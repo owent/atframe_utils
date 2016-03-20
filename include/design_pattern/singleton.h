@@ -32,31 +32,27 @@ namespace util {
     namespace design_pattern {
 
         namespace wrapper {
-            template<class T>
+            template <class T>
             class singleton_wrapper : public T {
-            public:
+                public:
                 static bool destroyed_;
-                ~singleton_wrapper() {
-                    destroyed_ = true;
-                }
+                ~singleton_wrapper() { destroyed_ = true; }
             };
 
-            template<class T>
-            bool singleton_wrapper< T >::destroyed_ = false;
-
+            template <class T>
+            bool singleton_wrapper<T>::destroyed_ = false;
         }
 
         template <typename T>
         class singleton : public noncopyable {
-        public:
+            public:
             /**
              * @brief 自身类型声明
              */
             typedef T self_type;
             typedef std::shared_ptr<self_type> ptr_t;
 
-        protected:
-
+            protected:
             /**
              * @brief 虚类，禁止直接构造
              */
@@ -67,42 +63,37 @@ namespace util {
              */
             static void use(self_type const &) {}
 
-        public:
+            public:
             /**
              * @brief 获取单件对象引用
              * @return T& instance
              */
-            static T& get_instance() {
-                return *me();
-            }
+            static T &get_instance() { return *me(); }
 
             /**
              * @brief 获取单件对象常量引用
              * @return const T& instance
              */
-            static const T& get_const_instance() {
-                return get_instance();
-            }
+            static const T &get_const_instance() { return get_instance(); }
 
             /**
              * @brief 获取实例指针
              * @return T* instance
              */
-            static self_type* instance() {
-                return me().get();
-            }
+            static self_type *instance() { return me().get(); }
 
             /**
             * @brief 获取原始指针
             * @return T* instance
             */
-            static ptr_t& me() {
+            static ptr_t &me() {
                 static ptr_t inst;
                 if (!inst) {
                     static util::lock::spin_lock lock;
                     lock.lock();
 
-#if (defined(__cplusplus) && __cplusplus >= 201103L) || (defined(_MSC_VER) && (_MSC_VER > 1700 || (defined(_HAS_CPP0X) && _HAS_CPP0X)))
+#if (defined(__cplusplus) && __cplusplus >= 201103L) || \
+    (defined(_MSC_VER) && (_MSC_VER > 1700 || (defined(_HAS_CPP0X) && _HAS_CPP0X)))
                     std::atomic_thread_fence(std::memory_order_acquire);
 #elif defined(__UTIL_LOCK_SPINLOCK_ATOMIC_GCC_ATOMIC)
                     __atomic_thread_fence(__ATOMIC_ACQUIRE);
@@ -112,11 +103,12 @@ namespace util {
                             break;
                         }
 
-                        ptr_t new_data = std::make_shared<wrapper::singleton_wrapper<self_type> >();
+                        ptr_t new_data = std::make_shared<wrapper::singleton_wrapper<self_type>>();
                         inst = new_data;
                     } while (false);
 
-#if (defined(__cplusplus) && __cplusplus >= 201103L) || (defined(_MSC_VER) && (_MSC_VER > 1700 || (defined(_HAS_CPP0X) && _HAS_CPP0X)))
+#if (defined(__cplusplus) && __cplusplus >= 201103L) || \
+    (defined(_MSC_VER) && (_MSC_VER > 1700 || (defined(_HAS_CPP0X) && _HAS_CPP0X)))
                     std::atomic_thread_fence(std::memory_order_release);
 #elif defined(__UTIL_LOCK_SPINLOCK_ATOMIC_GCC_ATOMIC)
                     __atomic_thread_fence(__ATOMIC_RELEASE);
@@ -132,11 +124,8 @@ namespace util {
              * @brief 判断是否已被析构
              * @return bool
              */
-            static bool is_instance_destroyed() {
-                return wrapper::singleton_wrapper<T>::destroyed_;
-            }
+            static bool is_instance_destroyed() { return wrapper::singleton_wrapper<T>::destroyed_; }
         };
-
     }
 }
 #endif
