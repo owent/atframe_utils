@@ -4,7 +4,7 @@
 #include "frame/test_macros.h"
 
 class singleton_unit_test : public singleton<singleton_unit_test> {
-    public:
+public:
     bool b;
     int i;
 };

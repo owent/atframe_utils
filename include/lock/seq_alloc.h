@@ -23,17 +23,19 @@
 #define _UTIL_LOCK_SEQ_ALLOC_H_
 
 #if defined(_MSC_VER) && (_MSC_VER >= 1020)
-# pragma once
+#pragma once
 #endif
 #include <stdint.h>
 
-#if defined(__cplusplus) && defined(__clang__) && (__clang_major__ > 3 || (__clang_major__ == 3 && __clang_minor__ >= 1 ) ) && __cplusplus >= 201103L
+#if defined(__cplusplus) && defined(__clang__) && \
+    (__clang_major__ > 3 || (__clang_major__ == 3 && __clang_minor__ >= 1)) && __cplusplus >= 201103L
 #include <atomic>
 #define __UTIL_LOCK_SEQ_ALLOC_ATOMIC_STD
 #elif defined(_MSC_VER) && (_MSC_VER > 1700 || (defined(_HAS_CPP0X) && _HAS_CPP0X))
 #include <atomic>
 #define __UTIL_LOCK_SEQ_ALLOC_ATOMIC_STD
-#elif defined(__GNUC__) && ((__GNUC__ == 4 && __GNUC_MINOR__ >= 5) || __GNUC__ > 4) && (__cplusplus >= 201103L || defined(__GXX_EXPERIMENTAL_CXX0X__))
+#elif defined(__GNUC__) && ((__GNUC__ == 4 && __GNUC_MINOR__ >= 5) || __GNUC__ > 4) && \
+    (__cplusplus >= 201103L || defined(__GXX_EXPERIMENTAL_CXX0X__))
 #include <atomic>
 #define __UTIL_LOCK_SEQ_ALLOC_ATOMIC_STD
 #endif
@@ -45,13 +47,12 @@
 
 namespace util {
     namespace lock {
-        // C++ 0x/11版实现
+// C++ 0x/11版实现
 #if defined(__UTIL_LOCK_SEQ_ALLOC_ATOMIC_STD)
 #define __UTIL_LOCK_SEQ_ALLOC_ATOMIC_BRANCH_NAME "std::atomic<T>"
 
-        template<typename Ty>
-        class seq_alloc
-        {
+        template <typename Ty>
+        class seq_alloc {
         public:
             typedef Ty value_type;
 
@@ -59,49 +60,29 @@ namespace util {
             std::atomic<value_type> data_;
 
         public:
-            seq_alloc() {
-                data_.store(static_cast<value_type>(0));
-            }
+            seq_alloc() { data_.store(static_cast<value_type>(0)); }
 
-            value_type get() const {
-                return data_.load(std::memory_order_acquire);
-            }
+            value_type get() const { return data_.load(std::memory_order_acquire); }
 
-            value_type set(value_type val) {
-                return data_.exchange(val, std::memory_order_release);
-            }
+            value_type set(value_type val) { return data_.exchange(val, std::memory_order_release); }
 
-            value_type add(value_type val) {
-                return data_.fetch_add(val, std::memory_order_release);
-            }
+            value_type add(value_type val) { return data_.fetch_add(val, std::memory_order_release); }
 
-            value_type sub(value_type val) {
-                return data_.fetch_sub(val, std::memory_order_release);
-            }
+            value_type sub(value_type val) { return data_.fetch_sub(val, std::memory_order_release); }
 
-            value_type band(value_type val) {
-                return data_.fetch_and(val, std::memory_order_release);
-            }
+            value_type band(value_type val) { return data_.fetch_and(val, std::memory_order_release); }
 
-            value_type bor(value_type val) {
-                return data_.fetch_or(val, std::memory_order_release);
-            }
+            value_type bor(value_type val) { return data_.fetch_or(val, std::memory_order_release); }
 
-            value_type bxor(value_type val) {
-                return data_.fetch_xor(val, std::memory_order_release);
-            }
+            value_type bxor(value_type val) { return data_.fetch_xor(val, std::memory_order_release); }
 
             bool compare_exchange(value_type expected, value_type val) {
                 return data_.compare_exchange_strong(expected, val, std::memory_order_acq_rel);
             }
 
-            value_type inc() {
-                return add(static_cast<value_type>(1)) + static_cast<value_type>(1);
-            }
+            value_type inc() { return add(static_cast<value_type>(1)) + static_cast<value_type>(1); }
 
-            value_type dec() {
-                return sub(static_cast<value_type>(1)) - static_cast<value_type>(1);
-            }
+            value_type dec() { return sub(static_cast<value_type>(1)) - static_cast<value_type>(1); }
         };
 
         typedef seq_alloc<uint8_t> seq_alloc_u8;
@@ -116,7 +97,8 @@ namespace util {
 #else
 
 #if defined(__clang__)
-#if !defined(__GCC_ATOMIC_INT_LOCK_FREE) && (!defined(__GNUC__) || __GNUC__ < 4 || (__GNUC__ == 4 && __GNUC_MINOR__ < 1))
+#if !defined(__GCC_ATOMIC_INT_LOCK_FREE) && \
+    (!defined(__GNUC__) || __GNUC__ < 4 || (__GNUC__ == 4 && __GNUC_MINOR__ < 1))
 #error Clang version is too old
 #endif
 #if defined(__GCC_ATOMIC_INT_LOCK_FREE)
@@ -156,10 +138,10 @@ namespace util {
 
 #ifdef __UTIL_LOCK_SEQ_ALLOC_ATOMIC_MSVC
 
-        template<bool is_64bit>
+        template <bool is_64bit>
         class seq_alloc_vc_base;
 
-        template<>
+        template <>
         class seq_alloc_vc_base<false> {
         public:
             typedef LONG value_type;
@@ -170,48 +152,30 @@ namespace util {
         public:
             seq_alloc_vc_base() : data_(0) {}
 
-            value_type get() const {
-                return InterlockedExchangeAddAcquire(const_cast<value_type*>(&data_), 0L);
-            }
+            value_type get() const { return InterlockedExchangeAddAcquire(const_cast<value_type *>(&data_), 0L); }
 
-            value_type set(value_type val) {
-                return InterlockedExchange(&data_, val);
-            }
+            value_type set(value_type val) { return InterlockedExchange(&data_, val); }
 
-            value_type add(value_type val) {
-                return InterlockedExchangeAddRelease(&data_, val);
-            }
+            value_type add(value_type val) { return InterlockedExchangeAddRelease(&data_, val); }
 
-            value_type sub(value_type val) {
-                return add(-val);
-            }
+            value_type sub(value_type val) { return add(-val); }
 
-            value_type band(value_type val) {
-                return InterlockedAndRelease(&data_, val);
-            }
+            value_type band(value_type val) { return InterlockedAndRelease(&data_, val); }
 
-            value_type bor(value_type val) {
-                return InterlockedOrRelease(&data_, val);
-            }
+            value_type bor(value_type val) { return InterlockedOrRelease(&data_, val); }
 
-            value_type bxor(value_type val) {
-                return InterlockedXorRelease(&data_, val);
-            }
+            value_type bxor(value_type val) { return InterlockedXorRelease(&data_, val); }
 
             bool compare_exchange(value_type expected, value_type val) {
                 return !!InterlockedCompareExchange(&data_, val, expected);
             }
 
-            value_type inc() {
-                return InterlockedIncrementRelease(&data_);
-            }
+            value_type inc() { return InterlockedIncrementRelease(&data_); }
 
-            value_type dec() {
-                return InterlockedDecrementRelease(&data_);
-            }
+            value_type dec() { return InterlockedDecrementRelease(&data_); }
         };
 
-        template<>
+        template <>
         class seq_alloc_vc_base<true> {
         public:
             typedef LONGLONG value_type;
@@ -222,49 +186,31 @@ namespace util {
         public:
             seq_alloc_vc_base() : data_(0) {}
 
-            value_type get() const {
-                return InterlockedAddAcquire64(const_cast<value_type*>(&data_), 0LL);
-            }
+            value_type get() const { return InterlockedAddAcquire64(const_cast<value_type *>(&data_), 0LL); }
 
-            value_type set(value_type val) {
-                return InterlockedExchange64(&data_, val);
-            }
+            value_type set(value_type val) { return InterlockedExchange64(&data_, val); }
 
-            value_type add(value_type val) {
-                return InterlockedAddRelease64(&data_, val);
-            }
+            value_type add(value_type val) { return InterlockedAddRelease64(&data_, val); }
 
-            value_type sub(value_type val) {
-                return add(-val);
-            }
+            value_type sub(value_type val) { return add(-val); }
 
-            value_type band(value_type val) {
-                return InterlockedAnd64Release(&data_, val);
-            }
+            value_type band(value_type val) { return InterlockedAnd64Release(&data_, val); }
 
-            value_type bor(value_type val) {
-                return InterlockedOr64(&data_, val);
-            }
+            value_type bor(value_type val) { return InterlockedOr64(&data_, val); }
 
-            value_type bxor(value_type val) {
-                return InterlockedXor64(&data_, val);
-            }
+            value_type bxor(value_type val) { return InterlockedXor64(&data_, val); }
 
             bool compare_exchange(value_type expected, value_type val) {
                 return !!InterlockedCompareExchange64(&data_, val, expected);
             }
 
-            value_type inc() {
-                return InterlockedIncrement64(&data_);
-            }
+            value_type inc() { return InterlockedIncrement64(&data_); }
 
-            value_type dec() {
-                return InterlockedDecrement64(&data_);
-            }
+            value_type dec() { return InterlockedDecrement64(&data_); }
         };
 #endif
 
-        template<typename Ty>
+        template <typename Ty>
         class seq_alloc
 
 #ifdef __UTIL_LOCK_SEQ_ALLOC_ATOMIC_MSVC
@@ -359,7 +305,9 @@ namespace util {
 
             bool compare_exchange(value_type expected, value_type val) {
 #ifdef __UTIL_LOCK_SEQ_ALLOC_ATOMIC_MSVC
-                return static_cast<value_type>(_base_type::compare_exchange(static_cast<typename _base_type::value_type>(expected), static_cast<typename _base_type::value_type>(val)));
+                return static_cast<value_type>(
+                    _base_type::compare_exchange(static_cast<typename _base_type::value_type>(expected),
+                                                 static_cast<typename _base_type::value_type>(val)));
 #elif defined(__UTIL_LOCK_SEQ_ALLOC_ATOMIC_GCC_ATOMIC)
                 return __atomic_compare_exchange_n(&data_, &expected, val, false, __ATOMIC_ACQ_REL, __ATOMIC_ACQUIRE);
 #else

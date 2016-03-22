@@ -41,9 +41,9 @@
 #endif
 
 namespace util {
-    bool file_system::get_file_content(std::string& out, const char* file_path, bool is_binary) {
-        FILE* f = NULL;
-        if(is_binary) {
+    bool file_system::get_file_content(std::string &out, const char *file_path, bool is_binary) {
+        FILE *f = NULL;
+        if (is_binary) {
             UTIL_FS_OPEN(error_code, f, file_path, "rb");
             COMPILER_UNUSED(error_code);
         } else {
@@ -60,14 +60,14 @@ namespace util {
         fseek(f, 0, SEEK_SET);
 
         out.resize(static_cast<size_t>(len));
-        fread(const_cast<char*>(out.data()), sizeof(char), static_cast<size_t>(len), f);
+        fread(const_cast<char *>(out.data()), sizeof(char), static_cast<size_t>(len), f);
 
         fclose(f);
 
         return true;
     }
 
-    bool file_system::split_path(std::vector<std::string>& out, const char* path, bool compact) {
+    bool file_system::split_path(std::vector<std::string> &out, const char *path, bool compact) {
         if (NULL == path) {
             return false;
         }
@@ -80,8 +80,8 @@ namespace util {
         strncpy(opr_path, path, sizeof(opr_path));
 #endif
 
-        char* saveptr = NULL;
-        char* token = SAFE_STRTOK_S(opr_path, "\\/", &saveptr);
+        char *saveptr = NULL;
+        char *token = SAFE_STRTOK_S(opr_path, "\\/", &saveptr);
         while (NULL != token) {
             if (0 != strlen(token)) {
 
@@ -106,11 +106,9 @@ namespace util {
         return !out.empty();
     }
 
-    bool file_system::is_exist(const char* file_path) {
-        return 0 == FUNC_ACCESS(file_path);
-    }
+    bool file_system::is_exist(const char *file_path) { return 0 == FUNC_ACCESS(file_path); }
 
-    bool file_system::mkdir(const char* dir_path, bool recursion, int mode) {
+    bool file_system::mkdir(const char *dir_path, bool recursion, int mode) {
 #ifndef UTIL_FS_WINDOWS_API
         if (0 == mode) {
             mode = S_IRWXU | S_IRWXG | S_IRGRP | S_IWGRP | S_IROTH;
@@ -131,7 +129,7 @@ namespace util {
         // 留一个\0和一个分隔符位
         now_path.reserve(strlen(dir_path) + 2);
 
-        for(size_t i = 0; i < path_segs.size(); ++ i) {
+        for (size_t i = 0; i < path_segs.size(); ++i) {
             now_path += path_segs[i];
 
             if (false == is_exist(now_path.c_str())) {
@@ -149,15 +147,15 @@ namespace util {
     std::string file_system::get_cwd() {
         std::string ret;
 #ifdef UTIL_FS_WINDOWS_API
-        ret = _getcwd( NULL, 0 );
+        ret = _getcwd(NULL, 0);
 #else
-        ret = getcwd( NULL, 0 );
+        ret = getcwd(NULL, 0);
 #endif
 
         return ret;
     }
 
-    std::string file_system::get_abs_path(const char* dir_path) {
+    std::string file_system::get_abs_path(const char *dir_path) {
         if (is_abs_path(dir_path)) {
             return dir_path;
         }
@@ -170,7 +168,7 @@ namespace util {
         std::string cwd = get_cwd();
         split_path(out, (cwd + DIRECTORY_SEPARATOR + dir_path).c_str(), true);
 
-        if ('\\' == cwd[0] || '/' == cwd[0] ) {
+        if ('\\' == cwd[0] || '/' == cwd[0]) {
             ret += DIRECTORY_SEPARATOR;
         }
 
@@ -178,7 +176,7 @@ namespace util {
             ret += out[0];
         }
 
-        for (size_t i = 1; i < out.size(); ++ i) {
+        for (size_t i = 1; i < out.size(); ++i) {
             ret += DIRECTORY_SEPARATOR;
             ret += out[i];
         }
@@ -186,17 +184,13 @@ namespace util {
         return ret;
     }
 
-    bool file_system::rename(const char* from, const char* to) {
-        return 0 == ::rename(from, to);
-    }
+    bool file_system::rename(const char *from, const char *to) { return 0 == ::rename(from, to); }
 
-    bool file_system::remove(const char* path) {
-        return 0 == ::remove(path);
-    }
+    bool file_system::remove(const char *path) { return 0 == ::remove(path); }
 
-    FILE* file_system::open_tmp_file() {
+    FILE *file_system::open_tmp_file() {
 #if defined(UTIL_FS_C11_API)
-        FILE* ret = NULL;
+        FILE *ret = NULL;
         if (0 == tmpfile_s(&ret)) {
             return ret;
         }
@@ -207,9 +201,9 @@ namespace util {
 #endif
     }
 
-    int file_system::scan_dir(const char* dir_path, std::list<std::string>& out, int options) {
+    int file_system::scan_dir(const char *dir_path, std::list<std::string> &out, int options) {
         int ret = 0;
-        std::string base_dir = dir_path? dir_path: "";
+        std::string base_dir = dir_path ? dir_path : "";
 
         // 转为绝对路径
         if ((options & dir_opt_t::EN_DOT_ABSP) && false == is_abs_path(base_dir.c_str())) {
@@ -288,7 +282,7 @@ namespace util {
 
             // 普通追加目录
             out.push_back(child_path);
-        } while((ret = _findnext( cache, &child_node )) == 0);
+        } while ((ret = _findnext(cache, &child_node)) == 0);
 
         _findclose(cache);
 
@@ -296,7 +290,7 @@ namespace util {
             return 0;
         }
 #else
-        DIR* dir = NULL;
+        DIR *dir = NULL;
         if (base_dir.empty()) {
             dir = opendir(".");
         } else {
@@ -307,12 +301,12 @@ namespace util {
         }
 
         struct dirent child_node;
-        struct dirent* cache = NULL;
+        struct dirent *cache = NULL;
 
         do {
             child_node.d_name[0] = '\0';
             ret = readdir_r(dir, &child_node, &cache);
-            if(ret < 0) {
+            if (ret < 0) {
                 break;
             }
 
@@ -323,30 +317,30 @@ namespace util {
 
             int accept = 0;
             switch (child_node.d_type) {
-                case DT_DIR: {
-                    accept = options & dir_opt_t::EN_DOT_TDIR;
-                    break;
-                }
+            case DT_DIR: {
+                accept = options & dir_opt_t::EN_DOT_TDIR;
+                break;
+            }
 
-                case DT_REG: {
-                    accept = options & dir_opt_t::EN_DOT_TREG;
-                    break;
-                }
+            case DT_REG: {
+                accept = options & dir_opt_t::EN_DOT_TREG;
+                break;
+            }
 
-                case DT_LNK: {
-                    accept = options & dir_opt_t::EN_DOT_TLNK;
-                    break;
-                }
+            case DT_LNK: {
+                accept = options & dir_opt_t::EN_DOT_TLNK;
+                break;
+            }
 
-                case DT_SOCK: {
-                    accept = options & dir_opt_t::EN_DOT_TSOCK;
-                    break;
-                }
+            case DT_SOCK: {
+                accept = options & dir_opt_t::EN_DOT_TSOCK;
+                break;
+            }
 
-                default: {
-                    accept = options & dir_opt_t::EN_DOT_TOTH;
-                    break;
-                }
+            default: {
+                accept = options & dir_opt_t::EN_DOT_TOTH;
+                break;
+            }
             }
 
             // 类型不符合则跳过
@@ -381,7 +375,7 @@ namespace util {
 
             // 普通追加目录
             out.push_back(child_path);
-        } while(true);
+        } while (true);
 
         closedir(dir);
 
@@ -391,17 +385,18 @@ namespace util {
     }
 
 
-    bool file_system::is_abs_path(const char* dir_path) {
+    bool file_system::is_abs_path(const char *dir_path) {
         if (NULL == dir_path) {
             return false;
         }
 
-        if(dir_path[0] == '/') {
+        if (dir_path[0] == '/') {
             return true;
         }
 
 #ifdef _WIN32
-        if (((dir_path[0] >= 'a' && dir_path[0] <= 'z') || (dir_path[0] >= 'A' && dir_path[0] <= 'Z')) && dir_path[1] == ':' ) {
+        if (((dir_path[0] >= 'a' && dir_path[0] <= 'z') || (dir_path[0] >= 'A' && dir_path[0] <= 'Z')) &&
+            dir_path[1] == ':') {
             return true;
         }
 #endif

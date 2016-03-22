@@ -21,81 +21,56 @@
 
 #include "design_pattern/noncopyable.h"
 
-namespace util
-{
-    namespace lock
-    {
-        namespace detail
-        {
-            template<typename TLock>
-            struct default_lock_action
-            {
-                bool operator()(TLock& lock) const
-                {
+namespace util {
+    namespace lock {
+        namespace detail {
+            template <typename TLock>
+            struct default_lock_action {
+                bool operator()(TLock &lock) const {
                     lock.lock();
                     return true;
                 }
             };
 
-            template<typename TLock>
-            struct default_try_lock_action
-            {
-                bool operator()(TLock& lock) const
-                {
-                    return lock.try_lock();
-                }
+            template <typename TLock>
+            struct default_try_lock_action {
+                bool operator()(TLock &lock) const { return lock.try_lock(); }
             };
 
-            template<typename TLock>
-            struct default_unlock_action
-            {
-                void operator()(TLock& lock) const
-                {
-                    lock.unlock();
-                }
+            template <typename TLock>
+            struct default_unlock_action {
+                void operator()(TLock &lock) const { lock.unlock(); }
             };
 
-            template<typename TLock>
-            struct default_try_unlock_action
-            {
-                bool operator()(TLock& lock) const
-                {
-                    return lock.try_unlock();
-                }
+            template <typename TLock>
+            struct default_try_unlock_action {
+                bool operator()(TLock &lock) const { return lock.try_unlock(); }
             };
         }
 
-        template<typename TLock,
-            typename TLockAct = detail::default_lock_action<TLock>,
-            typename TUnlockAct = detail::default_unlock_action<TLock>
-        >
-        class lock_holder : public ::util::design_pattern::noncopyable
-        {
+        template <typename TLock,
+                  typename TLockAct = detail::default_lock_action<TLock>,
+                  typename TUnlockAct = detail::default_unlock_action<TLock> >
+        class lock_holder : public ::util::design_pattern::noncopyable {
         public:
             typedef TLock value_type;
 
-            lock_holder(TLock& lock): lock_flag_(&lock)
-            {
-                if (false == TLockAct()(lock))
-                {
+            lock_holder(TLock &lock) : lock_flag_(&lock) {
+                if (false == TLockAct()(lock)) {
                     lock_flag_ = NULL;
                 }
             }
 
-            ~lock_holder()
-            {
-                if (NULL != lock_flag_)
-                {
+            ~lock_holder() {
+                if (NULL != lock_flag_) {
                     TUnlockAct()(*lock_flag_);
                 }
             }
 
-            bool is_available() const {
-                return NULL != lock_flag_;
-            }
+            bool is_available() const { return NULL != lock_flag_; }
 
         private:
-            value_type* lock_flag_;
+            value_type *lock_flag_;
         };
     }
 }

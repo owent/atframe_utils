@@ -7,9 +7,8 @@
 
 #include "log/LogWrapper.h"
 
-#include "Logic/AttributeManager.h"
-#include "Random/RandomGenerator.h"
-#include "String/TQueryString.h"
+#include "random/random_generator.h"
+#include "string/tquerystring.h"
 #include "algorithm/hash.h"
 
 //=======================================================================================================
@@ -29,15 +28,15 @@ void LogSample() {
 //=======================================================================================================
 
 //=======================================================================================================
-void RandomSample() {
+void random_sample() {
     printf("\n");
     printf("===============begin random sample==============\n");
-    util::random::MT19937 stGen1;
-    stGen1.InitSeed(123);
+    util::random::mt19937 gen1;
+    gen1.init_seed(123);
 
-    printf("Random - mt19937: %u\n", stGen1.Random());
-    printf("Random - mt19937: %u\n", stGen1());
-    printf("Random - mt19937 - between [100, 10000): %d\n", stGen1.RandomBetween(100, 10000));
+    printf("Random - mt19937: %u\n", gen1.random());
+    printf("Random - mt19937: %u\n", gen1());
+    printf("Random - mt19937 - between [100, 10000): %d\n", gen1.random_between(100, 10000));
 
     printf("===============end random sample==============\n");
 }
@@ -46,34 +45,34 @@ void RandomSample() {
 
 
 //=======================================================================================================
-void TQueryStringSample() {
+void tquerystring_sample() {
     printf("\n");
     printf("===============begin querystring sample==============\n");
 
-    util::TQueryString encode, decode;
+    util::tquerystring encode, decode;
 
-    encode.Set("a", "wulala");
-    encode.Set("page", "ok!");
+    encode.set("a", "wulala");
+    encode.set("page", "ok!");
 
     std::string output;
-    encode.Encode(output);
+    encode.encode(output);
 
-    util::types::ItemArray::ptr_type arr = encode.CreateArray();
+    util::types::item_array::ptr_type arr = encode.create_array();
 
-    arr->Append("blablabla...");
-    arr->Append("a and b is ab");
-    util::types::ItemObject::ptr_type obj = encode.CreateObject();
-    obj->Set("so", "");
-    arr->Append(obj);
+    arr->append("blablabla...");
+    arr->append("a and b is ab");
+    util::types::item_object::ptr_type obj = encode.create_object();
+    obj->set("so", "");
+    arr->append(obj);
 
-    encode.Set("c", arr);
+    encode.set("c", arr);
 
-    std::cout << "Encode => " << encode.ToString() << std::endl;
-    std::cout << "Encode (old) => " << output << std::endl;
-    std::cout << "Array => " << arr->ToString() << std::endl;
+    std::cout << "encode => " << encode.to_string() << std::endl;
+    std::cout << "encode (old) => " << output << std::endl;
+    std::cout << "Array => " << arr->to_string() << std::endl;
 
-    decode.Decode(encode.ToString().c_str());
-    std::cout << "Decode => " << decode.ToString() << std::endl;
+    decode.decode(encode.to_string().c_str());
+    std::cout << "decode => " << decode.to_string() << std::endl;
 
     printf("===============end querystring sample================\n");
 }
@@ -102,8 +101,9 @@ void hash_sample() {
 //=======================================================================================================
 
 int main(int argc, char **argv) {
-    TQueryStringSample();
+    tquerystring_sample();
     hash_sample();
+    random_sample();
     LogSample();
     return 0;
 }

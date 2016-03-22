@@ -17,7 +17,7 @@
 
 // 目测主流编译器都支持且有优化， gcc 3.4 and upper, vc, clang, c++ builder xe3, intel c++ and etc.
 //#if defined(_MSC_VER) && (_MSC_VER >= 1020)
-# pragma once
+#pragma once
 //#endif
 
 #include <cstdlib>
@@ -36,7 +36,8 @@
 #define UTIL_STRFUNC_STRNCMP(l, r, s) strncmp(l, r, s)
 #endif
 
-#if (defined(_MSC_VER) && _MSC_VER >= 1600)  || (defined(__STDC_VERSION__) && __STDC_VERSION__ >= 201112L) || defined(__STDC_LIB_EXT1__)
+#if (defined(_MSC_VER) && _MSC_VER >= 1600) || (defined(__STDC_VERSION__) && __STDC_VERSION__ >= 201112L) || \
+    defined(__STDC_LIB_EXT1__)
 #define UTIL_STRFUNC_SSCANF(...) sscanf_s(__VA_ARGS__)
 #define UTIL_STRFUNC_SNPRINTF(...) sprintf_s(__VA_ARGS__)
 #define UTIL_STRFUNC_C11_SUPPORT 1
@@ -53,8 +54,8 @@ namespace util {
          * @param str 被转换的字符串
          * @note 性能肯定比sscanf系，和iostream系高。strtol系就不知道了
          */
-        template<typename T>
-        void str2int(T& out, const char* str) {
+        template <typename T>
+        void str2int(T &out, const char *str) {
             out = static_cast<T>(0);
             if (NULL == str || !(*str)) {
                 return;
@@ -92,12 +93,12 @@ namespace util {
          * @param c 被转换的字符
          * @param upper_case 输出大写字符？
          */
-        template<typename TStr, typename TCh>
-        void hex(TStr* out, TCh c, bool upper_case = false) {
+        template <typename TStr, typename TCh>
+        void hex(TStr *out, TCh c, bool upper_case = false) {
             out[0] = static_cast<TStr>((c >> 4) & 0x0F);
             out[1] = static_cast<TStr>(c & 0x0F);
 
-            for (int i = 0; i < 2; ++ i) {
+            for (int i = 0; i < 2; ++i) {
                 if (out[i] > 9) {
                     out[i] += (upper_case ? 'A' : 'a') - 10;
                 } else {
@@ -112,8 +113,8 @@ namespace util {
          * @param c 被转换的字符
          * @param upper_case 输出大写字符？
          */
-        template<typename TStr, typename TCh>
-        void oct(TStr* out, TCh c) {
+        template <typename TStr, typename TCh>
+        void oct(TStr *out, TCh c) {
             out[0] = static_cast<TStr>(((c >> 6) & 0x07) + '0');
             out[1] = static_cast<TStr>(((c >> 3) & 0x07) + '0');
             out[2] = static_cast<TStr>((c & 0x07) + '0');
@@ -126,11 +127,11 @@ namespace util {
          * @param out 输出buffer
          * @param os 输出buffer长度，回传输出缓冲区使用的长度
          */
-        template<typename TCh>
-        void serialization(const void* src, size_t ss, TCh* out, size_t& os) {
-            const TCh* cs = reinterpret_cast<const TCh*>(src);
+        template <typename TCh>
+        void serialization(const void *src, size_t ss, TCh *out, size_t &os) {
+            const TCh *cs = reinterpret_cast<const TCh *>(src);
             size_t i, j;
-            for (i = 0, j = 0; i < ss && j < os; ++ i) {
+            for (i = 0, j = 0; i < ss && j < os; ++i) {
                 if (cs[i] >= 32 && cs[i] < 127) {
                     out[j] = cs[i];
                     ++j;
@@ -152,9 +153,9 @@ namespace util {
          * @param ss 输入的buffer长度
          * @param out 输出缓冲区
          */
-        template<typename Elem, typename Traits>
-        void serialization(const void* src, size_t ss, std::basic_ostream<Elem, Traits>& out) {
-            const Elem* cs = reinterpret_cast<const Elem*>(src);
+        template <typename Elem, typename Traits>
+        void serialization(const void *src, size_t ss, std::basic_ostream<Elem, Traits> &out) {
+            const Elem *cs = reinterpret_cast<const Elem *>(src);
             size_t i;
             for (i = 0; i < ss; ++i) {
                 if (cs[i] >= 32 && cs[i] < 127) {

@@ -3,10 +3,9 @@
 
 #define ENABLE_MIXEDINT_MAGIC_MASK 3
 
-#include "Algorithm/MixedInt.h"
+#include "algorithm/mixed_int.h"
 
-CASE_TEST(MixedIntTest, Basic)
-{
+CASE_TEST(mixed_int_test, basic) {
     CASE_EXPECT_TRUE(typeid(uint32_t) != typeid(mixed_uint32_t));
 
     {
@@ -36,15 +35,12 @@ CASE_TEST(MixedIntTest, Basic)
         mixed_int64_t a4 = -20000000000LL;
         CASE_EXPECT_EQ((int64_t)-20000000000LL, (int64_t)a4);
     }
-
-
 }
 
-CASE_TEST(MixedIntTest, Compare)
-{
+CASE_TEST(mixed_int_test, compare) {
     mixed_int32_t a2 = -65540;
     mixed_uint32_t a3 = 65540;
-    
+
 
     CASE_EXPECT_TRUE((uint32_t)65540 == a3);
     CASE_EXPECT_TRUE(a2 == (int32_t)-65540);
@@ -60,8 +56,7 @@ CASE_TEST(MixedIntTest, Compare)
     CASE_EXPECT_TRUE(a2 <= (int32_t)-65540);
 }
 
-CASE_TEST(MixedIntTest, Calculate)
-{
+CASE_TEST(mixed_int_test, calculate) {
     mixed_int32_t a2 = 100;
 
     CASE_EXPECT_EQ(-10, a2 - 110);
@@ -83,8 +78,7 @@ CASE_TEST(MixedIntTest, Calculate)
     CASE_EXPECT_EQ(10, (int32_t)a2);
 }
 
-CASE_TEST(MixedIntTest, BitOperator)
-{
+CASE_TEST(mixed_int_test, bit_operator) {
     mixed_uint64_t a2 = 65535;
     a2 >>= 8;
     CASE_EXPECT_EQ((uint64_t)255, (uint64_t)a2);

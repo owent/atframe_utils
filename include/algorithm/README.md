@@ -26,3 +26,11 @@ OWenT’s Utils - Algorithm
 1. [snappy](https://github.com/google/snappy) By Google 高效的压缩/解压算法。比zlib压缩率略低，性能高。
 2. [zopfli](https://github.com/google/zopfli) By Google 压缩率高但是CPU消耗也高的压缩算法。
 3. [brotli](https://github.com/google/brotli) By Google 压缩率高，CPU消耗接近zlib的deflate的压缩算法。
+
+
+内存混淆整数([mixed_int](mixed_int.h))
+------
++ 尽量模拟正常的整数操作
++ 支持主流编译器
++ 内存大小和原生整形一致（内存布局当然不一致了，不然还混淆个毛线啊）
++ 然而这么搞还是会影响模板类型推断，因为这个类会导致多一次隐式类型转换，这时候只能报错或报warning的地方手动加下类型转换了

@@ -1,4 +1,4 @@
-﻿/**  
+﻿/**
  * @brief 静态无锁队列(数组)
  * @note 固定最大长度
  * @note 使用了 c++11的atomic
@@ -18,59 +18,46 @@
 
 namespace util {
     namespace ds {
-        
+
         template <typename T, size_t SIZE, typename TContainer = std::array<T, SIZE + 1> >
         class lock_free_array {
         public:
             typedef T value_type;
-            typedef value_type* pointer_type;
-            typedef value_type& reference_type;
+            typedef value_type *pointer_type;
+            typedef value_type &reference_type;
             typedef TContainer container_type;
 
         private:
-            lock_free_array(const lock_free_array&) FUNC_DELETE;
-            lock_free_array& operator=(const lock_free_array&)FUNC_DELETE;
+            lock_free_array(const lock_free_array &) FUNC_DELETE;
+            lock_free_array &operator=(const lock_free_array &) FUNC_DELETE;
 
         public:
             typedef pointer_type iterator;
             typedef const iterator const_iterator;
 
         public:
-
-            lock_free_array(){
+            lock_free_array() {
                 start_.store(0);
                 end_.store(0);
             }
 
-            iterator begin() {
-                return &data_[start_.load()];
-            }
+            iterator begin() { return &data_[start_.load()]; }
 
-            iterator begin() const {
-                return &data_[start_.load()];
-            }
+            iterator begin() const { return &data_[start_.load()]; }
 
-            iterator end() {
-                return &data_[end_.load()];
-            }
+            iterator end() { return &data_[end_.load()]; }
 
-            iterator end() const {
-                return &data_[end_.load()];
-            }
+            iterator end() const { return &data_[end_.load()]; }
 
             /**
              * @brief 获取原始数据
              */
-            iterator at(size_t index) {
-                return &data_[index];
-            }
+            iterator at(size_t index) { return &data_[index]; }
 
             /**
              * @brief 获取原始数据
              */
-            iterator at(size_t index) const {
-                return &data_[index];
-            }
+            iterator at(size_t index) const { return &data_[index]; }
 
             iterator push_back() {
                 while (true) {
@@ -144,18 +131,12 @@ namespace util {
                 return nullptr;
             }
 
-            bool empty() const {
-                return start_ != end_;
-            }
+            bool empty() const { return start_ != end_; }
 
-            size_t size() const {
-                return (data_.size() + end_ - start_) % data_.size();
-            }
+            size_t size() const { return (data_.size() + end_ - start_) % data_.size(); }
 
 
-            size_t capacity() const {
-                return data_.capacity();
-            }
+            size_t capacity() const { return data_.capacity(); }
 
         private:
             std::atomic<size_t> start_;

@@ -34,7 +34,7 @@ namespace util {
         namespace wrapper {
             template <class T>
             class singleton_wrapper : public T {
-                public:
+            public:
                 static bool destroyed_;
                 ~singleton_wrapper() { destroyed_ = true; }
             };
@@ -45,14 +45,14 @@ namespace util {
 
         template <typename T>
         class singleton : public noncopyable {
-            public:
+        public:
             /**
              * @brief 自身类型声明
              */
             typedef T self_type;
             typedef std::shared_ptr<self_type> ptr_t;
 
-            protected:
+        protected:
             /**
              * @brief 虚类，禁止直接构造
              */
@@ -63,7 +63,7 @@ namespace util {
              */
             static void use(self_type const &) {}
 
-            public:
+        public:
             /**
              * @brief 获取单件对象引用
              * @return T& instance
@@ -103,7 +103,7 @@ namespace util {
                             break;
                         }
 
-                        ptr_t new_data = std::make_shared<wrapper::singleton_wrapper<self_type>>();
+                        ptr_t new_data = std::make_shared<wrapper::singleton_wrapper<self_type> >();
                         inst = new_data;
                     } while (false);
 
