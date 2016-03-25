@@ -25,36 +25,27 @@
 #define DEFAULT_FILE_SIZE 256 * 1024
 
 namespace util {
-    namespace log{
+    namespace log {
 
-        LogHandlerFilesystem::LogHandlerFilesystem():
-            check_interval_(60), // 默认文件切换检查周期为60秒
-            last_check_point_(0),
-            enable_buffer_(false),
-            inited_(false),
-            max_file_size_(DEFAULT_FILE_SIZE),
-            max_file_number_(10),
-            open_file_index_(0) {
+        LogHandlerFilesystem::LogHandlerFilesystem()
+            : check_interval_(60), // 默认文件切换检查周期为60秒
+              last_check_point_(0), enable_buffer_(false), inited_(false), max_file_size_(DEFAULT_FILE_SIZE), max_file_number_(10),
+              open_file_index_(0) {
             dirs_pattern_.push_back("%Y-%m-%d"); // 默认文件名规则
             log_file_suffix_ = ".%d.log";
         }
 
-        LogHandlerFilesystem::LogHandlerFilesystem(const std::string& file_name_pattern, std::string suffix) :
-            check_interval_(60), // 默认文件切换检查周期为60秒
-            last_check_point_(0),
-            enable_buffer_(false),
-            inited_(false),
-            max_file_size_(DEFAULT_FILE_SIZE),
-            max_file_number_(10),
-            open_file_index_(0) {
+        LogHandlerFilesystem::LogHandlerFilesystem(const std::string &file_name_pattern, std::string suffix)
+            : check_interval_(60), // 默认文件切换检查周期为60秒
+              last_check_point_(0), enable_buffer_(false), inited_(false), max_file_size_(DEFAULT_FILE_SIZE), max_file_number_(10),
+              open_file_index_(0) {
 
             setFilePattern(file_name_pattern, suffix);
         }
 
-        LogHandlerFilesystem::~LogHandlerFilesystem() {
-        }
+        LogHandlerFilesystem::~LogHandlerFilesystem() {}
 
-        void LogHandlerFilesystem::setFilePattern(const std::string& file_name_pattern, std::string suffix) {
+        void LogHandlerFilesystem::setFilePattern(const std::string &file_name_pattern, std::string suffix) {
             using std::strtok;
             dirs_pattern_.clear();
             // 保证必须有一个 %d
@@ -63,11 +54,11 @@ namespace util {
             }
             log_file_suffix_ = suffix;
 
-            char* paths = static_cast<char*>(malloc(file_name_pattern.size() + 1));
+            char *paths = static_cast<char *>(malloc(file_name_pattern.size() + 1));
             strncpy(paths, file_name_pattern.c_str(), file_name_pattern.size());
             paths[file_name_pattern.size()] = '\0';
 
-            char* token = strtok(paths, "\\/");
+            char *token = strtok(paths, "\\/");
             while (NULL != token) {
                 if (0 != strlen(token)) {
                     dirs_pattern_.push_back(token);
@@ -78,12 +69,12 @@ namespace util {
             free(paths);
         }
 
-        void LogHandlerFilesystem::operator()(LogWrapper::level_t::type level_id, const char* level, const char* content) {
+        void LogHandlerFilesystem::operator()(log_wrapper::level_t::type level_id, const char *level, const char *content) {
             if (!inited_) {
                 init();
             }
 
-            std::shared_ptr<FILE*> f = open_log_file();
+            std::shared_ptr<FILE *> f = open_log_file();
             if (f && NULL == *f) {
                 return;
             }
@@ -98,7 +89,7 @@ namespace util {
         void LogHandlerFilesystem::init() {
             inited_ = true;
             if (!opened_file_) {
-                typedef FILE* ft;
+                typedef FILE *ft;
                 opened_file_ = std::shared_ptr<ft>(new ft(), delete_file);
             }
 
@@ -123,7 +114,7 @@ namespace util {
             open_file_index_ = open_file_index_ % max_file_number_;
         }
 
-        std::shared_ptr<FILE*> LogHandlerFilesystem::open_log_file() {
+        std::shared_ptr<FILE *> LogHandlerFilesystem::open_log_file() {
             std::string real_path;
 
             size_t file_size = max_file_size_;
@@ -132,7 +123,7 @@ namespace util {
             }
 
             if (opened_file_ && NULL != (*opened_file_) && file_size < max_file_size_) {
-                time_t now = LogWrapper::getLogTime();
+                time_t now = log_wrapper::getLogTime();
                 time_t cp = now >= last_check_point_ ? now - last_check_point_ : last_check_point_ - now;
 
                 if (cp < check_interval_) {
@@ -151,7 +142,7 @@ namespace util {
             {
                 open_file_index_ = (open_file_index_ + 1) % max_file_number_;
 
-                typedef FILE* ft;
+                typedef FILE *ft;
                 opened_file_ = std::shared_ptr<ft>(new ft(NULL), delete_file);
 
                 real_path.clear(); // 文件名失效
@@ -160,7 +151,7 @@ namespace util {
             // 重算文件名
             real_path = get_log_file();
 
-            FILE* clear_fd = fopen(real_path.c_str(), "w");
+            FILE *clear_fd = fopen(real_path.c_str(), "w");
             if (NULL != clear_fd) {
                 fclose(clear_fd);
             }
@@ -178,9 +169,9 @@ namespace util {
         std::string LogHandlerFilesystem::get_log_file() {
             std::string real_path;
 
-        #ifndef MAX_PATH
-        #define MAX_PATH 260
-        #endif
+#ifndef MAX_PATH
+#define MAX_PATH 260
+#endif
 
             char os_name[MAX_PATH];
             real_path.reserve(MAX_PATH);
@@ -188,11 +179,11 @@ namespace util {
             for (size_t i = 0; i < dirs_pattern_.size(); ++i) {
                 size_t len = strftime(os_name, sizeof(os_name), dirs_pattern_[i].c_str(), get_tm());
                 if (!real_path.empty()) {
-        #ifdef WIN32
+#ifdef WIN32
                     real_path += "\\";
-        #else
+#else
                     real_path += "/";
-        #endif
+#endif
                 }
 
                 real_path.append(os_name, len);
@@ -216,11 +207,9 @@ namespace util {
             return real_path;
         }
 
-        const tm* LogHandlerFilesystem::get_tm() {
-            return LogWrapper::Instance()->getLogTm();
-        }
+        const tm *LogHandlerFilesystem::get_tm() { return log_wrapper::Instance()->getLogTm(); }
 
-        void LogHandlerFilesystem::delete_file(FILE** f) {
+        void LogHandlerFilesystem::delete_file(FILE **f) {
             if (f) {
                 if (NULL != *f) {
                     fflush(*f);
@@ -230,7 +219,5 @@ namespace util {
                 delete f;
             }
         }
-
-
     }
 }

@@ -48,8 +48,7 @@ namespace util {
             };
         }
 
-        template <typename TLock,
-                  typename TLockAct = detail::default_lock_action<TLock>,
+        template <typename TLock, typename TLockAct = detail::default_lock_action<TLock>,
                   typename TUnlockAct = detail::default_unlock_action<TLock> >
         class lock_holder : public ::util::design_pattern::noncopyable {
         public:

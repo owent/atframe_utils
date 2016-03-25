@@ -1,17 +1,16 @@
 ﻿#include <cstdio>
 #include <cstring>
 #include <stdarg.h>
-#include "log/LogWrapper.h"
+#include "log/log_wrapper.h"
 
 namespace util {
     namespace log {
 
-        bool LogWrapper::destroyed_ = false;
-        time_t LogWrapper::log_time_cache_sec_ = 0;
-        tm* LogWrapper::log_time_cache_sec_p_;
+        bool log_wrapper::destroyed_ = false;
+        time_t log_wrapper::log_time_cache_sec_ = 0;
+        tm *log_wrapper::log_time_cache_sec_p_;
 
-        LogWrapper::LogWrapper() :
-            log_level_(level_t::LOG_LW_DISABLED) {
+        log_wrapper::log_wrapper() : log_level_(level_t::LOG_LW_DISABLED) {
             auto_update_time_ = true;
             update();
 
@@ -21,20 +20,20 @@ namespace util {
             enable_print_time_ = "[%Y-%m-%d %H:%M:%S]";
         }
 
-        LogWrapper::~LogWrapper() {
-            LogWrapper::destroyed_ = true;
+        log_wrapper::~log_wrapper() {
+            log_wrapper::destroyed_ = true;
 
             // 重置level，只要内存没释放，就还可以内存访问，但是不能写出日志
             log_level_ = level_t::LOG_LW_DISABLED;
         }
 
-        int32_t LogWrapper::init(level_t::type level) {
+        int32_t log_wrapper::init(level_t::type level) {
             log_level_ = level;
 
             return 0;
         }
 
-        void LogWrapper::addLogHandle(log_handler_t h, level_t::type level_min, level_t::type level_max) {
+        void log_wrapper::addLogHandle(log_handler_t h, level_t::type level_min, level_t::type level_max) {
             if (h) {
                 log_router_t router;
                 router.handle = h;
@@ -44,13 +43,13 @@ namespace util {
             };
         }
 
-        void LogWrapper::update() {
+        void log_wrapper::update() {
             log_time_cache_sec_ = time(NULL);
             log_time_cache_sec_p_ = localtime(&log_time_cache_sec_);
         }
 
-        void LogWrapper::log(level_t::type level_id, const char* level, const char* file_path, uint32_t line_number,
-                             const char* func_name, const char* fmt, ...) {
+        void log_wrapper::log(level_t::type level_id, const char *level, const char *file_path, uint32_t line_number, const char *func_name,
+                              const char *fmt, ...) {
             if (auto_update_time_ && !enable_print_time_.empty()) {
                 update();
             }
@@ -69,13 +68,12 @@ namespace util {
 
                 // 是否需要毫秒级？std::chrono
                 if (!enable_print_time_.empty()) {
-                    start_index += strftime(&log_buffer[start_index], sizeof(log_buffer) - start_index,
-                                            enable_print_time_.c_str(), log_time_cache_sec_p_);
+                    start_index += strftime(&log_buffer[start_index], sizeof(log_buffer) - start_index, enable_print_time_.c_str(),
+                                            log_time_cache_sec_p_);
                 }
 
                 // 打印位置选项
-                if (enable_print_file_location_ && enable_print_function_name_ &&
-                    NULL != file_path && NULL != func_name) {
+                if (enable_print_file_location_ && enable_print_function_name_ && NULL != file_path && NULL != func_name) {
                     int res = sprintf(&log_buffer[start_index], "[%s:%u(%s)]: ", file_path, line_number, func_name);
                     start_index += res >= 0 ? res : 0;
                 } else if (enable_print_file_location_ && NULL != file_path) {
@@ -104,16 +102,15 @@ namespace util {
                         iter->handle(level_id, level, log_buffer);
                     }
                 }
-
             }
         }
 
-        LogWrapper* LogWrapper::getLogCat(uint32_t cats) {
-            if (LogWrapper::destroyed_) {
+        log_wrapper *log_wrapper::getLogCat(uint32_t cats) {
+            if (log_wrapper::destroyed_) {
                 return NULL;
             }
 
-            static LogWrapper all_logger[categorize_t::MAX];
+            static log_wrapper all_logger[categorize_t::MAX];
 
             if (cats >= categorize_t::MAX) {
                 return NULL;
@@ -121,6 +118,5 @@ namespace util {
 
             return &all_logger[cats];
         }
-
     }
 }

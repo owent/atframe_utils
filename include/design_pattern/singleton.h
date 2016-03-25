@@ -24,6 +24,7 @@
 #include "noncopyable.h"
 
 #include "lock/spin_lock.h"
+#include "lock/lock_holder.h"
 #include "std/smart_ptr.h"
 #include <cstddef>
 #include <memory>
@@ -90,10 +91,9 @@ namespace util {
                 static ptr_t inst;
                 if (!inst) {
                     static util::lock::spin_lock lock;
-                    lock.lock();
+                    util::lock::lock_holder<util::lock::spin_lock> lock_opr(lock);
 
-#if (defined(__cplusplus) && __cplusplus >= 201103L) || \
-    (defined(_MSC_VER) && (_MSC_VER > 1700 || (defined(_HAS_CPP0X) && _HAS_CPP0X)))
+#if (defined(__cplusplus) && __cplusplus >= 201103L) || (defined(_MSC_VER) && (_MSC_VER > 1700 || (defined(_HAS_CPP0X) && _HAS_CPP0X)))
                     std::atomic_thread_fence(std::memory_order_acquire);
 #elif defined(__UTIL_LOCK_SPINLOCK_ATOMIC_GCC_ATOMIC)
                     __atomic_thread_fence(__ATOMIC_ACQUIRE);
@@ -107,13 +107,11 @@ namespace util {
                         inst = new_data;
                     } while (false);
 
-#if (defined(__cplusplus) && __cplusplus >= 201103L) || \
-    (defined(_MSC_VER) && (_MSC_VER > 1700 || (defined(_HAS_CPP0X) && _HAS_CPP0X)))
+#if (defined(__cplusplus) && __cplusplus >= 201103L) || (defined(_MSC_VER) && (_MSC_VER > 1700 || (defined(_HAS_CPP0X) && _HAS_CPP0X)))
                     std::atomic_thread_fence(std::memory_order_release);
 #elif defined(__UTIL_LOCK_SPINLOCK_ATOMIC_GCC_ATOMIC)
                     __atomic_thread_fence(__ATOMIC_RELEASE);
 #endif
-                    lock.unlock();
                     use(*inst);
                 }
 

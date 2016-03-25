@@ -32,15 +32,13 @@
 #if defined(__cplusplus) && __cplusplus >= 201103L
 #include <atomic>
 #define __UTIL_LOCK_SPINLOCK_ATOMIC_STD
-#if defined(__clang__) && (__clang_major__ > 3 || (__clang_major__ == 3 && __clang_minor__ >= 1)) && \
-    __cplusplus >= 201103L
+#if defined(__clang__) && (__clang_major__ > 3 || (__clang_major__ == 3 && __clang_minor__ >= 1)) && __cplusplus >= 201103L
 #include <atomic>
 #define __UTIL_LOCK_SPINLOCK_ATOMIC_STD
 #elif defined(_MSC_VER) && (_MSC_VER > 1700 || (defined(_HAS_CPP0X) && _HAS_CPP0X))
 #include <atomic>
 #define __UTIL_LOCK_SPINLOCK_ATOMIC_STD
-#elif defined(__GNUC__) && ((__GNUC__ == 4 && __GNUC_MINOR__ >= 5) || __GNUC__ > 4) && \
-    defined(__GXX_EXPERIMENTAL_CXX0X__)
+#elif defined(__GNUC__) && ((__GNUC__ == 4 && __GNUC_MINOR__ >= 5) || __GNUC__ > 4) && defined(__GXX_EXPERIMENTAL_CXX0X__)
 #include <atomic>
 #define __UTIL_LOCK_SPINLOCK_ATOMIC_STD
 #endif
@@ -158,8 +156,11 @@
 
 namespace util {
     namespace lock {
-// C++ 0x/11版实现
 #ifdef __UTIL_LOCK_SPINLOCK_ATOMIC_STD
+        /**
+         * @brief 自旋锁 - C++ 0x/11版实现
+         * @see http://www.boost.org/doc/libs/1_60_0/doc/html/atomic/usage_examples.html#boost_atomic.usage_examples.example_spinlock
+         */
         class spin_lock {
         private:
             typedef enum { UNLOCKED = 0, LOCKED = 1 } lock_state_t;
@@ -178,21 +179,14 @@ namespace util {
 
             bool is_locked() { return lock_status_.load(::std::memory_order_acquire) == LOCKED; }
 
-            bool try_lock() {
-                return lock_status_.exchange(static_cast<unsigned int>(LOCKED), ::std::memory_order_acq_rel) ==
-                       UNLOCKED;
-            }
+            bool try_lock() { return lock_status_.exchange(static_cast<unsigned int>(LOCKED), ::std::memory_order_acq_rel) == UNLOCKED; }
 
-            bool try_unlock() {
-                return lock_status_.exchange(static_cast<unsigned int>(UNLOCKED), ::std::memory_order_acq_rel) ==
-                       LOCKED;
-            }
+            bool try_unlock() { return lock_status_.exchange(static_cast<unsigned int>(UNLOCKED), ::std::memory_order_acq_rel) == LOCKED; }
         };
 #else
 
 #if defined(__clang__)
-#if !defined(__GCC_ATOMIC_INT_LOCK_FREE) && \
-    (!defined(__GNUC__) || __GNUC__ < 4 || (__GNUC__ == 4 && __GNUC_MINOR__ < 1))
+#if !defined(__GCC_ATOMIC_INT_LOCK_FREE) && (!defined(__GNUC__) || __GNUC__ < 4 || (__GNUC__ == 4 && __GNUC_MINOR__ < 1))
 #error Clang version is too old
 #endif
 #if defined(__GCC_ATOMIC_INT_LOCK_FREE)

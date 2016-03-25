@@ -5,18 +5,18 @@
 #include <iostream>
 #include <vector>
 
-#include "log/LogWrapper.h"
+#include "log/log_wrapper.h"
 
 #include "random/random_generator.h"
 #include "string/tquerystring.h"
 #include "algorithm/hash.h"
 
 //=======================================================================================================
-void LogSample() {
+void log_sample() {
     puts("");
     puts("===============begin log sample==============");
 
-    WLOG_INIT(util::log::LogWrapper::categorize_t::DEFAULT, util::log::LogWrapper::level_t::LOG_LW_DEBUG);
+    WLOG_INIT(util::log::log_wrapper::categorize_t::DEFAULT, util::log::log_wrapper::level_t::LOG_LW_DEBUG);
 
     PSTDERROR("try to print error log.\n");
 
@@ -104,6 +104,6 @@ int main(int argc, char **argv) {
     tquerystring_sample();
     hash_sample();
     random_sample();
-    LogSample();
+    log_sample();
     return 0;
 }
