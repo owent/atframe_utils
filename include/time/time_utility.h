@@ -14,12 +14,30 @@
 
 #pragma once
 
-#include <ctime>
-#include <stdint.h>
 #include <cstddef>
 #include <cstring>
+#include <ctime>
+#include <stdint.h>
 
 #include "std/chrono.h"
+
+#if (defined(__STDC_VERSION__) && __STDC_VERSION__ >= 201112L) || defined(__STDC_LIB_EXT1__)
+#define UTIL_STRFUNC_LOCALTIME_S(time_t_ptr, tm_ptr) localtime_s(time_t_ptr, tm_ptr)
+#define UTIL_STRFUNC_GMTIME_S(time_t_ptr, tm_ptr) gmtime_s(time_t_ptr, tm_ptr)
+
+#if defined(_MSC_VER) && _MSC_VER >= 1300
+#define UTIL_STRFUNC_LOCALTIME_S(time_t_ptr, tm_ptr) localtime_s(tm_ptr, time_t_ptr)
+#define UTIL_STRFUNC_GMTIME_S(time_t_ptr, tm_ptr) gmtime_s(tm_ptr, time_t_ptr)
+
+#elif defined(__STDC_VERSION__)
+#define UTIL_STRFUNC_LOCALTIME_S(time_t_ptr, tm_ptr) localtime_r(time_t_ptr, tm_ptr)
+#define UTIL_STRFUNC_GMTIME_S(time_t_ptr, tm_ptr) gmtime_r(time_t_ptr, tm_ptr)
+
+#else
+#define UTIL_STRFUNC_LOCALTIME_S(time_t_ptr, tm_ptr) (*(tm_ptr) = localtime(time_t_ptr))
+#define UTIL_STRFUNC_GMTIME_S(time_t_ptr, tm_ptr) (*(tm_ptr) = gmtime_s(time_t_ptr))
+
+#endif
 
 namespace util {
     namespace time {
@@ -113,6 +131,13 @@ namespace util {
              * @return 同一周返回 true
              */
             static bool is_same_week(time_t left, time_t right, time_t week_first = 0);
+
+            /**
+             * @brief [快速非严格]判定当前时区时间是本周第几天
+             * @param t (必须大于0)
+             * @return 本周第几天，周日返回0,周一返回1,周二返回2,以此类推
+             */
+            static int get_week_day(time_t t);
 
         private:
             // 当前时间

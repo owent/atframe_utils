@@ -1,22 +1,104 @@
-#include <time.h>
+#include <algorithm>
+#include <cstring>
+#include <ctime>
 
-#include "design_pattern/singleton.h"
 #include "frame/test_macros.h"
+#include "time/time_utility.h"
 
-class singleton_unit_test : public singleton<singleton_unit_test> {
-public:
-    bool b;
-    int i;
-};
+CASE_TEST(time_test, zone_offset) {
+    util::time::time_utility::update();
+    time_t offset = util::time::get_sys_zone_offset() - 5 * util::time::time_utility::HOUR_SECONDS;
+    util::time::time_utility::set_zone_offset(offset);
+    CASE_EXPECT_EQ(offset, util::time::get_zone_offset());
+    CASE_EXPECT_NE(offset, util::time::get_sys_zone_offset());
 
-CASE_TEST(singleton_test, instance) {
-    singleton_unit_test *pl = singleton_unit_test::instance();
-    singleton_unit_test &pr = singleton_unit_test::get_instance();
+    // 恢复时区设置
+    util::time::time_utility::set_zone_offset(util::time::get_sys_zone_offset());
+}
 
-    pl->b = true;
-    pl->i = 1024;
+CASE_TEST(time_test, today_offset) {
+    using std::abs;
+    struct tm tobj;
+    time_t tnow, loffset, cnow;
+    util::time::time_utility::update();
 
-    CASE_EXPECT_EQ(pl, &pr);
-    CASE_EXPECT_EQ(true, pr.b);
-    CASE_EXPECT_EQ(1024, pr.i);
+    tnow = util::time::time_utility::get_now();
+    UTIL_STRFUNC_LOCALTIME_S(&tnow, &tobj);
+    loffset = tobj.tm_hour * util::time::time_utility::HOUR_SECONDS + tobj.tm_min * util::time::time_utility::MINITE_SECONDS + tobj.tm_sec;
+    cnow = util::time::time_utility::get_today_offset(loffset);
+
+    // 只有闰秒误差，肯定在5秒以内
+    CASE_EXPECT_TRUE(abs(cnow - tnow) <= 5);
+}
+
+CASE_TEST(time_test, is_same_day) {
+    struct tm tobj;
+    time_t lt, rt;
+    UTIL_STRFUNC_LOCALTIME_S(NULL, &tobj);
+
+    tobj.tm_hour = 0;
+    tobj.tm_min = 0;
+    tobj.tm_sec = 5;
+    lt = mktime(&tobj);
+    tobj.tm_sec = 10;
+    rt = lt + 5;
+    CASE_EXPECT_TRUE(util::time::time_utility::is_same_day(lt, rt));
+
+    tobj.tm_hour = 23;
+    tobj.tm_min = 59;
+    tobj.tm_sec = 55;
+    rt = mktime(&tobj);
+    CASE_EXPECT_TRUE(util::time::time_utility::is_same_day(lt, rt));
+
+    lt = rt - 5;
+    CASE_EXPECT_TRUE(util::time::time_utility::is_same_day(lt, rt));
+    lt = rt + 10;
+    CASE_EXPECT_FALSE(util::time::time_utility::is_same_day(lt, rt));
+}
+
+CASE_TEST(time_test, is_same_week) {
+    struct tm tobj;
+    time_t lt, rt, tnow;
+
+    util::time::time_utility::update();
+    tnow = util::time::time_utility::get_now();
+    UTIL_STRFUNC_LOCALTIME_S(&tnow, &tobj);
+
+    tobj.tm_hour = 0;
+    tobj.tm_min = 0;
+    tobj.tm_sec = 5;
+    lt = mktime(&tobj);
+    lt -= util::time::time_utility::DAY_SECONDS * tobj.tm_wday;
+    rt = lt + util::time::time_utility::WEEK_SECONDS;
+    CASE_EXPECT_FALSE(util::time::time_utility::is_same_week(lt, rt));
+
+    rt -= 10;
+    CASE_EXPECT_TRUE(util::time::time_utility::is_same_week(lt, rt));
+    CASE_EXPECT_TRUE(util::time::time_utility::is_same_week(lt, tnow));
+}
+
+CASE_TEST(time_test, get_week_day) {
+    struct tm tobj;
+    time_t lt, rt, tnow;
+
+    util::time::time_utility::update();
+    tnow = util::time::time_utility::get_now();
+    UTIL_STRFUNC_LOCALTIME_S(&tnow, &tobj);
+
+    tobj.tm_hour = 0;
+    tobj.tm_min = 0;
+    tobj.tm_sec = 5;
+    lt = mktime(&tobj);
+
+    tobj.tm_hour = 23;
+    tobj.tm_min = 59;
+    tobj.tm_sec = 55;
+    rt = mktime(&tobj);
+
+    CASE_EXPECT_EQ(util::time::time_utility::get_week_day(lt), util::time::time_utility::get_week_day(tnow));
+    CASE_EXPECT_EQ(util::time::time_utility::get_week_day(lt), util::time::time_utility::get_week_day(rt));
+}
+
+CASE_TEST(time_test, is_same_month) {
+    // nothing todo use libc now
 }

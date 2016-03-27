@@ -96,7 +96,18 @@ namespace util {
             // 仅考虑时区, 不是标准意义上的当天时间，忽略记闰秒之类的偏移(偏移量很少，忽略不计吧)
             // 1970年1月1日是周四
             // 周日是一周的第一天
-            return (left - (week_first - 4) * DAY_SECONDS) / WEEK_SECONDS == (right + (week_first - 4) * DAY_SECONDS) / WEEK_SECONDS;
+            return (left - (week_first - 4) * DAY_SECONDS) / WEEK_SECONDS == (right - (week_first - 4) * DAY_SECONDS) / WEEK_SECONDS;
+        }
+
+        int time_utility::get_week_day(time_t t) {
+            t -= get_zone_offset();
+
+            // 仅考虑时区, 不是标准意义上的时间，忽略记闰秒之类的偏移(偏移量很少，忽略不计吧)
+            // 1970年1月1日是周四
+            // 周日是一周的第一天
+            t %= WEEK_SECONDS;
+            t /= DAY_SECONDS;
+            return static_cast<int>((t + 4) % 7);
         }
     }
 }
