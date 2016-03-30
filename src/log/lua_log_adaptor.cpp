@@ -1,6 +1,6 @@
 ﻿#include "log/log_wrapper.h"
 
-#include "log/LuaLogAdaptor.h"
+#include "log/lua_log_adaptor.h"
 
 #ifndef LOG_WRAPPER_DISABLE_LUA_SUPPORT
 
@@ -18,10 +18,13 @@ static int lua_log_adaptor_fn_lua_log(lua_State *L) {
 
     util::log::log_wrapper *logger = WDTLOGGETCAT(cat);
     if (NULL != logger && logger->check(level)) {
+        // TODO: 是否填充lua文件名和行号？但是那个操作比较耗性能
+        util::log::log_wrapper::caller_info_t caller(level, "Lua", NULL, 0, NULL);
+
         for (int i = 3; i <= top; ++i) {
             const char *content = lua_tostring(L, i);
             if (NULL != content) {
-                logger->log(level, "Lua", NULL, 0, NULL, "%s", content);
+                logger->log(caller, "%s", content);
             }
         }
     }
@@ -33,7 +36,7 @@ static int lua_log_adaptor_fn_lua_log(lua_State *L) {
 extern "C" {
 #endif
 
-int LuaLogAdaptor_openLib(lua_State *L) {
+int lua_log_adaptor_openLib(lua_State *L) {
     lua_newtable(L);
 
     lua_pushinteger(L, static_cast<lua_Integer>(util::log::log_wrapper::level_t::LOG_LW_DISABLED));

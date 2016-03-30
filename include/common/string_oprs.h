@@ -36,14 +36,21 @@
 #define UTIL_STRFUNC_STRNCMP(l, r, s) strncmp(l, r, s)
 #endif
 
-#if (defined(_MSC_VER) && _MSC_VER >= 1600) || (defined(__STDC_VERSION__) && __STDC_VERSION__ >= 201112L) || \
-    defined(__STDC_LIB_EXT1__)
+#if (defined(_MSC_VER) && _MSC_VER >= 1600) || (defined(__STDC_VERSION__) && __STDC_VERSION__ >= 201112L) || defined(__STDC_LIB_EXT1__)
 #define UTIL_STRFUNC_SSCANF(...) sscanf_s(__VA_ARGS__)
 #define UTIL_STRFUNC_SNPRINTF(...) sprintf_s(__VA_ARGS__)
+
+#ifdef _MSC_VER
+#define UTIL_STRFUNC_VSNPRINTF(buffer, bufsz, fmt, arg) vsnprintf_s(buffer, static_cast<size_t>(bufsz), _TRUNCATE, fmt, arg)
+#else
+#define UTIL_STRFUNC_VSNPRINTF(buffer, bufsz, fmt, arg) vsnprintf_s(buffer, static_cast<size_t>(bufsz), fmt, arg)
+#endif
+
 #define UTIL_STRFUNC_C11_SUPPORT 1
 #else
 #define UTIL_STRFUNC_SSCANF(...) sscanf(__VA_ARGS__)
 #define UTIL_STRFUNC_SNPRINTF(...) snprintf(__VA_ARGS__)
+#define UTIL_STRFUNC_VSNPRINTF(buffer, bufsz, fmt, arg) vsnprintf(buffer, static_cast<int>(bufsz), fmt, arg)
 #endif
 
 namespace util {
