@@ -32,7 +32,7 @@
 #if defined(__cplusplus) && __cplusplus >= 201103L
 #include <atomic>
 #define __UTIL_LOCK_SPINLOCK_ATOMIC_STD
-#if defined(__clang__) && (__clang_major__ > 3 || (__clang_major__ == 3 && __clang_minor__ >= 1)) && __cplusplus >= 201103L
+#elif defined(__clang__) && (__clang_major__ > 3 || (__clang_major__ == 3 && __clang_minor__ >= 1)) && __cplusplus >= 201103L
 #include <atomic>
 #define __UTIL_LOCK_SPINLOCK_ATOMIC_STD
 #elif defined(_MSC_VER) && (_MSC_VER > 1700 || (defined(_HAS_CPP0X) && _HAS_CPP0X))

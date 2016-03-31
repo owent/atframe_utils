@@ -11,21 +11,13 @@
 
 namespace util {
     namespace log {
-
         bool log_wrapper::destroyed_ = false;
-
-        log_wrapper::caller_info_t::caller_info_t(level_t::type lid, const char *lname, const char *fpath, uint32_t lnum,
-                                                  const char *fnname)
-            : level_id(lid), level_name(lname), file_path(fpath), line_number(lnum), func_name(fnname) {}
 
         log_wrapper::log_wrapper() : log_level_(level_t::LOG_LW_DISABLED) {
             update();
 
             set_option(options_t::OPT_AUTO_UPDATE_TIME, true);
-            set_option(options_t::OPT_PRINT_FILE_NAME, true);
-            set_option(options_t::OPT_PRINT_FUNCTION_NAME, true);
-            set_option(options_t::OPT_PRINT_LEVEL, true);
-            time_format_ = "[%Y-%m-%d %H:%M:%S]";
+            prefix_format_ = "[Log %L][%F %T.%f][%s:%n(%C)]: ";
         }
 
         log_wrapper::~log_wrapper() {
@@ -75,53 +67,20 @@ namespace util {
 
                 if (!log_sinks_.empty()) {
                     // format => "[Log    DEBUG][2015-01-12 10:09:08.]
-                    int start_index = 0;
-
-                    if (get_option(options_t::OPT_PRINT_LEVEL) && NULL != caller.level_name) {
-                        start_index = UTIL_STRFUNC_VSNPRINTF(log_buffer, sizeof(log_buffer), "[Log %8s]", caller.level_name);
-                        if (start_index < 0) {
-                            start_index = 14;
-                        }
-                    }
-
-                    // TODO 以后自己写时间format函数,自己记update
-                    if (!time_format_.empty()) {
-                        static time_t tm_tp = 0;
-                        static struct tm tm_obj;
-                        if (tm_tp != util::time::time_utility::get_now()) {
-                            tm_tp = util::time::time_utility::get_now();
-                            UTIL_STRFUNC_LOCALTIME_S(&tm_tp, &tm_obj);
-                        }
-
-                        start_index += strftime(&log_buffer[start_index], sizeof(log_buffer) - start_index, time_format_.c_str(), tm_obj);
-                    }
-
-                    // 打印位置选项
-                    if (get_option(options_t::OPT_PRINT_FILE_NAME) && get_option(options_t::OPT_PRINT_FUNCTION_NAME) && NULL != file_path &&
-                        NULL != func_name) {
-                        int res = UTIL_STRFUNC_VSNPRINTF(&log_buffer[start_index], sizeof(log_buffer) - start_index, "[%s:%u(%s)]: ",
-                                                         file_path, line_number, func_name);
-                        start_index += res >= 0 ? res : 0;
-                    } else if (get_option(options_t::OPT_PRINT_FILE_NAME) && NULL != file_path) {
-                        int res = UTIL_STRFUNC_VSNPRINTF(&log_buffer[start_index], sizeof(log_buffer) - start_index, "[%s:%u]: ", file_path,
-                                                         line_number);
-                        start_index += res >= 0 ? res : 0;
-                    } else if (get_option(options_t::OPT_PRINT_FUNCTION_NAME) && NULL != func_name) {
-                        int res = UTIL_STRFUNC_VSNPRINTF(&log_buffer[start_index], sizeof(log_buffer) - start_index, "[(%s)]: ", func_name);
-                        start_index += res >= 0 ? res : 0;
-                    }
+                    size_t start_index =
+                        log_formater::format(log_buffer, sizeof(log_buffer), prefix_format_.c_str(), prefix_format_.size(), caller);
 
                     va_list va_args;
                     va_start(va_args, fmt);
                     int prt_res = UTIL_STRFUNC_VSNPRINTF(&log_buffer[start_index], sizeof(log_buffer) - start_index, fmt, va_args);
                     va_end(va_args);
                     if (prt_res >= 0) {
-                        start_index += prt_res;
+                        start_index += static_cast<size_t>(prt_res);
                     }
 
-                    if (static_cast<size_t>(start_index) < sizeof(log_buffer)) {
+                    if (start_index < sizeof(log_buffer)) {
                         log_buffer[start_index] = 0;
-                        log_size = static_cast<size_t>(start_index);
+                        log_size = start_index;
                     } else {
                         log_size = sizeof(log_buffer);
                         log_buffer[sizeof(log_buffer) - 1] = 0;

@@ -14,16 +14,12 @@
 
 #pragma once
 
-#include <cstdlib>
-#include <cstdio>
-#include <stdint.h>
-#include <string>
-#include <inttypes.h>
-#include <ctime>
 #include <list>
 #include <bitset>
 #include "std/functional.h"
 #include "std/smart_ptr.h"
+
+#include "log_formatter.h"
 
 #ifndef LOG_WRAPPER_MAX_SIZE_PER_LINE
 #define LOG_WRAPPER_MAX_SIZE_PER_LINE (1024 * 1024 * 2)
@@ -44,38 +40,16 @@ namespace util {
                 };
             };
 
-            struct level_t {
-                enum type {
-                    LOG_LW_DISABLED = 0, // 关闭日志
-                    LOG_LW_FATAL,        // 强制输出
-                    LOG_LW_ERROR,        // 错误
-                    LOG_LW_WARNING,
-                    LOG_LW_INFO,
-                    LOG_LW_NOTICE,
-                    LOG_LW_DEBUG,
-                };
-            };
-
             struct options_t {
                 enum type {
                     OPT_AUTO_UPDATE_TIME = 0, // 是否自动更新时间（会降低性能）
-                    OPT_PRINT_FILE_NAME,      // 打印文件名
-                    OPT_PRINT_FUNCTION_NAME,  // 打印函数名
-                    OPT_PRINT_LEVEL,          // 打印日志级别
                     OPT_MAX
                 };
             };
 
         public:
-            struct caller_info_t {
-                level_t::type level_id;
-                const char *level_name;
-                const char *file_path;
-                uint32_t line_number;
-                const char *func_name;
-
-                caller_info_t(level_t::type lid, const char *lname, const char *fpath, uint32_t lnum, const char *fnname);
-            };
+            typedef log_formatter::level_t level_t;
+            typedef log_formatter::caller_info_t caller_info_t;
 
             typedef std::function<void(const caller_info_t &caller, const char *content, size_t content_size)> log_handler_t;
             typedef struct {
@@ -126,9 +100,9 @@ namespace util {
 
             inline level_t::type get_level() const { return log_level_; }
 
-            inline const std::string &get_time_format() const { return time_format_; }
+            inline const std::string &set_prefix_format() const { return prefix_format_; }
 
-            inline void set_time_format(const std::string &time_format) { time_format_ = time_format; }
+            inline void set_prefix_format(const std::string &prefix) { prefix_format_ = prefix; }
 
             inline bool get_option(options_t::type t) const {
                 if (t < options_t::OPT_MAX) {
@@ -138,12 +112,12 @@ namespace util {
                 return options_.test(t);
             };
 
-            inline void set_option(options_t::type t, bool v) const {
+            inline void set_option(options_t::type t, bool v) {
                 if (t < options_t::OPT_MAX) {
                     return;
                 }
 
-                return options_.set(t, v);
+                options_.set(t, v);
             };
 
             /**
@@ -158,7 +132,7 @@ namespace util {
         private:
             level_t::type log_level_;
             std::list<log_router_t> log_sinks_;
-            std::string time_format_;
+            std::string prefix_format_;
             std::bitset<options_t::OPT_MAX> options_;
 
             static bool destroyed_; // log模块进入释放阶段，进入释放阶段后log功能会被关闭

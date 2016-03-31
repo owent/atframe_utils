@@ -108,6 +108,23 @@ namespace util {
 
     bool file_system::is_exist(const char *file_path) { return 0 == FUNC_ACCESS(file_path); }
 
+    bool file_system::file_size(const char *file_path, size_t& sz) {
+        FILE *f = NULL;
+        UTIL_FS_OPEN(error_code, f, file_path, "rb");
+        COMPILER_UNUSED(error_code);
+
+
+        if (NULL == f) {
+            return false;
+        }
+
+        fseek(f, 0, SEEK_END);
+        sz = static_cast<size_t>(ftell(f));
+        fclose(f);
+
+        return true;
+    }
+
     bool file_system::mkdir(const char *dir_path, bool recursion, int mode) {
 #ifndef UTIL_FS_WINDOWS_API
         if (0 == mode) {
@@ -141,6 +158,34 @@ namespace util {
             now_path += DIRECTORY_SEPARATOR;
         }
 
+        return true;
+    }
+
+    bool file_system::dirname(const char *file_path, size_t sz, std::string& dir) {
+        if (NULL == file_path || 0 == file_path[0]) {
+            return false;
+        }
+
+        size_t last_dir_sep = 0;
+        
+        dir.clear();
+        if (0 == sz) {
+            sz = strlen(file_path);
+        }
+        --sz;
+
+        while (sz > 0 && ('/' == file_path[sz] || '\\' == file_path[sz])) {
+            --sz;
+        }
+
+        while (sz > 0) {
+            if ('/' == file_path[sz] || '\\' == file_path[sz]) {
+                break;
+            }
+            --sz;
+        }
+
+        dir.assign(file_path, sz);
         return true;
     }
 

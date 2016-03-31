@@ -116,6 +116,14 @@ namespace util {
         static bool is_exist(const char *file_path);
 
         /**
+        * @brief 返回文件的大小
+        * @param file_path [IN] 文件路径
+        * @param sz [OUT] 文件大小
+        * @return 无法打开(不存在，权限不足)返回false, 其他情况返回true
+        */
+        static bool file_size(const char *file_path, size_t& sz);
+
+        /**
          * @brief 创建目录
          * @param dir_path [IN] 目录路径
          * @param recursion [IN] 是否递归创建
@@ -123,6 +131,15 @@ namespace util {
          * @return 创建成功返回true
          */
         static bool mkdir(const char *dir_path, bool recursion = false, int mode = 0);
+
+        /**
+        * @brief 获取目录路径
+        * @param file_path [IN] 文件/目录路径
+        * @param sz [IN] 文件/目录路径长度
+        * @param dir [OUT] 父级目录路径
+        * @return 成功返回true
+        */
+        static bool dirname(const char *file_path, size_t sz, std::string& dir);
 
         /**
          * @brief 获取当前运行目录

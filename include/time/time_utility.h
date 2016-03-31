@@ -25,7 +25,7 @@
 #define UTIL_STRFUNC_LOCALTIME_S(time_t_ptr, tm_ptr) localtime_s(time_t_ptr, tm_ptr)
 #define UTIL_STRFUNC_GMTIME_S(time_t_ptr, tm_ptr) gmtime_s(time_t_ptr, tm_ptr)
 
-#if defined(_MSC_VER) && _MSC_VER >= 1300
+#elif defined(_MSC_VER) && _MSC_VER >= 1300
 #define UTIL_STRFUNC_LOCALTIME_S(time_t_ptr, tm_ptr) localtime_s(tm_ptr, time_t_ptr)
 #define UTIL_STRFUNC_GMTIME_S(time_t_ptr, tm_ptr) gmtime_s(tm_ptr, time_t_ptr)
 

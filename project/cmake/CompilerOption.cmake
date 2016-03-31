@@ -18,7 +18,7 @@ set(C_FLAGS_IN_ONE_COMMON "")
 set(CXX_FLAGS_IN_ONE_COMMON "")
 
 # 编译器选项 (仅做了GCC、VC和Clang兼容)
-if( "${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
+if( ${CMAKE_CXX_COMPILER_ID} STREQUAL "GNU")
     add_definitions(-Wall -Werror)
 
     # gcc 4.9 编译输出颜色支持
@@ -30,7 +30,7 @@ if( "${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
             add_definitions(-Wno-unused-local-typedefs)
             message(STATUS "GCC Version ${CMAKE_CXX_COMPILER_VERSION} Found, -Wno-unused-local-typedefs added.")
     endif()
-    
+
     if (CMAKE_CXX_COMPILER_VERSION VERSION_GREATER "5.0.0" OR CMAKE_CXX_COMPILER_VERSION  VERSION_EQUAL "5.0.0" )
         set(CMAKE_C_STANDARD 11)
         set(CMAKE_CXX_STANDARD 14)
@@ -44,7 +44,7 @@ if( "${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
         message(STATUS "GCC Version ${CMAKE_CXX_COMPILER_VERSION} , using -std=c++0x.")
     endif()
 
-elseif( "${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
+elseif( ${CMAKE_CXX_COMPILER_ID} STREQUAL "Clang")
     add_definitions(-Wall -Werror -fPIC)
     # 苹果系统会误判，不过问题不大，反正也是用最高的标准
     if (CMAKE_CXX_COMPILER_VERSION VERSION_GREATER "3.4" OR CMAKE_CXX_COMPILER_VERSION  VERSION_EQUAL "3.4" )

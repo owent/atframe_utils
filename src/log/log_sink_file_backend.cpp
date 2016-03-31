@@ -4,22 +4,10 @@
 
 #include <iostream>
 
-#include "log/LogHandlerFilesystem.h"
+#include "lock/lock_holder.h"
+#include "common/file_system.h"
 
-#ifdef _MSC_VER
-#include <io.h>
-#include <direct.h>
-#define FUNC_MKDIR(x) _mkdir(x)
-#define FUNC_ACCESS(x) _access(x, 0)
-
-#else
-#include <unistd.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#define FUNC_MKDIR(x) mkdir(x, S_IRWXU | S_IRWXG | S_IRGRP | S_IWGRP | S_IROTH)
-#define FUNC_ACCESS(x) access(x, F_OK)
-
-#endif
+#include "log/log_sink_file_backend.h"
 
 // 默认文件大小是256KB
 #define DEFAULT_FILE_SIZE 256 * 1024
@@ -27,70 +15,86 @@
 namespace util {
     namespace log {
 
-        LogHandlerFilesystem::LogHandlerFilesystem()
-            : check_interval_(60), // 默认文件切换检查周期为60秒
-              last_check_point_(0), enable_buffer_(false), inited_(false), max_file_size_(DEFAULT_FILE_SIZE), max_file_number_(10),
-              open_file_index_(0) {
-            dirs_pattern_.push_back("%Y-%m-%d"); // 默认文件名规则
-            log_file_suffix_ = ".%d.log";
+        log_sink_file_backend::log_sink_file_backend()
+            : rotation_size_(10),    // 默认10个文件
+            max_file_size_(DEFAULT_FILE_SIZE), // 默认文件大小
+            check_interval_(60), // 默认文件切换检查周期为60秒
+            check_expire_point_(0), inited_(false) {
+
+            path_pattern_ = "%Y-%m-%d.%N.log";// 默认文件名规则
+            log_file_.auto_flush = false;
+            log_file_.rotation_index = 0;
+            log_file_.written_size = 0;
         }
 
-        LogHandlerFilesystem::LogHandlerFilesystem(const std::string &file_name_pattern, std::string suffix)
-            : check_interval_(60), // 默认文件切换检查周期为60秒
-              last_check_point_(0), enable_buffer_(false), inited_(false), max_file_size_(DEFAULT_FILE_SIZE), max_file_number_(10),
-              open_file_index_(0) {
+        log_sink_file_backend::log_sink_file_backend(const std::string &file_name_pattern)
+            : rotation_size_(10),    // 默认10个文件
+            max_file_size_(DEFAULT_FILE_SIZE), // 默认文件大小
+            check_interval_(60), // 默认文件切换检查周期为60秒
+            check_expire_point_(0), inited_(false) {
 
-            setFilePattern(file_name_pattern, suffix);
+            path_pattern_ = "%Y-%m-%d.%N.log";// 默认文件名规则
+            log_file_.auto_flush = false;
+            log_file_.rotation_index = 0;
+            log_file_.written_size = 0;
+
+            set_file_pattern(file_name_pattern);
         }
 
-        LogHandlerFilesystem::~LogHandlerFilesystem() {}
+        log_sink_file_backend::~log_sink_file_backend() {}
 
-        void LogHandlerFilesystem::setFilePattern(const std::string &file_name_pattern, std::string suffix) {
-            using std::strtok;
-            dirs_pattern_.clear();
-            // 保证必须有一个 %d
-            if (std::string::npos == suffix.find("%d")) {
-                suffix.append(".%d");
+        void log_sink_file_backend::set_file_pattern(const std::string &file_name_pattern) {
+            // 设置文件路径模式， 如果文件已打开，需要重新执行初始化流程
+            if (log_file_.opened_file) {
+                inited_ = false;
+                init();
             }
-            log_file_suffix_ = suffix;
-
-            char *paths = static_cast<char *>(malloc(file_name_pattern.size() + 1));
-            strncpy(paths, file_name_pattern.c_str(), file_name_pattern.size());
-            paths[file_name_pattern.size()] = '\0';
-
-            char *token = strtok(paths, "\\/");
-            while (NULL != token) {
-                if (0 != strlen(token)) {
-                    dirs_pattern_.push_back(token);
-                }
-                token = strtok(NULL, "\\/");
-            }
-
-            free(paths);
         }
 
-        void LogHandlerFilesystem::operator()(log_wrapper::level_t::type level_id, const char *level, const char *content) {
+        void log_sink_file_backend::operator()(const log_formatter::caller_info_t &caller, const char *content, size_t content_size) {
             if (!inited_) {
                 init();
             }
 
-            std::shared_ptr<FILE *> f = open_log_file();
-            if (f && NULL == *f) {
+            std::shared_ptr<std::ofstream> f = open_log_file();
+            if (!f) {
                 return;
             }
 
-            fputs(content, *f);
-            fputs("\r\n", *f);
-            if (!enable_buffer_) {
-                fflush(*f);
+            f->write(content, content_size);
+            f->put('\n');
+            if (log_file_.auto_flush) {
+                f->flush();
             }
         }
 
-        void LogHandlerFilesystem::init() {
+        void log_sink_file_backend::init() {
+            lock::lock_holder<lock::spin_lock> lkholder(fs_lock_);
+            if (inited_) {
+                return;
+            }
+
             inited_ = true;
-            if (!opened_file_) {
-                typedef FILE *ft;
-                opened_file_ = std::shared_ptr<ft>(new ft(), delete_file);
+
+            log_file_.rotation_index = 0;
+            log_file_.written_size = 0;
+            log_file_.opened_file.reset();
+            log_file_.file_path.clear();
+
+            log_formatter::caller_info_t caller;
+            char log_file[file_system::MAX_PATH_LEN];
+
+            for (size_t i = 0; max_file_size_ > 0 && i < rotation_size_; ++i) {
+                caller.rotate_index = (log_file_.rotation_index + i) % rotation_size_;
+                size_t fsz = 0;
+                log_formatter::format(log_file, sizeof(log_file), path_pattern_.c_str(), path_pattern_.size(), caller);
+                file_system::file_size(log_file, fsz);
+
+                // 文件不存在fsz也是0
+                if (fsz < max_file_size_) {
+                    log_file_.rotation_index = caller.rotate_index;
+                }
+                
             }
 
             for (open_file_index_ = 0; open_file_index_ < max_file_number_; ++open_file_index_) {
@@ -114,7 +118,7 @@ namespace util {
             open_file_index_ = open_file_index_ % max_file_number_;
         }
 
-        std::shared_ptr<FILE *> LogHandlerFilesystem::open_log_file() {
+        std::shared_ptr<FILE *> log_sink_file_backend::open_log_file() {
             std::string real_path;
 
             size_t file_size = max_file_size_;
@@ -166,7 +170,7 @@ namespace util {
             return opened_file_;
         }
 
-        std::string LogHandlerFilesystem::get_log_file() {
+        std::string log_sink_file_backend::get_log_file() {
             std::string real_path;
 
 #ifndef MAX_PATH
@@ -205,19 +209,6 @@ namespace util {
             real_path.append(os_name, len);
 
             return real_path;
-        }
-
-        const tm *LogHandlerFilesystem::get_tm() { return log_wrapper::Instance()->getLogTm(); }
-
-        void LogHandlerFilesystem::delete_file(FILE **f) {
-            if (f) {
-                if (NULL != *f) {
-                    fflush(*f);
-                    fclose(*f);
-                    *f = NULL;
-                }
-                delete f;
-            }
         }
     }
 }
