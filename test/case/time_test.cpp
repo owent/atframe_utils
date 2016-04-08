@@ -7,13 +7,13 @@
 
 CASE_TEST(time_test, zone_offset) {
     util::time::time_utility::update();
-    time_t offset = util::time::get_sys_zone_offset() - 5 * util::time::time_utility::HOUR_SECONDS;
+    time_t offset = util::time::time_utility::get_sys_zone_offset() - 5 * util::time::time_utility::HOUR_SECONDS;
     util::time::time_utility::set_zone_offset(offset);
-    CASE_EXPECT_EQ(offset, util::time::get_zone_offset());
-    CASE_EXPECT_NE(offset, util::time::get_sys_zone_offset());
+    CASE_EXPECT_EQ(offset, util::time::time_utility::get_zone_offset());
+    CASE_EXPECT_NE(offset, util::time::time_utility::get_sys_zone_offset());
 
     // 恢复时区设置
-    util::time::time_utility::set_zone_offset(util::time::get_sys_zone_offset());
+    util::time::time_utility::set_zone_offset(util::time::time_utility::get_sys_zone_offset());
 }
 
 CASE_TEST(time_test, today_offset) {
@@ -34,7 +34,9 @@ CASE_TEST(time_test, today_offset) {
 CASE_TEST(time_test, is_same_day) {
     struct tm tobj;
     time_t lt, rt;
-    UTIL_STRFUNC_LOCALTIME_S(NULL, &tobj);
+    util::time::time_utility::update();
+    lt = util::time::time_utility::get_now();
+    UTIL_STRFUNC_LOCALTIME_S(&lt, &tobj);
 
     tobj.tm_hour = 0;
     tobj.tm_min = 0;

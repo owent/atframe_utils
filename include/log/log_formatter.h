@@ -94,6 +94,9 @@ namespace util {
              */
             static size_t format(char *buff, size_t bufz, const char *fmt, size_t fmtz, const caller_info_t &caller);
 
+            static bool check_rotation_var(const char *fmt, size_t fmtz);
+
+            static bool has_format(const char *fmt, size_t fmtz);
         private:
             static struct tm *get_iso_tm();
         };

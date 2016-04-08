@@ -3,7 +3,7 @@
 #include "design_pattern/singleton.h"
 #include "frame/test_macros.h"
 
-class singleton_unit_test : public singleton<singleton_unit_test> {
+class singleton_unit_test : public util::design_pattern::singleton<singleton_unit_test> {
 public:
     bool b;
     int i;

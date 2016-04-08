@@ -2,11 +2,14 @@
 #include <cstring>
 #include <stdarg.h>
 #include "std/thread.h"
+
+#include "common/string_oprs.h"
 #include "lock/spin_lock.h"
 #include "lock/lock_holder.h"
 
 #include "time/time_utility.h"
 
+#include "log/log_formatter.h"
 #include "log/log_wrapper.h"
 
 namespace util {
@@ -46,7 +49,7 @@ namespace util {
         void log_wrapper::update() {}
 
         void log_wrapper::log(const caller_info_t &caller, const char *fmt, ...) {
-            if (get_option(options_t::OPT_AUTO_UPDATE_TIME) && !time_format_.empty()) {
+            if (get_option(options_t::OPT_AUTO_UPDATE_TIME) && !prefix_format_.empty()) {
                 update();
             }
 
@@ -68,7 +71,7 @@ namespace util {
                 if (!log_sinks_.empty()) {
                     // format => "[Log    DEBUG][2015-01-12 10:09:08.]
                     size_t start_index =
-                        log_formater::format(log_buffer, sizeof(log_buffer), prefix_format_.c_str(), prefix_format_.size(), caller);
+                        log_formatter::format(log_buffer, sizeof(log_buffer), prefix_format_.c_str(), prefix_format_.size(), caller);
 
                     va_list va_args;
                     va_start(va_args, fmt);
@@ -101,8 +104,8 @@ namespace util {
 
         void log_wrapper::write_log(const caller_info_t &caller, const char *content, size_t content_size) {
             for (std::list<log_router_t>::iterator iter = log_sinks_.begin(); iter != log_sinks_.end(); ++iter) {
-                if (level_id >= iter->level_min && level_id <= iter->level_max) {
-                    iter->handle(caller, log_buffer, log_size);
+                if (log_level_ >= iter->level_min && log_level_ <= iter->level_max) {
+                    iter->handle(caller, content, content_size);
                 }
             }
         }

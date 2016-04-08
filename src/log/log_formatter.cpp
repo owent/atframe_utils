@@ -73,6 +73,7 @@ if(NULL == tm_obj_ptr) {                \
                     continue;
                 }
 
+                need_parse = false;
                 // 以后再优化
                 switch (fmt[i]) {
                 // =================== datetime ===================
@@ -319,6 +320,26 @@ if(NULL == tm_obj_ptr) {                \
                 buff[bufz - 1] = '\0';
             }
             return ret;
+        }
+
+        bool log_formatter::check_rotation_var(const char *fmt, size_t fmtz) {
+            for (size_t i = 0; fmt && i < fmtz - 1; ++i) {
+                if ('%' == fmt[i] && 'N' == fmt[i + 1]) {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        bool log_formatter::has_format(const char *fmt, size_t fmtz) {
+            for (size_t i = 0; fmt && i < fmtz - 1; ++i) {
+                if ('%' == fmt[i]) {
+                    return true;
+                }
+            }
+
+            return false;
         }
     }
 }

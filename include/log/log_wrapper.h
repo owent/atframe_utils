@@ -142,12 +142,12 @@ namespace util {
 
 #define WLOG_LEVELID(lv) static_cast<util::log::log_wrapper::level_t::type>(lv)
 
-#define WDTLOGGETCAT(cat) util::log::log_wrapper::getLogCat(cat)
+#define WDTLOGGETCAT(cat) util::log::log_wrapper::mutable_log_cat(cat)
 #define WDTLOGFILENF(lv, name) util::log::log_wrapper::caller_info_t(lv, name, __FILE__, __LINE__, __FUNCTION__)
 
 #define WLOG_INIT(cat, lv) NULL != WDTLOGGETCAT(cat) ? WDTLOGGETCAT(cat)->init(lv) : -1
 
-#define WLOG_GETCAT(cat) util::log::log_wrapper::getLogCat(cat)
+#define WLOG_GETCAT(cat) util::log::log_wrapper::mutable_log_cat(cat)
 
 // 按分类日志输出工具
 #ifdef _MSC_VER

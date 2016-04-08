@@ -1,8 +1,9 @@
 
-#include <time_utility.h>
+#include "time/time_utility.h"
+
 namespace util {
     namespace time {
-        raw_time_t time_utility::now_ = 0;
+        time_utility::raw_time_t time_utility::now_;
         time_t time_utility::now_unix_;
         time_t time_utility::custom_zone_offset_ = -YEAR_SECONDS;
 
@@ -10,7 +11,7 @@ namespace util {
         time_utility::~time_utility() {}
 
         void time_utility::update(raw_time_t *t) {
-            if (NULL ！= t) {
+            if (NULL != t) {
                 now_ = *t;
             } else {
                 now_ = std::chrono::system_clock::now();
@@ -19,28 +20,28 @@ namespace util {
             now_unix_ = std::chrono::system_clock::to_time_t(now_);
         }
 
-        raw_time_t time_utility::now() { return now_; }
+        time_utility::raw_time_t time_utility::now() { return now_; }
 
         time_t time_utility::get_now() { return now_unix_; }
 
         // ====================== 后面的函数都和时区相关 ======================
         time_t time_utility::get_sys_zone_offset() {
-            time_t ret;
+            time_t ret = 0;
             struct tm t;
             memset(&t, 0, sizeof(t));
             t.tm_year = 70;
             t.tm_mon = 0;
-            t.tm_mday = 1;
+            t.tm_mday = 2;  // VC 在时区offset是负数的时候会出错，所以改成从第二天开始然后减一天
             t.tm_hour = 0;
             t.tm_min = 0;
             t.tm_sec = 0;
 
             ret = mktime(&t);
-            return ret;
+            return ret - DAY_SECONDS;
         }
 
         time_t time_utility::get_zone_offset() {
-            if (custom_zone_offset_ <= YEAR_SECONDS) {
+            if (custom_zone_offset_ <= -YEAR_SECONDS) {
                 return custom_zone_offset_ = get_sys_zone_offset();
             }
 
@@ -83,10 +84,10 @@ namespace util {
         bool time_utility::is_same_month(time_t left, time_t right) {
             std::tm left_tm;
             std::tm right_tm;
-            localtime_r(&left, &left_tm);
-            localtime_r(&right, &right_tm);
+            UTIL_STRFUNC_LOCALTIME_S(&left, &left_tm);
+            UTIL_STRFUNC_LOCALTIME_S(&right, &right_tm);
 
-            return left.tm_year == right_tm.tm_year && left_tm.tm_mon == right_tm.tm_mon;
+            return left_tm.tm_year == right_tm.tm_year && left_tm.tm_mon == right_tm.tm_mon;
         }
 
         bool time_utility::is_same_week(time_t left, time_t right, time_t week_first) {

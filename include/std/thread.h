@@ -20,6 +20,7 @@
 # pragma once
 #endif
 
+// ===================================== thread local storage =====================================
 /**
  * 导入线程特性支持 (thread)
  * 规则如下
@@ -71,6 +72,55 @@
 
 #if !defined(THREAD_TLS)
     #define THREAD_TLS
+#endif
+
+
+// ===================================== thread sleep & yield =====================================
+#if (defined(__cplusplus) && __cplusplus >= 201103L) || (defined(_MSC_VER) && _MSC_VER >= 1800)
+#include <thread>
+#define THREAD_SLEEP_MS(x) std::this_thread::sleep_for(std::chrono::milliseconds(x))
+#define THREAD_YIELD() std::this_thread::yield()
+
+#elif  defined(_MSC_VER)
+#include <Windows.h>
+#define THREAD_SLEEP_MS(x) Sleep(x)
+#define THREAD_YIELD() YieldProcessor()
+
+#else
+#include <unistd.h>
+
+#define THREAD_SLEEP_MS(x) ((x > 1000)? sleep(x / 1000): usleep(0)); usleep((x % 1000) * 1000)
+#if defined(__linux__) || defined(__unix__)
+#include <sched.h>
+#define THREAD_YIELD() sched_yield()
+#elif defined(__GNUC__) || defined(__clang__)
+#if defined(__i386__) || defined(__x86_64__)
+/**
+* See: Intel(R) 64 and IA-32 Architectures Software Developer's Manual V2
+* PAUSE-Spin Loop Hint, 4-57
+* http://www.intel.com/content/www/us/en/architecture-and-technology/64-ia-32-architectures-software-developer-instruction-set-reference-manual-325383.html?wapkw=instruction+set+reference
+*/
+#define THREAD_YIELD() __asm__ __volatile__("pause")
+#elif defined(__ia64__) || defined(__ia64)
+/**
+* See: Intel(R) Itanium(R) Architecture Developer's Manual, Vol.3
+* hint - Performance Hint, 3:145
+* http://www.intel.com/content/www/us/en/processors/itanium/itanium-architecture-vol-3-manual.html
+*/
+#define THREAD_YIELD() __asm__ __volatile__ ("hint @pause")
+#elif defined(__arm__) && !defined(__ANDROID__)
+/**
+* See: ARM Architecture Reference Manuals (YIELD)
+* http://infocenter.arm.com/help/index.jsp?topic=/com.arm.doc.subset.architecture.reference/index.html
+*/
+#define THREAD_YIELD() __asm__ __volatile__ ("yield")
+#else
+#define THREAD_YIELD()
+#endif
+#else
+#define THREAD_YIELD()
+#endif
+
 #endif
 
 #endif

@@ -34,6 +34,7 @@ namespace util {
         public:
             log_sink_file_backend();
             log_sink_file_backend(const std::string &file_name_pattern);
+            log_sink_file_backend(const log_sink_file_backend& other);
             ~log_sink_file_backend();
 
         public:
@@ -57,14 +58,14 @@ namespace util {
 
             inline size_t get_max_file_size() const { return max_file_size_; }
 
-            inline log_sink_file_backend &setMaxFileSize(size_t max_file_size) {
+            inline log_sink_file_backend &set_max_file_size(size_t max_file_size) {
                 max_file_size_ = max_file_size;
                 return *this;
             }
 
-            inline size_t get_rotate_size() const { return rotation_size_; }
+            inline uint32_t get_rotate_size() const { return rotation_size_; }
 
-            inline log_sink_file_backend &set_rotate_size(size_t sz) {
+            inline log_sink_file_backend &set_rotate_size(uint32_t sz) {
                 // 轮训sz不能为0
                 if (sz <= 1) {
                     sz = 1;
@@ -76,15 +77,18 @@ namespace util {
         private:
             void init();
 
-            std::shared_ptr<std::ofstream>& open_log_file();
+            std::shared_ptr<std::ofstream> open_log_file(bool destroy_content);
 
-            std::string get_log_file();
+            void rotate_log();
 
+            void check_update();
+
+            void reset_log_file();
         private:
             // 第一个first表示是否需要format
             std::string path_pattern_;
 
-            uint32_t rotation_size_; // 轮询滚动size
+            uint32_t rotation_size_;  // 轮询滚动size
             size_t max_file_size_;  // log文件size限制
 
 

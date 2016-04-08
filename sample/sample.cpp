@@ -5,7 +5,12 @@
 #include <iostream>
 #include <vector>
 
+#include "std/thread.h"
 #include "log/log_wrapper.h"
+#include "log/log_sink_file_backend.h"
+
+#include "common/file_system.h"
+#include "time/time_utility.h"
 
 #include "random/random_generator.h"
 #include "string/tquerystring.h"
@@ -22,6 +27,26 @@ void log_sample() {
 
     WLOGNOTICE("notice log %d", 0);
 
+    util::log::log_sink_file_backend filed_backend;
+    filed_backend.set_max_file_size(256);
+    filed_backend.set_rotate_size(3);
+    filed_backend.set_file_pattern("%Y-%m-%d/%S/%N.log");
+    //filed_backend.set_check_interval(1);
+
+    WLOG_GETCAT(util::log::log_wrapper::categorize_t::DEFAULT)->add_sink(filed_backend);
+
+    for (int i = 0; i < 16; ++i) {
+        WLOGDEBUG("first dir test log: %d", i);
+    }
+
+    THREAD_SLEEP_MS(1000);
+    util::time::time_utility::update();
+
+    for (int i = 0; i < 16; ++i) {
+        WLOGDEBUG("second dir log: %d", i);
+    }
+
+    printf("log are located at %s\n", util::file_system::get_cwd().c_str());
     puts("===============end log sample==============");
 }
 
@@ -101,6 +126,8 @@ void hash_sample() {
 //=======================================================================================================
 
 int main(int argc, char **argv) {
+    util::time::time_utility::update();
+
     tquerystring_sample();
     hash_sample();
     random_sample();

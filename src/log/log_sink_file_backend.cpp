@@ -3,9 +3,11 @@
 #include <cstring>
 
 #include <iostream>
+#include <sstream>
 
 #include "lock/lock_holder.h"
 #include "common/file_system.h"
+#include "time/time_utility.h"
 
 #include "log/log_sink_file_backend.h"
 
@@ -22,6 +24,7 @@ namespace util {
             check_expire_point_(0), inited_(false) {
 
             path_pattern_ = "%Y-%m-%d.%N.log";// 默认文件名规则
+
             log_file_.auto_flush = false;
             log_file_.rotation_index = 0;
             log_file_.written_size = 0;
@@ -33,7 +36,6 @@ namespace util {
             check_interval_(60), // 默认文件切换检查周期为60秒
             check_expire_point_(0), inited_(false) {
 
-            path_pattern_ = "%Y-%m-%d.%N.log";// 默认文件名规则
             log_file_.auto_flush = false;
             log_file_.rotation_index = 0;
             log_file_.written_size = 0;
@@ -41,9 +43,23 @@ namespace util {
             set_file_pattern(file_name_pattern);
         }
 
+        log_sink_file_backend::log_sink_file_backend(const log_sink_file_backend& other)
+            : rotation_size_(other.rotation_size_),     // 默认文件数量
+            max_file_size_(other.max_file_size_),       // 默认文件大小
+            check_interval_(other.check_interval_),     // 默认文件切换检查周期为60秒
+            check_expire_point_(0), inited_(false) {
+            path_pattern_ = other.path_pattern_;
+
+            log_file_.auto_flush = other.log_file_.auto_flush;
+
+            // 其他的部分都要重新初始化，不能复制
+        }
+
         log_sink_file_backend::~log_sink_file_backend() {}
 
         void log_sink_file_backend::set_file_pattern(const std::string &file_name_pattern) {
+            path_pattern_ = file_name_pattern;
+
             // 设置文件路径模式， 如果文件已打开，需要重新执行初始化流程
             if (log_file_.opened_file) {
                 inited_ = false;
@@ -55,8 +71,14 @@ namespace util {
             if (!inited_) {
                 init();
             }
+            
+            if (log_file_.written_size > 0 && log_file_.written_size >= max_file_size_) {
+                rotate_log();
+            }
+            check_update();
 
-            std::shared_ptr<std::ofstream> f = open_log_file();
+            std::shared_ptr<std::ofstream> f = open_log_file(true);
+
             if (!f) {
                 return;
             }
@@ -66,20 +88,20 @@ namespace util {
             if (log_file_.auto_flush) {
                 f->flush();
             }
+
+            log_file_.written_size += content_size + 1;
         }
 
         void log_sink_file_backend::init() {
-            lock::lock_holder<lock::spin_lock> lkholder(fs_lock_);
             if (inited_) {
                 return;
             }
 
             inited_ = true;
 
+            check_expire_point_ = 0;
             log_file_.rotation_index = 0;
-            log_file_.written_size = 0;
-            log_file_.opened_file.reset();
-            log_file_.file_path.clear();
+            reset_log_file();
 
             log_formatter::caller_info_t caller;
             char log_file[file_system::MAX_PATH_LEN];
@@ -93,122 +115,129 @@ namespace util {
                 // 文件不存在fsz也是0
                 if (fsz < max_file_size_) {
                     log_file_.rotation_index = caller.rotate_index;
-                }
-                
-            }
-
-            for (open_file_index_ = 0; open_file_index_ < max_file_number_; ++open_file_index_) {
-                std::string real_path = get_log_file();
-
-                if (NULL != (*opened_file_)) {
-                    fclose(*opened_file_);
-                }
-
-                (*opened_file_) = fopen(real_path.c_str(), "a+");
-                if (NULL != (*opened_file_)) {
-                    fseek((*opened_file_), 0, SEEK_END);
-                    size_t file_size = ftell((*opened_file_));
-                    if (file_size < max_file_size_) {
-                        log_file_path_ = real_path;
-                        break;
-                    }
+                    break;
                 }
             }
 
-            open_file_index_ = open_file_index_ % max_file_number_;
+            open_log_file(false);
         }
 
-        std::shared_ptr<FILE *> log_sink_file_backend::open_log_file() {
-            std::string real_path;
-
-            size_t file_size = max_file_size_;
-            if (opened_file_ && NULL != (*opened_file_)) {
-                file_size = static_cast<size_t>(ftell(*opened_file_));
+        std::shared_ptr<std::ofstream> log_sink_file_backend::open_log_file(bool destroy_content) {
+            if (log_file_.opened_file && log_file_.opened_file->good()) {
+                return log_file_.opened_file;
             }
 
-            if (opened_file_ && NULL != (*opened_file_) && file_size < max_file_size_) {
-                time_t now = log_wrapper::getLogTime();
-                time_t cp = now >= last_check_point_ ? now - last_check_point_ : last_check_point_ - now;
+            reset_log_file();
 
-                if (cp < check_interval_) {
-                    return opened_file_;
+            // 打开新文件要加锁
+            lock::lock_holder<lock::spin_lock> lkholder(fs_lock_);
+
+            char log_file[file_system::MAX_PATH_LEN];
+            log_formatter::caller_info_t caller;
+            caller.rotate_index = log_file_.rotation_index;
+            size_t file_path_len = log_formatter::format(log_file, sizeof(log_file), path_pattern_.c_str(), path_pattern_.size(), caller);
+            if (file_path_len <= 0) {
+                std::cerr << "log.format " << path_pattern_ << " failed"<< std::endl;
+                return std::shared_ptr<std::ofstream>();
+            }
+
+            std::shared_ptr<std::ofstream> of = std::make_shared<std::ofstream>();
+            if (!of) {
+                std::cerr << "log.file malloc failed" << path_pattern_ << std::endl;
+                return std::shared_ptr<std::ofstream>();
+            }
+
+            std::string dir_name;
+            util::file_system::dirname(log_file, file_path_len, dir_name);
+            if (!dir_name.empty() && !util::file_system::is_exist(dir_name.c_str())) {
+                util::file_system::mkdir(dir_name.c_str(), true);
+            }
+
+            // 销毁原先的内容
+            if (destroy_content) {
+                of->open(log_file, std::ios::binary | std::ios::out | std::ios::trunc);
+                if (!of->is_open()) {
+                    std::cerr << "log.file open " << static_cast<const char*>(log_file) << " failed" << path_pattern_ << std::endl;
+                    return std::shared_ptr<std::ofstream>();
                 }
+                of->close();
+            }
 
-                last_check_point_ = now;
-                real_path = get_log_file();
-                // 文件目录不变
-                if (real_path == log_file_path_) {
-                    return opened_file_;
+            of->open(log_file, std::ios::binary | std::ios::out | std::ios::app);
+            if (!of->is_open()) {
+                std::cerr << "log.file open "<< static_cast<const char*>(log_file) <<" failed" << path_pattern_ << std::endl;
+                return std::shared_ptr<std::ofstream>();
+            }
+
+            of->seekp(0, std::ios_base::end);
+            log_file_.written_size = static_cast<size_t>(of->tellp());
+
+            log_file_.opened_file = of;
+            log_file_.file_path.assign(log_file, file_path_len);
+            return log_file_.opened_file;
+        }
+
+        void log_sink_file_backend::rotate_log() {
+            if (rotation_size_ > 0) {
+                log_file_.rotation_index = (log_file_.rotation_index + 1) % rotation_size_;
+            } else {
+                log_file_.rotation_index = 0;
+            }
+            reset_log_file();
+            check_expire_point_ = 0;
+        }
+
+        void log_sink_file_backend::check_update() {
+            if (0 != check_expire_point_) {
+                if (0 == check_interval_ || util::time::time_utility::get_now() < check_expire_point_) {
+                    return;
                 }
             }
 
-            // open new file
+            check_expire_point_ = util::time::time_utility::get_now() + check_interval_;
+            char log_file[file_system::MAX_PATH_LEN];
+            log_formatter::caller_info_t caller;
+            caller.rotate_index = log_file_.rotation_index;
+            size_t file_path_len = log_formatter::format(log_file, sizeof(log_file), path_pattern_.c_str(), path_pattern_.size(), caller);
+            if (file_path_len <= 0) {
+                return;
+            }
+
+            std::string new_file_path;
+            std::string old_file_path;
+
             {
-                open_file_index_ = (open_file_index_ + 1) % max_file_number_;
-
-                typedef FILE *ft;
-                opened_file_ = std::shared_ptr<ft>(new ft(NULL), delete_file);
-
-                real_path.clear(); // 文件名失效
+                // 短时间加锁，防止文件路径变更
+                lock::lock_holder<lock::spin_lock> lkholder(fs_lock_);
+                old_file_path = log_file_.file_path;
             }
 
-            // 重算文件名
-            real_path = get_log_file();
-
-            FILE *clear_fd = fopen(real_path.c_str(), "w");
-            if (NULL != clear_fd) {
-                fclose(clear_fd);
+            new_file_path.assign(log_file, file_path_len);
+            if (new_file_path == old_file_path) {
+                return;
             }
 
-            *opened_file_ = fopen(real_path.c_str(), "a");
-            if (NULL == *opened_file_) {
-                std::cerr << "[LOG INIT.ERR] open log file " << real_path << " failed." << std::endl;
-                return opened_file_;
+            std::string new_dir;
+            std::string old_dir;
+            util::file_system::dirname(new_file_path.c_str(), new_file_path.size(), new_dir);
+            util::file_system::dirname(old_file_path.c_str(), old_file_path.size(), old_dir);
+
+            // 如果目录变化则重置序号
+            if (new_dir != old_dir) {
+                log_file_.rotation_index = 0;
             }
 
-            log_file_path_ = real_path;
-            return opened_file_;
+            reset_log_file();
         }
 
-        std::string log_sink_file_backend::get_log_file() {
-            std::string real_path;
+        void log_sink_file_backend::reset_log_file() {
+            // 更换日志文件需要加锁
+            lock::lock_holder<lock::spin_lock> lkholder(fs_lock_);
 
-#ifndef MAX_PATH
-#define MAX_PATH 260
-#endif
-
-            char os_name[MAX_PATH];
-            real_path.reserve(MAX_PATH);
-
-            for (size_t i = 0; i < dirs_pattern_.size(); ++i) {
-                size_t len = strftime(os_name, sizeof(os_name), dirs_pattern_[i].c_str(), get_tm());
-                if (!real_path.empty()) {
-#ifdef WIN32
-                    real_path += "\\";
-#else
-                    real_path += "/";
-#endif
-                }
-
-                real_path.append(os_name, len);
-                // 目录，递归创建
-                if (i != dirs_pattern_.size() - 1) {
-                    if (FUNC_ACCESS(real_path.c_str())) {
-                        if (FUNC_MKDIR(real_path.c_str())) {
-                            std::cerr << "[LOG INIT.ERR] create directory " << real_path << " failed." << std::endl;
-                            return real_path;
-                        } else {
-                            // 只要换目录，一定从0重新开始
-                            open_file_index_ = 0;
-                        }
-                    }
-                }
-            }
-
-            size_t len = sprintf(os_name, log_file_suffix_.c_str(), open_file_index_);
-            real_path.append(os_name, len);
-
-            return real_path;
+            // 必须依赖析构来关闭文件，以防这个文件正在其他地方被引用
+            log_file_.opened_file.reset();
+            log_file_.written_size = 0;
+            //log_file_.file_path.clear(); // 保留上一个文件路径，即便已被关闭。用于rotate后的目录变更判定
         }
     }
 }
