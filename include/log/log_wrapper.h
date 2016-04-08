@@ -19,6 +19,8 @@
 #include "std/functional.h"
 #include "std/smart_ptr.h"
 
+#include "cli/shell_font.h"
+
 #include "log_formatter.h"
 
 #ifndef LOG_WRAPPER_MAX_SIZE_PER_LINE
@@ -186,44 +188,39 @@ namespace util {
 
 
 // 控制台输出工具
-#ifdef WIN32
-#define PSTDTERMCOLOR(code, fmt) fmt
-#else
-#define PSTDTERMCOLOR(code, fmt) "\033[" #code ";1m" fmt "\033[0m"
-#endif
-
 #ifdef _MSC_VER
-
-#define PSTDINFO(fmt, ...) printf("Info: " fmt, __VA_ARGS__)
-#define PSTDNOTICE(fmt, ...) printf(PSTDTERMCOLOR(36, "Notice: " fmt), __VA_ARGS__)
-#define PSTDWARNING(fmt, ...) printf(PSTDTERMCOLOR(33, "Warning: " fmt), __VA_ARGS__)
-#define PSTDERROR(fmt, ...) printf(PSTDTERMCOLOR(31, "Error: " fmt), __VA_ARGS__)
-#define PSTDFATAL(fmt, ...) printf(PSTDTERMCOLOR(31, "Fatal: " fmt), __VA_ARGS__)
-#define PSTDOK(fmt, ...) printf(PSTDTERMCOLOR(32, "OK: " fmt), __VA_ARGS__)
-//
-#ifndef NDEBUG
-#define PSTDDEBUG(fmt, ...) printf(PSTDTERMCOLOR(35, "Debug: " fmt), __VA_ARGS__)
-#define PSTDMARK printf(PSTDTERMCOLOR(35, "Mark: %s:%s (function %s)"), __FILE__, __LINE__, __FUNCTION__)
-#else
-#define PSTDDEBUG(fmt, ...)
-#define PSTDMARK
-#endif
+#define PSTDTERMCOLOR(code, fmt, ...)  \
+{\
+    util::cli::shell_stream::shell_stream_opr log_wrapper_pstd_ss(&std::cout);\
+    log_wrapper_pstd_ss.open(code);\
+    log_wrapper_pstd_ss.close();\
+    printf(fmt, __VA_ARGS__);\
+}
 
 #else
-#define PSTDINFO(fmt, args...) printf("Info: " fmt, ##args)
-#define PSTDNOTICE(fmt, args...) printf(PSTDTERMCOLOR(36, "Notice: " fmt), ##args)
-#define PSTDWARNING(fmt, args...) printf(PSTDTERMCOLOR(33, "Warning: " fmt), ##args)
-#define PSTDERROR(fmt, args...) printf(PSTDTERMCOLOR(31, "Error: " fmt), ##args)
-#define PSTDFATAL(fmt, args...) printf(PSTDTERMCOLOR(31, "Fatal: " fmt), ##args)
-#define PSTDOK(fmt, args...) printf(PSTDTERMCOLOR(32, "OK: " fmt), ##args)
+#define PSTDTERMCOLOR(code, fmt, args...)  \
+{\
+    util::cli::shell_stream::shell_stream_opr log_wrapper_pstd_ss;\
+    log_wrapper_pstd_ss.open(code);\
+    printf(fmt, ##args);\
+    log_wrapper_pstd_ss.close();\
+}
+
+#endif
+
+#define PSTDINFO(...) printf(__VA_ARGS__)
+#define PSTDNOTICE(...) PSTDTERMCOLOR(util::cli::shell_font_style::SHELL_FONT_COLOR_YELLOW, __VA_ARGS__)
+#define PSTDWARNING(...) PSTDTERMCOLOR(util::cli::shell_font_style::SHELL_FONT_SPEC_BOLD | util::cli::shell_font_style::SHELL_FONT_COLOR_YELLOW, __VA_ARGS__)
+#define PSTDERROR(...) PSTDTERMCOLOR(util::cli::shell_font_style::SHELL_FONT_SPEC_BOLD | util::cli::shell_font_style::SHELL_FONT_COLOR_RED, __VA_ARGS__)
+#define PSTDFATAL(...) PSTDTERMCOLOR(util::cli::shell_font_style::SHELL_FONT_COLOR_MAGENTA, __VA_ARGS__)
+#define PSTDOK(...) PSTDTERMCOLOR(util::cli::shell_font_style::SHELL_FONT_COLOR_GREEN, __VA_ARGS__)
 //
 #ifndef NDEBUG
-#define PSTDDEBUG(fmt, args...) printf(PSTDTERMCOLOR(35, "Debug: " fmt), ##args)
-#define PSTDMARK printf(PSTDTERMCOLOR(35, "Mark: %s:%s (function %s)"), __FILE__, __LINE__, __FUNCTION__)
+#define PSTDDEBUG(...) PSTDTERMCOLOR(util::cli::shell_font_style::SHELL_FONT_COLOR_CYAN, __VA_ARGS__)
+#define PSTDMARK PSTDTERMCOLOR(util::cli::shell_font_style::SHELL_FONT_SPEC_BOLD | util::cli::shell_font_style::SHELL_FONT_COLOR_RED, "Mark: %s:%s (function %s)\n", __FILE__, __LINE__, __FUNCTION__)
 #else
-#define PSTDDEBUG(fmt, args...)
+#define PSTDDEBUG(...)
 #define PSTDMARK
-#endif
 
 #endif
 

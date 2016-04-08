@@ -24,6 +24,7 @@ void log_sample() {
     WLOG_INIT(util::log::log_wrapper::categorize_t::DEFAULT, util::log::log_wrapper::level_t::LOG_LW_DEBUG);
 
     PSTDERROR("try to print error log.\n");
+    PSTDOK("try to print ok log.\n");
 
     WLOGNOTICE("notice log %d", 0);
 
