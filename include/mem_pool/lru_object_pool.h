@@ -31,7 +31,7 @@
 
 #include "std/smart_ptr.h"
 
-#include "Lock/seq_alloc.h"
+#include "lock/seq_alloc.h"
 
 #if defined(__cplusplus) && (__cplusplus >= 201103L || \
         (defined(_MSC_VER) && (_MSC_VER == 1500 && defined (_HAS_TR1)) || (_MSC_VER > 1500 && defined(_HAS_CPP0X) && _HAS_CPP0X)) || \
