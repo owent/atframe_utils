@@ -21,13 +21,14 @@
 
 #pragma once
 
+#include <cstddef>
+#include <memory>
+
 #include "noncopyable.h"
 
 #include "lock/spin_lock.h"
 #include "lock/lock_holder.h"
 #include "std/smart_ptr.h"
-#include <cstddef>
-#include <memory>
 
 namespace util {
     namespace design_pattern {

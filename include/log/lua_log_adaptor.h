@@ -1,4 +1,4 @@
-/**
+﻿/**
  * @file lua_log_adaptor.h
  * @brief 日志lua封装
  * Licensed under the MIT licenses.

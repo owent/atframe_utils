@@ -1,4 +1,4 @@
-/**
+﻿/**
  * @file log_wrapper.h
  * @brief 日志包装器
  * Licensed under the MIT licenses.

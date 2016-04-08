@@ -50,13 +50,19 @@
  * ==============================================
  */
 #if defined(_MSC_VER)
-#include <windows.h> // YieldProcessor
+
+#include <Windows.h> // YieldProcessor
+#include <Processthreadsapi.h>
+
 
 /*
  * See: http://msdn.microsoft.com/en-us/library/windows/desktop/ms687419(v=vs.85).aspx
  * Not for intel c++ compiler, so ignore http://software.intel.com/en-us/forums/topic/296168
  */
+
+#ifdef YieldProcessor
 #define __UTIL_LOCK_SPIN_LOCK_PAUSE() YieldProcessor()
+#endif
 
 #elif defined(__GNUC__) || defined(__clang__)
 #if defined(__i386__) || defined(__x86_64__)
@@ -94,7 +100,10 @@
  * ======            cpu yield             ======
  * ==============================================
  */
-#if defined(_MSC_VER)
+#if 0 && defined(_MSC_VER)
+
+// SwitchToThread only can be used in desktop system
+
 #define __UTIL_LOCK_SPIN_LOCK_CPU_YIELD() SwitchToThread()
 
 #elif defined(__linux__) || defined(__unix__)

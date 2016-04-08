@@ -1,4 +1,4 @@
-/**
+﻿/**
  * @file foreach.hpp
  * @brief foreach 定义
  *        支持VC++、GCC

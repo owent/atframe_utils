@@ -1,4 +1,4 @@
-/**
+﻿/**
  * @file log_sink_file_backend.h
  * @brief 日志文件后端
  * Licensed under the MIT licenses.

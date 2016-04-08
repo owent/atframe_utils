@@ -1,4 +1,4 @@
-/**
+﻿/**
  * @file uuid_generator.h
  * @brief uuid 生成器
  *
