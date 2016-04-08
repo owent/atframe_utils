@@ -202,8 +202,8 @@ namespace util {
 {\
     util::cli::shell_stream::shell_stream_opr log_wrapper_pstd_ss(&std::cout);\
     log_wrapper_pstd_ss.open(code);\
-    printf(fmt, ##args);\
     log_wrapper_pstd_ss.close();\
+    printf(fmt, ##args);\
 }
 
 #endif
