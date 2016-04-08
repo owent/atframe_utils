@@ -31,7 +31,7 @@ namespace util {
             memset(&t, 0, sizeof(t));
             t.tm_year = 70;
             t.tm_mon = 0;
-            t.tm_mday = 2;  // VC 在时区offset是负数的时候会出错，所以改成从第二天开始然后减一天
+            t.tm_mday = 2; // VC 在时区offset是负数的时候会出错，所以改成从第二天开始然后减一天
             t.tm_hour = 0;
             t.tm_min = 0;
             t.tm_sec = 0;
@@ -75,7 +75,7 @@ namespace util {
         time_t time_utility::get_today_offset(time_t offset) {
             time_t now = get_now();
             now -= get_zone_offset();
-            now %= DAY_SECONDS;
+            now -= now % DAY_SECONDS;
 
             // 仅考虑时区, 不是标准意义上的当天时间，忽略记闰秒之类的偏移(偏移量很少，忽略不计吧)
             return now + offset + get_zone_offset();

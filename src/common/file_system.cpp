@@ -2,17 +2,17 @@
 // Created by 欧文韬 on 2015/6/2.
 //
 
-#include <cstring>
-#include <memory>
-#include <cstdio>
 #include "common/file_system.h"
 #include "common/compiler_message.h"
+#include <cstdio>
+#include <cstring>
+#include <memory>
 
 
 #ifdef UTIL_FS_WINDOWS_API
-#include <io.h>
-#include <direct.h>
 #include <Windows.h>
+#include <direct.h>
+#include <io.h>
 
 #ifdef _MSC_VER
 #include <atlconv.h>
@@ -31,12 +31,12 @@
 #else
 
 #include <dirent.h>
-#include <sys/types.h>
 #include <errno.h>
+#include <sys/types.h>
 
 #define FUNC_ACCESS(x) access(x, F_OK)
 #define SAFE_STRTOK_S(...) strtok_r(__VA_ARGS__)
-#define FUNC_MKDIR(path, mode) mkdir(path, mode)
+#define FUNC_MKDIR(path, mode) ::mkdir(path, mode)
 
 #endif
 
@@ -108,7 +108,7 @@ namespace util {
 
     bool file_system::is_exist(const char *file_path) { return 0 == FUNC_ACCESS(file_path); }
 
-    bool file_system::file_size(const char *file_path, size_t& sz) {
+    bool file_system::file_size(const char *file_path, size_t &sz) {
         FILE *f = NULL;
         UTIL_FS_OPEN(error_code, f, file_path, "rb");
         COMPILER_UNUSED(error_code);
@@ -150,7 +150,7 @@ namespace util {
             now_path += path_segs[i];
 
             if (false == is_exist(now_path.c_str())) {
-                if (false == mkdir(now_path.c_str(), false, mode)) {
+                if (0 != FUNC_MKDIR(now_path.c_str(), mode)) {
                     return false;
                 }
             }
@@ -161,13 +161,11 @@ namespace util {
         return true;
     }
 
-    bool file_system::dirname(const char *file_path, size_t sz, std::string& dir) {
+    bool file_system::dirname(const char *file_path, size_t sz, std::string &dir) {
         if (NULL == file_path || 0 == file_path[0]) {
             return false;
         }
 
-        size_t last_dir_sep = 0;
-        
         dir.clear();
         if (0 == sz) {
             sz = strlen(file_path);
@@ -440,8 +438,7 @@ namespace util {
         }
 
 #ifdef _WIN32
-        if (((dir_path[0] >= 'a' && dir_path[0] <= 'z') || (dir_path[0] >= 'A' && dir_path[0] <= 'Z')) &&
-            dir_path[1] == ':') {
+        if (((dir_path[0] >= 'a' && dir_path[0] <= 'z') || (dir_path[0] >= 'A' && dir_path[0] <= 'Z')) && dir_path[1] == ':') {
             return true;
         }
 #endif

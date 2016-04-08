@@ -34,8 +34,8 @@
 #define UTIL_STRFUNC_GMTIME_S(time_t_ptr, tm_ptr) gmtime_r(time_t_ptr, tm_ptr)
 
 #else
-#define UTIL_STRFUNC_LOCALTIME_S(time_t_ptr, tm_ptr) (*(tm_ptr) = localtime(time_t_ptr))
-#define UTIL_STRFUNC_GMTIME_S(time_t_ptr, tm_ptr) (*(tm_ptr) = gmtime_s(time_t_ptr))
+#define UTIL_STRFUNC_LOCALTIME_S(time_t_ptr, tm_ptr) (*(tm_ptr) = *localtime(time_t_ptr))
+#define UTIL_STRFUNC_GMTIME_S(time_t_ptr, tm_ptr) (*(tm_ptr) = gmtime(time_t_ptr))
 
 #endif
 
