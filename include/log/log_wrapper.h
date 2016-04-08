@@ -200,7 +200,7 @@ namespace util {
 #else
 #define PSTDTERMCOLOR(code, fmt, args...)  \
 {\
-    util::cli::shell_stream::shell_stream_opr log_wrapper_pstd_ss;\
+    util::cli::shell_stream::shell_stream_opr log_wrapper_pstd_ss(&std::cout);\
     log_wrapper_pstd_ss.open(code);\
     printf(fmt, ##args);\
     log_wrapper_pstd_ss.close();\
