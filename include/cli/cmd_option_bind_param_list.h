@@ -14,6 +14,7 @@
 
 #include "cli/cmd_option_bindt_cc.h"
 #include "cli/cmd_option_bindt_mf_cc.h"
+#include "cli/cmd_option_list.h"
 
 #if defined(UTIL_CONFIG_COMPILER_CXX_VARIADIC_TEMPLATES) && UTIL_CONFIG_COMPILER_CXX_VARIADIC_TEMPLATES
 #include "std/tuple.h"
