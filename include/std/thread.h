@@ -61,6 +61,7 @@
 
 // VC 2003
 #if !defined(THREAD_TLS) && defined(_MSC_VER)
+
 #if _MSC_VER >= 1900
 #define THREAD_TLS thread_local
 #define THREAD_TLS_ENABLED 1
@@ -71,6 +72,12 @@
 #define THREAD_TLS __thread
 #define THREAD_TLS_ENABLED 1
 #endif
+
+#elif !defined(THREAD_TLS) && (defined(__GNUC__) || defined(__clang__))
+// clang & gcc
+#define THREAD_TLS __thread
+#define THREAD_TLS_ENABLED 1
+
 #endif
 
 #if !defined(THREAD_TLS)

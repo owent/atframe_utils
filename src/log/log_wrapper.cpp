@@ -1,11 +1,11 @@
 ﻿#include <cstdio>
+#include "std/thread.h"
 #include <cstring>
 #include <stdarg.h>
-#include "std/thread.h"
 
 #include "common/string_oprs.h"
-#include "lock/spin_lock.h"
 #include "lock/lock_holder.h"
+#include "lock/spin_lock.h"
 
 #include "time/time_utility.h"
 
@@ -91,7 +91,7 @@ namespace util {
                 }
 
 #ifdef LOG_WRAPPER_WITH_LOCK
-                this_log.assign(log_buffer, start_index < sizeof(log_buffer) ? (start_index + 1) : sizeof(log_buffer));
+                this_log.assign(log_buffer, log_size);
 #endif
             }
 

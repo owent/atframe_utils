@@ -150,11 +150,12 @@ build_script:
 
             echo "cmake ..  -G '$Env:CMAKE_GEN' -DPROJECT_ENABLE_UNITTEST=ON -DPROJECT_ENABLE_SAMPLE=ON "
 
-            & cmake ..  -G "$Env:CMAKE_GEN" -DPROJECT_ENABLE_UNITTEST=ON -DPROJECT_ENABLE_SAMPLE=ON "
+            & cmake ..  -G "$Env:CMAKE_GEN" -DPROJECT_ENABLE_UNITTEST=ON -DPROJECT_ENABLE_SAMPLE=ON
 
-            echo "'C:\Program Files (x86)\MSBuild\14.0\bin\msbuild.exe' 'libatbus.sln' /verbosity:minimal /p:Configuration=$Env:CONFIGURATION /p:Platform=$Env:PLATFORM"
+            echo "'C:\Program Files (x86)\MSBuild\14.0\bin\msbuild.exe' 'atframe_utils_cpp.sln' /verbosity:minimal /p:Configuration=$Env:CONFIGURATION /p:Platform=$Env:PLATFORM"
 
-            & "C:\Program Files (x86)\MSBuild\14.0\bin\msbuild.exe" "libatbus.sln" /verbosity:minimal /p:Configuration=$Env:CONFIGURATION /p:Platform=$Env:PLATFORM
+            & "C:\Program Files (x86)\MSBuild\14.0\bin\msbuild.exe" "atframe_utils_cpp.sln" /verbosity:minimal /p:Configuration=$Env:CONFIGURATION /p:Platform=$Env:PLATFORM
+
         }
 #
 # Run unit test
