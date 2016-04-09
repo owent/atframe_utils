@@ -14,6 +14,10 @@
 #include <sstream>
 #include <cstdio>
 
+#ifdef _MSC_VER
+#include <Windows.h>
+#endif
+
 #ifdef UTILS_TEST_MACRO_TEST_ENABLE_GTEST
 #include "gtest/gtest.h"
 

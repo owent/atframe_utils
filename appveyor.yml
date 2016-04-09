@@ -176,17 +176,17 @@ test_script:
 
             if ( "$Env:CMAKE_GEN" -ieq "MinGW32" ) {
 
-                echo "$Env:MSYS2_PREFIX/mingw32_shell -lc cd '$Env:APPVEYOR_BUILD_FOLDER/build'; ./test/unit_test.exe && ./bin/atframe_utils_sample.exe "
+                echo "$Env:MSYS2_PREFIX/mingw32_shell -lc cd '$Env:APPVEYOR_BUILD_FOLDER/build'; ./test/unit_test.exe; ./bin/atframe_utils_sample.exe "
 
-                & "$Env:MSYS2_PREFIX/mingw32_shell" -lc "cd '$Env:APPVEYOR_BUILD_FOLDER/build'; ./test/unit_test.exe && ./bin/atframe_utils_sample.exe > '$Env:MSYS2_LOG_FILE' 2>&1" | Out-Host
+                & "$Env:MSYS2_PREFIX/mingw32_shell" -lc "cd '$Env:APPVEYOR_BUILD_FOLDER/build'; ./test/unit_test.exe  > '$Env:MSYS2_LOG_FILE'; ./bin/atframe_utils_sample.exe >> '$Env:MSYS2_LOG_FILE' 2>&1" | Out-Host
 
                 Get-Content "$Env:MSYS2_LOG_FILE"
 
             } else {
 
-                echo "$Env:MSYS2_PREFIX/mingw64_shell -lc cd '$Env:APPVEYOR_BUILD_FOLDER/build'; ./test/unit_test.exe && ./bin/atframe_utils_sample.exe"
+                echo "$Env:MSYS2_PREFIX/mingw64_shell -lc cd '$Env:APPVEYOR_BUILD_FOLDER/build'; ./test/unit_test.exe; ./bin/atframe_utils_sample.exe"
 
-                & "$Env:MSYS2_PREFIX/mingw64_shell" -lc "cd '$Env:APPVEYOR_BUILD_FOLDER/build'; ./test/unit_test.exe && ./bin/atframe_utils_sample.exe > '$Env:MSYS2_LOG_FILE' 2>&1" | Out-Host
+                & "$Env:MSYS2_PREFIX/mingw64_shell" -lc "cd '$Env:APPVEYOR_BUILD_FOLDER/build'; ./test/unit_test.exe  > '$Env:MSYS2_LOG_FILE'; ./bin/atframe_utils_sample.exe >> '$Env:MSYS2_LOG_FILE' 2>&1" | Out-Host
 
                 Get-Content "$Env:MSYS2_LOG_FILE"
 
