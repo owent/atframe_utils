@@ -17,7 +17,7 @@
 
 
 #if defined(_MSC_VER) && (_MSC_VER >= 1020)
-# pragma once
+#pragma once
 #endif
 
 // ===================================== thread local storage =====================================
@@ -29,49 +29,52 @@
  */
 // IOS 不支持tls
 #if defined(__APPLE__)
-    #include <TargetConditionals.h>
+#include <TargetConditionals.h>
 
-    #if TARGET_OS_IPHONE || TARGET_OS_EMBEDDED || TARGET_IPHONE_SIMULATOR
-        #define THREAD_TLS
-    #endif
+#if TARGET_OS_IPHONE || TARGET_OS_EMBEDDED || TARGET_IPHONE_SIMULATOR
+#define THREAD_TLS
+#endif
 #endif
 
-// android 不支持tls 
+// android 不支持tls
 #if !defined(THREAD_TLS) && defined(__ANDROID__)
-    #define THREAD_TLS
+#define THREAD_TLS
 #endif
 
 #if !defined(THREAD_TLS) && defined(__clang__)
-    #if __has_feature(cxx_thread_local)
-        #define THREAD_TLS thread_local
-        #define THREAD_TLS_ENABLED 1
-    #elif __has_feature(c_thread_local) || __has_extension(c_thread_local)
-        #define THREAD_TLS _Thread_local
-        #define THREAD_TLS_ENABLED 1
-    #else
-        #define THREAD_TLS __thread
-        #define THREAD_TLS_ENABLED 1
-    #endif
+#if __has_feature(cxx_thread_local)
+#define THREAD_TLS thread_local
+#define THREAD_TLS_ENABLED 1
+#elif __has_feature(c_thread_local) || __has_extension(c_thread_local)
+#define THREAD_TLS _Thread_local
+#define THREAD_TLS_ENABLED 1
+#else
+#define THREAD_TLS __thread
+#define THREAD_TLS_ENABLED 1
+#endif
 #endif
 
 #if !defined(THREAD_TLS) && defined(__cplusplus) && __cplusplus >= 201103L
-    #define THREAD_TLS thread_local
-    #define THREAD_TLS_ENABLED 1
+#define THREAD_TLS thread_local
+#define THREAD_TLS_ENABLED 1
 #endif
 
 // VC 2003
-#if !defined(THREAD_TLS)
-    #if defined(_MSC_VER) && (_MSC_VER >= 1300)
-        #define THREAD_TLS __declspec( thread )
-        #define THREAD_TLS_ENABLED 1
-    #else
-        #define THREAD_TLS __thread
-        #define THREAD_TLS_ENABLED 1
-    #endif
+#if !defined(THREAD_TLS) && defined(_MSC_VER)
+#if _MSC_VER >= 1900
+#define THREAD_TLS thread_local
+#define THREAD_TLS_ENABLED 1
+#elif _MSC_VER >= 1300
+#define THREAD_TLS __declspec(thread)
+#define THREAD_TLS_ENABLED 1
+#else
+#define THREAD_TLS __thread
+#define THREAD_TLS_ENABLED 1
+#endif
 #endif
 
 #if !defined(THREAD_TLS)
-    #define THREAD_TLS
+#define THREAD_TLS
 #endif
 
 
@@ -81,7 +84,7 @@
 #define THREAD_SLEEP_MS(x) std::this_thread::sleep_for(std::chrono::milliseconds(x))
 #define THREAD_YIELD() std::this_thread::yield()
 
-#elif  defined(_MSC_VER)
+#elif defined(_MSC_VER)
 #include <Windows.h>
 #define THREAD_SLEEP_MS(x) Sleep(x)
 #define THREAD_YIELD() YieldProcessor()
@@ -89,7 +92,9 @@
 #else
 #include <unistd.h>
 
-#define THREAD_SLEEP_MS(x) ((x > 1000)? sleep(x / 1000): usleep(0)); usleep((x % 1000) * 1000)
+#define THREAD_SLEEP_MS(x)                      \
+    ((x > 1000) ? sleep(x / 1000) : usleep(0)); \
+    usleep((x % 1000) * 1000)
 #if defined(__linux__) || defined(__unix__)
 #include <sched.h>
 #define THREAD_YIELD() sched_yield()
@@ -107,13 +112,13 @@
 * hint - Performance Hint, 3:145
 * http://www.intel.com/content/www/us/en/processors/itanium/itanium-architecture-vol-3-manual.html
 */
-#define THREAD_YIELD() __asm__ __volatile__ ("hint @pause")
+#define THREAD_YIELD() __asm__ __volatile__("hint @pause")
 #elif defined(__arm__) && !defined(__ANDROID__)
 /**
 * See: ARM Architecture Reference Manuals (YIELD)
 * http://infocenter.arm.com/help/index.jsp?topic=/com.arm.doc.subset.architecture.reference/index.html
 */
-#define THREAD_YIELD() __asm__ __volatile__ ("yield")
+#define THREAD_YIELD() __asm__ __volatile__("yield")
 #else
 #define THREAD_YIELD()
 #endif
@@ -124,4 +129,3 @@
 #endif
 
 #endif
-

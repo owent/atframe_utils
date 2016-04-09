@@ -1,4 +1,5 @@
 ﻿
-# 设置实际的默认编译输出目录 
+# 设置实际的默认编译输出目录
 set(EXECUTABLE_OUTPUT_PATH "${PROJECT_BINARY_DIR}/bin")
 set(LIBRARY_OUTPUT_PATH "${PROJECT_BINARY_DIR}/lib${PLATFORM_SUFFIX}")
+link_directories (${LIBRARY_OUTPUT_PATH})

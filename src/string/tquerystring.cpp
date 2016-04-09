@@ -383,7 +383,7 @@ namespace util {
     }
 
     bool tquerystring::decode_record(const char *content, std::size_t sz) {
-        std::string strSeg, value, strOrigin;
+        std::string seg, value, strOrigin;
         std::vector<std::string> keys;
         strOrigin.assign(content, sz);
 
@@ -404,23 +404,23 @@ namespace util {
             }
 
             while (sz < strOrigin.size() && strOrigin[sz] != '[') {
-                strSeg += strOrigin[sz];
+                seg += strOrigin[sz];
                 ++sz;
             }
 
-            keys.push_back(strSeg);
-            strSeg.clear();
+            keys.push_back(seg);
+            seg.clear();
 
             if (sz >= strOrigin.size()) {
                 break;
             }
             for (++sz; sz < strOrigin.size() && strOrigin[sz] != ']'; ++sz) {
-                strSeg += strOrigin[sz];
+                seg += strOrigin[sz];
             }
         }
 
-        if (strSeg.size() > 0) {
-            keys.push_back(strSeg);
+        if (seg.size() > 0) {
+            keys.push_back(seg);
         }
 
         return parse(keys, 0, value);

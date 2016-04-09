@@ -126,6 +126,18 @@ void hash_sample() {
 }
 //=======================================================================================================
 
+//=======================================================================================================
+extern int cmd_option_sample_main();
+
+void cmd_option_sample() {
+    puts("");
+    puts("===============begin cmd_option sample==============");
+    cmd_option_sample_main();
+    puts("===============end cmd_option sample==============");
+}
+//=======================================================================================================
+
+
 int main(int argc, char **argv) {
     util::time::time_utility::update();
 
@@ -133,5 +145,6 @@ int main(int argc, char **argv) {
     hash_sample();
     random_sample();
     log_sample();
+    cmd_option_sample();
     return 0;
 }
