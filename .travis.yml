@@ -6,7 +6,8 @@ env:
     - CMAKE_PREFIX=$HOME/prebuilt/cmake ;
     - CMAKE_VERSION=3.5.1 ;
 
-  matrix:
+matrix:
+  env:
     - TRAVIS_OS_NAME=osx CC=clang CXX=clang++
     - TRAVIS_OS_NAME=osx CC=gcc CXX=g++
     - TRAVIS_OS_NAME=linux CC=gcc CXX=g++
