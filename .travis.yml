@@ -13,17 +13,40 @@ env:
     - TRAVIS_OS_NAME=linux USE_CC=gcc-5 USE_CXX=g++-5
     - TRAVIS_OS_NAME=linux USE_CC=clang-3.8 USE_CXX=clang++-3.8
 
-before_install:
-  - if [ "$TRAVIS_OS_NAME" == "linux" ]; then sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test; fi
-  - if [ "$TRAVIS_OS_NAME" == "linux" ]; then sudo add-apt-repository -y "deb http://llvm.org/apt/precise/ llvm-toolchain-precise-3.8 main"; fi
-  - if [ "$TRAVIS_OS_NAME" == "linux" ]; then wget -O - http://llvm.org/apt/llvm-snapshot.gpg.key | sudo apt-key add - ; fi
-  - if [ "$TRAVIS_OS_NAME" == "linux" ]; then sudo apt-get update -qq; fi
-  - if [ "$TRAVIS_OS_NAME" == "linux" ]; then sudo apt-get update; fi
+addons:
+  apt:
+    sources:
+      - ubuntu-toolchain-r-test
+      - llvm-toolchain-precise-3.8
+    packages:
+      - gcc-4.9
+      - gcc-4.9-multilib
+      - g++-4.9
+      - g++-4.9-multilib
+      - gcc-5
+      - gcc-5-multilib
+      - g++-5
+      - g++-5-multilib
+      - clang
+      - libc++1
+      - libc++-dev
+      - libc++abi1
+      - libc++abi-dev
+      - clang-3.8
+      - libclang-common-3.8-dev
+      - libclang-3.8-dev
 
-install:
-  - if [ "$TRAVIS_OS_NAME" == "linux" ] && [ "$USE_CC" == "gcc-4.9" ] ; then sudo apt-get install -qq gcc-4.9-multilib g++-4.9-multilib; fi
-  - if [ "$TRAVIS_OS_NAME" == "linux" ] && [ "$USE_CC" == "gcc-5" ] ; then sudo apt-get install -qq gcc-5-multilib g++-5-multilib; fi
-  - if [ "$TRAVIS_OS_NAME" == "linux" ] && [ "$USE_CC" == "clang-3.8" ] ; then sudo apt-get install --allow-unauthenticated -qq clang-3.8; fi
+# before_install:
+#   - if [ "$TRAVIS_OS_NAME" == "linux" ]; then sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test; fi
+#   - if [ "$TRAVIS_OS_NAME" == "linux" ]; then sudo add-apt-repository -y "deb http://llvm.org/apt/precise/ llvm-toolchain-precise-3.8 main"; fi
+#   - if [ "$TRAVIS_OS_NAME" == "linux" ]; then wget -O - http://llvm.org/apt/llvm-snapshot.gpg.key | sudo apt-key add - ; fi
+#   - if [ "$TRAVIS_OS_NAME" == "linux" ]; then sudo apt-get update -qq; fi
+#   - if [ "$TRAVIS_OS_NAME" == "linux" ]; then sudo apt-get update; fi
+#
+# install:
+#   - if [ "$TRAVIS_OS_NAME" == "linux" ] && [ "$USE_CC" == "gcc-4.9" ] ; then sudo apt-get install -qq gcc-4.9-multilib g++-4.9-multilib; fi
+#   - if [ "$TRAVIS_OS_NAME" == "linux" ] && [ "$USE_CC" == "gcc-5" ] ; then sudo apt-get install -qq gcc-5-multilib g++-5-multilib; fi
+#   - if [ "$TRAVIS_OS_NAME" == "linux" ] && [ "$USE_CC" == "clang-3.8" ] ; then sudo apt-get install --allow-unauthenticated -qq clang-3.8 libclang-common-3.8-dev libclang-3.8-dev; fi
 
 before_script:
   - REPO_DIR=$PWD;
