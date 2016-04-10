@@ -3,7 +3,7 @@ language: cpp
 env:
   global:
     - LANG="zh_CN.UTF-8"
-    - CMAKE_PREFIX=$HOME/prebuilt/cmake ;
+    - CMAKE_PREFIX=/home/travis/prebuilt/cmake ;
     - CMAKE_VERSION=3.5.1 ;
   matrix:
     # - TRAVIS_OS_NAME=osx USE_CC=clang USE_CXX=clang++
@@ -80,7 +80,7 @@ cache:
   apt: true
   ccache: true
   directories:
-  - $HOME/prebuilt
+  - /home/travis/prebuilt
 
 branches:
   only:
