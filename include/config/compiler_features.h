@@ -397,7 +397,7 @@
 #  if UTIL_CONFIG_COMPILER_CXX_NULLPTR
 #    define UTIL_CONFIG_NULLPTR nullptr
 #  else
-#    define UTIL_CONFIG_NULLPTR 0
+#    define UTIL_CONFIG_NULLPTR static_cast<void*>(0)
 #  endif
 
 #  if UTIL_CONFIG_COMPILER_CXX_STATIC_ASSERT
