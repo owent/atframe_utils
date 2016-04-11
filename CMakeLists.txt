@@ -15,8 +15,8 @@ include(FindConfigurePackage)
 # 工程选项
 set(EXTENTION_LINK_LIB)
 
-set(PROJECT_ALL_INCLUDE_DIR "${PROJECT_SOURCE_DIR}/include")
-set(PROJECT_ALL_SOURCE_DIR "${PROJECT_SOURCE_DIR}/src")
+set(PROJECT_ALL_INCLUDE_DIR "${CMAKE_CURRENT_LIST_DIR}/include")
+set(PROJECT_ALL_SOURCE_DIR "${CMAKE_CURRENT_LIST_DIR}/src")
 include_directories ("${PROJECT_ALL_INCLUDE_DIR}")
 
 include("${PROJECT_CMAKE_MODULE_DIR}/ProjectBuildOption.cmake")
@@ -43,9 +43,9 @@ install(DIRECTORY "${PROJECT_ALL_INCLUDE_DIR}" DESTINATION .
 )
 
 if (PROJECT_ENABLE_SAMPLE)
-    add_subdirectory("${PROJECT_SOURCE_DIR}/sample")
+    add_subdirectory("${CMAKE_CURRENT_LIST_DIR}/sample")
 endif()
 
 if (PROJECT_ENABLE_UNITTEST)
-    add_subdirectory("${PROJECT_SOURCE_DIR}/test")
+    add_subdirectory("${CMAKE_CURRENT_LIST_DIR}/test")
 endif()
