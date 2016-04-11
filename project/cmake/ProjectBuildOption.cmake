@@ -3,13 +3,13 @@ include(WriteCompilerDetectionHeader)
 
 # generate check header
 write_compiler_detection_header(
-    FILE compiler_features.h
+    FILE "${PROJECT_ALL_INCLUDE_DIR}/config/compiler_features.h"
     PREFIX UTIL_CONFIG
     COMPILERS GNU Clang AppleClang MSVC
     FEATURES cxx_deleted_functions cxx_final cxx_noexcept cxx_nullptr cxx_static_assert cxx_thread_local cxx_variadic_templates
 )
-file(MAKE_DIRECTORY "${PROJECT_ALL_INCLUDE_DIR}/config")
-file(RENAME "${CMAKE_BINARY_DIR}/compiler_features.h" "${PROJECT_ALL_INCLUDE_DIR}/config/compiler_features.h")
+#file(MAKE_DIRECTORY "${PROJECT_ALL_INCLUDE_DIR}/config")
+#file(RENAME "${CMAKE_BINARY_DIR}/compiler_features.h" "${PROJECT_ALL_INCLUDE_DIR}/config/compiler_features.h")
 
 # 默认配置选项
 #####################################################################
