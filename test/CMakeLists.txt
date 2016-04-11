@@ -4,13 +4,12 @@ include("test.macro.cmake")
 
 enable_testing()
 find_package(GTest)
-set (PROJECT_TEST_LIB_LINK "")
 
 # =========== find gtest ===========
 if (GTEST_FOUND)
     EchoWithColor(COLOR GREEN "-- GTest Found: ${GTEST_LIBRARIES}")
     add_compiler_define(PROJECT_TEST_MACRO_ENABLE_GTEST=1)
-	set (PROJECT_TEST_LIB_LINK ${GTEST_LIBRARIES})
+	list(APPEND PROJECT_TEST_LIB_LINK ${GTEST_LIBRARIES})
     include_directories(${GTEST_INCLUDE_DIRS})
 
 # =========== enable find boost.test ===========
@@ -31,7 +30,7 @@ elseif(PROJECT_TEST_ENABLE_BOOST_UNIT_TEST)
         endif()
 
         add_compiler_define(PROJECT_TEST_MACRO_ENABLE_BOOST_TEST=1)
-        set (PROJECT_TEST_LIB_LINK ${Boost_LIBRARIES})
+        list(APPEND PROJECT_TEST_LIB_LINK ${Boost_LIBRARIES})
         include_directories(${Boost_INCLUDE_DIRS})
         EchoWithColor(COLOR GREEN "-- Boost.test Found: ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}")
 
@@ -61,11 +60,15 @@ source_group_by_dir(PROJECT_TEST_SRC_LIST)
 # ================ multi thread ================
 if ( NOT MSVC )
     add_definitions(-D_POSIX_MT_)
-    set (PROJECT_TEST_LIB_LINK ${PROJECT_TEST_LIB_LINK} pthread)
+    list(APPEND PROJECT_TEST_LIB_LINK pthread)
 endif()
 
 # ============ test - coroutine test frame ============
 set(EXECUTABLE_OUTPUT_PATH "${PROJECT_BINARY_DIR}/test")
+
+if (MINGW)
+    list(APPEND EXTENTION_LINK_LIB stdc++)
+endif()
 
 add_executable(unit_test ${PROJECT_TEST_SRC_LIST})
 target_link_libraries(unit_test
@@ -73,6 +76,7 @@ target_link_libraries(unit_test
     ${PROJECT_TEST_LIB_LINK}
     ${3RD_PARTY_LIBUV_LINK_NAME}
     ${3RD_PARTY_C_CPP_UTILS_LINK_NAME}
+    ${EXTENTION_LINK_LIB}
 )
 
 add_test(test unit_test)
