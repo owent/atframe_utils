@@ -60,7 +60,7 @@ namespace util {
         public:
             /**
              * @brief 更新时间
-             * @param 可以指定时间对象
+             * @param t 可以指定时间对象
              */
             static void update(raw_time_t *t = NULL);
 
@@ -97,7 +97,7 @@ namespace util {
             static void set_zone_offset(time_t t);
 
             /**
-             * @brief 获取当前时区今天过了多少秒
+             * @brief 获取当前时区今天过了多少秒(不计自定义时区)
              * @return 目前时间的相对今天的偏移
              */
             static time_t get_today_now_offset();
@@ -109,6 +109,17 @@ namespace util {
              * @return 同一天返回 true
              */
             static bool is_same_day(time_t left, time_t right);
+
+            /**
+             * @brief [快速非严格]判定当前时区，两个时间是否跨同一天的指定时间点
+             * @param left (必须大于0)
+             * @param right (必须大于0)
+             * @param offset 时间点偏移
+             * @note 比如某个功能在21:00刷新，那么判定是否需要刷新则使用 is_same_day([上一次刷新时间], [要检测的时间], 75600)
+             * @note offset = 0时等同于is_same_day(time_t left, time_t right)
+             * @return 不跨同一天的该时间点返回 true
+             */
+            static bool is_same_day(time_t left, time_t right, time_t offset);
 
             /**
              * @brief 获取当前时区相对于今天零点之后offset秒的Unix时间戳
@@ -131,6 +142,18 @@ namespace util {
              * @return 同一周返回 true
              */
             static bool is_same_week(time_t left, time_t right, time_t week_first = 0);
+
+            /**
+             * @brief [快速非严格]判定当前时区，两个时间是否跨同一周的指定时间点
+             * @param left (必须大于0)
+             * @param right (必须大于0)
+             * @param offset 时间点偏移
+             * @note 比如某个功能在每周的第一天的21:00刷新，那么判定是否需要刷新则使用 is_same_week_point([上一次刷新时间], [要检测的时间],
+             * 75600, [一周的第一天])
+             * @note offset = 0时等同于is_same_week(time_t left, time_t right, time_t week_first)
+             * @return 不跨同一天的该时间点返回 true
+             */
+            static bool is_same_week_point(time_t left, time_t right, time_t offset, time_t week_first = 0);
 
             /**
              * @brief [快速非严格]判定当前时区时间是本周第几天

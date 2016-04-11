@@ -5,7 +5,7 @@ namespace util {
     namespace time {
         time_utility::raw_time_t time_utility::now_;
         time_t time_utility::now_unix_;
-        time_t time_utility::custom_zone_offset_ = -YEAR_SECONDS;
+        time_t time_utility::custom_zone_offset_ = -time_utility::YEAR_SECONDS;
 
         time_utility::time_utility() {}
         time_utility::~time_utility() {}
@@ -64,21 +64,23 @@ namespace util {
             }
         }
 
-        bool time_utility::is_same_day(time_t left, time_t right) {
+        bool time_utility::is_same_day(time_t left, time_t right) { return is_same_day(left, right, 0); }
+
+        bool time_utility::is_same_day(time_t left, time_t right, time_t offset) {
             // 仅考虑时区, 不是标准意义上的当天时间，忽略记闰秒之类的偏移(偏移量很少，忽略不计吧)
-            left -= get_zone_offset();
-            right -= get_zone_offset();
+            left -= get_zone_offset() - offset;
+            right -= get_zone_offset() - offset;
 
             return left / DAY_SECONDS == right / DAY_SECONDS;
         }
 
         time_t time_utility::get_today_offset(time_t offset) {
-            time_t now = get_now();
-            now -= get_zone_offset();
-            now -= now % DAY_SECONDS;
+            time_t now_tp = get_now();
+            now_tp -= get_zone_offset();
+            now_tp -= now_tp % DAY_SECONDS;
 
             // 仅考虑时区, 不是标准意义上的当天时间，忽略记闰秒之类的偏移(偏移量很少，忽略不计吧)
-            return now + offset + get_zone_offset();
+            return now_tp + offset + get_zone_offset();
         }
 
         bool time_utility::is_same_month(time_t left, time_t right) {
@@ -91,8 +93,12 @@ namespace util {
         }
 
         bool time_utility::is_same_week(time_t left, time_t right, time_t week_first) {
-            left -= get_zone_offset();
-            right -= get_zone_offset();
+            return is_same_week_point(left, right, 0, week_first);
+        }
+
+        bool time_utility::is_same_week_point(time_t left, time_t right, time_t offset, time_t week_first) {
+            left -= get_zone_offset() - offset;
+            right -= get_zone_offset() - offset;
 
             // 仅考虑时区, 不是标准意义上的当天时间，忽略记闰秒之类的偏移(偏移量很少，忽略不计吧)
             // 1970年1月1日是周四
