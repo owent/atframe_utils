@@ -73,7 +73,7 @@ script:
   - make -j4
 
 after_success:
-  - test/unit_test
+  - test/atframe_utils_unit_test
   - bin/atframe_utils_sample
 
 cache:
