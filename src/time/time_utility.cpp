@@ -68,8 +68,8 @@ namespace util {
 
         bool time_utility::is_same_day(time_t left, time_t right, time_t offset) {
             // 仅考虑时区, 不是标准意义上的当天时间，忽略记闰秒之类的偏移(偏移量很少，忽略不计吧)
-            left -= get_zone_offset() - offset;
-            right -= get_zone_offset() - offset;
+            left -= get_zone_offset() + offset;
+            right -= get_zone_offset() + offset;
 
             return left / DAY_SECONDS == right / DAY_SECONDS;
         }
@@ -97,8 +97,8 @@ namespace util {
         }
 
         bool time_utility::is_same_week_point(time_t left, time_t right, time_t offset, time_t week_first) {
-            left -= get_zone_offset() - offset;
-            right -= get_zone_offset() - offset;
+            left -= get_zone_offset() + offset;
+            right -= get_zone_offset() + offset;
 
             // 仅考虑时区, 不是标准意义上的当天时间，忽略记闰秒之类的偏移(偏移量很少，忽略不计吧)
             // 1970年1月1日是周四
