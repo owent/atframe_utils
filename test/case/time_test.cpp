@@ -42,7 +42,6 @@ CASE_TEST(time_test, is_same_day) {
     tobj.tm_min = 0;
     tobj.tm_sec = 5;
     lt = mktime(&tobj);
-    tobj.tm_sec = 10;
     rt = lt + 5;
     CASE_EXPECT_TRUE(util::time::time_utility::is_same_day(lt, rt));
 
@@ -56,6 +55,30 @@ CASE_TEST(time_test, is_same_day) {
     CASE_EXPECT_TRUE(util::time::time_utility::is_same_day(lt, rt));
     lt = rt + 10;
     CASE_EXPECT_FALSE(util::time::time_utility::is_same_day(lt, rt));
+}
+
+CASE_TEST(time_test, is_same_day_with_offset) {
+    struct tm tobj;
+    time_t lt, rt;
+    int zero_hore = 5;
+    time_t day_offset = zero_hore * util::time::time_utility::DAY_SECONDS;
+    
+    util::time::time_utility::update();
+    lt = util::time::time_utility::get_now();
+    UTIL_STRFUNC_LOCALTIME_S(&lt, &tobj);
+
+    tobj.tm_hour = zero_hore;
+    tobj.tm_min = 0;
+    tobj.tm_sec = 5;
+    lt = mktime(&tobj);
+    rt = lt + 5;
+    CASE_EXPECT_TRUE(util::time::time_utility::is_same_day(lt, rt, day_offset));
+
+    tobj.tm_hour = zero_hore - 1;
+    tobj.tm_min = 59;
+    tobj.tm_sec = 55;
+    rt = mktime(&tobj);
+    CASE_EXPECT_FALSE(util::time::time_utility::is_same_day(lt, rt, day_offset));
 }
 
 CASE_TEST(time_test, is_same_week) {
