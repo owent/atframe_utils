@@ -61,7 +61,7 @@ CASE_TEST(time_test, is_same_day_with_offset) {
     struct tm tobj;
     time_t lt, rt;
     int zero_hore = 5;
-    time_t day_offset = zero_hore * util::time::time_utility::DAY_SECONDS;
+    time_t day_offset = zero_hore * util::time::time_utility::HOUR_SECONDS;
     
     util::time::time_utility::update();
     lt = util::time::time_utility::get_now();
