@@ -1,5 +1,5 @@
 
-EchoWithColor(COLOR GREEN "-- Configure Test Projects")
+EchoWithColor(COLOR GREEN "-- Configure ${CMAKE_CURRENT_LIST_DIR}")
 include("test.macro.cmake")
 
 enable_testing()
