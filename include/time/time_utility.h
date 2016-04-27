@@ -76,6 +76,15 @@ namespace util {
              */
             static time_t get_now();
 
+            /**
+             * @brief 获取当前时间的微秒部分
+             * @note 为了减少系统调用，这里仅在update时更新缓存，并且使用偏移值进行计算，所以大部分情况下都会偏小一些。
+             *       这里仅为能够容忍误差的时间相关的功能提供一个时间参考，如果需要使用精确时间，请使用系统调用
+             * @note update接口不加锁，所以一般情况下，返回值在[0, 1000000)之间，极端情况下（特别是多线程调用时）可能出现大于1000000
+             * @return 当前时间的微妙部分
+             */
+            static time_t get_now_usec();
+
             // ====================== 后面的函数都和时区相关 ======================
             /**
              * @brief 获取系统时区时间偏移(忽略自定义偏移)
@@ -165,8 +174,13 @@ namespace util {
         private:
             // 当前时间
             static raw_time_t now_;
-            // 当前时间
+
+            // 当前时间(Unix时间戳)
             static time_t now_unix_;
+
+            // 当前时间(微妙，非精确)
+            static time_t now_usec_;
+
             // 时区时间的人为偏移
             static time_t custom_zone_offset_;
         };

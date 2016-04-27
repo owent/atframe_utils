@@ -5,22 +5,32 @@ namespace util {
     namespace time {
         time_utility::raw_time_t time_utility::now_;
         time_t time_utility::now_unix_;
+        time_t time_utility::now_usec_ = 0;
         time_t time_utility::custom_zone_offset_ = -time_utility::YEAR_SECONDS;
 
         time_utility::time_utility() {}
         time_utility::~time_utility() {}
 
         void time_utility::update(raw_time_t *t) {
+            raw_time_t prev_tp = now_;
             if (NULL != t) {
                 now_ = *t;
             } else {
                 now_ = std::chrono::system_clock::now();
             }
 
-            now_unix_ = std::chrono::system_clock::to_time_t(now_);
+            time_t unix_timestamp = std::chrono::system_clock::to_time_t(now_);
+            if (now_unix_ != unix_timestamp) {
+                now_unix_ = unix_timestamp;
+                now_usec_ = 0;
+            } else {
+                now_usec_ += static_cast<time_t>(std::chrono::duration_cast<std::chrono::microseconds>(now_ - prev_tp).count());
+            }
         }
 
         time_utility::raw_time_t time_utility::now() { return now_; }
+
+        time_t time_utility::get_now_usec() { return now_usec_; }
 
         time_t time_utility::get_now() { return now_unix_; }
 
