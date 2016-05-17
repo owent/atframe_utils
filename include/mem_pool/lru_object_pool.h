@@ -438,25 +438,48 @@ namespace util {
             typedef std::shared_ptr<list_type> list_ptr_type;
             typedef _UTIL_MEMPOOL_LRUOBJECTPOOL_MAP(key_t, list_ptr_type) cat_map_type;
 
+            struct flag_t {
+                enum type {
+                    INITED = 0,
+                    CLEARING
+                };
+            };
         private:
             lru_pool(const lru_pool&);
             lru_pool& operator=(const lru_pool&);
 
+            struct flag_guard {
+                static inline bool test(const uint32_t& fs, typename flag_t::type t) {
+                    return 0 != (fs & (static_cast<uint32_t>(1) << t));
+                }
+
+                static inline void set(uint32_t& fs, typename flag_t::type t) {
+                    fs |= static_cast<uint32_t>(1) << t;
+                }
+
+                static inline void unset(uint32_t& fs, typename flag_t::type t) {
+                    fs &= ~(static_cast<uint32_t>(1) << t);
+                }
+
+                flag_guard(uint32_t& fs, typename flag_t::type t) : flag_set(fs), flag_opt(t) {
+                    set(flag_set, flag_opt);
+                }
+
+                ~flag_guard() {
+                    unset(flag_set, flag_opt);
+                }
+
+                uint32_t& flag_set;
+                typename flag_t::type flag_opt;
+            };
         public:
-            lru_pool() {
+            lru_pool(): flags_(0){
                 push_id_alloc_.set(0);
             }
 
             virtual ~lru_pool() {
                 set_manager(NULL);
-
-                for (typename cat_map_type::iterator iter = data_.begin(); iter != data_.end();) {
-                    typename cat_map_type::iterator checked_it = iter++;
-                    if (checked_it->second) {
-                        while (checked_it->second->gc());
-                    }
-                }
-                data_.clear();
+                clear();
             }
 
             /**
@@ -465,6 +488,8 @@ namespace util {
             */
             int init(lru_pool_manager::ptr_t m) {
                 set_manager(m);
+
+                flag_guard::set(flags_, flag_t::INITED);
                 return 0;
             }
 
@@ -493,6 +518,13 @@ namespace util {
                 }
 #endif
                 if (NULL == obj) {
+                    return false;
+                }
+
+                // clear过程中再推送的对象一律走GC
+                if (flag_guard::test(flags_, flag_t::CLEARING)) {
+                    TAction act;
+                    act.gc(obj);
                     return false;
                 }
 
@@ -567,12 +599,17 @@ namespace util {
             }
 
             void clear() {
+                // 递归调用clear，直接返回
+                if (flag_guard::test(flags_, flag_t::CLEARING)) {
+                    return;
+                }
+
+                flag_guard fg(flags_, flag_t::CLEARING);
+
                 for (typename cat_map_type::iterator iter = data_.begin(); iter != data_.end();) {
                     typename cat_map_type::iterator checked_it = iter++;
                     if (checked_it->second) {
-                        while (!checked_it->second->empty()) {
-                            checked_it->second->gc();
-                        }
+                        while (checked_it->second->gc());
                     }
                 }
 
@@ -605,10 +642,15 @@ namespace util {
                 return ret;
             }
 
+            const cat_map_type& data() const {
+                return data_;
+            }
+
         private:
             cat_map_type data_;
             lru_pool_manager::ptr_t mgr_;
             util::lock::seq_alloc_u64 push_id_alloc_;
+            uint32_t flags_;
 #ifdef _UTIL_MEMPOOL_LRUOBJECTPOOL_CHECK_REPUSH
             std::set<value_type*> check_pushed_;
 #endif
