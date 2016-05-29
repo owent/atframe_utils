@@ -131,6 +131,25 @@ namespace util {
             static bool is_same_day(time_t left, time_t right, time_t offset);
 
             /**
+             * @brief [快速非严格]判定当前时区，right是否和left不是同一天且right大于left
+             * @param left (必须大于0)
+             * @param right (必须大于0)
+             * @return right是否和left不是同一天且right大于left返回 true
+             */
+            static bool is_greater_day(time_t left, time_t right);
+
+            /**
+             * @brief [快速非严格]判定当前时区，right是否和left不是同一天且right大于left
+             * @param left (必须大于0)
+             * @param right (必须大于0)
+             * @param offset 时间点偏移
+             * @note 比如某个功能在21:00刷新，那么判定是否需要刷新则使用 is_greater_day([上一次刷新时间], [要检测的时间], 75600)
+             * @note offset = 0时等同于is_greater_day(time_t left, time_t right)
+             * @return right是否和left不是同一天且right大于left返回 true
+             */
+            static bool is_greater_day(time_t left, time_t right, time_t offset);
+
+            /**
              * @brief 获取当前时区相对于今天零点之后offset秒的Unix时间戳
              * @param offset 时间偏移值
              * @return 今天0点后offset的时间戳

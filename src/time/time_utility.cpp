@@ -84,6 +84,20 @@ namespace util {
             return left / DAY_SECONDS == right / DAY_SECONDS;
         }
 
+        bool time_utility::is_greater_day(time_t left, time_t right) { return is_greater_day(left, right, 0); }
+
+        bool time_utility::is_greater_day(time_t left, time_t right, time_t offset) {
+            if (left >= right) {
+                return false;
+            }
+
+            // 仅考虑时区, 不是标准意义上的当天时间，忽略记闰秒之类的偏移(偏移量很少，忽略不计吧)
+            left -= get_zone_offset() + offset;
+            right -= get_zone_offset() + offset;
+
+            return left / DAY_SECONDS < right / DAY_SECONDS;
+        }
+
         time_t time_utility::get_today_offset(time_t offset) {
             time_t now_tp = get_now();
             now_tp -= get_zone_offset();
