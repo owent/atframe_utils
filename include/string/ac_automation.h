@@ -17,13 +17,14 @@
 #pragma once
 
 #include "std/smart_ptr.h"
+#include <algorithm>
 #include <assert.h>
 #include <cstddef>
+#include <cstring>
 #include <list>
 #include <map>
 #include <stdint.h>
 #include <string>
-#include <cstring>
 #include <vector>
 
 namespace util {
@@ -32,9 +33,7 @@ namespace util {
             template <typename CH>
             class actrie_skip_charset {
             public:
-                actrie_skip_charset() {
-                    memset(skip_code_, 0, sizeof(skip_code_));
-                }
+                actrie_skip_charset() { memset(skip_code_, 0, sizeof(skip_code_)); }
 
                 void set(CH c) {
                     size_t index = c / 8;
@@ -54,9 +53,7 @@ namespace util {
                     return 0 != (skip_code_[index] & (1 << offset));
                 }
 
-                inline bool operator[](CH c) const {
-                    return test(c);
-                }
+                inline bool operator[](CH c) const { return test(c); }
 
             private:
                 uint8_t skip_code_[(static_cast<size_t>(1) << (sizeof(CH) * 8)) / 8];
@@ -73,7 +70,7 @@ namespace util {
                 struct match_result_t {
                     size_t start;
                     size_t length;
-                    const self_t* keyword;
+                    const self_t *keyword;
                     bool has_skip;
                 };
 
@@ -186,7 +183,7 @@ namespace util {
                  * 获取叶子节点的字符串
                  * @return 叶子节点的字符串
                  */
-                const string_t & get_leaf() const { return matched_string_; }
+                const string_t &get_leaf() const { return matched_string_; }
 
                 /**
                  * 构建关键字的字典树节点
@@ -224,8 +221,8 @@ namespace util {
                  * @param skip 可跳过字符集
                  * @return 匹配完成后剩余字节数
                  */
-                template<typename TSkipSet>
-                size_t match(match_result_t& out, const char_t *chp, size_t left_sz, const TSkipSet* skip) const {
+                template <typename TSkipSet>
+                size_t match(match_result_t &out, const char_t *chp, size_t left_sz, const TSkipSet *skip) const {
                     // 成功匹配
                     if (is_leaf()) {
                         out.keyword = this;
@@ -254,7 +251,7 @@ namespace util {
                     // 如果是root节点，放弃匹配
                     if (!failed_) {
                         return left_sz - 1;
-                        //return match(out, chp + 1, left_sz - 1, skip);
+                        // return match(out, chp + 1, left_sz - 1, skip);
                     }
 
                     // 如果失败节点是根节点，放弃匹配，退栈
@@ -273,7 +270,7 @@ namespace util {
                  * @param str 字符串起始地址
                  * @param end_sz 字符串结束位置
                  */
-                size_t find_start(const char_t * str, size_t end_sz) const {
+                size_t find_start(const char_t *str, size_t end_sz) const {
                     if (end_sz <= 0) {
                         return 0;
                     }
@@ -313,9 +310,10 @@ namespace util {
             struct match_t {
                 size_t start;
                 size_t length;
-                const string_t* keyword;
+                const string_t *keyword;
             };
             typedef std::vector<match_t> value_type;
+
         private:
             /**
              * 根节点(空节点)
@@ -328,6 +326,7 @@ namespace util {
             skip_set_t skip_charset_;
 
             bool is_inited_;
+            bool is_no_case_;
 
             /**
              * 初始化字典树的失败指针
@@ -341,7 +340,8 @@ namespace util {
             }
 
         public:
-            ac_automation() : root_(new detail::actrie<char_t>(std::shared_ptr<detail::actrie<char_t> >(NULL))), is_inited_(false) {
+            ac_automation()
+                : root_(new detail::actrie<char_t>(std::shared_ptr<detail::actrie<char_t> >(NULL))), is_inited_(false), is_no_case_(false) {
                 // 临时的自环
                 root_->set_failed(root_);
             }
@@ -350,6 +350,12 @@ namespace util {
                 // 解除自环，防止内存泄漏
                 root_->set_failed(std::shared_ptr<detail::actrie<char_t> >(NULL));
             }
+
+            /**
+             * @brief 获取是否已经初始化过（已建立索引）
+             * @return 是否已初始化过
+             */
+            inline bool is_inited() const { return is_inited_; }
 
             /**
              * 增加关键字
@@ -361,7 +367,14 @@ namespace util {
                 }
 
                 is_inited_ = false;
-                root_->insert(keyword.c_str(), keyword.size(), keyword);
+
+                if (is_no_case_) {
+                    string_t res = keyword;
+                    std::transform(res.begin(), res.end(), res.begin(), ::tolower);
+                    root_->insert(res.c_str(), res.size(), keyword);
+                } else {
+                    root_->insert(keyword.c_str(), keyword.size(), keyword);
+                }
             }
 
             /**
@@ -374,11 +387,18 @@ namespace util {
                 if (content.empty()) {
                     return ret;
                 }
+                const string_t *conv_content = &content;
+                string_t nocase;
+                if (is_no_case_) {
+                    nocase = content;
+                    std::transform(nocase.begin(), nocase.end(), nocase.begin(), ::tolower);
+                    conv_content = &nocase;
+                }
 
                 init();
-                size_t sz = content.size();
+                size_t sz = conv_content->size();
                 size_t left = sz;
-                const char_t *end = content.data() + sz;
+                const char_t *end = conv_content->data() + sz;
 
                 while (left > 0) {
                     typename trie_type::match_result_t mres;
@@ -390,10 +410,10 @@ namespace util {
                     size_t res = root_->match(mres, end - left, left, &skip_charset_);
                     if (NULL != mres.keyword && mres.keyword->is_leaf()) {
                         ret.push_back(match_t());
-                        match_t& item = ret.back(); 
+                        match_t &item = ret.back();
                         item.keyword = &mres.keyword->get_leaf();
                         if (mres.has_skip) {
-                            item.start = mres.keyword->find_start(content.data(), sz - res);
+                            item.start = mres.keyword->find_start(conv_content->data(), sz - res);
                         } else {
                             item.start = sz - res - mres.keyword->get_leaf().size();
                         }
@@ -421,6 +441,17 @@ namespace util {
              * 取消设置忽略字符
              */
             void unset_skip(char_t c) { skip_charset_.unset(c); }
+
+            /**
+             * 设置是否忽视大小写
+             * @note 必须在insert_keyword前调用
+             */
+            void set_nocase(bool v) { is_no_case_ = v; }
+
+            /**
+             * 获取是否忽视大小写
+             */
+            bool is_nocase() const { return is_no_case_; }
         };
     }
 }
