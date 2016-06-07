@@ -478,7 +478,7 @@ namespace util {
             }
 
             virtual ~lru_pool() {
-                set_manager(NULL);
+                set_manager(lru_pool_manager::ptr_t());
                 clear();
             }
 
