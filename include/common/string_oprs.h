@@ -23,6 +23,8 @@
 #include <cstdlib>
 #include <cstring>
 #include <algorithm>
+#include <cctype>
+#include <ostream>
 
 #if defined(_MSC_VER) && _MSC_VER >= 1600
 #define UTIL_STRFUNC_STRCASE_CMP(l, r) _stricmp(l, r)
