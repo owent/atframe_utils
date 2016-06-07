@@ -148,7 +148,7 @@ namespace util {
                  * 当前节点会被视为根节点
                  */
                 void init_failed() {
-                    failed_ = ptr_type(NULL);
+                    failed_.reset();
                     std::list<std::pair<char_t, ptr_type> > ls;
 
                     typedef typename std::map<char_t, ptr_type>::iterator iter_type;
@@ -277,7 +277,7 @@ namespace util {
 
                     size_t ret = end_sz - 1;
                     // 匹配错误，直接返回
-                    if (matched_string_.empty() || str[ret] != matched_string_.back()) {
+                    if (matched_string_.empty() || str[ret] != *matched_string_.rbegin()) {
                         return end_sz;
                     }
 
@@ -341,14 +341,14 @@ namespace util {
 
         public:
             ac_automation()
-                : root_(new detail::actrie<char_t>(std::shared_ptr<detail::actrie<char_t> >(NULL))), is_inited_(false), is_no_case_(false) {
+                : root_(new detail::actrie<char_t>(std::shared_ptr<detail::actrie<char_t> >())), is_inited_(false), is_no_case_(false) {
                 // 临时的自环
                 root_->set_failed(root_);
             }
 
             ~ac_automation() {
                 // 解除自环，防止内存泄漏
-                root_->set_failed(std::shared_ptr<detail::actrie<char_t> >(NULL));
+                root_->set_failed(std::shared_ptr<detail::actrie<char_t> >());
             }
 
             /**
