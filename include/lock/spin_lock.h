@@ -167,17 +167,17 @@ namespace util {
 
             void lock() {
                 unsigned char try_times = 0;
-                while (lock_status_.exchange(static_cast<unsigned int>(LOCKED), ::std::memory_order_acq_rel) == LOCKED)
+                while (lock_status_.exchange(static_cast<unsigned int>(LOCKED), ::util::lock::memory_order_acq_rel) == LOCKED)
                     __UTIL_LOCK_SPIN_LOCK_WAIT(try_times++); /* busy-wait */
             }
 
-            void unlock() { lock_status_.store(static_cast<unsigned int>(UNLOCKED), ::std::memory_order_release); }
+            void unlock() { lock_status_.store(static_cast<unsigned int>(UNLOCKED), ::util::lock::memory_order_release); }
 
-            bool is_locked() { return lock_status_.load(::std::memory_order_acquire) == LOCKED; }
+            bool is_locked() { return lock_status_.load(::util::lock::memory_order_acquire) == LOCKED; }
 
-            bool try_lock() { return lock_status_.exchange(static_cast<unsigned int>(LOCKED), ::std::memory_order_acq_rel) == UNLOCKED; }
+            bool try_lock() { return lock_status_.exchange(static_cast<unsigned int>(LOCKED), ::util::lock::memory_order_acq_rel) == UNLOCKED; }
 
-            bool try_unlock() { return lock_status_.exchange(static_cast<unsigned int>(UNLOCKED), ::std::memory_order_acq_rel) == LOCKED; }
+            bool try_unlock() { return lock_status_.exchange(static_cast<unsigned int>(UNLOCKED), ::util::lock::memory_order_acq_rel) == LOCKED; }
         };
     }
 }

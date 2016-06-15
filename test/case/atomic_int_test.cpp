@@ -1,4 +1,5 @@
 ﻿#include <stdint.h>
+
 #include "frame/test_macros.h"
 
 #include "config/compiler_features.h"
@@ -447,11 +448,13 @@ CASE_TEST(atomic_int_test, multi_thread_add) {
 
     typedef std::shared_ptr<std::thread> thread_ptr;
     std::vector<thread_ptr> thds;
-    thds.resize(1024);
+    thds.resize(10000);
 
     for (size_t i = 0; i < thds.size(); ++i) {
         thds[i] = std::make_shared<std::thread>([&tested, i]() {
-            tested.fetch_add(i);
+            for (uint64_t j = 1; j <= 10; ++j) {
+                tested.fetch_add(i * 10 + j);
+            }
         });
     }
 
@@ -459,6 +462,6 @@ CASE_TEST(atomic_int_test, multi_thread_add) {
         thds[i]->join();
     }
 
-    CASE_EXPECT_EQ(523819, tested.load());
+    CASE_EXPECT_EQ(5000050043, tested.load());
 }
 #endif

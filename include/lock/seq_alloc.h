@@ -42,22 +42,22 @@ namespace util {
         public:
             seq_alloc() { data_.store(static_cast<value_type>(0)); }
 
-            value_type get() const { return data_.load(std::memory_order_acquire); }
+            value_type get() const { return data_.load(util::lock::memory_order_acquire); }
 
-            value_type set(value_type val) { return data_.exchange(val, std::memory_order_release); }
+            value_type set(value_type val) { return data_.exchange(val, util::lock::memory_order_release); }
 
-            value_type add(value_type val) { return data_.fetch_add(val, std::memory_order_release); }
+            value_type add(value_type val) { return data_.fetch_add(val, util::lock::memory_order_release); }
 
-            value_type sub(value_type val) { return data_.fetch_sub(val, std::memory_order_release); }
+            value_type sub(value_type val) { return data_.fetch_sub(val, util::lock::memory_order_release); }
 
-            value_type band(value_type val) { return data_.fetch_and(val, std::memory_order_release); }
+            value_type band(value_type val) { return data_.fetch_and(val, util::lock::memory_order_release); }
 
-            value_type bor(value_type val) { return data_.fetch_or(val, std::memory_order_release); }
+            value_type bor(value_type val) { return data_.fetch_or(val, util::lock::memory_order_release); }
 
-            value_type bxor(value_type val) { return data_.fetch_xor(val, std::memory_order_release); }
+            value_type bxor(value_type val) { return data_.fetch_xor(val, util::lock::memory_order_release); }
 
             bool compare_exchange(value_type expected, value_type val) {
-                return data_.compare_exchange_strong(expected, val, std::memory_order_acq_rel);
+                return data_.compare_exchange_strong(expected, val, util::lock::memory_order_acq_rel);
             }
 
             value_type inc() { return ++data_; }

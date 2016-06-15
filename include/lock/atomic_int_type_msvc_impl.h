@@ -1,4 +1,4 @@
-﻿﻿/**
+﻿/**
  * @file atomic_int_type_msvc_impl.h
  * @brief 整数类型的原子操作-MSVC统一接口
  * Licensed under the MIT licenses.
@@ -13,17 +13,27 @@
  * @history
  *     2016-06-14
  */
-
 #ifndef _UTIL_LOCK_ATOMIC_INT_TYPE_MSVC_IMPL_H_
 #define _UTIL_LOCK_ATOMIC_INT_TYPE_MSVC_IMPL_H_
 
 #pragma once
 
-#include <WinBase.h>
+#include <Windows.h>
 
 namespace util {
     namespace lock {
+
+        enum memory_order {
+            memory_order_relaxed = 0,
+            memory_order_consume,
+            memory_order_acquire,
+            memory_order_release,
+            memory_order_acq_rel,
+            memory_order_seq_cst
+        };
+
         namespace detail {
+
             template<int INT_SIZE>
             struct atomic_msvc_oprs;
 
@@ -32,120 +42,80 @@ namespace util {
                 typedef char opr_t;
 
                 static opr_t exchange(volatile opr_t * target, opr_t value, ::util::lock::memory_order order) {
-                    switch(order) {
-                        case ::util::lock::memory_order_relaxed:
-                            return InterlockedExchange8NoFence(target, value);
-                        case ::util::lock::memory_order_acquire:
-                            return InterlockedExchange8Acquire(target, value);
-                        case ::util::lock::memory_order_release:
-                            return InterlockedExchange8Release(target, value);
-                        default:
-                            return InterlockedExchange8(target, value);
-                    }
+                    return InterlockedExchange8(target, value);
                 }
 
                 static opr_t cas(volatile opr_t * target, opr_t value, opr_t expected, ::util::lock::memory_order order) {
-                    switch(order) {
-                        case ::util::lock::memory_order_relaxed:
-                            return InterlockedCompareExchange8NoFence(target, value, expected);
-                        case ::util::lock::memory_order_acquire:
-                            return InterlockedCompareExchange8Acquire(target, value, expected);
-                        case ::util::lock::memory_order_release:
-                            return InterlockedCompareExchange8Release(target, value, expected);
-                        default:
-                            return InterlockedCompareExchange8(target, value, expected);
+                    volatile short* star = reinterpret_cast<volatile short*>(target);
+                    short real_expect = expected;
+                    real_expect |= 0xFF00 & *star;
+
+                    switch (order) {
+                    case ::util::lock::memory_order_relaxed:
+                        return static_cast<opr_t>(InterlockedCompareExchangeNoFence16(star, value, real_expect));
+                    case ::util::lock::memory_order_acquire:
+                        return static_cast<opr_t>(InterlockedCompareExchangeAcquire16(star, value, real_expect));
+                    case ::util::lock::memory_order_release:
+                        return static_cast<opr_t>(InterlockedCompareExchangeRelease16(star, value, real_expect));
+                    default:
+                        return static_cast<opr_t>(InterlockedCompareExchange16(star, value, real_expect));
                     }
                 }
 
                 static opr_t inc(volatile opr_t * target, ::util::lock::memory_order order) {
-                    switch(order) {
-                        case ::util::lock::memory_order_relaxed:
-                            return InterlockedIncrement8NoFence(target);
-                        case ::util::lock::memory_order_acquire:
-                            return InterlockedIncrement8Acquire(target);
-                        case ::util::lock::memory_order_release:
-                            return InterlockedIncrement8Release(target);
-                        default:
-                            return InterlockedIncrement8(target);
-                    }
+                    return add(target, 1, order);
                 }
 
                 static opr_t dec(volatile opr_t * target, ::util::lock::memory_order order) {
-                    switch(order) {
-                        case ::util::lock::memory_order_relaxed:
-                            return InterlockedDecrement8NoFence(target);
-                        case ::util::lock::memory_order_acquire:
-                            return InterlockedDecrement8Acquire(target);
-                        case ::util::lock::memory_order_release:
-                            return InterlockedDecrement8Release(target);
-                        default:
-                            return InterlockedDecrement8(target);
-                    }
+                    return sub(target, 1, order);
                 }
 
                 static opr_t add(volatile opr_t * target, opr_t value, ::util::lock::memory_order order) {
-                    switch(order) {
-                        case ::util::lock::memory_order_relaxed:
-                            return InterlockedAdd8NoFence(target, value);
-                        case ::util::lock::memory_order_acquire:
-                            return InterlockedAdd8Acquire(target, value);
-                        case ::util::lock::memory_order_release:
-                            return InterlockedAdd8Release(target, value);
-                        default:
-                            return InterlockedAdd8(target, value);
+                    // no api just like InterlockedAdd16, use cas to simulate it
+                    if (NULL == target || 0 == value) {
+                        return 0;
                     }
+
+                    opr_t ret = *target;
+                    while (true) {
+                        if (ret == cas(target, ret + value, ret, order)) {
+                            ret += value;
+                            break;
+                        }
+                        ret = *target;
+                    }
+
+                    return ret;
                 }
 
                 static opr_t sub(volatile opr_t * target, opr_t value, ::util::lock::memory_order order) {
-                    switch(order) {
-                        case ::util::lock::memory_order_relaxed:
-                            return InterlockedAdd8NoFence(target, ~(value - 1);
-                        case ::util::lock::memory_order_acquire:
-                            return InterlockedAdd8Acquire(target, ~(value - 1));
-                        case ::util::lock::memory_order_release:
-                            return InterlockedAdd8Release(target, ~(value - 1));
-                        default:
-                            return InterlockedAdd8(target, ~(value - 1));
+                    // no api just like InterlockedAdd16, use cas to simulate it
+                    if (NULL == target || 0 == value) {
+                        return 0;
                     }
+
+                    opr_t ret = *target;
+                    while (true) {
+                        if (ret == cas(target, ret - value, ret, order)) {
+                            ret -= value;
+                            break;
+                        }
+                        ret = *target;
+                    }
+
+                    return ret;
                 }
 
                 static opr_t and(volatile opr_t * target, opr_t value, ::util::lock::memory_order order) {
-                    switch(order) {
-                        case ::util::lock::memory_order_relaxed:
-                            return InterlockedAnd8NoFence(target, value);
-                        case ::util::lock::memory_order_acquire:
-                            return InterlockedAnd8Acquire(target, value);
-                        case ::util::lock::memory_order_release:
-                            return InterlockedAnd8Release(target, value);
-                        default:
-                            return InterlockedAnd8(target, value);
-                    }
+                    return InterlockedAnd8(target, value);
                 }
 
                 static opr_t or(volatile opr_t * target, opr_t value, ::util::lock::memory_order order) {
-                    switch(order) {
-                        case ::util::lock::memory_order_relaxed:
-                            return InterlockedOr8NoFence(target, value);
-                        case ::util::lock::memory_order_acquire:
-                            return InterlockedOr8Acquire(target, value);
-                        case ::util::lock::memory_order_release:
-                            return InterlockedOr8Release(target, value);
-                        default:
-                            return InterlockedOr8(target, value);
-                    }
+                    return InterlockedOr8(target, value);
                 }
 
                 static opr_t xor(volatile opr_t * target, opr_t value, ::util::lock::memory_order order) {
-                    switch(order) {
-                        case ::util::lock::memory_order_relaxed:
-                            return InterlockedXor8NoFence(target, value);
-                        case ::util::lock::memory_order_acquire:
-                            return InterlockedXor8Acquire(target, value);
-                        case ::util::lock::memory_order_release:
-                            return InterlockedXor8Release(target, value);
-                        default:
-                            return InterlockedXor8(target, value);
-                    }
+                    return InterlockedXor8(target, value);
                 }
             };
 
@@ -154,26 +124,17 @@ namespace util {
                 typedef SHORT opr_t;
 
                 static opr_t exchange(volatile opr_t * target, opr_t value, ::util::lock::memory_order order) {
-                    switch(order) {
-                        case ::util::lock::memory_order_relaxed:
-                            return InterlockedExchange16NoFence(target, value);
-                        case ::util::lock::memory_order_acquire:
-                            return InterlockedExchange16Acquire(target, value);
-                        case ::util::lock::memory_order_release:
-                            return InterlockedExchange16Release(target, value);
-                        default:
-                            return InterlockedExchange16(target, value);
-                    }
+                    return InterlockedExchange16(target, value);
                 }
 
                 static opr_t cas(volatile opr_t * target, opr_t value, opr_t expected, ::util::lock::memory_order order) {
                     switch(order) {
                         case ::util::lock::memory_order_relaxed:
-                            return InterlockedCompareExchange16NoFence(target, value, expected);
+                            return InterlockedCompareExchangeNoFence16(target, value, expected);
                         case ::util::lock::memory_order_acquire:
-                            return InterlockedCompareExchange16Acquire(target, value, expected);
+                            return InterlockedCompareExchangeAcquire16(target, value, expected);
                         case ::util::lock::memory_order_release:
-                            return InterlockedCompareExchange16Release(target, value, expected);
+                            return InterlockedCompareExchangeRelease16(target, value, expected);
                         default:
                             return InterlockedCompareExchange16(target, value, expected);
                     }
@@ -182,11 +143,11 @@ namespace util {
                 static opr_t inc(volatile opr_t * target, ::util::lock::memory_order order) {
                     switch(order) {
                         case ::util::lock::memory_order_relaxed:
-                            return InterlockedIncrement16NoFence(target);
+                            return InterlockedIncrementNoFence16(target);
                         case ::util::lock::memory_order_acquire:
-                            return InterlockedIncrement16Acquire(target);
+                            return InterlockedIncrementAcquire16(target);
                         case ::util::lock::memory_order_release:
-                            return InterlockedIncrement16Release(target);
+                            return InterlockedIncrementRelease16(target);
                         default:
                             return InterlockedIncrement16(target);
                     }
@@ -195,79 +156,62 @@ namespace util {
                 static opr_t dec(volatile opr_t * target, ::util::lock::memory_order order) {
                     switch(order) {
                         case ::util::lock::memory_order_relaxed:
-                            return InterlockedDecrement16NoFence(target);
+                            return InterlockedDecrementNoFence16(target);
                         case ::util::lock::memory_order_acquire:
-                            return InterlockedDecrement16Acquire(target);
+                            return InterlockedDecrementAcquire16(target);
                         case ::util::lock::memory_order_release:
-                            return InterlockedDecrement16Release(target);
+                            return InterlockedDecrementRelease16(target);
                         default:
                             return InterlockedDecrement16(target);
                     }
                 }
 
                 static opr_t add(volatile opr_t * target, opr_t value, ::util::lock::memory_order order) {
-                    switch(order) {
-                        case ::util::lock::memory_order_relaxed:
-                            return InterlockedAdd16NoFence(target, value);
-                        case ::util::lock::memory_order_acquire:
-                            return InterlockedAdd16Acquire(target, value);
-                        case ::util::lock::memory_order_release:
-                            return InterlockedAdd16Release(target, value);
-                        default:
-                            return InterlockedAdd16(target, value);
+                    // no api just like InterlockedAdd16, use cas to simulate it
+                    if (NULL == target || 0 == value) {
+                        return 0;
                     }
+
+                    opr_t ret = *target;
+                    while (true) {
+                        if (ret == cas(target, ret + value, ret, order)) {
+                            ret += value;
+                            break;
+                        }
+                        ret = *target;
+                    }
+
+                    return ret;
                 }
 
                 static opr_t sub(volatile opr_t * target, opr_t value, ::util::lock::memory_order order) {
-                    switch(order) {
-                        case ::util::lock::memory_order_relaxed:
-                            return InterlockedAdd16NoFence(target, ~(value - 1);
-                        case ::util::lock::memory_order_acquire:
-                            return InterlockedAdd16Acquire(target, ~(value - 1));
-                        case ::util::lock::memory_order_release:
-                            return InterlockedAdd16Release(target, ~(value - 1));
-                        default:
-                            return InterlockedAdd16(target, ~(value - 1));
+                    // no api just like InterlockedAdd16, use cas to simulate it
+                    if (NULL == target || 0 == value) {
+                        return 0;
                     }
+
+                    opr_t ret = *target;
+                    while (true) {
+                        if (ret == cas(target, ret - value, ret, order)) {
+                            ret -= value;
+                            break;
+                        }
+                        ret = *target;
+                    }
+
+                    return ret;
                 }
 
                 static opr_t and(volatile opr_t * target, opr_t value, ::util::lock::memory_order order) {
-                    switch(order) {
-                        case ::util::lock::memory_order_relaxed:
-                            return InterlockedAnd16NoFence(target, value);
-                        case ::util::lock::memory_order_acquire:
-                            return InterlockedAnd16Acquire(target, value);
-                        case ::util::lock::memory_order_release:
-                            return InterlockedAnd16Release(target, value);
-                        default:
-                            return InterlockedAnd16(target, value);
-                    }
+                    return InterlockedAnd16(target, value);
                 }
 
                 static opr_t or(volatile opr_t * target, opr_t value, ::util::lock::memory_order order) {
-                    switch(order) {
-                        case ::util::lock::memory_order_relaxed:
-                            return InterlockedOr16NoFence(target, value);
-                        case ::util::lock::memory_order_acquire:
-                            return InterlockedOr16Acquire(target, value);
-                        case ::util::lock::memory_order_release:
-                            return InterlockedOr16Release(target, value);
-                        default:
-                            return InterlockedOr16(target, value);
-                    }
+                    return InterlockedOr16(target, value);
                 }
 
                 static opr_t xor(volatile opr_t * target, opr_t value, ::util::lock::memory_order order) {
-                    switch(order) {
-                        case ::util::lock::memory_order_relaxed:
-                            return InterlockedXor16NoFence(target, value);
-                        case ::util::lock::memory_order_acquire:
-                            return InterlockedXor16Acquire(target, value);
-                        case ::util::lock::memory_order_release:
-                            return InterlockedXor16Release(target, value);
-                        default:
-                            return InterlockedXor16(target, value);
-                    }
+                    return InterlockedXor16(target, value);
                 }
             };
 
@@ -281,8 +225,6 @@ namespace util {
                             return InterlockedExchangeNoFence64(target, value);
                         case ::util::lock::memory_order_acquire:
                             return InterlockedExchangeAcquire64(target, value);
-                        case ::util::lock::memory_order_release:
-                            return InterlockedExchangeRelease64(target, value);
                         default:
                             return InterlockedExchange64(target, value);
                     }
@@ -343,7 +285,7 @@ namespace util {
                 static opr_t sub(volatile opr_t * target, opr_t value, ::util::lock::memory_order order) {
                     switch(order) {
                         case ::util::lock::memory_order_relaxed:
-                            return InterlockedAddNoFence64(target, ~(value - 1);
+                            return InterlockedAddNoFence64(target, ~(value - 1));
                         case ::util::lock::memory_order_acquire:
                             return InterlockedAddAcquire64(target, ~(value - 1));
                         case ::util::lock::memory_order_release:
@@ -403,8 +345,6 @@ namespace util {
                             return InterlockedExchangeNoFence(target, value);
                         case ::util::lock::memory_order_acquire:
                             return InterlockedExchangeAcquire(target, value);
-                        case ::util::lock::memory_order_release:
-                            return InterlockedExchangeRelease(target, value);
                         default:
                             return InterlockedExchange(target, value);
                     }
@@ -465,7 +405,7 @@ namespace util {
                 static opr_t sub(volatile opr_t * target, opr_t value, ::util::lock::memory_order order) {
                     switch(order) {
                         case ::util::lock::memory_order_relaxed:
-                            return InterlockedAddNoFence(target, ~(value - 1);
+                            return InterlockedAddNoFence(target, ~(value - 1));
                         case ::util::lock::memory_order_acquire:
                             return InterlockedAddAcquire(target, ~(value - 1));
                         case ::util::lock::memory_order_release:
