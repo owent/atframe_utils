@@ -19,6 +19,8 @@
  *         4. add gcc atomic support
  *    2014-07-08
  *         1. add yield operation
+ *    2016-06-15
+ *         1. using atomic_int_type
  */
 
 #ifndef _UTIL_LOCK_SPINLOCK_H_
@@ -28,21 +30,7 @@
 #pragma once
 #endif
 
-#include <cstddef>
-#if defined(__cplusplus) && __cplusplus >= 201103L
-#include <atomic>
-#define __UTIL_LOCK_SPINLOCK_ATOMIC_STD
-#elif defined(__clang__) && (__clang_major__ > 3 || (__clang_major__ == 3 && __clang_minor__ >= 1)) && __cplusplus >= 201103L
-#include <atomic>
-#define __UTIL_LOCK_SPINLOCK_ATOMIC_STD
-#elif defined(_MSC_VER) && (_MSC_VER > 1700 || (defined(_HAS_CPP0X) && _HAS_CPP0X))
-#include <atomic>
-#define __UTIL_LOCK_SPINLOCK_ATOMIC_STD
-#elif defined(__GNUC__) && ((__GNUC__ == 4 && __GNUC_MINOR__ >= 5) || __GNUC__ > 4) && defined(__GXX_EXPERIMENTAL_CXX0X__)
-#include <atomic>
-#define __UTIL_LOCK_SPINLOCK_ATOMIC_STD
-#endif
-
+#include "atomic_int_type.h"
 
 /**
  * ==============================================
@@ -165,15 +153,14 @@
 
 namespace util {
     namespace lock {
-#ifdef __UTIL_LOCK_SPINLOCK_ATOMIC_STD
         /**
-         * @brief 自旋锁 - C++ 0x/11版实现
-         * @see http://www.boost.org/doc/libs/1_60_0/doc/html/atomic/usage_examples.html#boost_atomic.usage_examples.example_spinlock
+         * @brief 自旋锁
+         * @see http://www.boost.org/doc/libs/1_61_0/doc/html/atomic/usage_examples.html#boost_atomic.usage_examples.example_spinlock
          */
         class spin_lock {
         private:
             typedef enum { UNLOCKED = 0, LOCKED = 1 } lock_state_t;
-            ::std::atomic_uint lock_status_;
+            ::util::lock::atomic_int_type<unsigned int> lock_status_;
 
         public:
             spin_lock() { lock_status_.store(UNLOCKED); }
@@ -192,104 +179,6 @@ namespace util {
 
             bool try_unlock() { return lock_status_.exchange(static_cast<unsigned int>(UNLOCKED), ::std::memory_order_acq_rel) == LOCKED; }
         };
-#else
-
-#if defined(__clang__)
-#if !defined(__GCC_ATOMIC_INT_LOCK_FREE) && (!defined(__GNUC__) || __GNUC__ < 4 || (__GNUC__ == 4 && __GNUC_MINOR__ < 1))
-#error Clang version is too old
-#endif
-#if defined(__GCC_ATOMIC_INT_LOCK_FREE)
-#define __UTIL_LOCK_SPINLOCK_ATOMIC_GCC_ATOMIC 1
-#else
-#define __UTIL_LOCK_SPINLOCK_ATOMIC_GCC 1
-#endif
-#elif defined(_MSC_VER)
-#include <WinBase.h>
-#define __UTIL_LOCK_SPINLOCK_ATOMIC_MSVC 1
-
-#elif defined(__GNUC__) || defined(__clang__) || defined(__clang__) || defined(__INTEL_COMPILER)
-#if defined(__GNUC__) && (__GNUC__ < 4 || (__GNUC__ == 4 && __GNUC_MINOR__ < 1))
-#error GCC version must be greater or equal than 4.1
-#endif
-
-#if defined(__INTEL_COMPILER) && __INTEL_COMPILER < 1100
-#error Intel Compiler version must be greater or equal than 11.0
-#endif
-
-#if defined(__GCC_ATOMIC_INT_LOCK_FREE)
-#define __UTIL_LOCK_SPINLOCK_ATOMIC_GCC_ATOMIC 1
-#else
-#define __UTIL_LOCK_SPINLOCK_ATOMIC_GCC 1
-#endif
-#else
-#error Currently only gcc, msvc, intel compiler & llvm-clang are supported
-#endif
-
-        class spin_lock {
-        private:
-            typedef enum { UNLOCKED = 0, LOCKED = 1 } lock_state_t;
-            volatile unsigned int lock_status_;
-
-        public:
-            spin_lock() : lock_status_(UNLOCKED) {}
-
-            void lock() {
-                unsigned char try_times = 0;
-#ifdef __UTIL_LOCK_SPINLOCK_ATOMIC_MSVC
-                while (InterlockedExchange(&lock_status_, LOCKED) == LOCKED)
-                    __UTIL_LOCK_SPIN_LOCK_WAIT(try_times++); /* busy-wait */
-#elif defined(__UTIL_LOCK_SPINLOCK_ATOMIC_GCC_ATOMIC)
-                while (__atomic_exchange_n(&lock_status_, LOCKED, __ATOMIC_ACQ_REL) == LOCKED)
-                    __UTIL_LOCK_SPIN_LOCK_WAIT(try_times++); /* busy-wait */
-#else
-                while (__sync_lock_test_and_set(&lock_status_, LOCKED) == LOCKED)
-                    __UTIL_LOCK_SPIN_LOCK_WAIT(try_times++); /* busy-wait */
-#endif
-            }
-
-            void unlock() {
-#ifdef __UTIL_LOCK_SPINLOCK_ATOMIC_MSVC
-                InterlockedExchange(&lock_status_, UNLOCKED);
-#elif defined(__UTIL_LOCK_SPINLOCK_ATOMIC_GCC_ATOMIC)
-                __atomic_store_n(&lock_status_, UNLOCKED, __ATOMIC_RELEASE);
-#else
-                __sync_lock_release(&lock_status_, UNLOCKED);
-#endif
-            }
-
-            bool is_locked() {
-#ifdef __UTIL_LOCK_SPINLOCK_ATOMIC_MSVC
-                return InterlockedExchangeAdd(&lock_status_, 0) == LOCKED;
-#elif defined(__UTIL_LOCK_SPINLOCK_ATOMIC_GCC_ATOMIC)
-                return __atomic_load_n(&lock_status_, __ATOMIC_ACQUIRE) == LOCKED;
-#else
-                return __sync_add_and_fetch(&lock_status_, 0) == LOCKED;
-#endif
-            }
-
-            bool try_lock() {
-
-#ifdef __UTIL_LOCK_SPINLOCK_ATOMIC_MSVC
-                return InterlockedExchange(&lock_status_, LOCKED) == UNLOCKED;
-#elif defined(__UTIL_LOCK_SPINLOCK_ATOMIC_GCC_ATOMIC)
-                return __atomic_exchange_n(&lock_status_, LOCKED, __ATOMIC_ACQ_REL) == UNLOCKED;
-#else
-                return __sync_bool_compare_and_swap(&lock_status_, UNLOCKED, LOCKED);
-#endif
-            }
-
-            bool try_unlock() {
-#ifdef __UTIL_LOCK_SPINLOCK_ATOMIC_MSVC
-                return InterlockedExchange(&lock_status_, UNLOCKED) == LOCKED;
-#elif defined(__UTIL_LOCK_SPINLOCK_ATOMIC_GCC_ATOMIC)
-                return __atomic_exchange_n(&lock_status_, UNLOCKED, __ATOMIC_ACQ_REL) == LOCKED;
-#else
-                return __sync_bool_compare_and_swap(&lock_status_, LOCKED, UNLOCKED);
-#endif
-            }
-        };
-
-#endif
     }
 }
 
