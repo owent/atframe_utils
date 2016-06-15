@@ -40,6 +40,7 @@
 #if defined(_MSC_VER)
 
 #include <Windows.h> // YieldProcessor
+#include <Synchapi.h> // Windows server
 #include <Processthreadsapi.h>
 
 
@@ -108,7 +109,7 @@
  * ======           thread yield           ======
  * ==============================================
  */
-#if defined(__UTIL_LOCK_SPINLOCK_ATOMIC_STD)
+#if defined(__UTIL_LOCK_ATOMIC_INT_TYPE_ATOMIC_STD)
 #include <thread>
 #include <chrono>
 #define __UTIL_LOCK_SPIN_LOCK_THREAD_YIELD() ::std::this_thread::yield()
