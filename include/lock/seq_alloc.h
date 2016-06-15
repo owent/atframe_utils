@@ -62,7 +62,7 @@ namespace util {
 
             value_type inc() { return ++data_; }
 
-            value_type dec() { return --data; }
+            value_type dec() { return --data_; }
         };
 
         typedef seq_alloc<uint8_t> seq_alloc_u8;

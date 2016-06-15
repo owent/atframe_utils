@@ -154,6 +154,36 @@
 # endif
 
 #    if (__GNUC__ * 100 + __GNUC_MINOR__) >= 404 && (__cplusplus >= 201103L || (defined(__GXX_EXPERIMENTAL_CXX0X__) && __GXX_EXPERIMENTAL_CXX0X__))
+#      define UTIL_CONFIG_COMPILER_CXX_AUTO_TYPE 1
+#    else
+#      define UTIL_CONFIG_COMPILER_CXX_AUTO_TYPE 0
+#    endif
+
+#    if (__GNUC__ * 100 + __GNUC_MINOR__) >= 406 && (__cplusplus >= 201103L || (defined(__GXX_EXPERIMENTAL_CXX0X__) && __GXX_EXPERIMENTAL_CXX0X__))
+#      define UTIL_CONFIG_COMPILER_CXX_CONSTEXPR 1
+#    else
+#      define UTIL_CONFIG_COMPILER_CXX_CONSTEXPR 0
+#    endif
+
+#    if (__GNUC__ * 100 + __GNUC_MINOR__) >= 404 && (__cplusplus >= 201103L || (defined(__GXX_EXPERIMENTAL_CXX0X__) && __GXX_EXPERIMENTAL_CXX0X__))
+#      define UTIL_CONFIG_COMPILER_CXX_DECLTYPE 1
+#    else
+#      define UTIL_CONFIG_COMPILER_CXX_DECLTYPE 0
+#    endif
+
+#    if (__GNUC__ * 100 + __GNUC_MINOR__) >= 409 && __cplusplus > 201103L
+#      define UTIL_CONFIG_COMPILER_CXX_DECLTYPE_AUTO 1
+#    else
+#      define UTIL_CONFIG_COMPILER_CXX_DECLTYPE_AUTO 0
+#    endif
+
+#    if (__GNUC__ * 100 + __GNUC_MINOR__) >= 404 && (__cplusplus >= 201103L || (defined(__GXX_EXPERIMENTAL_CXX0X__) && __GXX_EXPERIMENTAL_CXX0X__))
+#      define UTIL_CONFIG_COMPILER_CXX_DEFAULTED_FUNCTIONS 1
+#    else
+#      define UTIL_CONFIG_COMPILER_CXX_DEFAULTED_FUNCTIONS 0
+#    endif
+
+#    if (__GNUC__ * 100 + __GNUC_MINOR__) >= 404 && (__cplusplus >= 201103L || (defined(__GXX_EXPERIMENTAL_CXX0X__) && __GXX_EXPERIMENTAL_CXX0X__))
 #      define UTIL_CONFIG_COMPILER_CXX_DELETED_FUNCTIONS 1
 #    else
 #      define UTIL_CONFIG_COMPILER_CXX_DELETED_FUNCTIONS 0
@@ -163,6 +193,18 @@
 #      define UTIL_CONFIG_COMPILER_CXX_FINAL 1
 #    else
 #      define UTIL_CONFIG_COMPILER_CXX_FINAL 0
+#    endif
+
+#    if (__GNUC__ * 100 + __GNUC_MINOR__) >= 407 && __cplusplus >= 201103L
+#      define UTIL_CONFIG_COMPILER_CXX_OVERRIDE 1
+#    else
+#      define UTIL_CONFIG_COMPILER_CXX_OVERRIDE 0
+#    endif
+
+#    if (__GNUC__ * 100 + __GNUC_MINOR__) >= 406 && (__cplusplus >= 201103L || (defined(__GXX_EXPERIMENTAL_CXX0X__) && __GXX_EXPERIMENTAL_CXX0X__))
+#      define UTIL_CONFIG_COMPILER_CXX_RANGE_FOR 1
+#    else
+#      define UTIL_CONFIG_COMPILER_CXX_RANGE_FOR 0
 #    endif
 
 #    if (__GNUC__ * 100 + __GNUC_MINOR__) >= 406 && (__cplusplus >= 201103L || (defined(__GXX_EXPERIMENTAL_CXX0X__) && __GXX_EXPERIMENTAL_CXX0X__))
@@ -195,6 +237,12 @@
 #      define UTIL_CONFIG_COMPILER_CXX_VARIADIC_TEMPLATES 0
 #    endif
 
+#    if (__GNUC__ * 100 + __GNUC_MINOR__) >= 405 && (__cplusplus >= 201103L || (defined(__GXX_EXPERIMENTAL_CXX0X__) && __GXX_EXPERIMENTAL_CXX0X__))
+#      define UTIL_CONFIG_COMPILER_CXX_LAMBDAS 1
+#    else
+#      define UTIL_CONFIG_COMPILER_CXX_LAMBDAS 0
+#    endif
+
 #  elif UTIL_CONFIG_COMPILER_IS_Clang
 
 #    if !(((__clang_major__ * 100) + __clang_minor__) >= 304)
@@ -210,6 +258,36 @@
 #  define UTIL_CONFIG_SIMULATE_VERSION_MINOR (_MSC_VER % 100)
 # endif
 
+#    if ((__clang_major__ * 100) + __clang_minor__) >= 304 && __has_feature(cxx_auto_type)
+#      define UTIL_CONFIG_COMPILER_CXX_AUTO_TYPE 1
+#    else
+#      define UTIL_CONFIG_COMPILER_CXX_AUTO_TYPE 0
+#    endif
+
+#    if ((__clang_major__ * 100) + __clang_minor__) >= 304 && __has_feature(cxx_constexpr)
+#      define UTIL_CONFIG_COMPILER_CXX_CONSTEXPR 1
+#    else
+#      define UTIL_CONFIG_COMPILER_CXX_CONSTEXPR 0
+#    endif
+
+#    if ((__clang_major__ * 100) + __clang_minor__) >= 304 && __has_feature(cxx_decltype)
+#      define UTIL_CONFIG_COMPILER_CXX_DECLTYPE 1
+#    else
+#      define UTIL_CONFIG_COMPILER_CXX_DECLTYPE 0
+#    endif
+
+#    if ((__clang_major__ * 100) + __clang_minor__) >= 304 && __cplusplus > 201103L
+#      define UTIL_CONFIG_COMPILER_CXX_DECLTYPE_AUTO 1
+#    else
+#      define UTIL_CONFIG_COMPILER_CXX_DECLTYPE_AUTO 0
+#    endif
+
+#    if ((__clang_major__ * 100) + __clang_minor__) >= 304 && __has_feature(cxx_defaulted_functions)
+#      define UTIL_CONFIG_COMPILER_CXX_DEFAULTED_FUNCTIONS 1
+#    else
+#      define UTIL_CONFIG_COMPILER_CXX_DEFAULTED_FUNCTIONS 0
+#    endif
+
 #    if ((__clang_major__ * 100) + __clang_minor__) >= 304 && __has_feature(cxx_deleted_functions)
 #      define UTIL_CONFIG_COMPILER_CXX_DELETED_FUNCTIONS 1
 #    else
@@ -220,6 +298,18 @@
 #      define UTIL_CONFIG_COMPILER_CXX_FINAL 1
 #    else
 #      define UTIL_CONFIG_COMPILER_CXX_FINAL 0
+#    endif
+
+#    if ((__clang_major__ * 100) + __clang_minor__) >= 304 && __has_feature(cxx_override_control)
+#      define UTIL_CONFIG_COMPILER_CXX_OVERRIDE 1
+#    else
+#      define UTIL_CONFIG_COMPILER_CXX_OVERRIDE 0
+#    endif
+
+#    if ((__clang_major__ * 100) + __clang_minor__) >= 304 && __has_feature(cxx_range_for)
+#      define UTIL_CONFIG_COMPILER_CXX_RANGE_FOR 1
+#    else
+#      define UTIL_CONFIG_COMPILER_CXX_RANGE_FOR 0
 #    endif
 
 #    if ((__clang_major__ * 100) + __clang_minor__) >= 304 && __has_feature(cxx_noexcept)
@@ -252,6 +342,12 @@
 #      define UTIL_CONFIG_COMPILER_CXX_VARIADIC_TEMPLATES 0
 #    endif
 
+#    if ((__clang_major__ * 100) + __clang_minor__) >= 304 && __has_feature(cxx_lambdas)
+#      define UTIL_CONFIG_COMPILER_CXX_LAMBDAS 1
+#    else
+#      define UTIL_CONFIG_COMPILER_CXX_LAMBDAS 0
+#    endif
+
 #  elif UTIL_CONFIG_COMPILER_IS_AppleClang
 
 #    if !(((__clang_major__ * 100) + __clang_minor__) >= 400)
@@ -268,6 +364,36 @@
 # endif
 # define UTIL_CONFIG_COMPILER_VERSION_TWEAK (__apple_build_version__)
 
+#    if ((__clang_major__ * 100) + __clang_minor__) >= 400 && __has_feature(cxx_auto_type)
+#      define UTIL_CONFIG_COMPILER_CXX_AUTO_TYPE 1
+#    else
+#      define UTIL_CONFIG_COMPILER_CXX_AUTO_TYPE 0
+#    endif
+
+#    if ((__clang_major__ * 100) + __clang_minor__) >= 400 && __has_feature(cxx_constexpr)
+#      define UTIL_CONFIG_COMPILER_CXX_CONSTEXPR 1
+#    else
+#      define UTIL_CONFIG_COMPILER_CXX_CONSTEXPR 0
+#    endif
+
+#    if ((__clang_major__ * 100) + __clang_minor__) >= 400 && __has_feature(cxx_decltype)
+#      define UTIL_CONFIG_COMPILER_CXX_DECLTYPE 1
+#    else
+#      define UTIL_CONFIG_COMPILER_CXX_DECLTYPE 0
+#    endif
+
+#    if ((__clang_major__ * 100) + __clang_minor__) >= 501 && __cplusplus > 201103L
+#      define UTIL_CONFIG_COMPILER_CXX_DECLTYPE_AUTO 1
+#    else
+#      define UTIL_CONFIG_COMPILER_CXX_DECLTYPE_AUTO 0
+#    endif
+
+#    if ((__clang_major__ * 100) + __clang_minor__) >= 400 && __has_feature(cxx_defaulted_functions)
+#      define UTIL_CONFIG_COMPILER_CXX_DEFAULTED_FUNCTIONS 1
+#    else
+#      define UTIL_CONFIG_COMPILER_CXX_DEFAULTED_FUNCTIONS 0
+#    endif
+
 #    if ((__clang_major__ * 100) + __clang_minor__) >= 400 && __has_feature(cxx_deleted_functions)
 #      define UTIL_CONFIG_COMPILER_CXX_DELETED_FUNCTIONS 1
 #    else
@@ -278,6 +404,18 @@
 #      define UTIL_CONFIG_COMPILER_CXX_FINAL 1
 #    else
 #      define UTIL_CONFIG_COMPILER_CXX_FINAL 0
+#    endif
+
+#    if ((__clang_major__ * 100) + __clang_minor__) >= 400 && __has_feature(cxx_override_control)
+#      define UTIL_CONFIG_COMPILER_CXX_OVERRIDE 1
+#    else
+#      define UTIL_CONFIG_COMPILER_CXX_OVERRIDE 0
+#    endif
+
+#    if ((__clang_major__ * 100) + __clang_minor__) >= 400 && __has_feature(cxx_range_for)
+#      define UTIL_CONFIG_COMPILER_CXX_RANGE_FOR 1
+#    else
+#      define UTIL_CONFIG_COMPILER_CXX_RANGE_FOR 0
 #    endif
 
 #    if ((__clang_major__ * 100) + __clang_minor__) >= 400 && __has_feature(cxx_noexcept)
@@ -310,6 +448,12 @@
 #      define UTIL_CONFIG_COMPILER_CXX_VARIADIC_TEMPLATES 0
 #    endif
 
+#    if ((__clang_major__ * 100) + __clang_minor__) >= 400 && __has_feature(cxx_lambdas)
+#      define UTIL_CONFIG_COMPILER_CXX_LAMBDAS 1
+#    else
+#      define UTIL_CONFIG_COMPILER_CXX_LAMBDAS 0
+#    endif
+
 #  elif UTIL_CONFIG_COMPILER_IS_MSVC
 
 #    if !(_MSC_VER >= 1600)
@@ -332,6 +476,36 @@
 #  define UTIL_CONFIG_COMPILER_VERSION_TWEAK (_MSC_BUILD)
 # endif
 
+#    if _MSC_VER >= 1600
+#      define UTIL_CONFIG_COMPILER_CXX_AUTO_TYPE 1
+#    else
+#      define UTIL_CONFIG_COMPILER_CXX_AUTO_TYPE 0
+#    endif
+
+#    if _MSC_VER >= 1900
+#      define UTIL_CONFIG_COMPILER_CXX_CONSTEXPR 1
+#    else
+#      define UTIL_CONFIG_COMPILER_CXX_CONSTEXPR 0
+#    endif
+
+#    if _MSC_VER >= 1600
+#      define UTIL_CONFIG_COMPILER_CXX_DECLTYPE 1
+#    else
+#      define UTIL_CONFIG_COMPILER_CXX_DECLTYPE 0
+#    endif
+
+#    if _MSC_VER >= 1900
+#      define UTIL_CONFIG_COMPILER_CXX_DECLTYPE_AUTO 1
+#    else
+#      define UTIL_CONFIG_COMPILER_CXX_DECLTYPE_AUTO 0
+#    endif
+
+#    if _MSC_VER >= 1800
+#      define UTIL_CONFIG_COMPILER_CXX_DEFAULTED_FUNCTIONS 1
+#    else
+#      define UTIL_CONFIG_COMPILER_CXX_DEFAULTED_FUNCTIONS 0
+#    endif
+
 #    if _MSC_VER >= 1900
 #      define UTIL_CONFIG_COMPILER_CXX_DELETED_FUNCTIONS 1
 #    else
@@ -342,6 +516,18 @@
 #      define UTIL_CONFIG_COMPILER_CXX_FINAL 1
 #    else
 #      define UTIL_CONFIG_COMPILER_CXX_FINAL 0
+#    endif
+
+#    if _MSC_VER >= 1600
+#      define UTIL_CONFIG_COMPILER_CXX_OVERRIDE 1
+#    else
+#      define UTIL_CONFIG_COMPILER_CXX_OVERRIDE 0
+#    endif
+
+#    if _MSC_VER >= 1700
+#      define UTIL_CONFIG_COMPILER_CXX_RANGE_FOR 1
+#    else
+#      define UTIL_CONFIG_COMPILER_CXX_RANGE_FOR 0
 #    endif
 
 #    if _MSC_VER >= 1900
@@ -374,9 +560,22 @@
 #      define UTIL_CONFIG_COMPILER_CXX_VARIADIC_TEMPLATES 0
 #    endif
 
+#    if _MSC_VER >= 1600
+#      define UTIL_CONFIG_COMPILER_CXX_LAMBDAS 1
+#    else
+#      define UTIL_CONFIG_COMPILER_CXX_LAMBDAS 0
+#    endif
+
 #  else
 #    error Unsupported compiler
 #  endif
+
+#  if UTIL_CONFIG_COMPILER_CXX_CONSTEXPR
+#    define UTIL_CONFIG_CONSTEXPR constexpr
+#  else
+#    define UTIL_CONFIG_CONSTEXPR
+#  endif
+
 
 #  if UTIL_CONFIG_COMPILER_CXX_DELETED_FUNCTIONS
 #    define UTIL_CONFIG_DELETED_FUNCTION = delete
@@ -389,6 +588,13 @@
 #    define UTIL_CONFIG_FINAL final
 #  else
 #    define UTIL_CONFIG_FINAL
+#  endif
+
+
+#  if UTIL_CONFIG_COMPILER_CXX_OVERRIDE
+#    define UTIL_CONFIG_OVERRIDE override
+#  else
+#    define UTIL_CONFIG_OVERRIDE
 #  endif
 
 

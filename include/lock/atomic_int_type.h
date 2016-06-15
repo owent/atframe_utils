@@ -1,4 +1,4 @@
-﻿﻿/**
+﻿/**
  * @file atomic_int_type.h
  * @brief 整数类型的原子操作跨平台适配
  * Licensed under the MIT licenses.
@@ -52,7 +52,13 @@
 namespace util {
     namespace lock {
 #ifdef __UTIL_LOCK_ATOMIC_INT_TYPE_ATOMIC_STD
-        typedef ::std::memory_order memory_order;
+        using ::std::memory_order;
+        using ::std::memory_order_relaxed;
+        using ::std::memory_order_consume;
+        using ::std::memory_order_acquire;
+        using ::std::memory_order_release;
+        using ::std::memory_order_acq_rel;
+        using ::std::memory_order_seq_cst;
 
         /**
          * @brief atomic - C++ 0x/11版实现
@@ -67,17 +73,17 @@ namespace util {
 
         private:
             ::std::atomic<value_type> data_;
+            atomic_int_type(const atomic_int_type&);
 
         public:
             atomic_int_type(): data_() {}
             atomic_int_type(value_type desired): data_(desired) {}
-            atomic_int_type(const atomic_int_type&);
 
             inline void store(value_type desired, ::util::lock::memory_order order = ::util::lock::memory_order_seq_cst) { data_.store(desired, order); }
             inline void store(value_type desired, ::util::lock::memory_order order = ::util::lock::memory_order_seq_cst) volatile { data_.store(desired, order); }
 
-            inline value_type load( ::util::lock::memory_order order = ::util::lock::memory_order_seq_cst ) const { data_.load(order); }
-            inline value_type load( ::util::lock::memory_order order = ::util::lock::memory_order_seq_cst ) const volatile { data_.load(order); }
+            inline value_type load( ::util::lock::memory_order order = ::util::lock::memory_order_seq_cst ) const { return data_.load(order); }
+            inline value_type load( ::util::lock::memory_order order = ::util::lock::memory_order_seq_cst ) const volatile { return data_.load(order); }
     
             inline operator value_type() const { return load(); }
             inline operator value_type() const volatile { return load(); }
@@ -91,35 +97,35 @@ namespace util {
             inline value_type operator--( int ) { return data_ --; }
             inline value_type operator--( int ) volatile { return data_ --; }
 
-            inline value_type exchange( value_type desired, ::util::lock::memory_order order = ::util::lock::memory_order_seq_cst ) { data_.exchange(desired, order); }
-            inline value_type exchange( value_type desired, ::util::lock::memory_order order = ::util::lock::memory_order_seq_cst ) volatile { data_.exchange(desired, order); }
+            inline value_type exchange( value_type desired, ::util::lock::memory_order order = ::util::lock::memory_order_seq_cst ) { return data_.exchange(desired, order); }
+            inline value_type exchange( value_type desired, ::util::lock::memory_order order = ::util::lock::memory_order_seq_cst ) volatile { return data_.exchange(desired, order); }
     
-            inline bool compare_exchange_weak( value_type& expected, value_type desired, ::util::lock::memory_order success, ::util::lock::memory_order failure ) { data_.compare_exchange_weak(expected, desired, success, failure); }
-            inline bool compare_exchange_weak( value_type& expected, value_type desired, ::util::lock::memory_order success, ::util::lock::memory_order failure ) volatile { data_.compare_exchange_weak(expected, desired, success, failure); }
+            inline bool compare_exchange_weak( value_type& expected, value_type desired, ::util::lock::memory_order success, ::util::lock::memory_order failure ) { return data_.compare_exchange_weak(expected, desired, success, failure); }
+            inline bool compare_exchange_weak( value_type& expected, value_type desired, ::util::lock::memory_order success, ::util::lock::memory_order failure ) volatile { return data_.compare_exchange_weak(expected, desired, success, failure); }
 
-            inline bool compare_exchange_weak( value_type& expected, value_type desired, ::util::lock::memory_order order = ::util::lock::memory_order_seq_cst ) { data_.compare_exchange_weak(expected, desired, order); }
-            inline bool compare_exchange_weak( value_type& expected, value_type desired, ::util::lock::memory_order order = ::util::lock::memory_order_seq_cst ) volatile { data_.compare_exchange_weak(expected, desired, order); }
+            inline bool compare_exchange_weak( value_type& expected, value_type desired, ::util::lock::memory_order order = ::util::lock::memory_order_seq_cst ) { return data_.compare_exchange_weak(expected, desired, order); }
+            inline bool compare_exchange_weak( value_type& expected, value_type desired, ::util::lock::memory_order order = ::util::lock::memory_order_seq_cst ) volatile { return data_.compare_exchange_weak(expected, desired, order); }
 
-            inline bool compare_exchange_strong( value_type& expected, value_type desired, ::util::lock::memory_order success, ::util::lock::memory_order failure ) { data_.compare_exchange_strong(expected, desired, success, failure); }
-            inline bool compare_exchange_strong( value_type& expected, value_type desired, ::util::lock::memory_order success, ::util::lock::memory_order failure ) volatile { data_.compare_exchange_strong(expected, desired, success, failure); }
+            inline bool compare_exchange_strong( value_type& expected, value_type desired, ::util::lock::memory_order success, ::util::lock::memory_order failure ) { return data_.compare_exchange_strong(expected, desired, success, failure); }
+            inline bool compare_exchange_strong( value_type& expected, value_type desired, ::util::lock::memory_order success, ::util::lock::memory_order failure ) volatile { return data_.compare_exchange_strong(expected, desired, success, failure); }
 
-            inline bool compare_exchange_strong( value_type& expected, value_type desired, ::util::lock::memory_order order = ::util::lock::memory_order_seq_cst ) { data_.compare_exchange_strong(expected, desired, order); }
-            inline bool compare_exchange_strong( value_type& expected, value_type desired, ::util::lock::memory_order order = ::util::lock::memory_order_seq_cst ) volatile { data_.compare_exchange_strong(expected, desired, order); }
+            inline bool compare_exchange_strong( value_type& expected, value_type desired, ::util::lock::memory_order order = ::util::lock::memory_order_seq_cst ) { return data_.compare_exchange_strong(expected, desired, order); }
+            inline bool compare_exchange_strong( value_type& expected, value_type desired, ::util::lock::memory_order order = ::util::lock::memory_order_seq_cst ) volatile { return data_.compare_exchange_strong(expected, desired, order); }
 
-            inline value_type fetch_add( value_type arg, ::util::lock::memory_order order = ::util::lock::memory_order_seq_cst ) { data_.fetch_add(arg, order); }
-            inline value_type fetch_add( value_type arg, ::util::lock::memory_order order = ::util::lock::memory_order_seq_cst ) volatile { data_.fetch_add(arg, order); }
+            inline value_type fetch_add( value_type arg, ::util::lock::memory_order order = ::util::lock::memory_order_seq_cst ) { return data_.fetch_add(arg, order); }
+            inline value_type fetch_add( value_type arg, ::util::lock::memory_order order = ::util::lock::memory_order_seq_cst ) volatile { return data_.fetch_add(arg, order); }
 
-            inline value_type fetch_sub( value_type arg, ::util::lock::memory_order order = ::util::lock::memory_order_seq_cst ) { data_.fetch_sub(arg, order); }
-            inline value_type fetch_sub( value_type arg, ::util::lock::memory_order order = ::util::lock::memory_order_seq_cst ) volatile { data_.fetch_sub(arg, order); }
+            inline value_type fetch_sub( value_type arg, ::util::lock::memory_order order = ::util::lock::memory_order_seq_cst ) { return data_.fetch_sub(arg, order); }
+            inline value_type fetch_sub( value_type arg, ::util::lock::memory_order order = ::util::lock::memory_order_seq_cst ) volatile { return data_.fetch_sub(arg, order); }
 
-            inline value_type fetch_and( value_type arg, ::util::lock::memory_order order = ::util::lock::memory_order_seq_cst ) { data_.fetch_and(arg, order); }
-            inline value_type fetch_and( value_type arg, ::util::lock::memory_order order = ::util::lock::memory_order_seq_cst ) volatile { data_.fetch_and(arg, order); }
+            inline value_type fetch_and( value_type arg, ::util::lock::memory_order order = ::util::lock::memory_order_seq_cst ) { return data_.fetch_and(arg, order); }
+            inline value_type fetch_and( value_type arg, ::util::lock::memory_order order = ::util::lock::memory_order_seq_cst ) volatile { return data_.fetch_and(arg, order); }
 
-            inline value_type fetch_or( value_type arg, ::util::lock::memory_order order = ::util::lock::memory_order_seq_cst ) { data_.fetch_or(arg, order); }
-            inline value_type fetch_or( value_type arg, ::util::lock::memory_order order = ::util::lock::memory_order_seq_cst ) volatile { data_.fetch_or(arg, order); }
+            inline value_type fetch_or( value_type arg, ::util::lock::memory_order order = ::util::lock::memory_order_seq_cst ) { return data_.fetch_or(arg, order); }
+            inline value_type fetch_or( value_type arg, ::util::lock::memory_order order = ::util::lock::memory_order_seq_cst ) volatile { return data_.fetch_or(arg, order); }
 
-            inline value_type fetch_xor( value_type arg, ::util::lock::memory_order order = ::util::lock::memory_order_seq_cst ) { data_.fetch_xor(arg, order); }
-            inline value_type fetch_xor( value_type arg, ::util::lock::memory_order order = ::util::lock::memory_order_seq_cst ) volatile { data_.fetch_xor(arg, order); }
+            inline value_type fetch_xor( value_type arg, ::util::lock::memory_order order = ::util::lock::memory_order_seq_cst ) { return data_.fetch_xor(arg, order); }
+            inline value_type fetch_xor( value_type arg, ::util::lock::memory_order order = ::util::lock::memory_order_seq_cst ) volatile { return data_.fetch_xor(arg, order); }
         };
 #else
 
