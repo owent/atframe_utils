@@ -35,10 +35,13 @@
 #include <atomic>
 #define __UTIL_LOCK_ATOMIC_INT_TYPE_ATOMIC_STD
 
-#elif defined(__GNUC__) && ((__GNUC__ == 4 && __GNUC_MINOR__ >= 5) || __GNUC__ > 4) && defined(__GXX_EXPERIMENTAL_CXX0X__)
-
-#include <atomic>
-#define __UTIL_LOCK_ATOMIC_INT_TYPE_ATOMIC_STD
+// There is a BUG in gcc 4.6, which will cause 'undefined reference to `std::atomic_thread_fence(std::memory_order)'
+// In gcc 4.7 and upper, we can use -std=c++11 or upper
+// https://gcc.gnu.org/bugzilla/show_bug.cgi?id=51038
+// #elif defined(__GNUC__) && ((__GNUC__ == 4 && __GNUC_MINOR__ >= 5) || __GNUC__ > 4) && defined(__GXX_EXPERIMENTAL_CXX0X__)
+// 
+// #include <atomic>
+// #define __UTIL_LOCK_ATOMIC_INT_TYPE_ATOMIC_STD
 
 #endif
 
