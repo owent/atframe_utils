@@ -94,11 +94,7 @@ namespace util {
                     static util::lock::spin_lock lock;
                     util::lock::lock_holder<util::lock::spin_lock> lock_opr(lock);
 
-#if defined(__UTIL_LOCK_ATOMIC_INT_TYPE_ATOMIC_STD)
-                    std::atomic_thread_fence(std::memory_order_acquire);
-#elif defined(__UTIL_LOCK_ATOMIC_INT_ATOMIC_GCC_ATOMIC)
-                    __atomic_thread_fence(__ATOMIC_ACQUIRE);
-#endif
+                    UTIL_LOCK_ATOMIC_THREAD_FENCE(::util::lock::memory_order_acquire);
                     do {
                         if (inst) {
                             break;
@@ -108,11 +104,7 @@ namespace util {
                         inst = new_data;
                     } while (false);
 
-#if defined(__UTIL_LOCK_ATOMIC_INT_TYPE_ATOMIC_STD)
-                    std::atomic_thread_fence(std::memory_order_release);
-#elif defined(__UTIL_LOCK_ATOMIC_INT_ATOMIC_GCC_ATOMIC)
-                    __atomic_thread_fence(__ATOMIC_RELEASE);
-#endif
+                    UTIL_LOCK_ATOMIC_THREAD_FENCE(::util::lock::memory_order_release);
                     use(*inst);
                 }
 

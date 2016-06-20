@@ -59,6 +59,9 @@ namespace util {
         using ::std::memory_order_acq_rel;
         using ::std::memory_order_seq_cst;
 
+        #define UTIL_LOCK_ATOMIC_THREAD_FENCE(order) ::std::atomic_thread_fence(order)
+        #define UTIL_LOCK_ATOMIC_SIGNAL_FENCE(order) ::std::atomic_signal_fence(order)
+
         /**
          * @brief atomic - C++ 0x/11版实现
          * @see http://en.cppreference.com/w/cpp/atomic/atomic
@@ -180,6 +183,10 @@ namespace util {
             memory_order_acq_rel = __ATOMIC_ACQ_REL,
             memory_order_seq_cst = __ATOMIC_SEQ_CST
         };
+
+        #define UTIL_LOCK_ATOMIC_THREAD_FENCE(order) __atomic_thread_fence(order)
+        #define UTIL_LOCK_ATOMIC_SIGNAL_FENCE(order) __atomic_signal_fence(order)
+
 #elif !defined(__UTIL_LOCK_ATOMIC_INT_ATOMIC_MSVC) // old gcc and old msvc use this
         enum memory_order {
             memory_order_relaxed = 0,
@@ -189,6 +196,14 @@ namespace util {
             memory_order_acq_rel,
             memory_order_seq_cst
         };
+#endif
+
+#ifndef UTIL_LOCK_ATOMIC_THREAD_FENCE
+        UTIL_LOCK_ATOMIC_THREAD_FENCE(x)
+#endif
+
+#ifndef UTIL_LOCK_ATOMIC_SIGNAL_FENCE
+        UTIL_LOCK_ATOMIC_SIGNAL_FENCE(x)
 #endif
 
         template<typename Ty = int>
