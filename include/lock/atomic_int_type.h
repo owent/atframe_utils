@@ -199,11 +199,11 @@ namespace util {
 #endif
 
 #ifndef UTIL_LOCK_ATOMIC_THREAD_FENCE
-        UTIL_LOCK_ATOMIC_THREAD_FENCE(x)
+#define UTIL_LOCK_ATOMIC_THREAD_FENCE(x)
 #endif
 
 #ifndef UTIL_LOCK_ATOMIC_SIGNAL_FENCE
-        UTIL_LOCK_ATOMIC_SIGNAL_FENCE(x)
+#define UTIL_LOCK_ATOMIC_SIGNAL_FENCE(x)
 #endif
 
         template<typename Ty = int>
