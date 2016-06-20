@@ -21,9 +21,15 @@ set(CXX_FLAGS_IN_ONE_COMMON "")
 if( ${CMAKE_CXX_COMPILER_ID} STREQUAL "GNU")
     add_definitions(-Wall -Werror -fPIC)
 
-    if(UNIX and NOT CYGWIN and not MINGW) {
+    include(CheckCCompilerFlag)
+    message(STATUS "Check Flag: -rdynamic -- running")
+    CHECK_C_COMPILER_FLAG(-rdynamic, C_FLAGS_RDYNAMIC_AVAILABLE)
+    if(C_FLAGS_RDYNAMIC_AVAILABLE)
+        message(STATUS "Check Flag: -rdynamic -- yes")
         add_definitions(-rdynamic)
-    }
+    else()
+        message(STATUS "Check Flag: -rdynamic -- no")
+    endif()
 
     # gcc 4.9 编译输出颜色支持
     if ( CMAKE_CXX_COMPILER_VERSION VERSION_GREATER "4.9.0" OR CMAKE_CXX_COMPILER_VERSION  VERSION_EQUAL "4.9.0" )
