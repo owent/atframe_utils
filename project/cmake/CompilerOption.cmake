@@ -79,6 +79,28 @@ elseif( ${CMAKE_CXX_COMPILER_ID} STREQUAL "Clang")
     else()
         message(STATUS "Clang use stdlib=default(libstdc++)")
     endif()
+
+elseif( ${CMAKE_CXX_COMPILER_ID} STREQUAL "AppleClang")
+    add_definitions(-Wall -Werror -fPIC)
+    # 苹果系统会误判，不过问题不大，反正也是用最高的标准
+    if (CMAKE_CXX_COMPILER_VERSION VERSION_GREATER "6.0")
+        set(CMAKE_C_STANDARD 11)
+        set(CMAKE_CXX_STANDARD 14)
+        message(STATUS "AppleClang Version ${CMAKE_CXX_COMPILER_VERSION} , using -std=c11/c++14.")
+    elseif ( CMAKE_CXX_COMPILER_VERSION VERSION_GREATER "5.0" OR CMAKE_CXX_COMPILER_VERSION  VERSION_EQUAL "5.0" )
+        set(CMAKE_C_STANDARD 11)
+        set(CMAKE_CXX_STANDARD 11)
+        message(STATUS "Clang Version ${CMAKE_CXX_COMPILER_VERSION} , using -std=c11/c++11.")
+    endif()
+    # 优先使用libc++和libc++abi
+    find_library (COMPILER_CLANG_HAS_LIBCXX NAMES c++ libc++)
+    find_library (COMPILER_CLANG_HAS_LIBCXXABI NAMES c++abi libc++abi)
+    if(COMPILER_CLANG_HAS_LIBCXX AND COMPILER_CLANG_HAS_LIBCXXABI)
+        add_definitions(-stdlib=libc++)
+        message(STATUS "Clang use stdlib=libc++")
+    else()
+        message(STATUS "Clang use stdlib=default(libstdc++)")
+    endif()
 endif()
 
 # 配置公共编译选项
