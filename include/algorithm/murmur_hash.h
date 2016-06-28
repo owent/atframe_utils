@@ -15,6 +15,8 @@
 #ifndef _UTIL_HASH_MURMUR_HASH_H_
 #define _UTIL_HASH_MURMUR_HASH_H_
 
+#pragma once
+
 #include <stddef.h>
 #include <stdint.h>
 
@@ -30,3 +32,5 @@ namespace util {
         void murmur_hash3_x64_128(const void *key, const int len, const uint32_t seed, uint64_t out[2]);
     }
 }
+
+#endif
