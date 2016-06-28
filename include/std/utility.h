@@ -10,20 +10,20 @@
  * @history
  *
  */
- 
+
 #ifndef _STD_UTILITY_H_
 #define _STD_UTILITY_H_
- 
- 
+
+
 #if defined(_MSC_VER) && (_MSC_VER >= 1020)
-# pragma once
+#pragma once
 #endif
 
 // ============================================================
 // 公共包含部分
 // 自动导入TR1库
 // ============================================================
- 
+
 /**
 * 导入utility文件（utility）
 * 如果是G++且支持c++0x草案1（tr1版本）的utility[GCC版本高于4.0]
@@ -34,34 +34,34 @@
 *
 * 否则启用boost中的utility库（如果是这种情况需要加入boost库）
 */
- 
+
 // VC9.0 SP1以上分支判断
-#if defined(_MSC_VER) && (_MSC_VER == 1500 && defined (_HAS_TR1)) || (_MSC_VER > 1500 && defined(_HAS_CPP0X) && _HAS_CPP0X)
-    // 采用VC std::tr1库
-    #include <utility>
+#if defined(_MSC_VER) && ((_MSC_VER == 1500 && defined(_HAS_TR1)) || _MSC_VER > 1500)
+// 采用VC std::tr1库
+#include <utility>
 #elif defined(__clang__) && __clang_major__ >= 3
-    // 采用Clang c++11库
-    #include <utility>
+// 采用Clang c++11库
+#include <utility>
 #elif defined(__GNUC__) && __GNUC__ >= 4
-    // 采用G++ std::tr1库
-    #if __cplusplus >= 201103L || defined(__GXX_EXPERIMENTAL_CXX0X__)
-        #include <utility>
-    #else
-        #include <tr1/utility>
-        namespace std {
-            using tr1::get;
-            using tr1::tuple_element;
-            using tr1::tuple_size;
-        }
-    #endif
+// 采用G++ std::tr1库
+#if __cplusplus >= 201103L || defined(__GXX_EXPERIMENTAL_CXX0X__)
+#include <utility>
 #else
-    // 采用boost库
-    #include <boost/tr1/utility.hpp>
-    namespace std {
-        using tr1::get;
-        using tr1::tuple_element;
-        using tr1::tuple_size;
-    }
+#include <tr1/utility>
+namespace std {
+    using tr1::get;
+    using tr1::tuple_element;
+    using tr1::tuple_size;
+}
+#endif
+#else
+// 采用boost库
+#include <boost/tr1/utility.hpp>
+namespace std {
+    using tr1::get;
+    using tr1::tuple_element;
+    using tr1::tuple_size;
+}
 #endif
 
 #endif

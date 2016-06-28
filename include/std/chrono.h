@@ -34,7 +34,7 @@
 // C++ 11 and upper
 #include <chrono>
 
-#elif defined(_MSC_VER) && (_MSC_VER == 1500 && defined(_HAS_TR1)) || (_MSC_VER > 1500 && defined(_HAS_CPP0X) && _HAS_CPP0X)
+#elif defined(_MSC_VER) && ((_MSC_VER == 1500 && defined(_HAS_TR1)) || _MSC_VER > 1500)
 // VC9.0 SP1以上分支判断
 // 采用VC std::tr1库
 #include <chrono>
