@@ -22,26 +22,26 @@
 #ifndef _UTIL_MEMPOOL_LRUOBJECTPOOL_H_
 #define _UTIL_MEMPOOL_LRUOBJECTPOOL_H_
 
-#include <cstddef>
-#include <stdint.h>
-#include <list>
-#include <limits>
-#include <ctime>
 #include <algorithm>
+#include <cstddef>
+#include <ctime>
+#include <limits>
+#include <list>
+#include <stdint.h>
+
 
 #include "std/smart_ptr.h"
 
 #include "lock/seq_alloc.h"
 
-#if defined(__cplusplus) && (__cplusplus >= 201103L || \
-        (defined(_MSC_VER) && (_MSC_VER == 1500 && defined (_HAS_TR1)) || (_MSC_VER > 1500 && defined(_HAS_CPP0X) && _HAS_CPP0X)) || \
-        (defined(__GNUC__) && defined(__GXX_EXPERIMENTAL_CXX0X__)) \
-    )
+#if defined(__cplusplus) &&                                                                                         \
+    (__cplusplus >= 201103L || (defined(_MSC_VER) && (_MSC_VER == 1500 && defined(_HAS_TR1)) || _MSC_VER > 1500) || \
+     (defined(__GNUC__) && defined(__GXX_EXPERIMENTAL_CXX0X__)))
 #include <unordered_map>
-#define _UTIL_MEMPOOL_LRUOBJECTPOOL_MAP(...) std::unordered_map< __VA_ARGS__ >
+#define _UTIL_MEMPOOL_LRUOBJECTPOOL_MAP(...) std::unordered_map<__VA_ARGS__>
 #else
 #include <map>
-#define _UTIL_MEMPOOL_LRUOBJECTPOOL_MAP(...) std::map< __VA_ARGS__ >
+#define _UTIL_MEMPOOL_LRUOBJECTPOOL_MAP(...) std::map<__VA_ARGS__>
 #endif
 
 // 开启这个宏在包含此文件会开启对象重复push进同一个池的检测，同时也会导致push、pull和gc的复杂度由O(1)变为O(log(n))
@@ -60,6 +60,7 @@ namespace util {
                 virtual size_t size() const = 0;
                 virtual bool gc() = 0;
                 virtual bool empty() const = 0;
+
             protected:
                 list_type_base() {}
                 virtual ~list_type_base() {}
@@ -84,13 +85,11 @@ namespace util {
             };
 
         public:
-            static ptr_t create() {
-                return ptr_t(new lru_pool_manager());
-            }
+            static ptr_t create() { return ptr_t(new lru_pool_manager()); }
 
 #define _UTIL_MEMPOOL_LRUOBJECTPOOL_SETTER_GETTER(x) \
-            void set_##x(size_t v) { x##_ = v; } \
-            size_t get_##x() const { return x##_; }
+    void set_##x(size_t v) { x##_ = v; }             \
+    size_t get_##x() const { return x##_; }
 
             _UTIL_MEMPOOL_LRUOBJECTPOOL_SETTER_GETTER(item_min_bound);
             _UTIL_MEMPOOL_LRUOBJECTPOOL_SETTER_GETTER(item_max_bound);
@@ -100,49 +99,37 @@ namespace util {
             _UTIL_MEMPOOL_LRUOBJECTPOOL_SETTER_GETTER(gc_list);
             _UTIL_MEMPOOL_LRUOBJECTPOOL_SETTER_GETTER(gc_item);
 
-            void set_list_tick_timeout(time_t v) {
-                list_tick_timeout_ = v;
-            }
+            void set_list_tick_timeout(time_t v) { list_tick_timeout_ = v; }
 
-            time_t get_list_tick_timeout() const {
-                return list_tick_timeout_;
-            }
+            time_t get_list_tick_timeout() const { return list_tick_timeout_; }
 
             void set_item_adjust_min(size_t v) {
                 item_adjust_min_ = v;
                 item_adjust_max_ = item_adjust_min_ >= item_adjust_max_ ? (item_adjust_min_ + 1) : item_adjust_max_;
             }
 
-            size_t get_item_adjust_min() const {
-                return item_adjust_min_;
-            }
+            size_t get_item_adjust_min() const { return item_adjust_min_; }
 
             void set_item_adjust_max(size_t v) {
                 item_adjust_max_ = v;
                 item_adjust_min_ = item_adjust_min_ < item_adjust_max_ ? item_adjust_min_ : (item_adjust_max_ - 1);
             }
 
-            size_t get_item_adjust_max() const {
-                return item_adjust_max_;
-            }
+            size_t get_item_adjust_max() const { return item_adjust_max_; }
 
             void set_list_adjust_min(size_t v) {
                 list_adjust_min_ = v;
                 list_adjust_max_ = list_adjust_min_ >= list_adjust_max_ ? (list_adjust_min_ + 1) : list_adjust_max_;
             }
 
-            size_t get_list_adjust_min() const {
-                return list_adjust_min_;
-            }
+            size_t get_list_adjust_min() const { return list_adjust_min_; }
 
             void set_list_adjust_max(size_t v) {
                 list_adjust_max_ = v;
                 list_adjust_min_ = list_adjust_min_ < list_adjust_max_ ? list_adjust_min_ : (list_adjust_max_ - 1);
             }
 
-            size_t get_list_adjust_max() const {
-                return list_adjust_max_;
-            }
+            size_t get_list_adjust_max() const { return list_adjust_max_; }
 
 #undef _UTIL_MEMPOOL_LRUOBJECTPOOL_SETTER_GETTER
 
@@ -150,15 +137,15 @@ namespace util {
             * @brief 获取实例缓存数量
             * @note 如果不是非常了解这个数值的作用，请不要修改它
             */
-            inline util::lock::seq_alloc_u64& item_count() { return item_count_; }
-            inline const util::lock::seq_alloc_u64& item_count() const { return item_count_; }
+            inline util::lock::seq_alloc_u64 &item_count() { return item_count_; }
+            inline const util::lock::seq_alloc_u64 &item_count() const { return item_count_; }
 
             /**
             * @brief 获取检测队列长度
             * @note 如果不是非常了解这个数值的作用，请不要修改它
             */
-            inline util::lock::seq_alloc_u64& list_count() { return list_count_; }
-            inline const util::lock::seq_alloc_u64& list_count() const { return list_count_; }
+            inline util::lock::seq_alloc_u64 &list_count() { return list_count_; }
+            inline const util::lock::seq_alloc_u64 &list_count() const { return list_count_; }
 
             /**
             * @brief 主动GC，会触发阈值自适应
@@ -314,18 +301,16 @@ namespace util {
             }
 
         private:
-            lru_pool_manager() :item_min_bound_(0), item_max_bound_(1024),
-                list_bound_(2048), proc_list_count_(16), proc_item_count_(16),
-                gc_list_(0), gc_item_(0),
-                item_adjust_min_(256), item_adjust_max_(std::numeric_limits<size_t>::max()),
-                list_adjust_min_(512), list_adjust_max_(std::numeric_limits<size_t>::max()),
-                last_proc_tick_(0), list_tick_timeout_(0) {
+            lru_pool_manager()
+                : item_min_bound_(0), item_max_bound_(1024), list_bound_(2048), proc_list_count_(16), proc_item_count_(16), gc_list_(0),
+                  gc_item_(0), item_adjust_min_(256), item_adjust_max_(std::numeric_limits<size_t>::max()), list_adjust_min_(512),
+                  list_adjust_max_(std::numeric_limits<size_t>::max()), last_proc_tick_(0), list_tick_timeout_(0) {
                 item_count_.set(0);
                 list_count_.set(0);
             }
 
-            lru_pool_manager(const lru_pool_manager&);
-            lru_pool_manager& operator=(const lru_pool_manager&);
+            lru_pool_manager(const lru_pool_manager &);
+            lru_pool_manager &operator=(const lru_pool_manager &);
 
             size_t inner_gc() {
                 if (gc_list_ <= 0) {
@@ -343,6 +328,7 @@ namespace util {
                 using std::abs;
                 return 0 == list_tick_timeout_ || abs(last_proc_tick_ - tp) <= list_tick_timeout_;
             }
+
         private:
             size_t item_min_bound_;
             size_t item_max_bound_;
@@ -366,17 +352,15 @@ namespace util {
             time_t list_tick_timeout_;
         };
 
-        template<typename TObj>
+        template <typename TObj>
         struct lru_default_action {
-            void push(TObj* obj) {}
-            void pull(TObj* obj) {}
-            void reset(TObj* obj) {}
-            void gc(TObj* obj) {
-                delete obj;
-            }
+            void push(TObj *obj) {}
+            void pull(TObj *obj) {}
+            void reset(TObj *obj) {}
+            void gc(TObj *obj) { delete obj; }
         };
 
-        template<typename TKey, typename TObj, typename TAction = lru_default_action<TObj> >
+        template <typename TKey, typename TObj, typename TAction = lru_default_action<TObj> >
         class lru_pool : public lru_pool_base {
         public:
             typedef TKey key_t;
@@ -386,7 +370,7 @@ namespace util {
             class list_type : public lru_pool_base::list_type_base {
             public:
                 struct wrapper {
-                    value_type* object;
+                    value_type *object;
                     uint64_t push_id;
                 };
 
@@ -398,9 +382,7 @@ namespace util {
                     return cache_.back().push_id;
                 }
 
-                virtual size_t size() const {
-                    return cache_.size();
-                };
+                virtual size_t size() const { return cache_.size(); };
 
                 virtual bool gc() {
                     if (cache_.empty()) {
@@ -426,11 +408,9 @@ namespace util {
                     return true;
                 }
 
-                virtual bool empty() const {
-                    return cache_.empty();
-                }
+                virtual bool empty() const { return cache_.empty(); }
 
-                lru_pool<TKey, TObj, TAction>* owner_;
+                lru_pool<TKey, TObj, TAction> *owner_;
                 key_t id_;
                 std::list<wrapper> cache_;
             };
@@ -439,43 +419,30 @@ namespace util {
             typedef _UTIL_MEMPOOL_LRUOBJECTPOOL_MAP(key_t, list_ptr_type) cat_map_type;
 
             struct flag_t {
-                enum type {
-                    INITED = 0,
-                    CLEARING
-                };
+                enum type { INITED = 0, CLEARING };
             };
+
         private:
-            lru_pool(const lru_pool&);
-            lru_pool& operator=(const lru_pool&);
+            lru_pool(const lru_pool &);
+            lru_pool &operator=(const lru_pool &);
 
             struct flag_guard {
-                static inline bool test(const uint32_t& fs, typename flag_t::type t) {
-                    return 0 != (fs & (static_cast<uint32_t>(1) << t));
-                }
+                static inline bool test(const uint32_t &fs, typename flag_t::type t) { return 0 != (fs & (static_cast<uint32_t>(1) << t)); }
 
-                static inline void set(uint32_t& fs, typename flag_t::type t) {
-                    fs |= static_cast<uint32_t>(1) << t;
-                }
+                static inline void set(uint32_t &fs, typename flag_t::type t) { fs |= static_cast<uint32_t>(1) << t; }
 
-                static inline void unset(uint32_t& fs, typename flag_t::type t) {
-                    fs &= ~(static_cast<uint32_t>(1) << t);
-                }
+                static inline void unset(uint32_t &fs, typename flag_t::type t) { fs &= ~(static_cast<uint32_t>(1) << t); }
 
-                flag_guard(uint32_t& fs, typename flag_t::type t) : flag_set(fs), flag_opt(t) {
-                    set(flag_set, flag_opt);
-                }
+                flag_guard(uint32_t &fs, typename flag_t::type t) : flag_set(fs), flag_opt(t) { set(flag_set, flag_opt); }
 
-                ~flag_guard() {
-                    unset(flag_set, flag_opt);
-                }
+                ~flag_guard() { unset(flag_set, flag_opt); }
 
-                uint32_t& flag_set;
+                uint32_t &flag_set;
                 typename flag_t::type flag_opt;
             };
+
         public:
-            lru_pool(): flags_(0){
-                push_id_alloc_.set(0);
-            }
+            lru_pool() : flags_(0) { push_id_alloc_.set(0); }
 
             virtual ~lru_pool() {
                 set_manager(lru_pool_manager::ptr_t());
@@ -511,7 +478,7 @@ namespace util {
                 }
             }
 
-            bool push(key_t id, TObj* obj) {
+            bool push(key_t id, TObj *obj) {
 #ifdef _UTIL_MEMPOOL_LRUOBJECTPOOL_CHECK_REPUSH
                 if (check_pushed_.find(obj) != check_pushed_.end()) {
                     return false;
@@ -528,7 +495,7 @@ namespace util {
                     return false;
                 }
 
-                list_ptr_type& list_ = data_[id];
+                list_ptr_type &list_ = data_[id];
                 if (!list_) {
                     list_ = std::make_shared<list_type>();
                     if (!list_) {
@@ -540,9 +507,10 @@ namespace util {
                 }
 
                 typename list_type::wrapper obj_wrapper;
-                
+
                 obj_wrapper.object = obj;
-                while (0 == (obj_wrapper.push_id = push_id_alloc_.inc()));
+                while (0 == (obj_wrapper.push_id = push_id_alloc_.inc()))
+                    ;
 
                 // 推送node, FILO
                 list_->cache_.push_front(obj_wrapper);
@@ -564,7 +532,7 @@ namespace util {
                 return true;
             }
 
-            TObj* pull(key_t id) {
+            TObj *pull(key_t id) {
                 typename cat_map_type::iterator iter = data_.find(id);
                 if (iter == data_.end()) {
                     return NULL;
@@ -609,7 +577,8 @@ namespace util {
                 for (typename cat_map_type::iterator iter = data_.begin(); iter != data_.end();) {
                     typename cat_map_type::iterator checked_it = iter++;
                     if (checked_it->second) {
-                        while (checked_it->second->gc());
+                        while (checked_it->second->gc())
+                            ;
                     }
                 }
 
@@ -630,7 +599,7 @@ namespace util {
                 return true;
             }
 
-            // high cost, do not use it frequently 
+            // high cost, do not use it frequently
             size_t size() const {
                 size_t ret = 0;
                 for (typename cat_map_type::const_iterator iter = data_.begin(); iter != data_.end(); ++iter) {
@@ -642,9 +611,7 @@ namespace util {
                 return ret;
             }
 
-            const cat_map_type& data() const {
-                return data_;
-            }
+            const cat_map_type &data() const { return data_; }
 
         private:
             cat_map_type data_;
@@ -652,7 +619,7 @@ namespace util {
             util::lock::seq_alloc_u64 push_id_alloc_;
             uint32_t flags_;
 #ifdef _UTIL_MEMPOOL_LRUOBJECTPOOL_CHECK_REPUSH
-            std::set<value_type*> check_pushed_;
+            std::set<value_type *> check_pushed_;
 #endif
         };
     }
