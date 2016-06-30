@@ -55,7 +55,6 @@ if( ${CMAKE_CXX_COMPILER_ID} STREQUAL "GNU")
 
 elseif( ${CMAKE_CXX_COMPILER_ID} STREQUAL "Clang")
     add_definitions(-Wall -Werror -fPIC)
-    # 苹果系统会误判，不过问题不大，反正也是用最高的标准
     if (CMAKE_CXX_COMPILER_VERSION VERSION_GREATER "3.4" OR CMAKE_CXX_COMPILER_VERSION  VERSION_EQUAL "3.4" )
         set(CMAKE_C_STANDARD 11)
         set(CMAKE_CXX_STANDARD 14)
@@ -77,7 +76,6 @@ elseif( ${CMAKE_CXX_COMPILER_ID} STREQUAL "Clang")
 
 elseif( ${CMAKE_CXX_COMPILER_ID} STREQUAL "AppleClang")
     add_definitions(-Wall -Werror -fPIC)
-    # 苹果系统会误判，不过问题不大，反正也是用最高的标准
     if (CMAKE_CXX_COMPILER_VERSION VERSION_GREATER "6.0")
         set(CMAKE_C_STANDARD 11)
         set(CMAKE_CXX_STANDARD 14)
