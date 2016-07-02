@@ -1,7 +1,8 @@
-﻿#include <cstdio>
-#include "std/thread.h"
+﻿#include "std/thread.h"
+#include <cstdio>
 #include <cstring>
 #include <stdarg.h>
+
 
 #include "common/string_oprs.h"
 #include "lock/lock_holder.h"
@@ -11,6 +12,49 @@
 
 #include "log/log_formatter.h"
 #include "log/log_wrapper.h"
+
+#if defined(THREAD_TLS_ENABLED) && 1 == THREAD_TLS_ENABLED
+namespace util {
+    namespace log {
+        namespace detail {
+            char *get_log_tls_buffer() {
+                static THREAD_TLS char ret[LOG_WRAPPER_MAX_SIZE_PER_LINE];
+                return ret;
+            }
+        }
+    }
+}
+#else
+
+#include <pthread.h>
+namespace util {
+    namespace log {
+        namespace detail {
+            static pthread_once_t gt_get_log_tls_once = PTHREAD_ONCE_INIT;
+            static pthread_key_t gt_get_log_tls_key;
+
+            static void dtor_pthread_get_log_tls(void *p) {
+                char *buffer_block = reinterpret_cast<char *>(p);
+                if (NULL != buffer_block) {
+                    delete[] buffer_block;
+                }
+            }
+
+            static void init_pthread_get_log_tls() {
+                (void)pthread_key_create(&gt_get_log_tls_key, dtor_pthread_get_log_tls);
+                char *buffer_block = new char[LOG_WRAPPER_MAX_SIZE_PER_LINE];
+                pthread_setspecific(gt_get_log_tls_key, buffer_block);
+            }
+
+            char *get_log_tls_buffer() {
+                (void)pthread_once(&gt_get_log_tls_once, init_pthread_get_log_tls);
+                return reinterpret_cast<char *>(pthread_getspecific(gt_get_log_tls_key));
+            }
+        }
+    }
+}
+
+#endif
 
 namespace util {
     namespace log {
@@ -53,53 +97,34 @@ namespace util {
                 update();
             }
 
-#if defined(THREAD_TLS_ENABLED) && 1 == THREAD_TLS_ENABLED
-            static THREAD_TLS char log_buffer[LOG_WRAPPER_MAX_SIZE_PER_LINE];
-#else
-#define LOG_WRAPPER_WITH_LOCK 1
-            static util::lock::spin_lock log_fmt_lock;
-            static char log_buffer[LOG_WRAPPER_MAX_SIZE_PER_LINE];
-
-            std::string this_log;
-#endif
+            char *log_buffer = detail::get_log_tls_buffer();
             size_t log_size = 0;
             {
-#ifdef LOG_WRAPPER_WITH_LOCK
-                util::lock::lock_holder<util::lock::spin_lock> fmt_lock(log_fmt_lock);
-#endif
-
                 if (!log_sinks_.empty()) {
                     // format => "[Log    DEBUG][2015-01-12 10:09:08.]
-                    size_t start_index =
-                        log_formatter::format(log_buffer, sizeof(log_buffer), prefix_format_.c_str(), prefix_format_.size(), caller);
+                    size_t start_index = log_formatter::format(log_buffer, LOG_WRAPPER_MAX_SIZE_PER_LINE, prefix_format_.c_str(),
+                                                               prefix_format_.size(), caller);
 
                     va_list va_args;
                     va_start(va_args, fmt);
-                    int prt_res = UTIL_STRFUNC_VSNPRINTF(&log_buffer[start_index], sizeof(log_buffer) - start_index, fmt, va_args);
+                    int prt_res =
+                        UTIL_STRFUNC_VSNPRINTF(&log_buffer[start_index], LOG_WRAPPER_MAX_SIZE_PER_LINE - start_index, fmt, va_args);
                     va_end(va_args);
                     if (prt_res >= 0) {
                         start_index += static_cast<size_t>(prt_res);
                     }
 
-                    if (start_index < sizeof(log_buffer)) {
+                    if (start_index < LOG_WRAPPER_MAX_SIZE_PER_LINE) {
                         log_buffer[start_index] = 0;
                         log_size = start_index;
                     } else {
-                        log_size = sizeof(log_buffer);
-                        log_buffer[sizeof(log_buffer) - 1] = 0;
+                        log_size = LOG_WRAPPER_MAX_SIZE_PER_LINE;
+                        log_buffer[LOG_WRAPPER_MAX_SIZE_PER_LINE - 1] = 0;
                     }
                 }
-
-#ifdef LOG_WRAPPER_WITH_LOCK
-                this_log.assign(log_buffer, log_size);
-#endif
             }
 
-#ifdef LOG_WRAPPER_WITH_LOCK
-            write_log(caller, this_log.c_str(), this_log.size());
-#else
             write_log(caller, log_buffer, log_size);
-#endif
         }
 
         void log_wrapper::write_log(const caller_info_t &caller, const char *content, size_t content_size) {
