@@ -5,16 +5,18 @@
 #include <iostream>
 #include <vector>
 
-#include "std/thread.h"
-#include "log/log_wrapper.h"
 #include "log/log_sink_file_backend.h"
+#include "log/log_wrapper.h"
+#include "std/thread.h"
+
 
 #include "common/file_system.h"
 #include "time/time_utility.h"
 
+#include "algorithm/hash.h"
 #include "random/random_generator.h"
 #include "string/tquerystring.h"
-#include "algorithm/hash.h"
+
 
 //=======================================================================================================
 void log_sample() {
@@ -32,7 +34,7 @@ void log_sample() {
     filed_backend.set_max_file_size(256);
     filed_backend.set_rotate_size(3);
     filed_backend.set_file_pattern("%Y-%m-%d/%S/%N.log");
-    //filed_backend.set_check_interval(1);
+    // filed_backend.set_check_interval(1);
 
     WLOG_GETCAT(util::log::log_wrapper::categorize_t::DEFAULT)->add_sink(filed_backend);
 
@@ -47,6 +49,8 @@ void log_sample() {
         WLOGDEBUG("second dir log: %d", i);
     }
 
+    unsigned long long ull_test_in_mingw = 64;
+    WLOGINFO("%llu", ull_test_in_mingw);
     printf("log are located at %s\n", util::file_system::get_cwd().c_str());
     puts("===============end log sample==============");
 }
