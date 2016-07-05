@@ -40,15 +40,16 @@ namespace util {
                 }
             }
 
-            static void init_pthread_get_log_tls() {
-                (void)pthread_key_create(&gt_get_log_tls_key, dtor_pthread_get_log_tls);
-                char *buffer_block = new char[LOG_WRAPPER_MAX_SIZE_PER_LINE];
-                pthread_setspecific(gt_get_log_tls_key, buffer_block);
-            }
+            static void init_pthread_get_log_tls() { (void)pthread_key_create(&gt_get_log_tls_key, dtor_pthread_get_log_tls); }
 
             char *get_log_tls_buffer() {
                 (void)pthread_once(&gt_get_log_tls_once, init_pthread_get_log_tls);
-                return reinterpret_cast<char *>(pthread_getspecific(gt_get_log_tls_key));
+                char *buffer_block = reinterpret_cast<char *>(pthread_getspecific(gt_get_log_tls_key));
+                if (NULL == buffer_block) {
+                    buffer_block = new char[LOG_WRAPPER_MAX_SIZE_PER_LINE];
+                    pthread_setspecific(gt_get_log_tls_key, buffer_block);
+                }
+                return buffer_block;
             }
         }
     }
