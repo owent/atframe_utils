@@ -74,7 +74,7 @@ endfunction()
 macro (FindConfigurePackage)
     include(CMakeParseArguments)
     set(optionArgs BUILD_WITH_CONFIGURE BUILD_WITH_CMAKE BUILD_WITH_SCONS BUILD_WITH_CUSTOM_COMMAND)
-    set(oneValueArgs PACKAGE WORKING_DIRECTORY BUILD_DIRECTORY PREFIX_DIRECTORY SRC_DIRECTORY_NAME ZIP_URL TAR_URL SVN_URL GIT_URL)
+    set(oneValueArgs PACKAGE WORKING_DIRECTORY BUILD_DIRECTORY PREFIX_DIRECTORY SRC_DIRECTORY_NAME ZIP_URL TAR_URL SVN_URL GIT_URL GIT_BRANCH)
     set(multiValueArgs CONFIGURE_CMD CONFIGURE_FLAGS CMAKE_FLAGS SCONS_FLAGS MAKE_FLAGS CUSTOM_BUILD_COMMAND PREBUILD_COMMAND)
     cmake_parse_arguments(FindConfigurePackage "${optionArgs}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN} )
 
@@ -183,8 +183,11 @@ macro (FindConfigurePackage)
                        message(FATAL_ERROR "git not found")
                     endif()
 
-                    execute_process(COMMAND ${GIT_EXECUTABLE} clone "${FindConfigurePackage_GIT_URL}" "${FindConfigurePackage_SRC_DIRECTORY_NAME}"
-                        WORKING_DIRECTORY "${FindConfigurePackage_WORKING_DIRECTORY}"
+                    if (NOT FindConfigurePackage_GIT_BRANCH)
+                        set(FindConfigurePackage_GIT_BRANCH master)
+                    endif()
+                    execute_process(COMMAND ${GIT_EXECUTABLE} clone -b ${FindConfigurePackage_GIT_BRANCH} ${FindConfigurePackage_GIT_URL} ${FindConfigurePackage_SRC_DIRECTORY_NAME}
+                        WORKING_DIRECTORY ${FindConfigurePackage_WORKING_DIRECTORY}
                     )
                 endif()
 

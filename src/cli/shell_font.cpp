@@ -241,7 +241,7 @@ namespace util {
 #ifdef SHELL_FONT_USING_WIN32_CONSOLE
             if (os == &std::cout) {
                 hOsHandle = GetStdHandle(STD_OUTPUT_HANDLE);
-            } else if (os == &std::cout) {
+            } else if (os == &std::cerr) {
                 hOsHandle = GetStdHandle(STD_ERROR_HANDLE);
             } else {
                 hOsHandle = NULL;

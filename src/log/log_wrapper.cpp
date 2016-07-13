@@ -130,7 +130,7 @@ namespace util {
 
         void log_wrapper::write_log(const caller_info_t &caller, const char *content, size_t content_size) {
             for (std::list<log_router_t>::iterator iter = log_sinks_.begin(); iter != log_sinks_.end(); ++iter) {
-                if (log_level_ >= iter->level_min && log_level_ <= iter->level_max) {
+                if (caller.level_id >= iter->level_min && caller.level_id <= iter->level_max) {
                     iter->handle(caller, content, content_size);
                 }
             }
