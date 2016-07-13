@@ -37,7 +37,8 @@ if( ${CMAKE_CXX_COMPILER_ID} STREQUAL "GNU")
     # 检测GCC版本大于等于4.8时，默认-Wno-unused-local-typedefs (普片用于type_traits，故而关闭该警告)
     if ( CMAKE_CXX_COMPILER_VERSION VERSION_GREATER "4.8.0" OR CMAKE_CXX_COMPILER_VERSION  VERSION_EQUAL "4.8.0" )
         # GCC < 4.8 doesn't support the address sanitizer
-        add_definitions(-Wno-unused-local-typedefs -fsanitize=address)
+        # -fsanitize=address require -lasan be placed before -lstdc++, every target shoud add this
+        add_definitions(-Wno-unused-local-typedefs)
         message(STATUS "GCC Version ${CMAKE_CXX_COMPILER_VERSION} Found, -Wno-unused-local-typedefs added.")
     endif()
 
