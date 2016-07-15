@@ -20,10 +20,6 @@ if (NOT ENABLE_MIXEDINT_MAGIC_MASK)
     set(ENABLE_MIXEDINT_MAGIC_MASK 0)
 endif()
 
-if (${ENABLE_MIXEDINT_MAGIC_MASK} GREATER 0)
-    add_compiler_define("ENABLE_MIXEDINT_MAGIC_MASK=${ENABLE_MIXEDINT_MAGIC_MASK}")
-endif()
-
 # Lua模块
 find_package(Lua51)
 if (LUA51_FOUND)
@@ -34,7 +30,25 @@ elseif(ENABLE_LUA_SUPPORT)
     message(STATUS "Lua support enabled.(enabled by custom)")
 else()
     message(STATUS "Lua support disabled")
-	add_compiler_define("LOG_WRAPPER_DISABLE_LUA_SUPPORT=1")
+    set(LOG_WRAPPER_DISABLE_LUA_SUPPORT 1)
+endif()
+
+# libuv
+find_package(Libuv)
+if(Libuv_FOUND)
+    message(STATUS "Libuv support enabled")
+    set(NETWORK_EVPOLL_ENABLE_LIBUV 1)
+else()
+    message(STATUS "Libuv support disabled")
+endif()
+
+# curl
+find_package(CURL)
+if(CURL_FOUND)
+    message(STATUS "Curl support disabled")
+    set(NETWORK_ENABLE_CURL 1)
+else()
+    message(STATUS "Curl support disabled")
 endif()
 
 # 测试配置选项

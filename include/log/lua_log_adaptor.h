@@ -14,6 +14,8 @@
 
 #pragma once
 
+#include "config/atframe_utils_build_feature.h"
+
 #ifndef LOG_WRAPPER_DISABLE_LUA_SUPPORT
 
 #ifdef __cplusplus

@@ -30,3 +30,6 @@
 
 /build
 /build_*
+
+# generated files
+/include/config/atframe_utils_build_feature.h

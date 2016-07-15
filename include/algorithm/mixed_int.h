@@ -25,6 +25,7 @@
 #include <type_traits>
 
 #include "../common/compiler_message.h"
+#include "../config/atframe_utils_build_feature.h"
 
 // 定义ENABLE_MIXEDINT_MAGIC_MASK=[数字]以设置整数混淆功能
 // 如果ENABLE_MIXEDINT_MAGIC_MASK=1，则刚好是ZigZag编码规则
@@ -32,7 +33,6 @@
 #if defined(ENABLE_MIXEDINT_MAGIC_MASK)
 #if ENABLE_MIXEDINT_MAGIC_MASK <= 0
 #undef ENABLE_MIXEDINT_MAGIC_MASK
-COMPILER_MSG_WARN("ENABLE_MIXEDINT_MAGIC_MASK must be greater then 0");
 
 #elif ENABLE_MIXEDINT_MAGIC_MASK >= 64
 COMPILER_MSG_ERROR("ENABLE_MIXEDINT_MAGIC_MASK must be less than 64");

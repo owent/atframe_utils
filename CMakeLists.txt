@@ -32,6 +32,20 @@ source_group_by_dir(HEADER_LIST)
 source_group_by_dir(SRC_LIST)
 add_library(${PROJECT_LIB_LINK} ${HEADER_LIST} ${SRC_LIST})
 
+configure_file(
+    "${PROJECT_ALL_INCLUDE_DIR}/config/atframe_utils_build_feature.h.in"
+    "${PROJECT_ALL_INCLUDE_DIR}/config/atframe_utils_build_feature.h"
+    @ONLY
+)
+
+if (PROJECT_ENABLE_SAMPLE)
+    add_subdirectory("${CMAKE_CURRENT_LIST_DIR}/sample")
+endif()
+
+if (PROJECT_ENABLE_UNITTEST)
+    add_subdirectory("${CMAKE_CURRENT_LIST_DIR}/test")
+endif()
+
 install(TARGETS ${PROJECT_LIB_LINK}
     RUNTIME DESTINATION bin
     LIBRARY DESTINATION lib${PLATFORM_SUFFIX}
@@ -44,11 +58,3 @@ install(DIRECTORY ${PROJECT_ALL_INCLUDE_DIR}
     PATTERN ".svn" EXCLUDE
     PATTERN ".git" EXCLUDE
 )
-
-if (PROJECT_ENABLE_SAMPLE)
-    add_subdirectory("${CMAKE_CURRENT_LIST_DIR}/sample")
-endif()
-
-if (PROJECT_ENABLE_UNITTEST)
-    add_subdirectory("${CMAKE_CURRENT_LIST_DIR}/test")
-endif()
