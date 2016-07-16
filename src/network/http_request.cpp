@@ -1,7 +1,17 @@
 ﻿#include <assert.h>
 #include <cstring>
 
+#include <string/tquerystring.h>
+
 #include "network/http_request.h"
+
+
+#if __cplusplus >= 201103L || (defined(_MSC_VER) && _MSC_VER >= 1800)
+#include <type_traits>
+
+static_assert(std::is_pod<util::network::http_request::curl_poll_context_t>::value, "curl_poll_context_t must be a POD type");
+
+#endif
 
 #if defined(NETWORK_EVPOLL_ENABLE_LIBUV) && defined(NETWORK_ENABLE_CURL)
 
@@ -11,6 +21,13 @@
 
 namespace util {
     namespace network {
+        namespace detail {
+            /* initialize custom header list (stating that Expect: 100-continue is not wanted */
+            static const char custom_no_expect_header[] = "Expect:";
+            static const char content_type_multipart_post[] = "Content-Type: application/x-www-form-urlencoded";
+            static const char content_type_multipart_form_data[] = "Content-Type: multipart/form-data";
+        }
+
         http_request::ptr_t http_request::create(curl_m_bind_t* curl_multi, const std::string &url) {
             ptr_t ret = create(curl_multi);
             if (ret) {
@@ -37,15 +54,15 @@ namespace util {
             timeout_ms_(0), bind_m_(curl_multi),
             request_(NULL), flags_(0), response_code_(0),
             priv_data_(NULL) {
+            http_form_.begin = NULL;
+            http_form_.end = NULL;
+            http_form_.headerlist = NULL;
+            http_form_.posted_size = 0;
             set_user_agent("libcurl");
         }
 
         http_request::~http_request() {
             cleanup();
-
-            if (ev_poll_) {
-                ev_poll_->owner = NULL;
-            }
         }
 
         int http_request::start(method_t::type method, bool wait) {
@@ -69,9 +86,11 @@ namespace util {
             case method_t::EN_MT_POST:
                 curl_easy_setopt(req, CURLOPT_POST, 1L);
                 break;
-            case method_t::EN_MT_PUT:
+            case method_t::EN_MT_PUT: {
                 curl_easy_setopt(req, CURLOPT_PUT, 1L);
+                curl_easy_setopt(req, CURLOPT_UPLOAD, 1L);
                 break;
+            }
             case method_t::EN_MT_DELETE:
                 curl_easy_setopt(req, CURLOPT_CUSTOMREQUEST, "DELETE");
                 break;
@@ -83,11 +102,56 @@ namespace util {
             }
 
             int res = CURLE_OK;
-            // setup options
-            if (!post_data_.empty()) {
-                set_opt_bool(CURLOPT_POST, true);
-                curl_easy_setopt(req, CURLOPT_POSTFIELDS, &post_data_[0]);
-                set_opt_long(CURLOPT_POSTFIELDSIZE, post_data_.size());
+            if (method_t::EN_MT_POST == method) {
+                // setup options
+                if (!post_data_.empty()) {
+                    set_opt_long(CURLOPT_POSTFIELDSIZE, post_data_.size());
+                    curl_easy_setopt(req, CURLOPT_POSTFIELDS, post_data_.c_str());
+                    //curl_easy_setopt(req, CURLOPT_COPYPOSTFIELDS, post_data_.c_str());
+                }
+
+                // multipart/formdata HTTP POST
+                // @see https://curl.haxx.se/libcurl/c/CURLOPT_HTTPPOST.html
+                if (NULL != http_form_.begin) {
+                    http_form_.headerlist = curl_slist_append(http_form_.headerlist, ::util::network::detail::custom_no_expect_header);
+
+                    curl_easy_setopt(req, CURLOPT_HTTPHEADER, http_form_.headerlist);
+                    curl_easy_setopt(req, CURLOPT_HTTPPOST, http_form_.begin);
+                    curl_easy_setopt(req, CURLOPT_VERBOSE, 1L);
+                }
+            } else if (method_t::EN_MT_PUT == method) {
+                // if using put method, CURLOPT_POST* will have no effect
+                // we must use CURLOPT_READFUNCTION to upload the data
+                // @see https://curl.haxx.se/libcurl/c/CURLOPT_PUT.html
+                // @see https://curl.haxx.se/libcurl/c/CURLOPT_UPLOAD.html
+                // @see https://curl.haxx.se/libcurl/c/CURLOPT_READDATA.html
+                // @see https://curl.haxx.se/libcurl/c/CURLOPT_READFUNCTION.html
+                // @see https://curl.haxx.se/libcurl/c/CURLOPT_INFILESIZE.html
+                // @see https://curl.haxx.se/libcurl/c/CURLOPT_INFILESIZE_LARGE.html
+
+                if (NULL != http_form_.begin) {
+                    http_form_.headerlist = curl_slist_append(http_form_.headerlist, ::util::network::detail::custom_no_expect_header);
+                    http_form_.headerlist = curl_slist_append(http_form_.headerlist, ::util::network::detail::content_type_multipart_post);
+                    curl_easy_setopt(req, CURLOPT_HTTPHEADER, http_form_.headerlist);
+                    curl_easy_setopt(req, CURLOPT_VERBOSE, 1L);
+
+                    http_form_.posted_size = 0;
+                    util::tquerystring qs;
+                    curl_httppost* post_data = http_form_.begin;
+                    while (NULL != post_data) {
+                        qs.set(
+                            std::string(post_data->name, post_data->namelength),
+                            std::string(post_data->contents, post_data->contentlen)
+                        );
+
+                        post_data = post_data->next;
+                    }
+                    qs.to_string().swap(post_data_);
+                }
+
+                curl_easy_setopt(req, CURLOPT_READFUNCTION, curl_callback_on_read);
+                curl_easy_setopt(req, CURLOPT_READDATA, this);
+                curl_easy_setopt(req, CURLOPT_INFILESIZE, static_cast<long>(post_data_.size()));
             }
 
             if (timeout_ms_ > 0) {
@@ -107,7 +171,7 @@ namespace util {
                 res = curl_multi_add_handle(bind_m_->curl_multi, req);
                 if (res != CURLM_OK) {
                     UNSET_FLAG(flags_, flag_t::EN_FT_RUNNING);
-                    UNSET_FLAG(flags_, flag_t::EN_FT_CURL_MULTI_HANDLE);
+                    cleanup();
                 }
             }
 
@@ -123,29 +187,39 @@ namespace util {
             return 0;
         }
 
+        void http_request::remove_curl_request() {
+            CURL* req = request_;
+            request_ = NULL;
+            if (NULL != req) {
+                if (NULL != bind_m_ && CHECK_FLAG(flags_, flag_t::EN_FT_CURL_MULTI_HANDLE)) {
+                    curl_multi_remove_handle(bind_m_->curl_multi, req);
+                    UNSET_FLAG(flags_, flag_t::EN_FT_CURL_MULTI_HANDLE);
+                }
+
+                curl_easy_cleanup(req);
+            }
+
+            if (NULL != http_form_.begin) {
+                curl_formfree(http_form_.begin);
+                http_form_.begin = NULL;
+                http_form_.end = NULL;
+            }
+
+            if (NULL != http_form_.headerlist) {
+                curl_slist_free_all(http_form_.headerlist);
+                http_form_.headerlist = NULL;
+            }
+
+            http_form_.posted_size = 0;
+        }
+
         void http_request::cleanup() {
             if (CHECK_FLAG(flags_, flag_t::EN_FT_CLEANING)) {
                 return;
             }
             SET_FLAG(flags_, flag_t::EN_FT_CLEANING);
 
-            if (NULL != request_) {
-                if (NULL != bind_m_ && CHECK_FLAG(flags_, flag_t::EN_FT_CURL_MULTI_HANDLE)) {
-                    curl_multi_remove_handle(bind_m_->curl_multi, request_);
-                    UNSET_FLAG(flags_, flag_t::EN_FT_CURL_MULTI_HANDLE);
-                }
-
-                curl_easy_cleanup(request_);
-                request_ = NULL;
-            }
-
-            // clean poll obj in libuv
-            if (ev_poll_ && false == ev_poll_->is_closing) {
-                uv_poll_stop(&ev_poll_->poll_object);
-                ev_poll_->self_holder = ev_poll_;
-                uv_close(reinterpret_cast<uv_handle_t*>(&ev_poll_->poll_object), ev_callback_on_poll_closed);
-                ev_poll_->is_closing = true;
-            }
+            remove_curl_request();
 
             UNSET_FLAG(flags_, flag_t::EN_FT_CLEANING);
         }
@@ -178,6 +252,46 @@ namespace util {
 
         std::string& http_request::post_data() { return post_data_; }
         const std::string &http_request::post_data() const { return post_data_; }
+
+        int http_request::add_form_file(const std::string& fieldname, const char* filename) {
+            return curl_formadd(&http_form_.begin, &http_form_.end,
+                CURLFORM_COPYNAME, fieldname.c_str(),
+                CURLFORM_NAMELENGTH, static_cast<long>(fieldname.size()),
+                CURLFORM_FILE, filename,
+                CURLFORM_END);
+        }
+
+        int http_request::add_form_file(const std::string& fieldname, const char* filename, const char* content_type, const char* new_filename) {
+            return curl_formadd(&http_form_.begin, &http_form_.end,
+                CURLFORM_COPYNAME, fieldname.c_str(),
+                CURLFORM_NAMELENGTH, static_cast<long>(fieldname.size()),
+                CURLFORM_FILE, filename,
+                CURLFORM_CONTENTTYPE, content_type,
+                CURLFORM_FILENAME, new_filename,
+                CURLFORM_END);
+        }
+
+        int http_request::add_form_file(const std::string& fieldname, const char* filename, const char* content_type) {
+            return curl_formadd(&http_form_.begin, &http_form_.end,
+                CURLFORM_COPYNAME, fieldname.c_str(),
+                CURLFORM_NAMELENGTH, static_cast<long>(fieldname.size()),
+                CURLFORM_FILE, filename,
+                CURLFORM_CONTENTTYPE, content_type,
+                CURLFORM_END);
+        }
+
+        int http_request::add_form_field(const std::string& fieldname, const char* fieldvalue, size_t fieldlength) {
+            return curl_formadd(&http_form_.begin, &http_form_.end,
+                CURLFORM_COPYNAME, fieldname.c_str(), 
+                CURLFORM_NAMELENGTH, static_cast<long>(fieldname.size()),
+                CURLFORM_COPYCONTENTS, fieldvalue, 
+                CURLFORM_CONTENTSLENGTH, static_cast<long>(fieldlength),
+                CURLFORM_END);
+        }
+
+        int http_request::add_form_field(const std::string& fieldname, const std::string& fieldvalue) {
+            return add_form_field(fieldname, fieldvalue.c_str(), fieldvalue.size());
+        }
 
         void http_request::set_opt_ssl_verify_peer(bool v) {
             set_opt_bool(CURLOPT_SSL_VERIFYPEER, v);
@@ -280,9 +394,6 @@ namespace util {
             if (on_complete_fn_) {
                 on_complete_fn_(*this);
             }
-
-            // cleanup
-            cleanup();
         }
 
         CURL * http_request::mutable_request() {
@@ -303,30 +414,56 @@ namespace util {
             return request_;
         }
 
-        std::shared_ptr<http_request::poll_info_t>& http_request::make_poll(curl_socket_t sockfd) {
-            if (ev_poll_) {
-                assert(false == ev_poll_->is_closing);
-                return ev_poll_;
+        http_request::curl_poll_context_t* http_request::malloc_poll(http_request* req, curl_socket_t sockfd) {
+            if (NULL == req) {
+                abort();
             }
 
-            assert(bind_m_);
-            assert(bind_m_->ev_loop);
+            assert(req->bind_m_);
+            assert(req->bind_m_->ev_loop);
 
-            ev_poll_ = std::make_shared<poll_info_t>();
-            if (ev_poll_) {
-                ev_poll_->owner = this;
-
-                uv_poll_init_socket(bind_m_->ev_loop, &ev_poll_->poll_object, sockfd);
-                ev_poll_->poll_object.data = ev_poll_.get();
-                ev_poll_->fd = sockfd;
+            curl_poll_context_t* ret = reinterpret_cast<curl_poll_context_t*>(malloc(sizeof(curl_poll_context_t)));
+            if (NULL == ret) {
+                return ret;
             }
 
-            return ev_poll_;
+            ret->sockfd = sockfd;
+            ret->bind_multi = req->bind_m_;
+            uv_poll_init_socket(req->bind_m_->ev_loop, &ret->poll_object, sockfd);
+            ret->poll_object.data = ret;
+
+            return ret;
+        }
+
+        void http_request::free_poll(curl_poll_context_t* p) {
+            free(p);
+        }
+
+        void http_request::check_multi_info(CURLM* curl_handle) {
+            CURLMsg *message;
+            int pending;
+
+            while ((message = curl_multi_info_read(curl_handle, &pending))) {
+                switch (message->msg) {
+                case CURLMSG_DONE: {
+                    http_request *req = NULL;
+                    curl_easy_getinfo(message->easy_handle, CURLINFO_PRIVATE, &req);
+                    assert(req);
+
+                    http_request::ptr_t req_p = req->shared_from_this();
+                    // this may cause req not available any more
+                    req_p->finish_req_rsp();
+                    req_p->remove_curl_request();
+                    break;
+                }
+                default:
+                    fprintf(stderr, "CURLMSG default\n");
+                    break;
+                }
+            }
         }
 
         http_request::curl_m_bind_t::curl_m_bind_t():ev_loop(NULL), curl_multi(NULL) {}
-
-        http_request::poll_info_t::poll_info_t() : owner(NULL), is_closing(false) {}
 
         int http_request::create_curl_multi(uv_loop_t * evloop, std::shared_ptr<curl_m_bind_t>& manager) {
             assert(evloop);
@@ -389,56 +526,45 @@ namespace util {
         }
 
         void http_request::ev_callback_on_poll_closed(uv_handle_t* handle) {
-            poll_info_t* poll_data = reinterpret_cast<poll_info_t*>(handle->data);
-            assert(poll_data);
+            curl_poll_context_t* context = reinterpret_cast<curl_poll_context_t*>(handle->data);
+            assert(context);
 
-            // release self holder
-            poll_data->self_holder.reset();
+            free_poll(context);
         }
 
         void http_request::ev_callback_on_timeout(uv_timer_t *handle) {
             curl_m_bind_t* bind = reinterpret_cast<curl_m_bind_t*>(handle->data);
             assert(bind);
 
-            int still_running = 0;
-            curl_multi_socket_action(bind->curl_multi, CURL_SOCKET_TIMEOUT, 0, &still_running);
+            int running_handles = 0;
+            curl_multi_socket_action(bind->curl_multi, CURL_SOCKET_TIMEOUT, 0, &running_handles);
+            check_multi_info(bind->curl_multi);
         }
 
         void http_request::ev_callback_curl_perform(uv_poll_t *req, int status, int events) {
-            poll_info_t* poll_data = reinterpret_cast<poll_info_t*>(req->data);
-            assert(poll_data);
-            assert(poll_data->owner);
-            assert(poll_data->owner->bind_m_);
+            curl_poll_context_t* context = reinterpret_cast<curl_poll_context_t*>(req->data);
+            assert(context);
 
-            uv_timer_stop(&poll_data->owner->bind_m_->ev_timeout);
-            
+            uv_timer_stop(&context->bind_multi->ev_timeout);
             int running_handles;
             int flags = 0;
-            if (events & UV_READABLE) flags |= CURL_CSELECT_IN;
-            if (events & UV_WRITABLE) flags |= CURL_CSELECT_OUT;
 
-            if (0 != status || 0 == flags) {
+            if (status < 0) {
+                flags |= CURL_CSELECT_ERR;
+            }
+            if (events & UV_READABLE) {
+                flags |= CURL_CSELECT_IN;
+            }
+            if (events & UV_WRITABLE) {
+                flags |= CURL_CSELECT_OUT;
+            }
+
+            if (0 == flags) {
                 return;
             }
 
-            curl_multi_socket_action(poll_data->owner->bind_m_, poll_data->fd, flags, &running_handles);
-
-            CURLMsg *message;
-            int pending;
-            while ((message = curl_multi_info_read(poll_data->owner->bind_m_, &pending))) {
-                switch (message->msg) {
-                case CURLMSG_DONE: {
-                    http_request *req = NULL;
-                    curl_easy_getinfo(message->easy_handle, CURLINFO_PRIVATE, &req);
-                    assert(req);
-
-                    req->finish_req_rsp();
-                    break;
-                }
-                default:
-                    break;
-                }
-            }
+            curl_multi_socket_action(context->bind_multi->curl_multi, context->sockfd, flags, &running_handles);
+            check_multi_info(context->bind_multi->curl_multi);
         }
 
         void http_request::curl_callback_start_timer(CURLM *multi, long timeout_ms, void *userp) {
@@ -447,52 +573,54 @@ namespace util {
 
             // @see https://curl.haxx.se/libcurl/c/evhiperfifo.html
             // @see https://gist.github.com/clemensg/5248927
-            if (timeout_ms > 0) {
-                uv_timer_start(&bind->ev_timeout, http_request::ev_callback_on_timeout, static_cast<uint64_t>(timeout_ms), 0);
-            } else {
-                ev_callback_on_timeout(&bind->ev_timeout);
+            // @see https://curl.haxx.se/libcurl/c/multi-uv.html
+            if (timeout_ms <= 0) {
+                timeout_ms = 1;
             }
+
+            uv_timer_start(&bind->ev_timeout, http_request::ev_callback_on_timeout, static_cast<uint64_t>(timeout_ms), 0);
         }
 
         int http_request::curl_callback_handle_socket(CURL *easy, curl_socket_t s, int action, void *userp, void *socketp) {
-            http_request *req = reinterpret_cast<http_request*>(socketp);
-            if (action == CURL_POLL_IN || action == CURL_POLL_OUT) {
-                if (NULL == req) {
+            curl_poll_context_t *context = reinterpret_cast<curl_poll_context_t*>(socketp);
+            if (action == CURL_POLL_IN || action == CURL_POLL_OUT || action == CURL_POLL_INOUT || action == CURL_POLL_NONE) {
+                if (NULL == context) {
+                    http_request* req;
                     curl_easy_getinfo(easy, CURLINFO_PRIVATE, &req);
                     assert(req->bind_m_);
                     assert(req->bind_m_->curl_multi);
-                    curl_multi_assign(req->bind_m_->curl_multi, s, req);
-                }
 
-                if (!req->ev_poll_) {
-                    req->make_poll(s);
+                    context = malloc_poll(req, s);
+                    curl_multi_assign(req->bind_m_->curl_multi, s, context);
                 }
             }
 
+            int res = 0;
             switch (action) {
             case CURL_POLL_IN:
-                uv_poll_start(&req->ev_poll_->poll_object, UV_READABLE, ev_callback_curl_perform);
+                res = uv_poll_start(&context->poll_object, UV_READABLE, ev_callback_curl_perform);
                 break;
             case CURL_POLL_OUT:
-                uv_poll_start(&req->ev_poll_->poll_object, UV_WRITABLE, ev_callback_curl_perform);
+                res = uv_poll_start(&context->poll_object, UV_WRITABLE, ev_callback_curl_perform);
                 break;
             case CURL_POLL_INOUT:
-                uv_poll_start(&req->ev_poll_->poll_object, UV_READABLE | UV_WRITABLE, ev_callback_curl_perform);
+                res = uv_poll_start(&context->poll_object, UV_READABLE | UV_WRITABLE, ev_callback_curl_perform);
                 break;
             case CURL_POLL_REMOVE:
-                if (req) {
+                if (context) {
+                    CURLM* curl_multi = context->bind_multi->curl_multi;
+
                     // already removed by libcurl
-                    UNSET_FLAG(req->flags_, flag_t::EN_FT_CURL_MULTI_HANDLE);
-                    req->request_ = NULL;
-                    req->cleanup();
-                    curl_multi_assign(req->bind_m_->curl_multi, s, NULL);
+                    uv_poll_stop(&context->poll_object);
+                    uv_close(reinterpret_cast<uv_handle_t*>(&context->poll_object), ev_callback_on_poll_closed);
+                    curl_multi_assign(curl_multi, s, NULL);
                 }
                 break;
             default:
                 break;
             }
 
-            return 0;
+            return res;
         }
 
         size_t http_request::curl_callback_on_write(char *ptr, size_t size, size_t nmemb, void *userdata) {
@@ -516,6 +644,24 @@ namespace util {
             progress.ulnow = ulnow;
 
             return self->on_progress_fn_(*self, progress);
+        }
+
+        size_t http_request::curl_callback_on_read(char *buffer, size_t size, size_t nitems, void *instream) {
+            http_request* self = reinterpret_cast<http_request*>(instream);
+            assert(self);
+
+            if (self->post_data_.size() <= self->http_form_.posted_size) {
+                return 0;
+            }
+
+            size_t nwrite = size * nitems;
+            if (nwrite > self->post_data_.size() - self->http_form_.posted_size) {
+                nwrite = self->post_data_.size() - self->http_form_.posted_size;
+            }
+
+            memcpy(buffer, self->post_data_.data() + self->http_form_.posted_size, nwrite);
+            self->http_form_.posted_size += nwrite;
+            return nwrite;
         }
     }
 }

@@ -36,7 +36,11 @@ extern "C" {
 namespace util {
     namespace network {
 
-        class http_request : public ::util::design_pattern::noncopyable {
+        /**
+         * http_request using libuv
+         * @see https://curl.haxx.se/libcurl/c/multi-uv.html
+         */
+        class http_request : public std::enable_shared_from_this<http_request>, public ::util::design_pattern::noncopyable {
         public:
             /**
              * @brief types
@@ -123,14 +127,10 @@ namespace util {
             };
             typedef std::shared_ptr<curl_m_bind_t> curl_m_bind_ptr_t;
 
-            struct poll_info_t {
-                http_request* owner;
+            struct curl_poll_context_t {
+                curl_m_bind_t* bind_multi;
                 uv_poll_t poll_object;
-                curl_socket_t fd;
-                bool is_closing;
-
-                poll_info_t();
-                std::shared_ptr<poll_info_t> self_holder;
+                curl_socket_t sockfd;
             };
 
             typedef std::function<int(http_request&)> on_error_fn_t;
@@ -167,6 +167,8 @@ namespace util {
 
             int stop();
 
+            void remove_curl_request();
+
             void cleanup();
 
             void set_url(const std::string &v);
@@ -185,6 +187,26 @@ namespace util {
             inline std::stringstream& get_response_stream() { return response_; }
             inline const std::stringstream& get_response_stream() const { return response_; }
 
+            int add_form_file(const std::string& fieldname, const char* filename);
+
+            int add_form_file(const std::string& fieldname, const char* filename, const char* content_type, const char* new_filename);
+
+            int add_form_file(const std::string& fieldname, const char* filename, const char* content_type);
+
+            int add_form_field(const std::string& fieldname, const char* fieldvalue, size_t fieldlength);
+
+            int add_form_field(const std::string& fieldname, const std::string& fieldvalue);
+
+            template<typename T>
+            int add_form_field(const std::string& fieldname, const T& fieldvalue) {
+                std::stringstream ss;
+                ss << fieldvalue;
+
+                std::string val;
+                ss.str().swap(val);
+                return add_form_field(fieldname, val.c_str(), val.size());
+            }
+
             inline void set_priv_data(void* v) { priv_data_ = v; }
             inline void* get_priv_data() const { return priv_data_; }
 
@@ -195,6 +217,14 @@ namespace util {
 
                 long val = v ? 1L : 0L;
                 curl_easy_setopt(mutable_request(), k, 0L);
+            }
+
+            inline void set_opt_string(CURLoption k, const char* v) {
+                if (NULL == mutable_request()) {
+                    return;
+                }
+
+                curl_easy_setopt(mutable_request(), k, v);
             }
 
             template<typename T>
@@ -239,7 +269,10 @@ namespace util {
 
             CURL * mutable_request();
 
-            std::shared_ptr<poll_info_t>& make_poll(curl_socket_t sockfd);
+            static curl_poll_context_t* malloc_poll(http_request* req, curl_socket_t sockfd);
+            static void free_poll(curl_poll_context_t*);
+
+            static void check_multi_info(CURLM* curl_handle);
 
             static void ev_callback_on_timer_closed(uv_handle_t* handle);
             static void ev_callback_on_poll_closed(uv_handle_t* handle);
@@ -250,10 +283,9 @@ namespace util {
             static int curl_callback_handle_socket(CURL *easy, curl_socket_t s, int action, void *userp, void *socketp);
             static size_t curl_callback_on_write(char *ptr, size_t size, size_t nmemb, void *userdata);
             static int curl_callback_on_progress(void *clientp, double dltotal, double dlnow, double ultotal, double ulnow);
+            static size_t curl_callback_on_read(char *buffer, size_t size, size_t nitems, void *instream);
         private:
             // event dispatcher
-            std::shared_ptr<poll_info_t> ev_poll_;
-            ptr_t self_holder_;
             time_t timeout_ms_;
 
             // curl resource
@@ -268,6 +300,15 @@ namespace util {
             int response_code_;
             void* priv_data_;
             std::string useragent_;
+
+            typedef struct {
+                curl_httppost *begin;
+                curl_httppost *end;
+                curl_slist* headerlist;
+
+                size_t posted_size;
+            } form_list_t;
+            form_list_t http_form_;
 
             char error_buffer_[CURL_ERROR_SIZE];
 
