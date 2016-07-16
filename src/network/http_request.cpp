@@ -117,7 +117,7 @@ namespace util {
 
                     curl_easy_setopt(req, CURLOPT_HTTPHEADER, http_form_.headerlist);
                     curl_easy_setopt(req, CURLOPT_HTTPPOST, http_form_.begin);
-                    curl_easy_setopt(req, CURLOPT_VERBOSE, 1L);
+                    //curl_easy_setopt(req, CURLOPT_VERBOSE, 1L);
                 }
             } else if (method_t::EN_MT_PUT == method) {
                 // if using put method, CURLOPT_POST* will have no effect
@@ -133,7 +133,7 @@ namespace util {
                     http_form_.headerlist = curl_slist_append(http_form_.headerlist, ::util::network::detail::custom_no_expect_header);
                     http_form_.headerlist = curl_slist_append(http_form_.headerlist, ::util::network::detail::content_type_multipart_post);
                     curl_easy_setopt(req, CURLOPT_HTTPHEADER, http_form_.headerlist);
-                    curl_easy_setopt(req, CURLOPT_VERBOSE, 1L);
+                    //curl_easy_setopt(req, CURLOPT_VERBOSE, 1L);
 
                     http_form_.posted_size = 0;
                     util::tquerystring qs;
