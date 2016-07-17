@@ -28,7 +28,7 @@ namespace util {
             static const char content_type_multipart_form_data[] = "Content-Type: multipart/form-data";
         }
 
-        http_request::ptr_t http_request::create(curl_m_bind_t* curl_multi, const std::string &url) {
+        http_request::ptr_t http_request::create(curl_m_bind_t *curl_multi, const std::string &url) {
             ptr_t ret = create(curl_multi);
             if (ret) {
                 ret->set_url(url);
@@ -37,7 +37,7 @@ namespace util {
             return ret;
         }
 
-        http_request::ptr_t http_request::create(curl_m_bind_t* curl_multi) {
+        http_request::ptr_t http_request::create(curl_m_bind_t *curl_multi) {
             ptr_t ret = std::make_shared<http_request>(curl_multi);
             if (ret->mutable_request()) {
                 return ret;
@@ -46,27 +46,22 @@ namespace util {
             return ptr_t();
         }
 
-        int http_request::get_status_code_group(int code) {
-            return code / 100;
-        }
+        int http_request::get_status_code_group(int code) { return code / 100; }
 
-        http_request::http_request(curl_m_bind_t* curl_multi):
-            timeout_ms_(0), bind_m_(curl_multi),
-            request_(NULL), flags_(0), response_code_(0),
-            priv_data_(NULL) {
+        http_request::http_request(curl_m_bind_t *curl_multi)
+            : timeout_ms_(0), bind_m_(curl_multi), request_(NULL), flags_(0), response_code_(0), priv_data_(NULL) {
             http_form_.begin = NULL;
             http_form_.end = NULL;
             http_form_.headerlist = NULL;
             http_form_.posted_size = 0;
+            http_form_.uploaded_file = NULL;
             set_user_agent("libcurl");
         }
 
-        http_request::~http_request() {
-            cleanup();
-        }
+        http_request::~http_request() { cleanup(); }
 
         int http_request::start(method_t::type method, bool wait) {
-            CURL* req = mutable_request();
+            CURL *req = mutable_request();
             if (NULL == req) {
                 return -1;
             }
@@ -107,7 +102,7 @@ namespace util {
                 if (!post_data_.empty()) {
                     set_opt_long(CURLOPT_POSTFIELDSIZE, post_data_.size());
                     curl_easy_setopt(req, CURLOPT_POSTFIELDS, post_data_.c_str());
-                    //curl_easy_setopt(req, CURLOPT_COPYPOSTFIELDS, post_data_.c_str());
+                    // curl_easy_setopt(req, CURLOPT_COPYPOSTFIELDS, post_data_.c_str());
                 }
 
                 // multipart/formdata HTTP POST
@@ -117,7 +112,7 @@ namespace util {
 
                     curl_easy_setopt(req, CURLOPT_HTTPHEADER, http_form_.headerlist);
                     curl_easy_setopt(req, CURLOPT_HTTPPOST, http_form_.begin);
-                    //curl_easy_setopt(req, CURLOPT_VERBOSE, 1L);
+                    // curl_easy_setopt(req, CURLOPT_VERBOSE, 1L);
                 }
             } else if (method_t::EN_MT_PUT == method) {
                 // if using put method, CURLOPT_POST* will have no effect
@@ -129,29 +124,45 @@ namespace util {
                 // @see https://curl.haxx.se/libcurl/c/CURLOPT_INFILESIZE.html
                 // @see https://curl.haxx.se/libcurl/c/CURLOPT_INFILESIZE_LARGE.html
 
+                long infile_size = 0;
+                http_form_.uploaded_file = NULL;
                 if (NULL != http_form_.begin) {
                     http_form_.headerlist = curl_slist_append(http_form_.headerlist, ::util::network::detail::custom_no_expect_header);
-                    http_form_.headerlist = curl_slist_append(http_form_.headerlist, ::util::network::detail::content_type_multipart_post);
-                    curl_easy_setopt(req, CURLOPT_HTTPHEADER, http_form_.headerlist);
-                    //curl_easy_setopt(req, CURLOPT_VERBOSE, 1L);
+                    // if there is not only one file to upload, make content-type to be content_type_multipart_post
+                    if (NULL != http_form_.begin->next ||
+                        (!(http_form_.begin->flags & CURL_HTTPPOST_FILENAME) && !(http_form_.begin->flags & CURL_HTTPPOST_READFILE))) {
+                        http_form_.headerlist =
+                            curl_slist_append(http_form_.headerlist, ::util::network::detail::content_type_multipart_post);
+                        curl_easy_setopt(req, CURLOPT_HTTPHEADER, http_form_.headerlist);
+                        // curl_easy_setopt(req, CURLOPT_VERBOSE, 1L);
 
-                    http_form_.posted_size = 0;
-                    util::tquerystring qs;
-                    curl_httppost* post_data = http_form_.begin;
-                    while (NULL != post_data) {
-                        qs.set(
-                            std::string(post_data->name, post_data->namelength),
-                            std::string(post_data->contents, post_data->contentlen)
-                        );
+                        http_form_.posted_size = 0;
+                        util::tquerystring qs;
+                        curl_httppost *post_data = http_form_.begin;
+                        while (NULL != post_data) {
+                            qs.set(std::string(post_data->name, post_data->namelength),
+                                   std::string(post_data->contents, post_data->contentlen));
 
-                        post_data = post_data->next;
+                            post_data = post_data->next;
+                        }
+                        qs.to_string().swap(post_data_);
+                        infile_size = static_cast<long>(post_data_.size());
+                    } else {
+                        // just upload a file
+                        http_form_.uploaded_file = fopen(http_form_.begin->contents, "rb");
+                        if (NULL != http_form_.uploaded_file) {
+                            fseek(http_form_.uploaded_file, 0, SEEK_END);
+                            infile_size = ftell(http_form_.uploaded_file);
+                            fseek(http_form_.uploaded_file, 0, SEEK_SET);
+                        } else {
+                            res = -1;
+                        }
                     }
-                    qs.to_string().swap(post_data_);
                 }
 
                 curl_easy_setopt(req, CURLOPT_READFUNCTION, curl_callback_on_read);
                 curl_easy_setopt(req, CURLOPT_READDATA, this);
-                curl_easy_setopt(req, CURLOPT_INFILESIZE, static_cast<long>(post_data_.size()));
+                curl_easy_setopt(req, CURLOPT_INFILESIZE, infile_size);
             }
 
             if (timeout_ms_ > 0) {
@@ -188,7 +199,7 @@ namespace util {
         }
 
         void http_request::remove_curl_request() {
-            CURL* req = request_;
+            CURL *req = request_;
             request_ = NULL;
             if (NULL != req) {
                 if (NULL != bind_m_ && CHECK_FLAG(flags_, flag_t::EN_FT_CURL_MULTI_HANDLE)) {
@@ -211,6 +222,11 @@ namespace util {
             }
 
             http_form_.posted_size = 0;
+
+            if (NULL != http_form_.uploaded_file) {
+                fclose(http_form_.uploaded_file);
+                http_form_.uploaded_file = NULL;
+            }
         }
 
         void http_request::cleanup() {
@@ -233,9 +249,7 @@ namespace util {
             curl_easy_setopt(mutable_request(), CURLOPT_URL, url_.c_str());
         }
 
-        const std::string &http_request::get_url() const {
-            return url_;
-        }
+        const std::string &http_request::get_url() const { return url_; }
 
         void http_request::set_user_agent(const std::string &v) {
             if (NULL == mutable_request()) {
@@ -246,72 +260,48 @@ namespace util {
             curl_easy_setopt(mutable_request(), CURLOPT_USERAGENT, url_.c_str());
         }
 
-        const std::string &http_request::get_user_agent() const {
-            return useragent_;
-        }
+        const std::string &http_request::get_user_agent() const { return useragent_; }
 
-        std::string& http_request::post_data() { return post_data_; }
+        std::string &http_request::post_data() { return post_data_; }
         const std::string &http_request::post_data() const { return post_data_; }
 
-        int http_request::add_form_file(const std::string& fieldname, const char* filename) {
-            return curl_formadd(&http_form_.begin, &http_form_.end,
-                CURLFORM_COPYNAME, fieldname.c_str(),
-                CURLFORM_NAMELENGTH, static_cast<long>(fieldname.size()),
-                CURLFORM_FILE, filename,
-                CURLFORM_END);
+        int http_request::add_form_file(const std::string &fieldname, const char *filename) {
+            return curl_formadd(&http_form_.begin, &http_form_.end, CURLFORM_COPYNAME, fieldname.c_str(), CURLFORM_NAMELENGTH,
+                                static_cast<long>(fieldname.size()), CURLFORM_FILE, filename, CURLFORM_END);
         }
 
-        int http_request::add_form_file(const std::string& fieldname, const char* filename, const char* content_type, const char* new_filename) {
-            return curl_formadd(&http_form_.begin, &http_form_.end,
-                CURLFORM_COPYNAME, fieldname.c_str(),
-                CURLFORM_NAMELENGTH, static_cast<long>(fieldname.size()),
-                CURLFORM_FILE, filename,
-                CURLFORM_CONTENTTYPE, content_type,
-                CURLFORM_FILENAME, new_filename,
-                CURLFORM_END);
+        int http_request::add_form_file(const std::string &fieldname, const char *filename, const char *content_type,
+                                        const char *new_filename) {
+            return curl_formadd(&http_form_.begin, &http_form_.end, CURLFORM_COPYNAME, fieldname.c_str(), CURLFORM_NAMELENGTH,
+                                static_cast<long>(fieldname.size()), CURLFORM_FILE, filename, CURLFORM_CONTENTTYPE, content_type,
+                                CURLFORM_FILENAME, new_filename, CURLFORM_END);
         }
 
-        int http_request::add_form_file(const std::string& fieldname, const char* filename, const char* content_type) {
-            return curl_formadd(&http_form_.begin, &http_form_.end,
-                CURLFORM_COPYNAME, fieldname.c_str(),
-                CURLFORM_NAMELENGTH, static_cast<long>(fieldname.size()),
-                CURLFORM_FILE, filename,
-                CURLFORM_CONTENTTYPE, content_type,
-                CURLFORM_END);
+        int http_request::add_form_file(const std::string &fieldname, const char *filename, const char *content_type) {
+            return curl_formadd(&http_form_.begin, &http_form_.end, CURLFORM_COPYNAME, fieldname.c_str(), CURLFORM_NAMELENGTH,
+                                static_cast<long>(fieldname.size()), CURLFORM_FILE, filename, CURLFORM_CONTENTTYPE, content_type,
+                                CURLFORM_END);
         }
 
-        int http_request::add_form_field(const std::string& fieldname, const char* fieldvalue, size_t fieldlength) {
-            return curl_formadd(&http_form_.begin, &http_form_.end,
-                CURLFORM_COPYNAME, fieldname.c_str(), 
-                CURLFORM_NAMELENGTH, static_cast<long>(fieldname.size()),
-                CURLFORM_COPYCONTENTS, fieldvalue, 
-                CURLFORM_CONTENTSLENGTH, static_cast<long>(fieldlength),
-                CURLFORM_END);
+        int http_request::add_form_field(const std::string &fieldname, const char *fieldvalue, size_t fieldlength) {
+            return curl_formadd(&http_form_.begin, &http_form_.end, CURLFORM_COPYNAME, fieldname.c_str(), CURLFORM_NAMELENGTH,
+                                static_cast<long>(fieldname.size()), CURLFORM_COPYCONTENTS, fieldvalue, CURLFORM_CONTENTSLENGTH,
+                                static_cast<long>(fieldlength), CURLFORM_END);
         }
 
-        int http_request::add_form_field(const std::string& fieldname, const std::string& fieldvalue) {
+        int http_request::add_form_field(const std::string &fieldname, const std::string &fieldvalue) {
             return add_form_field(fieldname, fieldvalue.c_str(), fieldvalue.size());
         }
 
-        void http_request::set_opt_ssl_verify_peer(bool v) {
-            set_opt_bool(CURLOPT_SSL_VERIFYPEER, v);
-        }
+        void http_request::set_opt_ssl_verify_peer(bool v) { set_opt_bool(CURLOPT_SSL_VERIFYPEER, v); }
 
-        void http_request::set_opt_no_signal(bool v) {
-            set_opt_bool(CURLOPT_NOSIGNAL, v);
-        }
+        void http_request::set_opt_no_signal(bool v) { set_opt_bool(CURLOPT_NOSIGNAL, v); }
 
-        void http_request::set_opt_follow_location(bool v) {
-            set_opt_bool(CURLOPT_FOLLOWLOCATION, v);
-        }
+        void http_request::set_opt_follow_location(bool v) { set_opt_bool(CURLOPT_FOLLOWLOCATION, v); }
 
-        void http_request::set_opt_verbose(bool v) {
-            set_opt_bool(CURLOPT_VERBOSE, v);
-        }
+        void http_request::set_opt_verbose(bool v) { set_opt_bool(CURLOPT_VERBOSE, v); }
 
-        void http_request::set_opt_http_content_decoding(bool v) {
-            set_opt_bool(CURLOPT_HTTP_CONTENT_DECODING, v);
-        }
+        void http_request::set_opt_http_content_decoding(bool v) { set_opt_bool(CURLOPT_HTTP_CONTENT_DECODING, v); }
 
         void http_request::set_opt_keepalive(time_t idle, time_t interval) {
             if (0 == idle && 0 == interval) {
@@ -324,25 +314,25 @@ namespace util {
             set_opt_long(CURLOPT_TCP_KEEPINTVL, interval);
         }
 
-        //void http_request::set_opt_connect_timeout(time_t timeout_ms) {
+        // void http_request::set_opt_connect_timeout(time_t timeout_ms) {
         //    set_opt_long(CURLOPT_CONNECTTIMEOUT_MS, timeout_ms);
         //}
 
-        //void http_request::set_opt_request_timeout(time_t timeout_ms) {
+        // void http_request::set_opt_request_timeout(time_t timeout_ms) {
         //    set_opt_long(CURLOPT_TIMEOUT_MS, timeout_ms);
         //}
 
         void http_request::set_opt_timeout(time_t timeout_ms) {
             timeout_ms_ = timeout_ms;
-            //set_opt_connect_timeout(timeout_ms);
-            //set_opt_request_timeout(timeout_ms);
+            // set_opt_connect_timeout(timeout_ms);
+            // set_opt_request_timeout(timeout_ms);
         }
 
-        const http_request::on_progress_fn_t& http_request::get_on_progress() const { return on_progress_fn_; }
+        const http_request::on_progress_fn_t &http_request::get_on_progress() const { return on_progress_fn_; }
         void http_request::set_on_progress(on_progress_fn_t fn) {
             on_progress_fn_ = fn;
 
-            CURL* req = mutable_request();
+            CURL *req = mutable_request();
             if (NULL == req) {
                 return;
             }
@@ -358,18 +348,16 @@ namespace util {
             }
         }
 
-        const http_request::on_success_fn_t& http_request::get_on_success() const { return on_success_fn_; }
+        const http_request::on_success_fn_t &http_request::get_on_success() const { return on_success_fn_; }
         void http_request::set_on_success(on_success_fn_t fn) { on_success_fn_ = fn; }
 
-        const http_request::on_error_fn_t& http_request::get_on_error() const { return on_error_fn_; }
+        const http_request::on_error_fn_t &http_request::get_on_error() const { return on_error_fn_; }
         void http_request::set_on_error(on_error_fn_t fn) { on_error_fn_ = fn; }
 
-        const http_request::on_complete_fn_t& http_request::get_on_complete() const { return on_complete_fn_; }
+        const http_request::on_complete_fn_t &http_request::get_on_complete() const { return on_complete_fn_; }
         void http_request::set_on_complete(on_complete_fn_t fn) { on_complete_fn_ = fn; }
 
-        bool http_request::is_running() const {
-            return CHECK_FLAG(flags_, flag_t::EN_FT_RUNNING);
-        }
+        bool http_request::is_running() const { return CHECK_FLAG(flags_, flag_t::EN_FT_RUNNING); }
 
         void http_request::finish_req_rsp() {
             UNSET_FLAG(flags_, flag_t::EN_FT_RUNNING);
@@ -396,7 +384,7 @@ namespace util {
             }
         }
 
-        CURL * http_request::mutable_request() {
+        CURL *http_request::mutable_request() {
             if (NULL != request_) {
                 return request_;
             }
@@ -414,7 +402,7 @@ namespace util {
             return request_;
         }
 
-        http_request::curl_poll_context_t* http_request::malloc_poll(http_request* req, curl_socket_t sockfd) {
+        http_request::curl_poll_context_t *http_request::malloc_poll(http_request *req, curl_socket_t sockfd) {
             if (NULL == req) {
                 abort();
             }
@@ -422,7 +410,7 @@ namespace util {
             assert(req->bind_m_);
             assert(req->bind_m_->ev_loop);
 
-            curl_poll_context_t* ret = reinterpret_cast<curl_poll_context_t*>(malloc(sizeof(curl_poll_context_t)));
+            curl_poll_context_t *ret = reinterpret_cast<curl_poll_context_t *>(malloc(sizeof(curl_poll_context_t)));
             if (NULL == ret) {
                 return ret;
             }
@@ -435,11 +423,9 @@ namespace util {
             return ret;
         }
 
-        void http_request::free_poll(curl_poll_context_t* p) {
-            free(p);
-        }
+        void http_request::free_poll(curl_poll_context_t *p) { free(p); }
 
-        void http_request::check_multi_info(CURLM* curl_handle) {
+        void http_request::check_multi_info(CURLM *curl_handle) {
             CURLMsg *message;
             int pending;
 
@@ -463,9 +449,9 @@ namespace util {
             }
         }
 
-        http_request::curl_m_bind_t::curl_m_bind_t():ev_loop(NULL), curl_multi(NULL) {}
+        http_request::curl_m_bind_t::curl_m_bind_t() : ev_loop(NULL), curl_multi(NULL) {}
 
-        int http_request::create_curl_multi(uv_loop_t * evloop, std::shared_ptr<curl_m_bind_t>& manager) {
+        int http_request::create_curl_multi(uv_loop_t *evloop, std::shared_ptr<curl_m_bind_t> &manager) {
             assert(evloop);
             if (manager) {
                 destroy_curl_multi(manager);
@@ -497,7 +483,7 @@ namespace util {
             return 0;
         }
 
-        int http_request::destroy_curl_multi(std::shared_ptr<curl_m_bind_t>& manager) {
+        int http_request::destroy_curl_multi(std::shared_ptr<curl_m_bind_t> &manager) {
             if (!manager) {
                 return 0;
             }
@@ -511,29 +497,29 @@ namespace util {
             // hold self in case of timer in libuv invalid
             manager->self_holder = manager;
             uv_timer_stop(&manager->ev_timeout);
-            uv_close(reinterpret_cast<uv_handle_t*>(&manager->ev_timeout), http_request::ev_callback_on_timer_closed);
+            uv_close(reinterpret_cast<uv_handle_t *>(&manager->ev_timeout), http_request::ev_callback_on_timer_closed);
 
             manager.reset();
             return 0;
         }
 
-        void http_request::ev_callback_on_timer_closed(uv_handle_t* handle) {
-            curl_m_bind_t* bind = reinterpret_cast<curl_m_bind_t*>(handle->data);
+        void http_request::ev_callback_on_timer_closed(uv_handle_t *handle) {
+            curl_m_bind_t *bind = reinterpret_cast<curl_m_bind_t *>(handle->data);
             assert(bind);
 
             // release self holder
             bind->self_holder.reset();
         }
 
-        void http_request::ev_callback_on_poll_closed(uv_handle_t* handle) {
-            curl_poll_context_t* context = reinterpret_cast<curl_poll_context_t*>(handle->data);
+        void http_request::ev_callback_on_poll_closed(uv_handle_t *handle) {
+            curl_poll_context_t *context = reinterpret_cast<curl_poll_context_t *>(handle->data);
             assert(context);
 
             free_poll(context);
         }
 
         void http_request::ev_callback_on_timeout(uv_timer_t *handle) {
-            curl_m_bind_t* bind = reinterpret_cast<curl_m_bind_t*>(handle->data);
+            curl_m_bind_t *bind = reinterpret_cast<curl_m_bind_t *>(handle->data);
             assert(bind);
 
             int running_handles = 0;
@@ -542,7 +528,7 @@ namespace util {
         }
 
         void http_request::ev_callback_curl_perform(uv_poll_t *req, int status, int events) {
-            curl_poll_context_t* context = reinterpret_cast<curl_poll_context_t*>(req->data);
+            curl_poll_context_t *context = reinterpret_cast<curl_poll_context_t *>(req->data);
             assert(context);
 
             uv_timer_stop(&context->bind_multi->ev_timeout);
@@ -568,7 +554,7 @@ namespace util {
         }
 
         void http_request::curl_callback_start_timer(CURLM *multi, long timeout_ms, void *userp) {
-            curl_m_bind_t* bind = reinterpret_cast<curl_m_bind_t*>(userp);
+            curl_m_bind_t *bind = reinterpret_cast<curl_m_bind_t *>(userp);
             assert(bind);
 
             // @see https://curl.haxx.se/libcurl/c/evhiperfifo.html
@@ -582,10 +568,10 @@ namespace util {
         }
 
         int http_request::curl_callback_handle_socket(CURL *easy, curl_socket_t s, int action, void *userp, void *socketp) {
-            curl_poll_context_t *context = reinterpret_cast<curl_poll_context_t*>(socketp);
+            curl_poll_context_t *context = reinterpret_cast<curl_poll_context_t *>(socketp);
             if (action == CURL_POLL_IN || action == CURL_POLL_OUT || action == CURL_POLL_INOUT || action == CURL_POLL_NONE) {
                 if (NULL == context) {
-                    http_request* req;
+                    http_request *req;
                     curl_easy_getinfo(easy, CURLINFO_PRIVATE, &req);
                     assert(req->bind_m_);
                     assert(req->bind_m_->curl_multi);
@@ -608,11 +594,11 @@ namespace util {
                 break;
             case CURL_POLL_REMOVE:
                 if (context) {
-                    CURLM* curl_multi = context->bind_multi->curl_multi;
+                    CURLM *curl_multi = context->bind_multi->curl_multi;
 
                     // already removed by libcurl
                     uv_poll_stop(&context->poll_object);
-                    uv_close(reinterpret_cast<uv_handle_t*>(&context->poll_object), ev_callback_on_poll_closed);
+                    uv_close(reinterpret_cast<uv_handle_t *>(&context->poll_object), ev_callback_on_poll_closed);
                     curl_multi_assign(curl_multi, s, NULL);
                 }
                 break;
@@ -624,14 +610,14 @@ namespace util {
         }
 
         size_t http_request::curl_callback_on_write(char *ptr, size_t size, size_t nmemb, void *userdata) {
-            http_request* self = reinterpret_cast<http_request*>(userdata);
+            http_request *self = reinterpret_cast<http_request *>(userdata);
             assert(self);
             self->response_.write(ptr, size * nmemb);
             return size * nmemb;
         }
 
         int http_request::curl_callback_on_progress(void *clientp, double dltotal, double dlnow, double ultotal, double ulnow) {
-            http_request* self = reinterpret_cast<http_request*>(clientp);
+            http_request *self = reinterpret_cast<http_request *>(clientp);
             assert(self);
             if (!self->on_progress_fn_) {
                 return 0;
@@ -647,8 +633,12 @@ namespace util {
         }
 
         size_t http_request::curl_callback_on_read(char *buffer, size_t size, size_t nitems, void *instream) {
-            http_request* self = reinterpret_cast<http_request*>(instream);
+            http_request *self = reinterpret_cast<http_request *>(instream);
             assert(self);
+
+            if (self->post_data_.empty() && NULL != self->http_form_.uploaded_file) {
+                return fread(buffer, size, nitems, self->http_form_.uploaded_file);
+            }
 
             if (self->post_data_.size() <= self->http_form_.posted_size) {
                 return 0;

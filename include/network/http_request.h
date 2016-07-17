@@ -16,21 +16,24 @@
 #pragma once
 
 #include <cstddef>
+#include <cstdio>
 #include <memory>
 #include <sstream>
 #include <string>
 
+
 #include "design_pattern/noncopyable.h"
-#include "std/smart_ptr.h"
 #include "std/functional.h"
+#include "std/smart_ptr.h"
+
 
 #include "config/atframe_utils_build_feature.h"
 
 #if defined(NETWORK_EVPOLL_ENABLE_LIBUV) && defined(NETWORK_ENABLE_CURL)
 
 extern "C" {
-#include <uv.h>
 #include <curl/curl.h>
+#include <uv.h>
 }
 
 namespace util {
@@ -118,8 +121,8 @@ namespace util {
             };
 
             struct curl_m_bind_t {
-                uv_loop_t * ev_loop;
-                CURLM* curl_multi;
+                uv_loop_t *ev_loop;
+                CURLM *curl_multi;
                 uv_timer_t ev_timeout;
 
                 curl_m_bind_t();
@@ -128,35 +131,35 @@ namespace util {
             typedef std::shared_ptr<curl_m_bind_t> curl_m_bind_ptr_t;
 
             struct curl_poll_context_t {
-                curl_m_bind_t* bind_multi;
+                curl_m_bind_t *bind_multi;
                 uv_poll_t poll_object;
                 curl_socket_t sockfd;
             };
 
-            typedef std::function<int(http_request&)> on_error_fn_t;
-            typedef std::function<int(http_request&)> on_success_fn_t;
-            typedef std::function<int(http_request&)> on_complete_fn_t;
+            typedef std::function<int(http_request &)> on_error_fn_t;
+            typedef std::function<int(http_request &)> on_success_fn_t;
+            typedef std::function<int(http_request &)> on_complete_fn_t;
 
             struct progress_t {
-                double dltotal;     /** total download size **/
-                double dlnow;       /** already downloaded size **/
-                double ultotal;     /** total upload size **/
-                double ulnow;       /** already uploaded size **/
+                double dltotal; /** total download size **/
+                double dlnow;   /** already downloaded size **/
+                double ultotal; /** total upload size **/
+                double ulnow;   /** already uploaded size **/
             };
-            typedef std::function<int(http_request&, const progress_t&)> on_progress_fn_t;
+            typedef std::function<int(http_request &, const progress_t &)> on_progress_fn_t;
 
         public:
-            static ptr_t create(curl_m_bind_t*, const std::string &url);
+            static ptr_t create(curl_m_bind_t *, const std::string &url);
 
-            static ptr_t create(curl_m_bind_t*);
+            static ptr_t create(curl_m_bind_t *);
 
             static int get_status_code_group(int code);
 
-            http_request(curl_m_bind_t* curl_multi);
+            http_request(curl_m_bind_t *curl_multi);
             ~http_request();
 
-            static int create_curl_multi(uv_loop_t * evloop, std::shared_ptr<curl_m_bind_t>& manager);
-            static int destroy_curl_multi(std::shared_ptr<curl_m_bind_t>& manager);
+            static int create_curl_multi(uv_loop_t *evloop, std::shared_ptr<curl_m_bind_t> &manager);
+            static int destroy_curl_multi(std::shared_ptr<curl_m_bind_t> &manager);
 
             /**
              * @brief start a http request
@@ -177,28 +180,28 @@ namespace util {
             void set_user_agent(const std::string &v);
             const std::string &get_user_agent() const;
 
-            std::string& post_data();
+            std::string &post_data();
             const std::string &post_data() const;
 
             inline int get_response_code() const { return response_code_; }
 
-            inline const char* get_error_msg() const { return error_buffer_; }
+            inline const char *get_error_msg() const { return error_buffer_; }
 
-            inline std::stringstream& get_response_stream() { return response_; }
-            inline const std::stringstream& get_response_stream() const { return response_; }
+            inline std::stringstream &get_response_stream() { return response_; }
+            inline const std::stringstream &get_response_stream() const { return response_; }
 
-            int add_form_file(const std::string& fieldname, const char* filename);
+            int add_form_file(const std::string &fieldname, const char *filename);
 
-            int add_form_file(const std::string& fieldname, const char* filename, const char* content_type, const char* new_filename);
+            int add_form_file(const std::string &fieldname, const char *filename, const char *content_type, const char *new_filename);
 
-            int add_form_file(const std::string& fieldname, const char* filename, const char* content_type);
+            int add_form_file(const std::string &fieldname, const char *filename, const char *content_type);
 
-            int add_form_field(const std::string& fieldname, const char* fieldvalue, size_t fieldlength);
+            int add_form_field(const std::string &fieldname, const char *fieldvalue, size_t fieldlength);
 
-            int add_form_field(const std::string& fieldname, const std::string& fieldvalue);
+            int add_form_field(const std::string &fieldname, const std::string &fieldvalue);
 
-            template<typename T>
-            int add_form_field(const std::string& fieldname, const T& fieldvalue) {
+            template <typename T>
+            int add_form_field(const std::string &fieldname, const T &fieldvalue) {
                 std::stringstream ss;
                 ss << fieldvalue;
 
@@ -207,8 +210,8 @@ namespace util {
                 return add_form_field(fieldname, val.c_str(), val.size());
             }
 
-            inline void set_priv_data(void* v) { priv_data_ = v; }
-            inline void* get_priv_data() const { return priv_data_; }
+            inline void set_priv_data(void *v) { priv_data_ = v; }
+            inline void *get_priv_data() const { return priv_data_; }
 
             inline void set_opt_bool(CURLoption k, bool v) {
                 if (NULL == mutable_request()) {
@@ -216,10 +219,10 @@ namespace util {
                 }
 
                 long val = v ? 1L : 0L;
-                curl_easy_setopt(mutable_request(), k, 0L);
+                curl_easy_setopt(mutable_request(), k, val);
             }
 
-            inline void set_opt_string(CURLoption k, const char* v) {
+            inline void set_opt_string(CURLoption k, const char *v) {
                 if (NULL == mutable_request()) {
                     return;
                 }
@@ -227,7 +230,7 @@ namespace util {
                 curl_easy_setopt(mutable_request(), k, v);
             }
 
-            template<typename T>
+            template <typename T>
             void set_opt_long(CURLoption k, T v) {
                 if (NULL == mutable_request()) {
                     return;
@@ -251,31 +254,32 @@ namespace util {
 
             void set_opt_timeout(time_t timeout_ms);
 
-            const on_progress_fn_t& get_on_progress() const;
+            const on_progress_fn_t &get_on_progress() const;
             void set_on_progress(on_progress_fn_t fn);
 
-            const on_success_fn_t& get_on_success() const;
+            const on_success_fn_t &get_on_success() const;
             void set_on_success(on_success_fn_t fn);
 
-            const on_error_fn_t& get_on_error() const;
+            const on_error_fn_t &get_on_error() const;
             void set_on_error(on_error_fn_t fn);
 
-            const on_complete_fn_t& get_on_complete() const;
+            const on_complete_fn_t &get_on_complete() const;
             void set_on_complete(on_complete_fn_t fn);
 
             bool is_running() const;
+
         private:
             void finish_req_rsp();
 
-            CURL * mutable_request();
+            CURL *mutable_request();
 
-            static curl_poll_context_t* malloc_poll(http_request* req, curl_socket_t sockfd);
-            static void free_poll(curl_poll_context_t*);
+            static curl_poll_context_t *malloc_poll(http_request *req, curl_socket_t sockfd);
+            static void free_poll(curl_poll_context_t *);
 
-            static void check_multi_info(CURLM* curl_handle);
+            static void check_multi_info(CURLM *curl_handle);
 
-            static void ev_callback_on_timer_closed(uv_handle_t* handle);
-            static void ev_callback_on_poll_closed(uv_handle_t* handle);
+            static void ev_callback_on_timer_closed(uv_handle_t *handle);
+            static void ev_callback_on_poll_closed(uv_handle_t *handle);
             static void ev_callback_on_timeout(uv_timer_t *handle);
             static void ev_callback_curl_perform(uv_poll_t *req, int status, int events);
 
@@ -284,6 +288,7 @@ namespace util {
             static size_t curl_callback_on_write(char *ptr, size_t size, size_t nmemb, void *userdata);
             static int curl_callback_on_progress(void *clientp, double dltotal, double dlnow, double ultotal, double ulnow);
             static size_t curl_callback_on_read(char *buffer, size_t size, size_t nitems, void *instream);
+
         private:
             // event dispatcher
             time_t timeout_ms_;
@@ -298,15 +303,16 @@ namespace util {
             std::string post_data_;
             std::stringstream response_;
             int response_code_;
-            void* priv_data_;
+            void *priv_data_;
             std::string useragent_;
 
             typedef struct {
                 curl_httppost *begin;
                 curl_httppost *end;
-                curl_slist* headerlist;
+                curl_slist *headerlist;
 
                 size_t posted_size;
+                FILE *uploaded_file;
             } form_list_t;
             form_list_t http_form_;
 
