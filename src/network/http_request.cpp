@@ -1,10 +1,12 @@
 ﻿#include <assert.h>
 #include <cstring>
 
-#include <string/tquerystring.h>
 #include <common/file_system.h>
+#include <string/tquerystring.h>
 
 #include "network/http_request.h"
+
+#if defined(NETWORK_EVPOLL_ENABLE_LIBUV) && defined(NETWORK_ENABLE_CURL)
 
 #if __cplusplus >= 201103L || (defined(_MSC_VER) && _MSC_VER >= 1800)
 #include <type_traits>
@@ -12,8 +14,6 @@
 static_assert(std::is_pod<util::network::http_request::curl_poll_context_t>::value, "curl_poll_context_t must be a POD type");
 
 #endif
-
-#if defined(NETWORK_EVPOLL_ENABLE_LIBUV) && defined(NETWORK_ENABLE_CURL)
 
 #define CHECK_FLAG(f, v) !!((f) & (v))
 #define SET_FLAG(f, v) (f) |= (v)
@@ -49,9 +49,7 @@ namespace util {
         int http_request::get_status_code_group(int code) { return code / 100; }
 
         http_request::http_request(curl_m_bind_t *curl_multi)
-            : timeout_ms_(0), bind_m_(curl_multi), request_(NULL), flags_(0), 
-            response_code_(0), last_error_code_(0),
-            priv_data_(NULL) {
+            : timeout_ms_(0), bind_m_(curl_multi), request_(NULL), flags_(0), response_code_(0), last_error_code_(0), priv_data_(NULL) {
             http_form_.begin = NULL;
             http_form_.end = NULL;
             http_form_.headerlist = NULL;
@@ -266,11 +264,11 @@ namespace util {
         std::string &http_request::post_data() { return post_data_; }
         const std::string &http_request::post_data() const { return post_data_; }
 
-        int http_request::get_response_code() const { 
+        int http_request::get_response_code() const {
             if (0 != response_code_) {
                 return response_code_;
             }
-            
+
             if (NULL != request_) {
                 long rsp_code = 0;
                 curl_easy_getinfo(request_, CURLINFO_RESPONSE_CODE, &rsp_code);
@@ -280,9 +278,7 @@ namespace util {
             return response_code_;
         }
 
-        int http_request::get_error_code() const {
-            return last_error_code_;
-        }
+        int http_request::get_error_code() const { return last_error_code_; }
 
         int http_request::add_form_file(const std::string &fieldname, const char *filename) {
             return curl_formadd(&http_form_.begin, &http_form_.end, CURLFORM_COPYNAME, fieldname.c_str(), CURLFORM_NAMELENGTH,
@@ -643,10 +639,8 @@ namespace util {
                     curl_multi_assign(curl_multi, s, NULL);
                 }
                 break;
-            }    
-            default: {
-                break;
             }
+            default: { break; }
             }
 
             return res;
@@ -711,9 +705,9 @@ namespace util {
                 --nwrite;
             }
 
-            const char* key = buffer;
+            const char *key = buffer;
             size_t keylen = 0;
-            const char* val = NULL;
+            const char *val = NULL;
 
             for (; keylen < nwrite; ++keylen) {
                 if (':' == key[keylen]) {
