@@ -1,7 +1,7 @@
 ﻿// Licensed under the MIT licenses.
 
-#include <cstring>
 #include <algorithm>
+#include <cstring>
 
 #include "string/tquerystring.h"
 
@@ -55,7 +55,7 @@ namespace util {
         }
 
 
-        static std::string _encode_uri(uri_map_type &uri_map, const char *data, std::size_t sz, bool like_php) {
+        static std::string _encode_uri(uri_map_type &uri_map, const char *data, size_t sz, bool like_php) {
             std::string ret;
             ret.reserve(sz);
 
@@ -90,7 +90,7 @@ namespace util {
             return ret;
         }
 
-        static std::string _decode_uri(const char *data, std::size_t sz, bool like_php) {
+        static std::string _decode_uri(const char *data, size_t sz, bool like_php) {
             std::string ret;
 
             sz = sz ? sz : strlen(data);
@@ -126,52 +126,52 @@ namespace util {
         }
 
 
-        std::string encode_uri(const char *content, std::size_t sz) {
+        std::string encode_uri(const char *content, size_t sz) {
             _init_uri_map(g_uri_map);
             sz = sz ? sz : strlen(content);
 
             return _encode_uri(g_uri_map, content, sz, false);
         }
 
-        std::string decode_uri(const char *uri, std::size_t sz) {
+        std::string decode_uri(const char *uri, size_t sz) {
             sz = sz ? sz : strlen(uri);
             return _decode_uri(uri, sz, false);
         }
 
-        std::string encode_uri_component(const char *content, std::size_t sz) {
+        std::string encode_uri_component(const char *content, size_t sz) {
             _init_uri_component_map(g_uri_component_map);
             sz = sz ? sz : strlen(content);
 
             return _encode_uri(g_uri_component_map, content, sz, false);
         }
 
-        std::string decode_uri_component(const char *uri, std::size_t sz) {
+        std::string decode_uri_component(const char *uri, size_t sz) {
             sz = sz ? sz : strlen(uri);
             return _decode_uri(uri, sz, false);
         }
 
         // ==== RFC 3986 ====
-        std::string raw_encode_url(const char *content, std::size_t sz) {
+        std::string raw_encode_url(const char *content, size_t sz) {
             _init_raw_url_map(g_raw_url_map);
             sz = sz ? sz : strlen(content);
 
             return _encode_uri(g_raw_url_map, content, sz, false);
         }
 
-        std::string raw_decode_url(const char *uri, std::size_t sz) {
+        std::string raw_decode_url(const char *uri, size_t sz) {
             sz = sz ? sz : strlen(uri);
             return _decode_uri(uri, sz, false);
         }
 
         // ==== application/x-www-form-urlencoded ====
-        std::string encode_url(const char *content, std::size_t sz) {
+        std::string encode_url(const char *content, size_t sz) {
             _init_raw_url_map(g_raw_url_map);
             sz = sz ? sz : strlen(content);
 
             return _encode_uri(g_raw_url_map, content, sz, true);
         }
 
-        std::string decode_url(const char *uri, std::size_t sz) {
+        std::string decode_url(const char *uri, size_t sz) {
             sz = sz ? sz : strlen(uri);
             return _decode_uri(uri, sz, true);
         }
@@ -190,13 +190,15 @@ namespace util {
 
         item_string::~item_string() {}
 
-        std::size_t item_string::size() const { return data_.size(); }
+        bool item_string::empty() const { return data_.empty(); }
+
+        size_t item_string::size() const { return data_.size(); }
 
         ITEM_TYPE item_string::type() const { return ITEM_TYPE_STRING; }
 
         std::string item_string::to_string(const char *prefix) const { return data_; }
 
-        bool item_string::parse(const std::vector<std::string> &keys, std::size_t index, const std::string &value) {
+        bool item_string::parse(const std::vector<std::string> &keys, size_t index, const std::string &value) {
             data_ = value;
             return true;
         }
@@ -211,13 +213,15 @@ namespace util {
 
         item_array::~item_array() {}
 
-        std::size_t item_array::size() const { return data_.size(); }
+        bool item_array::empty() const { return data_.empty(); }
+
+        size_t item_array::size() const { return data_.size(); }
 
         ITEM_TYPE item_array::type() const { return ITEM_TYPE_ARRAY; }
 
         std::string item_array::to_string(const char *prefix) const {
             std::string ret = "[";
-            for (std::size_t i = 0; i < data_.size(); ++i) {
+            for (size_t i = 0; i < data_.size(); ++i) {
                 if (i) {
                     ret += ", ";
                 }
@@ -229,7 +233,7 @@ namespace util {
             return ret;
         }
 
-        bool item_array::parse(const std::vector<std::string> &keys, std::size_t index, const std::string &value) {
+        bool item_array::parse(const std::vector<std::string> &keys, size_t index, const std::string &value) {
             if (index + 1 != keys.size() || keys[index].size()) {
                 return false;
             }
@@ -240,7 +244,7 @@ namespace util {
 
         bool item_array::encode(std::string &output, const char *prefix) const {
             bool ret = true;
-            std::size_t index = 0;
+            size_t index = 0;
             std::string new_prefix, pre_prefix = prefix;
             for (; index < data_.size(); ++index) {
                 if (data_[index]->type() >= ITEM_TYPE_QUERYSTRING) {
@@ -270,7 +274,9 @@ namespace util {
 
         item_object::~item_object() {}
 
-        std::size_t item_object::size() const { return data_.size(); }
+        bool item_object::empty() const { return data_.empty(); }
+
+        size_t item_object::size() const { return data_.size(); }
 
         ITEM_TYPE item_object::type() const { return ITEM_TYPE_ARRAY; }
 
@@ -289,7 +295,7 @@ namespace util {
             return ret;
         }
 
-        bool item_object::parse(const std::vector<std::string> &keys, std::size_t index, const std::string &value) {
+        bool item_object::parse(const std::vector<std::string> &keys, size_t index, const std::string &value) {
             data_iterator iter = data_.find(keys[index]);
             if (iter == data_.end()) {
                 types::item_impl::ptr_type ptr;
@@ -344,7 +350,9 @@ namespace util {
 
     tquerystring::~tquerystring() {}
 
-    std::size_t tquerystring::size() const { return data_.size(); }
+    bool tquerystring::empty() const { return data_.empty(); }
+
+    size_t tquerystring::size() const { return data_.size(); }
 
     types::ITEM_TYPE tquerystring::type() const { return types::ITEM_TYPE_QUERYSTRING; }
 
@@ -356,66 +364,67 @@ namespace util {
         return ret;
     }
 
-    bool tquerystring::decode(const char *content, std::size_t sz) {
-        bool pDeclMap[256] = {false}, ret = true;
-        std::size_t uLen = 0, isDecl;
+    bool tquerystring::decode(const char *content, size_t sz) {
+        bool decl_map[256] = {false}, ret = true;
+        size_t len = 0, is_decl;
         sz = sz ? sz : strlen(content);
 
-        for (std::size_t i = 0; i < spliter_.size(); ++i) {
-            pDeclMap[static_cast<int>(spliter_[i])] = true;
+        for (size_t i = 0; i < spliter_.size(); ++i) {
+            decl_map[static_cast<int>(spliter_[i])] = true;
         }
 
         while (sz) {
-            for (isDecl = 0, uLen = 0; uLen < sz; ++uLen) {
-                if (pDeclMap[static_cast<int>(*(content + uLen))]) {
-                    isDecl = 1;
+            for (is_decl = 0, len = 0; len < sz; ++len) {
+                if (decl_map[static_cast<int>(*(content + len))]) {
+                    is_decl = 1;
                     break;
                 }
             }
 
-            ret = decode_record(content, uLen);
+            ret = decode_record(content, len);
 
-            content += uLen + isDecl;
-            sz -= uLen + isDecl;
+            content += len + is_decl;
+            sz -= len + is_decl;
         }
 
         return ret;
     }
 
-    bool tquerystring::decode_record(const char *content, std::size_t sz) {
-        std::string seg, value, strOrigin;
+    bool tquerystring::decode_record(const char *content, size_t sz) {
+        std::string seg, value, origin_val;
         std::vector<std::string> keys;
-        strOrigin.assign(content, sz);
+        origin_val.assign(content, sz);
+        seg.reserve(sz);
 
         // 计算值
-        std::size_t uValStart = strOrigin.find_last_of('=');
-        if (uValStart != strOrigin.npos) {
-            value = strOrigin.substr(uValStart + 1);
+        size_t val_start = origin_val.find_last_of('=');
+        if (val_start != origin_val.npos) {
+            value = origin_val.substr(val_start + 1);
             value = uri::decode_uri_component(value.data(), value.size());
-            strOrigin = strOrigin.substr(0, uValStart);
+            origin_val = origin_val.substr(0, val_start);
         }
 
-        strOrigin = uri::decode_uri_component(strOrigin.data(), strOrigin.size());
+        origin_val = uri::decode_uri_component(origin_val.data(), origin_val.size());
 
         // 计算key列表
-        for (sz = 0; sz < strOrigin.size(); ++sz) {
-            while (sz < strOrigin.size() && strOrigin[sz] == ']') {
+        for (sz = 0; sz < origin_val.size(); ++sz) {
+            while (sz < origin_val.size() && origin_val[sz] == ']') {
                 ++sz;
             }
 
-            while (sz < strOrigin.size() && strOrigin[sz] != '[') {
-                seg += strOrigin[sz];
+            while (sz < origin_val.size() && origin_val[sz] != '[') {
+                seg += origin_val[sz];
                 ++sz;
             }
 
             keys.push_back(seg);
             seg.clear();
 
-            if (sz >= strOrigin.size()) {
+            if (sz >= origin_val.size()) {
                 break;
             }
-            for (++sz; sz < strOrigin.size() && strOrigin[sz] != ']'; ++sz) {
-                seg += strOrigin[sz];
+            for (++sz; sz < origin_val.size() && origin_val[sz] != ']'; ++sz) {
+                seg += origin_val[sz];
             }
         }
 

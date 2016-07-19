@@ -98,70 +98,35 @@ namespace util {
             }
 
             last_error_code_ = CURLE_OK;
-            if (method_t::EN_MT_POST == method) {
-                // setup options
-                if (!post_data_.empty()) {
-                    set_opt_long(CURLOPT_POSTFIELDSIZE, post_data_.size());
-                    curl_easy_setopt(req, CURLOPT_POSTFIELDS, post_data_.c_str());
-                    // curl_easy_setopt(req, CURLOPT_COPYPOSTFIELDS, post_data_.c_str());
-                }
+            build_http_form(method);
 
-                // multipart/formdata HTTP POST
-                // @see https://curl.haxx.se/libcurl/c/CURLOPT_HTTPPOST.html
-                if (NULL != http_form_.begin) {
-                    http_form_.headerlist = curl_slist_append(http_form_.headerlist, ::util::network::detail::custom_no_expect_header);
+            if (NULL != http_form_.begin) {
+                http_form_.headerlist = curl_slist_append(http_form_.headerlist, ::util::network::detail::custom_no_expect_header);
+                curl_easy_setopt(req, CURLOPT_HTTPPOST, http_form_.begin);
+                // curl_easy_setopt(req, CURLOPT_VERBOSE, 1L);
+            } 
+            if (!post_data_.empty()) {
+                set_opt_long(CURLOPT_POSTFIELDSIZE, post_data_.size());
+                curl_easy_setopt(req, CURLOPT_POSTFIELDS, post_data_.c_str());
+                // curl_easy_setopt(req, CURLOPT_COPYPOSTFIELDS, post_data_.c_str());
+            }
 
-                    curl_easy_setopt(req, CURLOPT_HTTPHEADER, http_form_.headerlist);
-                    curl_easy_setopt(req, CURLOPT_HTTPPOST, http_form_.begin);
-                    // curl_easy_setopt(req, CURLOPT_VERBOSE, 1L);
-                }
-            } else if (method_t::EN_MT_PUT == method) {
-                // if using put method, CURLOPT_POST* will have no effect
-                // we must use CURLOPT_READFUNCTION to upload the data
-                // @see https://curl.haxx.se/libcurl/c/CURLOPT_PUT.html
-                // @see https://curl.haxx.se/libcurl/c/CURLOPT_UPLOAD.html
-                // @see https://curl.haxx.se/libcurl/c/CURLOPT_READDATA.html
-                // @see https://curl.haxx.se/libcurl/c/CURLOPT_READFUNCTION.html
-                // @see https://curl.haxx.se/libcurl/c/CURLOPT_INFILESIZE.html
-                // @see https://curl.haxx.se/libcurl/c/CURLOPT_INFILESIZE_LARGE.html
+            if (NULL != http_form_.headerlist) {
+                curl_easy_setopt(req, CURLOPT_HTTPHEADER, http_form_.headerlist);
+            }
 
-                long infile_size = 0;
-                http_form_.uploaded_file = NULL;
-                if (NULL != http_form_.begin) {
-                    http_form_.headerlist = curl_slist_append(http_form_.headerlist, ::util::network::detail::custom_no_expect_header);
-                    // if there is not only one file to upload, make content-type to be content_type_multipart_post
-                    if (NULL != http_form_.begin->next || (http_form_.flags & form_list_t::EN_FLFT_HAS_FORM_FIELD)) {
-                        http_form_.headerlist =
-                            curl_slist_append(http_form_.headerlist, ::util::network::detail::content_type_multipart_post);
-                        curl_easy_setopt(req, CURLOPT_HTTPHEADER, http_form_.headerlist);
-                        // curl_easy_setopt(req, CURLOPT_VERBOSE, 1L);
-
-                        http_form_.posted_size = 0;
-                        util::tquerystring qs;
-                        curl_httppost *post_data = http_form_.begin;
-                        while (NULL != post_data) {
-                            qs.set(std::string(post_data->name, post_data->namelength),
-                                   std::string(post_data->contents, post_data->contentlen));
-
-                            post_data = post_data->next;
-                        }
-                        qs.to_string().swap(post_data_);
-                        infile_size = static_cast<long>(post_data_.size());
-                    } else {
-                        // just upload a file
-                        UTIL_FS_OPEN(foerr, http_form_.uploaded_file, http_form_.begin->contents, "rb");
-                        if (0 != foerr) {
-                            fseek(http_form_.uploaded_file, 0, SEEK_END);
-                            infile_size = ftell(http_form_.uploaded_file);
-                            fseek(http_form_.uploaded_file, 0, SEEK_SET);
-                        } else {
-                            last_error_code_ = -1;
-                        }
-                    }
-                }
-
+            if (http_form_.flags & form_list_t::EN_FLFT_WRITE_FORM_USE_FUNC) {
                 curl_easy_setopt(req, CURLOPT_READFUNCTION, curl_callback_on_read);
                 curl_easy_setopt(req, CURLOPT_READDATA, this);
+
+                long infile_size = 0;
+                if (NULL != http_form_.uploaded_file) {
+                    fseek(http_form_.uploaded_file, 0, SEEK_END);
+                    infile_size = ftell(http_form_.uploaded_file);
+                    fseek(http_form_.uploaded_file, 0, SEEK_SET);
+                } else if (!post_data_.empty()) {
+                    infile_size = static_cast<long>(post_data_.size());
+                }
                 curl_easy_setopt(req, CURLOPT_INFILESIZE, infile_size);
             }
 
@@ -213,6 +178,7 @@ namespace util {
                 curl_formfree(http_form_.begin);
                 http_form_.begin = NULL;
                 http_form_.end = NULL;
+                http_form_.qs_fields.clear();
             }
 
             if (NULL != http_form_.headerlist) {
@@ -227,6 +193,8 @@ namespace util {
                 http_form_.uploaded_file = NULL;
             }
             http_form_.flags = 0;
+
+            post_data_.clear();
         }
 
         void http_request::cleanup() {
@@ -282,51 +250,79 @@ namespace util {
         int http_request::get_error_code() const { return last_error_code_; }
 
         int http_request::add_form_file(const std::string &fieldname, const char *filename) {
+            if (NULL != http_form_.uploaded_file) {
+                fclose(http_form_.uploaded_file);
+                http_form_.uploaded_file = NULL;
+            }
+
+            UTIL_FS_OPEN(res, http_form_.uploaded_file, filename, "rb");
+            if (0 != res) {
+                return res;
+            }
+
             int ret = curl_formadd(&http_form_.begin, &http_form_.end, CURLFORM_COPYNAME, fieldname.c_str(), CURLFORM_NAMELENGTH,
                                 static_cast<long>(fieldname.size()), CURLFORM_FILE, filename, CURLFORM_END);
             if (0 == ret) {
                 http_form_.flags |= form_list_t::EN_FLFT_HAS_FORM_FILE;
+            } else {
+                fclose(http_form_.uploaded_file);
+                http_form_.uploaded_file = NULL;
             }
             return ret;
         }
 
         int http_request::add_form_file(const std::string &fieldname, const char *filename, const char *content_type,
                                         const char *new_filename) {
+            if (NULL != http_form_.uploaded_file) {
+                fclose(http_form_.uploaded_file);
+                http_form_.uploaded_file = NULL;
+            }
+
+            UTIL_FS_OPEN(res, http_form_.uploaded_file, filename, "rb");
+            if (0 != res) {
+                return res;
+            }
+
             int ret = curl_formadd(&http_form_.begin, &http_form_.end, CURLFORM_COPYNAME, fieldname.c_str(), CURLFORM_NAMELENGTH,
                                 static_cast<long>(fieldname.size()), CURLFORM_FILE, filename, CURLFORM_CONTENTTYPE, content_type,
                                 CURLFORM_FILENAME, new_filename, CURLFORM_END);
             if (0 == ret) {
                 http_form_.flags |= form_list_t::EN_FLFT_HAS_FORM_FILE;
+            } else {
+                fclose(http_form_.uploaded_file);
+                http_form_.uploaded_file = NULL;
             }
             return ret;
         }
 
         int http_request::add_form_file(const std::string &fieldname, const char *filename, const char *content_type) {
+            if (NULL != http_form_.uploaded_file) {
+                fclose(http_form_.uploaded_file);
+                http_form_.uploaded_file = NULL;
+            }
+
+            UTIL_FS_OPEN(res, http_form_.uploaded_file, filename, "rb");
+            if (0 != res) {
+                return res;
+            }
+
             int ret = curl_formadd(&http_form_.begin, &http_form_.end, CURLFORM_COPYNAME, fieldname.c_str(), CURLFORM_NAMELENGTH,
                                 static_cast<long>(fieldname.size()), CURLFORM_FILE, filename, CURLFORM_CONTENTTYPE, content_type,
                                 CURLFORM_END);
             if (0 == ret) {
                 http_form_.flags |= form_list_t::EN_FLFT_HAS_FORM_FILE;
-            }
-            return ret;
-        }
-
-        int http_request::add_form_field(const std::string &fieldname, const char *fieldvalue, size_t fieldlength) {
-            int ret = curl_formadd(&http_form_.begin, &http_form_.end, CURLFORM_COPYNAME, fieldname.c_str(), CURLFORM_NAMELENGTH,
-                                static_cast<long>(fieldname.size()), CURLFORM_COPYCONTENTS, fieldvalue, CURLFORM_CONTENTSLENGTH,
-                                static_cast<long>(fieldlength), CURLFORM_END);
-            if (0 == ret) {
-                http_form_.flags |= form_list_t::EN_FLFT_HAS_FORM_FIELD;
+            } else {
+                fclose(http_form_.uploaded_file);
+                http_form_.uploaded_file = NULL;
             }
             return ret;
         }
 
         int http_request::add_form_field(const std::string &fieldname, const std::string &fieldvalue) {
-            int ret = add_form_field(fieldname, fieldvalue.c_str(), fieldvalue.size());
-            if (0 == ret) {
-                http_form_.flags |= form_list_t::EN_FLFT_HAS_FORM_FIELD;
-            }
-            return ret;
+            http_form_.qs_fields.set(fieldname, fieldvalue);
+            http_form_.flags |= form_list_t::EN_FLFT_HAS_FORM_FIELD;
+            //int ret = add_form_field(fieldname, fieldvalue.c_str(), fieldvalue.size());
+            return 0;
         }
 
         void http_request::set_opt_ssl_verify_peer(bool v) { set_opt_bool(CURLOPT_SSL_VERIFYPEER, v); }
@@ -454,6 +450,73 @@ namespace util {
             }
 
             return request_;
+        }
+
+        void http_request::build_http_form(method_t::type method) {
+            if (method_t::EN_MT_PUT == method) {
+                http_form_.posted_size = 0;
+
+                // if using put method, CURLOPT_POST* will have no effect
+                // we must use CURLOPT_READFUNCTION to upload the data
+                // @see https://curl.haxx.se/libcurl/c/CURLOPT_PUT.html
+                // @see https://curl.haxx.se/libcurl/c/CURLOPT_UPLOAD.html
+                // @see https://curl.haxx.se/libcurl/c/CURLOPT_READDATA.html
+                // @see https://curl.haxx.se/libcurl/c/CURLOPT_READFUNCTION.html
+                // @see https://curl.haxx.se/libcurl/c/CURLOPT_INFILESIZE.html
+                // @see https://curl.haxx.se/libcurl/c/CURLOPT_INFILESIZE_LARGE.html
+                if (!http_form_.qs_fields.empty()) {
+                    http_form_.headerlist = curl_slist_append(http_form_.headerlist, ::util::network::detail::custom_no_expect_header);
+                    http_form_.headerlist =
+                        curl_slist_append(http_form_.headerlist, ::util::network::detail::content_type_multipart_post);
+                    http_form_.qs_fields.to_string().swap(post_data_);
+                    http_form_.flags |= form_list_t::EN_FLFT_WRITE_FORM_USE_FUNC;
+
+                    if (NULL != http_form_.uploaded_file) {
+                        fclose(http_form_.uploaded_file);
+                        http_form_.uploaded_file = NULL;
+                    }
+                } else if (NULL != http_form_.uploaded_file) {
+                    http_form_.headerlist = curl_slist_append(http_form_.headerlist, ::util::network::detail::custom_no_expect_header);
+                }
+            } else if (!http_form_.qs_fields.empty()) {
+                http_form_.headerlist = curl_slist_append(http_form_.headerlist, ::util::network::detail::custom_no_expect_header);
+
+                for (util::tquerystring::data_const_iterator iter = http_form_.qs_fields.data().begin();
+                    iter != http_form_.qs_fields.data().end(); ++iter) {
+
+                    if (util::types::ITEM_TYPE_STRING == iter->second->type()) {
+                        util::types::item_string* val = dynamic_cast<util::types::item_string*>(iter->second.get());
+
+                        if (NULL != val) {
+                            curl_formadd(&http_form_.begin, &http_form_.end,
+                                CURLFORM_PTRNAME, iter->first.c_str(),
+                                CURLFORM_NAMELENGTH, static_cast<long>(iter->first.size()),
+                                CURLFORM_PTRCONTENTS, val->data().c_str(),
+#if LIBCURL_VERSION_MAJOR > 7 || (7 == LIBCURL_VERSION_MAJOR && LIBCURL_VERSION_MINOR >= 46)
+                                CURLFORM_CONTENTLEN, static_cast<curl_off_t>(val->data().size()),
+#else
+                                CURLFORM_CONTENTSLENGTH, static_cast<long>(val->data().size()),
+#endif
+                                CURLFORM_END
+                            );
+                        }
+                    } else {
+                        std::string val = iter->second->to_string();
+                        curl_formadd(&http_form_.begin, &http_form_.end,
+                            CURLFORM_PTRNAME, iter->first.c_str(),
+                            CURLFORM_NAMELENGTH, static_cast<long>(iter->first.size()),
+                            CURLFORM_COPYCONTENTS, val.c_str(),
+                            CURLFORM_CONTENTSLENGTH, static_cast<long>(val.size()),
+                            CURLFORM_END
+                        );
+                    }
+                }
+
+                if (NULL != http_form_.uploaded_file) {
+                    fclose(http_form_.uploaded_file);
+                    http_form_.uploaded_file = NULL;
+                }
+            }
         }
 
         http_request::curl_poll_context_t *http_request::malloc_poll(http_request *req, curl_socket_t sockfd) {

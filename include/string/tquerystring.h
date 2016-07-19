@@ -20,9 +20,9 @@
 
 #include <cstddef>
 #include <map>
-#include <vector>
-#include <string>
 #include <sstream>
+#include <string>
+#include <vector>
 
 #include "std/smart_ptr.h"
 
@@ -152,6 +152,12 @@ namespace util {
             virtual ~item_impl() {}
 
             /**
+            * @brief 获取是否为空内容
+            * @return 是否为空
+            */
+            virtual bool empty() const = 0;
+
+            /**
              * @brief 获取数据数量
              * @return 数据长度
              */
@@ -211,14 +217,16 @@ namespace util {
              * @brief 创建自身类型的实例
              * @return 新实例的智能指针
              */
-            static inline ptr_type create() { return std::shared_ptr<item_string>(new item_string()); }
+            static inline ptr_type create() { return std::make_shared<item_string>(); }
 
             /**
              * @brief 创建自身类型的实例
              * @param [in] data 初始数据
              * @return 新实例的智能指针
              */
-            static inline ptr_type create(const std::string &data) { return std::shared_ptr<item_string>(new item_string(data)); }
+            static inline ptr_type create(const std::string &data) { return std::make_shared<item_string>(data); }
+
+            virtual bool empty() const;
 
             virtual std::size_t size() const;
 
@@ -229,6 +237,8 @@ namespace util {
             virtual bool encode(std::string &output, const char *prefix = "") const;
 
             virtual bool parse(const std::vector<std::string> &keys, std::size_t index, const std::string &value);
+
+            inline const std::string& data() const { return data_; }
 
             /**
              * @breif 类型转换操作
@@ -280,7 +290,9 @@ namespace util {
              * @param [in] data 初始数据
              * @return 新实例的智能指针
              */
-            static inline ptr_type create() { return std::shared_ptr<item_array>(new item_array()); }
+            static inline ptr_type create() { return std::make_shared<item_array>(); }
+
+            virtual bool empty() const;
 
             virtual std::size_t size() const;
 
@@ -318,9 +330,7 @@ namespace util {
              * @param [in] uIndex 下标
              * @param [in] value 字符串值
              */
-            inline void set(std::size_t uIndex, const std::string &value) {
-                data_[uIndex] = std::shared_ptr<item_string>(new item_string(value));
-            };
+            inline void set(std::size_t uIndex, const std::string &value) { data_[uIndex] = std::make_shared<item_string>(value); };
 
             /**
              * @breif 添加值
@@ -334,7 +344,7 @@ namespace util {
              * @param [in] uIndex 下标
              * @param [in] value 字符串值
              */
-            inline void append(const std::string &value) { data_.push_back(std::shared_ptr<item_string>(new item_string(value))); };
+            inline void append(const std::string &value) { data_.push_back(std::make_shared<item_string>(value)); };
 
             /**
              * @breif 清除最后一项数据
@@ -351,10 +361,11 @@ namespace util {
          * @brief 映射类型
          */
         class item_object : public item_impl {
-        protected:
-            std::map<std::string, std::shared_ptr<item_impl> > data_;
-            typedef std::map<std::string, std::shared_ptr<item_impl> >::iterator data_iterator;
-            typedef std::map<std::string, std::shared_ptr<item_impl> >::const_iterator data_const_iterator;
+        public:
+            typedef std::map<std::string, std::shared_ptr<item_impl> > data_map_t;
+            data_map_t data_;
+            typedef data_map_t::iterator data_iterator;
+            typedef data_map_t::const_iterator data_const_iterator;
 
         public:
             /**
@@ -367,11 +378,13 @@ namespace util {
              * @param [in] data 初始数据
              * @return 新实例的智能指针
              */
-            static inline ptr_type create() { return std::shared_ptr<item_object>(new item_object()); }
+            static inline ptr_type create() { return std::make_shared<item_object>(); }
 
             item_object();
 
             virtual ~item_object();
+
+            virtual bool empty() const;
 
             virtual std::size_t size() const;
 
@@ -385,6 +398,7 @@ namespace util {
 
             std::vector<std::string> keys() const;
 
+            inline const std::map<std::string, std::shared_ptr<item_impl> >& data() const { return data_; }
             /**
              * @breif 依据Key获取数据
              * @param [in] key Key
@@ -424,9 +438,7 @@ namespace util {
              * @param [in] key Key
              * @param [in] value 字符串值
              */
-            inline void set(const std::string &key, const std::string &value) {
-                set(key, std::shared_ptr<item_string>(new item_string(value)));
-            };
+            inline void set(const std::string &key, const std::string &value) { set(key, std::make_shared<item_string>(value)); };
 
             /**
              * @breif 删除数据
@@ -442,10 +454,12 @@ namespace util {
     }
 
     class tquerystring : public types::item_object {
-    protected:
-        typedef std::map<std::string, std::shared_ptr<types::item_impl> >::iterator data_iterator;
-        typedef std::map<std::string, std::shared_ptr<types::item_impl> >::const_iterator data_const_iterator;
+    public:
+        typedef types::item_object::data_map_t data_map_t;
+        typedef types::item_object::data_iterator data_iterator;
+        typedef types::item_object::data_const_iterator data_const_iterator;
 
+    protected:
         std::string spliter_;
 
         bool decode_record(const char *content, std::size_t sz);
@@ -466,14 +480,16 @@ namespace util {
          * @brief 创建自身类型的实例
          * @return 新实例的智能指针
          */
-        static inline ptr_type create() { return std::shared_ptr<tquerystring>(new tquerystring()); }
+        static inline ptr_type create() { return std::make_shared<tquerystring>(); }
 
         /**
          * @brief 创建自身类型的实例
          * @param [in] spliter 默认分隔符
          * @return 新实例的智能指针
          */
-        static inline ptr_type create(const std::string &spliter) { return std::shared_ptr<tquerystring>(new tquerystring(spliter)); }
+        static inline ptr_type create(const std::string &spliter) { return std::make_shared<tquerystring>(spliter); }
+
+        virtual bool empty() const;
 
         virtual std::size_t size() const;
 

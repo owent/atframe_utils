@@ -25,6 +25,7 @@
 #include "design_pattern/noncopyable.h"
 #include "std/functional.h"
 #include "std/smart_ptr.h"
+#include "string/tquerystring.h"
 
 
 #include "config/atframe_utils_build_feature.h"
@@ -200,8 +201,6 @@ namespace util {
 
             int add_form_file(const std::string &fieldname, const char *filename, const char *content_type);
 
-            int add_form_field(const std::string &fieldname, const char *fieldvalue, size_t fieldlength);
-
             int add_form_field(const std::string &fieldname, const std::string &fieldvalue);
 
             template <typename T>
@@ -211,7 +210,7 @@ namespace util {
 
                 std::string val;
                 ss.str().swap(val);
-                return add_form_field(fieldname, val.c_str(), val.size());
+                return add_form_field(fieldname, val);
             }
 
             inline void set_priv_data(void *v) { priv_data_ = v; }
@@ -283,6 +282,8 @@ namespace util {
 
             CURL *mutable_request();
 
+            void build_http_form(method_t::type method);
+
             static curl_poll_context_t *malloc_poll(http_request *req, curl_socket_t sockfd);
             static void free_poll(curl_poll_context_t *);
 
@@ -322,6 +323,7 @@ namespace util {
                 curl_httppost *begin;
                 curl_httppost *end;
                 curl_slist *headerlist;
+                util::tquerystring qs_fields;
 
                 size_t posted_size;
                 FILE *uploaded_file;
@@ -330,6 +332,7 @@ namespace util {
                 enum flag_t {
                     EN_FLFT_HAS_FORM_FILE = 0x01,
                     EN_FLFT_HAS_FORM_FIELD = 0x02,
+                    EN_FLFT_WRITE_FORM_USE_FUNC = 0x04,
                 };
             } form_list_t;
             form_list_t http_form_;
