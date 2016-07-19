@@ -147,6 +147,8 @@ namespace util {
                 double ulnow;   /** already uploaded size **/
             };
             typedef std::function<int(http_request &, const progress_t &)> on_progress_fn_t;
+            /** parameters: http_request, key, key length, value, value length **/
+            typedef std::function<int(http_request &, const char*, size_t, const char*, size_t)> on_header_fn_t;
 
         public:
             static ptr_t create(curl_m_bind_t *, const std::string &url);
@@ -183,7 +185,9 @@ namespace util {
             std::string &post_data();
             const std::string &post_data() const;
 
-            inline int get_response_code() const { return response_code_; }
+            int get_response_code() const;
+
+            int get_error_code() const;
 
             inline const char *get_error_msg() const { return error_buffer_; }
 
@@ -213,6 +217,7 @@ namespace util {
             inline void set_priv_data(void *v) { priv_data_ = v; }
             inline void *get_priv_data() const { return priv_data_; }
 
+            // ======== set options of libcurl @see https://curl.haxx.se/libcurl/c/curl_easy_setopt.html for detail ========
             inline void set_opt_bool(CURLoption k, bool v) {
                 if (NULL == mutable_request()) {
                     return;
@@ -254,8 +259,13 @@ namespace util {
 
             void set_opt_timeout(time_t timeout_ms);
 
+            // -------- set options of libcurl @see https://curl.haxx.se/libcurl/c/curl_easy_setopt.html for detail --------
+
             const on_progress_fn_t &get_on_progress() const;
             void set_on_progress(on_progress_fn_t fn);
+
+            const on_header_fn_t &get_on_header() const;
+            void set_on_header(on_header_fn_t fn);
 
             const on_success_fn_t &get_on_success() const;
             void set_on_success(on_success_fn_t fn);
@@ -288,6 +298,7 @@ namespace util {
             static size_t curl_callback_on_write(char *ptr, size_t size, size_t nmemb, void *userdata);
             static int curl_callback_on_progress(void *clientp, double dltotal, double dlnow, double ultotal, double ulnow);
             static size_t curl_callback_on_read(char *buffer, size_t size, size_t nitems, void *instream);
+            static size_t curl_callback_on_header(char *buffer, size_t size, size_t nitems, void *userdata);
 
         private:
             // event dispatcher
@@ -302,7 +313,8 @@ namespace util {
             std::string url_;
             std::string post_data_;
             std::stringstream response_;
-            int response_code_;
+            mutable int response_code_;
+            int last_error_code_;
             void *priv_data_;
             std::string useragent_;
 
@@ -323,6 +335,7 @@ namespace util {
             on_success_fn_t on_success_fn_;
             on_complete_fn_t on_complete_fn_;
             on_progress_fn_t on_progress_fn_;
+            on_header_fn_t on_header_fn_;
         };
     }
 }

@@ -2,9 +2,9 @@
 #include <cstring>
 
 #include <string/tquerystring.h>
+#include <common/file_system.h>
 
 #include "network/http_request.h"
-
 
 #if __cplusplus >= 201103L || (defined(_MSC_VER) && _MSC_VER >= 1800)
 #include <type_traits>
@@ -49,7 +49,9 @@ namespace util {
         int http_request::get_status_code_group(int code) { return code / 100; }
 
         http_request::http_request(curl_m_bind_t *curl_multi)
-            : timeout_ms_(0), bind_m_(curl_multi), request_(NULL), flags_(0), response_code_(0), priv_data_(NULL) {
+            : timeout_ms_(0), bind_m_(curl_multi), request_(NULL), flags_(0), 
+            response_code_(0), last_error_code_(0),
+            priv_data_(NULL) {
             http_form_.begin = NULL;
             http_form_.end = NULL;
             http_form_.headerlist = NULL;
@@ -96,7 +98,7 @@ namespace util {
                 break;
             }
 
-            int res = CURLE_OK;
+            last_error_code_ = CURLE_OK;
             if (method_t::EN_MT_POST == method) {
                 // setup options
                 if (!post_data_.empty()) {
@@ -149,13 +151,13 @@ namespace util {
                         infile_size = static_cast<long>(post_data_.size());
                     } else {
                         // just upload a file
-                        http_form_.uploaded_file = fopen(http_form_.begin->contents, "rb");
-                        if (NULL != http_form_.uploaded_file) {
+                        UTIL_FS_OPEN(foerr, http_form_.uploaded_file, http_form_.begin->contents, "rb");
+                        if (0 != foerr) {
                             fseek(http_form_.uploaded_file, 0, SEEK_END);
                             infile_size = ftell(http_form_.uploaded_file);
                             fseek(http_form_.uploaded_file, 0, SEEK_SET);
                         } else {
-                            res = -1;
+                            last_error_code_ = -1;
                         }
                     }
                 }
@@ -166,27 +168,26 @@ namespace util {
             }
 
             if (timeout_ms_ > 0) {
-                long val = static_cast<long>(timeout_ms_);
-                set_opt_long(CURLOPT_CONNECTTIMEOUT_MS, val);
-                set_opt_long(CURLOPT_TIMEOUT_MS, val);
+                set_opt_long(CURLOPT_CONNECTTIMEOUT_MS, timeout_ms_);
+                set_opt_long(CURLOPT_TIMEOUT_MS, timeout_ms_);
             }
 
             if (wait) {
                 SET_FLAG(flags_, flag_t::EN_FT_RUNNING);
-                res = curl_easy_perform(req);
+                last_error_code_ = curl_easy_perform(req);
                 UNSET_FLAG(flags_, flag_t::EN_FT_RUNNING);
                 finish_req_rsp();
             } else {
                 SET_FLAG(flags_, flag_t::EN_FT_RUNNING);
                 SET_FLAG(flags_, flag_t::EN_FT_CURL_MULTI_HANDLE);
-                res = curl_multi_add_handle(bind_m_->curl_multi, req);
-                if (res != CURLM_OK) {
+                last_error_code_ = curl_multi_add_handle(bind_m_->curl_multi, req);
+                if (last_error_code_ != CURLM_OK) {
                     UNSET_FLAG(flags_, flag_t::EN_FT_RUNNING);
                     cleanup();
                 }
             }
 
-            return res;
+            return last_error_code_;
         }
 
         int http_request::stop() {
@@ -203,7 +204,7 @@ namespace util {
             request_ = NULL;
             if (NULL != req) {
                 if (NULL != bind_m_ && CHECK_FLAG(flags_, flag_t::EN_FT_CURL_MULTI_HANDLE)) {
-                    curl_multi_remove_handle(bind_m_->curl_multi, req);
+                    last_error_code_ = curl_multi_remove_handle(bind_m_->curl_multi, req);
                     UNSET_FLAG(flags_, flag_t::EN_FT_CURL_MULTI_HANDLE);
                 }
 
@@ -264,6 +265,24 @@ namespace util {
 
         std::string &http_request::post_data() { return post_data_; }
         const std::string &http_request::post_data() const { return post_data_; }
+
+        int http_request::get_response_code() const { 
+            if (0 != response_code_) {
+                return response_code_;
+            }
+            
+            if (NULL != request_) {
+                long rsp_code = 0;
+                curl_easy_getinfo(request_, CURLINFO_RESPONSE_CODE, &rsp_code);
+                response_code_ = static_cast<int>(rsp_code);
+            }
+
+            return response_code_;
+        }
+
+        int http_request::get_error_code() const {
+            return last_error_code_;
+        }
 
         int http_request::add_form_file(const std::string &fieldname, const char *filename) {
             return curl_formadd(&http_form_.begin, &http_form_.end, CURLFORM_COPYNAME, fieldname.c_str(), CURLFORM_NAMELENGTH,
@@ -345,6 +364,24 @@ namespace util {
                 set_opt_bool(CURLOPT_NOPROGRESS, true);
                 curl_easy_setopt(req, CURLOPT_PROGRESSFUNCTION, NULL);
                 curl_easy_setopt(req, CURLOPT_PROGRESSDATA, NULL);
+            }
+        }
+
+        const http_request::on_header_fn_t &http_request::get_on_header() const { return on_header_fn_; }
+        void http_request::set_on_header(on_header_fn_t fn) {
+            on_header_fn_ = fn;
+
+            CURL *req = mutable_request();
+            if (NULL == req) {
+                return;
+            }
+
+            if (on_header_fn_) {
+                curl_easy_setopt(req, CURLOPT_HEADERFUNCTION, curl_callback_on_header);
+                curl_easy_setopt(req, CURLOPT_HEADERDATA, this);
+            } else {
+                curl_easy_setopt(req, CURLOPT_HEADERFUNCTION, NULL);
+                curl_easy_setopt(req, CURLOPT_HEADERDATA, NULL);
             }
         }
 
@@ -437,13 +474,13 @@ namespace util {
                     assert(req);
 
                     http_request::ptr_t req_p = req->shared_from_this();
+                    req->last_error_code_ = message->data.result;
                     // this may cause req not available any more
                     req_p->finish_req_rsp();
                     req_p->remove_curl_request();
                     break;
                 }
                 default:
-                    fprintf(stderr, "CURLMSG default\n");
                     break;
                 }
             }
@@ -468,6 +505,7 @@ namespace util {
             }
 
             manager->ev_loop = evloop;
+            int ret = 0;
             if (0 != uv_timer_init(evloop, &manager->ev_timeout)) {
                 curl_multi_cleanup(manager->curl_multi);
                 manager.reset();
@@ -475,10 +513,10 @@ namespace util {
             }
             manager->ev_timeout.data = manager.get();
 
-            curl_multi_setopt(manager->curl_multi, CURLMOPT_SOCKETFUNCTION, http_request::curl_callback_handle_socket);
-            curl_multi_setopt(manager->curl_multi, CURLMOPT_SOCKETDATA, manager.get());
-            curl_multi_setopt(manager->curl_multi, CURLMOPT_TIMERFUNCTION, http_request::curl_callback_start_timer);
-            curl_multi_setopt(manager->curl_multi, CURLMOPT_TIMERDATA, manager.get());
+            ret = curl_multi_setopt(manager->curl_multi, CURLMOPT_SOCKETFUNCTION, http_request::curl_callback_handle_socket);
+            ret = curl_multi_setopt(manager->curl_multi, CURLMOPT_SOCKETDATA, manager.get());
+            ret = curl_multi_setopt(manager->curl_multi, CURLMOPT_TIMERFUNCTION, http_request::curl_callback_start_timer);
+            ret = curl_multi_setopt(manager->curl_multi, CURLMOPT_TIMERDATA, manager.get());
 
             return 0;
         }
@@ -491,7 +529,7 @@ namespace util {
             assert(manager->ev_loop);
             assert(manager->curl_multi);
 
-            curl_multi_cleanup(manager->curl_multi);
+            int ret = curl_multi_cleanup(manager->curl_multi);
             manager->curl_multi = NULL;
 
             // hold self in case of timer in libuv invalid
@@ -500,7 +538,7 @@ namespace util {
             uv_close(reinterpret_cast<uv_handle_t *>(&manager->ev_timeout), http_request::ev_callback_on_timer_closed);
 
             manager.reset();
-            return 0;
+            return ret;
         }
 
         void http_request::ev_callback_on_timer_closed(uv_handle_t *handle) {
@@ -569,7 +607,7 @@ namespace util {
 
         int http_request::curl_callback_handle_socket(CURL *easy, curl_socket_t s, int action, void *userp, void *socketp) {
             curl_poll_context_t *context = reinterpret_cast<curl_poll_context_t *>(socketp);
-            if (action == CURL_POLL_IN || action == CURL_POLL_OUT || action == CURL_POLL_INOUT || action == CURL_POLL_NONE) {
+            if (action == CURL_POLL_IN || action == CURL_POLL_OUT || action == CURL_POLL_INOUT) {
                 if (NULL == context) {
                     http_request *req;
                     curl_easy_getinfo(easy, CURLINFO_PRIVATE, &req);
@@ -577,22 +615,25 @@ namespace util {
                     assert(req->bind_m_->curl_multi);
 
                     context = malloc_poll(req, s);
-                    curl_multi_assign(req->bind_m_->curl_multi, s, context);
+                    req->last_error_code_ = curl_multi_assign(req->bind_m_->curl_multi, s, context);
                 }
             }
 
             int res = 0;
             switch (action) {
-            case CURL_POLL_IN:
+            case CURL_POLL_IN: {
                 res = uv_poll_start(&context->poll_object, UV_READABLE, ev_callback_curl_perform);
                 break;
-            case CURL_POLL_OUT:
+            }
+            case CURL_POLL_OUT: {
                 res = uv_poll_start(&context->poll_object, UV_WRITABLE, ev_callback_curl_perform);
                 break;
-            case CURL_POLL_INOUT:
+            }
+            case CURL_POLL_INOUT: {
                 res = uv_poll_start(&context->poll_object, UV_READABLE | UV_WRITABLE, ev_callback_curl_perform);
                 break;
-            case CURL_POLL_REMOVE:
+            }
+            case CURL_POLL_REMOVE: {
                 if (context) {
                     CURLM *curl_multi = context->bind_multi->curl_multi;
 
@@ -602,8 +643,10 @@ namespace util {
                     curl_multi_assign(curl_multi, s, NULL);
                 }
                 break;
-            default:
+            }    
+            default: {
                 break;
+            }
             }
 
             return res;
@@ -652,6 +695,48 @@ namespace util {
             memcpy(buffer, self->post_data_.data() + self->http_form_.posted_size, nwrite);
             self->http_form_.posted_size += nwrite;
             return nwrite;
+        }
+
+        size_t http_request::curl_callback_on_header(char *buffer, size_t size, size_t nitems, void *userdata) {
+            http_request *self = reinterpret_cast<http_request *>(userdata);
+            assert(self);
+
+            size_t nwrite = size * nitems;
+
+            while (nwrite > 0) {
+                if ('\r' != buffer[nwrite - 1] && '\n' != buffer[nwrite - 1]) {
+                    break;
+                }
+
+                --nwrite;
+            }
+
+            const char* key = buffer;
+            size_t keylen = 0;
+            const char* val = NULL;
+
+            for (; keylen < nwrite; ++keylen) {
+                if (':' == key[keylen]) {
+                    val = &key[keylen + 1];
+                    break;
+                }
+            }
+
+            for (; val && static_cast<size_t>(val - buffer) < nwrite; ++val) {
+                if (' ' != *val && '\t' != *val) {
+                    break;
+                }
+            }
+
+            if (keylen > 0 && self->on_header_fn_) {
+                if (static_cast<size_t>(val - buffer) < nwrite) {
+                    self->on_header_fn_(*self, key, keylen, val, nwrite - (val - key));
+                } else {
+                    self->on_header_fn_(*self, key, keylen, NULL, 0);
+                }
+            }
+
+            return size * nitems;
         }
     }
 }
