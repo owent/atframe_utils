@@ -325,6 +325,12 @@ namespace util {
 
                 size_t posted_size;
                 FILE *uploaded_file;
+                int flags;
+
+                enum flag_t {
+                    EN_FLFT_HAS_FORM_FILE = 0x01,
+                    EN_FLFT_HAS_FORM_FIELD = 0x02,
+                };
             } form_list_t;
             form_list_t http_form_;
 

@@ -55,6 +55,7 @@ namespace util {
             http_form_.headerlist = NULL;
             http_form_.posted_size = 0;
             http_form_.uploaded_file = NULL;
+            http_form_.flags = 0;
             set_user_agent("libcurl");
         }
 
@@ -129,8 +130,7 @@ namespace util {
                 if (NULL != http_form_.begin) {
                     http_form_.headerlist = curl_slist_append(http_form_.headerlist, ::util::network::detail::custom_no_expect_header);
                     // if there is not only one file to upload, make content-type to be content_type_multipart_post
-                    if (NULL != http_form_.begin->next ||
-                        (!(http_form_.begin->flags & CURL_HTTPPOST_FILENAME) && !(http_form_.begin->flags & CURL_HTTPPOST_READFILE))) {
+                    if (NULL != http_form_.begin->next || (http_form_.flags & form_list_t::EN_FLFT_HAS_FORM_FIELD)) {
                         http_form_.headerlist =
                             curl_slist_append(http_form_.headerlist, ::util::network::detail::content_type_multipart_post);
                         curl_easy_setopt(req, CURLOPT_HTTPHEADER, http_form_.headerlist);
@@ -226,6 +226,7 @@ namespace util {
                 fclose(http_form_.uploaded_file);
                 http_form_.uploaded_file = NULL;
             }
+            http_form_.flags = 0;
         }
 
         void http_request::cleanup() {
@@ -281,31 +282,51 @@ namespace util {
         int http_request::get_error_code() const { return last_error_code_; }
 
         int http_request::add_form_file(const std::string &fieldname, const char *filename) {
-            return curl_formadd(&http_form_.begin, &http_form_.end, CURLFORM_COPYNAME, fieldname.c_str(), CURLFORM_NAMELENGTH,
+            int ret = curl_formadd(&http_form_.begin, &http_form_.end, CURLFORM_COPYNAME, fieldname.c_str(), CURLFORM_NAMELENGTH,
                                 static_cast<long>(fieldname.size()), CURLFORM_FILE, filename, CURLFORM_END);
+            if (0 == ret) {
+                http_form_.flags |= form_list_t::EN_FLFT_HAS_FORM_FILE;
+            }
+            return ret;
         }
 
         int http_request::add_form_file(const std::string &fieldname, const char *filename, const char *content_type,
                                         const char *new_filename) {
-            return curl_formadd(&http_form_.begin, &http_form_.end, CURLFORM_COPYNAME, fieldname.c_str(), CURLFORM_NAMELENGTH,
+            int ret = curl_formadd(&http_form_.begin, &http_form_.end, CURLFORM_COPYNAME, fieldname.c_str(), CURLFORM_NAMELENGTH,
                                 static_cast<long>(fieldname.size()), CURLFORM_FILE, filename, CURLFORM_CONTENTTYPE, content_type,
                                 CURLFORM_FILENAME, new_filename, CURLFORM_END);
+            if (0 == ret) {
+                http_form_.flags |= form_list_t::EN_FLFT_HAS_FORM_FILE;
+            }
+            return ret;
         }
 
         int http_request::add_form_file(const std::string &fieldname, const char *filename, const char *content_type) {
-            return curl_formadd(&http_form_.begin, &http_form_.end, CURLFORM_COPYNAME, fieldname.c_str(), CURLFORM_NAMELENGTH,
+            int ret = curl_formadd(&http_form_.begin, &http_form_.end, CURLFORM_COPYNAME, fieldname.c_str(), CURLFORM_NAMELENGTH,
                                 static_cast<long>(fieldname.size()), CURLFORM_FILE, filename, CURLFORM_CONTENTTYPE, content_type,
                                 CURLFORM_END);
+            if (0 == ret) {
+                http_form_.flags |= form_list_t::EN_FLFT_HAS_FORM_FILE;
+            }
+            return ret;
         }
 
         int http_request::add_form_field(const std::string &fieldname, const char *fieldvalue, size_t fieldlength) {
-            return curl_formadd(&http_form_.begin, &http_form_.end, CURLFORM_COPYNAME, fieldname.c_str(), CURLFORM_NAMELENGTH,
+            int ret = curl_formadd(&http_form_.begin, &http_form_.end, CURLFORM_COPYNAME, fieldname.c_str(), CURLFORM_NAMELENGTH,
                                 static_cast<long>(fieldname.size()), CURLFORM_COPYCONTENTS, fieldvalue, CURLFORM_CONTENTSLENGTH,
                                 static_cast<long>(fieldlength), CURLFORM_END);
+            if (0 == ret) {
+                http_form_.flags |= form_list_t::EN_FLFT_HAS_FORM_FIELD;
+            }
+            return ret;
         }
 
         int http_request::add_form_field(const std::string &fieldname, const std::string &fieldvalue) {
-            return add_form_field(fieldname, fieldvalue.c_str(), fieldvalue.size());
+            int ret = add_form_field(fieldname, fieldvalue.c_str(), fieldvalue.size());
+            if (0 == ret) {
+                http_form_.flags |= form_list_t::EN_FLFT_HAS_FORM_FIELD;
+            }
+            return ret;
         }
 
         void http_request::set_opt_ssl_verify_peer(bool v) { set_opt_bool(CURLOPT_SSL_VERIFYPEER, v); }
