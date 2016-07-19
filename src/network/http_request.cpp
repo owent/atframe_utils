@@ -585,7 +585,6 @@ namespace util {
             }
 
             manager->ev_loop = evloop;
-            int ret = 0;
             if (0 != uv_timer_init(evloop, &manager->ev_timeout)) {
                 curl_multi_cleanup(manager->curl_multi);
                 manager.reset();
@@ -593,12 +592,12 @@ namespace util {
             }
             manager->ev_timeout.data = manager.get();
 
-            ret = curl_multi_setopt(manager->curl_multi, CURLMOPT_SOCKETFUNCTION, http_request::curl_callback_handle_socket);
+            int ret = curl_multi_setopt(manager->curl_multi, CURLMOPT_SOCKETFUNCTION, http_request::curl_callback_handle_socket);
             ret = curl_multi_setopt(manager->curl_multi, CURLMOPT_SOCKETDATA, manager.get());
             ret = curl_multi_setopt(manager->curl_multi, CURLMOPT_TIMERFUNCTION, http_request::curl_callback_start_timer);
             ret = curl_multi_setopt(manager->curl_multi, CURLMOPT_TIMERDATA, manager.get());
 
-            return 0;
+            return ret;
         }
 
         int http_request::destroy_curl_multi(std::shared_ptr<curl_m_bind_t> &manager) {
