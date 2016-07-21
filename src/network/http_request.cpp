@@ -25,7 +25,7 @@ namespace util {
             /* initialize custom header list (stating that Expect: 100-continue is not wanted */
             static const char custom_no_expect_header[] = "Expect:";
             static const char content_type_multipart_post[] = "Content-Type: application/x-www-form-urlencoded";
-            static const char content_type_multipart_form_data[] = "Content-Type: multipart/form-data";
+            // static const char content_type_multipart_form_data[] = "Content-Type: multipart/form-data";
         }
 
         http_request::ptr_t http_request::create(curl_m_bind_t *curl_multi, const std::string &url) {
@@ -104,7 +104,7 @@ namespace util {
                 http_form_.headerlist = curl_slist_append(http_form_.headerlist, ::util::network::detail::custom_no_expect_header);
                 curl_easy_setopt(req, CURLOPT_HTTPPOST, http_form_.begin);
                 // curl_easy_setopt(req, CURLOPT_VERBOSE, 1L);
-            } 
+            }
             if (!post_data_.empty()) {
                 set_opt_long(CURLOPT_POSTFIELDSIZE, post_data_.size());
                 curl_easy_setopt(req, CURLOPT_POSTFIELDS, post_data_.c_str());
@@ -261,7 +261,7 @@ namespace util {
             }
 
             int ret = curl_formadd(&http_form_.begin, &http_form_.end, CURLFORM_COPYNAME, fieldname.c_str(), CURLFORM_NAMELENGTH,
-                                static_cast<long>(fieldname.size()), CURLFORM_FILE, filename, CURLFORM_END);
+                                   static_cast<long>(fieldname.size()), CURLFORM_FILE, filename, CURLFORM_END);
             if (0 == ret) {
                 http_form_.flags |= form_list_t::EN_FLFT_HAS_FORM_FILE;
             } else {
@@ -284,8 +284,8 @@ namespace util {
             }
 
             int ret = curl_formadd(&http_form_.begin, &http_form_.end, CURLFORM_COPYNAME, fieldname.c_str(), CURLFORM_NAMELENGTH,
-                                static_cast<long>(fieldname.size()), CURLFORM_FILE, filename, CURLFORM_CONTENTTYPE, content_type,
-                                CURLFORM_FILENAME, new_filename, CURLFORM_END);
+                                   static_cast<long>(fieldname.size()), CURLFORM_FILE, filename, CURLFORM_CONTENTTYPE, content_type,
+                                   CURLFORM_FILENAME, new_filename, CURLFORM_END);
             if (0 == ret) {
                 http_form_.flags |= form_list_t::EN_FLFT_HAS_FORM_FILE;
             } else {
@@ -307,8 +307,8 @@ namespace util {
             }
 
             int ret = curl_formadd(&http_form_.begin, &http_form_.end, CURLFORM_COPYNAME, fieldname.c_str(), CURLFORM_NAMELENGTH,
-                                static_cast<long>(fieldname.size()), CURLFORM_FILE, filename, CURLFORM_CONTENTTYPE, content_type,
-                                CURLFORM_END);
+                                   static_cast<long>(fieldname.size()), CURLFORM_FILE, filename, CURLFORM_CONTENTTYPE, content_type,
+                                   CURLFORM_END);
             if (0 == ret) {
                 http_form_.flags |= form_list_t::EN_FLFT_HAS_FORM_FILE;
             } else {
@@ -321,7 +321,7 @@ namespace util {
         int http_request::add_form_field(const std::string &fieldname, const std::string &fieldvalue) {
             http_form_.qs_fields.set(fieldname, fieldvalue);
             http_form_.flags |= form_list_t::EN_FLFT_HAS_FORM_FIELD;
-            //int ret = add_form_field(fieldname, fieldvalue.c_str(), fieldvalue.size());
+            // int ret = add_form_field(fieldname, fieldvalue.c_str(), fieldvalue.size());
             return 0;
         }
 
@@ -466,8 +466,7 @@ namespace util {
                 // @see https://curl.haxx.se/libcurl/c/CURLOPT_INFILESIZE_LARGE.html
                 if (!http_form_.qs_fields.empty()) {
                     http_form_.headerlist = curl_slist_append(http_form_.headerlist, ::util::network::detail::custom_no_expect_header);
-                    http_form_.headerlist =
-                        curl_slist_append(http_form_.headerlist, ::util::network::detail::content_type_multipart_post);
+                    http_form_.headerlist = curl_slist_append(http_form_.headerlist, ::util::network::detail::content_type_multipart_post);
                     http_form_.qs_fields.to_string().swap(post_data_);
                     http_form_.flags |= form_list_t::EN_FLFT_WRITE_FORM_USE_FUNC;
 
@@ -482,33 +481,26 @@ namespace util {
                 http_form_.headerlist = curl_slist_append(http_form_.headerlist, ::util::network::detail::custom_no_expect_header);
 
                 for (util::tquerystring::data_const_iterator iter = http_form_.qs_fields.data().begin();
-                    iter != http_form_.qs_fields.data().end(); ++iter) {
+                     iter != http_form_.qs_fields.data().end(); ++iter) {
 
                     if (util::types::ITEM_TYPE_STRING == iter->second->type()) {
-                        util::types::item_string* val = dynamic_cast<util::types::item_string*>(iter->second.get());
+                        util::types::item_string *val = dynamic_cast<util::types::item_string *>(iter->second.get());
 
                         if (NULL != val) {
-                            curl_formadd(&http_form_.begin, &http_form_.end,
-                                CURLFORM_PTRNAME, iter->first.c_str(),
-                                CURLFORM_NAMELENGTH, static_cast<long>(iter->first.size()),
-                                CURLFORM_PTRCONTENTS, val->data().c_str(),
+                            curl_formadd(&http_form_.begin, &http_form_.end, CURLFORM_PTRNAME, iter->first.c_str(), CURLFORM_NAMELENGTH,
+                                         static_cast<long>(iter->first.size()), CURLFORM_PTRCONTENTS, val->data().c_str(),
 #if LIBCURL_VERSION_MAJOR > 7 || (7 == LIBCURL_VERSION_MAJOR && LIBCURL_VERSION_MINOR >= 46)
-                                CURLFORM_CONTENTLEN, static_cast<curl_off_t>(val->data().size()),
+                                         CURLFORM_CONTENTLEN, static_cast<curl_off_t>(val->data().size()),
 #else
-                                CURLFORM_CONTENTSLENGTH, static_cast<long>(val->data().size()),
+                                         CURLFORM_CONTENTSLENGTH, static_cast<long>(val->data().size()),
 #endif
-                                CURLFORM_END
-                            );
+                                         CURLFORM_END);
                         }
                     } else {
                         std::string val = iter->second->to_string();
-                        curl_formadd(&http_form_.begin, &http_form_.end,
-                            CURLFORM_PTRNAME, iter->first.c_str(),
-                            CURLFORM_NAMELENGTH, static_cast<long>(iter->first.size()),
-                            CURLFORM_COPYCONTENTS, val.c_str(),
-                            CURLFORM_CONTENTSLENGTH, static_cast<long>(val.size()),
-                            CURLFORM_END
-                        );
+                        curl_formadd(&http_form_.begin, &http_form_.end, CURLFORM_PTRNAME, iter->first.c_str(), CURLFORM_NAMELENGTH,
+                                     static_cast<long>(iter->first.size()), CURLFORM_COPYCONTENTS, val.c_str(), CURLFORM_CONTENTSLENGTH,
+                                     static_cast<long>(val.size()), CURLFORM_END);
                     }
                 }
 
