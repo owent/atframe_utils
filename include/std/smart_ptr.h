@@ -64,6 +64,7 @@ namespace std {
     using tr1::static_pointer_cast;
     using tr1::swap;
     using tr1::weak_ptr;
+    using tr1::unique_ptr;
 }
 #endif
 #else
@@ -80,6 +81,7 @@ namespace std {
     using tr1::static_pointer_cast;
     using tr1::swap;
     using tr1::weak_ptr;
+    using tr1::unique_ptr;
 }
 #endif
 
