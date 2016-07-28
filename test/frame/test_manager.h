@@ -46,16 +46,26 @@ public:
     static boost::unit_test::test_suite *&test_suit();
 #endif
 
-    template<typename TL, typename TR, bool has_pointer, bool all_pointer>
+    template<typename TL, typename TR, bool has_pointer, bool has_integer, bool all_integer>
     struct pick_param;
 
+    // compare pointer with integer
     template<typename TL, typename TR>
-    struct pick_param<TL, TR, true, false> {
+    struct pick_param<TL, TR, true, true, false> {
         template<typename T>
         intptr_t operator()(const T& t) { return (intptr_t)(t); }
     };
 
-    template<typename TL, typename TR, bool has_pointer, bool all_pointer>
+    // compare integer with integer, all converted to int64_t
+    template<typename TL, typename TR>
+    struct pick_param<TL, TR, false, true, true> {
+        template<typename T>
+        int64_t operator()(const T& t) {
+            return static_cast<int64_t>(t);
+        }
+    };
+
+    template<typename TL, typename TR, bool has_pointer, bool has_integer, bool all_integer>
     struct pick_param {
         template<typename T>
         const T& operator()(const T& t) { return t; }
@@ -67,7 +77,8 @@ public:
         pick_param<
             TL, TR,
             util::type_traits::is_pointer<TL>::value || util::type_traits::is_pointer<TR>::value,
-            util::type_traits::is_pointer<TL>::value && util::type_traits::is_pointer<TR>::value
+            util::type_traits::is_integral<TL>::value || util::type_traits::is_integral<TR>::value,
+            util::type_traits::is_integral<TL>::value && util::type_traits::is_integral<TR>::value
         > pp;
         if (pp(l) == pp(r)) {
             ++(*success_counter_ptr);
@@ -89,7 +100,8 @@ public:
         pick_param<
             TL, TR,
             util::type_traits::is_pointer<TL>::value || util::type_traits::is_pointer<TR>::value,
-            util::type_traits::is_pointer<TL>::value && util::type_traits::is_pointer<TR>::value
+            util::type_traits::is_integral<TL>::value || util::type_traits::is_integral<TR>::value,
+            util::type_traits::is_integral<TL>::value && util::type_traits::is_integral<TR>::value
         > pp;
 
         if (pp(l) != pp(r)) {
@@ -112,7 +124,8 @@ public:
         pick_param<
             TL, TR,
             util::type_traits::is_pointer<TL>::value || util::type_traits::is_pointer<TR>::value,
-            util::type_traits::is_pointer<TL>::value && util::type_traits::is_pointer<TR>::value
+            util::type_traits::is_integral<TL>::value || util::type_traits::is_integral<TR>::value,
+            util::type_traits::is_integral<TL>::value && util::type_traits::is_integral<TR>::value
         > pp;
 
         if (pp(l) < pp(r)) {
@@ -135,7 +148,8 @@ public:
         pick_param<
             TL, TR,
             util::type_traits::is_pointer<TL>::value || util::type_traits::is_pointer<TR>::value,
-            util::type_traits::is_pointer<TL>::value && util::type_traits::is_pointer<TR>::value
+            util::type_traits::is_integral<TL>::value || util::type_traits::is_integral<TR>::value,
+            util::type_traits::is_integral<TL>::value && util::type_traits::is_integral<TR>::value
         > pp;
 
         if (pp(l) <= pp(r)) {
@@ -158,7 +172,8 @@ public:
         pick_param<
             TL, TR,
             util::type_traits::is_pointer<TL>::value || util::type_traits::is_pointer<TR>::value,
-            util::type_traits::is_pointer<TL>::value && util::type_traits::is_pointer<TR>::value
+            util::type_traits::is_integral<TL>::value || util::type_traits::is_integral<TR>::value,
+            util::type_traits::is_integral<TL>::value && util::type_traits::is_integral<TR>::value
         > pp;
 
         if (pp(l) > pp(r)) {
@@ -181,7 +196,8 @@ public:
         pick_param<
             TL, TR,
             util::type_traits::is_pointer<TL>::value || util::type_traits::is_pointer<TR>::value,
-            util::type_traits::is_pointer<TL>::value && util::type_traits::is_pointer<TR>::value
+            util::type_traits::is_integral<TL>::value || util::type_traits::is_integral<TR>::value,
+            util::type_traits::is_integral<TL>::value && util::type_traits::is_integral<TR>::value
         > pp;
 
         if (pp(l) >= pp(r)) {
