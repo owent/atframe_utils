@@ -16,6 +16,8 @@
 #include <vector>
 
 #include "std/type_traits/is_xxx_impl.h"
+#include "cli/shell_font.h"
+
 #include "test_case_base.h"
 
 /*

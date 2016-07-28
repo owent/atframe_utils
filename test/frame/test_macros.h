@@ -33,7 +33,6 @@
 #define CASE_EXPECT_GE(l, r) EXPECT_GE(l, r)
 
 #else
-#include "cli/shell_font.h"
 #include "test_manager.h"
 
 #define test_case_func_name(test_name, case_name) test_func_test_##test_name##_case_##case_name
