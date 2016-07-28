@@ -15,6 +15,7 @@
 #include <string>
 #include <vector>
 
+#include "std/type_traits/is_xxx_impl.h"
 #include "test_case_base.h"
 
 /*
@@ -45,6 +46,184 @@ public:
     static boost::unit_test::test_suite *&test_suit();
 #endif
 
+    template<bool has_pointer, bool all_pointer>
+    struct pick_param;
+
+    template<>
+    struct pick_param<true, false> {
+        template<typename T>
+        intptr_t operator()(const T& t) { return (intptr_t)(t); }
+    };
+
+    template<bool has_pointer, bool all_pointer>
+    struct pick_param {
+        template<typename T>
+        const T& operator()(const T& t) { return t; }
+    };
+
+    // expect functions
+    template<typename TL, typename TR>
+    bool expect_eq(const TL& l, const TR& r, const char* lexpr, const char* rexpr, const char* file, size_t line) {
+        pick_param<
+            util::type_traits::is_pointer<TL>::value || util::type_traits::is_pointer<TR>::value,
+            util::type_traits::is_pointer<TL>::value && util::type_traits::is_pointer<TR>::value
+        > pp;
+        if (pp(l) == pp(r)) {
+            ++(*success_counter_ptr);
+            return true;
+        } else {
+            ++(*failed_counter_ptr);
+            util::cli::shell_stream ss(std::cout);
+            ss() << util::cli::shell_font_style::SHELL_FONT_COLOR_RED << "FAILED => " << file << ":" << line << std::endl <<
+                "Expected: " << lexpr<< " == "<< rexpr << std::endl <<
+                lexpr << ": " << l << std::endl <<
+                rexpr << ": " << r << std::endl;
+
+            return false;
+        }
+    }
+
+    template<typename TL, typename TR>
+    bool expect_ne(const TL& l, const TR& r, const char* lexpr, const char* rexpr, const char* file, size_t line) {
+        pick_param<
+            util::type_traits::is_pointer<TL>::value || util::type_traits::is_pointer<TR>::value,
+            util::type_traits::is_pointer<TL>::value && util::type_traits::is_pointer<TR>::value
+        > pp;
+
+        if (pp(l) != pp(r)) {
+            ++(*success_counter_ptr);
+            return true;
+        } else {
+            ++(*failed_counter_ptr);
+            util::cli::shell_stream ss(std::cout);
+            ss() << util::cli::shell_font_style::SHELL_FONT_COLOR_RED << "FAILED => " << file << ":" << line << std::endl <<
+                "Expected: " << lexpr << " ！= " << rexpr << std::endl <<
+                lexpr << ": " << l << std::endl <<
+                rexpr << ": " << r << std::endl;
+
+            return false;
+        }
+    }
+
+    template<typename TL, typename TR>
+    bool expect_lt(const TL& l, const TR& r, const char* lexpr, const char* rexpr, const char* file, size_t line) {
+        pick_param<
+            util::type_traits::is_pointer<TL>::value || util::type_traits::is_pointer<TR>::value,
+            util::type_traits::is_pointer<TL>::value && util::type_traits::is_pointer<TR>::value
+        > pp;
+
+        if (pp(l) < pp(r)) {
+            ++(*success_counter_ptr);
+            return true;
+        } else {
+            ++(*failed_counter_ptr);
+            util::cli::shell_stream ss(std::cout);
+            ss() << util::cli::shell_font_style::SHELL_FONT_COLOR_RED << "FAILED => " << file << ":" << line << std::endl <<
+                "Expected: " << lexpr << " < " << rexpr << std::endl <<
+                lexpr << ": " << l << std::endl <<
+                rexpr << ": " << r << std::endl;
+
+            return false;
+        }
+    }
+
+    template<typename TL, typename TR>
+    bool expect_le(const TL& l, const TR& r, const char* lexpr, const char* rexpr, const char* file, size_t line) {
+        pick_param<
+            util::type_traits::is_pointer<TL>::value || util::type_traits::is_pointer<TR>::value,
+            util::type_traits::is_pointer<TL>::value && util::type_traits::is_pointer<TR>::value
+        > pp;
+
+        if (pp(l) <= pp(r)) {
+            ++(*success_counter_ptr);
+            return true;
+        } else {
+            ++(*failed_counter_ptr);
+            util::cli::shell_stream ss(std::cout);
+            ss() << util::cli::shell_font_style::SHELL_FONT_COLOR_RED << "FAILED => " << file << ":" << line << std::endl <<
+                "Expected: " << lexpr << " <= " << rexpr << std::endl <<
+                lexpr << ": " << l << std::endl <<
+                rexpr << ": " << r << std::endl;
+
+            return false;
+        }
+    }
+
+    template<typename TL, typename TR>
+    bool expect_gt(const TL& l, const TR& r, const char* lexpr, const char* rexpr, const char* file, size_t line) {
+        pick_param<
+            util::type_traits::is_pointer<TL>::value || util::type_traits::is_pointer<TR>::value,
+            util::type_traits::is_pointer<TL>::value && util::type_traits::is_pointer<TR>::value
+        > pp;
+
+        if (pp(l) > pp(r)) {
+            ++(*success_counter_ptr);
+            return true;
+        } else {
+            ++(*failed_counter_ptr);
+            util::cli::shell_stream ss(std::cout);
+            ss() << util::cli::shell_font_style::SHELL_FONT_COLOR_RED << "FAILED => " << file << ":" << line << std::endl <<
+                "Expected: " << lexpr << " > " << rexpr << std::endl <<
+                lexpr << ": " << l << std::endl <<
+                rexpr << ": " << r << std::endl;
+
+            return false;
+        }
+    }
+
+    template<typename TL, typename TR>
+    bool expect_ge(const TL& l, const TR& r, const char* lexpr, const char* rexpr, const char* file, size_t line) {
+        pick_param<
+            util::type_traits::is_pointer<TL>::value || util::type_traits::is_pointer<TR>::value,
+            util::type_traits::is_pointer<TL>::value && util::type_traits::is_pointer<TR>::value
+        > pp;
+
+        if (pp(l) >= pp(r)) {
+            ++(*success_counter_ptr);
+            return true;
+        } else {
+            ++(*failed_counter_ptr);
+            util::cli::shell_stream ss(std::cout);
+            ss() << util::cli::shell_font_style::SHELL_FONT_COLOR_RED << "FAILED => " << file << ":" << line << std::endl <<
+                "Expected: " << lexpr << " >= " << rexpr << std::endl <<
+                lexpr<< ": " << l << std::endl <<
+                rexpr<< ": " << r << std::endl;
+
+            return false;
+        }
+    }
+
+    template<typename TL>
+    bool expect_true(const TL& l, const char* expr, const char* file, size_t line) {
+        if (!!(l)) {
+            ++(*success_counter_ptr);
+            return true;
+        } else {
+            ++(*failed_counter_ptr);
+            util::cli::shell_stream ss(std::cout);
+            ss() << util::cli::shell_font_style::SHELL_FONT_COLOR_RED << "FAILED => " << file << ":" << line << std::endl <<
+                "Expected true: " << expr << std::endl <<
+                expr <<": " << l << std::endl;
+
+            return false;
+        }
+    }
+
+    template<typename TL>
+    bool expect_false(const TL& l, const char* expr, const char* file, size_t line) {
+        if (!(l)) {
+            ++(*success_counter_ptr);
+            return true;
+        } else {
+            ++(*failed_counter_ptr);
+            util::cli::shell_stream ss(std::cout);
+            ss() << util::cli::shell_font_style::SHELL_FONT_COLOR_RED << "FAILED => " << file << ":" << line << std::endl <<
+                "Expected false: " << expr << std::endl <<
+                expr << ": " << l << std::endl;
+
+            return false;
+        }
+    }
 private:
     test_data_type tests_;
     int success_;

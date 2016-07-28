@@ -56,24 +56,14 @@ void test_case_func_name(test_name, case_name) ()
     #define CASE_EXPECT_GE(l, r) BOOST_CHECK_GE(l, r)
 
 #else
-    #define CASE_EXPECT_EXPR(expr) \
-        if(expr){ \
-            ++(*test_manager::me().success_counter_ptr); \
-        } else { \
-            ++(*test_manager::me().failed_counter_ptr);\
-            util::cli::shell_stream ss(std::cout); \
-            ss() << util::cli::shell_font_style::SHELL_FONT_COLOR_RED<< "FAILED => " << __FILE__<< ":" << __LINE__<< std::endl << \
-            "Expected: "<< #expr<< std::endl; \
-        }
-
-    #define CASE_EXPECT_TRUE(c) CASE_EXPECT_EXPR(c)
-    #define CASE_EXPECT_FALSE(c) CASE_EXPECT_EXPR(!(c))
-    #define CASE_EXPECT_EQ(l, r) CASE_EXPECT_EXPR((l) == (r))
-    #define CASE_EXPECT_NE(l, r) CASE_EXPECT_EXPR((l) != (r))
-    #define CASE_EXPECT_LT(l, r) CASE_EXPECT_EXPR((l) < (r))
-    #define CASE_EXPECT_LE(l, r) CASE_EXPECT_EXPR((l) <= (r))
-    #define CASE_EXPECT_GT(l, r) CASE_EXPECT_EXPR((l) > (r))
-    #define CASE_EXPECT_GE(l, r) CASE_EXPECT_EXPR((l) >= (r))
+    #define CASE_EXPECT_TRUE(c) test_manager::me().expect_true((c), #c, __FILE__, __LINE__)
+    #define CASE_EXPECT_FALSE(c) test_manager::me().expect_false((c), #c, __FILE__, __LINE__)
+    #define CASE_EXPECT_EQ(l, r) test_manager::me().expect_eq((l), (r), #l, #r, __FILE__, __LINE__)
+    #define CASE_EXPECT_NE(l, r) test_manager::me().expect_ne((l), (r), #l, #r, __FILE__, __LINE__)
+    #define CASE_EXPECT_LT(l, r) test_manager::me().expect_lt((l), (r), #l, #r, __FILE__, __LINE__)
+    #define CASE_EXPECT_LE(l, r) test_manager::me().expect_le((l), (r), #l, #r, __FILE__, __LINE__)
+    #define CASE_EXPECT_GT(l, r) test_manager::me().expect_gt((l), (r), #l, #r, __FILE__, __LINE__)
+    #define CASE_EXPECT_GE(l, r) test_manager::me().expect_ge((l), (r), #l, #r, __FILE__, __LINE__)
 
 #endif
 
