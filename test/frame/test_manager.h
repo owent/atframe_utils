@@ -46,16 +46,16 @@ public:
     static boost::unit_test::test_suite *&test_suit();
 #endif
 
-    template<bool has_pointer, bool all_pointer>
+    template<typename TL, typename TR, bool has_pointer, bool all_pointer>
     struct pick_param;
 
-    template<>
-    struct pick_param<true, false> {
+    template<typename TL, typename TR>
+    struct pick_param<TL, TR, true, false> {
         template<typename T>
         intptr_t operator()(const T& t) { return (intptr_t)(t); }
     };
 
-    template<bool has_pointer, bool all_pointer>
+    template<typename TL, typename TR, bool has_pointer, bool all_pointer>
     struct pick_param {
         template<typename T>
         const T& operator()(const T& t) { return t; }
@@ -65,6 +65,7 @@ public:
     template<typename TL, typename TR>
     bool expect_eq(const TL& l, const TR& r, const char* lexpr, const char* rexpr, const char* file, size_t line) {
         pick_param<
+            TL, TR,
             util::type_traits::is_pointer<TL>::value || util::type_traits::is_pointer<TR>::value,
             util::type_traits::is_pointer<TL>::value && util::type_traits::is_pointer<TR>::value
         > pp;
@@ -86,6 +87,7 @@ public:
     template<typename TL, typename TR>
     bool expect_ne(const TL& l, const TR& r, const char* lexpr, const char* rexpr, const char* file, size_t line) {
         pick_param<
+            TL, TR,
             util::type_traits::is_pointer<TL>::value || util::type_traits::is_pointer<TR>::value,
             util::type_traits::is_pointer<TL>::value && util::type_traits::is_pointer<TR>::value
         > pp;
@@ -108,6 +110,7 @@ public:
     template<typename TL, typename TR>
     bool expect_lt(const TL& l, const TR& r, const char* lexpr, const char* rexpr, const char* file, size_t line) {
         pick_param<
+            TL, TR,
             util::type_traits::is_pointer<TL>::value || util::type_traits::is_pointer<TR>::value,
             util::type_traits::is_pointer<TL>::value && util::type_traits::is_pointer<TR>::value
         > pp;
@@ -130,6 +133,7 @@ public:
     template<typename TL, typename TR>
     bool expect_le(const TL& l, const TR& r, const char* lexpr, const char* rexpr, const char* file, size_t line) {
         pick_param<
+            TL, TR,
             util::type_traits::is_pointer<TL>::value || util::type_traits::is_pointer<TR>::value,
             util::type_traits::is_pointer<TL>::value && util::type_traits::is_pointer<TR>::value
         > pp;
@@ -152,6 +156,7 @@ public:
     template<typename TL, typename TR>
     bool expect_gt(const TL& l, const TR& r, const char* lexpr, const char* rexpr, const char* file, size_t line) {
         pick_param<
+            TL, TR,
             util::type_traits::is_pointer<TL>::value || util::type_traits::is_pointer<TR>::value,
             util::type_traits::is_pointer<TL>::value && util::type_traits::is_pointer<TR>::value
         > pp;
@@ -174,6 +179,7 @@ public:
     template<typename TL, typename TR>
     bool expect_ge(const TL& l, const TR& r, const char* lexpr, const char* rexpr, const char* file, size_t line) {
         pick_param<
+            TL, TR,
             util::type_traits::is_pointer<TL>::value || util::type_traits::is_pointer<TR>::value,
             util::type_traits::is_pointer<TL>::value && util::type_traits::is_pointer<TR>::value
         > pp;
