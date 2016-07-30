@@ -208,3 +208,17 @@ branches:
     - master
 
 # no need artifacts
+
+notifications:
+    - provider: Email
+      to:
+      - admin@owent.net
+      - owt5008137@live.com
+      on_build_success: false
+      on_build_failure: false
+      on_build_status_changed: true
+    - provider: Webhook
+      url: https://webhooks.gitter.im/e/38667a3c50b8e322422a
+      on_build_success: false
+      on_build_failure: false
+      on_build_status_changed: true
