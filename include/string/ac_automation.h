@@ -29,6 +29,105 @@
 
 namespace util {
     namespace string {
+        struct utf8_char_t {
+            utf8_char_t(const char* str) {
+                size_t len = length(str);
+                for (size_t i = 0; i < len; ++i) {
+                    data[i] = str[i];
+                }
+            };
+            utf8_char_t(const std::string& str) {
+                size_t len = length(str.c_str());
+                for (size_t i = 0; i < len; ++i) {
+                    data[i] = str[i];
+                }
+            };
+
+            char data[8];
+
+            inline size_t length(const char* s) const {
+                size_t ret = 1;
+                char c = (*s);
+
+                if (!(c & 0x80)) {
+                    return ret;
+                }
+                c <<= 1;
+                
+                for (; ret < 6; ++ret) {
+                    if (!(c & 0x80)) {
+                        break;
+                    }
+                }
+
+                return ret;
+            }
+
+            inline size_t length() const {
+                return length(&data[0]);
+            }
+
+            friend bool operator==(const utf8_char_t& l, const utf8_char_t& r) {
+                size_t len = l.length();
+
+                if (l.length() != r.length()) {
+                    return false;
+                }
+                
+                for (size_t i = 0; i < len; ++i) {
+                    if (l.data[i] != r.data[i]) {
+                        return false;
+                    }
+                }
+
+                return true;
+            }
+
+            friend bool operator!=(const utf8_char_t& l, const utf8_char_t& r) {
+                return !(l == r);
+            }
+
+            friend bool operator<(const utf8_char_t& l, const utf8_char_t& r) {
+                size_t len = l.length();
+
+                if (l.length() != r.length()) {
+                    return l.length() < r.length();
+                }
+
+                for (size_t i = 0; i < len; ++i) {
+                    if (l.data[i] != r.data[i]) {
+                        return l.data[i] < r.data[i];
+                    }
+                }
+
+                return false;
+            }
+
+            friend bool operator<=(const utf8_char_t& l, const utf8_char_t& r) {
+                size_t len = l.length();
+
+                if (l.length() != r.length()) {
+                    return l.length() < r.length();
+                }
+
+                for (size_t i = 0; i < len; ++i) {
+                    if (l.data[i] != r.data[i]) {
+                        return l.data[i] <= r.data[i];
+                    }
+                }
+
+                return true;
+            }
+
+            friend bool operator>(const utf8_char_t& l, const utf8_char_t& r) {
+                return !(l <= r);
+            }
+
+            friend bool operator>=(const utf8_char_t& l, const utf8_char_t& r) {
+                return !(l < r);
+            }
+        };
+
         namespace detail {
             template <typename CH>
             class actrie_skip_charset {
