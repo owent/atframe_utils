@@ -549,6 +549,9 @@ namespace util {
                     req->last_error_code_ = message->data.result;
                     // this may cause req not available any more
                     req_p->finish_req_rsp();
+
+                    // this function will probably call curl_multi_remove_handle
+                    // which may destroy message, so message can not be used any more
                     req_p->remove_curl_request();
                     break;
                 }
