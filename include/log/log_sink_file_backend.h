@@ -14,14 +14,15 @@
 
 #pragma once
 
-#include <cstdlib>
+#include "lock/spin_lock.h"
+#include "std/smart_ptr.h"
 #include <cstdio>
+#include <cstdlib>
+#include <fstream>
 #include <stdint.h>
 #include <string>
 #include <vector>
-#include <fstream>
-#include "std/smart_ptr.h"
-#include "lock/spin_lock.h"
+
 
 #include "log_formatter.h"
 
@@ -34,7 +35,7 @@ namespace util {
         public:
             log_sink_file_backend();
             log_sink_file_backend(const std::string &file_name_pattern);
-            log_sink_file_backend(const log_sink_file_backend& other);
+            log_sink_file_backend(const log_sink_file_backend &other);
             ~log_sink_file_backend();
 
         public:
@@ -49,10 +50,10 @@ namespace util {
                 return *this;
             }
 
-            inline bool get_auto_flush() const { return log_file_.auto_flush; }
+            inline uint32_t get_auto_flush() const { return log_file_.auto_flush; }
 
-            inline log_sink_file_backend &set_auto_flush(bool enable_buffer) {
-                log_file_.auto_flush = enable_buffer;
+            inline log_sink_file_backend &set_auto_flush(uint32_t flush_level) {
+                log_file_.auto_flush = flush_level;
                 return *this;
             }
 
@@ -84,22 +85,23 @@ namespace util {
             void check_update();
 
             void reset_log_file();
+
         private:
             // 第一个first表示是否需要format
             std::string path_pattern_;
 
-            uint32_t rotation_size_;  // 轮询滚动size
-            size_t max_file_size_;  // log文件size限制
+            uint32_t rotation_size_; // 轮询滚动size
+            size_t max_file_size_;   // log文件size限制
 
 
-            time_t check_interval_; // 更换文件或目录的检查周期
+            time_t check_interval_;     // 更换文件或目录的检查周期
             time_t check_expire_point_; // 更换文件或目录的检查周期
             bool inited_;
             lock::spin_lock fs_lock_;
 
-            
+
             struct file_impl_t {
-                bool auto_flush; // 是否每次追加内容后，自动刷写缓冲区到实际文件
+                uint32_t auto_flush; // 当日记级别高于或等于这个时，将会强制执行一次flush
                 uint32_t rotation_index;
                 size_t written_size;
                 std::shared_ptr<std::ofstream> opened_file;

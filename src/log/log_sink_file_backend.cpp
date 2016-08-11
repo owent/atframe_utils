@@ -5,9 +5,10 @@
 #include <iostream>
 #include <sstream>
 
-#include "lock/lock_holder.h"
 #include "common/file_system.h"
+#include "lock/lock_holder.h"
 #include "time/time_utility.h"
+
 
 #include "log/log_sink_file_backend.h"
 
@@ -18,36 +19,36 @@ namespace util {
     namespace log {
 
         log_sink_file_backend::log_sink_file_backend()
-            : rotation_size_(10),    // 默认10个文件
-            max_file_size_(DEFAULT_FILE_SIZE), // 默认文件大小
-            check_interval_(60), // 默认文件切换检查周期为60秒
-            check_expire_point_(0), inited_(false) {
+            : rotation_size_(10),                // 默认10个文件
+              max_file_size_(DEFAULT_FILE_SIZE), // 默认文件大小
+              check_interval_(60),               // 默认文件切换检查周期为60秒
+              check_expire_point_(0), inited_(false) {
 
-            path_pattern_ = "%Y-%m-%d.%N.log";// 默认文件名规则
+            path_pattern_ = "%Y-%m-%d.%N.log"; // 默认文件名规则
 
-            log_file_.auto_flush = false;
+            log_file_.auto_flush = log_formatter::level_t::LOG_LW_DISABLED;
             log_file_.rotation_index = 0;
             log_file_.written_size = 0;
         }
 
         log_sink_file_backend::log_sink_file_backend(const std::string &file_name_pattern)
-            : rotation_size_(10),    // 默认10个文件
-            max_file_size_(DEFAULT_FILE_SIZE), // 默认文件大小
-            check_interval_(60), // 默认文件切换检查周期为60秒
-            check_expire_point_(0), inited_(false) {
+            : rotation_size_(10),                // 默认10个文件
+              max_file_size_(DEFAULT_FILE_SIZE), // 默认文件大小
+              check_interval_(60),               // 默认文件切换检查周期为60秒
+              check_expire_point_(0), inited_(false) {
 
-            log_file_.auto_flush = false;
+            log_file_.auto_flush = log_formatter::level_t::LOG_LW_DISABLED;
             log_file_.rotation_index = 0;
             log_file_.written_size = 0;
 
             set_file_pattern(file_name_pattern);
         }
 
-        log_sink_file_backend::log_sink_file_backend(const log_sink_file_backend& other)
-            : rotation_size_(other.rotation_size_),     // 默认文件数量
-            max_file_size_(other.max_file_size_),       // 默认文件大小
-            check_interval_(other.check_interval_),     // 默认文件切换检查周期为60秒
-            check_expire_point_(0), inited_(false) {
+        log_sink_file_backend::log_sink_file_backend(const log_sink_file_backend &other)
+            : rotation_size_(other.rotation_size_),   // 默认文件数量
+              max_file_size_(other.max_file_size_),   // 默认文件大小
+              check_interval_(other.check_interval_), // 默认文件切换检查周期为60秒
+              check_expire_point_(0), inited_(false) {
             path_pattern_ = other.path_pattern_;
 
             log_file_.auto_flush = other.log_file_.auto_flush;
@@ -71,7 +72,7 @@ namespace util {
             if (!inited_) {
                 init();
             }
-            
+
             if (log_file_.written_size > 0 && log_file_.written_size >= max_file_size_) {
                 rotate_log();
             }
@@ -85,7 +86,7 @@ namespace util {
 
             f->write(content, content_size);
             f->put('\n');
-            if (log_file_.auto_flush) {
+            if (caller.level_id <= log_file_.auto_flush) {
                 f->flush();
             }
 
@@ -137,7 +138,7 @@ namespace util {
             caller.rotate_index = log_file_.rotation_index;
             size_t file_path_len = log_formatter::format(log_file, sizeof(log_file), path_pattern_.c_str(), path_pattern_.size(), caller);
             if (file_path_len <= 0) {
-                std::cerr << "log.format " << path_pattern_ << " failed"<< std::endl;
+                std::cerr << "log.format " << path_pattern_ << " failed" << std::endl;
                 return std::shared_ptr<std::ofstream>();
             }
 
@@ -157,7 +158,7 @@ namespace util {
             if (destroy_content) {
                 of->open(log_file, std::ios::binary | std::ios::out | std::ios::trunc);
                 if (!of->is_open()) {
-                    std::cerr << "log.file open " << static_cast<const char*>(log_file) << " failed" << path_pattern_ << std::endl;
+                    std::cerr << "log.file open " << static_cast<const char *>(log_file) << " failed" << path_pattern_ << std::endl;
                     return std::shared_ptr<std::ofstream>();
                 }
                 of->close();
@@ -165,7 +166,7 @@ namespace util {
 
             of->open(log_file, std::ios::binary | std::ios::out | std::ios::app);
             if (!of->is_open()) {
-                std::cerr << "log.file open "<< static_cast<const char*>(log_file) <<" failed" << path_pattern_ << std::endl;
+                std::cerr << "log.file open " << static_cast<const char *>(log_file) << " failed" << path_pattern_ << std::endl;
                 return std::shared_ptr<std::ofstream>();
             }
 
@@ -237,7 +238,7 @@ namespace util {
             // 必须依赖析构来关闭文件，以防这个文件正在其他地方被引用
             log_file_.opened_file.reset();
             log_file_.written_size = 0;
-            //log_file_.file_path.clear(); // 保留上一个文件路径，即便已被关闭。用于rotate后的目录变更判定
+            // log_file_.file_path.clear(); // 保留上一个文件路径，即便已被关闭。用于rotate后的目录变更判定
         }
     }
 }
