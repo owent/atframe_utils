@@ -86,7 +86,7 @@ namespace util {
 
             f->write(content, content_size);
             f->put('\n');
-            if (caller.level_id <= log_file_.auto_flush) {
+            if (static_cast<uint32_t>(caller.level_id) <= log_file_.auto_flush) {
                 f->flush();
             }
 
