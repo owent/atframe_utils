@@ -56,7 +56,11 @@ namespace util {
             // 其他的部分都要重新初始化，不能复制
         }
 
-        log_sink_file_backend::~log_sink_file_backend() {}
+        log_sink_file_backend::~log_sink_file_backend() {
+            if (log_file_.opened_file && log_file_.opened_file->is_open() && !log_file_.opened_file->bad()) {
+                log_file_.opened_file->flush();
+            }
+        }
 
         void log_sink_file_backend::set_file_pattern(const std::string &file_name_pattern) {
             path_pattern_ = file_name_pattern;
