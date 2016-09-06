@@ -176,6 +176,40 @@ namespace util {
                 }
             }
         }
+
+        /**
+        * @brief 字符转16进制表示
+        * @param src 输入的buffer
+        * @param ss 输入的buffer长度
+        * @param out 输出buffer
+        * @param upper_case 是否大写
+        */
+        template <typename TCh>
+        void dumphex(const void *src, size_t ss, TCh *out, bool upper_case = false) {
+            const unsigned char *cs = reinterpret_cast<const unsigned char *>(src);
+            size_t i;
+            for (i = 0; i < ss; ++i) {
+                hex<TCh, unsigned char>(&out[i<< 1], cs[i], upper_case);
+            }
+        }
+
+        /**
+        * @brief 字符转16进制表示
+        * @param src 输入的buffer
+        * @param ss 输入的buffer长度
+        * @param out 输出缓冲区
+        * @param upper_case 是否大写
+        */
+        template <typename Elem, typename Traits>
+        void dumphex(const void *src, size_t ss, std::basic_ostream<Elem, Traits> &out, bool upper_case = false) {
+            const unsigned char *cs = reinterpret_cast<const unsigned char *>(src);
+            size_t i;
+            Elem tmp[2];
+            for (i = 0; i < ss; ++i) {
+                hex<Elem, unsigned char>(tmp, cs[i], upper_case);
+                out.write(tmp, 2);
+            }
+        }
     }
 }
 
