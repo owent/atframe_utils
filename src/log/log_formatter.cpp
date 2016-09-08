@@ -273,6 +273,23 @@ if(NULL == tm_obj_ptr) {                \
                     }
                     break;
                 }
+                case 'k': {
+                    if (NULL != caller.file_path) {
+                        const char* file_name = caller.file_path;
+                        for(const char* dir_split = caller.file_path; *dir_split; ++dir_split) {
+                            if ('/' == *dir_split || '\\' == *dir_split) {
+                                file_name = dir_split + 1;
+                            }
+                        }
+                        int res = UTIL_STRFUNC_SNPRINTF(&buff[ret], bufz - ret, "%s", file_name);
+                        if (res < 0) {
+                            running = false;
+                        } else {
+                            ret += static_cast<size_t>(res);
+                        }
+                    }
+                    break;
+                }
                 case 'n': {
                     int res = UTIL_STRFUNC_SNPRINTF(&buff[ret], bufz - ret, "%u", caller.line_number);
                     if (res < 0) {
