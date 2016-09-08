@@ -256,7 +256,7 @@ namespace util {
             }
 
             UTIL_FS_OPEN(res, http_form_.uploaded_file, filename, "rb");
-            if (0 != res) {
+            if (0 != res || NULL == http_form_.uploaded_file) {
                 return res;
             }
 
@@ -279,7 +279,7 @@ namespace util {
             }
 
             UTIL_FS_OPEN(res, http_form_.uploaded_file, filename, "rb");
-            if (0 != res) {
+            if (0 != res || NULL == http_form_.uploaded_file) {
                 return res;
             }
 
@@ -302,7 +302,7 @@ namespace util {
             }
 
             UTIL_FS_OPEN(res, http_form_.uploaded_file, filename, "rb");
-            if (0 != res) {
+            if (0 != res || NULL == http_form_.uploaded_file) {
                 return res;
             }
 

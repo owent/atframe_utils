@@ -93,7 +93,13 @@ namespace util {
 
         void log_wrapper::update() {}
 
-        void log_wrapper::log(const caller_info_t &caller, const char *fmt, ...) {
+        void log_wrapper::log(const caller_info_t &caller, 
+#ifdef _MSC_VER
+            _In_z_ _Printf_format_string_ const char *fmt, ...
+#else
+            const char *fmt, ...
+#endif
+            ) {
             if (get_option(options_t::OPT_AUTO_UPDATE_TIME) && !prefix_format_.empty()) {
                 update();
             }
