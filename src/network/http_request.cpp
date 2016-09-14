@@ -588,9 +588,10 @@ namespace util {
             manager->ev_timeout.data = manager.get();
 
             int ret = curl_multi_setopt(manager->curl_multi, CURLMOPT_SOCKETFUNCTION, http_request::curl_callback_handle_socket);
-            ret = curl_multi_setopt(manager->curl_multi, CURLMOPT_SOCKETDATA, manager.get());
-            ret = curl_multi_setopt(manager->curl_multi, CURLMOPT_TIMERFUNCTION, http_request::curl_callback_start_timer);
-            ret = curl_multi_setopt(manager->curl_multi, CURLMOPT_TIMERDATA, manager.get());
+            ret = (CURLE_OK != ret) || curl_multi_setopt(manager->curl_multi, CURLMOPT_SOCKETDATA, manager.get());
+            ret = (CURLE_OK != ret) ||
+                  curl_multi_setopt(manager->curl_multi, CURLMOPT_TIMERFUNCTION, http_request::curl_callback_start_timer);
+            ret = (CURLE_OK != ret) || curl_multi_setopt(manager->curl_multi, CURLMOPT_TIMERDATA, manager.get());
 
             return ret;
         }
