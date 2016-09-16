@@ -101,7 +101,7 @@ namespace util {
             build_http_form(method);
 
             if (NULL != http_form_.begin) {
-                http_form_.headerlist = curl_slist_append(http_form_.headerlist, ::util::network::detail::custom_no_expect_header);
+                set_libcurl_no_expect();
                 curl_easy_setopt(req, CURLOPT_HTTPPOST, http_form_.begin);
                 // curl_easy_setopt(req, CURLOPT_VERBOSE, 1L);
             }
@@ -360,6 +360,19 @@ namespace util {
             // set_opt_request_timeout(timeout_ms);
         }
 
+        void http_request::set_libcurl_no_expect() {
+            if (http_form_.flags & form_list_t::EN_FLFT_LIBCURL_NO_EXPECT) {
+                return;
+            }
+            http_form_.flags |= form_list_t::EN_FLFT_LIBCURL_NO_EXPECT;
+
+            append_http_header(::util::network::detail::custom_no_expect_header);
+        }
+
+        void http_request::append_http_header(const char *http_header) {
+            http_form_.headerlist = curl_slist_append(http_form_.headerlist, http_header);
+        }
+
         const http_request::on_progress_fn_t &http_request::get_on_progress() const { return on_progress_fn_; }
         void http_request::set_on_progress(on_progress_fn_t fn) {
             on_progress_fn_ = fn;
@@ -465,8 +478,8 @@ namespace util {
                 // @see https://curl.haxx.se/libcurl/c/CURLOPT_INFILESIZE.html
                 // @see https://curl.haxx.se/libcurl/c/CURLOPT_INFILESIZE_LARGE.html
                 if (!http_form_.qs_fields.empty()) {
-                    http_form_.headerlist = curl_slist_append(http_form_.headerlist, ::util::network::detail::custom_no_expect_header);
-                    http_form_.headerlist = curl_slist_append(http_form_.headerlist, ::util::network::detail::content_type_multipart_post);
+                    set_libcurl_no_expect();
+                    append_http_header(::util::network::detail::content_type_multipart_post);
                     http_form_.qs_fields.to_string().swap(post_data_);
                     http_form_.flags |= form_list_t::EN_FLFT_WRITE_FORM_USE_FUNC;
 
@@ -475,10 +488,10 @@ namespace util {
                         http_form_.uploaded_file = NULL;
                     }
                 } else if (NULL != http_form_.uploaded_file) {
-                    http_form_.headerlist = curl_slist_append(http_form_.headerlist, ::util::network::detail::custom_no_expect_header);
+                    set_libcurl_no_expect();
                 }
             } else if (!http_form_.qs_fields.empty()) {
-                http_form_.headerlist = curl_slist_append(http_form_.headerlist, ::util::network::detail::custom_no_expect_header);
+                set_libcurl_no_expect();
 
                 for (util::tquerystring::data_const_iterator iter = http_form_.qs_fields.data().begin();
                      iter != http_form_.qs_fields.data().end(); ++iter) {

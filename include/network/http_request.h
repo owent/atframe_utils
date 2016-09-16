@@ -2,8 +2,6 @@
  * @file http_request.h
  * @brief 对CURL的封装
  *
- * Note that this singleton class is thread-safe.
- *
  * @version 1.0
  * @author owent
  * @date 2016.07.14
@@ -149,7 +147,7 @@ namespace util {
             };
             typedef std::function<int(http_request &, const progress_t &)> on_progress_fn_t;
             /** parameters: http_request, key, key length, value, value length **/
-            typedef std::function<int(http_request &, const char*, size_t, const char*, size_t)> on_header_fn_t;
+            typedef std::function<int(http_request &, const char *, size_t, const char *, size_t)> on_header_fn_t;
 
         public:
             static ptr_t create(curl_m_bind_t *, const std::string &url);
@@ -258,6 +256,9 @@ namespace util {
 
             void set_opt_timeout(time_t timeout_ms);
 
+            void set_libcurl_no_expect();
+
+            void append_http_header(const char *http_header);
             // -------- set options of libcurl @see https://curl.haxx.se/libcurl/c/curl_easy_setopt.html for detail --------
 
             const on_progress_fn_t &get_on_progress() const;
@@ -333,6 +334,7 @@ namespace util {
                     EN_FLFT_HAS_FORM_FILE = 0x01,
                     EN_FLFT_HAS_FORM_FIELD = 0x02,
                     EN_FLFT_WRITE_FORM_USE_FUNC = 0x04,
+                    EN_FLFT_LIBCURL_NO_EXPECT = 0x08,
                 };
             } form_list_t;
             form_list_t http_form_;
