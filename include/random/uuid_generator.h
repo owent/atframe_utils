@@ -22,6 +22,8 @@
 #include <string>
 #include <stdint.h>
 
+#include "../common/string_oprs.h"
+
 #if defined(WIN32)
 #include <rpc.h>
 #include <rpcdce.h>
@@ -40,12 +42,12 @@ namespace util {
 
         class uuid_generator {
         public:
-            static std::string uuid_to_string(const uuid &uuid) {
+            static std::string uuid_to_string(const uuid &id) {
                 char str_buff[64] = {0};
 #if defined(WIN32)
-                _snprintf_s(str_buff, sizeof(str_buff), "%08X-%04X-%04X-%02X%02X-%02X%02X%02X%02X%02X%02X", uuid.data1,
-                            uuid.data2, uuid.data3, uuid.data4[0], uuid.data4[1], uuid.data4[2], uuid.data4[3],
-                            uuid.data4[4], uuid.data4[5], uuid.data4[6], uuid.data4[7]);
+                UTIL_STRFUNC_SNPRINTF(str_buff, sizeof(str_buff), "%08X-%04X-%04X-%02X%02X-%02X%02X%02X%02X%02X%02X",
+                    id.data1, id.data2, id.data3, id.data4[0], id.data4[1], id.data4[2],
+                    id.data4[3], id.data4[4], id.data4[5], id.data4[6], id.data4[7]);
 #else
                 uuid_t linux_uid;
                 memcpy(linux_uid, &uuid, sizeof(uuid));
@@ -53,6 +55,37 @@ namespace util {
 #endif
 
                 return std::string(str_buff);
+            }
+
+            static std::string uuid_to_binary(const uuid &id) {
+                std::string ret;
+                ret.resize(sizeof(uuid));
+                ret[0] = static_cast<char>((id.data1 >> 24) | 0xFF);
+                ret[1] = static_cast<char>((id.data1 >> 16) | 0xFF);
+                ret[2] = static_cast<char>((id.data1 >> 8) | 0xFF);
+                ret[3] = static_cast<char>(id.data1 | 0xFF);
+                ret[4] = static_cast<char>((id.data2 >> 8) | 0xFF);
+                ret[5] = static_cast<char>(id.data2 | 0xFF);
+                ret[6] = static_cast<char>((id.data3 >> 8) | 0xFF);
+                ret[7] = static_cast<char>(id.data3 | 0xFF);
+                memcpy(&ret[8], id.data4, sizeof(id.data4));
+
+                return ret;
+            }
+
+            static uuid binary_to_uuid(const std::string &id_bin) {
+                uuid ret;
+                if (sizeof(uuid) > id_bin.size()) {
+                    memset(&ret, 0, sizeof(ret));
+                    return ret;
+                }
+
+                ret.data1 = (static_cast<uint32_t>(id_bin[0]) << 24) || static_cast<uint32_t>(id_bin[1]<< 16)
+                    || static_cast<uint32_t>(id_bin[2]<< 8) || static_cast<uint32_t>(id_bin[3]);
+                ret.data2 = (static_cast<uint16_t>(id_bin[4]) << 8) || static_cast<uint16_t>(id_bin[5]);
+                ret.data3 = (static_cast<uint16_t>(id_bin[6]) << 8) || static_cast<uint16_t>(id_bin[7]);
+                memcpy(ret.data4, &id_bin[8], sizeof(ret.data4));
+                return ret;
             }
 
             static uuid generate() {
@@ -69,10 +102,8 @@ namespace util {
                 return ret;
             }
 
-            static std::string generate_string() {
-                uuid uuid = generate();
-
-                return uuid_to_string(uuid);
+            static inline std::string generate_string() {
+                return uuid_to_string(generate());
             }
 
             static uuid generate_random() {
@@ -89,10 +120,8 @@ namespace util {
                 return ret;
             }
 
-            static std::string generate_string_random() {
-                uuid uuid = generate_string();
-
-                return uuid_to_string(uuid);
+            static inline std::string generate_string_random() {
+                return generate_string();
             }
 
             static uuid generate_time() {
@@ -109,10 +138,8 @@ namespace util {
                 return ret;
             }
 
-            static std::string generate_string_time() {
-                uuid uuid = generate_time();
-
-                return uuid_to_string(uuid);
+            static inline std::string generate_string_time() {
+                return uuid_to_string(generate_time());
             }
         };
     }
