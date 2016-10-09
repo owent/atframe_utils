@@ -50,7 +50,7 @@ namespace util {
                     id.data4[3], id.data4[4], id.data4[5], id.data4[6], id.data4[7]);
 #else
                 uuid_t linux_uid;
-                memcpy(linux_uid, &uuid, sizeof(uuid));
+                memcpy(linux_uid, &id, sizeof(uuid));
                 uuid_unparse(linux_uid, str_buff);
 #endif
 
