@@ -76,7 +76,7 @@ before_install:
 #
 install:
     - if [ "$TRAVIS_OS_NAME" == "linux" ] ; then sudo apt-get install -qq -y cmake; fi
-    - if [ "$TRAVIS_OS_NAME" == "osx" ] ; then brew upgrade cmake; fi
+#   - if [ "$TRAVIS_OS_NAME" == "osx" ] ; then brew upgrade cmake; fi
 #   - if [ "$TRAVIS_OS_NAME" == "linux" ] && [ "$USE_CC" == "gcc-4.9" ] ; then sudo apt-get install -qq gcc-4.9-multilib g++-4.9-multilib; fi
 #   - if [ "$TRAVIS_OS_NAME" == "linux" ] && [ "$USE_CC" == "gcc-5" ] ; then sudo apt-get install -qq gcc-5-multilib g++-5-multilib; fi
 #   - if [ "$TRAVIS_OS_NAME" == "linux" ] && [ "$USE_CC" == "clang-3.8" ] ; then sudo apt-get install --allow-unauthenticated -qq clang-3.8 libclang-common-3.8-dev libclang-3.8-dev; fi
