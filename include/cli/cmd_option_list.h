@@ -34,10 +34,20 @@ namespace util {
             class cmd_option_bind_base : public std::enable_shared_from_this<cmd_option_bind_base> {
             protected:
                 static const char *ROOT_NODE_CMD;
+                typedef struct {
+                    std::vector<std::string> cmd_paths;
+                    std::string all_cmds;
+                    std::string description;
+                    std::shared_ptr<cmd_option_bind_base> binded_obj;
+                } help_msg_t;
+                typedef std::vector<help_msg_t> help_list_t;
 
                 std::string help_msg_;
                 virtual ~cmd_option_bind_base() {}
 
+                static bool sort_by_all_cmds(const help_msg_t& l, const help_msg_t& r) {
+                    return l.all_cmds < r.all_cmds;
+                }
             public:
                 // 定义参数类型
                 typedef callback_param param_type;
@@ -45,7 +55,7 @@ namespace util {
                 virtual void operator()(callback_param arg) = 0;
 
                 // 获取绑定器的帮助信息
-                virtual std::string get_help_msg(const char *prefix_data = "") { return prefix_data + help_msg_; }
+                virtual std::string get_help_msg(const char *prefix_data = "") const { return prefix_data + help_msg_; }
 
                 // 设置绑定器的帮助信息
                 virtual std::shared_ptr<cmd_option_bind_base> set_help_msg(const char *help_msg) {

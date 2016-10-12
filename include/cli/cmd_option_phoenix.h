@@ -25,9 +25,9 @@ namespace util {
              * @brief 通用赋值动作 - 设置一个变量值
              */
             template <typename T>
-            struct assign {
+            struct assign_t {
                 T &var;
-                assign(T &t) : var(t) {}
+                assign_t(T &t) : var(t) {}
 
                 void operator()(util::cli::callback_param params) {
                     if (params.get_params_number() > 0) {
@@ -36,41 +36,76 @@ namespace util {
                 }
             };
 
+            template <typename T>
+            assign_t<T> assign(T& t) {
+                return assign_t<T>(std::ref(t));
+            }
+
             /**
              * @brief 通用赋值动作 - 容器push_back操作
              */
             template <typename T>
-            struct push_back {
+            struct push_back_t {
                 T &var;
-                push_back(T &t) : var(t) {}
+                push_back_t(T &t) : var(t) {}
 
                 void operator()(util::cli::callback_param params) {
                     for (util::cli::cmd_option_list::size_type i = 0; i < params.get_params_number(); ++i) {
-                        var.push_back(params[i]->as_cpp_string());
+                        var.push_back(params[i]->to_cpp_string());
                     }
                 }
             };
+
+            template <typename T>
+            push_back_t<T> push_back(T& t) {
+                return push_back_t<T>(std::ref(t));
+            }
+
+            /**
+             * @brief 通用赋值动作 - 容器push_front操作
+             */
+            template <typename T>
+            struct push_front_t {
+                T &var;
+                push_front_t(T &t) : var(t) {}
+
+                void operator()(util::cli::callback_param params) {
+                    for (util::cli::cmd_option_list::size_type i = 0; i < params.get_params_number(); ++i) {
+                        var.push_front(params[i]->to_cpp_string());
+                    }
+                }
+            };
+
+            template <typename T>
+            push_front_t<T> push_front(T& t) {
+                return push_front_t<T>(std::ref(t));
+            }
 
             /**
              * @brief 通用赋值动作 - 设置变量值为某个固定值
              */
             template <typename T>
-            struct set_const {
+            struct set_const_t {
                 T &var;
                 T val;
-                set_const(T &t, const T &v) : var(t), val(v) {}
+                set_const_t(T &t, const T &v) : var(t), val(v) {}
 
                 void operator()(util::cli::callback_param params) { var = val; }
             };
+
+            template <typename T>
+            set_const_t<T> set_const(T& t, const T &v) {
+                return set_const_t<T>(std::ref(t), std::cref(v));
+            }
 
             /**
              * @brief 通用赋值动作 - 设置一个变量为bool值并检查语义
              * @note no, false, disabled, disable, 0 都会被判定为false，其他为true
              */
             template <typename T>
-            struct assign_logic_bool {
+            struct assign_logic_bool_t {
                 T &var;
-                assign_logic_bool(T &t) : var(t) {}
+                assign_logic_bool_t(T &t) : var(t) {}
 
                 void operator()(util::cli::callback_param params) {
                     if (params.get_params_number() > 0) {
@@ -80,6 +115,11 @@ namespace util {
                     }
                 }
             };
+
+            template <typename T>
+            assign_logic_bool_t<T> assign_logic_bool(T& t) {
+                return assign_logic_bool_t<T>(std::ref(t));
+            }
         }
     }
 }
