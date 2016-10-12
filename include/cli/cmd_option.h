@@ -196,7 +196,7 @@ namespace util {
                     ss()<< shell_font_style::SHELL_FONT_COLOR_YELLOW<< (*iter).all_cmds;
                     if ((*iter).all_cmds.size() < cmd_padding) {
                         std::string padding_space;
-                        padding_space.resize(' ', cmd_padding - (*iter).all_cmds.size());
+                        padding_space.resize(cmd_padding - (*iter).all_cmds.size(), ' ');
                         ss()<< padding_space;
                     }
                     ss()<< (*iter).description<< std::endl;
