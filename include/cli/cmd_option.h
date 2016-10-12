@@ -126,7 +126,7 @@ namespace util {
 
         public:
             void list_help_msg(help_list_t& msg, const std::string& prefix) const {
-                for(funmap_type::const_iterator iter = callback_funcs_.begin(); iter != callback_funcs_.end(); ++iter) {
+                for(typename funmap_type::const_iterator iter = callback_funcs_.begin(); iter != callback_funcs_.end(); ++iter) {
                     help_list_t::iterator iter_m;
                     help_msg_t* obj;
                     for(iter_m = msg.begin(), obj = NULL; iter_m != msg.end(); ++iter_m) {
@@ -140,7 +140,7 @@ namespace util {
                     if (callback_children_.find(iter->first) != callback_children_.end()) {
                         self_type* child = dynamic_cast<self_type*>(iter->second.get());
                         assert(child);
-                        child->list_help_msg(msg, prefix + " " + iter->first);
+                        child->list_help_msg(msg, (prefix + " ") + iter->first.c_str());
                         continue;
                     }
 
@@ -176,7 +176,7 @@ namespace util {
                     bool not_first = false;
                     for (std::vector<std::string>::iterator cmd_it = (*iter).cmd_paths.begin(); cmd_it != (*iter).cmd_paths.end(); ++ cmd_it) {
                         if (not_first) {
-                            ss< ", ";
+                            ss<< ", ";
                         }
                         ss<< *cmd_it;
                         not_first = true;
@@ -211,7 +211,7 @@ namespace util {
              * @param val 解析结果
              * @return 未解析部分的开始位置
              */
-            static const char *get_segment(const char *begin_str, std::string &val) const {
+            static const char *get_segment(const char *begin_str, std::string &val) {
                 val.clear();
                 char flag; // 字符串开闭字符
 
@@ -256,7 +256,7 @@ namespace util {
              * @param begin_str 源字符串
              * @return 分离结果
              */
-            static std::vector<std::string> split_cmd(const char *begin_str) const {
+            static std::vector<std::string> split_cmd(const char *begin_str) {
                 std::vector<std::string> ret;
                 for (const char *begin_ptr = begin_str; (*begin_ptr);) {
                     std::string cmd_content;
