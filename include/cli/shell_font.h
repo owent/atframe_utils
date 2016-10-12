@@ -204,7 +204,7 @@ namespace util {
                     return (*this);
                 }
 
-                void open(int flag) const;
+                const shell_stream_opr& open(int flag) const;
 
                 void close() const;
 

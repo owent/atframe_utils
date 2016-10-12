@@ -78,6 +78,8 @@ namespace util {
             typedef std::map<TCmdStr,  func_ptr_t> funmap_type;
             funmap_type callback_funcs_; // 记录命令的映射函数
             funmap_type callback_children_; // 子命令组额外索引
+            int help_cmd_style_;
+            int help_description_style_;
 
             /**
              * 执行命令
@@ -120,7 +122,7 @@ namespace util {
              * 默认帮助函数
              */
             void on_help(callback_param) {
-                std::cout<< "help:"<< std::endl;
+                std::cout<< "Help:"<< std::endl;
                 std::cout<< (*this);
             }
 
@@ -193,13 +195,13 @@ namespace util {
                 for (help_list_t::iterator iter = msgs.begin(); iter != msgs.end(); ++iter) {
                     shell_stream ss(os);
 
-                    ss()<< shell_font_style::SHELL_FONT_COLOR_YELLOW<< (*iter).all_cmds;
+                    ss().open(self.help_cmd_style_)<< (*iter).all_cmds;
                     if ((*iter).all_cmds.size() < cmd_padding) {
                         std::string padding_space;
                         padding_space.resize(cmd_padding - (*iter).all_cmds.size(), ' ');
                         ss()<< padding_space;
                     }
-                    ss()<< (*iter).description<< std::endl;
+                    ss().open(self.help_description_style_)<< (*iter).description<< std::endl;
                 }
 
                 return os;
@@ -280,7 +282,7 @@ namespace util {
             /**
              * 构造函数
              */
-            cmd_option_bind() {
+            cmd_option_bind(): help_cmd_style_(shell_font_style::SHELL_FONT_COLOR_YELLOW | shell_font_style::SHELL_FONT_SPEC_BOLD), help_description_style_(0) {
                 // 如果已初始化则跳过
                 if (map_value_[(uc_t)' '] & SPLITCHAR) return;
 
@@ -345,6 +347,10 @@ namespace util {
             size_t empty() const { return callback_funcs_.empty(); }
             size_t children_size() const { return callback_children_.size(); }
             size_t children_empty() const { return callback_children_.empty(); }
+            const int get_help_cmd_style() const { return help_cmd_style_; }
+            void set_help_cmd_style(int style) { help_cmd_style_ = style; }
+            const int get_help_description_style() const { return help_description_style_; }
+            void set_help_description_style(int style) { help_description_style_ = style; }
 
             /**
              * 处理指令

@@ -272,13 +272,14 @@ namespace util {
             return (*this);
         }
 
-        void shell_stream::shell_stream_opr::open(int f) const {
+        const shell_stream::shell_stream_opr& shell_stream::shell_stream_opr::open(int f) const {
             if (f == shell_font_style::SHELL_FONT_SPEC_NULL) {
                 reset();
-                return;
+                return (*this);
             }
 
             flag |= f;
+            return (*this);
         }
 
         void shell_stream::shell_stream_opr::close() const {
