@@ -71,6 +71,17 @@ namespace util {
                 return;
             }
 
+            // negative
+            bool is_negative = false;
+            while(*str && *str == '-') {
+                is_negative = !is_negative;
+                ++ str;
+            }
+
+            if(!(*str)) {
+                return;
+            }
+
             if ('0' == str[0] && 'x' == str[1]) { // hex
                 for (size_t i = 2; str[i]; ++i) {
                     char c = static_cast<char>(::tolower(str[i]));
@@ -94,6 +105,10 @@ namespace util {
                     out *= 10;
                     out += str[i] - '0';
                 }
+            }
+
+            if (is_negative) {
+                out = (~out) + 1;
             }
         }
 
