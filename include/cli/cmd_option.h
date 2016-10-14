@@ -130,7 +130,7 @@ namespace util {
         public:
             void list_help_msg(help_list_t& msg, const std::string& prefix) const {
                 for(typename funmap_type::const_iterator iter = callback_funcs_.begin(); iter != callback_funcs_.end(); ++iter) {
-                    if (iter->first.empty() || '@' == iter->first.front()) {
+                    if (iter->first.empty() || '@' == iter->first[0]) {
                         continue;
                     }
 
