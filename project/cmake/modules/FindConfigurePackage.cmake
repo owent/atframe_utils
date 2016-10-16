@@ -71,6 +71,49 @@ function(FindConfigurePackageDownloadFile from to)
     endif()
 endfunction()
 
+function(FindConfigurePackageUnzip src work_dir)
+    find_program(ZIP_EXECUTABLE wzzip PATHS "$ENV{ProgramFiles}/WinZip")
+    if(ZIP_EXECUTABLE)
+        execute_process(COMMAND ${ZIP_EXECUTABLE} -f "${src}"
+            WORKING_DIRECTORY ${work_dir}
+        )
+    endif()
+
+    if(NOT ZIP_EXECUTABLE)
+        find_program(ZIP_EXECUTABLE 7z PATHS "$ENV{ProgramFiles}/7-Zip")
+        if(ZIP_EXECUTABLE)
+            execute_process(COMMAND ${ZIP_EXECUTABLE}
+                x -r -y ${src}
+                WORKING_DIRECTORY ${work_dir}
+            )
+        endif()
+    endif()
+
+    if(NOT ZIP_EXECUTABLE)
+        find_package(Cygwin)
+        find_program(ZIP_EXECUTABLE unzip PATHS "${CYGWIN_INSTALL_PATH}/bin")
+        if(ZIP_EXECUTABLE)
+            execute_process(COMMAND ${ZIP_EXECUTABLE} -o ${src}
+                WORKING_DIRECTORY ${work_dir}
+            )
+        endif()
+    endif()
+
+    if(NOT ZIP_EXECUTABLE)
+        message(FATAL_ERROR "unzip tools not found")
+    endif()
+endfunction()
+
+function(FindConfigurePackageRemoveEmptyDir DIR)
+    if (EXISTS ${DIR})
+        file(GLOB RESULT ${DIR})
+        list(LENGTH RESULT RES_LEN)
+        if(RES_LEN EQUAL 0)
+            file(REMOVE ${DIR})
+        endif()
+    endif()
+endfunction()
+
 macro (FindConfigurePackage)
     include(CMakeParseArguments)
     set(optionArgs BUILD_WITH_CONFIGURE BUILD_WITH_CMAKE BUILD_WITH_SCONS BUILD_WITH_CUSTOM_COMMAND)
@@ -99,45 +142,19 @@ macro (FindConfigurePackage)
             # zip package
             if(FindConfigurePackage_ZIP_URL)
                 get_filename_component(DOWNLOAD_FILENAME "${FindConfigurePackage_ZIP_URL}" NAME)
-
                 if(NOT FindConfigurePackage_SRC_DIRECTORY_NAME)
                     string(REGEX REPLACE "\\.zip$" "" FindConfigurePackage_SRC_DIRECTORY_NAME "${DOWNLOAD_FILENAME}")
                 endif()
+                set(FindConfigurePackage_DOWNLOAD_SOURCE_DIR "${FindConfigurePackage_WORKING_DIRECTORY}/${FindConfigurePackage_SRC_DIRECTORY_NAME}")
+                FindConfigurePackageRemoveEmptyDir(${FindConfigurePackage_DOWNLOAD_SOURCE_DIR})
 
                 if(NOT EXISTS "${FindConfigurePackage_WORKING_DIRECTORY}/${DOWNLOAD_FILENAME}")
                     message(STATUS "start to download ${DOWNLOAD_FILENAME} from ${FindConfigurePackage_ZIP_URL}")
                     FindConfigurePackageDownloadFile("${FindConfigurePackage_ZIP_URL}" "${FindConfigurePackage_WORKING_DIRECTORY}/${DOWNLOAD_FILENAME}")
                 endif()
 
-                find_program(ZIP_EXECUTABLE wzzip PATHS "$ENV{ProgramFiles}/WinZip")
-                if(ZIP_EXECUTABLE AND NOT EXISTS "${FindConfigurePackage_WORKING_DIRECTORY}/${FindConfigurePackage_SRC_DIRECTORY_NAME}")
-                    execute_process(COMMAND ${ZIP_EXECUTABLE} -f "${FindConfigurePackage_WORKING_DIRECTORY}/${DOWNLOAD_FILENAME}"
-                        WORKING_DIRECTORY "${FindConfigurePackage_WORKING_DIRECTORY}"
-                    )
-                endif()
-
-                if(NOT ZIP_EXECUTABLE AND NOT EXISTS "${FindConfigurePackage_WORKING_DIRECTORY}/${FindConfigurePackage_SRC_DIRECTORY_NAME}")
-                  find_program(ZIP_EXECUTABLE 7z PATHS "$ENV{ProgramFiles}/7-Zip")
-                  if(ZIP_EXECUTABLE)
-                      execute_process(COMMAND ${ZIP_EXECUTABLE}
-                            x -r -y ${DOWNLOAD_FILENAME}
-                          WORKING_DIRECTORY "${FindConfigurePackage_WORKING_DIRECTORY}"
-                      )
-                  endif()
-                endif()
-
-                if(NOT ZIP_EXECUTABLE AND NOT EXISTS "${FindConfigurePackage_WORKING_DIRECTORY}/${FindConfigurePackage_SRC_DIRECTORY_NAME}")
-                  find_package(Cygwin)
-                  find_program(ZIP_EXECUTABLE unzip PATHS "${CYGWIN_INSTALL_PATH}/bin")
-                  if(ZIP_EXECUTABLE)
-                      execute_process(COMMAND ${ZIP_EXECUTABLE} -o ${DOWNLOAD_FILENAME}
-                          WORKING_DIRECTORY "${FindConfigurePackage_WORKING_DIRECTORY}"
-                      )
-                  endif()
-                endif()
-
-                if(NOT ZIP_EXECUTABLE)
-                    message(FATAL_ERROR "unzip tools not found")
+                if(NOT EXISTS ${FindConfigurePackage_DOWNLOAD_SOURCE_DIR})
+                    FindConfigurePackageUnzip("${FindConfigurePackage_WORKING_DIRECTORY}/${DOWNLOAD_FILENAME}" ${FindConfigurePackage_WORKING_DIRECTORY})
                 endif()
 
             # tar package
@@ -146,6 +163,8 @@ macro (FindConfigurePackage)
                 if(NOT FindConfigurePackage_SRC_DIRECTORY_NAME)
                     string(REGEX REPLACE "\\.tar\\.[A-Za-z0-9]+$" "" FindConfigurePackage_SRC_DIRECTORY_NAME "${DOWNLOAD_FILENAME}")
                 endif()
+                set(FindConfigurePackage_DOWNLOAD_SOURCE_DIR "${FindConfigurePackage_WORKING_DIRECTORY}/${FindConfigurePackage_SRC_DIRECTORY_NAME}")
+                FindConfigurePackageRemoveEmptyDir(${FindConfigurePackage_DOWNLOAD_SOURCE_DIR})
 
                 if(NOT EXISTS "${FindConfigurePackage_WORKING_DIRECTORY}/${DOWNLOAD_FILENAME}")
                     message(STATUS "start to download ${DOWNLOAD_FILENAME} from ${FindConfigurePackage_TAR_URL}")
@@ -153,14 +172,19 @@ macro (FindConfigurePackage)
                 endif()
 
                 find_program(TAR_EXECUTABLE tar PATHS "${CYGWIN_INSTALL_PATH}/bin")
-                if(TAR_EXECUTABLE AND NOT EXISTS "${FindConfigurePackage_WORKING_DIRECTORY}/${FindConfigurePackage_SRC_DIRECTORY_NAME}")
+                if(TAR_EXECUTABLE AND NOT EXISTS ${FindConfigurePackage_DOWNLOAD_SOURCE_DIR})
+                    file(TO_NATIVE_PATH "${FindConfigurePackage_WORKING_DIRECTORY}/${DOWNLOAD_FILENAME}" DOWNLOAD_NATIVE_FILENAME)
                     if(APPLE)
-                        execute_process(COMMAND ${TAR_EXECUTABLE} -xvf "${FindConfigurePackage_WORKING_DIRECTORY}/${DOWNLOAD_FILENAME}"
-                            WORKING_DIRECTORY "${FindConfigurePackage_WORKING_DIRECTORY}"
+                        execute_process(COMMAND ${TAR_EXECUTABLE} -xvf ${DOWNLOAD_NATIVE_FILENAME}
+                            WORKING_DIRECTORY ${FindConfigurePackage_WORKING_DIRECTORY}
+                        )
+                    elseif(MINGW)
+                        execute_process(COMMAND ${TAR_EXECUTABLE} -axvf ${DOWNLOAD_FILENAME}
+                            WORKING_DIRECTORY ${FindConfigurePackage_WORKING_DIRECTORY}
                         )
                     else()
-                        execute_process(COMMAND ${TAR_EXECUTABLE} -axvf "${FindConfigurePackage_WORKING_DIRECTORY}/${DOWNLOAD_FILENAME}"
-                            WORKING_DIRECTORY "${FindConfigurePackage_WORKING_DIRECTORY}"
+                        execute_process(COMMAND ${TAR_EXECUTABLE} -axvf ${DOWNLOAD_NATIVE_FILENAME}
+                            WORKING_DIRECTORY ${FindConfigurePackage_WORKING_DIRECTORY}
                         )
                     endif()
                 endif()
@@ -176,8 +200,10 @@ macro (FindConfigurePackage)
                     get_filename_component(FindConfigurePackage_SRC_DIRECTORY_FULL_NAME "${DOWNLOAD_FILENAME}" NAME)
                     string(REGEX REPLACE "\\.git$" "" FindConfigurePackage_SRC_DIRECTORY_NAME "${FindConfigurePackage_SRC_DIRECTORY_FULL_NAME}")
                 endif()
+                set(FindConfigurePackage_DOWNLOAD_SOURCE_DIR "${FindConfigurePackage_WORKING_DIRECTORY}/${FindConfigurePackage_SRC_DIRECTORY_NAME}")
+                FindConfigurePackageRemoveEmptyDir(${FindConfigurePackage_DOWNLOAD_SOURCE_DIR})
 
-                if(NOT EXISTS "${FindConfigurePackage_WORKING_DIRECTORY}/${FindConfigurePackage_SRC_DIRECTORY_NAME}")
+                if(NOT EXISTS ${FindConfigurePackage_DOWNLOAD_SOURCE_DIR})
                     find_package(Git)
                     if(NOT GIT_FOUND)
                        message(FATAL_ERROR "git not found")
@@ -194,12 +220,13 @@ macro (FindConfigurePackage)
             # svn package
             elseif(FindConfigurePackage_SVN_URL)
                 get_filename_component(DOWNLOAD_FILENAME "${FindConfigurePackage_SVN_URL}" NAME)
-
                 if(NOT FindConfigurePackage_SRC_DIRECTORY_NAME)
                     get_filename_component(FindConfigurePackage_SRC_DIRECTORY_NAME "${DOWNLOAD_FILENAME}" NAME)
                 endif()
+                set(FindConfigurePackage_DOWNLOAD_SOURCE_DIR "${FindConfigurePackage_WORKING_DIRECTORY}/${FindConfigurePackage_SRC_DIRECTORY_NAME}")
+                FindConfigurePackageRemoveEmptyDir(${FindConfigurePackage_DOWNLOAD_SOURCE_DIR})
 
-                if(NOT EXISTS "${FindConfigurePackage_WORKING_DIRECTORY}/${FindConfigurePackage_SRC_DIRECTORY_NAME}")
+                if(NOT EXISTS ${FindConfigurePackage_DOWNLOAD_SOURCE_DIR})
                     find_package(Subversion)
                     if(NOT SUBVERSION_FOUND)
                        message(FATAL_ERROR "svn not found")
@@ -213,7 +240,7 @@ macro (FindConfigurePackage)
 
             # init build dir
             if (NOT FindConfigurePackage_BUILD_DIRECTORY)
-                set(FindConfigurePackage_BUILD_DIRECTORY "${FindConfigurePackage_WORKING_DIRECTORY}/${FindConfigurePackage_SRC_DIRECTORY_NAME}")
+                set(FindConfigurePackage_BUILD_DIRECTORY ${FindConfigurePackage_DOWNLOAD_SOURCE_DIR})
                 if (NOT EXISTS ${FindConfigurePackage_BUILD_DIRECTORY})
                     file(MAKE_DIRECTORY ${FindConfigurePackage_BUILD_DIRECTORY})
                 endif()
@@ -221,9 +248,10 @@ macro (FindConfigurePackage)
 
             # prebuild commands
             foreach(cmd ${FindConfigurePackage_PREBUILD_COMMAND})
+                message(STATUS "FindConfigurePackage - Run: ${cmd} @ ${FindConfigurePackage_BUILD_DIRECTORY}")
                 execute_process(
                     COMMAND ${cmd}
-                    WORKING_DIRECTORY "${FindConfigurePackage_BUILD_DIRECTORY}"
+                    WORKING_DIRECTORY ${FindConfigurePackage_BUILD_DIRECTORY}
                 )
             endforeach()
 
@@ -245,7 +273,7 @@ macro (FindConfigurePackage)
 
             # build using cmake and make
             elseif(FindConfigurePackage_BUILD_WITH_CMAKE)
-                file(RELATIVE_PATH BUILD_WITH_CMAKE_PROJECT_DIR ${FindConfigurePackage_BUILD_DIRECTORY} "${FindConfigurePackage_WORKING_DIRECTORY}/${FindConfigurePackage_SRC_DIRECTORY_NAME}")
+                file(RELATIVE_PATH BUILD_WITH_CMAKE_PROJECT_DIR ${FindConfigurePackage_BUILD_DIRECTORY} ${FindConfigurePackage_DOWNLOAD_SOURCE_DIR})
                 if ( NOT BUILD_WITH_CMAKE_PROJECT_DIR)
                     set(BUILD_WITH_CMAKE_PROJECT_DIR ".")
                 endif()
@@ -262,7 +290,7 @@ macro (FindConfigurePackage)
 
             # build using scons
             elseif(FindConfigurePackage_BUILD_WITH_SCONS)
-                file(RELATIVE_PATH BUILD_WITH_SCONS_PROJECT_DIR ${FindConfigurePackage_BUILD_DIRECTORY} "${FindConfigurePackage_WORKING_DIRECTORY}/${FindConfigurePackage_SRC_DIRECTORY_NAME}")
+                file(RELATIVE_PATH BUILD_WITH_SCONS_PROJECT_DIR ${FindConfigurePackage_BUILD_DIRECTORY} ${FindConfigurePackage_DOWNLOAD_SOURCE_DIR})
                 if ( NOT BUILD_WITH_SCONS_PROJECT_DIR)
                     set(BUILD_WITH_SCONS_PROJECT_DIR ".")
                 endif()
