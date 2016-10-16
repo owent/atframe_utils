@@ -92,7 +92,7 @@ namespace util {
                 uuid ret;
 
 #if defined(WIN32)
-                UuidCreate((uuid *)&ret);
+                UuidCreate((UUID *)&ret);
 #else
                 uuid_t linux_uid;
                 uuid_generate(linux_uid);
@@ -110,7 +110,7 @@ namespace util {
                 uuid ret;
 
 #if defined(WIN32)
-                UuidCreate((uuid *)&ret);
+                UuidCreate((UUID *)&ret);
 #else
                 uuid_t linux_uid;
                 uuid_generate_random(linux_uid);
@@ -128,7 +128,7 @@ namespace util {
                 uuid ret;
 
 #if defined(WIN32)
-                UuidCreate((uuid *)&ret);
+                UuidCreate((UUID *)&ret);
 #else
                 uuid_t linux_uid;
                 uuid_generate_time_safe(linux_uid);
