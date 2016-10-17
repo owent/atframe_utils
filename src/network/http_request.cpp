@@ -558,14 +558,16 @@ namespace util {
                     curl_easy_getinfo(message->easy_handle, CURLINFO_PRIVATE, &req);
                     assert(req);
 
-                    http_request::ptr_t req_p = req->shared_from_this();
-                    req->last_error_code_ = message->data.result;
-                    // this may cause req not available any more
-                    req_p->finish_req_rsp();
+                    if (NULL != req) {
+                        http_request::ptr_t req_p = req->shared_from_this();
+                        req->last_error_code_ = message->data.result;
+                        // this may cause req not available any more
+                        req_p->finish_req_rsp();
 
-                    // this function will probably call curl_multi_remove_handle
-                    // which may destroy message, so message can not be used any more
-                    req_p->remove_curl_request();
+                        // this function will probably call curl_multi_remove_handle
+                        // which may destroy message, so message can not be used any more
+                        req_p->remove_curl_request();
+                    }
                     break;
                 }
                 default:
@@ -634,7 +636,9 @@ namespace util {
             assert(bind);
 
             // release self holder
-            bind->self_holder.reset();
+            if(NULL != bind) {
+                bind->self_holder.reset();
+            }
         }
 
         void http_request::ev_callback_on_poll_closed(uv_handle_t *handle) {
@@ -647,6 +651,9 @@ namespace util {
         void http_request::ev_callback_on_timeout(uv_timer_t *handle) {
             curl_m_bind_t *bind = reinterpret_cast<curl_m_bind_t *>(handle->data);
             assert(bind);
+            if (NULL == bind) {
+                return;
+            }
 
             int running_handles = 0;
             curl_multi_socket_action(bind->curl_multi, CURL_SOCKET_TIMEOUT, 0, &running_handles);
@@ -654,6 +661,10 @@ namespace util {
         }
 
         void http_request::ev_callback_curl_perform(uv_poll_t *req, int status, int events) {
+            assert(req && req->data);
+            if (NULL == req || NULL == req->data) {
+                return;
+            }
             curl_poll_context_t *context = reinterpret_cast<curl_poll_context_t *>(req->data);
             assert(context);
 
@@ -699,12 +710,18 @@ namespace util {
                 if (NULL == context) {
                     http_request *req;
                     curl_easy_getinfo(easy, CURLINFO_PRIVATE, &req);
-                    assert(req->bind_m_);
-                    assert(req->bind_m_->curl_multi);
+                    if (NULL != req && NULL != req->bind_m_) {
+                        assert(req->bind_m_);
+                        assert(req->bind_m_->curl_multi);
 
-                    context = malloc_poll(req, s);
-                    req->last_error_code_ = curl_multi_assign(req->bind_m_->curl_multi, s, context);
+                        context = malloc_poll(req, s);
+                        req->last_error_code_ = curl_multi_assign(req->bind_m_->curl_multi, s, context);
+                    }
                 }
+            }
+
+            if (NULL == context) {
+                return 0;
             }
 
             int res = 0;
@@ -741,6 +758,10 @@ namespace util {
         size_t http_request::curl_callback_on_write(char *ptr, size_t size, size_t nmemb, void *userdata) {
             http_request *self = reinterpret_cast<http_request *>(userdata);
             assert(self);
+            if (NULL == self) {
+                return 0;
+            }
+
             self->response_.write(ptr, size * nmemb);
             return size * nmemb;
         }
@@ -748,7 +769,7 @@ namespace util {
         int http_request::curl_callback_on_progress(void *clientp, double dltotal, double dlnow, double ultotal, double ulnow) {
             http_request *self = reinterpret_cast<http_request *>(clientp);
             assert(self);
-            if (!self->on_progress_fn_) {
+            if (NULL == self || !self->on_progress_fn_) {
                 return 0;
             }
 
@@ -764,6 +785,9 @@ namespace util {
         size_t http_request::curl_callback_on_read(char *buffer, size_t size, size_t nitems, void *instream) {
             http_request *self = reinterpret_cast<http_request *>(instream);
             assert(self);
+            if (NULL == self) {
+                return 0;
+            }
 
             if (self->post_data_.empty() && NULL != self->http_form_.uploaded_file) {
                 return fread(buffer, size, nitems, self->http_form_.uploaded_file);
@@ -814,7 +838,7 @@ namespace util {
                 }
             }
 
-            if (keylen > 0 && self->on_header_fn_) {
+            if (keylen > 0 && NULL != self && self->on_header_fn_) {
                 if (static_cast<size_t>(val - buffer) < nwrite) {
                     self->on_header_fn_(*self, key, keylen, val, nwrite - (val - key));
                 } else {
