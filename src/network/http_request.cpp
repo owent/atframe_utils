@@ -257,6 +257,9 @@ namespace util {
 
             UTIL_FS_OPEN(res, http_form_.uploaded_file, filename, "rb");
             if (0 != res || NULL == http_form_.uploaded_file) {
+                if (NULL != http_form_.uploaded_file) {
+                    fclose(http_form_.uploaded_file);
+                }
                 return res;
             }
 
@@ -280,6 +283,9 @@ namespace util {
 
             UTIL_FS_OPEN(res, http_form_.uploaded_file, filename, "rb");
             if (0 != res || NULL == http_form_.uploaded_file) {
+                if (NULL != http_form_.uploaded_file) {
+                    fclose(http_form_.uploaded_file);
+                }
                 return res;
             }
 
@@ -303,6 +309,9 @@ namespace util {
 
             UTIL_FS_OPEN(res, http_form_.uploaded_file, filename, "rb");
             if (0 != res || NULL == http_form_.uploaded_file) {
+                if (NULL != http_form_.uploaded_file) {
+                    fclose(http_form_.uploaded_file);
+                }
                 return res;
             }
 
@@ -636,7 +645,7 @@ namespace util {
             assert(bind);
 
             // release self holder
-            if(NULL != bind) {
+            if (NULL != bind) {
                 bind->self_holder.reset();
             }
         }
