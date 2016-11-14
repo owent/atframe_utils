@@ -250,6 +250,10 @@ namespace util {
         int http_request::get_error_code() const { return last_error_code_; }
 
         int http_request::add_form_file(const std::string &fieldname, const char *filename) {
+            if (CHECK_FLAG(flags_, flag_t::EN_FT_CLEANING)) {
+                return -1;
+            }
+
             if (NULL != http_form_.uploaded_file) {
                 fclose(http_form_.uploaded_file);
                 http_form_.uploaded_file = NULL;
@@ -276,6 +280,10 @@ namespace util {
 
         int http_request::add_form_file(const std::string &fieldname, const char *filename, const char *content_type,
                                         const char *new_filename) {
+            if (CHECK_FLAG(flags_, flag_t::EN_FT_CLEANING)) {
+                return -1;
+            }
+
             if (NULL != http_form_.uploaded_file) {
                 fclose(http_form_.uploaded_file);
                 http_form_.uploaded_file = NULL;
@@ -302,6 +310,10 @@ namespace util {
         }
 
         int http_request::add_form_file(const std::string &fieldname, const char *filename, const char *content_type) {
+            if (CHECK_FLAG(flags_, flag_t::EN_FT_CLEANING)) {
+                return -1;
+            }
+
             if (NULL != http_form_.uploaded_file) {
                 fclose(http_form_.uploaded_file);
                 http_form_.uploaded_file = NULL;
@@ -328,6 +340,10 @@ namespace util {
         }
 
         int http_request::add_form_field(const std::string &fieldname, const std::string &fieldvalue) {
+            if (CHECK_FLAG(flags_, flag_t::EN_FT_CLEANING)) {
+                return -1;
+            }
+
             http_form_.qs_fields.set(fieldname, fieldvalue);
             http_form_.flags |= form_list_t::EN_FLFT_HAS_FORM_FIELD;
             // int ret = add_form_field(fieldname, fieldvalue.c_str(), fieldvalue.size());
