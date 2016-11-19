@@ -148,7 +148,7 @@ namespace util {
 
             std::shared_ptr<std::ofstream> of = std::make_shared<std::ofstream>();
             if (!of) {
-                std::cerr << "log.file malloc failed" << path_pattern_ << std::endl;
+                std::cerr << "log.file malloc failed: " << path_pattern_ << std::endl;
                 return std::shared_ptr<std::ofstream>();
             }
 
@@ -162,7 +162,7 @@ namespace util {
             if (destroy_content) {
                 of->open(log_file, std::ios::binary | std::ios::out | std::ios::trunc);
                 if (!of->is_open()) {
-                    std::cerr << "log.file open " << static_cast<const char *>(log_file) << " failed" << path_pattern_ << std::endl;
+                    std::cerr << "log.file open " << static_cast<const char *>(log_file) << " failed: " << path_pattern_ << std::endl;
                     return std::shared_ptr<std::ofstream>();
                 }
                 of->close();
@@ -170,7 +170,7 @@ namespace util {
 
             of->open(log_file, std::ios::binary | std::ios::out | std::ios::app);
             if (!of->is_open()) {
-                std::cerr << "log.file open " << static_cast<const char *>(log_file) << " failed" << path_pattern_ << std::endl;
+                std::cerr << "log.file open " << static_cast<const char *>(log_file) << " failed: " << path_pattern_ << std::endl;
                 return std::shared_ptr<std::ofstream>();
             }
 

@@ -33,3 +33,4 @@
 
 # generated files
 /include/config/atframe_utils_build_feature.h
+/include/config/compiler_features.h
