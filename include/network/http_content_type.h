@@ -17,6 +17,7 @@
 #pragma once
 
 #include <stdint.h>
+#include <cstddef>
 
 namespace util {
     namespace network {
