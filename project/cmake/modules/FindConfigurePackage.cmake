@@ -212,7 +212,7 @@ macro (FindConfigurePackage)
                     if (NOT FindConfigurePackage_GIT_BRANCH)
                         set(FindConfigurePackage_GIT_BRANCH master)
                     endif()
-                    execute_process(COMMAND ${GIT_EXECUTABLE} clone -b ${FindConfigurePackage_GIT_BRANCH} ${FindConfigurePackage_GIT_URL} ${FindConfigurePackage_SRC_DIRECTORY_NAME}
+                    execute_process(COMMAND ${GIT_EXECUTABLE} clone --depth=1 -b ${FindConfigurePackage_GIT_BRANCH} ${FindConfigurePackage_GIT_URL} ${FindConfigurePackage_SRC_DIRECTORY_NAME}
                         WORKING_DIRECTORY ${FindConfigurePackage_WORKING_DIRECTORY}
                     )
                 endif()
