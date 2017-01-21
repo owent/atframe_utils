@@ -8,12 +8,14 @@
  * @date 2012.02.21
  *
  * @history
- *
+ *      2017-01-21: using c++11 delete keyword in modern compiler
  *
  */
 
-#ifndef _NONCOPYABLE_H_
-#define _NONCOPYABLE_H_
+#ifndef _UTILS_DESIGNPATTERN_NONCOPYABLE_H_
+#define _UTILS_DESIGNPATTERN_NONCOPYABLE_H_
+
+#include <config/compiler_features.h>
 
 namespace util {
     namespace design_pattern {
@@ -21,13 +23,12 @@ namespace util {
         class noncopyable {
         protected:
             noncopyable() {}
-
             ~noncopyable() {}
 
         private:
-            noncopyable(const noncopyable &);
-
-            const noncopyable &operator=(const noncopyable &);
+            noncopyable(const noncopyable &) UTIL_CONFIG_DELETED_FUNCTION;
+            const noncopyable &operator=(const noncopyable &) UTIL_CONFIG_DELETED_FUNCTION;
+            // we has defined copy constructor, so move constructor will not generated
         };
     }
 }
