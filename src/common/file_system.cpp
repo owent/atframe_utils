@@ -179,7 +179,10 @@ namespace util {
         while (sz > 0 && depth > 0) {
             if ('/' == file_path[sz] || '\\' == file_path[sz]) {
                 -- depth;
-                continue;
+            }
+
+            if (depth <= 0) {
+                break;
             }
             --sz;
         }
