@@ -9,7 +9,6 @@
 
 namespace util {
     namespace log {
-
         log_formatter::caller_info_t::caller_info_t()
             : level_id(level_t::LOG_LW_DISABLED), level_name(NULL), file_path(NULL), line_number(0), func_name(NULL), rotate_index(0) {}
         log_formatter::caller_info_t::caller_info_t(level_t::type lid, const char *lname, const char *fpath, uint32_t lnum,
@@ -18,6 +17,8 @@ namespace util {
 
         log_formatter::caller_info_t::caller_info_t(level_t::type lid, const char *lname, const char *fpath, uint32_t lnum, const char *fnname, uint32_t ridx)
             : level_id(lid), level_name(lname), file_path(fpath), line_number(lnum), func_name(fnname), rotate_index(ridx) {}
+
+        std::string log_formatter::project_dir_;
 
         bool log_formatter::check(int32_t flags, int32_t checked) { return (flags & checked) == checked; }
 
@@ -264,7 +265,23 @@ if(NULL == tm_obj_ptr) {                \
                 }
                 case 's': {
                     if (NULL != caller.file_path) {
-                        int res = UTIL_STRFUNC_SNPRINTF(&buff[ret], bufz - ret, "%s", caller.file_path);
+                        const char* file_path = caller.file_path;
+                        if(!project_dir_.empty()) {
+                            for (size_t i = 0; i < project_dir_.size(); ++ i) {
+                                if (file_path && *file_path && project_dir_[i] == *file_path) {
+                                    ++ file_path;
+                                } else {
+                                    file_path = caller.file_path;
+                                    break;
+                                }
+                            }
+
+                            if (file_path != caller.file_path && ret < bufz - 1 ) {
+                                buff[ret++] = '~';
+                            }
+                        }
+
+                        int res = UTIL_STRFUNC_SNPRINTF(&buff[ret], bufz - ret, "%s", file_path);
                         if (res < 0) {
                             running = false;
                         } else {
@@ -357,6 +374,16 @@ if(NULL == tm_obj_ptr) {                \
             }
 
             return false;
+        }
+
+        void log_formatter::set_project_directory(const char* dirbuf, size_t dirsz) {
+            if (NULL == dirbuf) {
+                project_dir_.clear();
+            } else if (dirsz <= 0) {
+                project_dir_ = dirbuf;
+            } else {
+                project_dir_.assign(dirbuf, dirsz);
+            }
         }
     }
 }

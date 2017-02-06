@@ -137,9 +137,10 @@ namespace util {
         * @param file_path [IN] 文件/目录路径
         * @param sz [IN] 文件/目录路径长度
         * @param dir [OUT] 父级目录路径
+        * @param depth [IN] 深度，默认1，表示1级父级目录
         * @return 成功返回true
         */
-        static bool dirname(const char *file_path, size_t sz, std::string& dir);
+        static bool dirname(const char *file_path, size_t sz, std::string& dir, int depth = 1);
 
         /**
          * @brief 获取当前运行目录

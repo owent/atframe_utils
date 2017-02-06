@@ -161,7 +161,7 @@ namespace util {
         return true;
     }
 
-    bool file_system::dirname(const char *file_path, size_t sz, std::string &dir) {
+    bool file_system::dirname(const char *file_path, size_t sz, std::string &dir, int depth) {
         if (NULL == file_path || 0 == file_path[0]) {
             return false;
         }
@@ -176,9 +176,10 @@ namespace util {
             --sz;
         }
 
-        while (sz > 0) {
+        while (sz > 0 && depth > 0) {
             if ('/' == file_path[sz] || '\\' == file_path[sz]) {
-                break;
+                -- depth;
+                continue;
             }
             --sz;
         }

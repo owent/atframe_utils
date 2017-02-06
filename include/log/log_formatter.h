@@ -98,8 +98,14 @@ namespace util {
             static bool check_rotation_var(const char *fmt, size_t fmtz);
 
             static bool has_format(const char *fmt, size_t fmtz);
+
+            /**
+             * @brief 设置工程目录，会影响format时的%s参数，如果文件路径以工程目录开头，则会用~替换
+             */
+            static void set_project_directory(const char* dirbuf, size_t dirsz);
         private:
             static struct tm *get_iso_tm();
+            static std::string project_dir_;
         };
     }
 }
