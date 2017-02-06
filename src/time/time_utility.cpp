@@ -99,12 +99,15 @@ namespace util {
         }
 
         time_t time_utility::get_today_offset(time_t offset) {
-            time_t now_tp = get_now();
-            now_tp -= get_zone_offset();
-            now_tp -= now_tp % DAY_SECONDS;
+            return get_any_day_offset(get_now(), offset);
+        }
+
+        time_t time_utility::get_any_day_offset(time_t checked, time_t offset) {
+            checked -= get_zone_offset();
+            checked -= checked % DAY_SECONDS;
 
             // 仅考虑时区, 不是标准意义上的当天时间，忽略记闰秒之类的偏移(偏移量很少，忽略不计吧)
-            return now_tp + offset + get_zone_offset();
+            return checked + offset + get_zone_offset();
         }
 
         bool time_utility::is_same_month(time_t left, time_t right) {

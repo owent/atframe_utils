@@ -157,6 +157,14 @@ namespace util {
             static time_t get_today_offset(time_t offset);
 
             /**
+             * @brief 获取当前时区相对于指定时间得那一天的零点之后offset秒的Unix时间戳
+             * @param checked 指定时间，用于计算基于哪一天
+             * @param offset 时间偏移值
+             * @return 今天0点后offset的时间戳
+             */
+            static time_t get_any_day_offset(time_t checked, time_t offset = 0);
+
+            /**
              * @brief 判定当前时区时间是否是同一个月
              * @return 同一月返回 true
              */
