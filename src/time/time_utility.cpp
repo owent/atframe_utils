@@ -19,12 +19,23 @@ namespace util {
                 now_ = std::chrono::system_clock::now();
             }
 
+            // reset unix timestamp
             time_t unix_timestamp = std::chrono::system_clock::to_time_t(now_);
             if (now_unix_ != unix_timestamp) {
                 now_unix_ = unix_timestamp;
+            }
+
+            // reset usec
+            ::util::time::time_utility::raw_time_t padding_time = 
+                ::util::time::time_utility::raw_time_t::clock::from_time_t(unix_timestamp);
+            now_usec_ = static_cast<time_t>(
+                std::chrono::duration_cast<std::chrono::microseconds>(::util::time::time_utility::now() - padding_time).count()
+            );
+            if (now_usec_ < 0) {
                 now_usec_ = 0;
-            } else {
-                now_usec_ += static_cast<time_t>(std::chrono::duration_cast<std::chrono::microseconds>(now_ - prev_tp).count());
+            }
+            if (now_usec_ >= 1000000) {
+                now_usec_ = 999999;
             }
         }
 

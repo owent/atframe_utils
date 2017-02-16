@@ -12,10 +12,11 @@ namespace util {
         log_formatter::caller_info_t::caller_info_t()
             : level_id(level_t::LOG_LW_DISABLED), level_name(NULL), file_path(NULL), line_number(0), func_name(NULL), rotate_index(0) {}
         log_formatter::caller_info_t::caller_info_t(level_t::type lid, const char *lname, const char *fpath, uint32_t lnum,
-                                                   const char *fnname)
+                                                    const char *fnname)
             : level_id(lid), level_name(lname), file_path(fpath), line_number(lnum), func_name(fnname), rotate_index(0) {}
 
-        log_formatter::caller_info_t::caller_info_t(level_t::type lid, const char *lname, const char *fpath, uint32_t lnum, const char *fnname, uint32_t ridx)
+        log_formatter::caller_info_t::caller_info_t(level_t::type lid, const char *lname, const char *fpath, uint32_t lnum,
+                                                    const char *fnname, uint32_t ridx)
             : level_id(lid), level_name(lname), file_path(fpath), line_number(lnum), func_name(fnname), rotate_index(ridx) {}
 
         std::string log_formatter::project_dir_;
@@ -233,10 +234,15 @@ if(NULL == tm_obj_ptr) {                \
                     if (bufz - ret < 3) {
                         running = false;
                     } else {
-                        clock_t clk = (clock() / (CLOCKS_PER_SEC / 1000)) % 1000;
-                        buff[ret++] = static_cast<char>(clk / 100 + '0');
-                        buff[ret++] = static_cast<char>((clk / 10) % 10 + '0');
-                        buff[ret++] = static_cast<char>(clk % 10 + '0');
+                        time_t ms = ::util::time::time_utility::get_now_usec() / 1000;
+                        buff[ret++] = static_cast<char>(ms / 100 + '0');
+                        buff[ret++] = static_cast<char>((ms / 10) % 10 + '0');
+                        buff[ret++] = static_cast<char>(ms % 10 + '0');
+                        // old version use clock() to get the data
+                        // clock_t clk = (clock() / (CLOCKS_PER_SEC / 1000)) % 1000;
+                        // buff[ret++] = static_cast<char>(clk / 100 + '0');
+                        // buff[ret++] = static_cast<char>((clk / 10) % 10 + '0');
+                        // buff[ret++] = static_cast<char>(clk % 10 + '0');
                     }
 
                     break;
@@ -265,18 +271,18 @@ if(NULL == tm_obj_ptr) {                \
                 }
                 case 's': {
                     if (NULL != caller.file_path) {
-                        const char* file_path = caller.file_path;
-                        if(!project_dir_.empty()) {
-                            for (size_t i = 0; i < project_dir_.size(); ++ i) {
+                        const char *file_path = caller.file_path;
+                        if (!project_dir_.empty()) {
+                            for (size_t i = 0; i < project_dir_.size(); ++i) {
                                 if (file_path && *file_path && project_dir_[i] == *file_path) {
-                                    ++ file_path;
+                                    ++file_path;
                                 } else {
                                     file_path = caller.file_path;
                                     break;
                                 }
                             }
 
-                            if (file_path != caller.file_path && ret < bufz - 1 ) {
+                            if (file_path != caller.file_path && ret < bufz - 1) {
                                 buff[ret++] = '~';
                             }
                         }
@@ -292,8 +298,8 @@ if(NULL == tm_obj_ptr) {                \
                 }
                 case 'k': {
                     if (NULL != caller.file_path) {
-                        const char* file_name = caller.file_path;
-                        for(const char* dir_split = caller.file_path; *dir_split; ++dir_split) {
+                        const char *file_name = caller.file_path;
+                        for (const char *dir_split = caller.file_path; *dir_split; ++dir_split) {
                             if ('/' == *dir_split || '\\' == *dir_split) {
                                 file_name = dir_split + 1;
                             }
@@ -376,7 +382,7 @@ if(NULL == tm_obj_ptr) {                \
             return false;
         }
 
-        void log_formatter::set_project_directory(const char* dirbuf, size_t dirsz) {
+        void log_formatter::set_project_directory(const char *dirbuf, size_t dirsz) {
             if (NULL == dirbuf) {
                 project_dir_.clear();
             } else if (dirsz <= 0) {
