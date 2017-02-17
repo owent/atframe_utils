@@ -1,6 +1,6 @@
 ﻿/**
  * @file time_utility.h
- * @brief 日志包装器
+ * @brief 时间相关得通用代码
  * Licensed under the MIT licenses.
  *
  * @version 1.0

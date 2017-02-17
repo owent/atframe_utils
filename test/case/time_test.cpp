@@ -4,6 +4,7 @@
 
 #include "frame/test_macros.h"
 #include "time/time_utility.h"
+#include <time/jiffies_timer.h>
 
 CASE_TEST(time_test, zone_offset) {
     util::time::time_utility::update();
@@ -126,4 +127,88 @@ CASE_TEST(time_test, get_week_day) {
 
 CASE_TEST(time_test, is_same_month) {
     // nothing todo use libc now
+}
+
+
+struct jiffies_timer_fn {
+    void* check_priv_data;
+    jiffies_timer_fn(void* pd) : check_priv_data(pd) {}
+
+    void operator ()(time_t, void* priv_data) {
+        if (NULL != check_priv_data) {
+            CASE_EXPECT_EQ(priv_data, check_priv_data);
+        } else if (NULL != priv_data) {
+            ++ (*reinterpret_cast<int*>(priv_data));
+        }
+    }
+};
+
+CASE_TEST(time_test, jiffies_timer_basic) {
+    typedef util::time::jiffies_timer<6, 3, 4> short_timer_t;
+    short_timer_t short_timer;
+    int count = 0;
+    time_t max_tick = short_timer.get_max_tick_distance() + 1;
+
+    CASE_EXPECT_EQ(short_timer_t::error_type_t::EN_JTET_NOT_INITED, short_timer.add_timer(123, jiffies_timer_fn(NULL), NULL));
+    CASE_EXPECT_EQ(short_timer_t::error_type_t::EN_JTET_NOT_INITED, short_timer.tick(456));
+
+    CASE_EXPECT_EQ(short_timer_t::error_type_t::EN_JTET_SUCCESS, short_timer.init(max_tick));
+    CASE_EXPECT_EQ(short_timer_t::error_type_t::EN_JTET_ALREADY_INITED, short_timer.init(max_tick));
+
+    CASE_EXPECT_EQ(32767, short_timer.get_max_tick_distance());
+    CASE_EXPECT_EQ(short_timer_t::error_type_t::EN_JTET_TIMEOUT_EXTENDED, short_timer.add_timer(short_timer.get_max_tick_distance() + 1, jiffies_timer_fn(NULL), NULL));
+    
+    // 理论上会被放在（数组下标: 2^6*3=192）
+    CASE_EXPECT_EQ(short_timer_t::error_type_t::EN_JTET_SUCCESS, short_timer.add_timer(short_timer.get_max_tick_distance(), jiffies_timer_fn(&short_timer), &short_timer));
+    // 理论上会被放在（数组下标: 2^6*4-1=255）
+    CASE_EXPECT_EQ(short_timer_t::error_type_t::EN_JTET_SUCCESS, short_timer.add_timer(short_timer.get_max_tick_distance() - short_timer_t::LVL_GRAN(3), jiffies_timer_fn(&short_timer), &short_timer));
+
+    CASE_EXPECT_EQ(short_timer_t::error_type_t::EN_JTET_SUCCESS, short_timer.add_timer(-123, jiffies_timer_fn(NULL), &count));
+    CASE_EXPECT_EQ(short_timer_t::error_type_t::EN_JTET_SUCCESS, short_timer.add_timer(30, jiffies_timer_fn(NULL), &count));
+    CASE_EXPECT_EQ(short_timer_t::error_type_t::EN_JTET_SUCCESS, short_timer.add_timer(40, jiffies_timer_fn(NULL), &count));
+    CASE_EXPECT_EQ(0, count);
+    short_timer.tick(max_tick);
+    CASE_EXPECT_EQ(0, count);
+    short_timer.tick(max_tick + 1);
+    CASE_EXPECT_EQ(1, count);
+
+    // +30的触发点是+31。因为添加定时器的时候会认为当前时间是+0.XXX，并且由于触发只会延后不会提前
+    short_timer.tick(max_tick + 30);
+    CASE_EXPECT_EQ(1, count);
+    short_timer.tick(max_tick + 31);
+    CASE_EXPECT_EQ(2, count);
+
+    // 跨tick
+    short_timer.tick(max_tick + 64);
+    CASE_EXPECT_EQ(3, count);
+
+    // 32767
+    short_timer.tick(32767 + max_tick);
+
+    // 这个应该会放在数组下标为0的位置
+    CASE_EXPECT_EQ(short_timer_t::error_type_t::EN_JTET_SUCCESS, short_timer.add_timer(0, jiffies_timer_fn(NULL), &count));
+
+    // 环状数组的复用
+    CASE_EXPECT_EQ(short_timer_t::error_type_t::EN_JTET_SUCCESS, short_timer.add_timer(1000, jiffies_timer_fn(NULL), &count));
+
+    // 全部执行掉
+    short_timer.tick(32767 + max_tick + 1000);
+    CASE_EXPECT_EQ(5, count);
+}
+
+CASE_TEST(time_test, jiffies_timer_slot) {
+    //typedef util::time::jiffies_timer<6, 3, 4> short_timer_t;
+    //size_t timer_list_count[short_timer_t::WHEEL_SIZE] = {0};
+    //
+    //time_t max_tick = short_timer_t::get_max_tick_distance();
+    //for (time_t i = 0; i <= max_tick; ++i) {
+    //    size_t idx = short_timer_t::calc_wheel_index(i, 0);
+    //    CASE_EXPECT_LT(idx, short_timer_t::WHEEL_SIZE);
+    //    ++timer_list_count[idx];
+    //}
+
+    // 每个idx的计数器测试
+    //for (size_t i = 0; i < short_timer_t::WHEEL_SIZE; ++i) {
+    //    CASE_EXPECT_EQ(timer_list_count[i], short_timer_t::LVL_GRAN(i / short_timer_t::LVL_SIZE));
+    //}
 }
