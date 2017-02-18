@@ -215,7 +215,7 @@ CASE_TEST(time_test, jiffies_timer_slot) {
     time_t max_tick = short_timer_t::get_max_tick_distance();
     for (time_t i = 0; i <= max_tick; ++i) {
         size_t idx = short_timer_t::calc_wheel_index(i, 0);
-        CASE_EXPECT_LT(idx, short_timer_t::WHEEL_SIZE);
+        CASE_EXPECT_LT(idx, static_cast<size_t>(short_timer_t::WHEEL_SIZE));
         ++timer_list_count[idx];
     }
 
