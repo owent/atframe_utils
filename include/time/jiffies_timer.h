@@ -68,16 +68,18 @@
  *  7   1792  209715200 ms (~58h) 6710886400 ms - 13421772700 ms (~19d - ~621d)
  */
 
+#include <assert.h>
+#include <bitset>
 #include <cstddef>
 #include <cstring>
 #include <ctime>
-#include <stdint.h>
 #include <list>
-#include <bitset>
-#include <assert.h>
+#include <stdint.h>
 
-#include <std/functional.h>
+
 #include <config/compiler_features.h>
+#include <std/functional.h>
+
 
 namespace util {
     namespace time {
@@ -88,37 +90,32 @@ namespace util {
          *       每层定时器误差倍数: 2^LVL_CLK_SHIFT <br />
          *       最大定时器范围: 2^(LVL_CLK_SHIFT * (LVL_DEPTH - 1) + LVL_BITS) * tick周期 <br />
          */
-        template<time_t LVL_BITS = 6, time_t LVL_CLK_SHIFT = 3, size_t LVL_DEPTH = 8>
+        template <time_t LVL_BITS = 6, time_t LVL_CLK_SHIFT = 3, size_t LVL_DEPTH = 8>
         class jiffies_timer {
         public:
             UTIL_CONFIG_STATIC_ASSERT(LVL_CLK_SHIFT < LVL_BITS);
 
-            static const time_t LVL_CLK_DIV = static_cast<time_t>(1) << LVL_CLK_SHIFT;
-            static const time_t LVL_CLK_MASK = LVL_CLK_DIV - 1;
-            static inline time_t LVL_SHIFT(time_t n) {
-                return n * LVL_CLK_SHIFT;
-            }
+            enum lvl_clk_consts {
+                LVL_CLK_DIV = 1 << LVL_CLK_SHIFT,
+                LVL_CLK_MASK = LVL_CLK_DIV - 1,
+            };
+            static inline time_t LVL_SHIFT(time_t n) { return n * LVL_CLK_SHIFT; }
 
-            static inline time_t LVL_GRAN(time_t n) {
-                return static_cast<time_t>(1) << LVL_SHIFT(n);
-            }
+            static inline time_t LVL_GRAN(time_t n) { return static_cast<time_t>(1) << LVL_SHIFT(n); }
 
-            static const size_t LVL_SIZE = static_cast<size_t>(1) << LVL_BITS;
-            static const time_t LVL_MASK = static_cast<time_t>(LVL_SIZE) - 1;
-            static inline size_t LVL_OFFS(size_t n) {
-                return n * LVL_SIZE;
-            }
+            enum lvl_consts {
+                LVL_SIZE = 1 << LVL_BITS, //
+                LVL_MASK = LVL_SIZE - 1,
+                WHEEL_SIZE = LVL_SIZE * LVL_DEPTH
+            };
+            static inline size_t LVL_OFFS(size_t n) { return n * LVL_SIZE; }
 
-            static inline time_t LVL_START(size_t n) {
-                return static_cast<time_t>((LVL_SIZE) << ((n - 1) * LVL_CLK_SHIFT));
-            }
+            static inline time_t LVL_START(size_t n) { return static_cast<time_t>((LVL_SIZE) << ((n - 1) * LVL_CLK_SHIFT)); }
 
-            static const size_t WHEEL_SIZE = LVL_SIZE * LVL_DEPTH;
-
-            typedef std::function<void(time_t tick_time, void* priv_data)> timer_callback_fn_t;
+            typedef std::function<void(time_t tick_time, void *priv_data)> timer_callback_fn_t;
             struct timer_type {
                 time_t timeout;
-                void* private_data;
+                void *private_data;
                 timer_callback_fn_t fn;
             };
 
@@ -131,12 +128,13 @@ namespace util {
 
             struct error_type_t {
                 enum type {
-                    EN_JTET_SUCCESS = 0,                // 成功
-                    EN_JTET_NOT_INITED = -101,          // 未初始化
-                    EN_JTET_ALREADY_INITED = -102,      // 已初始化
-                    EN_JTET_TIMEOUT_EXTENDED = -103,    // 超时时间超出上限
+                    EN_JTET_SUCCESS = 0,             // 成功
+                    EN_JTET_NOT_INITED = -101,       // 未初始化
+                    EN_JTET_ALREADY_INITED = -102,   // 已初始化
+                    EN_JTET_TIMEOUT_EXTENDED = -103, // 超时时间超出上限
                 };
             };
+
         public:
             /**
             * @brief 初始化定时器
@@ -160,10 +158,12 @@ namespace util {
              * @param delta 定时器间隔，相对时间（向下取整，即如果应该是3.8个后tick触发，这里应该取3）
              * @param fn 定时器回掉函数
              * @param priv_data
-             * @note 定时器回调保证晚于指定时间间隔后触发
+             * @note 定时器回调保证晚于指定时间间隔后的下一个误差范围内时间触发。
+             *       这里有一个特殊的设计是认为当前tick的时间已被向下取整，即第3.8个tick的时间在定时器里记录的是3。
+             *       所以会保证定时器的触发时间一定晚于指定的时间（即，3.8+2=5.8意味着第6个tick才会触发定时器）
              * @return 0或错误码
              */
-            int add_timer(time_t delta, const timer_callback_fn_t& fn, void* priv_data) {
+            int add_timer(time_t delta, const timer_callback_fn_t &fn, void *priv_data) {
                 if (!flags_.test(flag_t::EN_JTFT_INITED)) {
                     return error_type_t::EN_JTET_NOT_INITED;
                 }
@@ -200,7 +200,7 @@ namespace util {
              * @return 错误码或触发的定时器数量
              */
             int tick(time_t expires) {
-                std::list<timer_type>* timer_list[LVL_DEPTH];
+                std::list<timer_type> *timer_list[LVL_DEPTH];
                 int ret = 0;
 
                 if (!flags_.test(flag_t::EN_JTFT_INITED)) {
@@ -219,7 +219,8 @@ namespace util {
                         --list_sz;
 
                         // 从高层级往地层级走，这样能保证定时器时序
-                        for (typename std::list<timer_type>::iterator iter = timer_list[list_sz]->begin(); iter != timer_list[list_sz]->end(); ++iter) {
+                        for (typename std::list<timer_type>::iterator iter = timer_list[list_sz]->begin();
+                             iter != timer_list[list_sz]->end(); ++iter) {
                             if (iter->fn) {
                                 iter->fn(last_tick_, iter->private_data);
                                 ++ret;
@@ -228,26 +229,24 @@ namespace util {
 
                         timer_list[list_sz]->clear();
                     }
-
-                    
                 }
 
                 return ret;
             }
 
             /**
-            * @brief 获取最后一次定时器滴答时间（当前定时器时间）
-            * @return 最后一次定时器滴答时间（当前定时器时间）
-            */
-            inline time_t get_last_tick() const {
-                return last_tick_;
-            }
+             * @brief 获取最后一次定时器滴答时间（当前定时器时间）
+             * @return 最后一次定时器滴答时间（当前定时器时间）
+             */
+            inline time_t get_last_tick() const { return last_tick_; }
 
-            static inline UTIL_CONFIG_CONSTEXPR time_t get_max_tick_distance() {
-                return LVL_START(LVL_DEPTH) - 1;
-            }
+            /**
+             * @brief 获取当前定时器类型的最大时间范围（tick）
+             * @return 当前定时器类型的最大时间范围（tick）
+             */
+            static inline UTIL_CONFIG_CONSTEXPR time_t get_max_tick_distance() { return LVL_START(LVL_DEPTH) - 1; }
 
-        
+
             static inline size_t calc_index(time_t expires, size_t lvl) {
                 // 这里的expires 必然大于last_tick_，并且至少加一帧
                 // 本帧的定时器列表检查可能会多次执行，所以不能加在当前帧
@@ -255,8 +254,7 @@ namespace util {
                 return LVL_OFFS(lvl) + static_cast<size_t>(expires & LVL_MASK);
             }
 
-            static size_t calc_wheel_index(time_t expires, time_t clk)
-            {
+            static size_t calc_wheel_index(time_t expires, time_t clk) {
                 assert(expires >= clk);
                 time_t delta = expires - clk;
                 size_t idx = WHEEL_SIZE;
@@ -273,14 +271,20 @@ namespace util {
             }
 
         private:
-            size_t collect_expired_timers(time_t tick_time, std::list<timer_type>* timer_list[LVL_DEPTH]) {
+            size_t collect_expired_timers(time_t tick_time, std::list<timer_type> *timer_list[LVL_DEPTH]) {
                 size_t ret = 0;
                 for (size_t i = 0; i < LVL_DEPTH; ++i) {
-                    size_t idx = static_cast<size_t>(tick_time & LVL_MASK) + i * LVL_SIZE;
+                    size_t idx = static_cast<size_t>(tick_time & LVL_MASK) + LVL_OFFS(i);
 
                     if (!timer_base_[idx].empty()) {
                         timer_list[ret++] = &timer_base_[idx];
                     }
+
+                    if (tick_time & LVL_CLK_MASK) {
+                        break;
+                    }
+
+                    tick_time >>= LVL_CLK_SHIFT;
                 }
 
                 return ret;
