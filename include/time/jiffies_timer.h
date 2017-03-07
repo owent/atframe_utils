@@ -219,7 +219,7 @@ namespace util {
                 timer_inst->fn = fn;
 
                 // assign to watcher
-                if (watcher != UTIL_CONFIG_NULLPTR) {
+                if (watcher != NULL) {
                     *watcher = timer_inst;
                 }
                 timer_base_[idx].push_back(std::move(timer_inst));
@@ -228,7 +228,7 @@ namespace util {
             }
 
             inline int add_timer(time_t delta, const timer_callback_fn_t &fn, void *priv_data) {
-                return add_timer(delta, fn, priv_data, UTIL_CONFIG_NULLPTR);
+                return add_timer(delta, fn, priv_data, NULL);
             }
 
             /**
