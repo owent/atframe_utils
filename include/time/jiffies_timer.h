@@ -186,7 +186,7 @@ namespace util {
              * @note 请尽量不要在外部直接保存定时器的智能指针(timer_ptr_t)，而仅仅使用监视器
              * @return 0或错误码
              */
-            int add_timer(time_t delta, const timer_callback_fn_t &fn, void *priv_data, timer_wptr_t *watcher = UTIL_CONFIG_NULLPTR) {
+            int add_timer(time_t delta, const timer_callback_fn_t &fn, void *priv_data, timer_wptr_t *watcher) {
                 if (!flags_.test(flag_t::EN_JTFT_INITED)) {
                     return error_type_t::EN_JTET_NOT_INITED;
                 }
@@ -225,6 +225,10 @@ namespace util {
                 timer_base_[idx].push_back(std::move(timer_inst));
 
                 return error_type_t::EN_JTET_SUCCESS;
+            }
+
+            inline int add_timer(time_t delta, const timer_callback_fn_t &fn, void *priv_data) {
+                return add_timer(delta, fn, priv_data, UTIL_CONFIG_NULLPTR);
             }
 
             /**
