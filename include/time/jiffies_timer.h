@@ -79,6 +79,7 @@
 
 #include <config/compiler_features.h>
 #include <std/functional.h>
+#include <std/smart_ptr.h>
 
 
 namespace util {
@@ -112,17 +113,36 @@ namespace util {
 
             static inline time_t LVL_START(size_t n) { return static_cast<time_t>((LVL_SIZE) << ((n - 1) * LVL_CLK_SHIFT)); }
 
-            typedef std::function<void(time_t tick_time, void *priv_data)> timer_callback_fn_t;
+        private:
+            struct timer_type;
+
+        public:
+            typedef std::function<void(time_t tick_time, const timer_type &timer)> timer_callback_fn_t;
+
+        private:
             struct timer_type {
-                time_t timeout;
-                void *private_data;
-                timer_callback_fn_t fn;
-            };
+                mutable int flags;      // 定时器标记位
+                uint32_t sequence;      // 定时器序号
+                time_t timeout;         // 原始的超时时间
+                void *private_data;     // 私有数据指针
+                timer_callback_fn_t fn; // 回掉函数
+            };                          // 外部请勿直接访问内部成员，只允许通过API访问
+
+        public:
+            typedef timer_type timer_t;                   // 外部请勿直接访问内部成员，只允许通过API访问
+            typedef std::shared_ptr<timer_t> timer_ptr_t; // 外部请勿直接访问内部成员，只允许通过API访问
+            typedef std::weak_ptr<timer_t> timer_wptr_t;  // 外部请勿直接访问内部成员，只允许通过API访问
 
             struct flag_t {
                 enum type {
                     EN_JTFT_INITED = 0,
                     EN_JTFT_MAX,
+                };
+            };
+
+            struct timer_flag_t {
+                enum type {
+                    EN_JTTF_DISABLED = 0x0001,
                 };
             };
 
@@ -148,6 +168,7 @@ namespace util {
                 flags_.set(flag_t::EN_JTFT_INITED, true);
 
                 last_tick_ = init_tick;
+                seq_alloc_ = 0;
 
                 return error_type_t::EN_JTET_SUCCESS;
             }
@@ -158,12 +179,14 @@ namespace util {
              * @param delta 定时器间隔，相对时间（向下取整，即如果应该是3.8个后tick触发，这里应该取3）
              * @param fn 定时器回掉函数
              * @param priv_data
+             * @param watcher 定时器的监视器指针，如果非空，这个weak_ptr会指向定时器对象，用于以后查询或修改数据
              * @note 定时器回调保证晚于指定时间间隔后的下一个误差范围内时间触发。
              *       这里有一个特殊的设计是认为当前tick的时间已被向下取整，即第3.8个tick的时间在定时器里记录的是3。
              *       所以会保证定时器的触发时间一定晚于指定的时间（即，3.8+2=5.8意味着第6个tick才会触发定时器）
+             * @note 请尽量不要在外部直接保存定时器的智能指针(timer_ptr_t)，而仅仅使用监视器
              * @return 0或错误码
              */
-            int add_timer(time_t delta, const timer_callback_fn_t &fn, void *priv_data) {
+            int add_timer(time_t delta, const timer_callback_fn_t &fn, void *priv_data, timer_wptr_t *watcher = UTIL_CONFIG_NULLPTR) {
                 if (!flags_.test(flag_t::EN_JTFT_INITED)) {
                     return error_type_t::EN_JTET_NOT_INITED;
                 }
@@ -181,15 +204,25 @@ namespace util {
                     delta = 0;
                 }
 
-                timer_type timer_inst;
-                timer_inst.timeout = last_tick_ + delta;
-                timer_inst.private_data = priv_data;
+                timer_ptr_t timer_inst = std::make_shared<timer_type>();
+                timer_inst->flags = 0;
+                timer_inst->timeout = last_tick_ + delta;
+                timer_inst->private_data = priv_data;
+                while (0 == ++seq_alloc_)
+                    ;
+                timer_inst->sequence = seq_alloc_;
 
-                size_t idx = calc_wheel_index(timer_inst.timeout, last_tick_);
+
+                size_t idx = calc_wheel_index(timer_inst->timeout, last_tick_);
                 assert(idx < WHEEL_SIZE);
 
-                timer_inst.fn = fn;
-                timer_base_[idx].push_back(timer_inst);
+                timer_inst->fn = fn;
+
+                // assign to watcher
+                if (watcher != UTIL_CONFIG_NULLPTR) {
+                    *watcher = timer_inst;
+                }
+                timer_base_[idx].push_back(std::move(timer_inst));
 
                 return error_type_t::EN_JTET_SUCCESS;
             }
@@ -200,7 +233,7 @@ namespace util {
              * @return 错误码或触发的定时器数量
              */
             int tick(time_t expires) {
-                std::list<timer_type> *timer_list[LVL_DEPTH];
+                std::list<timer_ptr_t> *timer_list[LVL_DEPTH];
                 int ret = 0;
 
                 if (!flags_.test(flag_t::EN_JTFT_INITED)) {
@@ -219,10 +252,10 @@ namespace util {
                         --list_sz;
 
                         // 从高层级往地层级走，这样能保证定时器时序
-                        for (typename std::list<timer_type>::iterator iter = timer_list[list_sz]->begin();
+                        for (typename std::list<timer_ptr_t>::iterator iter = timer_list[list_sz]->begin();
                              iter != timer_list[list_sz]->end(); ++iter) {
-                            if (iter->fn) {
-                                iter->fn(last_tick_, iter->private_data);
+                            if (*iter && (*iter)->fn && !((*iter)->flags & timer_flag_t::EN_JTTF_DISABLED)) {
+                                (*iter)->fn(last_tick_, **iter);
                                 ++ret;
                             }
                         }
@@ -240,6 +273,7 @@ namespace util {
              */
             inline time_t get_last_tick() const { return last_tick_; }
 
+        public:
             /**
              * @brief 获取当前定时器类型的最大时间范围（tick）
              * @return 当前定时器类型的最大时间范围（tick）
@@ -270,8 +304,15 @@ namespace util {
                 return idx;
             }
 
+        public:
+            static inline void *get_timer_private_data(const timer_t &timer) { return timer.private_data; }
+            static inline uint32_t get_timer_sequence(const timer_t &timer) { return timer.sequence; }
+            static inline bool check_timer_flags(const timer_t &timer, typename timer_flag_t::type f) { return !!(timer.flags & f); }
+            static inline bool set_timer_flags(const timer_t &timer, typename timer_flag_t::type f) { return timer.flags |= f; }
+            static inline bool unset_timer_flags(const timer_t &timer, typename timer_flag_t::type f) { return timer.flags &= ~f; }
+
         private:
-            size_t collect_expired_timers(time_t tick_time, std::list<timer_type> *timer_list[LVL_DEPTH]) {
+            size_t collect_expired_timers(time_t tick_time, std::list<timer_ptr_t> *timer_list[LVL_DEPTH]) {
                 size_t ret = 0;
                 for (size_t i = 0; i < LVL_DEPTH; ++i) {
                     size_t idx = static_cast<size_t>(tick_time & LVL_MASK) + LVL_OFFS(i);
@@ -293,7 +334,8 @@ namespace util {
         private:
             time_t last_tick_;
             std::bitset<flag_t::EN_JTFT_MAX> flags_;
-            std::list<timer_type> timer_base_[WHEEL_SIZE];
+            std::list<timer_ptr_t> timer_base_[WHEEL_SIZE];
+            uint32_t seq_alloc_;
         };
     }
 }

@@ -129,22 +129,23 @@ CASE_TEST(time_test, is_same_month) {
     // nothing todo use libc now
 }
 
-
+typedef util::time::jiffies_timer<6, 3, 4> short_timer_t;
 struct jiffies_timer_fn {
     void *check_priv_data;
     jiffies_timer_fn(void *pd) : check_priv_data(pd) {}
 
-    void operator()(time_t, void *priv_data) {
+    void operator()(time_t, const short_timer_t::timer_t &timer) {
         if (NULL != check_priv_data) {
-            CASE_EXPECT_EQ(priv_data, check_priv_data);
-        } else if (NULL != priv_data) {
-            ++(*reinterpret_cast<int *>(priv_data));
+            CASE_EXPECT_EQ(short_timer_t::get_timer_private_data(timer), check_priv_data);
+        } else if (NULL != short_timer_t::get_timer_private_data(timer)) {
+            ++(*reinterpret_cast<int *>(short_timer_t::get_timer_private_data(timer)));
         }
+
+        CASE_MSG_INFO() << "jiffies_timer " << short_timer_t::get_timer_sequence(timer) << " actived" << std::endl;
     }
 };
 
 CASE_TEST(time_test, jiffies_timer_basic) {
-    typedef util::time::jiffies_timer<6, 3, 4> short_timer_t;
     short_timer_t short_timer;
     int count = 0;
     time_t max_tick = short_timer.get_max_tick_distance() + 1;
@@ -209,7 +210,6 @@ CASE_TEST(time_test, jiffies_timer_basic) {
 }
 
 CASE_TEST(time_test, jiffies_timer_slot) {
-    typedef util::time::jiffies_timer<6, 3, 4> short_timer_t;
     size_t timer_list_count[short_timer_t::WHEEL_SIZE] = {0};
     time_t blank_area[short_timer_t::WHEEL_SIZE / short_timer_t::LVL_SIZE] = {0};
     time_t max_tick = short_timer_t::get_max_tick_distance();
