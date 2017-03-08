@@ -39,6 +39,7 @@
  */
 #if defined(_MSC_VER)
 
+#include <intrin.h>
 #include <Windows.h> // YieldProcessor
 #include <Synchapi.h> // Windows server
 #include <Processthreadsapi.h>
