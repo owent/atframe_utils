@@ -29,6 +29,7 @@
 #include "config/atframe_utils_build_feature.h"
 
 #if defined(NETWORK_EVPOLL_ENABLE_LIBUV) && defined(NETWORK_ENABLE_CURL)
+#if NETWORK_ENABLE_CURL && NETWORK_EVPOLL_ENABLE_LIBUV
 
 extern "C" {
 #include <curl/curl.h>
@@ -350,6 +351,8 @@ namespace util {
         };
     }
 }
+#endif
+
 #endif
 
 #endif

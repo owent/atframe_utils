@@ -7,6 +7,7 @@
 #include "network/http_request.h"
 
 #if defined(NETWORK_EVPOLL_ENABLE_LIBUV) && defined(NETWORK_ENABLE_CURL)
+#if NETWORK_ENABLE_CURL && NETWORK_EVPOLL_ENABLE_LIBUV
 
 #if __cplusplus >= 201103L || (defined(_MSC_VER) && _MSC_VER >= 1800)
 #include <type_traits>
@@ -875,5 +876,7 @@ namespace util {
         }
     }
 }
+
+#endif
 
 #endif
