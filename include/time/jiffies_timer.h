@@ -169,6 +169,7 @@ namespace util {
 
                 last_tick_ = init_tick;
                 seq_alloc_ = 0;
+                size_ = 0;
 
                 return error_type_t::EN_JTET_SUCCESS;
             }
@@ -223,6 +224,7 @@ namespace util {
                     *watcher = timer_inst;
                 }
                 timer_base_[idx].push_back(std::move(timer_inst));
+                ++size_;
 
                 return error_type_t::EN_JTET_SUCCESS;
             }
@@ -262,6 +264,8 @@ namespace util {
                                 (*iter)->fn(last_tick_, **iter);
                                 ++ret;
                             }
+
+                            --size_;
                         }
 
                         timer_list[list_sz]->clear();
@@ -276,6 +280,12 @@ namespace util {
              * @return 最后一次定时器滴答时间（当前定时器时间）
              */
             inline time_t get_last_tick() const { return last_tick_; }
+
+            /**
+             * @brief 获取最后一次定时器滴答时间（当前定时器时间）
+             * @return 最后一次定时器滴答时间（当前定时器时间）
+             */
+            inline size_t size() const { return size_; }
 
         public:
             /**
@@ -340,6 +350,7 @@ namespace util {
             std::bitset<flag_t::EN_JTFT_MAX> flags_;
             std::list<timer_ptr_t> timer_base_[WHEEL_SIZE];
             uint32_t seq_alloc_;
+            size_t size_;
         };
     }
 }

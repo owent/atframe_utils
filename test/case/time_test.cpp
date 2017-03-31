@@ -171,11 +171,14 @@ CASE_TEST(time_test, jiffies_timer_basic) {
     CASE_EXPECT_EQ(short_timer_t::error_type_t::EN_JTET_SUCCESS, short_timer.add_timer(-123, jiffies_timer_fn(NULL), &count));
     CASE_EXPECT_EQ(short_timer_t::error_type_t::EN_JTET_SUCCESS, short_timer.add_timer(30, jiffies_timer_fn(NULL), &count));
     CASE_EXPECT_EQ(short_timer_t::error_type_t::EN_JTET_SUCCESS, short_timer.add_timer(40, jiffies_timer_fn(NULL), &count));
+    CASE_EXPECT_EQ(5, static_cast<int>(short_timer.size()));
+
     CASE_EXPECT_EQ(0, count);
     short_timer.tick(max_tick);
     CASE_EXPECT_EQ(0, count);
     short_timer.tick(max_tick + 1);
     CASE_EXPECT_EQ(1, count);
+    CASE_EXPECT_EQ(4, static_cast<int>(short_timer.size()));
 
     // +30的触发点是+31。因为添加定时器的时候会认为当前时间是+0.XXX，并且由于触发只会延后不会提前
     short_timer.tick(max_tick + 30);
@@ -186,6 +189,7 @@ CASE_TEST(time_test, jiffies_timer_basic) {
     // 跨tick
     short_timer.tick(max_tick + 64);
     CASE_EXPECT_EQ(3, count);
+    CASE_EXPECT_EQ(2, static_cast<int>(short_timer.size()));
 
     // 非第一层、非第一个定时器组.（512+64*5-1 = 831）
     CASE_EXPECT_EQ(short_timer_t::error_type_t::EN_JTET_SUCCESS, short_timer.add_timer(831, jiffies_timer_fn(NULL), &count));
@@ -207,6 +211,7 @@ CASE_TEST(time_test, jiffies_timer_basic) {
     // 全部执行掉
     short_timer.tick(32767 + max_tick + 2000);
     CASE_EXPECT_EQ(6, count);
+    CASE_EXPECT_EQ(0, static_cast<int>(short_timer.size()));
 }
 
 CASE_TEST(time_test, jiffies_timer_slot) {
