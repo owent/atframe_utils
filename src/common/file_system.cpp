@@ -178,7 +178,7 @@ namespace util {
 
         while (sz > 0 && depth > 0) {
             if ('/' == file_path[sz] || '\\' == file_path[sz]) {
-                -- depth;
+                --depth;
             }
 
             if (depth <= 0) {
@@ -347,23 +347,14 @@ namespace util {
             return errno;
         }
 
-        struct dirent child_node;
-        struct dirent *cache = NULL;
-
         do {
-            child_node.d_name[0] = '\0';
-            ret = readdir_r(dir, &child_node, &cache);
-            if (ret < 0) {
-                break;
-            }
-
-            // reach the end
-            if (NULL == cache) {
+            struct dirent *child_node = readdir(dir);
+            if (NULL == child_node) {
                 break;
             }
 
             int accept = 0;
-            switch (child_node.d_type) {
+            switch (child_node->d_type) {
             case DT_DIR: {
                 accept = options & dir_opt_t::EN_DOT_TDIR;
                 break;
@@ -400,22 +391,22 @@ namespace util {
             if (!base_dir.empty()) {
                 child_path += base_dir + DIRECTORY_SEPARATOR;
             }
-            child_path += child_node.d_name;
+            child_path += child_node->d_name;
 
             // 是否排除 . 和 ..
-            if (0 == strcmp(".", child_node.d_name) || 0 == strcmp("..", child_node.d_name)) {
+            if (0 == strcmp(".", child_node->d_name) || 0 == strcmp("..", child_node->d_name)) {
                 if (!(options & dir_opt_t::EN_DOT_SELF)) {
                     continue;
                 }
             } else {
                 // 递归扫描（软链接不扫描，防止死循环）
-                if (DT_DIR == child_node.d_type && (options & dir_opt_t::EN_DOT_RECU)) {
+                if (DT_DIR == child_node->d_type && (options & dir_opt_t::EN_DOT_RECU)) {
                     scan_dir(child_path.c_str(), out, options & (~dir_opt_t::EN_DOT_SELF));
                     continue;
                 }
 
                 // 解析软链接
-                if (DT_LNK == child_node.d_type && (options & dir_opt_t::EN_DOT_RLNK)) {
+                if (DT_LNK == child_node->d_type && (options & dir_opt_t::EN_DOT_RLNK)) {
                     child_path = get_abs_path(child_path.c_str());
                 }
             }
