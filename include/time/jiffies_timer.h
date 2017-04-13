@@ -175,19 +175,27 @@ namespace util {
             }
 
 
-            /**
-             * @brief 添加定时器
-             * @param delta 定时器间隔，相对时间（向下取整，即如果应该是3.8个后tick触发，这里应该取3）
-             * @param fn 定时器回掉函数
-             * @param priv_data
-             * @param watcher 定时器的监视器指针，如果非空，这个weak_ptr会指向定时器对象，用于以后查询或修改数据
-             * @note 定时器回调保证晚于指定时间间隔后的下一个误差范围内时间触发。
-             *       这里有一个特殊的设计是认为当前tick的时间已被向下取整，即第3.8个tick的时间在定时器里记录的是3。
-             *       所以会保证定时器的触发时间一定晚于指定的时间（即，3.8+2=5.8意味着第6个tick才会触发定时器）
-             * @note 请尽量不要在外部直接保存定时器的智能指针(timer_ptr_t)，而仅仅使用监视器
-             * @return 0或错误码
-             */
+/**
+ * @brief 添加定时器
+ * @param delta 定时器间隔，相对时间（向下取整，即如果应该是3.8个后tick触发，这里应该取3）
+ * @param fn 定时器回掉函数
+ * @param priv_data
+ * @param watcher 定时器的监视器指针，如果非空，这个weak_ptr会指向定时器对象，用于以后查询或修改数据
+ * @note 定时器回调保证晚于指定时间间隔后的下一个误差范围内时间触发。
+ *       这里有一个特殊的设计是认为当前tick的时间已被向下取整，即第3.8个tick的时间在定时器里记录的是3。
+ *       所以会保证定时器的触发时间一定晚于指定的时间（即，3.8+2=5.8意味着第6个tick才会触发定时器）
+ * @note 请尽量不要在外部直接保存定时器的智能指针(timer_ptr_t)，而仅仅使用监视器
+ * @return 0或错误码
+ */
+#if defined(UTIL_CONFIG_COMPILER_CXX_RVALUE_REFERENCES) && UTIL_CONFIG_COMPILER_CXX_RVALUE_REFERENCES
+            inline int add_timer(time_t delta, const timer_callback_fn_t &fn, void *priv_data, timer_wptr_t *watcher) {
+                return add_timer(delta, std::move(timer_callback_fn_t(fn)), priv_data, watcher);
+            }
+
+            int add_timer(time_t delta, timer_callback_fn_t &&fn, void *priv_data, timer_wptr_t *watcher) {
+#else
             int add_timer(time_t delta, const timer_callback_fn_t &fn, void *priv_data, timer_wptr_t *watcher) {
+#endif
                 if (!flags_.test(flag_t::EN_JTFT_INITED)) {
                     return error_type_t::EN_JTET_NOT_INITED;
                 }
@@ -217,7 +225,11 @@ namespace util {
                 size_t idx = calc_wheel_index(timer_inst->timeout, last_tick_);
                 assert(idx < WHEEL_SIZE);
 
+#if defined(UTIL_CONFIG_COMPILER_CXX_RVALUE_REFERENCES) && UTIL_CONFIG_COMPILER_CXX_RVALUE_REFERENCES
+                timer_inst->fn = std::move(fn);
+#else
                 timer_inst->fn = fn;
+#endif
 
                 // assign to watcher
                 if (watcher != NULL) {
@@ -233,6 +245,9 @@ namespace util {
                 return add_timer(delta, fn, priv_data, NULL);
             }
 
+#if defined(UTIL_CONFIG_COMPILER_CXX_RVALUE_REFERENCES) && UTIL_CONFIG_COMPILER_CXX_RVALUE_REFERENCES
+            inline int add_timer(time_t delta, timer_callback_fn_t &&fn, void *priv_data) { return add_timer(delta, fn, priv_data, NULL); }
+#endif
             /**
              * @brief 定时器滴答
              * @param expires 到期的定时器时间（绝对时间）
