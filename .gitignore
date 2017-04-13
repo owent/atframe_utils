@@ -27,6 +27,9 @@
 *.out
 *.app
 
+.vs
+.vscode
+.clion
 
 /build
 /build_*
