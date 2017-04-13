@@ -382,7 +382,7 @@ namespace util {
             }
 
             // 类型不符合则跳过
-            if (0 == accept) {
+            if (DT_UNKNOWN != child_node->d_type && 0 == accept) {
                 continue;
             }
 
@@ -393,6 +393,29 @@ namespace util {
             }
             child_path += child_node->d_name;
 
+            // @see http://man7.org/linux/man-pages/man3/readdir.3.html
+            // some file system do not support d_type
+            if (DT_UNKNOWN == child_node->d_type && 0 == accept) {
+                struct stat child_stat;
+                memset(&child_stat, 0, sizeof(struct stat));
+                lstat(child_path.c_str(), &child_stat);
+
+                if (S_ISDIR(child_stat.st_mode)) {
+                    accept = options & dir_opt_t::EN_DOT_TDIR;
+                } else if (S_ISREG(child_stat.st_mode)) {
+                    accept = options & dir_opt_t::EN_DOT_TREG;
+                } else if (S_ISLNK(child_stat.st_mode)) {
+                    accept = options & dir_opt_t::EN_DOT_TLNK;
+                } else if (S_ISSOCK(child_stat.st_mode)) {
+                    accept = options & dir_opt_t::EN_DOT_TSOCK;
+                } else {
+                    accept = options & dir_opt_t::EN_DOT_TOTH;
+                }
+            }
+
+            if (0 == accept) {
+                continue;
+            }
             // 是否排除 . 和 ..
             if (0 == strcmp(".", child_node->d_name) || 0 == strcmp("..", child_node->d_name)) {
                 if (!(options & dir_opt_t::EN_DOT_SELF)) {
