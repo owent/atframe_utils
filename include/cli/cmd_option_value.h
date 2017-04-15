@@ -13,11 +13,15 @@
  *
  */
 
+#include <cstring>
 #include <sstream>
 #include <stdint.h>
 #include <string>
 
 #include "std/smart_ptr.h"
+#include "std/type_traits/remove_cv.h"
+
+#include <common/string_oprs.h>
 
 namespace util {
     namespace cli {
@@ -25,36 +29,48 @@ namespace util {
         protected:
             std::string data_;
 
-            template <typename _Tt>
-            inline _Tt string2any(const char *strData) const {
-                _Tt ret;
-                std::stringstream ss;
-                ss.str(strData);
-                ss >> ret;
-                return ret;
-            }
+            struct string2any {
+
+                template <typename Tt>
+                static inline Tt conv(const std::string &s, Tt *) {
+                    Tt ret;
+                    std::stringstream ss;
+                    ss.str(s);
+                    ss >> ret;
+                    return ret;
+                }
+
+                static inline const std::string &conv(const std::string &s, std::string *) { return s; }
+
+                // static const char *conv(const std::string &s, const char **) { return s.c_str(); }
+
+                static inline char conv(const std::string &s, char *) { return s.empty() ? 0 : s[0]; }
+
+                static inline unsigned char conv(const std::string &s, unsigned char *) {
+                    return static_cast<unsigned char>(s.empty() ? 0 : s[0]);
+                }
+
+                static inline int16_t conv(const std::string &s, int16_t *) { return util::string::to_int<int16_t>(s.c_str()); }
+
+                static inline uint16_t conv(const std::string &s, uint16_t *) { return util::string::to_int<int16_t>(s.c_str()); }
+
+                static inline int32_t conv(const std::string &s, int32_t *) { return util::string::to_int<int32_t>(s.c_str()); }
+
+                static inline uint32_t conv(const std::string &s, uint32_t *) { return util::string::to_int<uint32_t>(s.c_str()); }
+
+                static inline int64_t conv(const std::string &s, int64_t *) { return util::string::to_int<int64_t>(s.c_str()); }
+                static inline uint64_t conv(const std::string &s, uint64_t *) { return util::string::to_int<uint64_t>(s.c_str()); }
+
+                static inline bool conv(const std::string &s, bool *) { return !s.empty() && "0" != s; }
+            };
 
         public:
             cmd_option_value(const char *strData);
 
-            template <typename _Tt>
-            inline _Tt to() const {
-                return string2any<_Tt>(data_.c_str());
-            }
-
-            template <>
-            inline const std::string &to<std::string>() const {
-                return to_cpp_string();
-            }
-
-            template <>
-            inline const char *to<char *>() const {
-                return to_string();
-            }
-
-            template <>
-            inline const char *to<const char *>() const {
-                return to_string();
+            template <typename Tr>
+            Tr to() const {
+                typedef typename ::util::type_traits::remove_cv<Tr>::type cv_type;
+                return string2any::conv(data_, reinterpret_cast<cv_type *>(NULL));
             }
 
             // 获取存储对象的字符串

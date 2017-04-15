@@ -37,7 +37,7 @@ namespace util {
             };
 
             template <typename T>
-            assign_t<T> assign(T& t) {
+            assign_t<T> assign(T &t) {
                 return assign_t<T>(std::ref(t));
             }
 
@@ -51,13 +51,13 @@ namespace util {
 
                 void operator()(util::cli::callback_param params) {
                     for (util::cli::cmd_option_list::size_type i = 0; i < params.get_params_number(); ++i) {
-                        var.push_back(params[i]->to_cpp_string());
+                        var.push_back(params[i]->to<T>());
                     }
                 }
             };
 
             template <typename T>
-            push_back_t<T> push_back(T& t) {
+            push_back_t<T> push_back(T &t) {
                 return push_back_t<T>(std::ref(t));
             }
 
@@ -71,14 +71,34 @@ namespace util {
 
                 void operator()(util::cli::callback_param params) {
                     for (util::cli::cmd_option_list::size_type i = 0; i < params.get_params_number(); ++i) {
-                        var.push_front(params[i]->to_cpp_string());
+                        var.push_front(params[i]->to<T>());
                     }
                 }
             };
 
             template <typename T>
-            push_front_t<T> push_front(T& t) {
+            push_front_t<T> push_front(T &t) {
                 return push_front_t<T>(std::ref(t));
+            }
+
+            /**
+             * @brief 通用赋值动作 - 容器insert操作
+             */
+            template <typename T>
+            struct insert_t {
+                T &var;
+                insert_t(T &t) : var(t) {}
+
+                void operator()(util::cli::callback_param params) {
+                    for (util::cli::cmd_option_list::size_type i = 0; i < params.get_params_number(); ++i) {
+                        var.insert(params[i]->to<T>());
+                    }
+                }
+            };
+
+            template <typename T>
+            insert_t<T> insert(T &t) {
+                return insert_t<T>(std::ref(t));
             }
 
             /**
@@ -94,7 +114,7 @@ namespace util {
             };
 
             template <typename T>
-            set_const_t<T> set_const(T& t, const T &v) {
+            set_const_t<T> set_const(T &t, const T &v) {
                 return set_const_t<T>(std::ref(t), std::cref(v));
             }
 
@@ -117,7 +137,7 @@ namespace util {
             };
 
             template <typename T>
-            assign_logic_bool_t<T> assign_logic_bool(T& t) {
+            assign_logic_bool_t<T> assign_logic_bool(T &t) {
                 return assign_logic_bool_t<T>(std::ref(t));
             }
         }
