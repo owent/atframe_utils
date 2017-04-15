@@ -20,11 +20,12 @@
 #pragma once
 //#endif
 
-#include <cstdlib>
-#include <cstring>
 #include <algorithm>
 #include <cctype>
+#include <cstdlib>
+#include <cstring>
 #include <ostream>
+
 
 #if defined(_MSC_VER) && _MSC_VER >= 1600
 #define UTIL_STRFUNC_STRCASE_CMP(l, r) _stricmp(l, r)
@@ -73,12 +74,12 @@ namespace util {
 
             // negative
             bool is_negative = false;
-            while(*str && *str == '-') {
+            while (*str && *str == '-') {
                 is_negative = !is_negative;
-                ++ str;
+                ++str;
             }
 
-            if(!(*str)) {
+            if (!(*str)) {
                 return;
             }
 
@@ -110,6 +111,18 @@ namespace util {
             if (is_negative) {
                 out = (~out) + 1;
             }
+        }
+
+        /**
+         * @brief 字符串转整数
+         * @param str 被转换的字符串
+         * @return 输出的整数
+         */
+        template <typename T>
+        inline T to_int(const char *str) {
+            T ret = 0;
+            str2int(ret, str);
+            return ret;
         }
 
         /**
@@ -205,7 +218,7 @@ namespace util {
             const unsigned char *cs = reinterpret_cast<const unsigned char *>(src);
             size_t i;
             for (i = 0; i < ss; ++i) {
-                hex<TCh, unsigned char>(&out[i<< 1], cs[i], upper_case);
+                hex<TCh, unsigned char>(&out[i << 1], cs[i], upper_case);
             }
         }
 

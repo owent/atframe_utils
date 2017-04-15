@@ -71,11 +71,7 @@ namespace util {
             }
 
             if ("no" == lowercase_content || "false" == lowercase_content || "disabled" == lowercase_content ||
-                "disable" == lowercase_content) {
-                return false;
-            }
-
-            if (0 == to_int()) {
+                "disable" == lowercase_content || "0" == lowercase_content) {
                 return false;
             }
 

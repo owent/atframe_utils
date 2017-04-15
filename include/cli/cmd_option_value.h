@@ -42,6 +42,21 @@ namespace util {
                 return string2any<_Tt>(data_.c_str());
             }
 
+            template <>
+            inline const std::string &to<std::string>() const {
+                return to_cpp_string();
+            }
+
+            template <>
+            inline const char *to<char *>() const {
+                return to_string();
+            }
+
+            template <>
+            inline const char *to<const char *>() const {
+                return to_string();
+            }
+
             // 获取存储对象的字符串
             const std::string &to_cpp_string() const;
 
