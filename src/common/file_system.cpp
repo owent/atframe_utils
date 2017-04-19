@@ -333,7 +333,7 @@ namespace util {
 
         _findclose(cache);
 
-        if (ENOENT == ret) {
+        if (ENOENT == errno) {
             return 0;
         }
 #else

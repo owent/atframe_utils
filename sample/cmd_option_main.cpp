@@ -1,7 +1,8 @@
-﻿#include <iostream>
+﻿#include "std/ref.h"
 #include <algorithm>
 #include <cstdio>
-#include "std/ref.h"
+#include <iostream>
+
 
 #include "cli/cmd_option.h"
 
@@ -14,12 +15,11 @@
 #include "cmd_option_caseignore_bind.h"
 
 class foo;
-foo* g_test = NULL;
+foo *g_test = NULL;
 
 class foo {
 public:
-    void print_t(util::cli::callback_param par, std::string& str)
-    {
+    void print_t(util::cli::callback_param par, std::string &str) {
         printf("sizeof(float) => %d\n", static_cast<int>(sizeof(float)));
         printf("sizeof(double) => %d\n", static_cast<int>(sizeof(double)));
         printf("sizeof(long double) => %d\n", static_cast<int>(sizeof(long double)));
@@ -27,38 +27,30 @@ public:
         str = "Hello World!";
     }
 
-    void print(util::cli::callback_param par)
-    {
+    void print(util::cli::callback_param par) {
         puts("bt func:");
         int len = static_cast<int>(par.get_params_number());
-        for (int i = 0; i < len; ++i)
-        {
+        for (int i = 0; i < len; ++i) {
             puts(par[i]->to_string());
         }
 
         g_test = this;
     }
 
-    void print_t2(util::cli::callback_param par, int i)
-    {
+    void print_t2(util::cli::callback_param par, int i) {
         printf("Mem Fun B2 Params Num: %d, i => %d\n", static_cast<int>(par.get_params_number()), i);
     }
 
-    void print_t3(util::cli::callback_param par, int i, double d)
-    {
+    void print_t3(util::cli::callback_param par, int i, double d) {
         printf("Mem Fun B3 Params Num: %d, i => %d, d => %lf\n", static_cast<int>(par.get_params_number()), i, d);
     }
 };
 
-class foo2: public foo {
-    void print(util::cli::callback_param par, std::string& str)
-    {
-        str = "Hello World! - child";
-    }
+class foo2 : public foo {
+    void print(util::cli::callback_param par, std::string &str) { str = "Hello World! - child"; }
 };
 
-void print(util::cli::callback_param par, std::string* str)
-{
+void print(util::cli::callback_param par, std::string *str) {
     printf("sizeof(short) => %d\n", static_cast<int>(sizeof(short)));
     printf("sizeof(int) => %d\n", static_cast<int>(sizeof(int)));
     printf("sizeof(long) => %d\n", static_cast<int>(sizeof(long)));
@@ -66,23 +58,18 @@ void print(util::cli::callback_param par, std::string* str)
     (*str) = par.get("par1")->to_string();
 }
 
-void print(util::cli::callback_param par)
-{
-    puts("do nothing! - free func without parameter\n");
-}
+void print(util::cli::callback_param par) { puts("do nothing! - free func without parameter\n"); }
 
-void print2(util::cli::callback_param par, double d)
-{
+void print2(util::cli::callback_param par, double d) {
     printf("Free Fun B2 Params Num: %d, d => %lf\n", static_cast<int>(par.get_params_number()), d);
 }
 
-void print3(util::cli::callback_param par, double d, int i)
-{
+void print3(util::cli::callback_param par, double d, int i) {
     printf("Free Fun B3 Params Num: %d, i => %d, d => %lf\n", static_cast<int>(par.get_params_number()), i, d);
 }
 
 
-static int complex_bind_func(util::cli::callback_param par, int i){
+static int complex_bind_func(util::cli::callback_param par, int i) {
     printf("%d\n", i);
     return 0;
 }
@@ -98,39 +85,43 @@ int cmd_option_sample_main() {
 
     foo f, *pf = new foo2();
     std::string str;
-    
+
     // 绑定错误处理函数
-    co->bind_cmd("@on_error", on_error);
+    co->bind_cmd("@OnError", on_error);
 
     // 带参数类函数绑定（参数为引用）
-    co->bind_cmd("-bt1, --bind_class_func_param", &foo::print_t, pf, std::ref(str))->set_help_msg("-bt1, --bind_class_func_param    带参数类绑定");
+    co->bind_cmd("-bt1, --bind_class_func_param", &foo::print_t, pf, std::ref(str))
+        ->set_help_msg("-bt1, --bind_class_func_param    带参数类绑定");
     // 带参数类函数绑定（多个参数）
     co->bind_cmd("-bt2, --bind_class_func_param2", &foo::print_t2, pf, 1011);
     co->bind_cmd("-bt3, --bind_class_func_param3", &foo::print_t3, pf, 1013, 10.13);
     // 无参数类函数绑定
     co->bind_cmd("-bt, --bind_class_func", &foo::print, std::ref(f))->set_help_msg("-bt, --bind_class_func    无参数类绑定");
     // 带参数普通函数绑定(自动类型推断)
-    cco->bind_cmd("-bf1, --bind_func_param1", (void (*)(util::cli::callback_param, std::string*))print, &str)->set_help_msg("-bf1, --bind_func_param    带参数函数绑定");
+    cco->bind_cmd("-bf1, --bind_func_param1", (void (*)(util::cli::callback_param, std::string *))print, &str)
+        ->set_help_msg("-bf1, --bind_func_param    带参数函数绑定");
 
     cco->bind_cmd("-bf2, --bind_func_param2", print2, 20.11);
     cco->bind_cmd("-bf3, --bind_func_param3", print3, 20.11, 2013);
 
     // 无参数普通函数绑定
-    cco->bind_cmd("-bf, --bind_func", (void(*)(util::cli::callback_param))print)->set_help_msg("-bf, --bind_func    无参数函数绑定");
+    cco->bind_cmd("-bf, --bind_func", (void (*)(util::cli::callback_param))print)->set_help_msg("-bf, --bind_func    无参数函数绑定");
     // 复杂多指令绑定
     co->bind_cmd("wo  ;le  , ge, cha,de", complex_bind_func, 100);
     // 绑定子绑定对象
     co->bind_child_cmd("-c, --child", cco)->set_help_msg("-c, --child    ");
     // 绑定多指令的默认执行函数
-    co->bind_cmd("@OnDefault", (void(*)(util::cli::callback_param))print);
+    co->bind_cmd("@OnDefault", (void (*)(util::cli::callback_param))print);
 
     // 单指令启动测试
-    co->start("-c lala def -bf1 par1 par2 par3 -bf2 -bf3 fp1");
+    co->start("-c lala def -bf1 par1=par2 par3 -bf2 -bf3 fp1");
+    printf("-bf1 has set str=%s with parameter par1=par2\n", str.c_str());
+
     co->start("-bt btpar1 \"test end of line\\r\\n\tanother line\"-bt1 with one param --bind_class_func_param2 p1 p2 p3 -bt3 p4");
     printf("成员函数绑定传入对象引用包装测试: %s\n", (g_test == &f) ? "通过" : "失败！！！！！！！！！！！");
 
     // 多指令启动测试
-    const char* strCmds[] = {"path", "par1", "par2", "wo", "le", "ge", "cha"};
+    const char *strCmds[] = {"path", "par1=par2", "par2", "wo", "le", "ge", "cha"};
     co->start(7, strCmds);
     puts(str.c_str());
 
@@ -140,7 +131,7 @@ int cmd_option_sample_main() {
 
     // 添加帮助信息测试
     co->get_binded_cmd("wo")->add_help_msg("wo, le, ge, cha, de")->add_help_msg("   复杂指令绑定");
-    std::shared_ptr<std::vector<const char*> > cmds = co->get_cmd_names();
+    std::shared_ptr<std::vector<const char *> > cmds = co->get_cmd_names();
     printf("CMDS: ");
     for (unsigned int i = 0; i < cmds->size(); ++i) {
         printf(" %s;", (*cmds)[i]);

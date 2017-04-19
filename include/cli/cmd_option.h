@@ -19,15 +19,17 @@
  *
  */
 
+#include <assert.h>
 #include <cstdio>
 #include <exception>
 #include <set>
-#include <assert.h>
+
 
 #include <map>
-#include <vector>
 #include <ostream>
 #include <sstream>
+#include <vector>
+
 
 #include "std/ref.h"
 #include "std/smart_ptr.h"
@@ -71,13 +73,13 @@ namespace util {
             typedef binder::cmd_option_bind_base::help_msg_t help_msg_t;
             typedef binder::cmd_option_bind_base::help_list_t help_list_t;
             typedef std::shared_ptr<binder::cmd_option_bind_base> func_ptr_t;
-            typedef std::map<TCmdStr,  func_ptr_t> funmap_type;
+            typedef std::map<TCmdStr, func_ptr_t> funmap_type;
 
         protected:
             static short map_value_[256];  // 记录不同字符的映射关系
             static char trans_value_[256]; // 记录特殊转义字符
 
-            funmap_type callback_funcs_; // 记录命令的映射函数
+            funmap_type callback_funcs_;    // 记录命令的映射函数
             funmap_type callback_children_; // 子命令组额外索引
             int help_cmd_style_;
             int help_description_style_;
@@ -101,12 +103,8 @@ namespace util {
 
                     iter = callback_funcs_.find("@OnError"); // 查找错误处理函数
                     if (iter != callback_funcs_.end()) {
-                        // 末尾无参数Key填充空Value
-                        if (params.get_params_number() % 2) params.add("");
-
                         // 错误附加内容(错误内容)
-                        params.add("@ErrorMsg");
-                        params.add("Command Invalid");
+                        params.add("@ErrorMsg=Command Invalid");
                         params.append_cmd(cmd_content.c_str(), iter->second); // 添加当前指令调用栈
 
                         (*iter->second)(params);
@@ -123,20 +121,20 @@ namespace util {
              * 默认帮助函数
              */
             void on_help(callback_param) {
-                std::cout<< "Help:"<< std::endl;
-                std::cout<< (*this);
+                std::cout << "Help:" << std::endl;
+                std::cout << (*this);
             }
 
         public:
-            void list_help_msg(help_list_t& msg, const std::string& prefix) const {
-                for(typename funmap_type::const_iterator iter = callback_funcs_.begin(); iter != callback_funcs_.end(); ++iter) {
+            void list_help_msg(help_list_t &msg, const std::string &prefix) const {
+                for (typename funmap_type::const_iterator iter = callback_funcs_.begin(); iter != callback_funcs_.end(); ++iter) {
                     if (iter->first.empty() || '@' == iter->first[0]) {
                         continue;
                     }
 
                     help_list_t::iterator iter_m;
-                    help_msg_t* obj;
-                    for(iter_m = msg.begin(), obj = NULL; iter_m != msg.end(); ++iter_m) {
+                    help_msg_t *obj;
+                    for (iter_m = msg.begin(), obj = NULL; iter_m != msg.end(); ++iter_m) {
                         if ((*iter_m).binded_obj == iter->second) {
                             obj = &(*iter_m);
                             break;
@@ -145,7 +143,7 @@ namespace util {
 
                     // all children do not make a help_msg_t
                     if (callback_children_.find(iter->first) != callback_children_.end()) {
-                        self_type* child = dynamic_cast<self_type*>(iter->second.get());
+                        self_type *child = dynamic_cast<self_type *>(iter->second.get());
                         assert(child);
                         child->list_help_msg(msg, (prefix + " ") + iter->first.c_str());
                         continue;
@@ -171,7 +169,7 @@ namespace util {
                 }
             }
 
-            static std::ostream& dump(std::ostream& os, const self_type& self, const std::string& prefix) {
+            static std::ostream &dump(std::ostream &os, const self_type &self, const std::string &prefix) {
                 help_list_t msgs;
                 self.list_help_msg(msgs, "");
 
@@ -181,11 +179,12 @@ namespace util {
                     std::sort((*iter).cmd_paths.begin(), (*iter).cmd_paths.end());
                     std::stringstream ss;
                     bool not_first = false;
-                    for (std::vector<std::string>::iterator cmd_it = (*iter).cmd_paths.begin(); cmd_it != (*iter).cmd_paths.end(); ++ cmd_it) {
+                    for (std::vector<std::string>::iterator cmd_it = (*iter).cmd_paths.begin(); cmd_it != (*iter).cmd_paths.end();
+                         ++cmd_it) {
                         if (not_first) {
-                            ss<< ", ";
+                            ss << ", ";
                         }
-                        ss<< *cmd_it;
+                        ss << *cmd_it;
                         not_first = true;
                     }
 
@@ -200,25 +199,21 @@ namespace util {
                 for (help_list_t::iterator iter = msgs.begin(); iter != msgs.end(); ++iter) {
                     shell_stream ss(os);
 
-                    ss().open(self.help_cmd_style_)<< prefix<< (*iter).all_cmds;
+                    ss().open(self.help_cmd_style_) << prefix << (*iter).all_cmds;
                     if ((*iter).all_cmds.size() < cmd_padding) {
                         std::string padding_space;
                         padding_space.resize(cmd_padding - (*iter).all_cmds.size(), ' ');
-                        ss()<< padding_space;
+                        ss() << padding_space;
                     }
-                    ss().open(self.help_description_style_)<< (*iter).description<< std::endl;
+                    ss().open(self.help_description_style_) << (*iter).description << std::endl;
                 }
 
                 return os;
             }
 
-            friend std::ostream& operator<<(std::ostream& os, const self_type& self) {
-                return dump(os, self, std::string());
-            }
+            friend std::ostream &operator<<(std::ostream &os, const self_type &self) { return dump(os, self, std::string()); }
 
-            std::ostream& dump(std::ostream& os, const std::string& prefix) {
-                return dump(os, *this, prefix);
-            }
+            std::ostream &dump(std::ostream &os, const std::string &prefix) { return dump(os, *this, prefix); }
 
             /**
              * 从字符串获取一个字段（返回未处理的字符串结尾）
@@ -295,7 +290,9 @@ namespace util {
             /**
              * 构造函数
              */
-            cmd_option_bind(): help_cmd_style_(shell_font_style::SHELL_FONT_COLOR_YELLOW | shell_font_style::SHELL_FONT_SPEC_BOLD), help_description_style_(0) {
+            cmd_option_bind()
+                : help_cmd_style_(shell_font_style::SHELL_FONT_COLOR_YELLOW | shell_font_style::SHELL_FONT_SPEC_BOLD),
+                  help_description_style_(0) {
                 // 如果已初始化则跳过
                 if (map_value_[(uc_t)' '] & SPLITCHAR) return;
 
@@ -358,11 +355,11 @@ namespace util {
 
             size_t size() const { return callback_funcs_.size(); }
             size_t empty() const { return callback_funcs_.empty(); }
-            const funmap_type& get_all() const { return callback_funcs_; }
+            const funmap_type &get_all() const { return callback_funcs_; }
 
             size_t children_size() const { return callback_children_.size(); }
             size_t children_empty() const { return callback_children_.empty(); }
-            const funmap_type& get_all_children() const { return callback_children_; }
+            const funmap_type &get_all_children() const { return callback_children_; }
 
             const int get_help_cmd_style() const { return help_cmd_style_; }
             void set_help_cmd_style(int style) { help_cmd_style_ = style; }
@@ -708,8 +705,7 @@ namespace util {
                 return base_node;
             }
 
-            std::shared_ptr<binder::cmd_option_bind_base> bind_child_cmd(const std::string cmd_content,
-                                                                         ptr_type cmd_opt) {
+            std::shared_ptr<binder::cmd_option_bind_base> bind_child_cmd(const std::string cmd_content, ptr_type cmd_opt) {
                 std::shared_ptr<binder::cmd_option_bind_base> base_node = std::dynamic_pointer_cast<binder::cmd_option_bind_base>(cmd_opt);
                 std::vector<std::string> cmds = split_cmd(cmd_content.c_str());
                 for (std::vector<std::string>::size_type index = 0; index < cmds.size(); ++index) {

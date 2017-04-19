@@ -37,9 +37,22 @@ namespace util {
 
             key_value_ = std::shared_ptr<key_map_type>(new key_map_type());
 
-            keys_type::size_type uLen = (keys_.size() / 2) * 2; // 去除末尾无value的key
-            for (keys_type::size_type i = 0; i < uLen; i += 2) {
-                (*key_value_)[keys_[i]->to_string()] = keys_[i + 1];
+            for (keys_type::size_type i = 0; i < keys_.size(); ++i) {
+                const char *str_key = keys_[i]->to_string();
+                if (NULL == str_key) {
+                    continue;
+                }
+
+                const char *str_val = str_key;
+                for (; *str_val && ':' != *str_val && '=' != *str_val; ++str_val)
+                    ;
+                if (*str_val) {
+                    ++str_val;
+                } else {
+                    continue;
+                }
+
+                (*key_value_)[std::string(str_key, str_val - 1)] = value_type(new cmd_option_value(str_val));
             }
         }
 
