@@ -3,6 +3,8 @@ language: cpp
 env:
   global:
     - LANG="zh_CN.UTF-8"
+    - CMAKE_PREFIX=$HOME/prebuilt/cmake ;
+    - CMAKE_LINUX_URL=https://cmake.org/files/v3.8/cmake-3.8.1-Linux-x86_64.sh ;
 matrix:
   include:
     - os: osx
@@ -38,7 +40,6 @@ addons:
   apt:
     sources:
       - ubuntu-toolchain-r-test
-      - ppa:george-edison55/cmake-3.x
       # - sourceline: 'deb http://apt.llvm.org/trusty/ llvm-toolchain-trusty-3.8 main'
       #   key_url: 'http://apt.llvm.org/llvm-snapshot.gpg.key'
 
@@ -56,7 +57,6 @@ addons:
       - g++-6
       - g++-6-multilib
       - clang
-      - cmake
       ## - libc++1
       ## - libc++-dev
       ## - libc++abi1
@@ -75,20 +75,25 @@ before_install:
 #   - if [ "$TRAVIS_OS_NAME" == "linux" ]; then sudo apt-get update; fi
 #
 install:
-    - if [ "$TRAVIS_OS_NAME" == "linux" ] ; then sudo apt-get install -qq -y cmake; fi
-#   - if [ "$TRAVIS_OS_NAME" == "osx" ] ; then brew upgrade cmake; fi
-#   - if [ "$TRAVIS_OS_NAME" == "linux" ] && [ "$USE_CC" == "gcc-4.9" ] ; then sudo apt-get install -qq gcc-4.9-multilib g++-4.9-multilib; fi
-#   - if [ "$TRAVIS_OS_NAME" == "linux" ] && [ "$USE_CC" == "gcc-5" ] ; then sudo apt-get install -qq gcc-5-multilib g++-5-multilib; fi
-#   - if [ "$TRAVIS_OS_NAME" == "linux" ] && [ "$USE_CC" == "clang-3.8" ] ; then sudo apt-get install --allow-unauthenticated -qq clang-3.8 libclang-common-3.8-dev libclang-3.8-dev; fi
+    - if [ "$TRAVIS_OS_NAME" == "linux" ] ; then
+          sudo apt-get install -qq -y cmake;
+
+          if [ ! -e "$CMAKE_PREFIX/bin/cmake" ]; then
+            mkdir -p "$CMAKE_PREFIX";
+            curl --insecure -L "$CMAKE_LINUX_URL" -o cmake-linux.sh ;
+            bash cmake-linux.sh --skip-license --prefix=$CMAKE_PREFIX ;
+          fi
+
+      fi
 
 script:
   - export CC=$USE_CC
   - export CXX=$USE_CXX
   - REPO_DIR=$PWD;
   - mkdir -p $REPO_DIR/build && cd $REPO_DIR/build ;
-  - echo "cmake .. -DPROJECT_ENABLE_UNITTEST=ON -DPROJECT_ENABLE_SAMPLE=ON -DCMAKE_C_COMPILER=$USE_CC -DCMAKE_CXX_COMPILER=$USE_CXX" ;
-  - cmake .. -DPROJECT_ENABLE_UNITTEST=ON -DPROJECT_ENABLE_SAMPLE=ON -DCMAKE_C_COMPILER=$USE_CC -DCMAKE_CXX_COMPILER=$USE_CXX ;
-  - make -j4
+  - echo "$CMAKE_PREFIX/bin/cmake .. -DPROJECT_ENABLE_UNITTEST=ON -DPROJECT_ENABLE_SAMPLE=ON -DCMAKE_C_COMPILER=$USE_CC -DCMAKE_CXX_COMPILER=$USE_CXX" ;
+  - $CMAKE_PREFIX/bin/cmake .. -DPROJECT_ENABLE_UNITTEST=ON -DPROJECT_ENABLE_SAMPLE=ON -DCMAKE_C_COMPILER=$USE_CC -DCMAKE_CXX_COMPILER=$USE_CXX ;
+  - $CMAKE_PREFIX/bin/cmake --build .
 
 after_success:
   - test/atframe_utils_unit_test
@@ -97,6 +102,8 @@ after_success:
 cache:
   apt: true
   ccache: true
+  directories:
+  - $CMAKE_PREFIX
 
 branches:
   only:
