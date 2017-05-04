@@ -76,8 +76,7 @@ before_install:
 #
 install:
     - if [ "$TRAVIS_OS_NAME" == "linux" ] ; then
-          sudo apt-get install -qq -y cmake;
-
+    
           if [ ! -e "$CMAKE_BIN" ]; then
             mkdir -p "$CMAKE_PREFIX";
             curl --insecure -L "$CMAKE_LINUX_URL" -o cmake-linux.sh ;
