@@ -100,7 +100,7 @@ function(FindConfigurePackageUnzip src work_dir)
     endif()
 
     if(NOT ZIP_EXECUTABLE)
-        message(FATAL_ERROR "unzip tools not found")
+        message(STATUS "unzip tools not found, skip ${src}")
     endif()
 endfunction()
 
@@ -139,26 +139,10 @@ macro (FindConfigurePackage)
 
         # step 3. build
         if(NOT ${FindConfigurePackage_PACKAGE}_FOUND AND NOT ${FIND_CONFIGURE_PACKAGE_UPPER_NAME})
-            # zip package
-            if(FindConfigurePackage_ZIP_URL)
-                get_filename_component(DOWNLOAD_FILENAME "${FindConfigurePackage_ZIP_URL}" NAME)
-                if(NOT FindConfigurePackage_SRC_DIRECTORY_NAME)
-                    string(REGEX REPLACE "\\.zip$" "" FindConfigurePackage_SRC_DIRECTORY_NAME "${DOWNLOAD_FILENAME}")
-                endif()
-                set(FindConfigurePackage_DOWNLOAD_SOURCE_DIR "${FindConfigurePackage_WORKING_DIRECTORY}/${FindConfigurePackage_SRC_DIRECTORY_NAME}")
-                FindConfigurePackageRemoveEmptyDir(${FindConfigurePackage_DOWNLOAD_SOURCE_DIR})
-
-                if(NOT EXISTS "${FindConfigurePackage_WORKING_DIRECTORY}/${DOWNLOAD_FILENAME}")
-                    message(STATUS "start to download ${DOWNLOAD_FILENAME} from ${FindConfigurePackage_ZIP_URL}")
-                    FindConfigurePackageDownloadFile("${FindConfigurePackage_ZIP_URL}" "${FindConfigurePackage_WORKING_DIRECTORY}/${DOWNLOAD_FILENAME}")
-                endif()
-
-                if(NOT EXISTS ${FindConfigurePackage_DOWNLOAD_SOURCE_DIR})
-                    FindConfigurePackageUnzip("${FindConfigurePackage_WORKING_DIRECTORY}/${DOWNLOAD_FILENAME}" ${FindConfigurePackage_WORKING_DIRECTORY})
-                endif()
+            set (FindConfigurePackage_UNPACK_SOURCE NO)
 
             # tar package
-            elseif(FindConfigurePackage_TAR_URL)
+            if(NOT FindConfigurePackage_UNPACK_SOURCE AND FindConfigurePackage_TAR_URL)
                 get_filename_component(DOWNLOAD_FILENAME "${FindConfigurePackage_TAR_URL}" NAME)
                 if(NOT FindConfigurePackage_SRC_DIRECTORY_NAME)
                     string(REGEX REPLACE "\\.tar\\.[A-Za-z0-9]+$" "" FindConfigurePackage_SRC_DIRECTORY_NAME "${DOWNLOAD_FILENAME}")
@@ -190,11 +174,39 @@ macro (FindConfigurePackage)
                 endif()
 
                 if(NOT TAR_EXECUTABLE)
-                    message(FATAL_ERROR "tar not found")
+                    message(STATUS "tar not found skip ${FindConfigurePackage_TAR_URL}")
                 endif()
 
+                if (EXISTS ${FindConfigurePackage_DOWNLOAD_SOURCE_DIR})
+                    set (FindConfigurePackage_UNPACK_SOURCE YES)
+                endif()
+            endif()
+
+            # zip package
+            if(NOT FindConfigurePackage_UNPACK_SOURCE AND FindConfigurePackage_ZIP_URL)
+                get_filename_component(DOWNLOAD_FILENAME "${FindConfigurePackage_ZIP_URL}" NAME)
+                if(NOT FindConfigurePackage_SRC_DIRECTORY_NAME)
+                    string(REGEX REPLACE "\\.zip$" "" FindConfigurePackage_SRC_DIRECTORY_NAME "${DOWNLOAD_FILENAME}")
+                endif()
+                set(FindConfigurePackage_DOWNLOAD_SOURCE_DIR "${FindConfigurePackage_WORKING_DIRECTORY}/${FindConfigurePackage_SRC_DIRECTORY_NAME}")
+                FindConfigurePackageRemoveEmptyDir(${FindConfigurePackage_DOWNLOAD_SOURCE_DIR})
+
+                if(NOT EXISTS "${FindConfigurePackage_WORKING_DIRECTORY}/${DOWNLOAD_FILENAME}")
+                    message(STATUS "start to download ${DOWNLOAD_FILENAME} from ${FindConfigurePackage_ZIP_URL}")
+                    FindConfigurePackageDownloadFile("${FindConfigurePackage_ZIP_URL}" "${FindConfigurePackage_WORKING_DIRECTORY}/${DOWNLOAD_FILENAME}")
+                endif()
+
+                if(NOT EXISTS ${FindConfigurePackage_DOWNLOAD_SOURCE_DIR})
+                    FindConfigurePackageUnzip("${FindConfigurePackage_WORKING_DIRECTORY}/${DOWNLOAD_FILENAME}" ${FindConfigurePackage_WORKING_DIRECTORY})
+                endif()
+
+                if (EXISTS ${FindConfigurePackage_DOWNLOAD_SOURCE_DIR})
+                    set (FindConfigurePackage_UNPACK_SOURCE YES)
+                endif()
+            endif()
+
             # git package
-            elseif(FindConfigurePackage_GIT_URL)
+            if(NOT FindConfigurePackage_UNPACK_SOURCE AND FindConfigurePackage_GIT_URL)
                 get_filename_component(DOWNLOAD_FILENAME "${FindConfigurePackage_GIT_URL}" NAME)
                 if(NOT FindConfigurePackage_SRC_DIRECTORY_NAME)
                     get_filename_component(FindConfigurePackage_SRC_DIRECTORY_FULL_NAME "${DOWNLOAD_FILENAME}" NAME)
@@ -205,20 +217,25 @@ macro (FindConfigurePackage)
 
                 if(NOT EXISTS ${FindConfigurePackage_DOWNLOAD_SOURCE_DIR})
                     find_package(Git)
-                    if(NOT GIT_FOUND)
-                       message(FATAL_ERROR "git not found")
+                    if(GIT_FOUND)
+                        if (NOT FindConfigurePackage_GIT_BRANCH)
+                            set(FindConfigurePackage_GIT_BRANCH master)
+                        endif()
+                        execute_process(COMMAND ${GIT_EXECUTABLE} clone --depth=1 -b ${FindConfigurePackage_GIT_BRANCH} ${FindConfigurePackage_GIT_URL} ${FindConfigurePackage_SRC_DIRECTORY_NAME}
+                            WORKING_DIRECTORY ${FindConfigurePackage_WORKING_DIRECTORY}
+                        )
+                    else()
+                       message(STATUS "git not found, skip ${FindConfigurePackage_GIT_URL}")
                     endif()
-
-                    if (NOT FindConfigurePackage_GIT_BRANCH)
-                        set(FindConfigurePackage_GIT_BRANCH master)
-                    endif()
-                    execute_process(COMMAND ${GIT_EXECUTABLE} clone --depth=1 -b ${FindConfigurePackage_GIT_BRANCH} ${FindConfigurePackage_GIT_URL} ${FindConfigurePackage_SRC_DIRECTORY_NAME}
-                        WORKING_DIRECTORY ${FindConfigurePackage_WORKING_DIRECTORY}
-                    )
                 endif()
 
+                if (EXISTS ${FindConfigurePackage_DOWNLOAD_SOURCE_DIR})
+                    set (FindConfigurePackage_UNPACK_SOURCE YES)
+                endif()
+            endif()
+
             # svn package
-            elseif(FindConfigurePackage_SVN_URL)
+            if(NOT FindConfigurePackage_UNPACK_SOURCE AND FindConfigurePackage_SVN_URL)
                 get_filename_component(DOWNLOAD_FILENAME "${FindConfigurePackage_SVN_URL}" NAME)
                 if(NOT FindConfigurePackage_SRC_DIRECTORY_NAME)
                     get_filename_component(FindConfigurePackage_SRC_DIRECTORY_NAME "${DOWNLOAD_FILENAME}" NAME)
@@ -228,14 +245,22 @@ macro (FindConfigurePackage)
 
                 if(NOT EXISTS ${FindConfigurePackage_DOWNLOAD_SOURCE_DIR})
                     find_package(Subversion)
-                    if(NOT SUBVERSION_FOUND)
-                       message(FATAL_ERROR "svn not found")
+                    if(SUBVERSION_FOUND)
+                        execute_process(COMMAND ${Subversion_SVN_EXECUTABLE} co "${FindConfigurePackage_SVN_URL}" "${FindConfigurePackage_SRC_DIRECTORY_NAME}"
+                            WORKING_DIRECTORY "${FindConfigurePackage_WORKING_DIRECTORY}"
+                        )
+                    else()
+                       message(STATUS "svn not found, skip ${FindConfigurePackage_SVN_URL}")
                     endif()
-
-                    execute_process(COMMAND ${Subversion_SVN_EXECUTABLE} co "${FindConfigurePackage_SVN_URL}" "${FindConfigurePackage_SRC_DIRECTORY_NAME}"
-                        WORKING_DIRECTORY "${FindConfigurePackage_WORKING_DIRECTORY}"
-                    )
                 endif()
+
+                if (EXISTS ${FindConfigurePackage_DOWNLOAD_SOURCE_DIR})
+                    set (FindConfigurePackage_UNPACK_SOURCE YES)
+                endif()
+            endif()
+
+            if(NOT FindConfigurePackage_UNPACK_SOURCE)
+                message(FATAL_ERROR "Can not download source for ${FindConfigurePackage_PACKAGE}")
             endif()
 
             # init build dir
@@ -278,13 +303,16 @@ macro (FindConfigurePackage)
                     set(BUILD_WITH_CMAKE_PROJECT_DIR ".")
                 endif()
                 execute_process(
-                    COMMAND "cmake" ${BUILD_WITH_CMAKE_PROJECT_DIR} "-DCMAKE_INSTALL_PREFIX=${FindConfigurePackage_PREFIX_DIRECTORY}" ${FindConfigurePackage_CMAKE_FLAGS}
+                    COMMAND 
+                        "cmake" ${BUILD_WITH_CMAKE_PROJECT_DIR} 
+                        -G "${CMAKE_GENERATOR}"
+                        "-DCMAKE_INSTALL_PREFIX=${FindConfigurePackage_PREFIX_DIRECTORY}" ${FindConfigurePackage_CMAKE_FLAGS}
                     WORKING_DIRECTORY "${FindConfigurePackage_BUILD_DIRECTORY}"
                 )
 
-                # TODO visual studio?
+                # cmake --build and install
                 execute_process(
-                    COMMAND "make" ${FindConfigurePackage_MAKE_FLAGS} "install"
+                    COMMAND "cmake" --build . --target install
                     WORKING_DIRECTORY "${FindConfigurePackage_BUILD_DIRECTORY}"
                 )
 
