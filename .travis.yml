@@ -10,7 +10,7 @@ matrix:
     - os: osx
       env: USE_CC=clang USE_CXX=clang++ CMAKE_BIN=cmake
     - os: osx
-      env: USE_CC=gcc USE_CXX=g++
+      env: USE_CC=gcc USE_CXX=g++ CMAKE_BIN=cmake
     - os: linux
       dist: trusty
       sudo: required
@@ -76,7 +76,7 @@ before_install:
 #
 install:
     - if [ "$TRAVIS_OS_NAME" == "linux" ] ; then
-    
+
           if [ ! -e "$CMAKE_BIN" ]; then
             mkdir -p "$CMAKE_PREFIX";
             curl --insecure -L "$CMAKE_LINUX_URL" -o cmake-linux.sh ;
