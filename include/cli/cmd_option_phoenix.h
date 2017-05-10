@@ -51,7 +51,7 @@ namespace util {
 
                 void operator()(util::cli::callback_param params) {
                     for (util::cli::cmd_option_list::size_type i = 0; i < params.get_params_number(); ++i) {
-                        var.push_back(params[i]->to<T>());
+                        var.push_back(params[i]->to<typename T::value_type>());
                     }
                 }
             };
@@ -71,7 +71,7 @@ namespace util {
 
                 void operator()(util::cli::callback_param params) {
                     for (util::cli::cmd_option_list::size_type i = 0; i < params.get_params_number(); ++i) {
-                        var.push_front(params[i]->to<T>());
+                        var.push_front(params[i]->to<typename T::value_type>());
                     }
                 }
             };
@@ -91,7 +91,7 @@ namespace util {
 
                 void operator()(util::cli::callback_param params) {
                     for (util::cli::cmd_option_list::size_type i = 0; i < params.get_params_number(); ++i) {
-                        var.insert(params[i]->to<T>());
+                        var.insert(params[i]->to<typename T::value_type>());
                     }
                 }
             };
