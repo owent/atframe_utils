@@ -117,7 +117,7 @@ endfunction()
 macro (FindConfigurePackage)
     include(CMakeParseArguments)
     set(optionArgs BUILD_WITH_CONFIGURE BUILD_WITH_CMAKE BUILD_WITH_SCONS BUILD_WITH_CUSTOM_COMMAND)
-    set(oneValueArgs PACKAGE WORKING_DIRECTORY BUILD_DIRECTORY PREFIX_DIRECTORY SRC_DIRECTORY_NAME ZIP_URL TAR_URL SVN_URL GIT_URL GIT_BRANCH)
+    set(oneValueArgs PACKAGE WORKING_DIRECTORY BUILD_DIRECTORY PREFIX_DIRECTORY SRC_DIRECTORY_NAME PROJECT_DIRECTORY ZIP_URL TAR_URL SVN_URL GIT_URL GIT_BRANCH)
     set(multiValueArgs CONFIGURE_CMD CONFIGURE_FLAGS CMAKE_FLAGS SCONS_FLAGS MAKE_FLAGS CUSTOM_BUILD_COMMAND PREBUILD_COMMAND)
     cmake_parse_arguments(FindConfigurePackage "${optionArgs}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN} )
 
@@ -266,9 +266,9 @@ macro (FindConfigurePackage)
             # init build dir
             if (NOT FindConfigurePackage_BUILD_DIRECTORY)
                 set(FindConfigurePackage_BUILD_DIRECTORY ${FindConfigurePackage_DOWNLOAD_SOURCE_DIR})
-                if (NOT EXISTS ${FindConfigurePackage_BUILD_DIRECTORY})
-                    file(MAKE_DIRECTORY ${FindConfigurePackage_BUILD_DIRECTORY})
-                endif()
+            endif()
+            if (NOT EXISTS ${FindConfigurePackage_BUILD_DIRECTORY})
+                file(MAKE_DIRECTORY ${FindConfigurePackage_BUILD_DIRECTORY})
             endif()
 
             # prebuild commands
@@ -282,7 +282,11 @@ macro (FindConfigurePackage)
 
             # build using configure and make
             if(FindConfigurePackage_BUILD_WITH_CONFIGURE)
-                file(RELATIVE_PATH CONFIGURE_EXEC_FILE ${FindConfigurePackage_BUILD_DIRECTORY} "${FindConfigurePackage_WORKING_DIRECTORY}/${FindConfigurePackage_SRC_DIRECTORY_NAME}/configure")
+                if(FindConfigurePackage_PROJECT_DIRECTORY)
+                    file(RELATIVE_PATH CONFIGURE_EXEC_FILE ${FindConfigurePackage_BUILD_DIRECTORY} "${FindConfigurePackage_PROJECT_DIRECTORY}/configure")
+                else()
+                    file(RELATIVE_PATH CONFIGURE_EXEC_FILE ${FindConfigurePackage_BUILD_DIRECTORY} "${FindConfigurePackage_WORKING_DIRECTORY}/${FindConfigurePackage_SRC_DIRECTORY_NAME}/configure")
+                endif()
                 if ( ${CONFIGURE_EXEC_FILE} STREQUAL "configure")
                     set(CONFIGURE_EXEC_FILE "./configure")
                 endif()
@@ -298,27 +302,36 @@ macro (FindConfigurePackage)
 
             # build using cmake and make
             elseif(FindConfigurePackage_BUILD_WITH_CMAKE)
-                file(RELATIVE_PATH BUILD_WITH_CMAKE_PROJECT_DIR ${FindConfigurePackage_BUILD_DIRECTORY} ${FindConfigurePackage_DOWNLOAD_SOURCE_DIR})
+                if(FindConfigurePackage_PROJECT_DIRECTORY)
+                    file(RELATIVE_PATH BUILD_WITH_CMAKE_PROJECT_DIR ${FindConfigurePackage_BUILD_DIRECTORY} ${FindConfigurePackage_PROJECT_DIRECTORY})
+                else()
+                    file(RELATIVE_PATH BUILD_WITH_CMAKE_PROJECT_DIR ${FindConfigurePackage_BUILD_DIRECTORY} ${FindConfigurePackage_DOWNLOAD_SOURCE_DIR})
+                endif()
                 if ( NOT BUILD_WITH_CMAKE_PROJECT_DIR)
                     set(BUILD_WITH_CMAKE_PROJECT_DIR ".")
                 endif()
+                message(STATUS "@${FindConfigurePackage_BUILD_DIRECTORY} Run: ${CMAKE_COMMAND} ${BUILD_WITH_CMAKE_PROJECT_DIR} -G '${CMAKE_GENERATOR}' -DCMAKE_INSTALL_PREFIX=${FindConfigurePackage_PREFIX_DIRECTORY} ${FindConfigurePackage_CMAKE_FLAGS}")
                 execute_process(
                     COMMAND 
-                        "cmake" ${BUILD_WITH_CMAKE_PROJECT_DIR} 
+                        ${CMAKE_COMMAND} ${BUILD_WITH_CMAKE_PROJECT_DIR} 
                         -G "${CMAKE_GENERATOR}"
                         "-DCMAKE_INSTALL_PREFIX=${FindConfigurePackage_PREFIX_DIRECTORY}" ${FindConfigurePackage_CMAKE_FLAGS}
-                    WORKING_DIRECTORY "${FindConfigurePackage_BUILD_DIRECTORY}"
+                    WORKING_DIRECTORY ${FindConfigurePackage_BUILD_DIRECTORY}
                 )
 
                 # cmake --build and install
                 execute_process(
-                    COMMAND "cmake" --build . --target install
-                    WORKING_DIRECTORY "${FindConfigurePackage_BUILD_DIRECTORY}"
+                    COMMAND ${CMAKE_COMMAND} --build . --target install
+                    WORKING_DIRECTORY ${FindConfigurePackage_BUILD_DIRECTORY}
                 )
 
             # build using scons
             elseif(FindConfigurePackage_BUILD_WITH_SCONS)
-                file(RELATIVE_PATH BUILD_WITH_SCONS_PROJECT_DIR ${FindConfigurePackage_BUILD_DIRECTORY} ${FindConfigurePackage_DOWNLOAD_SOURCE_DIR})
+                if(FindConfigurePackage_PROJECT_DIRECTORY)
+                    file(RELATIVE_PATH BUILD_WITH_SCONS_PROJECT_DIR ${FindConfigurePackage_BUILD_DIRECTORY} ${FindConfigurePackage_PROJECT_DIRECTORY})
+                else()
+                    file(RELATIVE_PATH BUILD_WITH_SCONS_PROJECT_DIR ${FindConfigurePackage_BUILD_DIRECTORY} ${FindConfigurePackage_DOWNLOAD_SOURCE_DIR})
+                endif()
                 if ( NOT BUILD_WITH_SCONS_PROJECT_DIR)
                     set(BUILD_WITH_SCONS_PROJECT_DIR ".")
                 endif()
@@ -327,7 +340,7 @@ macro (FindConfigurePackage)
                 set(ENV{prefix} ${FindConfigurePackage_PREFIX_DIRECTORY})
                 execute_process(
                     COMMAND "scons" ${FindConfigurePackage_SCONS_FLAGS} ${BUILD_WITH_SCONS_PROJECT_DIR}
-                    WORKING_DIRECTORY "${FindConfigurePackage_BUILD_DIRECTORY}"
+                    WORKING_DIRECTORY ${FindConfigurePackage_BUILD_DIRECTORY}
                 )
                 set(ENV{prefix} ${OLD_ENV_PREFIX})
 
@@ -336,7 +349,7 @@ macro (FindConfigurePackage)
                 foreach(cmd ${FindConfigurePackage_CUSTOM_BUILD_COMMAND})
                     execute_process(
                         COMMAND ${cmd}
-                        WORKING_DIRECTORY "${FindConfigurePackage_BUILD_DIRECTORY}"
+                        WORKING_DIRECTORY ${FindConfigurePackage_BUILD_DIRECTORY}
                     )
                 endforeach()
 
