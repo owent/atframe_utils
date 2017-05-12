@@ -1,6 +1,8 @@
 #include <stdlib.h>
+#include <stdint.h>
+#include <inttypes.h>
 #include <string.h>
-
+#include <limits>
 
 #include "algorithm/xxtea.h"
 
@@ -16,6 +18,10 @@
         (n) = ((uint32_t)(b)[(i)] << 24) | ((uint32_t)(b)[(i) + 1] << 16) | ((uint32_t)(b)[(i) + 2] << 8) | ((uint32_t)(b)[(i) + 3]); \
     \
 }
+#endif
+
+#if defined(max)
+#undef max
 #endif
 
 namespace util {
@@ -34,7 +40,7 @@ namespace util {
             abort();
         }
 
-        if (sizeof(size_t) > sizeof(uint32_t) && len > (static_cast<size_t>(UINT32_MAX) << 2)) {
+        if (sizeof(size_t) > sizeof(uint32_t) && len > (static_cast<size_t>(std::numeric_limits<uint32_t>::max()) << 2)) {
             abort();
         }
 
@@ -68,7 +74,7 @@ namespace util {
             abort();
         }
 
-        if (sizeof(size_t) > sizeof(uint32_t) && len > (static_cast<size_t>(UINT32_MAX) << 2)) {
+        if (sizeof(size_t) > sizeof(uint32_t) && len > (static_cast<size_t>(std::numeric_limits<uint32_t>::max()) << 2)) {
             abort();
         }
 
