@@ -240,7 +240,7 @@ namespace std {
 
     // hash_value
     template <typename T>
-    struct hash;
+    class hash;
 
     template <typename T>
     std::size_t hash_value(intrusive_ptr<T> const &p) {
