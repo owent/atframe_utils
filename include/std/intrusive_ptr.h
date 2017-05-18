@@ -237,15 +237,6 @@ namespace std {
         os << p.get();
         return os;
     }
-
-    // hash_value
-    template <typename T>
-    class hash;
-
-    template <typename T>
-    std::size_t hash_value(intrusive_ptr<T> const &p) {
-        return std::hash<T *>()(p.get());
-    }
 }
 
 #endif
