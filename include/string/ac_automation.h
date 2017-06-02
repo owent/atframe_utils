@@ -20,15 +20,17 @@
 #include <assert.h>
 #include <cstddef>
 #include <cstring>
+#include <iostream>
 #include <list>
 #include <map>
 #include <stdint.h>
 #include <string>
 #include <vector>
-#include <iostream>
 
-#include "std/smart_ptr.h"
+
 #include "common/string_oprs.h"
+#include "std/smart_ptr.h"
+
 
 namespace util {
     namespace string {
@@ -236,53 +238,42 @@ namespace util {
                 }
 
 
-                template<typename TC>
-                struct equal_char {
-                    static inline bool equal(TC l, char r) {
-                        return false;
-                    }
+                static inline bool equal_char(char l, char r) { return l == r; }
 
-                    template<typename OTC, typename OTCTT>
-                    static inline void out(TC l, std::basic_ostream<OTC, OTCTT>& os) {
+                template <typename OTC, typename OTCTT>
+                static inline void output_char(char l, std::basic_ostream<OTC, OTCTT> &os) {
+                    if (l > 0x21 && l <= 0x7f) {
                         os << l;
+                    } else {
+                        char hex_val[3] = {0};
+                        util::string::hex(hex_val, l);
+                        os << "0x" << hex_val;
                     }
-                };
+                }
 
-                template<>
-                struct equal_char<char> {
-                    static inline bool equal(char l, char r) {
-                        return l == r;
-                    }
+                static inline bool equal_char(unsigned char l, char r) { return l == static_cast<unsigned char>(r); }
 
-                    template<typename OTC, typename OTCTT>
-                    static inline void out(char l, std::basic_ostream<OTC, OTCTT>& os) {
-                        if (l > 0x21 && l <= 0x7f) {
-                            os << l;
-                        } else {
-                            char hex_val[3] = { 0 };
-                            util::string::hex(hex_val, l);
-                            os << "0x" << hex_val;
-                        }
+                template <typename OTC, typename OTCTT>
+                static inline void output_char(unsigned char l, std::basic_ostream<OTC, OTCTT> &os) {
+                    if (l > 0x21 && l <= 0x7f) {
+                        os << l;
+                    } else {
+                        char hex_val[3] = {0};
+                        util::string::hex(hex_val, l);
+                        os << "0x" << hex_val;
                     }
-                };
+                }
 
-                template<>
-                struct equal_char<unsigned char> {
-                    static inline bool equal(unsigned char l, char r) {
-                        return l == static_cast<unsigned char>(r);
-                    }
+                template <typename TC>
+                static inline bool equal_char(TC l, char r) {
+                    return false;
+                }
 
-                    template<typename OTC, typename OTCTT>
-                    static inline void out(unsigned char l, std::basic_ostream<OTC, OTCTT>& os) {
-                        if (l > 0x21 && l <= 0x7f) {
-                            os << l;
-                        } else {
-                            char hex_val[3] = { 0 };
-                            util::string::hex(hex_val, l);
-                            os << "0x" << hex_val;
-                        }
-                    }
-                };
+                template <typename TC, typename OTC, typename OTCTT>
+                static inline void output_char(TC l, std::basic_ostream<OTC, OTCTT> &os) {
+                    os << l;
+                }
+
             private:
                 actrie(storage_t &storage, uint32_t failed_idx = 0) : failed_(failed_idx) {}
 
@@ -309,23 +300,23 @@ namespace util {
                     return ret;
                 }
 
-                template<typename TC, typename TCTT>
-                void dump(std::basic_ostream<TC, TCTT>& os) const {
-                    os << idx_ << " " << failed_<< " "<< matched_string_.size()<< " ";
+                template <typename TC, typename TCTT>
+                void dump(std::basic_ostream<TC, TCTT> &os) const {
+                    os << idx_ << " " << failed_ << " " << matched_string_.size() << " ";
                     os.write(matched_string_.data(), matched_string_.size());
 
                     typedef typename std::map<char_t, uint32_t>::const_iterator iter_type;
                     for (iter_type iter = next_.begin(); iter != next_.end(); ++iter) {
                         if (iter->second > 0) {
-                            os << " " << iter->first<< " "<< iter->second;
+                            os << " " << iter->first << " " << iter->second;
                         }
                     }
 
                     os << "\r\n";
                 }
 
-                template<typename TC, typename TCTT>
-                bool load(std::basic_istream<TC, TCTT>& is) {
+                template <typename TC, typename TCTT>
+                bool load(std::basic_istream<TC, TCTT> &is) {
                     if (!(is >> idx_)) {
                         return false;
                     }
@@ -359,18 +350,18 @@ namespace util {
                     return true;
                 }
 
-                template<typename TC, typename TCTT>
-                static inline std::basic_ostream<TC, TCTT>& dump_dot_node_name(std::basic_ostream<TC, TCTT>& os, uint32_t idx) {
+                template <typename TC, typename TCTT>
+                static inline std::basic_ostream<TC, TCTT> &dump_dot_node_name(std::basic_ostream<TC, TCTT> &os, uint32_t idx) {
                     return os << "char_" << idx;
                 }
 
-                template<typename TC, typename TCTT>
-                void dump_dot_node(std::basic_ostream<TC, TCTT>& os) const {
+                template <typename TC, typename TCTT>
+                void dump_dot_node(std::basic_ostream<TC, TCTT> &os) const {
                     dump_dot_node_name(os, get_idx());
                     if (!matched_string_.empty()) {
                         os << " [label=\"";
                         for (size_t i = 0; i < matched_string_.size(); ++i) {
-                            if (equal_char<char_t>::equal(matched_string_[i], '"')) {
+                            if (equal_char(matched_string_[i], '"')) {
                                 os << "\\\"";
                             } else {
                                 os << matched_string_[i];
@@ -378,18 +369,18 @@ namespace util {
                         }
                         os << "\"];" << std::endl;
                     } else {
-                        os << " [label=\"" << get_idx() << "\"];"<< std::endl;
+                        os << " [label=\"" << get_idx() << "\"];" << std::endl;
                     }
                 }
 
-                template<typename TC, typename TCTT>
-                void dump_dot_relationship(std::basic_ostream<TC, TCTT>& os) const {
+                template <typename TC, typename TCTT>
+                void dump_dot_relationship(std::basic_ostream<TC, TCTT> &os) const {
                     // fail node
                     if (0 != failed_) {
                         dump_dot_node_name(os, get_idx());
                         os << " -> ";
                         dump_dot_node_name(os, failed_);
-                        os << " [color=red];"<< std::endl;
+                        os << " [color=red];" << std::endl;
                     }
 
                     typedef typename std::map<char_t, uint32_t>::const_iterator iter_type;
@@ -399,10 +390,10 @@ namespace util {
                             os << " -> ";
                             dump_dot_node_name(os, iter->second);
                             os << " [style=bold,label=\"";
-                            if (equal_char<char_t>::equal(iter->first, '"')) {
+                            if (equal_char(iter->first, '"')) {
                                 os << "\\\"";
                             } else {
-                                equal_char<char_t>::out(iter->first, os);
+                                output_char(iter->first, os);
                             }
 
                             os << "\"];" << std::endl;
@@ -741,8 +732,9 @@ namespace util {
              * @param node_options 节点绘制选项(最后跟一个NULL表示结束)
              * @param edge_options 边绘制选项(最后跟一个NULL表示结束)
              */
-            template<typename TC, typename TCTT>
-            void dump_dot(std::basic_ostream<TC, TCTT>& os, const char* options[] = NULL, const char* node_options[] = NULL, const char* edge_options[] = NULL) {
+            template <typename TC, typename TCTT>
+            void dump_dot(std::basic_ostream<TC, TCTT> &os, const char *options[] = NULL, const char *node_options[] = NULL,
+                          const char *edge_options[] = NULL) {
                 init();
 
                 os << "digraph \"ac_automation";
@@ -758,7 +750,7 @@ namespace util {
                 }
 
                 if (node_options && *node_options) {
-                    os << "node ["<< *node_options;
+                    os << "node [" << *node_options;
                     ++node_options;
                     while (node_options && *node_options) {
                         os << ", " << *node_options;
@@ -768,7 +760,7 @@ namespace util {
                 }
 
                 if (edge_options && *edge_options) {
-                    os << "edge ["<< *edge_options;
+                    os << "edge [" << *edge_options;
                     ++edge_options;
                     while (edge_options && *edge_options) {
                         os << ", " << *edge_options;
@@ -795,11 +787,11 @@ namespace util {
             * @param node_options 节点绘制选项(最后跟一个NULL表示结束)
             * @param edge_options 边绘制选项(最后跟一个NULL表示结束)
             */
-            template<typename TC, typename TCTT>
-            void dump(std::basic_ostream<TC, TCTT>& os) {
+            template <typename TC, typename TCTT>
+            void dump(std::basic_ostream<TC, TCTT> &os) {
                 init();
 
-                os << "ACAUTOMATION "<< sizeof(char_t)<< "\r\n";
+                os << "ACAUTOMATION " << sizeof(char_t) << "\r\n";
                 if (is_nocase()) {
                     os << "nocase 1\r\n";
                 }
