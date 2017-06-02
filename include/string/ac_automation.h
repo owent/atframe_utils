@@ -16,7 +16,6 @@
 
 #pragma once
 
-#include "std/smart_ptr.h"
 #include <algorithm>
 #include <assert.h>
 #include <cstddef>
@@ -26,17 +25,21 @@
 #include <stdint.h>
 #include <string>
 #include <vector>
+#include <iostream>
+
+#include "std/smart_ptr.h"
+#include "common/string_oprs.h"
 
 namespace util {
     namespace string {
         struct utf8_char_t {
-            utf8_char_t(const char* str) {
+            utf8_char_t(const char *str) {
                 size_t len = length(str);
                 for (size_t i = 0; i < len; ++i) {
                     data[i] = str[i];
                 }
             };
-            utf8_char_t(const std::string& str) {
+            utf8_char_t(const std::string &str) {
                 size_t len = length(str.c_str());
                 for (size_t i = 0; i < len; ++i) {
                     data[i] = str[i];
@@ -45,7 +48,7 @@ namespace util {
 
             char data[8];
 
-            inline size_t length(const char* s) const {
+            static inline size_t length(const char *s) {
                 size_t ret = 1;
                 char c = (*s);
 
@@ -53,7 +56,7 @@ namespace util {
                     return ret;
                 }
                 c <<= 1;
-                
+
                 for (; ret < 6; ++ret) {
                     if (!(c & 0x80)) {
                         break;
@@ -63,17 +66,19 @@ namespace util {
                 return ret;
             }
 
-            inline size_t length() const {
-                return length(&data[0]);
-            }
+            inline char operator[](size_t idx) const { return idx < sizeof(data) ? data[idx] : 0; }
+            inline char operator[](int idx) const { return (idx >= 0 && static_cast<size_t>(idx) < sizeof(data)) ? data[idx] : 0; }
+            inline char operator[](int64_t idx) const { return (idx >= 0 && static_cast<size_t>(idx) < sizeof(data)) ? data[idx] : 0; }
 
-            friend bool operator==(const utf8_char_t& l, const utf8_char_t& r) {
+            inline size_t length() const { return length(&data[0]); }
+
+            friend bool operator==(const utf8_char_t &l, const utf8_char_t &r) {
                 size_t len = l.length();
 
                 if (l.length() != r.length()) {
                     return false;
                 }
-                
+
                 for (size_t i = 0; i < len; ++i) {
                     if (l.data[i] != r.data[i]) {
                         return false;
@@ -83,11 +88,9 @@ namespace util {
                 return true;
             }
 
-            friend bool operator!=(const utf8_char_t& l, const utf8_char_t& r) {
-                return !(l == r);
-            }
+            friend bool operator!=(const utf8_char_t &l, const utf8_char_t &r) { return !(l == r); }
 
-            friend bool operator<(const utf8_char_t& l, const utf8_char_t& r) {
+            friend bool operator<(const utf8_char_t &l, const utf8_char_t &r) {
                 size_t len = l.length();
 
                 if (l.length() != r.length()) {
@@ -103,7 +106,7 @@ namespace util {
                 return false;
             }
 
-            friend bool operator<=(const utf8_char_t& l, const utf8_char_t& r) {
+            friend bool operator<=(const utf8_char_t &l, const utf8_char_t &r) {
                 size_t len = l.length();
 
                 if (l.length() != r.length()) {
@@ -119,13 +122,9 @@ namespace util {
                 return true;
             }
 
-            friend bool operator>(const utf8_char_t& l, const utf8_char_t& r) {
-                return !(l <= r);
-            }
+            friend bool operator>(const utf8_char_t &l, const utf8_char_t &r) { return !(l <= r); }
 
-            friend bool operator>=(const utf8_char_t& l, const utf8_char_t& r) {
-                return !(l < r);
-            }
+            friend bool operator>=(const utf8_char_t &l, const utf8_char_t &r) { return !(l < r); }
         };
 
         namespace detail {
@@ -159,12 +158,13 @@ namespace util {
             };
 
             template <typename CH = char>
-            class actrie : public std::enable_shared_from_this<actrie<CH> > {
+            class actrie {
             public:
                 typedef CH char_t;
                 typedef std::basic_string<char_t> string_t;
                 typedef actrie<char_t> self_t;
                 typedef std::shared_ptr<self_t> ptr_type;
+                typedef std::vector<ptr_type> storage_t;
 
                 struct match_result_t {
                     size_t start;
@@ -175,39 +175,46 @@ namespace util {
 
             private:
                 /**
+                 * id
+                 */
+                uint32_t idx_;
+
+                /**
+                 * 失败转向节点
+                 */
+                uint32_t failed_;
+
+                /**
                  * 关联的匹配字符串<br />
                  * size不为0表示该节点有关联的字符串并且是最后一个节点
                  */
                 string_t matched_string_;
 
-                /**
-                 * 失败转向节点
-                 */
-                ptr_type failed_;
 
                 /**
                  * 下一个查找项
                  */
-                std::map<char_t, ptr_type> next_;
+                std::map<char_t, uint32_t> next_;
 
                 /**
-                 * 初始化自身和子节点的失败指针
-                 * @param pre_failed 初始搜索的指针（一般为父节点的失败指针）
+                 * 初始化自身和子节点的失败节点ID
+                 * @param pre_failed 初始搜索的节点ID（一般为父节点的失败节点ID）
                  * @param ch 搜索的字符
                  */
-                void _init_failed(ptr_type pre_failed, const char_t &ch) {
-                    typedef typename std::map<char_t, ptr_type>::iterator iter_type;
+                void _init_failed(storage_t &storage, uint32_t pre_failed, const char_t &ch) {
+                    assert(pre_failed < storage.size());
+                    typedef typename std::map<char_t, uint32_t>::iterator iter_type;
 
-                    // 设置自身的失败指针
+                    // 设置自身的失败节点ID
                     iter_type iter;
-                    for (;; pre_failed = pre_failed->failed_) {
-                        iter = pre_failed->next_.find(ch);
-                        if (iter != pre_failed->next_.end()) {
+                    for (;; pre_failed = storage[pre_failed]->failed_) {
+                        iter = storage[pre_failed]->next_.find(ch);
+                        if (iter != storage[pre_failed]->next_.end()) {
                             failed_ = iter->second;
                             break;
                         }
 
-                        if (NULL == pre_failed->failed_.get()) {
+                        if (0 == storage[pre_failed]->failed_) {
                             failed_ = pre_failed;
                             break;
                         }
@@ -216,54 +223,228 @@ namespace util {
 
                 /**
                  * 把子节点填充到链表中（用于BFS）<br />
-                 * 调用此函数时，当前节点的失败指针必须已经设置好
+                 * 调用此函数时，当前节点的失败节点ID必须已经设置好
                  * @param ls 填充目标
                  */
-                void _fill_children(std::list<std::pair<char_t, ptr_type> > &ls) {
-                    typedef typename std::map<char_t, ptr_type>::iterator iter_type;
+                void _fill_children(storage_t &storage, std::list<std::pair<char_t, uint32_t> > &ls) {
+                    typedef typename std::map<char_t, uint32_t>::iterator iter_type;
                     for (iter_type iter = next_.begin(); iter != next_.end(); ++iter) {
-                        iter->second->failed_ = failed_; // 临时用于记录父节点的失败指针
+                        assert(iter->second < storage.size());
+                        storage[iter->second]->failed_ = failed_; // 临时用于记录父节点的失败节点ID
                         ls.push_back(std::make_pair(iter->first, iter->second));
                     }
                 }
 
-                /**
-                 * 获取当前指针
-                 * @return 当前对象的智能指针
-                 */
-                ptr_type _get_ptr() { return this->shared_from_this(); }
+
+                template<typename TC>
+                struct equal_char {
+                    static inline bool equal(TC l, char r) {
+                        return false;
+                    }
+
+                    template<typename OTC, typename OTCTT>
+                    static inline void out(TC l, std::basic_ostream<OTC, OTCTT>& os) {
+                        os << l;
+                    }
+                };
+
+                template<>
+                struct equal_char<char> {
+                    static inline bool equal(char l, char r) {
+                        return l == r;
+                    }
+
+                    template<typename OTC, typename OTCTT>
+                    static inline void out(char l, std::basic_ostream<OTC, OTCTT>& os) {
+                        if (l > 0x21 && l <= 0x7f) {
+                            os << l;
+                        } else {
+                            char hex_val[3] = { 0 };
+                            util::string::hex(hex_val, l);
+                            os << "0x" << hex_val;
+                        }
+                    }
+                };
+
+                template<>
+                struct equal_char<unsigned char> {
+                    static inline bool equal(unsigned char l, char r) {
+                        return l == static_cast<unsigned char>(r);
+                    }
+
+                    template<typename OTC, typename OTCTT>
+                    static inline void out(unsigned char l, std::basic_ostream<OTC, OTCTT>& os) {
+                        if (l > 0x21 && l <= 0x7f) {
+                            os << l;
+                        } else {
+                            char hex_val[3] = { 0 };
+                            util::string::hex(hex_val, l);
+                            os << "0x" << hex_val;
+                        }
+                    }
+                };
+            private:
+                actrie(storage_t &storage, uint32_t failed_idx = 0) : failed_(failed_idx) {}
+
+                struct protect_constructor_helper {};
 
             public:
-                actrie(ptr_type pRoot) : failed_(pRoot) {}
+                actrie(protect_constructor_helper helper, storage_t &storage, uint32_t failed_idx = 0) : failed_(failed_idx) {}
+
+                inline uint32_t get_idx() const { return idx_; }
 
                 /**
-                 * 设置失败指针
-                 * @param pFailed 失败指针
+                 * 创建actrie树节点
+                 * @param storage 失败节点ID
+                 * @param failed_idx 失败节点ID
                  */
-                void set_failed(ptr_type pFailed) { failed_ = pFailed; }
+                static ptr_type create(storage_t &storage, uint32_t failed_idx = 0) {
+                    ptr_type ret = std::make_shared<self_t>(protect_constructor_helper(), storage, failed_idx);
+                    if (!ret) {
+                        return ret;
+                    }
+
+                    ret->idx_ = static_cast<uint32_t>(storage.size());
+                    storage.push_back(ret);
+                    return ret;
+                }
+
+                template<typename TC, typename TCTT>
+                void dump(std::basic_ostream<TC, TCTT>& os) const {
+                    os << idx_ << " " << failed_<< " "<< matched_string_.size()<< " ";
+                    os.write(matched_string_.data(), matched_string_.size());
+
+                    typedef typename std::map<char_t, uint32_t>::const_iterator iter_type;
+                    for (iter_type iter = next_.begin(); iter != next_.end(); ++iter) {
+                        if (iter->second > 0) {
+                            os << " " << iter->first<< " "<< iter->second;
+                        }
+                    }
+
+                    os << "\r\n";
+                }
+
+                template<typename TC, typename TCTT>
+                bool load(std::basic_istream<TC, TCTT>& is) {
+                    if (!(is >> idx_)) {
+                        return false;
+                    }
+
+                    if (!(is >> failed_)) {
+                        return false;
+                    }
+
+                    size_t matstr_len = 0;
+                    if (!(is >> matstr_len)) {
+                        return false;
+                    }
+
+                    if (matstr_len > 0) {
+                        is.get();
+
+                        matched_string_.resize(matstr_len);
+                        is.readsome(&matched_string_[0], matstr_len);
+                    }
+
+                    next_.clear();
+                    char_t k;
+                    uint32_t v;
+
+                    while (is >> k) {
+                        if (is >> v) {
+                            next_[k] = v;
+                        }
+                    }
+
+                    return true;
+                }
+
+                template<typename TC, typename TCTT>
+                static inline std::basic_ostream<TC, TCTT>& dump_dot_node_name(std::basic_ostream<TC, TCTT>& os, uint32_t idx) {
+                    return os << "char_" << idx;
+                }
+
+                template<typename TC, typename TCTT>
+                void dump_dot_node(std::basic_ostream<TC, TCTT>& os) const {
+                    dump_dot_node_name(os, get_idx());
+                    if (!matched_string_.empty()) {
+                        os << " [label=\"";
+                        for (size_t i = 0; i < matched_string_.size(); ++i) {
+                            if (equal_char<char_t>::equal(matched_string_[i], '"')) {
+                                os << "\\\"";
+                            } else {
+                                os << matched_string_[i];
+                            }
+                        }
+                        os << "\"];" << std::endl;
+                    } else {
+                        os << " [label=\"" << get_idx() << "\"];"<< std::endl;
+                    }
+                }
+
+                template<typename TC, typename TCTT>
+                void dump_dot_relationship(std::basic_ostream<TC, TCTT>& os) const {
+                    // fail node
+                    if (0 != failed_) {
+                        dump_dot_node_name(os, get_idx());
+                        os << " -> ";
+                        dump_dot_node_name(os, failed_);
+                        os << " [color=red];"<< std::endl;
+                    }
+
+                    typedef typename std::map<char_t, uint32_t>::const_iterator iter_type;
+                    for (iter_type iter = next_.begin(); iter != next_.end(); ++iter) {
+                        if (iter->second > 0) {
+                            dump_dot_node_name(os, get_idx());
+                            os << " -> ";
+                            dump_dot_node_name(os, iter->second);
+                            os << " [style=bold,label=\"";
+                            if (equal_char<char_t>::equal(iter->first, '"')) {
+                                os << "\\\"";
+                            } else {
+                                equal_char<char_t>::out(iter->first, os);
+                            }
+
+                            os << "\"];" << std::endl;
+                        }
+                    }
+                }
 
                 /**
-                 * 初始化根节点中，子节点的失败指针<br />
+                 * 设置失败节点ID
+                 * @param pFailed 失败节点ID
+                 */
+                void set_failed(uint32_t idx) { failed_ = idx; }
+
+                /**
+                 * 初始化根节点中，子节点的失败节点ID<br />
                  * 当前节点会被视为根节点
                  */
-                void init_failed() {
-                    failed_.reset();
-                    std::list<std::pair<char_t, ptr_type> > ls;
+                void init_failed(storage_t &storage) {
+                    failed_ = 0;
+                    std::list<std::pair<char_t, uint32_t> > ls;
 
-                    typedef typename std::map<char_t, ptr_type>::iterator iter_type;
+                    typedef typename std::map<char_t, uint32_t>::iterator iter_type;
 
                     // 第一层节点
                     for (iter_type iter = next_.begin(); iter != next_.end(); ++iter) {
-                        iter->second->failed_ = _get_ptr();
-                        iter->second->_fill_children(ls);
+                        assert(iter->second < storage.size());
+                        if (iter->second < storage.size()) {
+                            storage[iter->second]->failed_ = get_idx();
+                            storage[iter->second]->_fill_children(storage, ls);
+                        }
                     }
 
                     // 后续节点 BFS 建树
-                    while (ls.size() > 0) {
-                        std::pair<char_t, ptr_type> node = ls.front();
+                    while (!ls.empty()) {
+                        std::pair<char_t, uint32_t> node = ls.front();
                         ls.pop_front();
-                        node.second->_init_failed(node.second->failed_, node.first);
-                        node.second->_fill_children(ls);
+
+                        assert(node.second < storage.size());
+                        if (node.second < storage.size()) {
+                            storage[node.second]->_init_failed(storage, storage[node.second]->failed_, node.first);
+                            storage[node.second]->_fill_children(storage, ls);
+                        }
                     }
                 }
 
@@ -286,11 +467,12 @@ namespace util {
 
                 /**
                  * 构建关键字的字典树节点
+                 * @param storage      actrie节点存储区
                  * @param str          当前字符指针
                  * @param left_sz      关键字剩余字符数
                  * @param origin_val   关键字原始内容
                  */
-                void insert(const char_t *str, size_t left_sz, const string_t &origin_val) {
+                void insert(storage_t &storage, const char_t *str, size_t left_sz, const string_t &origin_val) {
                     // 最后一个节点
                     if (0 >= left_sz) {
                         matched_string_.assign(origin_val.data(), origin_val.size());
@@ -299,17 +481,20 @@ namespace util {
 
                     --left_sz;
 
-                    typedef typename std::map<char_t, ptr_type>::iterator iter_type;
+                    typedef typename std::map<char_t, uint32_t>::iterator iter_type;
                     iter_type iter = next_.find(*str);
-                    if (iter != next_.end()) {
-                        iter->second->insert(str + 1, left_sz, origin_val);
+                    if (iter != next_.end() && iter->second < storage.size()) {
+                        storage[iter->second]->insert(storage, str + 1, left_sz, origin_val);
                         return;
                     }
 
-                    std::pair<iter_type, bool> iter_new = next_.insert(std::make_pair(*str, ptr_type(new actrie<char_t>(failed_))));
+                    ptr_type node = create(storage, failed_);
+                    assert(!!node);
+
+                    std::pair<iter_type, bool> iter_new(next_.insert(std::make_pair(*str, node->get_idx())));
                     assert(iter_new.second);
 
-                    iter_new.first->second->insert(str + 1, left_sz, origin_val);
+                    storage[iter_new.first->second]->insert(storage, str + 1, left_sz, origin_val);
                 }
 
                 /**
@@ -321,7 +506,7 @@ namespace util {
                  * @return 匹配完成后剩余字节数
                  */
                 template <typename TSkipSet>
-                size_t match(match_result_t &out, const char_t *chp, size_t left_sz, const TSkipSet *skip) const {
+                size_t match(storage_t &storage, match_result_t &out, const char_t *chp, size_t left_sz, const TSkipSet *skip) const {
                     // 成功匹配
                     if (is_leaf()) {
                         out.keyword = this;
@@ -335,33 +520,34 @@ namespace util {
                     }
 
                     // 匹配下一项
-                    typedef typename std::map<char_t, ptr_type>::const_iterator iter_type;
+                    typedef typename std::map<char_t, uint32_t>::const_iterator iter_type;
                     iter_type iter = next_.find(*chp);
-                    if (iter != next_.end()) {
-                        return iter->second->match(out, chp + 1, left_sz - 1, skip);
+                    // 如果是root节点或者无效节点，放弃匹配
+                    if (iter != next_.end() && 0 != iter->second && iter->second < storage.size()) {
+                        return storage[iter->second]->match(storage, out, chp + 1, left_sz - 1, skip);
                     }
 
                     // 忽略字符，直接往后匹配
                     if (NULL != skip && (*skip)[*chp]) {
                         out.has_skip = true;
-                        return match(out, chp + 1, left_sz - 1, skip);
+                        return match(storage, out, chp + 1, left_sz - 1, skip);
                     }
 
                     // 如果是root节点，放弃匹配
-                    if (!failed_) {
+                    if (0 == get_idx()) {
                         return left_sz - 1;
-                        // return match(out, chp + 1, left_sz - 1, skip);
+                        // return match(storage, out, chp + 1, left_sz - 1, skip);
                     }
 
                     // 如果失败节点是根节点，放弃匹配，退栈
                     // 这里只是个优化，尽快退栈，防止调用栈过深
                     // 走到这里则至少已经消费了一个节点，left_sz不会再和前面相同
-                    if (!failed_->failed_) {
+                    if (0 == storage[failed_]->failed_) {
                         return left_sz;
                     }
 
                     // 否则, failed节点进行匹配
-                    return failed_->match(out, chp, left_sz, skip);
+                    return storage[failed_]->match(storage, out, chp, left_sz, skip);
                 }
 
                 /**
@@ -404,6 +590,7 @@ namespace util {
             typedef CH char_t;
             typedef typename detail::actrie<char_t> trie_type;
             typedef typename trie_type::string_t string_t;
+            typedef typename trie_type::storage_t storage_t;
             typedef TSKIP skip_set_t;
 
             struct match_t {
@@ -417,7 +604,7 @@ namespace util {
             /**
              * 根节点(空节点)
              */
-            std::shared_ptr<detail::actrie<char_t> > root_;
+            storage_t storage_;
 
             /**
              * 忽略的特殊字符
@@ -433,22 +620,14 @@ namespace util {
             void init() {
                 if (is_inited_) return;
 
-                root_->init_failed();
+                storage_[0]->init_failed(storage_);
 
                 is_inited_ = true;
             }
 
         public:
-            ac_automation()
-                : root_(new detail::actrie<char_t>(std::shared_ptr<detail::actrie<char_t> >())), is_inited_(false), is_no_case_(false) {
-                // 临时的自环
-                root_->set_failed(root_);
-            }
-
-            ~ac_automation() {
-                // 解除自环，防止内存泄漏
-                root_->set_failed(std::shared_ptr<detail::actrie<char_t> >());
-            }
+            ac_automation() : is_inited_(false), is_no_case_(false) { trie_type::create(storage_); }
+            ~ac_automation() {}
 
             /**
              * @brief 获取是否已经初始化过（已建立索引）
@@ -470,9 +649,9 @@ namespace util {
                 if (is_no_case_) {
                     string_t res = keyword;
                     std::transform(res.begin(), res.end(), res.begin(), ::tolower);
-                    root_->insert(res.c_str(), res.size(), keyword);
+                    storage_[0]->insert(storage_, res.c_str(), res.size(), keyword);
                 } else {
-                    root_->insert(keyword.c_str(), keyword.size(), keyword);
+                    storage_[0]->insert(storage_, keyword.c_str(), keyword.size(), keyword);
                 }
             }
 
@@ -506,7 +685,7 @@ namespace util {
                     mres.keyword = NULL;
                     mres.has_skip = false;
 
-                    size_t res = root_->match(mres, end - left, left, &skip_charset_);
+                    size_t res = storage_[0]->match(storage_, mres, end - left, left, &skip_charset_);
                     if (NULL != mres.keyword && mres.keyword->is_leaf()) {
                         ret.push_back(match_t());
                         match_t &item = ret.back();
@@ -529,7 +708,10 @@ namespace util {
             /**
              * 清空关键字列表
              */
-            void reset() { root_->reset(); }
+            void reset() {
+                storage_.clear();
+                trie_type::create(storage_);
+            }
 
             /**
              * 设置忽略字符
@@ -551,6 +733,83 @@ namespace util {
              * 获取是否忽视大小写
              */
             bool is_nocase() const { return is_no_case_; }
+
+            /**
+             * 导出AC自动机的关系图（dot格式）
+             * @param os 输出流
+             * @param options digraph选项(最后跟一个NULL表示结束)
+             * @param node_options 节点绘制选项(最后跟一个NULL表示结束)
+             * @param edge_options 边绘制选项(最后跟一个NULL表示结束)
+             */
+            template<typename TC, typename TCTT>
+            void dump_dot(std::basic_ostream<TC, TCTT>& os, const char* options[] = NULL, const char* node_options[] = NULL, const char* edge_options[] = NULL) {
+                init();
+
+                os << "digraph \"ac_automation";
+                if (is_nocase()) {
+                    os << "(no case)";
+                }
+
+                os << "\" {" << std::endl;
+
+                while (options && *options) {
+                    os << *options << std::endl;
+                    ++options;
+                }
+
+                if (node_options && *node_options) {
+                    os << "node ["<< *node_options;
+                    ++node_options;
+                    while (node_options && *node_options) {
+                        os << ", " << *node_options;
+                        ++node_options;
+                    }
+                    os << "];" << std::endl;
+                }
+
+                if (edge_options && *edge_options) {
+                    os << "edge ["<< *edge_options;
+                    ++edge_options;
+                    while (edge_options && *edge_options) {
+                        os << ", " << *edge_options;
+                        ++edge_options;
+                    }
+                    os << "];" << std::endl;
+                }
+
+                os << std::endl;
+                for (size_t i = 0; i < storage_.size(); ++i) {
+                    storage_[i]->dump_dot_node(os);
+                }
+                os << std::endl;
+                for (size_t i = 0; i < storage_.size(); ++i) {
+                    storage_[i]->dump_dot_relationship(os);
+                }
+                os << "}" << std::endl;
+            }
+
+            /**
+            * 导出AC自动机数据
+            * @param os 输出流
+            * @param options digraph选项(最后跟一个NULL表示结束)
+            * @param node_options 节点绘制选项(最后跟一个NULL表示结束)
+            * @param edge_options 边绘制选项(最后跟一个NULL表示结束)
+            */
+            template<typename TC, typename TCTT>
+            void dump(std::basic_ostream<TC, TCTT>& os) {
+                init();
+
+                os << "ACAUTOMATION "<< sizeof(char_t)<< "\r\n";
+                if (is_nocase()) {
+                    os << "nocase 1\r\n";
+                }
+                os << "\r\n";
+
+                // ignore skip datas
+                for (size_t i = 0; i < storage_.size(); ++i) {
+                    storage_[i]->dump(os);
+                }
+            }
         };
     }
 }

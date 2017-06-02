@@ -2,9 +2,11 @@
 #include <cstring>
 #include <ctime>
 #include <sstream>
+#include <fstream>
 
 #include "frame/test_macros.h"
 #include "string/ac_automation.h"
+#include "common/file_system.h"
 
 CASE_TEST(ac_automation, basic) {
     util::string::ac_automation<> actree;
@@ -135,4 +137,58 @@ CASE_TEST(ac_automation, skip) {
     }
 
     CASE_MSG_INFO() << "filter resault: " << ss.str() << std::endl;
+}
+
+
+CASE_TEST(ac_automation, dump_dot) {
+    util::string::ac_automation<> actree;
+
+    actree.insert_keyword("艹");
+    actree.insert_keyword("操你妈逼");
+    actree.insert_keyword("你妈逼");
+    actree.insert_keyword("艹你妈");
+    actree.set_skip(' ');
+    actree.set_skip('\t');
+    actree.set_skip('\r');
+    actree.set_skip('\n');
+
+    const char* node_options[] = { 
+        "shape=box",
+        "fontname = \"SimHei\"", 
+        "labelfontname = \"SimHei\"", 
+        "fontsize = 14", 
+        "labelfontsize = 14", 
+        NULL 
+    };
+    actree.dump_dot(std::cout, NULL, node_options);
+}
+
+CASE_TEST(ac_automation, load_and_dump) {
+    util::string::ac_automation<> actree;
+
+    if (false == util::file_system::is_exist("ac_automation.in.txt")) {
+        return;
+    }
+
+    std::fstream fos, fis, fdot;
+    fos.open("ac_automation.out.txt", std::ios::out);
+    fis.open("ac_automation.in.txt");
+    fdot.open("ac_automation.out.dot", std::ios::out);
+    std::string line;
+    while (std::getline(fis, line)) {
+        if (!line.empty()) {
+            actree.insert_keyword(line);
+        }
+    }
+
+    const char* node_options[] = {
+        "shape=box",
+        "fontname = \"SimHei\"",
+        "labelfontname = \"SimHei\"",
+        "fontsize = 14",
+        "labelfontsize = 14",
+        NULL
+    };
+    actree.dump(fos);
+    actree.dump_dot(fdot, NULL, node_options);
 }
