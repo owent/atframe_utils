@@ -48,6 +48,7 @@ CASE_TEST(time_test, is_same_day) {
     rt = lt + 5;
     CASE_EXPECT_TRUE(util::time::time_utility::is_same_day(lt, rt));
 
+    tobj.tm_isdst = 0;
     tobj.tm_hour = 23;
     tobj.tm_min = 59;
     tobj.tm_sec = 55;
@@ -56,7 +57,8 @@ CASE_TEST(time_test, is_same_day) {
 
     lt = rt - 5;
     CASE_EXPECT_TRUE(util::time::time_utility::is_same_day(lt, rt));
-    lt = rt + 10;
+    // 容忍夏时令误差
+    lt = rt + 3610;
     CASE_EXPECT_FALSE(util::time::time_utility::is_same_day(lt, rt));
 }
 
@@ -78,6 +80,7 @@ CASE_TEST(time_test, is_same_day_with_offset) {
     rt = lt + 5;
     CASE_EXPECT_TRUE(util::time::time_utility::is_same_day(lt, rt, day_offset));
 
+    tobj.tm_isdst = 0;
     tobj.tm_hour = zero_hore - 1;
     tobj.tm_min = 59;
     tobj.tm_sec = 55;
@@ -121,6 +124,7 @@ CASE_TEST(time_test, get_week_day) {
     tobj.tm_sec = 5;
     lt = mktime(&tobj);
 
+    tobj.tm_isdst = 0;
     tobj.tm_hour = 23;
     tobj.tm_min = 59;
     tobj.tm_sec = 55;
