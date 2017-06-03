@@ -29,7 +29,7 @@ CASE_TEST(time_test, today_offset) {
     cnow = util::time::time_utility::get_today_offset(loffset);
 
     // 只有闰秒误差，肯定在5秒以内
-    CASE_EXPECT_TRUE(abs(cnow - tnow) <= 5);
+    CASE_EXPECT_LE(abs(cnow - tnow), 5);
 }
 
 CASE_TEST(time_test, is_same_day) {
@@ -121,6 +121,7 @@ CASE_TEST(time_test, get_week_day) {
     tobj.tm_sec = 55;
     rt = mktime(&tobj);
 
+    CASE_MSG_INFO() << "lt=" << lt << ",tnow=" << tnow << ",rt=" << rt << std::endl;
     CASE_EXPECT_EQ(util::time::time_utility::get_week_day(lt), util::time::time_utility::get_week_day(tnow));
     CASE_EXPECT_EQ(util::time::time_utility::get_week_day(lt), util::time::time_utility::get_week_day(rt));
 }
