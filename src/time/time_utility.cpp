@@ -12,7 +12,7 @@ namespace util {
         time_utility::~time_utility() {}
 
         void time_utility::update(raw_time_t *t) {
-            //raw_time_t prev_tp = now_;
+            // raw_time_t prev_tp = now_;
             if (NULL != t) {
                 now_ = *t;
             } else {
@@ -23,11 +23,9 @@ namespace util {
             now_unix_ = std::chrono::system_clock::to_time_t(now_);
 
             // reset usec
-            ::util::time::time_utility::raw_time_t padding_time = 
-                ::util::time::time_utility::raw_time_t::clock::from_time_t(now_unix_);
+            ::util::time::time_utility::raw_time_t padding_time = ::util::time::time_utility::raw_time_t::clock::from_time_t(now_unix_);
             now_usec_ = static_cast<time_t>(
-                std::chrono::duration_cast<std::chrono::microseconds>(::util::time::time_utility::now() - padding_time).count()
-            );
+                std::chrono::duration_cast<std::chrono::microseconds>(::util::time::time_utility::now() - padding_time).count());
             if (now_usec_ < 0) {
                 now_usec_ = 0;
             }
@@ -53,6 +51,7 @@ namespace util {
             t.tm_hour = 0;
             t.tm_min = 0;
             t.tm_sec = 0;
+            t.tm_isdst = 0;
 
             ret = mktime(&t);
             return ret - DAY_SECONDS;
@@ -106,9 +105,7 @@ namespace util {
             return left / DAY_SECONDS < right / DAY_SECONDS;
         }
 
-        time_t time_utility::get_today_offset(time_t offset) {
-            return get_any_day_offset(get_now(), offset);
-        }
+        time_t time_utility::get_today_offset(time_t offset) { return get_any_day_offset(get_now(), offset); }
 
         time_t time_utility::get_any_day_offset(time_t checked, time_t offset) {
             checked -= get_zone_offset();

@@ -29,7 +29,8 @@ CASE_TEST(time_test, today_offset) {
     cnow = util::time::time_utility::get_today_offset(loffset);
 
     // 只有闰秒误差，肯定在5秒以内
-    CASE_EXPECT_LE(abs(cnow - tnow), 5);
+    // 容忍夏时令误差，所以要加一小时
+    CASE_EXPECT_LE(abs(cnow - tnow), 3605);
 }
 
 CASE_TEST(time_test, is_same_day) {
@@ -39,6 +40,7 @@ CASE_TEST(time_test, is_same_day) {
     lt = util::time::time_utility::get_now();
     UTIL_STRFUNC_LOCALTIME_S(&lt, &tobj);
 
+    tobj.tm_isdst = 0;
     tobj.tm_hour = 0;
     tobj.tm_min = 0;
     tobj.tm_sec = 5;
@@ -68,6 +70,7 @@ CASE_TEST(time_test, is_same_day_with_offset) {
     lt = util::time::time_utility::get_now();
     UTIL_STRFUNC_LOCALTIME_S(&lt, &tobj);
 
+    tobj.tm_isdst = 0;
     tobj.tm_hour = zero_hore;
     tobj.tm_min = 0;
     tobj.tm_sec = 5;
@@ -90,6 +93,7 @@ CASE_TEST(time_test, is_same_week) {
     tnow = util::time::time_utility::get_now();
     UTIL_STRFUNC_LOCALTIME_S(&tnow, &tobj);
 
+    tobj.tm_isdst = 0;
     tobj.tm_hour = 0;
     tobj.tm_min = 0;
     tobj.tm_sec = 5;
@@ -111,6 +115,7 @@ CASE_TEST(time_test, get_week_day) {
     tnow = util::time::time_utility::get_now();
     UTIL_STRFUNC_LOCALTIME_S(&tnow, &tobj);
 
+    tobj.tm_isdst = 0;
     tobj.tm_hour = 0;
     tobj.tm_min = 0;
     tobj.tm_sec = 5;
