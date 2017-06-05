@@ -1,5 +1,7 @@
 cmake_minimum_required(VERSION 3.3.0)
 
+enable_testing()
+
 project(atframe_utils_cpp)
 set (PROJECT_CMAKE_MODULE_DIR "${CMAKE_CURRENT_LIST_DIR}/project/cmake")
 

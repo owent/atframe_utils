@@ -17,139 +17,79 @@
 #pragma once
 
 #include <algorithm>
-#include <assert.h>
-#include <cstddef>
-#include <cstring>
-#include <iostream>
 #include <list>
 #include <map>
-#include <stdint.h>
-#include <string>
+#include <set>
 #include <vector>
 
-
-#include "common/string_oprs.h"
-#include "std/smart_ptr.h"
-
+#include "utf8_char_t.h"
 
 namespace util {
     namespace string {
-        struct utf8_char_t {
-            utf8_char_t(const char *str) {
-                size_t len = length(str);
-                for (size_t i = 0; i < len; ++i) {
-                    data[i] = str[i];
+        namespace detail {
+            template <typename TC, typename TCTT>
+            void write_varint(std::basic_ostream<TC, TCTT> &os, uint32_t i) {
+                unsigned char c;
+                if (i < (1U << 6)) {
+                    c = static_cast<unsigned char>(i & 0x3F);
+                    os << c;
                 }
-            };
-            utf8_char_t(const std::string &str) {
-                size_t len = length(str.c_str());
-                for (size_t i = 0; i < len; ++i) {
-                    data[i] = str[i];
+                else if (i < (1U << 14)) {
+                    c = static_cast<unsigned char>((i >> 8) & 0x3F) | 0x40;
+                    os << c;
+                    c = static_cast<unsigned char>(i & 0xFF);
+                    os << c;
                 }
-            };
-
-            char data[8];
-
-            static inline size_t length(const char *s) {
-                size_t ret = 1;
-                char c = (*s);
-
-                if (!(c & 0x80)) {
-                    return ret;
+                else if (i < (1U << 22)) {
+                    c = static_cast<unsigned char>((i >> 16) & 0x3F) | 0x80;
+                    os << c;
+                    c = static_cast<unsigned char>((i >> 8) & 0xFF);
+                    os << c;
+                    c = static_cast<unsigned char>(i & 0xFF);
+                    os << c;
                 }
-                c <<= 1;
+                else if (i < (1U << 30)) {
+                    c = static_cast<unsigned char>((i >> 24) & 0x3F) | 0xC0;
+                    os << c;
+                    c = static_cast<unsigned char>((i >> 16) & 0xFF);
+                    os << c;
+                    c = static_cast<unsigned char>((i >> 8) & 0xFF);
+                    os << c;
+                    c = static_cast<unsigned char>(i & 0xFF);
+                    os << c;
+                }
+                else {
+                    // too many nodes
+                    abort();
+                }
+            }
 
-                for (; ret < 6; ++ret) {
-                    if (!(c & 0x80)) {
-                        break;
+            template <typename TC, typename TCTT>
+            uint32_t read_varint(std::basic_istream<TC, TCTT> &is) {
+                unsigned char c;
+                if (!is >> c) {
+                    return 0;
+                }
+
+                uint32_t ret = 0;
+                ret = c & 0x3F;
+                for (unsigned char n = (c >> 6) & 0x03; n > 0; --n) {
+                    ret <<= 8;
+                    if (is >> c) {
+                        ret |= c;
                     }
                 }
 
                 return ret;
             }
 
-            inline char operator[](size_t idx) const { return idx < sizeof(data) ? data[idx] : 0; }
-            inline char operator[](int idx) const { return (idx >= 0 && static_cast<size_t>(idx) < sizeof(data)) ? data[idx] : 0; }
-            inline char operator[](int64_t idx) const { return (idx >= 0 && static_cast<size_t>(idx) < sizeof(data)) ? data[idx] : 0; }
+            template <typename CH, size_t CHSZ>
+            class actrie_skip_charset;
 
-            inline size_t length() const { return length(&data[0]); }
-
-            friend bool operator==(const utf8_char_t &l, const utf8_char_t &r) {
-                size_t len = l.length();
-
-                if (l.length() != r.length()) {
-                    return false;
-                }
-
-                for (size_t i = 0; i < len; ++i) {
-                    if (l.data[i] != r.data[i]) {
-                        return false;
-                    }
-                }
-
-                return true;
-            }
-
-            friend bool operator!=(const utf8_char_t &l, const utf8_char_t &r) { return !(l == r); }
-
-            friend bool operator<(const utf8_char_t &l, const utf8_char_t &r) {
-                size_t len = l.length();
-
-                if (l.length() != r.length()) {
-                    return l.length() < r.length();
-                }
-
-                for (size_t i = 0; i < len; ++i) {
-                    if (l.data[i] != r.data[i]) {
-                        return l.data[i] < r.data[i];
-                    }
-                }
-
-                return false;
-            }
-
-            friend bool operator<=(const utf8_char_t &l, const utf8_char_t &r) {
-                size_t len = l.length();
-
-                if (l.length() != r.length()) {
-                    return l.length() < r.length();
-                }
-
-                for (size_t i = 0; i < len; ++i) {
-                    if (l.data[i] != r.data[i]) {
-                        return l.data[i] <= r.data[i];
-                    }
-                }
-
-                return true;
-            }
-
-            friend bool operator>(const utf8_char_t &l, const utf8_char_t &r) { return !(l <= r); }
-
-            friend bool operator>=(const utf8_char_t &l, const utf8_char_t &r) { return !(l < r); }
-
-            template <typename CH, typename CHT>
-            friend std::basic_ostream<CH, CHT> &operator<<(std::basic_ostream<CH, CHT> &os, const utf8_char_t &self) {
-                os.write((CH*)self.data, self.length());
-                return os;
-            }
-
-            template <typename CH, typename CHT>
-            friend std::basic_istream<CH, CHT> &operator>>(std::basic_istream<CH, CHT> &is, utf8_char_t &self) {
-                self.data[0] = 0;
-                is.read((CH*)&self.data[0], 1);
-                size_t len = self.length();
-                if (len > 1) {
-                    is.read((CH*)&self.data[1], len - 1);
-                }
-                return is;
-            }
-        };
-
-        namespace detail {
             template <typename CH>
-            class actrie_skip_charset {
+            class actrie_skip_charset<CH, 1> {
             public:
+                typedef actrie_skip_charset<CH, 1> self_t;
                 actrie_skip_charset() { memset(skip_code_, 0, sizeof(skip_code_)); }
 
                 void set(CH c) {
@@ -172,15 +112,15 @@ namespace util {
 
                 inline bool operator[](CH c) const { return test(c); }
 
-                template <typename OTCTT>
-                friend std::basic_ostream<CH, OTCTT> &operator<<(std::basic_ostream<CH, OTCTT> &os, const actrie_skip_charset<CH> &self) {
-                    os.write((CH*)self.skip_code_, sizeof(self.skip_code_) / (sizeof(CH)));
+                template <typename OCH, typename OTCTT>
+                friend std::basic_ostream<OCH, OTCTT> &operator<<(std::basic_ostream<OCH, OTCTT> &os, const self_t &self) {
+                    os.write((CH*)self.skip_code_, sizeof(self.skip_code_));
                     return os;
                 }
 
-                template <typename OTCTT>
-                friend std::basic_istream<CH, OTCTT> &operator>>(std::basic_istream<CH, OTCTT> &is, actrie_skip_charset<CH> &self) {
-                    is.read((CH*)self.skip_code_, sizeof(self.skip_code_) / (sizeof(CH)));
+                template <typename OCH, typename OTCTT>
+                friend std::basic_istream<OCH, OTCTT> &operator>>(std::basic_istream<OCH, OTCTT> &is, self_t &self) {
+                    is.read((CH*)self.skip_code_, sizeof(self.skip_code_));
                     return is;
                 }
 
@@ -188,11 +128,68 @@ namespace util {
                 uint8_t skip_code_[(static_cast<size_t>(1) << (sizeof(CH) * 8)) / 8];
             };
 
+            template <typename CH, size_t CHSZ>
+            class actrie_skip_charset {
+            public:
+                typedef actrie_skip_charset<CH, CHSZ> self_t;
+                actrie_skip_charset() { }
+
+                void set(CH c) {
+                    skip_code_.insert(c);
+                }
+
+                void unset(CH c) {
+                    skip_code_.erase(c);
+                }
+
+                bool test(CH c) const {
+                    return skip_code_.end() != skip_code_.find(c);
+                }
+
+                inline bool operator[](CH c) const { return test(c); }
+
+                template <typename OCH, typename OTCTT>
+                friend std::basic_ostream<OCH, OTCTT> &operator<<(std::basic_ostream<OCH, OTCTT> &os, const self_t &self) {
+                    write_varint(os, static_cast<uint32_t>(self.skip_code_.size()));
+                    for (typename std::set<CH>::iterator iter = self.skip_code_.begin(); iter != self.skip_code_.end(); ++iter) {
+                        os << *iter;
+                    }
+                    return os;
+                }
+
+                template <typename OCH, typename OTCTT>
+                friend std::basic_istream<OCH, OTCTT> &operator>>(std::basic_istream<OCH, OTCTT> &is, self_t &self) {
+                    uint32_t sz = read_varint(is);
+                    self.skip_code_.clear();
+                    for (uint32_t i = 0; i < sz; ++i) {
+                        CH c;
+                        if (is >> c) {
+                            self.skip_code_.insert(c);
+                        } else {
+                            break;
+                        }
+                    }
+                    return is;
+                }
+
+            private:
+                std::set<CH> skip_code_;
+            };
+
+            template<typename CH>
+            size_t actrie_get_length(const CH& c) {
+                return sizeof(c);
+            }
+
+            size_t actrie_get_length(const utf8_char_t& c) {
+                return c.length();
+            }
+
             template <typename CH = char>
             class actrie {
             public:
                 typedef CH char_t;
-                typedef std::basic_string<char_t> string_t;
+                typedef std::string string_t;
                 typedef actrie<char_t> self_t;
                 typedef std::shared_ptr<self_t> ptr_type;
                 typedef std::vector<ptr_type> storage_t;
@@ -267,47 +264,49 @@ namespace util {
                 }
 
 
-                template <typename TC>
-                struct equal_char {
-                    static inline bool equal(TC l, char r) { return false; }
+                static inline bool equal_char(char l, char r) { return l == r; }
 
-                    template <typename OTC, typename OTCTT>
-                    static inline void out(TC l, std::basic_ostream<OTC, OTCTT> &os) {
+                template <typename OTC, typename OTCTT>
+                static inline void output_char(char l, std::basic_ostream<OTC, OTCTT> &os) {
+                    if (l > 0x21 && l <= 0x7f) {
                         os << l;
+                    } else {
+                        char hex_val[3] = {0};
+                        util::string::hex(hex_val, l);
+                        os << "0x" << hex_val;
                     }
-                };
+                }
 
-                template <>
-                struct equal_char<char> {
-                    static inline bool equal(char l, char r) { return l == r; }
+                static inline bool equal_char(unsigned char l, char r) { return l == static_cast<unsigned char>(r); }
 
-                    template <typename OTC, typename OTCTT>
-                    static inline void out(char l, std::basic_ostream<OTC, OTCTT> &os) {
-                        if (l > 0x21 && l <= 0x7f) {
-                            os << l;
-                        } else {
-                            char hex_val[3] = {0};
-                            util::string::hex(hex_val, l);
-                            os << "0x" << hex_val;
-                        }
+                template <typename OTC, typename OTCTT>
+                static inline void output_char(unsigned char l, std::basic_ostream<OTC, OTCTT> &os) {
+                    if (l > 0x21 && l <= 0x7f) {
+                        os << l;
+                    } else {
+                        char hex_val[3] = {0};
+                        util::string::hex(hex_val, l);
+                        os << "0x" << hex_val;
                     }
-                };
+                }
 
-                template <>
-                struct equal_char<unsigned char> {
-                    static inline bool equal(unsigned char l, char r) { return l == static_cast<unsigned char>(r); }
+                static inline bool equal_char(utf8_char_t l, char r) { return l == r; }
 
-                    template <typename OTC, typename OTCTT>
-                    static inline void out(unsigned char l, std::basic_ostream<OTC, OTCTT> &os) {
-                        if (l > 0x21 && l <= 0x7f) {
-                            os << l;
-                        } else {
-                            char hex_val[3] = {0};
-                            util::string::hex(hex_val, l);
-                            os << "0x" << hex_val;
-                        }
-                    }
-                };
+                template <typename OTC, typename OTCTT>
+                static inline void output_char(utf8_char_t l, std::basic_ostream<OTC, OTCTT> &os) {
+                    os << l;
+                }
+
+                template <typename TC>
+                static inline bool equal_char(TC l, char r) {
+                    return false;
+                }
+
+                template <typename TC, typename OTC, typename OTCTT>
+                static inline void output_char(TC l, std::basic_ostream<OTC, OTCTT> &os) {
+                    os << l;
+                }
+
 
             private:
                 actrie(storage_t &storage, uint32_t failed_idx = 0) : failed_(failed_idx) {}
@@ -332,58 +331,6 @@ namespace util {
 
                     ret->idx_ = static_cast<uint32_t>(storage.size());
                     storage.push_back(ret);
-                    return ret;
-                }
-
-                template <typename TC, typename TCTT>
-                void write_varint(std::basic_ostream<TC, TCTT> &os, uint32_t i) const {
-                    unsigned char c;
-                    if (i < (1U << 6)) {
-                        c = static_cast<unsigned char>(i & 0x3F);
-                        os << c;
-                    } else if (i < (1U << 14)) {
-                        c = static_cast<unsigned char>((i >> 8) & 0x3F) | 0x40;
-                        os << c;
-                        c = static_cast<unsigned char>(i & 0xFF);
-                        os << c;
-                    } else if (i < (1U << 22)) {
-                        c = static_cast<unsigned char>((i >> 16) & 0x3F) | 0x80;
-                        os << c;
-                        c = static_cast<unsigned char>((i >> 8) & 0xFF);
-                        os << c;
-                        c = static_cast<unsigned char>(i & 0xFF);
-                        os << c;
-                    } else if (i < (1U << 30)) {
-                        c = static_cast<unsigned char>((i >> 24) & 0x3F) | 0xC0;
-                        os << c;
-                        c = static_cast<unsigned char>((i >> 16) & 0xFF);
-                        os << c;
-                        c = static_cast<unsigned char>((i >> 8) & 0xFF);
-                        os << c;
-                        c = static_cast<unsigned char>(i & 0xFF);
-                        os << c;
-                    } else {
-                        // too many nodes
-                        abort();
-                    }
-                }
-
-                template <typename TC, typename TCTT>
-                uint32_t read_varint(std::basic_istream<TC, TCTT> &is) const {
-                    unsigned char c;
-                    if (!is >> c) {
-                        return 0;
-                    }
-
-                    uint32_t ret = 0;
-                    ret = c & 0x3F;
-                    for (unsigned char n = (c >> 6) & 0x03; n > 0; --n) {
-                        ret <<= 8;
-                        if (is>> c) {
-                            ret |= c;
-                        }
-                    }
-
                     return ret;
                 }
 
@@ -417,7 +364,9 @@ namespace util {
                     next_.clear();
                     uint32_t next_sz = read_varint(is);
                     for (uint32_t i = 0; i < next_sz; ++i) {
-
+                        std::pair<char_t, uint32_t> p;
+                        is >> p.first;
+                        p.second = (is);
                     }
 
                     return true;
@@ -434,7 +383,7 @@ namespace util {
                     if (!matched_string_.empty()) {
                         os << " [label=\"";
                         for (size_t i = 0; i < matched_string_.size(); ++i) {
-                            if (equal_char<char_t>::equal(matched_string_[i], '"')) {
+                            if (equal_char(matched_string_[i], '"')) {
                                 os << "\\\"";
                             } else {
                                 os << matched_string_[i];
@@ -463,10 +412,10 @@ namespace util {
                             os << " -> ";
                             dump_dot_node_name(os, iter->second);
                             os << " [style=bold,label=\"";
-                            if (equal_char<char_t>::equal(iter->first, '"')) {
+                            if (equal_char(iter->first, '"')) {
                                 os << "\\\"";
                             } else {
-                                equal_char<char_t>::out(iter->first, os);
+                                output_char(iter->first, os);
                             }
 
                             os << "\"];" << std::endl;
@@ -536,29 +485,34 @@ namespace util {
                  * @param left_sz      关键字剩余字符数
                  * @param origin_val   关键字原始内容
                  */
-                void insert(storage_t &storage, const char_t *str, size_t left_sz, const string_t &origin_val) {
+                void insert(storage_t &storage, const char *str, size_t left_sz, const string_t &origin_val) {
                     // 最后一个节点
                     if (0 >= left_sz) {
                         matched_string_.assign(origin_val.data(), origin_val.size());
                         return;
                     }
 
-                    --left_sz;
+                    char_t c(*str);
+                    size_t csz = actrie_get_length(c);
+                    if (csz > left_sz) {
+                        csz = left_sz;
+                    }
+                    left_sz -= csz;
 
                     typedef typename std::map<char_t, uint32_t>::iterator iter_type;
-                    iter_type iter = next_.find(*str);
+                    iter_type iter = next_.find(c);
                     if (iter != next_.end() && iter->second < storage.size()) {
-                        storage[iter->second]->insert(storage, str + 1, left_sz, origin_val);
+                        storage[iter->second]->insert(storage, str + csz, left_sz, origin_val);
                         return;
                     }
 
                     ptr_type node = create(storage, failed_);
                     assert(!!node);
 
-                    std::pair<iter_type, bool> iter_new(next_.insert(std::make_pair(*str, node->get_idx())));
+                    std::pair<iter_type, bool> iter_new(next_.insert(std::make_pair(c, node->get_idx())));
                     assert(iter_new.second);
 
-                    storage[iter_new.first->second]->insert(storage, str + 1, left_sz, origin_val);
+                    storage[iter_new.first->second]->insert(storage, str + csz, left_sz, origin_val);
                 }
 
                 /**
@@ -570,7 +524,7 @@ namespace util {
                  * @return 匹配完成后剩余字节数
                  */
                 template <typename TSkipSet>
-                size_t match(storage_t &storage, match_result_t &out, const char_t *chp, size_t left_sz, const TSkipSet *skip) const {
+                size_t match(storage_t &storage, match_result_t &out, const char *chp, size_t left_sz, const TSkipSet *skip) const {
                     // 成功匹配
                     if (is_leaf()) {
                         out.keyword = this;
@@ -583,24 +537,30 @@ namespace util {
                         return left_sz;
                     }
 
+                    char_t c(*chp);
+                    size_t csz = actrie_get_length(c);
+                    if (csz > left_sz) {
+                        csz = left_sz;
+                    }
+
                     // 匹配下一项
                     typedef typename std::map<char_t, uint32_t>::const_iterator iter_type;
-                    iter_type iter = next_.find(*chp);
+                    iter_type iter = next_.find(c);
                     // 如果是root节点或者无效节点，放弃匹配
                     if (iter != next_.end() && 0 != iter->second && iter->second < storage.size()) {
-                        return storage[iter->second]->match(storage, out, chp + 1, left_sz - 1, skip);
+                        return storage[iter->second]->match(storage, out, chp + csz, left_sz - csz, skip);
                     }
 
                     // 忽略字符，直接往后匹配
-                    if (NULL != skip && (*skip)[*chp]) {
+                    if (NULL != skip && (*skip)[c]) {
                         out.has_skip = true;
-                        return match(storage, out, chp + 1, left_sz - 1, skip);
+                        return match(storage, out, chp + csz, left_sz - csz, skip);
                     }
 
                     // 如果是root节点，放弃匹配
                     if (0 == get_idx()) {
-                        return left_sz - 1;
-                        // return match(storage, out, chp + 1, left_sz - 1, skip);
+                        return left_sz - csz;
+                        // return match(storage, out, chp + csz, left_sz - csz, skip);
                     }
 
                     // 如果失败节点是根节点，放弃匹配，退栈
@@ -619,8 +579,8 @@ namespace util {
                  * @param str 字符串起始地址
                  * @param end_sz 字符串结束位置
                  */
-                size_t find_start(const char_t *str, size_t end_sz) const {
-                    if (end_sz <= 0) {
+                size_t find_start(const char *str, size_t end_sz) const {
+                    if (end_sz <= 0 || NULL == str) {
                         return 0;
                     }
 
@@ -648,7 +608,7 @@ namespace util {
         }
 
 
-        template <typename CH = char, typename TSKIP = detail::actrie_skip_charset<CH> >
+        template <typename CH = char, typename TSKIP = detail::actrie_skip_charset<CH, sizeof(CH)> >
         class ac_automation {
         public:
             typedef CH char_t;
@@ -740,7 +700,7 @@ namespace util {
                 init();
                 size_t sz = conv_content->size();
                 size_t left = sz;
-                const char_t *end = conv_content->data() + sz;
+                const char *end = conv_content->data() + sz;
 
                 while (left > 0) {
                     typename trie_type::match_result_t mres;

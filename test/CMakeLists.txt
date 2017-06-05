@@ -2,7 +2,6 @@
 EchoWithColor(COLOR GREEN "-- Configure ${CMAKE_CURRENT_LIST_DIR}")
 include("test.macro.cmake")
 
-enable_testing()
 include("${CMAKE_CURRENT_LIST_DIR}/test.build_bin.cmake")
 
 include_directories(${PROJECT_ALL_INCLUDE_DIR})
@@ -29,4 +28,4 @@ target_link_libraries(atframe_utils_unit_test
     ${COMPILER_OPTION_EXTERN_CXX_LIBS}
 )
 
-add_test(test atframe_utils_unit_test)
+add_test(NAME test COMMAND atframe_utils_unit_test)

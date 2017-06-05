@@ -8,6 +8,28 @@
 #include "string/ac_automation.h"
 #include "common/file_system.h"
 
+#if defined(_MSC_VER) && _MSC_VER >= 1900
+#define U8_LITERALS(x) (u8 ## x)
+#elif defined(__clang__)
+// apple clang
+#if defined(__apple_build_version__)
+#if ((__clang_major__ * 100) + __clang_minor__) >= 600
+#define U8_LITERALS(x) (u8 ## x)
+#endif
+#else
+// clang
+#if ((__clang_major__ * 100) + __clang_minor__) >= 306
+#define U8_LITERALS(x) (u8 ## x)
+#endif
+#endif
+#elif defined(__GNUC__) && (__GNUC__ * 100 + __GNUC_MINOR__) >= 600
+#define U8_LITERALS(x) (u8 ## x)
+#endif
+
+#ifndef U8_LITERALS
+#define U8_LITERALS(x) x
+#endif
+
 CASE_TEST(ac_automation, basic) {
     util::string::ac_automation<> actree;
 
@@ -107,10 +129,10 @@ CASE_TEST(ac_automation, prefix) {
 CASE_TEST(ac_automation, skip) {
     util::string::ac_automation<> actree;
 
-    actree.insert_keyword("艹");
-    actree.insert_keyword("操你妈逼");
-    actree.insert_keyword("你妈逼");
-    actree.insert_keyword("艹你妈");
+    actree.insert_keyword(U8_LITERALS("艹"));
+    actree.insert_keyword(U8_LITERALS("操你妈逼"));
+    actree.insert_keyword(U8_LITERALS("你妈逼"));
+    actree.insert_keyword(U8_LITERALS("艹你妈"));
     actree.set_skip(' ');
     actree.set_skip('\t');
     actree.set_skip('\r');
@@ -141,12 +163,12 @@ CASE_TEST(ac_automation, skip) {
 
 
 CASE_TEST(ac_automation, dump_dot) {
-    util::string::ac_automation<> actree;
+    util::string::ac_automation<util::string::utf8_char_t> actree;
 
-    actree.insert_keyword(u8"艹");
-    actree.insert_keyword(u8"操你妈逼");
-    actree.insert_keyword(u8"你妈逼");
-    actree.insert_keyword(u8"艹你妈");
+    actree.insert_keyword(U8_LITERALS("艹"));
+    actree.insert_keyword(U8_LITERALS("操你妈逼"));
+    actree.insert_keyword(U8_LITERALS("你妈逼"));
+    actree.insert_keyword(U8_LITERALS("艹你妈"));
     actree.set_skip(' ');
     actree.set_skip('\t');
     actree.set_skip('\r');
@@ -160,11 +182,23 @@ CASE_TEST(ac_automation, dump_dot) {
         "labelfontsize = 14", 
         NULL 
     };
-    actree.dump_dot(std::cout, NULL, node_options);
+
+    const char* edge_options[] = {
+        "fontname = \"SimHei\"",
+        "labelfontname = \"SimHei\"",
+        "fontsize = 14",
+        "labelfontsize = 14",
+        NULL
+    };
+    actree.dump_dot(std::cout, NULL, node_options, edge_options);
+
+    std::fstream fos;
+    fos.open("ac_automation.dump_dot.txt", std::ios::out);
+    actree.dump_dot(fos, NULL, node_options, edge_options);
 }
 
 CASE_TEST(ac_automation, load_and_dump) {
-    util::string::ac_automation<> actree;
+    util::string::ac_automation<util::string::utf8_char_t> actree;
 
     if (false == util::file_system::is_exist("ac_automation.in.txt")) {
         return;
@@ -189,6 +223,14 @@ CASE_TEST(ac_automation, load_and_dump) {
         "labelfontsize = 14",
         NULL
     };
+    const char* edge_options[] = {
+        "fontname = \"SimHei\"",
+        "labelfontname = \"SimHei\"",
+        "fontsize = 14",
+        "labelfontsize = 14",
+        NULL
+    };
+
     actree.dump(fos);
-    actree.dump_dot(fdot, NULL, node_options);
+    actree.dump_dot(fdot, NULL, node_options, edge_options);
 }

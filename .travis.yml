@@ -8,29 +8,29 @@ env:
 matrix:
   include:
     - os: osx
-      env: USE_CC=clang USE_CXX=clang++ CMAKE_BIN=cmake
+      env: USE_CC=clang USE_CXX=clang++ CMAKE_BIN=cmake CTEST_BIN=ctest
     - os: osx
-      env: USE_CC=gcc USE_CXX=g++ CMAKE_BIN=cmake
+      env: USE_CC=gcc USE_CXX=g++ CMAKE_BIN=cmake CTEST_BIN=ctest
     - os: linux
       dist: trusty
       sudo: required
-      env: USE_CC=gcc USE_CXX=g++ CMAKE_BIN=$CMAKE_PREFIX/bin/cmake
+      env: USE_CC=gcc USE_CXX=g++ CMAKE_BIN=$CMAKE_PREFIX/bin/cmake CTEST_BIN=$CMAKE_PREFIX/bin/ctest
     - os: linux
       dist: trusty
       sudo: required
-      env: USE_CC=gcc-4.4 USE_CXX=g++-4.4 CMAKE_BIN=$CMAKE_PREFIX/bin/cmake
+      env: USE_CC=gcc-4.4 USE_CXX=g++-4.4 CMAKE_BIN=$CMAKE_PREFIX/bin/cmake CTEST_BIN=$CMAKE_PREFIX/bin/ctest
     - os: linux
       dist: trusty
       sudo: required
-      env: USE_CC=gcc-4.9 USE_CXX=g++-4.9 CMAKE_BIN=$CMAKE_PREFIX/bin/cmake
+      env: USE_CC=gcc-4.9 USE_CXX=g++-4.9 CMAKE_BIN=$CMAKE_PREFIX/bin/cmake CTEST_BIN=$CMAKE_PREFIX/bin/ctest
     - os: linux
       dist: trusty
       sudo: required
-      env: USE_CC=gcc-7 USE_CXX=g++-7 CMAKE_BIN=$CMAKE_PREFIX/bin/cmake
+      env: USE_CC=gcc-7 USE_CXX=g++-7 CMAKE_BIN=$CMAKE_PREFIX/bin/cmake CTEST_BIN=$CMAKE_PREFIX/bin/ctest
     - os: linux
       dist: trusty
       sudo: required
-      env: USE_CC=clang USE_CXX=clang++ CMAKE_BIN=$CMAKE_PREFIX/bin/cmake
+      env: USE_CC=clang USE_CXX=clang++ CMAKE_BIN=$CMAKE_PREFIX/bin/cmake CTEST_BIN=$CMAKE_PREFIX/bin/ctest
     # - os: linux
     #   dist: trusty
     #   sudo: required
@@ -95,8 +95,7 @@ script:
   - $CMAKE_BIN --build .
 
 after_success:
-  - test/atframe_utils_unit_test
-  - bin/atframe_utils_sample
+  - $CTEST_BIN -V .
 
 cache:
   apt: true
