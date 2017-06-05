@@ -143,10 +143,10 @@ CASE_TEST(ac_automation, skip) {
 CASE_TEST(ac_automation, dump_dot) {
     util::string::ac_automation<> actree;
 
-    actree.insert_keyword("艹");
-    actree.insert_keyword("操你妈逼");
-    actree.insert_keyword("你妈逼");
-    actree.insert_keyword("艹你妈");
+    actree.insert_keyword(u8"艹");
+    actree.insert_keyword(u8"操你妈逼");
+    actree.insert_keyword(u8"你妈逼");
+    actree.insert_keyword(u8"艹你妈");
     actree.set_skip(' ');
     actree.set_skip('\t');
     actree.set_skip('\r');

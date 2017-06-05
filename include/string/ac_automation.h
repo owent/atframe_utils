@@ -20,15 +20,17 @@
 #include <assert.h>
 #include <cstddef>
 #include <cstring>
+#include <iostream>
 #include <list>
 #include <map>
 #include <stdint.h>
 #include <string>
 #include <vector>
-#include <iostream>
 
-#include "std/smart_ptr.h"
+
 #include "common/string_oprs.h"
+#include "std/smart_ptr.h"
+
 
 namespace util {
     namespace string {
@@ -125,6 +127,23 @@ namespace util {
             friend bool operator>(const utf8_char_t &l, const utf8_char_t &r) { return !(l <= r); }
 
             friend bool operator>=(const utf8_char_t &l, const utf8_char_t &r) { return !(l < r); }
+
+            template <typename CH, typename CHT>
+            friend std::basic_ostream<CH, CHT> &operator<<(std::basic_ostream<CH, CHT> &os, const utf8_char_t &self) {
+                os.write((CH*)self.data, self.length());
+                return os;
+            }
+
+            template <typename CH, typename CHT>
+            friend std::basic_istream<CH, CHT> &operator>>(std::basic_istream<CH, CHT> &is, utf8_char_t &self) {
+                self.data[0] = 0;
+                is.read((CH*)&self.data[0], 1);
+                size_t len = self.length();
+                if (len > 1) {
+                    is.read((CH*)&self.data[1], len - 1);
+                }
+                return is;
+            }
         };
 
         namespace detail {
@@ -152,6 +171,18 @@ namespace util {
                 }
 
                 inline bool operator[](CH c) const { return test(c); }
+
+                template <typename OTCTT>
+                friend std::basic_ostream<CH, OTCTT> &operator<<(std::basic_ostream<CH, OTCTT> &os, const actrie_skip_charset<CH> &self) {
+                    os.write((CH*)self.skip_code_, sizeof(self.skip_code_) / (sizeof(CH)));
+                    return os;
+                }
+
+                template <typename OTCTT>
+                friend std::basic_istream<CH, OTCTT> &operator>>(std::basic_istream<CH, OTCTT> &is, actrie_skip_charset<CH> &self) {
+                    is.read((CH*)self.skip_code_, sizeof(self.skip_code_) / (sizeof(CH)));
+                    return is;
+                }
 
             private:
                 uint8_t skip_code_[(static_cast<size_t>(1) << (sizeof(CH) * 8)) / 8];
@@ -236,53 +267,48 @@ namespace util {
                 }
 
 
-                template<typename TC>
+                template <typename TC>
                 struct equal_char {
-                    static inline bool equal(TC l, char r) {
-                        return false;
-                    }
+                    static inline bool equal(TC l, char r) { return false; }
 
-                    template<typename OTC, typename OTCTT>
-                    static inline void out(TC l, std::basic_ostream<OTC, OTCTT>& os) {
+                    template <typename OTC, typename OTCTT>
+                    static inline void out(TC l, std::basic_ostream<OTC, OTCTT> &os) {
                         os << l;
                     }
                 };
 
-                template<>
+                template <>
                 struct equal_char<char> {
-                    static inline bool equal(char l, char r) {
-                        return l == r;
-                    }
+                    static inline bool equal(char l, char r) { return l == r; }
 
-                    template<typename OTC, typename OTCTT>
-                    static inline void out(char l, std::basic_ostream<OTC, OTCTT>& os) {
+                    template <typename OTC, typename OTCTT>
+                    static inline void out(char l, std::basic_ostream<OTC, OTCTT> &os) {
                         if (l > 0x21 && l <= 0x7f) {
                             os << l;
                         } else {
-                            char hex_val[3] = { 0 };
+                            char hex_val[3] = {0};
                             util::string::hex(hex_val, l);
                             os << "0x" << hex_val;
                         }
                     }
                 };
 
-                template<>
+                template <>
                 struct equal_char<unsigned char> {
-                    static inline bool equal(unsigned char l, char r) {
-                        return l == static_cast<unsigned char>(r);
-                    }
+                    static inline bool equal(unsigned char l, char r) { return l == static_cast<unsigned char>(r); }
 
-                    template<typename OTC, typename OTCTT>
-                    static inline void out(unsigned char l, std::basic_ostream<OTC, OTCTT>& os) {
+                    template <typename OTC, typename OTCTT>
+                    static inline void out(unsigned char l, std::basic_ostream<OTC, OTCTT> &os) {
                         if (l > 0x21 && l <= 0x7f) {
                             os << l;
                         } else {
-                            char hex_val[3] = { 0 };
+                            char hex_val[3] = {0};
                             util::string::hex(hex_val, l);
                             os << "0x" << hex_val;
                         }
                     }
                 };
+
             private:
                 actrie(storage_t &storage, uint32_t failed_idx = 0) : failed_(failed_idx) {}
 
@@ -309,63 +335,101 @@ namespace util {
                     return ret;
                 }
 
-                template<typename TC, typename TCTT>
-                void dump(std::basic_ostream<TC, TCTT>& os) const {
-                    os << idx_ << " " << failed_<< " "<< matched_string_.size()<< " ";
-                    os.write(matched_string_.data(), matched_string_.size());
+                template <typename TC, typename TCTT>
+                void write_varint(std::basic_ostream<TC, TCTT> &os, uint32_t i) const {
+                    unsigned char c;
+                    if (i < (1U << 6)) {
+                        c = static_cast<unsigned char>(i & 0x3F);
+                        os << c;
+                    } else if (i < (1U << 14)) {
+                        c = static_cast<unsigned char>((i >> 8) & 0x3F) | 0x40;
+                        os << c;
+                        c = static_cast<unsigned char>(i & 0xFF);
+                        os << c;
+                    } else if (i < (1U << 22)) {
+                        c = static_cast<unsigned char>((i >> 16) & 0x3F) | 0x80;
+                        os << c;
+                        c = static_cast<unsigned char>((i >> 8) & 0xFF);
+                        os << c;
+                        c = static_cast<unsigned char>(i & 0xFF);
+                        os << c;
+                    } else if (i < (1U << 30)) {
+                        c = static_cast<unsigned char>((i >> 24) & 0x3F) | 0xC0;
+                        os << c;
+                        c = static_cast<unsigned char>((i >> 16) & 0xFF);
+                        os << c;
+                        c = static_cast<unsigned char>((i >> 8) & 0xFF);
+                        os << c;
+                        c = static_cast<unsigned char>(i & 0xFF);
+                        os << c;
+                    } else {
+                        // too many nodes
+                        abort();
+                    }
+                }
 
-                    typedef typename std::map<char_t, uint32_t>::const_iterator iter_type;
-                    for (iter_type iter = next_.begin(); iter != next_.end(); ++iter) {
-                        if (iter->second > 0) {
-                            os << " " << iter->first<< " "<< iter->second;
+                template <typename TC, typename TCTT>
+                uint32_t read_varint(std::basic_istream<TC, TCTT> &is) const {
+                    unsigned char c;
+                    if (!is >> c) {
+                        return 0;
+                    }
+
+                    uint32_t ret = 0;
+                    ret = c & 0x3F;
+                    for (unsigned char n = (c >> 6) & 0x03; n > 0; --n) {
+                        ret <<= 8;
+                        if (is>> c) {
+                            ret |= c;
                         }
                     }
 
-                    os << "\r\n";
+                    return ret;
                 }
 
-                template<typename TC, typename TCTT>
-                bool load(std::basic_istream<TC, TCTT>& is) {
-                    if (!(is >> idx_)) {
-                        return false;
+                template <typename TC, typename TCTT>
+                void dump(std::basic_ostream<TC, TCTT> &os) const {
+                    write_varint(os, idx_);
+                    write_varint(os, failed_);
+                    write_varint(os, static_cast<uint32_t>(matched_string_.size()));
+                    if (!matched_string_.empty()) {
+                        os.write(matched_string_.data(), matched_string_.size());
                     }
 
-                    if (!(is >> failed_)) {
-                        return false;
+                    write_varint(os, static_cast<uint32_t>(next_.size()));
+                    typedef typename std::map<char_t, uint32_t>::const_iterator iter_type;
+                    for (iter_type iter = next_.begin(); iter != next_.end(); ++iter) {
+                        os << iter->first;
+                        write_varint(os, iter->second);
                     }
+                }
 
-                    size_t matstr_len = 0;
-                    if (!(is >> matstr_len)) {
-                        return false;
-                    }
-
-                    if (matstr_len > 0) {
-                        is.get();
-
-                        matched_string_.resize(matstr_len);
-                        is.readsome(&matched_string_[0], matstr_len);
+                template <typename TC, typename TCTT>
+                bool load(std::basic_istream<TC, TCTT> &is) {
+                    idx_ = read_varint(is);
+                    failed_ = read_varint(is);
+                    uint32_t mstr_sz = read_varint(is);
+                    if (mstr_sz > 0) {
+                        matched_string_.resize(mstr_sz);
+                        is.readsome(&matched_string_[0], mstr_sz);
                     }
 
                     next_.clear();
-                    char_t k;
-                    uint32_t v;
+                    uint32_t next_sz = read_varint(is);
+                    for (uint32_t i = 0; i < next_sz; ++i) {
 
-                    while (is >> k) {
-                        if (is >> v) {
-                            next_[k] = v;
-                        }
                     }
 
                     return true;
                 }
 
-                template<typename TC, typename TCTT>
-                static inline std::basic_ostream<TC, TCTT>& dump_dot_node_name(std::basic_ostream<TC, TCTT>& os, uint32_t idx) {
+                template <typename TC, typename TCTT>
+                static inline std::basic_ostream<TC, TCTT> &dump_dot_node_name(std::basic_ostream<TC, TCTT> &os, uint32_t idx) {
                     return os << "char_" << idx;
                 }
 
-                template<typename TC, typename TCTT>
-                void dump_dot_node(std::basic_ostream<TC, TCTT>& os) const {
+                template <typename TC, typename TCTT>
+                void dump_dot_node(std::basic_ostream<TC, TCTT> &os) const {
                     dump_dot_node_name(os, get_idx());
                     if (!matched_string_.empty()) {
                         os << " [label=\"";
@@ -378,18 +442,18 @@ namespace util {
                         }
                         os << "\"];" << std::endl;
                     } else {
-                        os << " [label=\"" << get_idx() << "\"];"<< std::endl;
+                        os << " [label=\"" << get_idx() << "\"];" << std::endl;
                     }
                 }
 
-                template<typename TC, typename TCTT>
-                void dump_dot_relationship(std::basic_ostream<TC, TCTT>& os) const {
+                template <typename TC, typename TCTT>
+                void dump_dot_relationship(std::basic_ostream<TC, TCTT> &os) const {
                     // fail node
                     if (0 != failed_) {
                         dump_dot_node_name(os, get_idx());
                         os << " -> ";
                         dump_dot_node_name(os, failed_);
-                        os << " [color=red];"<< std::endl;
+                        os << " [color=red];" << std::endl;
                     }
 
                     typedef typename std::map<char_t, uint32_t>::const_iterator iter_type;
@@ -741,8 +805,9 @@ namespace util {
              * @param node_options 节点绘制选项(最后跟一个NULL表示结束)
              * @param edge_options 边绘制选项(最后跟一个NULL表示结束)
              */
-            template<typename TC, typename TCTT>
-            void dump_dot(std::basic_ostream<TC, TCTT>& os, const char* options[] = NULL, const char* node_options[] = NULL, const char* edge_options[] = NULL) {
+            template <typename TC, typename TCTT>
+            void dump_dot(std::basic_ostream<TC, TCTT> &os, const char *options[] = NULL, const char *node_options[] = NULL,
+                          const char *edge_options[] = NULL) {
                 init();
 
                 os << "digraph \"ac_automation";
@@ -758,7 +823,7 @@ namespace util {
                 }
 
                 if (node_options && *node_options) {
-                    os << "node ["<< *node_options;
+                    os << "node [" << *node_options;
                     ++node_options;
                     while (node_options && *node_options) {
                         os << ", " << *node_options;
@@ -768,7 +833,7 @@ namespace util {
                 }
 
                 if (edge_options && *edge_options) {
-                    os << "edge ["<< *edge_options;
+                    os << "edge [" << *edge_options;
                     ++edge_options;
                     while (edge_options && *edge_options) {
                         os << ", " << *edge_options;
@@ -795,17 +860,20 @@ namespace util {
             * @param node_options 节点绘制选项(最后跟一个NULL表示结束)
             * @param edge_options 边绘制选项(最后跟一个NULL表示结束)
             */
-            template<typename TC, typename TCTT>
-            void dump(std::basic_ostream<TC, TCTT>& os) {
+            template <typename TC, typename TCTT>
+            void dump(std::basic_ostream<TC, TCTT> &os) {
                 init();
 
-                os << "ACAUTOMATION "<< sizeof(char_t)<< "\r\n";
+                os << "ACAUTOMATION " << sizeof(char_t) << "\r\n";
                 if (is_nocase()) {
                     os << "nocase 1\r\n";
                 }
+                os << "node "<< storage_.size()<<"\r\n";
                 os << "\r\n";
 
-                // ignore skip datas
+                //skip datas
+                os << skip_charset_;
+
                 for (size_t i = 0; i < storage_.size(); ++i) {
                     storage_[i]->dump(os);
                 }
