@@ -306,13 +306,11 @@ namespace util {
                 return -2;
             case method_t::EN_CMT_XXTEA: {
                 memcpy(output, input, ilen);
-                *olen = ilen;
-                if (ilen & 0x03) {
-                    memset(output + ilen, 0x04 - (ilen & 0x03));
-
-                    ilen = (ilen | 0x03) + 1;
+                *olen = ((ilen - 1) | 0x03) + 1;
+                if (*olen > ilen) {
+                    memset(reinterpret_cast<char *>(buffer) + insz, 0, *olen - insz);
                 }
-                util::xxtea_encrypt(&xxtea_context_.key, output, ilen);
+                util::xxtea_encrypt(&xxtea_context_.key, output, *olen);
                 return 0;
             }
             case method_t::EN_CMT_CIPHER:
@@ -337,13 +335,11 @@ namespace util {
                 return -2;
             case method_t::EN_CMT_XXTEA: {
                 memcpy(output, input, ilen);
-                *olen = ilen;
-                if (ilen & 0x03) {
-                    memset(output + ilen, 0x04 - (ilen & 0x03));
-
-                    ilen = (ilen | 0x03) + 1;
+                *olen = ((ilen - 1) | 0x03) + 1;
+                if (*olen > ilen) {
+                    memset(reinterpret_cast<char *>(buffer) + insz, 0, *olen - insz);
                 }
-                util::xxtea_decrypt(&xxtea_context_.key, output, ilen);
+                util::xxtea_decrypt(&xxtea_context_.key, output, *olen);
                 return 0;
             }
             case method_t::EN_CMT_CIPHER:
