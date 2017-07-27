@@ -20,6 +20,8 @@
 
 // CRYPTO_USE_OPENSSL, CRYPTO_USE_LIBRESSL,CRYPTO_USE_BORINGSSL, CRYPTO_USE_MBEDTLS
 
+#include <config/atframe_utils_build_feature.h>
+
 #if defined(CRYPTO_USE_OPENSSL) || defined(CRYPTO_USE_LIBRESSL) || defined(CRYPTO_USE_BORINGSSL)
 
 #include <openssl/evp.h>
@@ -47,6 +49,7 @@
 namespace util {
     namespace crypto {
         class cipher {
+        public:
             struct method_t {
                 enum type {
                     EN_CMT_INVALID = 0, // inner
@@ -80,16 +83,70 @@ namespace util {
             };
 #endif
 
+            struct error_code_t {
+                enum type {
+                    OK = 0,
+                    INVALID_PARAM = -1,
+                    NOT_INITED = -2,
+                    ALREADY_INITED = -3,
+                    MALLOC = -4,
+                    CIPHER_DISABLED = -11,
+                    CIPHER_NOT_SUPPORT = -12,
+                    CIPHER_OPERATION = -13,
+                };
+            };
+
         public:
             cipher();
             ~cipher();
 
-            bool init(const char *name, int mode = mode_t::EN_CMODE_ENCRYPT | mode_t::EN_CMODE_DECRYPT);
-            bool close();
+            int init(const char *name, int mode = mode_t::EN_CMODE_ENCRYPT | mode_t::EN_CMODE_DECRYPT);
+            int close();
 
+            /**
+             * @brief set last error returned by crypto library
+             * @param err error code returned by crypto library
+             */
+            inline void set_last_errno(int e) { last_errorno_ = e; }
+            /**
+             * @brief get last error returned by crypto library
+             * @return last error code returned by crypto library
+             */
+            inline int get_last_errno() const { return last_errorno_; }
+
+            /**
+             * @brief               get iv size in crypt library
+             * @return              iv length in bytes
+             */
             uint32_t get_iv_size() const;
+
+            /**
+             * @brief               get key length in bits
+             * @return              key length in bits
+             */
             uint32_t get_key_bits() const;
+
+            /**
+             * @brief               get block size in crypt library
+             * @return              block length in bytes
+             */
             uint32_t get_block_size() const;
+
+            /**
+             * @brief               set key
+             * @param key           key
+             * @param key_bitlen    key length to use, in bits. must equal or greater to get_key_bits()
+             * @return              0 or error code less than 0
+             */
+            int set_key(const unsigned char *key, uint32_t key_bitlen);
+
+            /**
+             * @brief               set key
+             * @param iv            iv value
+             * @param iv_len        length of iv, in bytes
+             * @return              0 or error code less than 0
+             */
+            int set_iv(const unsigned char *iv, size_t iv_len);
 
             /**
              * @biref               encrypt data
@@ -100,6 +157,7 @@ namespace util {
              *                      input!
              * @param olen          length of the output data, will be filled with the
              *                      actual number of bytes written.
+             * @return              0 or error code
              */
             int encrypt(const unsigned char *input, size_t ilen, unsigned char *output, size_t *olen);
 
@@ -112,6 +170,7 @@ namespace util {
              *                      input!
              * @param olen          length of the output data, will be filled with the
              *                      actual number of bytes written.
+             * @return              0 or error code
              */
             int decrypt(const unsigned char *input, size_t ilen, unsigned char *output, size_t *olen);
 
@@ -121,6 +180,7 @@ namespace util {
 
         private:
             method_t::type method_;
+            int last_errorno_;
             const cipher_kt_t *cipher_kt_;
             typedef struct { ::util::xxtea_key key; } xxtea_context_t;
             typedef struct {
@@ -131,7 +191,6 @@ namespace util {
                 cipher_context_t cipher_context_;
                 xxtea_context_t xxtea_context_;
             };
-            std::vector<unsigned char> iv_;
         };
     }
 }

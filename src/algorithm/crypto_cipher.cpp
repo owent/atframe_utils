@@ -1,5 +1,5 @@
-
 #include <common/string_oprs.h>
+#include <cstring>
 
 #include <algorithm/crypto_cipher.h>
 
@@ -8,6 +8,11 @@
 namespace util {
     namespace crypto {
         namespace details {
+            static inline cipher::error_code_t::type setup_errorno(cipher &ci, int err, cipher::error_code_t::type ret) {
+                ci.set_last_errno(err);
+                return ret;
+            }
+
             static const char *supported_ciphers[] = {
                 "xxtea",
                 "rc4",
@@ -25,7 +30,7 @@ namespace util {
                 "chacha20-poly1305" // only available on openssl 1.1.0 and upper
             };
 
-#if defined(CRYPTO_USE_MBEDTLS)
+#if !(defined(CRYPTO_USE_OPENSSL) || defined(CRYPTO_USE_LIBRESSL) || defined(CRYPTO_USE_BORINGSSL)) && defined(CRYPTO_USE_MBEDTLS)
             static const char *supported_ciphers_mbedtls[] = {
                 "xxtea",
                 "ARC4-128",
@@ -48,37 +53,37 @@ namespace util {
         cipher::cipher() : method_(method_t::EN_CMT_INVALID), cipher_kt_(NULL) {}
         cipher::~cipher() { close(); }
 
-        bool cipher::init(const char *name, int mode) {
+        int cipher::init(const char *name, int mode) {
             if (method_ != method_t::EN_CMT_INVALID) {
-                return false;
+                return details::setup_errorno(*this, -1, error_code_t::ALREADY_INITED);
             }
 
             if (NULL == name) {
-                return false;
+                return details::setup_errorno(*this, -1, error_code_t::INVALID_PARAM);
             }
 
             if (0 == UTIL_STRFUNC_STRCASE_CMP(name, "xxtea")) {
                 method_ = method_t::EN_CMT_XXTEA;
-                return true;
+                return details::setup_errorno(*this, 0, error_code_t::OK);
             }
 
             cipher_kt_ = get_cipher_by_name(name);
             if (NULL == cipher_kt_) {
-                return false;
+                return details::setup_errorno(*this, -1, error_code_t::CIPHER_NOT_SUPPORT);
             }
 
-            bool ret = true;
+            int ret = error_code_t::OK;
 #if defined(CRYPTO_USE_OPENSSL) || defined(CRYPTO_USE_LIBRESSL) || defined(CRYPTO_USE_BORINGSSL)
             do {
                 if (mode & mode_t::EN_CMODE_ENCRYPT) {
                     cipher_context_.enc = EVP_CIPHER_CTX_new();
 
                     if (NULL == cipher_context_.enc) {
-                        ret = false;
+                        ret = details::setup_errorno(*this, -1, error_code_t::MALLOC);
                         break;
                     }
-                    if (!EVP_CipherInit_ex(cipher_context_.enc, cipher_kt_, NULL, NULL, NULL, 1)) {
-                        ret = false;
+                    if (!(EVP_CipherInit_ex(cipher_context_.enc, cipher_kt_, NULL, NULL, NULL, 1))) {
+                        ret = details::setup_errorno(*this, -1, error_code_t::CIPHER_OPERATION);
                         break;
                     }
                 } else {
@@ -89,12 +94,12 @@ namespace util {
                     cipher_context_.dec = EVP_CIPHER_CTX_new();
 
                     if (NULL == cipher_context_.dec) {
-                        ret = false;
+                        ret = details::setup_errorno(*this, -1, error_code_t::MALLOC);
                         break;
                     }
 
-                    if (!EVP_CipherInit_ex(cipher_context_.dec, cipher_kt_, NULL, NULL, NULL, 0)) {
-                        ret = false;
+                    if (!(EVP_CipherInit_ex(cipher_context_.dec, cipher_kt_, NULL, NULL, NULL, 0))) {
+                        ret = details::setup_errorno(*this, -1, error_code_t::CIPHER_OPERATION);
                         break;
                     }
                 } else {
@@ -103,7 +108,7 @@ namespace util {
 
             } while (false);
 
-            if (false == ret) {
+            if (error_code_t::OK != ret) {
                 if ((mode & mode_t::EN_CMODE_ENCRYPT) && NULL != cipher_context_.enc) {
                     EVP_CIPHER_CTX_free(cipher_context_.enc);
                     cipher_context_.enc = NULL;
@@ -121,14 +126,15 @@ namespace util {
                     cipher_context_.enc = (cipher_evp_t *)malloc(sizeof(cipher_evp_t));
 
                     if (NULL == cipher_context_.enc) {
-                        ret = false;
+                        ret = details::setup_errorno(*this, -1, error_code_t::MALLOC);
                         break;
                     }
 
                     memset(cipher_context_.enc, 0, sizeof(cipher_evp_t));
                     mbedtls_cipher_init(cipher_context_.enc);
-                    if (mbedtls_cipher_setup(cipher_context_.enc, cipher_kt_) != 0) {
-                        ret = false;
+                    int res;
+                    if ((res = mbedtls_cipher_setup(cipher_context_.enc, cipher_kt_)) != 0) {
+                        ret = details::setup_errorno(*this, res, error_code_t::CIPHER_OPERATION);
                         break;
                     }
                 } else {
@@ -139,14 +145,15 @@ namespace util {
                     cipher_context_.dec = (cipher_evp_t *)malloc(sizeof(cipher_evp_t));
 
                     if (NULL == cipher_context_.dec) {
-                        ret = false;
+                        ret = details::setup_errorno(*this, -1, error_code_t::MALLOC);
                         break;
                     }
 
                     memset(cipher_context_.dec, 0, sizeof(cipher_evp_t));
                     mbedtls_cipher_init(cipher_context_.dec);
-                    if (mbedtls_cipher_setup(cipher_context_.dec, cipher_kt_) != 0) {
-                        ret = false;
+                    int res;
+                    if ((res = mbedtls_cipher_setup(cipher_context_.dec, cipher_kt_)) != 0) {
+                        ret = details::setup_errorno(*this, res, error_code_t::CIPHER_OPERATION);
                         break;
                     }
                 } else {
@@ -155,7 +162,7 @@ namespace util {
 
             } while (false);
 
-            if (false == ret) {
+            if (error_code_t::OK != ret) {
                 if ((mode & mode_t::EN_CMODE_ENCRYPT) && NULL != cipher_context_.enc) {
                     mbedtls_cipher_free(cipher_context_.enc);
                     free(cipher_context_.enc);
@@ -169,17 +176,18 @@ namespace util {
                 }
             }
 #endif
-            if (ret) {
+            if (error_code_t::OK == ret) {
                 method_ = method_t::EN_CMT_CIPHER;
             }
+
             return ret;
         }
 
-        bool cipher::close() {
+        int cipher::close() {
 
             do {
                 if (method_ == method_t::EN_CMT_INVALID) {
-                    return false;
+                    return details::setup_errorno(*this, 0, error_code_t::NOT_INITED);
                 } else if (method_ == method_t::EN_CMT_XXTEA) {
                     // just do nothing when using xxtea
                     break;
@@ -213,7 +221,7 @@ namespace util {
             } while (false);
 
             method_ = method_t::EN_CMT_INVALID;
-            return true;
+            return details::setup_errorno(*this, 0, error_code_t::OK);
         }
 
         uint32_t cipher::get_iv_size() const {
@@ -224,15 +232,15 @@ namespace util {
             case method_t::EN_CMT_CIPHER:
                 if (NULL != cipher_context_.enc) {
 #if defined(CRYPTO_USE_OPENSSL) || defined(CRYPTO_USE_LIBRESSL) || defined(CRYPTO_USE_BORINGSSL)
-                    return static_cast<uint32_t> EVP_CIPHER_CTX_iv_length(cipher_context_.enc);
+                    return static_cast<uint32_t>(EVP_CIPHER_CTX_iv_length(cipher_context_.enc));
 #elif defined(CRYPTO_USE_MBEDTLS)
-                    return static_cast<uint32_t> mbedtls_cipher_get_iv_size(cipher_context_.enc);
+                    return static_cast<uint32_t>(mbedtls_cipher_get_iv_size(cipher_context_.enc));
 #endif
                 } else if (NULL != cipher_context_.dec) {
 #if defined(CRYPTO_USE_OPENSSL) || defined(CRYPTO_USE_LIBRESSL) || defined(CRYPTO_USE_BORINGSSL)
-                    return static_cast<uint32_t> EVP_CIPHER_CTX_iv_length(cipher_context_.dec);
+                    return static_cast<uint32_t>(EVP_CIPHER_CTX_iv_length(cipher_context_.dec));
 #elif defined(CRYPTO_USE_MBEDTLS)
-                    return static_cast<uint32_t> mbedtls_cipher_get_iv_size(cipher_context_.dec);
+                    return static_cast<uint32_t>(mbedtls_cipher_get_iv_size(cipher_context_.dec));
 #endif
                 } else {
                     return 0;
@@ -251,15 +259,15 @@ namespace util {
             case method_t::EN_CMT_CIPHER:
                 if (NULL != cipher_context_.enc) {
 #if defined(CRYPTO_USE_OPENSSL) || defined(CRYPTO_USE_LIBRESSL) || defined(CRYPTO_USE_BORINGSSL)
-                    return static_cast<uint32_t> EVP_CIPHER_CTX_key_length(cipher_context_.enc) * 8;
+                    return static_cast<uint32_t>(EVP_CIPHER_CTX_key_length(cipher_context_.enc) * 8);
 #elif defined(CRYPTO_USE_MBEDTLS)
-                    return static_cast<uint32_t> mbedtls_cipher_get_key_bitlen(cipher_context_.enc);
+                    return static_cast<uint32_t>(mbedtls_cipher_get_key_bitlen(cipher_context_.enc));
 #endif
                 } else if (NULL != cipher_context_.dec) {
 #if defined(CRYPTO_USE_OPENSSL) || defined(CRYPTO_USE_LIBRESSL) || defined(CRYPTO_USE_BORINGSSL)
-                    return static_cast<uint32_t> EVP_CIPHER_CTX_key_length(cipher_context_.dec) * 8;
+                    return static_cast<uint32_t>(EVP_CIPHER_CTX_key_length(cipher_context_.dec) * 8);
 #elif defined(CRYPTO_USE_MBEDTLS)
-                    return static_cast<uint32_t> mbedtls_cipher_get_key_bitlen(cipher_context_.dec);
+                    return static_cast<uint32_t>(mbedtls_cipher_get_key_bitlen(cipher_context_.dec));
 #endif
                 } else {
                     return 0;
@@ -278,15 +286,15 @@ namespace util {
             case method_t::EN_CMT_CIPHER:
                 if (NULL != cipher_context_.enc) {
 #if defined(CRYPTO_USE_OPENSSL) || defined(CRYPTO_USE_LIBRESSL) || defined(CRYPTO_USE_BORINGSSL)
-                    return static_cast<uint32_t> EVP_CIPHER_CTX_block_size(cipher_context_.enc);
+                    return static_cast<uint32_t>(EVP_CIPHER_CTX_block_size(cipher_context_.enc));
 #elif defined(CRYPTO_USE_MBEDTLS)
-                    return static_cast<uint32_t> mbedtls_cipher_get_block_size(cipher_context_.enc);
+                    return static_cast<uint32_t>(mbedtls_cipher_get_block_size(cipher_context_.enc));
 #endif
                 } else if (NULL != cipher_context_.dec) {
 #if defined(CRYPTO_USE_OPENSSL) || defined(CRYPTO_USE_LIBRESSL) || defined(CRYPTO_USE_BORINGSSL)
-                    return static_cast<uint32_t> EVP_CIPHER_CTX_block_size(cipher_context_.dec);
+                    return static_cast<uint32_t>(EVP_CIPHER_CTX_block_size(cipher_context_.dec));
 #elif defined(CRYPTO_USE_MBEDTLS)
-                    return static_cast<uint32_t> mbedtls_cipher_get_block_size(cipher_context_.dec);
+                    return static_cast<uint32_t>(mbedtls_cipher_get_block_size(cipher_context_.dec));
 #endif
                 } else {
                     return 0;
@@ -296,61 +304,213 @@ namespace util {
             }
         }
 
+        int cipher::set_key(const unsigned char *key, uint32_t key_bitlen) {
+            switch (method_) {
+            case method_t::EN_CMT_INVALID:
+                return details::setup_errorno(*this, -1, error_code_t::NOT_INITED);
+            case method_t::EN_CMT_XXTEA: {
+                unsigned char secret[4 * sizeof(uint32_t)] = {0};
+                if (key_bitlen >= sizeof(secret) * 8) {
+                    memcpy(secret, key, sizeof(secret));
+                } else {
+                    memcpy(secret, key, key_bitlen / 8);
+                }
+                util::xxtea_setup(&xxtea_context_.key, secret);
+                return details::setup_errorno(*this, 0, error_code_t::OK);
+            }
+            case method_t::EN_CMT_CIPHER: {
+                int res = 0;
+#if defined(CRYPTO_USE_OPENSSL) || defined(CRYPTO_USE_LIBRESSL) || defined(CRYPTO_USE_BORINGSSL)
+                if (get_key_bits() < key_bitlen) {
+                    return details::setup_errorno(*this, -1, error_code_t::INVALID_PARAM);
+                }
+
+                if (NULL != cipher_context_.enc) {
+                    if (!EVP_CipherInit_ex(cipher_context_.enc, NULL, NULL, key, NULL, 1)) {
+                        res = -1;
+                    }
+                }
+
+                if (NULL != cipher_context_.dec) {
+                    if (!EVP_CipherInit_ex(cipher_context_.dec, NULL, NULL, key, NULL, 0)) {
+                        res = -1;
+                    }
+                }
+
+#elif defined(CRYPTO_USE_MBEDTLS)
+                if (NULL != cipher_context_.enc) {
+                    res = mbedtls_cipher_setkey(cipher_context_.enc, key, static_cast<int>(key_bitlen), MBEDTLS_ENCRYPT);
+                }
+
+                if (NULL != cipher_context_.dec) {
+                    res = mbedtls_cipher_setkey(cipher_context_.dec, key, static_cast<int>(key_bitlen), MBEDTLS_DECRYPT);
+                }
+#endif
+                if (res != 0) {
+                    return details::setup_errorno(*this, res, error_code_t::CIPHER_OPERATION);
+                }
+                return details::setup_errorno(*this, res, error_code_t::OK);
+            }
+            default:
+                return details::setup_errorno(*this, -1, error_code_t::NOT_INITED);
+            }
+        }
+
+        int cipher::set_iv(const unsigned char *iv, size_t iv_len) {
+            switch (method_) {
+            case method_t::EN_CMT_INVALID:
+            case method_t::EN_CMT_XXTEA:
+                return error_code_t::OK;
+
+            case method_t::EN_CMT_CIPHER: {
+                int res = 0;
+#if defined(CRYPTO_USE_OPENSSL) || defined(CRYPTO_USE_LIBRESSL) || defined(CRYPTO_USE_BORINGSSL)
+                if (get_iv_size() > iv_len) {
+                    return details::setup_errorno(*this, -1, error_code_t::INVALID_PARAM);
+                }
+
+                if (NULL != cipher_context_.enc) {
+                    if (!EVP_CipherInit_ex(cipher_context_.enc, NULL, NULL, NULL, iv, 1)) {
+                        res = -1;
+                    }
+                }
+
+                if (NULL != cipher_context_.dec) {
+                    if (!EVP_CipherInit_ex(cipher_context_.dec, NULL, NULL, NULL, iv, 0)) {
+                        res = -1;
+                    }
+                }
+
+#elif defined(CRYPTO_USE_MBEDTLS)
+                if (NULL != cipher_context_.enc) {
+                    res = mbedtls_cipher_set_iv(cipher_context_.enc, iv, iv_len);
+                }
+
+                if (NULL != cipher_context_.dec) {
+                    res = mbedtls_cipher_set_iv(cipher_context_.dec, iv, iv_len);
+                }
+#endif
+                if (res != 0) {
+                    return details::setup_errorno(*this, res, error_code_t::CIPHER_OPERATION);
+                }
+                return details::setup_errorno(*this, res, error_code_t::OK);
+            }
+            default:
+                return error_code_t::OK;
+            }
+
+            return error_code_t::OK;
+        }
+
         int cipher::encrypt(const unsigned char *input, size_t ilen, unsigned char *output, size_t *olen) {
-            if (input == NULL || ilen <= 0 || output == NULL || olen <= 0 || *olen < ilen + get_block_size()) {
-                return -1;
+            if (input == NULL || ilen <= 0 || output == NULL || NULL == olen || olen <= 0 || *olen < ilen + get_block_size()) {
+                return details::setup_errorno(*this, -1, error_code_t::INVALID_PARAM);
             }
 
             switch (method_) {
             case method_t::EN_CMT_INVALID:
-                return -2;
+                return details::setup_errorno(*this, -1, error_code_t::NOT_INITED);
             case method_t::EN_CMT_XXTEA: {
                 memcpy(output, input, ilen);
                 *olen = ((ilen - 1) | 0x03) + 1;
                 if (*olen > ilen) {
-                    memset(reinterpret_cast<char *>(buffer) + insz, 0, *olen - insz);
+                    memset(output + ilen, 0, *olen - ilen);
                 }
                 util::xxtea_encrypt(&xxtea_context_.key, output, *olen);
-                return 0;
+                return details::setup_errorno(*this, 0, error_code_t::OK);
             }
-            case method_t::EN_CMT_CIPHER:
+            case method_t::EN_CMT_CIPHER: {
                 if (NULL == cipher_context_.enc) {
-                    return -3;
+                    return details::setup_errorno(*this, 0, error_code_t::CIPHER_DISABLED);
                 }
 #if defined(CRYPTO_USE_OPENSSL) || defined(CRYPTO_USE_LIBRESSL) || defined(CRYPTO_USE_BORINGSSL)
+                int outl, finish_olen;
+                if (!(EVP_CipherUpdate(cipher_context_.enc, output, &outl, input, ilen))) {
+                    return details::setup_errorno(*this, -1, error_code_t::CIPHER_OPERATION);
+                }
+
+                if (!(EVP_CipherFinal_ex(cipher_context_.enc, output + outl, &finish_olen))) {
+                    return details::setup_errorno(*this, -1, error_code_t::CIPHER_OPERATION);
+                }
+
+                *olen = static_cast<size_t>(outl + finish_olen);
+                return error_code_t::OK;
+
 #elif defined(CRYPTO_USE_MBEDTLS)
+                size_t finish_olen;
+                if ((last_errorno_ = mbedtls_cipher_reset(cipher_context_.enc)) != 0) {
+                    return error_code_t::CIPHER_OPERATION;
+                }
+
+                if ((last_errorno_ = mbedtls_cipher_update(cipher_context_.enc, input, ilen, output, olen)) != 0) {
+                    return error_code_t::CIPHER_OPERATION;
+                }
+
+                if ((last_errorno_ = mbedtls_cipher_finish(cipher_context_.enc, output + *olen, &finish_olen)) != 0) {
+                    return error_code_t::CIPHER_OPERATION;
+                }
+
+                *olen += finish_olen;
+                return error_code_t::OK;
 #endif
+            }
             default:
-                return -2;
+                return details::setup_errorno(*this, -1, error_code_t::NOT_INITED);
             }
         }
 
         int cipher::decrypt(const unsigned char *input, size_t ilen, unsigned char *output, size_t *olen) {
-            if (input == NULL || ilen <= 0 || output == NULL || olen <= 0 || *olen < ilen + get_block_size()) {
-                return -1;
+            if (input == NULL || ilen <= 0 || output == NULL || NULL == olen || olen <= 0 || *olen < ilen + get_block_size()) {
+                return details::setup_errorno(*this, -1, error_code_t::INVALID_PARAM);
             }
 
             switch (method_) {
             case method_t::EN_CMT_INVALID:
-                return -2;
+                return details::setup_errorno(*this, -1, error_code_t::NOT_INITED);
             case method_t::EN_CMT_XXTEA: {
                 memcpy(output, input, ilen);
                 *olen = ((ilen - 1) | 0x03) + 1;
                 if (*olen > ilen) {
-                    memset(reinterpret_cast<char *>(buffer) + insz, 0, *olen - insz);
+                    memset(reinterpret_cast<char *>(output) + ilen, 0, *olen - ilen);
                 }
                 util::xxtea_decrypt(&xxtea_context_.key, output, *olen);
-                return 0;
+                return details::setup_errorno(*this, 0, error_code_t::OK);
             }
-            case method_t::EN_CMT_CIPHER:
-                if (NULL == cipher_context_.enc) {
-                    return -3;
+            case method_t::EN_CMT_CIPHER: {
+                if (NULL == cipher_context_.dec) {
+                    return details::setup_errorno(*this, 0, error_code_t::CIPHER_DISABLED);
                 }
 #if defined(CRYPTO_USE_OPENSSL) || defined(CRYPTO_USE_LIBRESSL) || defined(CRYPTO_USE_BORINGSSL)
+                int outl, finish_olen;
+                if (!(EVP_CipherUpdate(cipher_context_.dec, output, &outl, input, ilen))) {
+                    return details::setup_errorno(*this, -1, error_code_t::CIPHER_OPERATION);
+                }
+
+                if (!(EVP_CipherFinal_ex(cipher_context_.dec, output + outl, &finish_olen))) {
+                    return details::setup_errorno(*this, -1, error_code_t::CIPHER_OPERATION);
+                }
+
+                *olen = static_cast<size_t>(outl + finish_olen);
+
+                return error_code_t::OK;
 #elif defined(CRYPTO_USE_MBEDTLS)
+                size_t finish_olen;
+                if ((last_errorno_ = mbedtls_cipher_reset(cipher_context_.dec)) != 0) return error_code_t::CIPHER_OPERATION;
+
+                if ((last_errorno_ = mbedtls_cipher_update(cipher_context_.dec, input, ilen, output, olen)) != 0) {
+                    return error_code_t::CIPHER_OPERATION;
+                }
+
+                if ((last_errorno_ = mbedtls_cipher_finish(cipher_context_.dec, output + *olen, &finish_olen)) != 0) {
+                    return error_code_t::CIPHER_OPERATION;
+                }
+
+                *olen += finish_olen;
+                return error_code_t::OK;
 #endif
+            }
             default:
-                return -2;
+                return details::setup_errorno(*this, -1, error_code_t::NOT_INITED);
             }
         }
 
