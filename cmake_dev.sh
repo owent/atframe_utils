@@ -78,17 +78,17 @@ while getopts "ac:e:hm:o:tus-" OPTION; do
             exit 0;
         ;;
         m)
-            if [ -z "$OPTARG" ]; then
-                CMAKE_OPTIONS="$CMAKE_OPTIONS -DMBEDTLS_ROOT=$OPTARG";
+            if [ ! -z "$OPTARG" ]; then
+                CMAKE_OPTIONS="$CMAKE_OPTIONS -DMBEDTLS_ROOT=$OPTARG -DCRYPTO_USE_MBEDTLS=YES";
             else
-                CMAKE_OPTIONS="$CMAKE_OPTIONS -DMBEDTLS_ROOT=c:/workspace/lib/crypt/prebuilt/win64";
+                CMAKE_OPTIONS="$CMAKE_OPTIONS -DMBEDTLS_ROOT=c:/workspace/lib/crypt/prebuilt/win64 -DCRYPTO_USE_MBEDTLS=YES";
             fi
         ;;
         o)
-            if [ -z "$OPTARG" ]; then
-                CMAKE_OPTIONS="$CMAKE_OPTIONS -DOPENSSL_ROOT_DIR=$OPTARG";
+            if [ ! -z "$OPTARG" ]; then
+                CMAKE_OPTIONS="$CMAKE_OPTIONS -DOPENSSL_ROOT_DIR=$OPTARG -DCRYPTO_USE_OPENSSL=YES";
             else
-                CMAKE_OPTIONS="$CMAKE_OPTIONS -DOPENSSL_ROOT_DIR=c:/workspace/lib/crypt/prebuilt/openssl-1.0.2h-vs2015";
+                CMAKE_OPTIONS="$CMAKE_OPTIONS -DOPENSSL_ROOT_DIR=c:/workspace/lib/crypt/prebuilt/openssl-1.0.2h-vs2015 -DCRYPTO_USE_OPENSSL=YES";
             fi
         ;;
         t)
@@ -123,9 +123,9 @@ else
 fi
 
 if [ "$CHECK_MSYS" == "mingw" ]; then
-    cmake .. -G "MSYS Makefiles" -DRAPIDJSON_ROOT=$SCRIPT_DIR/3rd_party/rapidjson/repo $CMAKE_OPTIONS "$@";
+    cmake .. -G "MSYS Makefiles" $CMAKE_OPTIONS "$@";
 else
-    cmake .. -DRAPIDJSON_ROOT=$SCRIPT_DIR/3rd_party/rapidjson/repo $CMAKE_OPTIONS "$@";
+    cmake .. $CMAKE_OPTIONS "$@";
 fi
 
 
