@@ -176,7 +176,13 @@ namespace util {
 
         public:
             static const cipher_kt_t *get_cipher_by_name(const char *name);
+            /**
+             * @biref               split cipher names by space, comma, semicolon or colon
+             * @param in            string contain some cipher names
+             * @param out           cipher names
+             */
             static void split_ciphers(const std::string &in, std::vector<std::string> &out);
+            static const std::vector<std::string> &get_all_cipher_names();
 
         private:
             method_t::type method_;

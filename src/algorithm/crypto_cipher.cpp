@@ -2,6 +2,7 @@
 #include <cstring>
 
 #include <algorithm/crypto_cipher.h>
+#include <std/static_assert.h>
 
 #ifdef CRYPTO_ENABLED
 
@@ -26,8 +27,9 @@ namespace util {
                 "camellia-128-cfb",
                 "camellia-192-cfb",
                 "camellia-256-cfb",
-                "chacha20",         // only available on openssl 1.1.0 and upper
-                "chacha20-poly1305" // only available on openssl 1.1.0 and upper
+                "chacha20",          // only available on openssl 1.1.0 and upper
+                "chacha20-poly1305", // only available on openssl 1.1.0 and upper
+                NULL,                // end
             };
 
 #if !(defined(CRYPTO_USE_OPENSSL) || defined(CRYPTO_USE_LIBRESSL) || defined(CRYPTO_USE_BORINGSSL)) && defined(CRYPTO_USE_MBEDTLS)
@@ -44,9 +46,12 @@ namespace util {
                 "CAMELLIA-128-CFB128",
                 "CAMELLIA-192-CFB128",
                 "CAMELLIA-256-CFB128",
-                "CHACHA20",         // only available on later mbedtls version, @see https://github.com/ARMmbed/mbedtls/pull/485
-                "CHACHA20-POLY1305" // only available on later mbedtls version, @see https://github.com/ARMmbed/mbedtls/pull/485
+                "CHACHA20",          // only available on later mbedtls version, @see https://github.com/ARMmbed/mbedtls/pull/485
+                "CHACHA20-POLY1305", // only available on later mbedtls version, @see https://github.com/ARMmbed/mbedtls/pull/485
+                NULL,                // end
             };
+
+            STD_STATIC_ASSERT(sizeof(supported_ciphers) == sizeof(supported_ciphers_mbedtls));
 #endif
         }
 
@@ -515,15 +520,14 @@ namespace util {
         }
 
         const cipher::cipher_kt_t *cipher::get_cipher_by_name(const char *name) {
-            size_t sz = sizeof(details::supported_ciphers) / sizeof(const char *);
             size_t index = 0;
-            for (; index < sz; ++index) {
+            for (; NULL != details::supported_ciphers[index]; ++index) {
                 if (0 == UTIL_STRFUNC_STRCASE_CMP(name, details::supported_ciphers[index])) {
                     break;
                 }
             }
 
-            if (index >= sz) {
+            if (NULL == details::supported_ciphers[index]) {
                 return NULL;
             }
 
@@ -539,14 +543,14 @@ namespace util {
 
             while (b < in.size()) {
                 // skip \r\n\t and space
-                if (in[b] == ' ' || in[b] == '\t' || in[b] == '\r' || in[b] == '\n' || in[b] == ';') {
+                if (in[b] == ' ' || in[b] == '\t' || in[b] == '\r' || in[b] == '\n' || in[b] == ';' || in[b] == ',' || in[b] == ':') {
                     ++b;
                     continue;
                 }
 
                 for (e = b + 1; e < in.size(); ++e) {
                     char c = in[e];
-                    if (c == ' ' || c == '\t' || c == '\r' || c == '\n' || c == ';') {
+                    if (c == ' ' || c == '\t' || c == '\r' || c == '\n' || c == ';' || c == ',' || c == ':') {
                         break;
                     }
                 }
@@ -554,6 +558,23 @@ namespace util {
                 out.push_back(in.substr(b, e - b));
                 b = e;
             }
+        }
+
+        const std::vector<std::string> &cipher::get_all_cipher_names() {
+            static std::vector<std::string> ret;
+            if (ret.empty()) {
+                const size_t inner_algorithm_sz = 1;
+                for (size_t i = 0; i < inner_algorithm_sz; ++i) {
+                    ret.push_back(details::supported_ciphers[i]);
+                }
+
+                for (size_t i = inner_algorithm_sz; NULL != details::supported_ciphers[i]; ++i) {
+                    if (NULL != get_cipher_by_name(details::supported_ciphers[i])) {
+                        ret.push_back(details::supported_ciphers[i]);
+                    }
+                }
+            }
+            return ret;
         }
     }
 }

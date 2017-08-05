@@ -2,8 +2,44 @@
 #include "frame/test_macros.h"
 #include <cstring>
 
-
 #ifdef CRYPTO_ENABLED
+
+#include <sstream>
+
+#if defined(CRYPTO_USE_OPENSSL) || defined(CRYPTO_USE_LIBRESSL) || defined(CRYPTO_USE_BORINGSSL)
+static bool openssl_test_inited = false;
+#endif
+
+CASE_TEST(crypto_cipher, get_all_cipher_names) {
+#if defined(CRYPTO_USE_OPENSSL) || defined(CRYPTO_USE_LIBRESSL) || defined(CRYPTO_USE_BORINGSSL)
+    if (!openssl_test_inited) {
+        OpenSSL_add_all_algorithms();
+        openssl_test_inited = true;
+    }
+#endif
+
+    const std::vector<std::string> &all_ciphers = util::crypto::cipher::get_all_cipher_names();
+    std::stringstream ss;
+    for (size_t i = 0; i < all_ciphers.size(); ++i) {
+        if (i) {
+            ss << ",";
+        }
+
+        ss << all_ciphers[i];
+    }
+
+    CASE_MSG_INFO() << "All ciphers: " << ss.str() << std::endl;
+    CASE_EXPECT_NE(0, all_ciphers.size());
+}
+
+CASE_TEST(crypto_cipher, split_ciphers) {
+    std::vector<std::string> all_ciphers;
+    std::string in =
+        "xxtea,rc4,aes-128-cfb aes-192-cfb aes-256-cfb aes-128-ctr\raes-192-ctr\naes-256-ctr   bf-cfb:camellia-128-cfb:camellia-"
+        "192-cfb;camellia-256-cfb;;;chacha20\tchacha20-poly1305";
+    util::crypto::cipher::split_ciphers(in, all_ciphers);
+    CASE_EXPECT_EQ(14, all_ciphers.size());
+}
 
 static const unsigned char aes_test_cfb128_key[3][32] = {
     {0x2B, 0x7E, 0x15, 0x16, 0x28, 0xAE, 0xD2, 0xA6, 0xAB, 0xF7, 0x15, 0x88, 0x09, 0xCF, 0x4F, 0x3C},
@@ -30,10 +66,6 @@ static const unsigned char aes_test_cfb128_ct[3][64] = {
     {0xDC, 0x7E, 0x84, 0xBF, 0xDA, 0x79, 0x16, 0x4B, 0x7E, 0xCD, 0x84, 0x86, 0x98, 0x5D, 0x38, 0x60, 0x39, 0xFF, 0xED, 0x14, 0x3B, 0x28,
      0xB1, 0xC8, 0x32, 0x11, 0x3C, 0x63, 0x31, 0xE5, 0x40, 0x7B, 0xDF, 0x10, 0x13, 0x24, 0x15, 0xE5, 0x4B, 0x92, 0xA1, 0x3E, 0xD0, 0xA8,
      0x26, 0x7A, 0xE2, 0xF9, 0x75, 0xA3, 0x85, 0x74, 0x1A, 0xB9, 0xCE, 0xF8, 0x20, 0x31, 0x62, 0x3D, 0x55, 0xB1, 0xE4, 0x71}};
-
-#if defined(CRYPTO_USE_OPENSSL) || defined(CRYPTO_USE_LIBRESSL) || defined(CRYPTO_USE_BORINGSSL)
-static bool openssl_test_inited = false;
-#endif
 
 CASE_TEST(crypto_cipher, aes_cfb) {
 #if defined(CRYPTO_USE_OPENSSL) || defined(CRYPTO_USE_LIBRESSL) || defined(CRYPTO_USE_BORINGSSL)
