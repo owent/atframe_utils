@@ -444,7 +444,8 @@ CASE_TEST(atomic_int_test, multi_thread_add) {
 
     typedef std::shared_ptr<std::thread> thread_ptr;
     std::vector<thread_ptr> thds;
-    thds.resize(10000);
+    uint64_t thd_num = 5000;
+    thds.resize(static_cast<size_t>(thd_num));
 
     for (size_t i = 0; i < thds.size(); ++i) {
         thds[i] = std::make_shared<std::thread>([&tested, i]() {
@@ -458,7 +459,7 @@ CASE_TEST(atomic_int_test, multi_thread_add) {
         thds[i]->join();
     }
 
-    CASE_EXPECT_EQ(5000050043, tested.load());
+    CASE_EXPECT_EQ(5 * thd_num * (1 + 10 * thd_num) + 43, tested.load());
 }
 #endif
 
