@@ -179,9 +179,10 @@ namespace util {
             /**
              * @biref               split cipher names by space, comma, semicolon or colon
              * @param in            string contain some cipher names
-             * @param out           cipher names
+             * @return              begin(first) and end(second) address of a cipher name, both NULL if not found.
+             *                      you can use second pointer as the paramter of next call, just like strtok
              */
-            static void split_ciphers(const std::string &in, std::vector<std::string> &out);
+            static std::pair<const char *, const char *> ciphertok(const char *in);
             static const std::vector<std::string> &get_all_cipher_names();
 
         private:

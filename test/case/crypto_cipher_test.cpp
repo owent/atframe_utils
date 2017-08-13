@@ -37,7 +37,17 @@ CASE_TEST(crypto_cipher, split_ciphers) {
     std::string in =
         "xxtea,rc4,aes-128-cfb aes-192-cfb aes-256-cfb aes-128-ctr\raes-192-ctr\naes-256-ctr   bf-cfb:camellia-128-cfb:camellia-"
         "192-cfb;camellia-256-cfb;;;chacha20\tchacha20-poly1305";
-    util::crypto::cipher::split_ciphers(in, all_ciphers);
+
+    std::pair<const char *, const char *> res;
+    res.first = in.c_str();
+    res.second = in.c_str();
+    while (NULL != res.second) {
+        res = util::crypto::cipher::ciphertok(res.second);
+
+        if (NULL != res.second && NULL != res.first) {
+            all_ciphers.push_back(std::string(res.first, res.second));
+        }
+    }
     CASE_EXPECT_EQ(14, all_ciphers.size());
 }
 

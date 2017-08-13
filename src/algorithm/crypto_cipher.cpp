@@ -538,26 +538,29 @@ namespace util {
 #endif
         }
 
-        void cipher::split_ciphers(const std::string &in, std::vector<std::string> &out) {
-            size_t b = 0, e;
-
-            while (b < in.size()) {
-                // skip \r\n\t and space
-                if (in[b] == ' ' || in[b] == '\t' || in[b] == '\r' || in[b] == '\n' || in[b] == ';' || in[b] == ',' || in[b] == ':') {
-                    ++b;
-                    continue;
-                }
-
-                for (e = b + 1; e < in.size(); ++e) {
-                    char c = in[e];
-                    if (c == ' ' || c == '\t' || c == '\r' || c == '\n' || c == ';' || c == ',' || c == ':') {
-                        break;
-                    }
-                }
-
-                out.push_back(in.substr(b, e - b));
-                b = e;
+        std::pair<const char *, const char *> cipher::ciphertok(const char *in) {
+            if (NULL == in) {
+                return std::pair<const char *, const char *>(NULL, NULL);
             }
+
+            const char *b = in;
+            const char *e;
+            // skip \r\n\t and space
+            while (0 != *b && (*b == ' ' || *b == '\t' || *b == '\r' || *b == '\n' || *b == ';' || *b == ',' || *b == ':')) {
+                ++b;
+            }
+
+            for (e = b; 0 != *e; ++e) {
+                if (*e == ' ' || *e == '\t' || *e == '\r' || *e == '\n' || *e == ';' || *e == ',' || *e == ':') {
+                    break;
+                }
+            }
+
+            if (e <= b) {
+                return std::pair<const char *, const char *>(NULL, NULL);
+            }
+
+            return std::pair<const char *, const char *>(b, e);
         }
 
         const std::vector<std::string> &cipher::get_all_cipher_names() {
