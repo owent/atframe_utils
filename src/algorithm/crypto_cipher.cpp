@@ -539,8 +539,11 @@ namespace util {
         }
 
         std::pair<const char *, const char *> cipher::ciphertok(const char *in) {
+            std::pair<const char *, const char *> ret;
+            ret.first = NULL;
+            ret.second = NULL;
             if (NULL == in) {
-                return std::pair<const char *, const char *>(NULL, NULL);
+                return ret;
             }
 
             const char *b = in;
@@ -557,10 +560,12 @@ namespace util {
             }
 
             if (e <= b) {
-                return std::pair<const char *, const char *>(NULL, NULL);
+                return ret;
             }
 
-            return std::pair<const char *, const char *>(b, e);
+            ret.first = b;
+            ret.second = e;
+            return ret;
         }
 
         const std::vector<std::string> &cipher::get_all_cipher_names() {
