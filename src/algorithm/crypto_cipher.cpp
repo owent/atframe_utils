@@ -500,7 +500,9 @@ namespace util {
                 return error_code_t::OK;
 #elif defined(CRYPTO_USE_MBEDTLS)
                 size_t finish_olen;
-                if ((last_errorno_ = mbedtls_cipher_reset(cipher_context_.dec)) != 0) return error_code_t::CIPHER_OPERATION;
+                if ((last_errorno_ = mbedtls_cipher_reset(cipher_context_.dec)) != 0) {
+                    return error_code_t::CIPHER_OPERATION;
+                }
 
                 if ((last_errorno_ = mbedtls_cipher_update(cipher_context_.dec, input, ilen, output, olen)) != 0) {
                     return error_code_t::CIPHER_OPERATION;
