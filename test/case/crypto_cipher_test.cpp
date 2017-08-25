@@ -13,7 +13,7 @@ static bool openssl_test_inited = false;
 CASE_TEST(crypto_cipher, get_all_cipher_names) {
 #if defined(CRYPTO_USE_OPENSSL) || defined(CRYPTO_USE_LIBRESSL) || defined(CRYPTO_USE_BORINGSSL)
     if (!openssl_test_inited) {
-        OpenSSL_add_all_algorithms();
+        util::crypto::cipher::init_global_algorithm();
         openssl_test_inited = true;
     }
 #endif
@@ -80,7 +80,7 @@ static const unsigned char aes_test_cfb128_ct[3][64] = {
 CASE_TEST(crypto_cipher, aes_cfb) {
 #if defined(CRYPTO_USE_OPENSSL) || defined(CRYPTO_USE_LIBRESSL) || defined(CRYPTO_USE_BORINGSSL)
     if (!openssl_test_inited) {
-        OpenSSL_add_all_algorithms();
+        util::crypto::cipher::init_global_algorithm();
         openssl_test_inited = true;
     }
 #endif

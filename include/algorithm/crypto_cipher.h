@@ -185,6 +185,7 @@ namespace util {
             static std::pair<const char *, const char *> ciphertok(const char *in);
             static const std::vector<std::string> &get_all_cipher_names();
 
+            static int init_global_algorithm();
         private:
             method_t::type method_;
             int last_errorno_;

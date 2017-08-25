@@ -584,6 +584,13 @@ namespace util {
             }
             return ret;
         }
+
+        int cipher::init_global_algorithm() {
+#if defined(CRYPTO_USE_OPENSSL) || defined(CRYPTO_USE_LIBRESSL) || defined(CRYPTO_USE_BORINGSSL)
+            OpenSSL_add_all_algorithms();
+#endif
+            return 0;
+        }
     }
 }
 
