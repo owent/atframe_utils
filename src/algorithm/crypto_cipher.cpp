@@ -369,35 +369,36 @@ namespace util {
 
             case method_t::EN_CMT_CIPHER: {
                 int res = 0;
-#if defined(CRYPTO_USE_OPENSSL) || defined(CRYPTO_USE_LIBRESSL) || defined(CRYPTO_USE_BORINGSSL)
                 if (get_iv_size() > iv_len) {
                     return details::setup_errorno(*this, -1, error_code_t::INVALID_PARAM);
                 }
 
-                if (NULL != cipher_context_.enc) {
-                    if (!EVP_CipherInit_ex(cipher_context_.enc, NULL, NULL, NULL, iv, 1)) {
-                        res = -1;
-                    }
-                }
+                iv_.assign(iv, iv + iv_len);
+                // #if defined(CRYPTO_USE_OPENSSL) || defined(CRYPTO_USE_LIBRESSL) || defined(CRYPTO_USE_BORINGSSL)
+                //                 if (NULL != cipher_context_.enc) {
+                //                     if (!EVP_CipherInit_ex(cipher_context_.enc, NULL, NULL, NULL, iv, 1)) {
+                //                         res = -1;
+                //                     }
+                //                 }
 
-                if (NULL != cipher_context_.dec) {
-                    if (!EVP_CipherInit_ex(cipher_context_.dec, NULL, NULL, NULL, iv, 0)) {
-                        res = -1;
-                    }
-                }
+                //                 if (NULL != cipher_context_.dec) {
+                //                     if (!EVP_CipherInit_ex(cipher_context_.dec, NULL, NULL, NULL, iv, 0)) {
+                //                         res = -1;
+                //                     }
+                //                 }
 
-#elif defined(CRYPTO_USE_MBEDTLS)
-                if (NULL != cipher_context_.enc) {
-                    res = mbedtls_cipher_set_iv(cipher_context_.enc, iv, iv_len);
-                }
+                // #elif defined(CRYPTO_USE_MBEDTLS)
+                //                 if (NULL != cipher_context_.enc) {
+                //                     res = mbedtls_cipher_set_iv(cipher_context_.enc, iv, iv_len);
+                //                 }
 
-                if (NULL != cipher_context_.dec) {
-                    res = mbedtls_cipher_set_iv(cipher_context_.dec, iv, iv_len);
-                }
-#endif
-                if (res != 0) {
-                    return details::setup_errorno(*this, res, error_code_t::CIPHER_OPERATION);
-                }
+                //                 if (NULL != cipher_context_.dec) {
+                //                     res = mbedtls_cipher_set_iv(cipher_context_.dec, iv, iv_len);
+                //                 }
+                // #endif
+                // if (res != 0) {
+                //     return details::setup_errorno(*this, res, error_code_t::CIPHER_OPERATION);
+                // }
                 return details::setup_errorno(*this, res, error_code_t::OK);
             }
             default:
@@ -428,8 +429,22 @@ namespace util {
                 if (NULL == cipher_context_.enc) {
                     return details::setup_errorno(*this, 0, error_code_t::CIPHER_DISABLED);
                 }
+
+                if (iv_.empty()) {
+                    if (0 != get_iv_size()) {
+                        iv_.resize(get_iv_size(), 0);
+                    }
+                }
+
 #if defined(CRYPTO_USE_OPENSSL) || defined(CRYPTO_USE_LIBRESSL) || defined(CRYPTO_USE_BORINGSSL)
                 int outl, finish_olen;
+
+                if (!iv_.empty()) {
+                    if (!EVP_CipherInit_ex(cipher_context_.enc, NULL, NULL, NULL, &iv_[0], -1)) {
+                        return details::setup_errorno(*this, -1, error_code_t::CIPHER_OPERATION);
+                    }
+                }
+
                 if (!(EVP_CipherUpdate(cipher_context_.enc, output, &outl, input, ilen))) {
                     return details::setup_errorno(*this, -1, error_code_t::CIPHER_OPERATION);
                 }
@@ -442,20 +457,28 @@ namespace util {
                 return error_code_t::OK;
 
 #elif defined(CRYPTO_USE_MBEDTLS)
-                size_t finish_olen;
-                if ((last_errorno_ = mbedtls_cipher_reset(cipher_context_.enc)) != 0) {
+                if ((last_errorno_ = mbedtls_cipher_crypt(cipher_context_.enc, iv_.empty() ? NULL : &iv_[0], iv_.size(), input, ilen,
+                                                          output, olen)) != 0) {
                     return error_code_t::CIPHER_OPERATION;
                 }
+                // size_t finish_olen;
+                // if ((last_errorno_ = mbedtls_cipher_set_iv(cipher_context_.enc, iv_.empty() ? NULL : &iv_[0], iv_.size())) != 0) {
+                //     return error_code_t::CIPHER_OPERATION;
+                // }
 
-                if ((last_errorno_ = mbedtls_cipher_update(cipher_context_.enc, input, ilen, output, olen)) != 0) {
-                    return error_code_t::CIPHER_OPERATION;
-                }
+                // if ((last_errorno_ = mbedtls_cipher_reset(cipher_context_.enc)) != 0) {
+                //     return error_code_t::CIPHER_OPERATION;
+                // }
 
-                if ((last_errorno_ = mbedtls_cipher_finish(cipher_context_.enc, output + *olen, &finish_olen)) != 0) {
-                    return error_code_t::CIPHER_OPERATION;
-                }
+                // if ((last_errorno_ = mbedtls_cipher_update(cipher_context_.enc, input, ilen, output, olen)) != 0) {
+                //     return error_code_t::CIPHER_OPERATION;
+                // }
 
-                *olen += finish_olen;
+                // if ((last_errorno_ = mbedtls_cipher_finish(cipher_context_.enc, output + *olen, &finish_olen)) != 0) {
+                //     return error_code_t::CIPHER_OPERATION;
+                // }
+
+                // *olen += finish_olen;
                 return error_code_t::OK;
 #endif
             }
@@ -485,8 +508,22 @@ namespace util {
                 if (NULL == cipher_context_.dec) {
                     return details::setup_errorno(*this, 0, error_code_t::CIPHER_DISABLED);
                 }
+
+                if (iv_.empty()) {
+                    if (0 != get_iv_size()) {
+                        iv_.resize(get_iv_size(), 0);
+                    }
+                }
+
 #if defined(CRYPTO_USE_OPENSSL) || defined(CRYPTO_USE_LIBRESSL) || defined(CRYPTO_USE_BORINGSSL)
                 int outl, finish_olen;
+
+                if (!iv_.empty()) {
+                    if (!EVP_CipherInit_ex(cipher_context_.dec, NULL, NULL, NULL, &iv_[0], -1)) {
+                        return details::setup_errorno(*this, -1, error_code_t::CIPHER_OPERATION);
+                    }
+                }
+
                 if (!(EVP_CipherUpdate(cipher_context_.dec, output, &outl, input, ilen))) {
                     return details::setup_errorno(*this, -1, error_code_t::CIPHER_OPERATION);
                 }
@@ -499,20 +536,28 @@ namespace util {
 
                 return error_code_t::OK;
 #elif defined(CRYPTO_USE_MBEDTLS)
-                size_t finish_olen;
-                if ((last_errorno_ = mbedtls_cipher_reset(cipher_context_.dec)) != 0) {
+                if ((last_errorno_ = mbedtls_cipher_crypt(cipher_context_.dec, iv_.empty() ? NULL : &iv_[0], iv_.size(), input, ilen,
+                                                          output, olen)) != 0) {
                     return error_code_t::CIPHER_OPERATION;
                 }
+                // size_t finish_olen;
+                // if ((last_errorno_ = mbedtls_cipher_set_iv(cipher_context_.dec, iv_.empty() ? NULL : &iv_[0], iv_.size())) != 0) {
+                //     return error_code_t::CIPHER_OPERATION;
+                // }
 
-                if ((last_errorno_ = mbedtls_cipher_update(cipher_context_.dec, input, ilen, output, olen)) != 0) {
-                    return error_code_t::CIPHER_OPERATION;
-                }
+                // if ((last_errorno_ = mbedtls_cipher_reset(cipher_context_.dec)) != 0) {
+                //     return error_code_t::CIPHER_OPERATION;
+                // }
 
-                if ((last_errorno_ = mbedtls_cipher_finish(cipher_context_.dec, output + *olen, &finish_olen)) != 0) {
-                    return error_code_t::CIPHER_OPERATION;
-                }
+                // if ((last_errorno_ = mbedtls_cipher_update(cipher_context_.dec, input, ilen, output, olen)) != 0) {
+                //     return error_code_t::CIPHER_OPERATION;
+                // }
 
-                *olen += finish_olen;
+                // if ((last_errorno_ = mbedtls_cipher_finish(cipher_context_.dec, output + *olen, &finish_olen)) != 0) {
+                //     return error_code_t::CIPHER_OPERATION;
+                // }
+
+                // *olen += finish_olen;
                 return error_code_t::OK;
 #endif
             }

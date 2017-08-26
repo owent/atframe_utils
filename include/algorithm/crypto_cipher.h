@@ -186,10 +186,12 @@ namespace util {
             static const std::vector<std::string> &get_all_cipher_names();
 
             static int init_global_algorithm();
+
         private:
             method_t::type method_;
             int last_errorno_;
             const cipher_kt_t *cipher_kt_;
+            std::vector<unsigned char> iv_;
             typedef struct { ::util::xxtea_key key; } xxtea_context_t;
             typedef struct {
                 cipher_evp_t *enc; // used for encrypt
