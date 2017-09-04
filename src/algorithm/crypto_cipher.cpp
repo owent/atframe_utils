@@ -135,7 +135,7 @@ namespace util {
                         break;
                     }
 
-                    memset(cipher_context_.enc, 0, sizeof(cipher_evp_t));
+                    // memset(cipher_context_.enc, 0, sizeof(cipher_evp_t)); // call memset in mbedtls_cipher_init
                     mbedtls_cipher_init(cipher_context_.enc);
                     int res;
                     if ((res = mbedtls_cipher_setup(cipher_context_.enc, cipher_kt_)) != 0) {
@@ -154,7 +154,7 @@ namespace util {
                         break;
                     }
 
-                    memset(cipher_context_.dec, 0, sizeof(cipher_evp_t));
+                    // memset(cipher_context_.dec, 0, sizeof(cipher_evp_t)); // call memset in mbedtls_cipher_init
                     mbedtls_cipher_init(cipher_context_.dec);
                     int res;
                     if ((res = mbedtls_cipher_setup(cipher_context_.dec, cipher_kt_)) != 0) {
@@ -326,18 +326,18 @@ namespace util {
             case method_t::EN_CMT_CIPHER: {
                 int res = 0;
 #if defined(CRYPTO_USE_OPENSSL) || defined(CRYPTO_USE_LIBRESSL) || defined(CRYPTO_USE_BORINGSSL)
-                if (get_key_bits() < key_bitlen) {
+                if (get_key_bits() > key_bitlen) {
                     return details::setup_errorno(*this, -1, error_code_t::INVALID_PARAM);
                 }
 
                 if (NULL != cipher_context_.enc) {
-                    if (!EVP_CipherInit_ex(cipher_context_.enc, NULL, NULL, key, NULL, 1)) {
+                    if (!EVP_CipherInit_ex(cipher_context_.enc, NULL, NULL, key, NULL, -1)) {
                         res = -1;
                     }
                 }
 
                 if (NULL != cipher_context_.dec) {
-                    if (!EVP_CipherInit_ex(cipher_context_.dec, NULL, NULL, key, NULL, 0)) {
+                    if (!EVP_CipherInit_ex(cipher_context_.dec, NULL, NULL, key, NULL, -1)) {
                         res = -1;
                     }
                 }
@@ -376,13 +376,13 @@ namespace util {
                 iv_.assign(iv, iv + iv_len);
                 // #if defined(CRYPTO_USE_OPENSSL) || defined(CRYPTO_USE_LIBRESSL) || defined(CRYPTO_USE_BORINGSSL)
                 //                 if (NULL != cipher_context_.enc) {
-                //                     if (!EVP_CipherInit_ex(cipher_context_.enc, NULL, NULL, NULL, iv, 1)) {
+                //                     if (!EVP_CipherInit_ex(cipher_context_.enc, NULL, NULL, NULL, iv, -1)) {
                 //                         res = -1;
                 //                     }
                 //                 }
 
                 //                 if (NULL != cipher_context_.dec) {
-                //                     if (!EVP_CipherInit_ex(cipher_context_.dec, NULL, NULL, NULL, iv, 0)) {
+                //                     if (!EVP_CipherInit_ex(cipher_context_.dec, NULL, NULL, NULL, iv, -1)) {
                 //                         res = -1;
                 //                     }
                 //                 }

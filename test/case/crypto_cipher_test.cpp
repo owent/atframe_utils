@@ -100,7 +100,9 @@ CASE_TEST(crypto_cipher, aes_cfb) {
             CASE_EXPECT_EQ(0, ci.init("AES-256-CFB", mode));
         }
 
+        CASE_EXPECT_EQ(16, ci.get_iv_size());
         CASE_EXPECT_EQ(0, ci.set_iv(aes_test_cfb128_iv, 16));
+        CASE_EXPECT_EQ(128 + 64 * u, ci.get_key_bits());
         CASE_EXPECT_EQ(0, ci.set_key(aes_test_cfb128_key[u], 128 + 64 * u));
 
         unsigned char buf_in[64], buf_out[128];
