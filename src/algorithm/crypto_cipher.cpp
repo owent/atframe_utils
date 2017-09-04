@@ -417,12 +417,8 @@ namespace util {
             case method_t::EN_CMT_INVALID:
                 return details::setup_errorno(*this, -1, error_code_t::NOT_INITED);
             case method_t::EN_CMT_XXTEA: {
-                memcpy(output, input, ilen);
-                *olen = ((ilen - 1) | 0x03) + 1;
-                if (*olen > ilen) {
-                    memset(output + ilen, 0, *olen - ilen);
-                }
-                util::xxtea_encrypt(&xxtea_context_.key, output, *olen);
+                util::xxtea_encrypt(&xxtea_context_.key, reinterpret_cast<const void *>(input), ilen, reinterpret_cast<void *>(output),
+                                    olen);
                 return details::setup_errorno(*this, 0, error_code_t::OK);
             }
             case method_t::EN_CMT_CIPHER: {
@@ -496,12 +492,8 @@ namespace util {
             case method_t::EN_CMT_INVALID:
                 return details::setup_errorno(*this, -1, error_code_t::NOT_INITED);
             case method_t::EN_CMT_XXTEA: {
-                memcpy(output, input, ilen);
-                *olen = ((ilen - 1) | 0x03) + 1;
-                if (*olen > ilen) {
-                    memset(reinterpret_cast<char *>(output) + ilen, 0, *olen - ilen);
-                }
-                util::xxtea_decrypt(&xxtea_context_.key, output, *olen);
+                util::xxtea_decrypt(&xxtea_context_.key, reinterpret_cast<const void *>(input), ilen, reinterpret_cast<void *>(output),
+                                    olen);
                 return details::setup_errorno(*this, 0, error_code_t::OK);
             }
             case method_t::EN_CMT_CIPHER: {

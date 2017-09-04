@@ -34,17 +34,47 @@ namespace util {
 
     /**
      * @brief encrypt data use xxtea
-     * @param buffer buffer address, must padding to uint32_t
-     * @param len buffer size, must padding to uint32_t, can not be greater than 2^34
+     * @param key           xxtea key, should be initialized by xxtea_setup
+     * @param buffer        buffer address, must padding to uint32_t
+     * @param len           buffer size, must padding to uint32_t, can not be greater than 2^34
      */
     void xxtea_encrypt(const xxtea_key *key, void *buffer, size_t len);
 
     /**
+     * @brief encrypt data use xxtea
+     * @param key           xxtea key, should be initialized by xxtea_setup
+     * @param input         buffer holding the input data
+     * @param ilen          length of the input data
+     * @param output        buffer for the output data. Should be able to hold at
+     *                      least ((ilen - 1) | 0x03) + 1. Cannot be the same buffer as
+     *                      input!
+     * @param olen          length of the output data, will be filled with the
+     *                      actual number of bytes written.
+     * @note if passed invalid parameter, olen will be set to 0
+     */
+    void xxtea_encrypt(const xxtea_key *key, const void *input, size_t ilen, void *output, size_t *olen);
+
+    /**
      * @brief decrypt data use xxtea
-     * @param buffer buffer address, must padding to uint32_t
-     * @param len buffer size, must padding to uint32_t, can not be greater than 2^34
+     * @param key           xxtea key, should be initialized by xxtea_setup
+     * @param buffer        buffer address, must padding to uint32_t
+     * @param len           buffer size, must padding to uint32_t, can not be greater than 2^34
      */
     void xxtea_decrypt(const xxtea_key *key, void *buffer, size_t len);
+
+    /**
+     * @brief decrypt data use xxtea
+     * @param key           xxtea key, should be initialized by xxtea_setup
+     * @param input         buffer holding the input data
+     * @param ilen          length of the input data
+     * @param output        buffer for the output data. Should be able to hold at
+     *                      least ((ilen - 1) | 0x03) + 1. Cannot be the same buffer as
+     *                      input!
+     * @param olen          length of the output data, will be filled with the
+     *                      actual number of bytes written.
+     * @note if passed invalid parameter, olen will be set to 0
+     */
+    void xxtea_decrypt(const xxtea_key *key, const void *input, size_t ilen, void *output, size_t *olen);
 }
 
 #endif

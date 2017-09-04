@@ -1,8 +1,9 @@
-#include <stdlib.h>
-#include <stdint.h>
 #include <inttypes.h>
-#include <string.h>
 #include <limits>
+#include <stdint.h>
+#include <stdlib.h>
+#include <string.h>
+
 
 #include "algorithm/xxtea.h"
 
@@ -69,6 +70,36 @@ namespace util {
         } while (--rounds);
     }
 
+    void xxtea_encrypt(const xxtea_key *key, const void *input, size_t ilen, void *output, size_t *olen) {
+        do {
+            if (NULL == key || input == NULL || ilen <= 0 || output == NULL || NULL == olen) {
+                break;
+            }
+
+            size_t real_olen = ((ilen - 1) | 0x03) + 1;
+            if (*olen < real_olen) {
+                break;
+            }
+
+            if (input != output) {
+                memcpy(output, input, ilen);
+            }
+
+            if (real_olen > ilen) {
+                memset(reinterpret_cast<char *>(output) + ilen, 0, real_olen - ilen);
+            }
+
+            *olen = real_olen;
+            util::xxtea_encrypt(key, output, *olen);
+
+            return;
+        } while (false);
+
+        if (0 != olen) {
+            *olen = 0;
+        }
+    }
+
     void xxtea_decrypt(const xxtea_key *key, void *buffer, size_t len) {
         if (len & 0x03) {
             abort();
@@ -101,5 +132,35 @@ namespace util {
             y = v[0] -= XXTEA_MX;
             sum -= XXTEA_DELTA;
         } while (--rounds);
+    }
+
+    void xxtea_decrypt(const xxtea_key *key, const void *input, size_t ilen, void *output, size_t *olen) {
+        do {
+            if (NULL == key || input == NULL || ilen <= 0 || output == NULL || NULL == olen) {
+                break;
+            }
+
+            size_t real_olen = ((ilen - 1) | 0x03) + 1;
+            if (*olen < real_olen) {
+                break;
+            }
+
+            if (input != output) {
+                memcpy(output, input, ilen);
+            }
+
+            if (real_olen > ilen) {
+                memset(reinterpret_cast<char *>(output) + ilen, 0, real_olen - ilen);
+            }
+
+            *olen = real_olen;
+            util::xxtea_decrypt(key, output, *olen);
+
+            return;
+        } while (false);
+
+        if (0 != olen) {
+            *olen = 0;
+        }
     }
 }

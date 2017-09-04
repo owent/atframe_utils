@@ -44,3 +44,26 @@ CASE_TEST(xxtea, basic) {
         CASE_EXPECT_EQ(0, memcmp(test_data, xtea_test_pt[i], 8));
     }
 }
+
+CASE_TEST(xxtea, input_output) {
+    util::xxtea_key key;
+    unsigned char test_data_in[8];
+    unsigned char test_data_out[8];
+    size_t olen = 0;
+
+    for (int i = 0; i < 6; ++i) {
+        util::xxtea_setup(&key, xtea_test_key[i]);
+
+        memcpy(test_data_in, xtea_test_pt[i], 8);
+        olen = 8;
+        util::xxtea_encrypt(&key, test_data_in, 8, test_data_out, &olen);
+        CASE_EXPECT_EQ(0, memcmp(test_data_out, xtea_test_ct[i], 8));
+        CASE_EXPECT_EQ(8, olen);
+
+        memcpy(test_data_in, xtea_test_ct[i], 8);
+        olen = 8;
+        util::xxtea_decrypt(&key, test_data_in, 8, test_data_out, &olen);
+        CASE_EXPECT_EQ(0, memcmp(test_data_out, xtea_test_pt[i], 8));
+        CASE_EXPECT_EQ(8, olen);
+    }
+}
