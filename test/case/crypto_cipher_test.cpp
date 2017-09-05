@@ -125,6 +125,14 @@ CASE_TEST(crypto_cipher, aes_cfb) {
 static const unsigned char aes_test_cfb128_nopadding_pt[3][30] = {"hello message 0x00000001,hi 1", "hello message 0x00000002,hi 2",
                                                                   "hello message 0x00000003,hi 3"};
 
+static const unsigned char aes_test_cfb128_nopadding_ct[3][29] = {
+    {0xdf, 0xda, 0x56, 0x31, 0x9b, 0x19, 0xe4, 0xb8, 0xe4, 0x83, 0x9b, 0xf0, 0x8e, 0xee, 0x1f,
+     0x32, 0x18, 0xa7, 0xdd, 0xc2, 0x5a, 0xdd, 0x64, 0x85, 0xb7, 0x30, 0x35, 0x1c, 0xfe},
+    {0xdf, 0xda, 0x56, 0x31, 0x9b, 0x19, 0xe4, 0xb8, 0xe4, 0x83, 0x9b, 0xf0, 0x8e, 0xee, 0x1f,
+     0x32, 0x18, 0xa7, 0xdd, 0xc2, 0x5a, 0xdd, 0x64, 0x86, 0xb7, 0x30, 0x35, 0x1c, 0xfd},
+    {0xdf, 0xda, 0x56, 0x31, 0x9b, 0x19, 0xe4, 0xb8, 0xe4, 0x83, 0x9b, 0xf0, 0x8e, 0xee, 0x1f,
+     0x32, 0x18, 0xa7, 0xdd, 0xc2, 0x5a, 0xdd, 0x64, 0x87, 0xb7, 0x30, 0x35, 0x1c, 0xfc}};
+
 CASE_TEST(crypto_cipher, aes_cfb_nopadding_encrypt) {
 #if defined(CRYPTO_USE_OPENSSL) || defined(CRYPTO_USE_LIBRESSL) || defined(CRYPTO_USE_BORINGSSL)
     if (!openssl_test_inited) {
@@ -133,27 +141,54 @@ CASE_TEST(crypto_cipher, aes_cfb_nopadding_encrypt) {
     }
 #endif
 
+    {
+        util::crypto::cipher ci;
+        CASE_EXPECT_EQ(0, ci.init("AES-256-CFB", ::util::crypto::cipher::mode_t::EN_CMODE_ENCRYPT));
 
-    util::crypto::cipher ci;
-    CASE_EXPECT_EQ(0, ci.init("AES-256-CFB", ::util::crypto::cipher::mode_t::EN_CMODE_ENCRYPT));
+        CASE_EXPECT_EQ(16, ci.get_iv_size());
+        CASE_EXPECT_EQ(0, ci.set_iv(aes_test_cfb128_iv, 16));
+        CASE_EXPECT_EQ(256, ci.get_key_bits());
+        CASE_EXPECT_EQ(0, ci.set_key(aes_test_cfb128_key[2], 256));
 
-    CASE_EXPECT_EQ(16, ci.get_iv_size());
-    CASE_EXPECT_EQ(0, ci.set_iv(aes_test_cfb128_iv, 16));
-    CASE_EXPECT_EQ(256, ci.get_key_bits());
-    CASE_EXPECT_EQ(0, ci.set_key(aes_test_cfb128_key[2], 256));
+        const size_t buffer_len = 29;
 
-    const size_t buffer_len = 29;
+        for (int i = 0; i < 3; ++i) {
+            unsigned char buf_in[64] = {0}, buf_out[128] = {0};
+            size_t olen = sizeof(buf_out);
+            memcpy(buf_in, aes_test_cfb128_nopadding_pt[i], buffer_len);
+            CASE_EXPECT_EQ(0, ci.encrypt(buf_in, buffer_len, buf_out, &olen));
+            CASE_EXPECT_EQ(0, memcmp(buf_out, aes_test_cfb128_nopadding_ct[i], buffer_len));
 
-    for (int i = 0; i < 3; ++i) {
-        unsigned char buf_in[64] = {0}, buf_out[128] = {0};
-        size_t olen = sizeof(buf_out);
-        memcpy(buf_in, aes_test_cfb128_nopadding_pt[i], buffer_len);
-        CASE_EXPECT_EQ(0, ci.encrypt(buf_in, buffer_len, buf_out, &olen));
+            CASE_MSG_INFO() << "AES-256-CFB => txt: " << aes_test_cfb128_nopadding_pt[i] << std::endl;
+            CASE_MSG_INFO() << "AES-256-CFB => enc: ";
+            util::string::dumphex(buf_out, olen, std::cout);
+            std::cout << std::endl;
+        }
+    }
 
-        CASE_MSG_INFO() << "AES-256-CFB => ori: " << aes_test_cfb128_nopadding_pt[i] << std::endl;
-        CASE_MSG_INFO() << "AES-256-CFB => enc: ";
-        util::string::dumphex(buf_out, olen, std::cout);
-        std::cout << std::endl;
+    {
+        util::crypto::cipher ci;
+        CASE_EXPECT_EQ(0, ci.init("AES-256-CFB", ::util::crypto::cipher::mode_t::EN_CMODE_DECRYPT));
+
+        CASE_EXPECT_EQ(16, ci.get_iv_size());
+        CASE_EXPECT_EQ(0, ci.set_iv(aes_test_cfb128_iv, 16));
+        CASE_EXPECT_EQ(256, ci.get_key_bits());
+        CASE_EXPECT_EQ(0, ci.set_key(aes_test_cfb128_key[2], 256));
+
+        const size_t buffer_len = 29;
+
+        for (int i = 0; i < 3; ++i) {
+            unsigned char buf_in[64] = {0}, buf_out[128] = {0};
+            size_t olen = sizeof(buf_out);
+            memcpy(buf_in, aes_test_cfb128_nopadding_ct[i], buffer_len);
+            CASE_EXPECT_EQ(0, ci.decrypt(buf_in, buffer_len, buf_out, &olen));
+            CASE_EXPECT_EQ(0, memcmp(buf_out, aes_test_cfb128_nopadding_pt[i], buffer_len));
+
+            CASE_MSG_INFO() << "AES-256-CFB => dec: ";
+            util::string::dumphex(buf_in, buffer_len, std::cout);
+            std::cout << std::endl;
+            CASE_MSG_INFO() << "AES-256-CFB => txt: " << ((unsigned char *)buf_out) << std::endl;
+        }
     }
 }
 
