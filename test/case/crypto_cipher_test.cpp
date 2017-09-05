@@ -1,4 +1,5 @@
 #include "algorithm/crypto_cipher.h"
+#include "common/string_oprs.h"
 #include "frame/test_macros.h"
 #include <cstring>
 
@@ -118,6 +119,41 @@ CASE_TEST(crypto_cipher, aes_cfb) {
 
             CASE_EXPECT_EQ(0, memcmp(buf_out, aes_test_cfb128_ct[u], 64));
         }
+    }
+}
+
+static const unsigned char aes_test_cfb128_nopadding_pt[3][30] = {"hello message 0x00000001,hi 1", "hello message 0x00000002,hi 2",
+                                                                  "hello message 0x00000003,hi 3"};
+
+CASE_TEST(crypto_cipher, aes_cfb_nopadding_encrypt) {
+#if defined(CRYPTO_USE_OPENSSL) || defined(CRYPTO_USE_LIBRESSL) || defined(CRYPTO_USE_BORINGSSL)
+    if (!openssl_test_inited) {
+        util::crypto::cipher::init_global_algorithm();
+        openssl_test_inited = true;
+    }
+#endif
+
+
+    util::crypto::cipher ci;
+    CASE_EXPECT_EQ(0, ci.init("AES-256-CFB", ::util::crypto::cipher::mode_t::EN_CMODE_ENCRYPT));
+
+    CASE_EXPECT_EQ(16, ci.get_iv_size());
+    CASE_EXPECT_EQ(0, ci.set_iv(aes_test_cfb128_iv, 16));
+    CASE_EXPECT_EQ(256, ci.get_key_bits());
+    CASE_EXPECT_EQ(0, ci.set_key(aes_test_cfb128_key[2], 256));
+
+    const size_t buffer_len = 29;
+
+    for (int i = 0; i < 3; ++i) {
+        unsigned char buf_in[64] = {0}, buf_out[128] = {0};
+        size_t olen = sizeof(buf_out);
+        memcpy(buf_in, aes_test_cfb128_nopadding_pt[i], buffer_len);
+        CASE_EXPECT_EQ(0, ci.encrypt(buf_in, buffer_len, buf_out, &olen));
+
+        CASE_MSG_INFO() << "AES-256-CFB => ori: " << aes_test_cfb128_nopadding_pt[i] << std::endl;
+        CASE_MSG_INFO() << "AES-256-CFB => enc: ";
+        util::string::dumphex(buf_out, olen, std::cout);
+        std::cout << std::endl;
     }
 }
 
