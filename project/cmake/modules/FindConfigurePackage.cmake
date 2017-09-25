@@ -20,6 +20,7 @@
 #     BUILD_DIRECTORY <build directory>
 #     PREFIX_DIRECTORY <prefix directory>
 #     SRC_DIRECTORY_NAME <source directory name>
+#     MSVC_CONFIGURE [Debug/Release/RelWithDebInfo/MinSizeRel]
 #     ZIP_URL <zip url>
 #     TAR_URL <tar url>
 #     SVN_URL <svn url>
@@ -117,7 +118,7 @@ endfunction()
 macro (FindConfigurePackage)
     include(CMakeParseArguments)
     set(optionArgs BUILD_WITH_CONFIGURE BUILD_WITH_CMAKE BUILD_WITH_SCONS BUILD_WITH_CUSTOM_COMMAND)
-    set(oneValueArgs PACKAGE WORKING_DIRECTORY BUILD_DIRECTORY PREFIX_DIRECTORY SRC_DIRECTORY_NAME PROJECT_DIRECTORY ZIP_URL TAR_URL SVN_URL GIT_URL GIT_BRANCH)
+    set(oneValueArgs PACKAGE WORKING_DIRECTORY BUILD_DIRECTORY PREFIX_DIRECTORY SRC_DIRECTORY_NAME PROJECT_DIRECTORY MSVC_CONFIGURE ZIP_URL TAR_URL SVN_URL GIT_URL GIT_BRANCH)
     set(multiValueArgs CONFIGURE_CMD CONFIGURE_FLAGS CMAKE_FLAGS SCONS_FLAGS MAKE_FLAGS CUSTOM_BUILD_COMMAND PREBUILD_COMMAND)
     cmake_parse_arguments(FindConfigurePackage "${optionArgs}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN} )
 
@@ -320,10 +321,20 @@ macro (FindConfigurePackage)
                 )
 
                 # cmake --build and install
-                execute_process(
-                    COMMAND ${CMAKE_COMMAND} --build . --target install
-                    WORKING_DIRECTORY ${FindConfigurePackage_BUILD_DIRECTORY}
-                )
+                if(MSVC)
+                    if (NOT FindConfigurePackage_MSVC_CONFIGURE)
+                        set(FindConfigurePackage_MSVC_CONFIGURE RelWithDebInfo)
+                    endif()
+                    execute_process(
+                        COMMAND ${CMAKE_COMMAND} --build . --target install --config ${FindConfigurePackage_MSVC_CONFIGURE}
+                        WORKING_DIRECTORY ${FindConfigurePackage_BUILD_DIRECTORY}
+                    )
+                else()
+                    execute_process(
+                        COMMAND ${CMAKE_COMMAND} --build . --target install
+                        WORKING_DIRECTORY ${FindConfigurePackage_BUILD_DIRECTORY}
+                    )
+                endif()
 
             # build using scons
             elseif(FindConfigurePackage_BUILD_WITH_SCONS)

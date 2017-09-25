@@ -21,9 +21,9 @@ namespace util {
                 static THREAD_TLS char ret[LOG_WRAPPER_MAX_SIZE_PER_LINE];
                 return ret;
             }
-        }
-    }
-}
+        } // namespace detail
+    }     // namespace log
+} // namespace util
 #else
 
 #include <pthread.h>
@@ -51,9 +51,9 @@ namespace util {
                 }
                 return buffer_block;
             }
-        }
-    }
-}
+        } // namespace detail
+    }     // namespace log
+} // namespace util
 
 #endif
 
@@ -91,15 +91,15 @@ namespace util {
             };
         }
 
-        void log_wrapper::update() {}
+        void log_wrapper::update() { util::time::time_utility::update(); }
 
-        void log_wrapper::log(const caller_info_t &caller, 
+        void log_wrapper::log(const caller_info_t &caller,
 #ifdef _MSC_VER
-            _In_z_ _Printf_format_string_ const char *fmt, ...
+                              _In_z_ _Printf_format_string_ const char *fmt, ...
 #else
-            const char *fmt, ...
+                              const char *fmt, ...
 #endif
-            ) {
+        ) {
             if (get_option(options_t::OPT_AUTO_UPDATE_TIME) && !prefix_format_.empty()) {
                 update();
             }
@@ -155,5 +155,5 @@ namespace util {
 
             return &all_logger[cats];
         }
-    }
-}
+    } // namespace log
+} // namespace util

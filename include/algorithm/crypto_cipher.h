@@ -28,18 +28,18 @@
 #include <openssl/md5.h>
 #include <openssl/sha.h>
 
-#define CRYPTO_ENABLED 1
+#define CRYPTO_CIPHER_ENABLED 1
 
 #elif defined(CRYPTO_USE_MBEDTLS)
 
 #include <mbedtls/cipher.h>
 #include <mbedtls/md.h>
 
-#define CRYPTO_ENABLED 1
+#define CRYPTO_CIPHER_ENABLED 1
 
 #endif
 
-#ifdef CRYPTO_ENABLED
+#ifdef CRYPTO_CIPHER_ENABLED
 
 #include <string>
 #include <vector>
@@ -192,7 +192,9 @@ namespace util {
             int last_errorno_;
             const cipher_kt_t *cipher_kt_;
             std::vector<unsigned char> iv_;
-            typedef struct { ::util::xxtea_key key; } xxtea_context_t;
+            typedef struct {
+                ::util::xxtea_key key;
+            } xxtea_context_t;
             typedef struct {
                 cipher_evp_t *enc; // used for encrypt
                 cipher_evp_t *dec; // used for decrypt
@@ -202,8 +204,8 @@ namespace util {
                 xxtea_context_t xxtea_context_;
             };
         };
-    }
-}
+    } // namespace crypto
+} // namespace util
 
 #endif
 

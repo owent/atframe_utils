@@ -4,7 +4,7 @@
 #include <algorithm/crypto_cipher.h>
 #include <std/static_assert.h>
 
-#ifdef CRYPTO_ENABLED
+#ifdef CRYPTO_CIPHER_ENABLED
 
 namespace util {
     namespace crypto {
@@ -53,7 +53,7 @@ namespace util {
 
             STD_STATIC_ASSERT(sizeof(supported_ciphers) == sizeof(supported_ciphers_mbedtls));
 #endif
-        }
+        } // namespace details
 
         cipher::cipher() : method_(method_t::EN_CMT_INVALID), cipher_kt_(NULL) {}
         cipher::~cipher() { close(); }
@@ -630,7 +630,7 @@ namespace util {
 #endif
             return 0;
         }
-    }
-}
+    } // namespace crypto
+} // namespace util
 
 #endif

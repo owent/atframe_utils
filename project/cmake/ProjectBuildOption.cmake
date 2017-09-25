@@ -54,6 +54,7 @@ else()
 endif()
 
 # openssl
+option(CRYPTO_DISABLED "Disable crypto module if not specify crypto lib." OFF)
 if (CRYPTO_USE_OPENSSL OR CRYPTO_USE_LIBRESSL OR CRYPTO_USE_BORINGSSL)
     find_package(OpenSSL)
     if (OPENSSL_FOUND)
@@ -70,7 +71,7 @@ elseif (CRYPTO_USE_MBEDTLS)
     else()
         message(FATAL_ERROR "CRYPTO_USE_MBEDTLS is set but mbedtls not found")
     endif()
-else ()
+elseif (NOT CRYPTO_DISABLED)
     # try to find openssl or mbedtls
     find_package(OpenSSL)
     if (OPENSSL_FOUND)
