@@ -73,18 +73,18 @@ function(FindConfigurePackageDownloadFile from to)
 endfunction()
 
 function(FindConfigurePackageUnzip src work_dir)
-    find_program(ZIP_EXECUTABLE wzzip PATHS "$ENV{ProgramFiles}/WinZip")
+    find_program(ZIP_EXECUTABLE 7z PATHS "$ENV{ProgramFiles}/7-Zip")
     if(ZIP_EXECUTABLE)
-        execute_process(COMMAND ${ZIP_EXECUTABLE} -f "${src}"
+        execute_process(COMMAND ${ZIP_EXECUTABLE}
+            x -r -y ${src}
             WORKING_DIRECTORY ${work_dir}
         )
     endif()
 
     if(NOT ZIP_EXECUTABLE)
-        find_program(ZIP_EXECUTABLE 7z PATHS "$ENV{ProgramFiles}/7-Zip")
+        find_program(ZIP_EXECUTABLE wzzip PATHS "$ENV{ProgramFiles}/WinZip")
         if(ZIP_EXECUTABLE)
-            execute_process(COMMAND ${ZIP_EXECUTABLE}
-                x -r -y ${src}
+            execute_process(COMMAND ${ZIP_EXECUTABLE} -f "${src}"
                 WORKING_DIRECTORY ${work_dir}
             )
         endif()
