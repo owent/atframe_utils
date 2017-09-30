@@ -45,7 +45,7 @@ namespace util {
                 0,
                 0,
                 0,
-                0
+                0,
 #endif
 #ifdef NID_secp256k1
                 NID_secp256k1, // see curve_list in ec_curve.c
@@ -54,7 +54,7 @@ namespace util {
 #else
                 0,
                 0,
-                0
+                0,
 #endif
 #ifdef NID_brainpoolP512r1
                 NID_brainpoolP512r1, // see curve_list in ec_curve.c
