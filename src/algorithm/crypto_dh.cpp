@@ -34,18 +34,38 @@ namespace util {
             // see ec_list_element in ec_curve.c of openssl
             static const int supported_dh_curves_openssl[] = {
                 0,
+#ifdef NID_secp521r1
                 NID_secp521r1,        // see nist_curves in ec_curve.c
                 NID_secp384r1,        // see nist_curves in ec_curve.c
                 NID_X9_62_prime256v1, // see nist_curves in ec_curve.c
                 NID_secp224r1,        // see nist_curves in ec_curve.c
                 NID_X9_62_prime192v1, // see nist_curves in ec_curve.c
-                NID_secp256k1,        // see curve_list in ec_curve.c
-                NID_secp224k1,        // see curve_list in ec_curve.c
-                NID_secp192k1,        // see curve_list in ec_curve.c
-                NID_brainpoolP512r1,  // see curve_list in ec_curve.c
-                NID_brainpoolP384r1,  // see curve_list in ec_curve.c
-                NID_brainpoolP256r1,  // see curve_list in ec_curve.c
-                -1,                   // end
+#else
+                0,
+                0,
+                0,
+                0,
+                0
+#endif
+#ifdef NID_secp256k1
+                NID_secp256k1, // see curve_list in ec_curve.c
+                NID_secp224k1, // see curve_list in ec_curve.c
+                NID_secp192k1, // see curve_list in ec_curve.c
+#else
+                0,
+                0,
+                0
+#endif
+#ifdef NID_brainpoolP512r1
+                NID_brainpoolP512r1, // see curve_list in ec_curve.c
+                NID_brainpoolP384r1, // see curve_list in ec_curve.c
+                NID_brainpoolP256r1, // see curve_list in ec_curve.c
+#else
+                0,
+                0,
+                0
+#endif
+                -1, // end
             };
 
             STD_STATIC_ASSERT(sizeof(supported_dh_curves) / sizeof(const char *) == sizeof(supported_dh_curves_openssl) / sizeof(int));
@@ -96,7 +116,22 @@ namespace util {
             return details::setup_errorno(*this, 0, error_code_t::OK);
         }
 
-        const char **dh::get_all_curve_names() { return &details::supported_dh_curves[1]; }
+        const std::vector<std::string> &dh::get_all_curve_names() {
+            static std::vector<std::string> ret;
+            if (ret.empty()) {
+                for (int i = 1; details::supported_dh_curves[i] != NULL; ++i) {
+#if defined(CRYPTO_USE_OPENSSL) || defined(CRYPTO_USE_LIBRESSL) || defined(CRYPTO_USE_BORINGSSL)
+                    if (0 != details::supported_dh_curves_openssl[i]) {
+                        ret.push_back(details::supported_dh_curves[i]);
+                    }
+#else
+                    ret.push_back(details::supported_dh_curves[i]);
+#endif
+                }
+            }
+
+            return ret;
+        }
     } // namespace crypto
 } // namespace util
 

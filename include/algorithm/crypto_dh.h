@@ -239,7 +239,7 @@ namespace util {
             int calc_secret(unsigned char *output, size_t output_size, size_t *olen);
 
         public:
-            static const char **get_all_curve_names();
+            static const std::vector<std::string> &get_all_curve_names();
 
         private:
             int last_errorno_;
