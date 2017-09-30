@@ -134,7 +134,7 @@ namespace util {
                 int random(void *output, size_t *olen);
 
             private:
-                method_t method_;
+                method_t::type method_;
                 dh_param_t dh_param_;
                 random_engine_t random_engine_;
             };

@@ -65,7 +65,14 @@ namespace util {
         } // namespace details
 
         // =============== shared context ===============
-        dh::shared_context::shared_context() {}
+        dh::shared_context::shared_context() : method_(method_t::EN_CDT_INVALID) {
+#if defined(CRYPTO_USE_OPENSSL) || defined(CRYPTO_USE_LIBRESSL) || defined(CRYPTO_USE_BORINGSSL)
+            dh_param_.param = NULL;
+#elif defined(CRYPTO_USE_MBEDTLS)
+#endif
+
+            memset(&random_engine_, 0, sizeof(random_engine_));
+        }
         dh::shared_context::~shared_context() {}
 
         int dh::shared_context::init(const char *name) { return 0; }
