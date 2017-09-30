@@ -46,7 +46,7 @@ endif()
 # curl
 find_package(CURL)
 if(CURL_FOUND)
-    message(STATUS "Curl support disabled")
+    message(STATUS "Curl support enabled")
     set(NETWORK_ENABLE_CURL 1)
     include_directories(${CURL_INCLUDE_DIRS})
 else()
