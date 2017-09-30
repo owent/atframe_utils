@@ -41,29 +41,21 @@ namespace util {
                 NID_secp224r1,        // see nist_curves in ec_curve.c
                 NID_X9_62_prime192v1, // see nist_curves in ec_curve.c
 #else
-                0,
-                0,
-                0,
-                0,
-                0,
+                0,  0, 0, 0, 0,
 #endif
 #ifdef NID_secp256k1
                 NID_secp256k1, // see curve_list in ec_curve.c
                 NID_secp224k1, // see curve_list in ec_curve.c
                 NID_secp192k1, // see curve_list in ec_curve.c
 #else
-                0,
-                0,
-                0,
+                0,  0, 0,
 #endif
 #ifdef NID_brainpoolP512r1
                 NID_brainpoolP512r1, // see curve_list in ec_curve.c
                 NID_brainpoolP384r1, // see curve_list in ec_curve.c
                 NID_brainpoolP256r1, // see curve_list in ec_curve.c
 #else
-                0,
-                0,
-                0
+                0,  0, 0,
 #endif
                 -1, // end
             };
