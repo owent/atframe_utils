@@ -75,7 +75,12 @@ namespace util {
         }
         dh::shared_context::~shared_context() {}
 
-        int dh::shared_context::init(const char *name) { return 0; }
+        int dh::shared_context::init(const char *name) {
+            if (method_t::EN_CDT_INVALID != method_) {
+                return error_code_t::ALREADY_INITED;
+            }
+            return 0;
+        }
 
         void dh::shared_context::reset() {}
 
