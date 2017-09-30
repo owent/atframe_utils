@@ -27,10 +27,10 @@ matrix:
       dist: trusty
       sudo: required
       env: USE_CC=gcc-7 USE_CXX=g++-7 CMAKE_BIN=$CMAKE_PREFIX/bin/cmake CTEST_BIN=$CMAKE_PREFIX/bin/ctest
-    - os: linux
-      dist: trusty
-      sudo: required
-      env: USE_CC=clang USE_CXX=clang++ CMAKE_BIN=$CMAKE_PREFIX/bin/cmake CTEST_BIN=$CMAKE_PREFIX/bin/ctest
+    # - os: linux
+    #   dist: trusty
+    #   sudo: required
+    #   env: USE_CC=clang USE_CXX=clang++ CMAKE_BIN=$CMAKE_PREFIX/bin/cmake CTEST_BIN=$CMAKE_PREFIX/bin/ctest
     # - os: linux
     #   dist: trusty
     #   sudo: required
