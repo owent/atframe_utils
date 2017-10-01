@@ -31,10 +31,6 @@ matrix:
     #   dist: trusty
     #   sudo: required
     #   env: USE_CC=clang USE_CXX=clang++ CMAKE_BIN=$CMAKE_PREFIX/bin/cmake CTEST_BIN=$CMAKE_PREFIX/bin/ctest
-    # - os: linux
-    #   dist: trusty
-    #   sudo: required
-    #   env: USE_CC=clang-3.8 USE_CXX=clang++-3.8 CMAKE_BIN=$CMAKE_PREFIX/bin/cmake
 
 addons:
   apt:
@@ -95,7 +91,7 @@ script:
   - $CMAKE_BIN --build .
 
 after_success:
-  - $CTEST_BIN -V .
+  - $CTEST_BIN . -V
 
 cache:
   apt: true

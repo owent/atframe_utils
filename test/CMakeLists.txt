@@ -17,7 +17,6 @@ file(GLOB_RECURSE PROJECT_TEST_SRC_LIST
 source_group_by_dir(PROJECT_TEST_SRC_LIST)
 
 # ============ test - coroutine test frame ============
-set(EXECUTABLE_OUTPUT_PATH "${PROJECT_BINARY_DIR}/test")
 
 if (CRYPTO_USE_OPENSSL OR CRYPTO_USE_LIBRESSL OR CRYPTO_USE_BORINGSSL)
     find_package(OpenSSL)
@@ -26,6 +25,8 @@ elseif (CRYPTO_USE_MBEDTLS)
     find_package(MbedTLS)
     list(APPEND 3RD_PARTY_C_CPP_UTILS_LINK_NAME ${MbedTLS_CRYPTO_LIBRARIES})
 endif()
+
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/test")
 
 add_executable(atframe_utils_unit_test ${PROJECT_TEST_SRC_LIST})
 target_link_libraries(atframe_utils_unit_test
