@@ -84,6 +84,9 @@ namespace util {
                     DISABLED = -11,
                     NOT_SUPPORT = -12,
                     OPERATION = -13,
+                    INIT_RANDOM_ENGINE = -14,
+                    READ_DHPARAM_FILE = -21,
+                    INIT_DHPARAM = -22,
                 };
             };
 
@@ -118,6 +121,7 @@ namespace util {
                 /**
                  * @brief initialize a shared context
                  * @param name algorithm name, ecdh:[ECDH algorithm name] or the path of dh parameter PEM file
+                 *        passing NULL for dh client mode
                  * @return 0 or error code
                  */
                 int init(const char *name);
@@ -132,6 +136,8 @@ namespace util {
                  * @return 0 or error code
                  */
                 int random(void *output, size_t *olen);
+
+                bool is_dh_client_mode() const;
 
             private:
                 method_t::type method_;
