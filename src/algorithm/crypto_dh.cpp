@@ -8,8 +8,101 @@
 
 #ifdef CRYPTO_DH_ENABLED
 
+
 #ifndef UNUSED
 #define UNUSED(x) ((void)x)
+#endif
+
+#if defined(CRYPTO_USE_OPENSSL) || defined(CRYPTO_USE_LIBRESSL) || defined(CRYPTO_USE_BORINGSSL)
+
+// copy from ssl_locl.h
+#ifndef n2s
+#define n2s(c, s) ((s = (((unsigned int)(c[0])) << 8) | (((unsigned int)(c[1])))), c += 2)
+#endif
+
+// copy from ssl_locl.h
+#ifndef s2n
+#define s2n(s, c) ((c[0] = (unsigned char)(((s) >> 8) & 0xff), c[1] = (unsigned char)(((s)) & 0xff)), c += 2)
+#endif
+
+// adaptor for openssl 1.0.x -> openssl 1.1.x
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
+
+/**
+ * @see crypto/dh/dh_lib.c in openssl 1.1.x
+ */
+static inline void DH_get0_pqg(const DH *dh, const BIGNUM **p, const BIGNUM **q, const BIGNUM **g) {
+    if (p != NULL) *p = dh->p;
+    if (q != NULL) *q = dh->q;
+    if (g != NULL) *g = dh->g;
+}
+
+/**
+ * @see crypto/dh/dh_lib.c in openssl 1.1.x
+ */
+static inline int DH_set0_pqg(DH *dh, BIGNUM *p, BIGNUM *q, BIGNUM *g) {
+    /* If the fields p and g in d are NULL, the corresponding input
+     * parameters MUST be non-NULL.  q may remain NULL.
+     */
+    if ((dh->p == NULL && p == NULL) || (dh->g == NULL && g == NULL)) return 0;
+
+    if (p != NULL) {
+        BN_free(dh->p);
+        dh->p = p;
+    }
+    if (q != NULL) {
+        BN_free(dh->q);
+        dh->q = q;
+    }
+    if (g != NULL) {
+        BN_free(dh->g);
+        dh->g = g;
+    }
+
+    if (q != NULL) {
+        dh->length = BN_num_bits(q);
+    }
+
+    return 1;
+}
+
+/**
+ * @see crypto/dh/dh_lib.c in openssl 1.1.x
+ */
+static inline void DH_get0_key(const DH *dh, const BIGNUM **pub_key, const BIGNUM **priv_key) {
+    if (pub_key != NULL) *pub_key = dh->pub_key;
+    if (priv_key != NULL) *priv_key = dh->priv_key;
+}
+
+/**
+ * @see crypto/dh/dh_lib.c in openssl 1.1.x
+ */
+static inline int DH_set0_key(DH *dh, BIGNUM *pub_key, BIGNUM *priv_key) {
+    /* If the field pub_key in dh is NULL, the corresponding input
+     * parameters MUST be non-NULL.  The priv_key field may
+     * be left NULL.
+     */
+    if (dh->pub_key == NULL && pub_key == NULL) return 0;
+
+    if (pub_key != NULL) {
+        BN_free(dh->pub_key);
+        dh->pub_key = pub_key;
+    }
+    if (priv_key != NULL) {
+        BN_free(dh->priv_key);
+        dh->priv_key = priv_key;
+    }
+
+    return 1;
+}
+
+#endif
+
+#endif
+
+
+#ifdef max
+#undef max
 #endif
 
 namespace util {
@@ -201,7 +294,7 @@ namespace util {
 
             switch (method_) {
             case method_t::EN_CDT_DH: {
-// TODO clear pem file buffer
+// clear pem file buffer
 #if defined(CRYPTO_USE_OPENSSL) || defined(CRYPTO_USE_LIBRESSL) || defined(CRYPTO_USE_BORINGSSL)
                 if (NULL != dh_param_.param) {
                     BIO_free(dh_param_.param);
@@ -253,28 +346,216 @@ namespace util {
         dh::dh() : last_errorno_(0) { memset(&dh_context_, 0, sizeof(dh_context_)); }
         dh::~dh() { close(); }
 
-        int dh::init(shared_context::ptr_t shared_context) { return details::setup_errorno(*this, 0, error_code_t::OK); }
+        int dh::init(shared_context::ptr_t shared_context) {
+            if (!shared_context) {
+                return details::setup_errorno(*this, 0, error_code_t::INVALID_PARAM);
+            }
+
+            // shared_context must be initialized
+            if (method_t::EN_CDT_INVALID == shared_context->get_method()) {
+                return details::setup_errorno(*this, 0, error_code_t::NOT_INITED);
+            }
+
+            int ret = 0;
+
+            switch (shared_context->get_method()) {
+            case method_t::EN_CDT_DH: {
+// init DH param file
+#if defined(CRYPTO_USE_OPENSSL) || defined(CRYPTO_USE_LIBRESSL) || defined(CRYPTO_USE_BORINGSSL)
+                do {
+                    if (shared_context->is_dh_client_mode()) {
+                        dh_context_.openssl_dh_ptr_ = DH_new();
+                    } else {
+                        dh_context_.openssl_dh_ptr_ = PEM_read_bio_DHparams(shared_context->get_dh_parameter().param, NULL, NULL, NULL);
+                    }
+
+                    if (!dh_context_.openssl_dh_ptr_) {
+                        ret = error_code_t::INIT_DHPARAM;
+                        break;
+                    }
+
+                    // if (!shared_context->is_dh_client_mode() && !DH_generate_key(dh_context_.openssl_dh_ptr_)) {
+                    //     ret = error_code_t::INIT_DH_GENERATE_KEY;
+                    //     break;
+                    // }
+                } while (false);
+
+                if (0 != ret) {
+                    if (NULL != dh_context_.openssl_dh_ptr_) {
+                        DH_free(dh_context_.openssl_dh_ptr_);
+                        dh_context_.openssl_dh_ptr_ = NULL;
+                    }
+                }
+#elif defined(CRYPTO_USE_MBEDTLS)
+                // mbedtls_dhm_read_params
+                do {
+                    mbedtls_dhm_init(&dh_context_.mbedtls_dh_ctx_);
+                    dh_context_.dh_param_cache_.clear();
+
+                    // client mode, just init , do not read PEM file
+                    if (false == shared_context->is_dh_client_mode()) {
+                        int res =
+                            mbedtls_dhm_parse_dhm(&dh_context_.mbedtls_dh_ctx_,
+                                                  reinterpret_cast<const unsigned char *>(shared_context->get_dh_parameter().param.data()),
+                                                  shared_context->get_dh_parameter().param.size());
+                        if (0 != res) {
+                            ret = details::setup_errorno(*this, res, error_code_t::INIT_DHPARAM);
+                            break;
+                        }
+                    }
+                } while (false);
+
+                if (0 != ret) {
+                    mbedtls_dhm_free(&dh_context_.mbedtls_dh_ctx_);
+                }
+#endif
+                break;
+            }
+            case method_t::EN_CDT_ECDH: {
+                ret = details::setup_errorno(*this, 0, error_code_t::NOT_SUPPORT);
+                // TODO
+                break;
+            }
+            default: { details::setup_errorno(*this, 0, error_code_t::NOT_SUPPORT); }
+            }
+
+            if (0 != ret) {
+                return ret;
+            }
+
+            shared_context_ = shared_context;
+            return details::setup_errorno(*this, 0, error_code_t::OK);
+        }
 
         int dh::close() {
-            do {
-// cipher cleanup
+            if (!shared_context_) {
+                return details::setup_errorno(*this, 0, error_code_t::NOT_INITED);
+            }
+
+            shared_context::ptr_t shared_context;
+            shared_context.swap(shared_context_);
+
+            switch (shared_context->get_method()) {
+            case method_t::EN_CDT_DH: {
+// init DH param file
 #if defined(CRYPTO_USE_OPENSSL) || defined(CRYPTO_USE_LIBRESSL) || defined(CRYPTO_USE_BORINGSSL)
+                if (NULL != dh_context_.openssl_dh_ptr_) {
+                    DH_free(dh_context_.openssl_dh_ptr_);
+                    dh_context_.openssl_dh_ptr_ = NULL;
+                }
+
 #elif defined(CRYPTO_USE_MBEDTLS)
+                mbedtls_dhm_free(&dh_context_.mbedtls_dh_ctx_);
+                dh_context_.dh_param_cache_.clear();
 #endif
-            } while (false);
+                break;
+            }
+            case method_t::EN_CDT_ECDH: {
+                return details::setup_errorno(*this, 0, error_code_t::NOT_SUPPORT);
+                // TODO
+                // break;
+            }
+            default: { details::setup_errorno(*this, 0, error_code_t::NOT_SUPPORT); }
+            }
 
             return details::setup_errorno(*this, 0, error_code_t::OK);
         }
 
-        int dh::make_params(std::vector<unsigned char> &param) { return details::setup_errorno(*this, 0, error_code_t::OK); }
+        int dh::make_params(std::vector<unsigned char> &param) {
+            if (!shared_context_) {
+                return details::setup_errorno(*this, 0, error_code_t::NOT_INITED);
+            }
 
-        int dh::make_params(const unsigned char *param, size_t *plen) { return details::setup_errorno(*this, 0, error_code_t::OK); }
+            int ret = 0;
+            switch (shared_context_->get_method()) {
+            case method_t::EN_CDT_DH: {
+#if defined(CRYPTO_USE_OPENSSL) || defined(CRYPTO_USE_LIBRESSL) || defined(CRYPTO_USE_BORINGSSL)
+                if (NULL == dh_context_.openssl_dh_ptr_) {
+                    ret = error_code_t::NOT_SUPPORT;
+                    break;
+                }
+
+                // ===============================================
+                int res = DH_generate_key(dh_context_.openssl_dh_ptr_);
+                if (1 != res) {
+                    ret = error_code_t::INIT_DH_GENERATE_KEY;
+                    break;
+                }
+                int errcode = 0;
+                const BIGNUM *self_pubkey = NULL;
+                DH_get0_key(dh_context_.openssl_dh_ptr_, &self_pubkey, NULL);
+                res = DH_check_pub_key(dh_context_.openssl_dh_ptr_, self_pubkey, &errcode);
+                if (1 != res) {
+                    ret = details::setup_errorno(*this, errcode, error_code_t::INIT_DH_GENERATE_KEY);
+                    break;
+                }
+
+                // write big number into buffer, the size must be no less than BN_num_bytes()
+                // @see https://www.openssl.org/docs/manmaster/crypto/BN_bn2bin.html
+                // dump P,G,GX
+                // @see int ssl3_send_server_key_exchange(SSL *s) in s3_srvr.c          -- openssl 1.0.x
+                // @see int tls_construct_server_key_exchange(SSL *s) in statem_srvr.c  -- openssl 1.1.x
+                {
+                    const BIGNUM *r[4] = {NULL, NULL, NULL, NULL};
+                    DH_get0_pqg(dh_context_.openssl_dh_ptr_, &r[0], NULL, &r[1]);
+                    DH_get0_key(dh_context_.openssl_dh_ptr_, &r[2], NULL);
+
+                    size_t olen = 0;
+                    unsigned int nr[4] = {0};
+                    for (int i = 0; i < 4 && r[i] != NULL; i++) {
+                        nr[i] = BN_num_bytes(r[i]);
+                        // DHM_MPI_EXPORT in mbedtls/polarssl use 2 byte to store length, so openssl/libressl/boringssl should use
+                        // OPENSSL_NO_SRP
+                        olen += static_cast<size_t>(nr[i] + 2);
+                    }
+
+                    param.resize(olen, 0);
+                    unsigned char *p = &param[0];
+                    for (int i = 0; i < 4 && r[i] != NULL; i++) {
+                        s2n(nr[i], p);
+                        BN_bn2bin(r[i], p);
+                        p += nr[i];
+                    }
+                }
+
+#elif defined(CRYPTO_USE_MBEDTLS)
+                // size is P,G,GX
+                size_t psz = mbedtls_mpi_size(&dh_context_.mbedtls_dh_ctx_.P);
+                size_t gsz = mbedtls_mpi_size(&dh_context_.mbedtls_dh_ctx_.G);
+                size_t olen = 0;
+                // @see mbedtls_dhm_make_params, output P,G,GX. GX is smaller than P
+                // each big number has 2 byte length
+                param.resize(psz + psz + gsz + 6, 0);
+                int res = mbedtls_dhm_make_params(&dh_context_.mbedtls_dh_ctx_, static_cast<int>(psz),
+                                                  reinterpret_cast<unsigned char *>(&param[0]), &olen, mbedtls_ctr_drbg_random,
+                                                  &shared_context_->get_random_engine().ctr_drbg);
+                if (0 != res) {
+                    ret = details::setup_errorno(*this, res, error_code_t::INIT_DH_GENERATE_KEY);
+                    break;
+                }
+
+                // resize if P,G,GX is small than param
+                assert(olen <= psz + psz + gsz + 6);
+                if (olen < param.size()) {
+                    param.resize(olen);
+                }
+#endif
+                break;
+            }
+            case method_t::EN_CDT_ECDH: {
+                ret = details::setup_errorno(*this, 0, error_code_t::NOT_SUPPORT);
+                // TODO
+                break;
+            }
+            default: { details::setup_errorno(*this, 0, error_code_t::NOT_SUPPORT); }
+            }
+
+            return ret;
+        }
 
         int dh::read_params(const unsigned char *input, size_t ilen) { return details::setup_errorno(*this, 0, error_code_t::OK); }
 
         int dh::make_public(std::vector<unsigned char> &param) { return details::setup_errorno(*this, 0, error_code_t::OK); }
-
-        int dh::make_public(const unsigned char *param, size_t *plen) { return details::setup_errorno(*this, 0, error_code_t::OK); }
 
         int dh::read_public(const unsigned char *input, size_t ilen) { return details::setup_errorno(*this, 0, error_code_t::OK); }
 

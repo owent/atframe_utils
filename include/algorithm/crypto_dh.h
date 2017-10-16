@@ -71,6 +71,7 @@ namespace util {
 #elif defined(CRYPTO_USE_MBEDTLS)
             struct dh_context_t {
                 mbedtls_dhm_context mbedtls_dh_ctx_;
+                std::vector<unsigned char> dh_param_cache_;
             };
 #endif
 
@@ -87,6 +88,7 @@ namespace util {
                     INIT_RANDOM_ENGINE = -14,
                     READ_DHPARAM_FILE = -21,
                     INIT_DHPARAM = -22,
+                    INIT_DH_GENERATE_KEY = -23,
                 };
             };
 
@@ -139,6 +141,11 @@ namespace util {
 
                 bool is_dh_client_mode() const;
 
+                inline method_t::type get_method() const { return method_; }
+
+                inline const dh_param_t &get_dh_parameter() const { return dh_param_; }
+                inline const random_engine_t &get_random_engine() const { return random_engine_; }
+
             private:
                 method_t::type method_;
                 dh_param_t dh_param_;
@@ -182,19 +189,6 @@ namespace util {
             int make_params(std::vector<unsigned char> &param);
 
             /**
-             * @brief          Setup and write the ServerKeyExchange parameters
-             *
-             * @param param    destination buffer
-             * @param plen     number of chars written
-             *
-             * @note           This function assumes that ctx->P and ctx->G
-             *                 have already been properly set
-             *
-             * @return         0 if successful, or error code
-             */
-            int make_params(const unsigned char *param, size_t *plen);
-
-            /**
              * @brief          Parse the ServerKeyExchange parameters
              *
              * @param input    input buffer
@@ -212,15 +206,6 @@ namespace util {
              * @return         0 if successful, or error code
              */
             int make_public(std::vector<unsigned char> &param);
-
-            /**
-             * @brief          Create own private value X and export G^X
-             *
-             * @param param    destination buffer
-             * @param plen     must be at least equal to the size of P, ctx->len
-             * @return         0 if successful, or error code
-             */
-            int make_public(const unsigned char *param, size_t *plen);
 
             /**
              * @brief          Import the peer's public value G^Y
