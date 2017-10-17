@@ -193,12 +193,17 @@ namespace util {
 
     std::string file_system::get_cwd() {
         std::string ret;
+        char *res = NULL;
 #ifdef UTIL_FS_WINDOWS_API
-        ret = _getcwd(NULL, 0);
+        res = _getcwd(NULL, 0);
 #else
-        ret = getcwd(NULL, 0);
+        res = getcwd(NULL, 0);
 #endif
 
+        if (NULL != res) {
+            ret = res;
+            ::free(res);
+        }
         return ret;
     }
 
@@ -463,4 +468,4 @@ namespace util {
 
         return false;
     }
-}
+} // namespace util
