@@ -67,6 +67,7 @@ namespace util {
 #if defined(CRYPTO_USE_OPENSSL) || defined(CRYPTO_USE_LIBRESSL) || defined(CRYPTO_USE_BORINGSSL)
             struct dh_context_t {
                 DH *openssl_dh_ptr_;
+                BIGNUM *peer_pubkey_;
             };
 #elif defined(CRYPTO_USE_MBEDTLS)
             struct dh_context_t {
@@ -88,7 +89,9 @@ namespace util {
                     INIT_RANDOM_ENGINE = -14,
                     READ_DHPARAM_FILE = -21,
                     INIT_DHPARAM = -22,
-                    INIT_DH_GENERATE_KEY = -23,
+                    INIT_DH_READ_PARAM = -23,
+                    INIT_DH_GENERATE_KEY = -24,
+                    INIT_DH_READ_KEY = -25,
                 };
             };
 
@@ -162,6 +165,11 @@ namespace util {
              * @return 0 or error code
              */
             int init(shared_context::ptr_t shared_context);
+
+            /**
+             * @brief release all resources
+             * @return 0 or error code
+             */
             int close();
 
             /**
@@ -184,6 +192,7 @@ namespace util {
              * @note           This function assumes that ctx->P and ctx->G
              *                 have already been properly set
              *
+             * @note           server process: make_params->read_public->calc_secret
              * @return         0 if successful, or error code
              */
             int make_params(std::vector<unsigned char> &param);
@@ -194,6 +203,7 @@ namespace util {
              * @param input    input buffer
              * @param ilen     size of buffer
              *
+             * @note           client process: read_params->make_public->calc_secret
              * @return         0 if successful, or error code
              */
             int read_params(const unsigned char *input, size_t ilen);
@@ -203,6 +213,7 @@ namespace util {
              *
              * @param param    destination buffer
              *
+             * @note           client process: read_params->make_public->calc_secret
              * @return         0 if successful, or error code
              */
             int make_public(std::vector<unsigned char> &param);
@@ -213,6 +224,7 @@ namespace util {
              * @param input    input buffer
              * @param ilen     size of buffer
              *
+             * @note           server process: make_params->read_public->calc_secret
              * @return         0 if successful, or error code
              */
             int read_public(const unsigned char *input, size_t ilen);
