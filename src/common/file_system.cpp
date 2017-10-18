@@ -5,6 +5,7 @@
 #include "common/file_system.h"
 #include "common/compiler_message.h"
 #include <cstdio>
+#include <cstdlib>
 #include <cstring>
 #include <memory>
 
