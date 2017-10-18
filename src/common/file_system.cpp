@@ -202,7 +202,7 @@ namespace util {
 
         if (NULL != res) {
             ret = res;
-            ::free(res);
+            free(res);
         }
         return ret;
     }
