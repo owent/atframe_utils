@@ -476,7 +476,7 @@ namespace util {
                 return details::setup_errorno(*this, 0, error_code_t::NOT_INITED);
             }
 
-            int ret = 0;
+            int ret = details::setup_errorno(*this, 0, error_code_t::OK);
             switch (shared_context_->get_method()) {
             case method_t::EN_CDT_DH: {
 #if defined(CRYPTO_USE_OPENSSL) || defined(CRYPTO_USE_LIBRESSL) || defined(CRYPTO_USE_BORINGSSL)
@@ -568,12 +568,12 @@ namespace util {
                 return details::setup_errorno(*this, 0, error_code_t::NOT_INITED);
             }
 
-            int ret = 0;
+            int ret = details::setup_errorno(*this, 0, error_code_t::OK);
             switch (shared_context_->get_method()) {
             case method_t::EN_CDT_DH: {
 #if defined(CRYPTO_USE_OPENSSL) || defined(CRYPTO_USE_LIBRESSL) || defined(CRYPTO_USE_BORINGSSL)
                 if (NULL == dh_context_.openssl_dh_ptr_) {
-                    ret = error_code_t::NOT_INITED;
+                    ret = details::setup_errorno(*this, 0, error_code_t::NOT_INITED);
                     break;
                 }
 
@@ -590,13 +590,13 @@ namespace util {
 
                         // P
                         if (param_len > n) {
-                            ret = error_code_t::INIT_DH_READ_PARAM;
+                            ret = details::setup_errorno(*this, 0, error_code_t::INIT_DH_READ_PARAM);
                             break;
                         }
                         n2s(p, i);
 
                         if (i > n - param_len) {
-                            ret = error_code_t::INIT_DH_READ_PARAM;
+                            ret = details::setup_errorno(*this, 0, error_code_t::INIT_DH_READ_PARAM);
                             break;
                         }
 
@@ -605,20 +605,20 @@ namespace util {
                         p += i;
 
                         if (BN_is_zero(DH_p)) {
-                            ret = error_code_t::INIT_DH_READ_PARAM;
+                            ret = details::setup_errorno(*this, 0, error_code_t::INIT_DH_READ_PARAM);
                             break;
                         }
 
                         // G
                         param_len += 2;
                         if (param_len > n) {
-                            ret = error_code_t::INIT_DH_READ_PARAM;
+                            ret = details::setup_errorno(*this, 0, error_code_t::INIT_DH_READ_PARAM);
                             break;
                         }
                         n2s(p, i);
 
                         if (i > n - param_len) {
-                            ret = error_code_t::INIT_DH_READ_PARAM;
+                            ret = details::setup_errorno(*this, 0, error_code_t::INIT_DH_READ_PARAM);
                             break;
                         }
 
@@ -627,13 +627,13 @@ namespace util {
                         p += i;
 
                         if (BN_is_zero(DH_g)) {
-                            ret = error_code_t::INIT_DH_READ_PARAM;
+                            ret = details::setup_errorno(*this, 0, error_code_t::INIT_DH_READ_PARAM);
                             break;
                         }
 
                         // Set P, G
                         if (!DH_set0_pqg(dh_context_.openssl_dh_ptr_, DH_p, NULL, DH_g)) {
-                            ret = error_code_t::INIT_DH_READ_PARAM;
+                            ret = details::setup_errorno(*this, 0, error_code_t::INIT_DH_READ_PARAM);
                             break;
                         }
                         DH_p = NULL;
@@ -642,25 +642,25 @@ namespace util {
                         // GY
                         param_len += 2;
                         if (param_len > n) {
-                            ret = error_code_t::INIT_DH_READ_KEY;
+                            ret = details::setup_errorno(*this, 0, error_code_t::INIT_DH_READ_KEY);
                             break;
                         }
                         n2s(p, i);
 
                         if (i > n - param_len) {
-                            ret = error_code_t::INIT_DH_READ_KEY;
+                            ret = details::setup_errorno(*this, 0, error_code_t::INIT_DH_READ_KEY);
                             break;
                         }
 
                         // param_len += i; // do not use **param_len** any more, it will cause static analysis to report a warning
                         if (!(dh_context_.peer_pubkey_ = BN_bin2bn(p, i, NULL))) {
-                            ret = error_code_t::INIT_DH_READ_KEY;
+                            ret = details::setup_errorno(*this, 0, error_code_t::INIT_DH_READ_KEY);
                             break;
                         }
                         // p += i; // do not use **p** any more, it will cause static analysis to report a warning
 
                         if (BN_is_zero(dh_context_.peer_pubkey_)) {
-                            ret = error_code_t::INIT_DH_READ_KEY;
+                            ret = details::setup_errorno(*this, 0, error_code_t::INIT_DH_READ_KEY);
                             break;
                         }
                     }
@@ -707,12 +707,12 @@ namespace util {
                 return details::setup_errorno(*this, 0, error_code_t::NOT_INITED);
             }
 
-            int ret = 0;
+            int ret = details::setup_errorno(*this, 0, error_code_t::OK);
             switch (shared_context_->get_method()) {
             case method_t::EN_CDT_DH: {
 #if defined(CRYPTO_USE_OPENSSL) || defined(CRYPTO_USE_LIBRESSL) || defined(CRYPTO_USE_BORINGSSL)
                 if (NULL == dh_context_.openssl_dh_ptr_) {
-                    ret = error_code_t::NOT_INITED;
+                    ret = details::setup_errorno(*this, 0, error_code_t::NOT_INITED);
                     break;
                 }
 
@@ -755,10 +755,103 @@ namespace util {
             return ret;
         }
 
-        int dh::read_public(const unsigned char *input, size_t ilen) { return details::setup_errorno(*this, 0, error_code_t::OK); }
+        int dh::read_public(const unsigned char *input, size_t ilen) {
+            if (!shared_context_) {
+                return details::setup_errorno(*this, 0, error_code_t::NOT_INITED);
+            }
 
-        int dh::calc_secret(unsigned char *output, size_t output_size, size_t *olen) {
-            return details::setup_errorno(*this, 0, error_code_t::OK);
+            int ret = details::setup_errorno(*this, 0, error_code_t::OK);
+            switch (shared_context_->get_method()) {
+            case method_t::EN_CDT_DH: {
+#if defined(CRYPTO_USE_OPENSSL) || defined(CRYPTO_USE_LIBRESSL) || defined(CRYPTO_USE_BORINGSSL)
+                if (NULL == dh_context_.openssl_dh_ptr_) {
+                    ret = details::setup_errorno(*this, 0, error_code_t::NOT_INITED);
+                    break;
+                }
+
+                if (NULL != dh_context_.peer_pubkey_) {
+                    BN_free(dh_context_.peer_pubkey_);
+                }
+                dh_context_.peer_pubkey_ = BN_bin2bn(input, ilen, NULL);
+                if (NULL == dh_context_.peer_pubkey_) {
+                    ret = details::setup_errorno(*this, 0, error_code_t::INIT_DH_READ_KEY);
+                    break;
+                };
+
+#elif defined(CRYPTO_USE_MBEDTLS)
+                int res = mbedtls_dhm_read_public(&dh_context_.mbedtls_dh_ctx_, input, ilen);
+                if (0 != res) {
+                    ret = details::setup_errorno(*this, res, error_code_t::INIT_DH_GENERATE_KEY);
+                    break;
+                }
+#endif
+                break;
+            }
+            case method_t::EN_CDT_ECDH: {
+                ret = details::setup_errorno(*this, 0, error_code_t::NOT_SUPPORT);
+                // TODO
+                break;
+            }
+            default: { details::setup_errorno(*this, 0, error_code_t::NOT_SUPPORT); }
+            }
+
+            return ret;
+        }
+
+        int dh::calc_secret(std::vector<unsigned char> &output) {
+            if (!shared_context_) {
+                return details::setup_errorno(*this, 0, error_code_t::NOT_INITED);
+            }
+
+            int ret = details::setup_errorno(*this, 0, error_code_t::OK);
+            switch (shared_context_->get_method()) {
+            case method_t::EN_CDT_DH: {
+#if defined(CRYPTO_USE_OPENSSL) || defined(CRYPTO_USE_LIBRESSL) || defined(CRYPTO_USE_BORINGSSL)
+                if (NULL == dh_context_.openssl_dh_ptr_) {
+                    ret = details::setup_errorno(*this, 0, error_code_t::NOT_INITED);
+                    break;
+                }
+
+                if (NULL == dh_context_.peer_pubkey_) {
+                    ret = details::setup_errorno(*this, 0, error_code_t::INIT_DH_READ_KEY);
+                    break;
+                }
+
+                output.resize(static_cast<size_t>(sizeof(unsigned char) * (DH_size(dh_context_.openssl_dh_ptr_))), 0);
+                int secret_len = DH_compute_key(&output[0], dh_context_.peer_pubkey_, dh_context_.openssl_dh_ptr_);
+                if (secret_len < 0) {
+                    ret = details::setup_errorno(*this, secret_len, error_code_t::INIT_DH_GENERATE_SECRET);
+                    break;
+                }
+
+#elif defined(CRYPTO_USE_MBEDTLS)
+                size_t psz = dh_context_.mbedtls_dh_ctx_.len;
+                // generate next_secret
+                output.resize(psz, 0);
+                int res;
+                //  if (shared_context_->is_dh_client_mode()) {
+                mbedtls_dhm_calc_secret(&dh_context_.mbedtls_dh_ctx_, &output[0], psz, &psz, mbedtls_ctr_drbg_random,
+                                        &shared_context_->get_random_engine().ctr_drbg);
+                // } else {
+                // mbedtls_dhm_calc_secret(&dh_context_.mbedtls_dh_ctx_, &output[0], psz, &psz, NULL, NULL);
+                // }
+                if (0 != res) {
+                    ret = details::setup_errorno(*this, res, error_code_t::INIT_DH_GENERATE_SECRET);
+                    break;
+                }
+
+#endif
+                break;
+            }
+            case method_t::EN_CDT_ECDH: {
+                ret = details::setup_errorno(*this, 0, error_code_t::NOT_SUPPORT);
+                // TODO
+                break;
+            }
+            default: { details::setup_errorno(*this, 0, error_code_t::NOT_SUPPORT); }
+            }
+
+            return ret;
         }
 
         const std::vector<std::string> &dh::get_all_curve_names() {

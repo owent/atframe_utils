@@ -92,6 +92,7 @@ namespace util {
                     INIT_DH_READ_PARAM = -23,
                     INIT_DH_GENERATE_KEY = -24,
                     INIT_DH_READ_KEY = -25,
+                    INIT_DH_GENERATE_SECRET = -26,
                 };
             };
 
@@ -233,13 +234,11 @@ namespace util {
              * @brief          Derive and export the shared secret (G^Y)^X mod P
              *
              * @param output   destination buffer
-             * @param output_size   size of the destination buffer
-             * @param olen     on exit, holds the actual number of bytes written
              *
              * @return         0 if successful, or error code
              *
              */
-            int calc_secret(unsigned char *output, size_t output_size, size_t *olen);
+            int calc_secret(std::vector<unsigned char> &output);
 
         public:
             static const std::vector<std::string> &get_all_curve_names();
