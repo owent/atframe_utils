@@ -15,6 +15,8 @@
 
 #if defined(CRYPTO_USE_OPENSSL) || defined(CRYPTO_USE_LIBRESSL) || defined(CRYPTO_USE_BORINGSSL)
 
+#include <openssl/rand.h>
+
 // copy from ssl_locl.h
 #ifndef n2s
 #define n2s(c, s) ((s = (((unsigned int)(c[0])) << 8) | (((unsigned int)(c[1])))), c += 2)
@@ -172,7 +174,7 @@ namespace util {
 
             memset(&random_engine_, 0, sizeof(random_engine_));
         }
-        dh::shared_context::~shared_context() {}
+        dh::shared_context::~shared_context() { reset(); }
 
         int dh::shared_context::init(const char *name) {
             if (method_t::EN_CDT_INVALID != method_) {
@@ -203,7 +205,7 @@ namespace util {
                 size_t pem_sz = static_cast<size_t>(ftell(pem));
                 fseek(pem, 0, SEEK_SET);
 
-// TODO Read from pem file
+// Read from pem file
 #if defined(CRYPTO_USE_OPENSSL) || defined(CRYPTO_USE_LIBRESSL) || defined(CRYPTO_USE_BORINGSSL)
                 do {
                     unsigned char *pem_buf = reinterpret_cast<unsigned char *>(calloc(pem_sz, sizeof(unsigned char)));
@@ -327,7 +329,26 @@ namespace util {
 #endif
         }
 
-        int dh::shared_context::random(void *output, size_t *olen) { return error_code_t::OK; }
+        int dh::shared_context::random(void *output, size_t output_sz) {
+            if (method_t::EN_CDT_INVALID == method_) {
+                return error_code_t::NOT_INITED;
+            }
+
+            if (NULL == output || output_sz <= 0) {
+                return error_code_t::INVALID_PARAM;
+            }
+
+            int ret = error_code_t::OK;
+#if defined(CRYPTO_USE_OPENSSL) || defined(CRYPTO_USE_LIBRESSL) || defined(CRYPTO_USE_BORINGSSL)
+            if (!RAND_bytes(reinterpret_cast<unsigned char *>(output), static_cast<int>(output_sz))) {
+                ret = static_cast<int>(ERR_get_error());
+            }
+
+#elif defined(LIBATFRAME_ATGATEWAY_ENABLE_MBEDTLS)
+            ret = mbedtls_ctr_drbg_random(&random_engine_.ctr_drbg, reinterpret_cast<unsigned char *>(output), output_sz);
+#endif
+            return ret;
+        }
 
         bool dh::shared_context::is_dh_client_mode() const {
             if (method_t::EN_CDT_DH != method_) {

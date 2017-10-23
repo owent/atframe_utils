@@ -141,7 +141,7 @@ namespace util {
                  * @brief random buffer
                  * @return 0 or error code
                  */
-                int random(void *output, size_t *olen);
+                int random(void *output, size_t output_sz);
 
                 bool is_dh_client_mode() const;
 
