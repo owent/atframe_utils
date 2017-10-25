@@ -308,7 +308,7 @@ namespace util {
 
                 // 转义字符设置
                 for (int i = 0; i < 256; ++i)
-                    trans_value_[i] = i;
+                    trans_value_[i] = (uc_t)i;
 
                 trans_value_[(uc_t)'0'] = '\0';
                 trans_value_[(uc_t)'a'] = '\a';
@@ -727,6 +727,6 @@ namespace util {
         // 类型重定义
         typedef cmd_option_bind<std::string> cmd_option;
         typedef cmd_option_bind<cmd_option_ci_string> cmd_option_ci;
-    }
-}
+    } // namespace cli
+} // namespace util
 #endif /* CMDOPTION_H_ */

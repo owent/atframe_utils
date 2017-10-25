@@ -1,18 +1,28 @@
 ﻿/*
-* cmd_option_value.cpp
-*
-*  Created on: 2011-12-29
-*      Author: OWenT
-*
-* 应用程序命令处理
-*
-*/
+ * cmd_option_value.cpp
+ *
+ *  Created on: 2011-12-29
+ *      Author: OWenT
+ *
+ * 应用程序命令处理
+ *
+ */
 
 #include "cli/cmd_option_value.h"
 #include <algorithm>
 
 namespace util {
     namespace cli {
+        namespace detail {
+            static char tolower(char c) {
+                if (c >= 'A' && c <= 'Z') {
+                    return c - 'A' + 'a';
+                }
+
+                return c;
+            }
+        } // namespace detail
+
         cmd_option_value::cmd_option_value(const char *strData) : data_(strData) {}
 
         const std::string &cmd_option_value::to_cpp_string() const { return data_; }
@@ -64,7 +74,7 @@ namespace util {
 
         bool cmd_option_value::to_logic_bool() const {
             std::string lowercase_content = data_;
-            std::transform(lowercase_content.begin(), lowercase_content.end(), lowercase_content.begin(), ::tolower);
+            std::transform(lowercase_content.begin(), lowercase_content.end(), lowercase_content.begin(), detail::tolower);
 
             if (lowercase_content.empty()) {
                 return false;
@@ -77,5 +87,5 @@ namespace util {
 
             return true;
         }
-    }
-}
+    } // namespace cli
+} // namespace util

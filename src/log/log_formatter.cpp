@@ -59,7 +59,7 @@ if(NULL == tm_obj_ptr) {                \
         tm_obj_ptr = &tm_obj_cache;     \
         VAR = tm_obj_ptr->EXPRESS;      \
     \
-}                                \
+}                                  \
     else {                              \
         VAR = tm_obj_ptr->EXPRESS;      \
     \
@@ -273,8 +273,8 @@ if(NULL == tm_obj_ptr) {                \
                     if (NULL != caller.file_path) {
                         const char *file_path = caller.file_path;
                         if (!project_dir_.empty()) {
-                            for (size_t i = 0; i < project_dir_.size(); ++i) {
-                                if (file_path && *file_path && project_dir_[i] == *file_path) {
+                            for (size_t j = 0; j < project_dir_.size(); ++j) {
+                                if (file_path && *file_path && project_dir_[j] == *file_path) {
                                     ++file_path;
                                 } else {
                                     file_path = caller.file_path;
@@ -391,5 +391,5 @@ if(NULL == tm_obj_ptr) {                \
                 project_dir_.assign(dirbuf, dirsz);
             }
         }
-    }
-}
+    } // namespace log
+} // namespace util

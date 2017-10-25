@@ -22,7 +22,7 @@ if( ${CMAKE_CXX_COMPILER_ID} STREQUAL "GNU")
 
     include(CheckCCompilerFlag)
     message(STATUS "Check Flag: -rdynamic -- running")
-    CHECK_C_COMPILER_FLAG(-rdynamic, C_FLAGS_RDYNAMIC_AVAILABLE)
+    CHECK_C_COMPILER_FLAG(-rdynamic C_FLAGS_RDYNAMIC_AVAILABLE)
     if(C_FLAGS_RDYNAMIC_AVAILABLE)
         message(STATUS "Check Flag: -rdynamic -- yes")
         add_definitions(-rdynamic)
