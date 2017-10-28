@@ -293,7 +293,7 @@ namespace util {
             // Windows 版本暂不支持软链接
             if (_A_SUBDIR & child_node.attrib) {
                 accept = options & dir_opt_t::EN_DOT_TDIR;
-            } else if (_A_NORMAL & child_node.attrib) {
+            } else if ((_A_NORMAL | _A_RDONLY | _A_HIDDEN | _A_SYSTEM | _A_ARCH) & child_node.attrib) {
                 accept = options & dir_opt_t::EN_DOT_TREG;
             } else {
                 accept = options & dir_opt_t::EN_DOT_TOTH;
