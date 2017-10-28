@@ -74,7 +74,9 @@ namespace util {
             void log(const caller_info_t &caller,
 #ifdef _MSC_VER
                      _In_z_ _Printf_format_string_ const char *fmt, ...);
-#elif (defined(__clang__) && __clang_major__ >= 3) || (defined(__GNUC__) && __GNUC__ >= 4)
+#elif (defined(__clang__) && __clang_major__ >= 3)
+                     const char *fmt, ...) __attribute__((__format__(__printf__, 3, 4)));
+#elif (defined(__GNUC__) && __GNUC__ >= 4)
 // 格式检查(成员函数有个隐含的this参数)
 #if defined(__MINGW32__) || defined(__MINGW64__)
                      const char *fmt, ...) __attribute__((format(__MINGW_PRINTF_FORMAT, 3, 4)));
@@ -144,8 +146,8 @@ namespace util {
 
             static bool destroyed_; // log模块进入释放阶段，进入释放阶段后log功能会被关闭
         };
-    }
-}
+    } // namespace log
+} // namespace util
 
 #define WLOG_LEVELID(lv) static_cast<util::log::log_wrapper::level_t::type>(lv)
 
@@ -196,7 +198,7 @@ namespace util {
 #ifdef _MSC_VER
 #define PSTDTERMCOLOR(code, fmt, ...)                                              \
     \
-{                                                                           \
+{                                                                             \
         util::cli::shell_stream::shell_stream_opr log_wrapper_pstd_ss(&std::cout); \
         log_wrapper_pstd_ss.open(code);                                            \
         log_wrapper_pstd_ss.close();                                               \
@@ -207,7 +209,7 @@ namespace util {
 #else
 #define PSTDTERMCOLOR(code, fmt, args...)                                          \
     \
-{                                                                           \
+{                                                                             \
         util::cli::shell_stream::shell_stream_opr log_wrapper_pstd_ss(&std::cout); \
         log_wrapper_pstd_ss.open(code);                                            \
         log_wrapper_pstd_ss.close();                                               \

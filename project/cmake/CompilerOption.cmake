@@ -64,7 +64,11 @@ if( ${CMAKE_CXX_COMPILER_ID} STREQUAL "GNU")
     endif()
 
 elseif( ${CMAKE_CXX_COMPILER_ID} STREQUAL "Clang")
-    add_definitions(-Wall -Werror -fPIC)
+    if(NOT WIN32 AND NOT CYGWIN AND NOT MINGW) 
+        add_definitions(-fPIC)
+    endif()
+    
+    add_definitions(-Wall -Werror)
     if (CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL "3.4")
         set(CMAKE_C_STANDARD 11)
         if (CMAKE_VERSION VERSION_GREATER_EQUAL "3.8.0")
