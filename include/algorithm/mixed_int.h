@@ -12,13 +12,11 @@
  *
  */
 
-#ifndef _UTIL_ALGORITHM_MIXEDINT_H_
-#define _UTIL_ALGORITHM_MIXEDINT_H_
+#ifndef UTIL_ALGORITHM_MIXEDINT_H
+#define UTIL_ALGORITHM_MIXEDINT_H
 
 // 目测主流编译器都支持且有优化， gcc 3.4 and upper, vc, clang, c++ builder xe3, intel c++ and etc.
-//#if defined(_MSC_VER) && (_MSC_VER >= 1020)
 #pragma once
-//#endif
 
 #include <stddef.h>
 #include <stdint.h>

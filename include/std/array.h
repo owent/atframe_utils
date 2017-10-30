@@ -14,9 +14,7 @@
 #ifndef _STD_ARRAY_H_
 #define _STD_ARRAT_H_
 
-#if defined(_MSC_VER) && (_MSC_VER >= 1020)
 #pragma once
-#endif
 
 // ============================================================
 // 公共包含部分

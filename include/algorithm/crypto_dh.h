@@ -12,8 +12,8 @@
  *
  */
 
-#ifndef _UTIL_ALGORITHM_CRYPTO_DH_H_
-#define _UTIL_ALGORITHM_CRYPTO_DH_H_
+#ifndef UTIL_ALGORITHM_CRYPTO_DH_H
+#define UTIL_ALGORITHM_CRYPTO_DH_H
 
 #pragma once
 

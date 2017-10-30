@@ -12,13 +12,11 @@
 *
 */
 
-#ifndef _STD_THREAD_H_
-#define _STD_THREAD_H_
+#ifndef STD_THREAD_H
+#define STD_THREAD_H
 
 
-#if defined(_MSC_VER) && (_MSC_VER >= 1020)
 #pragma once
-#endif
 
 // ===================================== thread local storage =====================================
 /**

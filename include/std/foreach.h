@@ -43,9 +43,7 @@
  
 #ifndef owent_foreach
  
-#if defined(_MSC_VER) && (_MSC_VER >= 1020)
 # pragma once
-#endif
  
 // ============================================================
 // 公共基础库

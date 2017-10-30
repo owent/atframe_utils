@@ -15,8 +15,10 @@
  *
  */
 
-#ifndef _UTIL_URI_TQUERYSTRING_H_
-#define _UTIL_URI_TQUERYSTRING_H_
+#ifndef UTIL_URI_TQUERYSTRING_H
+#define UTIL_URI_TQUERYSTRING_H
+
+#pragma once
 
 #include <cstddef>
 #include <map>

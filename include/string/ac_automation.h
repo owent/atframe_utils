@@ -11,8 +11,8 @@
  *
  */
 
-#ifndef _UTIL_STRING_AC_AUTOMATION_H_
-#define _UTIL_STRING_AC_AUTOMATION_H_
+#ifndef UTIL_STRING_AC_AUTOMATION_H
+#define UTIL_STRING_AC_AUTOMATION_H
 
 #pragma once
 

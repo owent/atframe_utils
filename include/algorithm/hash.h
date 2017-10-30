@@ -12,8 +12,10 @@
  *
  */
 
-#ifndef _UTIL_HASH_HASH_H_
-#define _UTIL_HASH_HASH_H_
+#ifndef UTIL_HASH_HASH_H
+#define UTIL_HASH_HASH_H
+
+#pragma once
 
 #include <cstring>
 #include <limits>

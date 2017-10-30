@@ -1,5 +1,5 @@
-﻿#ifndef _UTIL_CLI_CMDOPTION_H_
-#define _UTIL_CLI_CMDOPTION_H_
+#ifndef UTIL_CLI_CMDOPTION_H
+#define UTIL_CLI_CMDOPTION_H
 
 #pragma once
 

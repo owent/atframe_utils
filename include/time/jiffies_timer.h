@@ -14,8 +14,8 @@
  *      2017-02-17: 第一版实现，暂时不加锁
  */
 
-#ifndef _UTIL_TIME_JIFFIES_TIMER_H_
-#define _UTIL_TIME_JIFFIES_TIMER_H_
+#ifndef UTIL_TIME_JIFFIES_TIMER_H
+#define UTIL_TIME_JIFFIES_TIMER_H
 
 #pragma once
 

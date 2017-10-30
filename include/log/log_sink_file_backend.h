@@ -9,8 +9,8 @@
  * @history
  */
 
-#ifndef _UTIL_LOG_LOG_SINK_FILE_BACKEND_H_
-#define _UTIL_LOG_LOG_SINK_FILE_BACKEND_H_
+#ifndef UTIL_LOG_LOG_SINK_FILE_BACKEND_H
+#define UTIL_LOG_LOG_SINK_FILE_BACKEND_H
 
 #pragma once
 

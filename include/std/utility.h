@@ -11,13 +11,11 @@
  *
  */
 
-#ifndef _STD_UTILITY_H_
-#define _STD_UTILITY_H_
+#ifndef STD_UTILITY_H
+#define STD_UTILITY_H
 
 
-#if defined(_MSC_VER) && (_MSC_VER >= 1020)
 #pragma once
-#endif
 
 // ============================================================
 // 公共包含部分

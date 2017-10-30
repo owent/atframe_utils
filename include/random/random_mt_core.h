@@ -14,12 +14,10 @@
  */
 
 
-#ifndef _UTIL_RANDOM_RANDOMMTCORE_H_
-#define _UTIL_RANDOM_RANDOMMTCORE_H_
+#ifndef UTIL_RANDOM_RANDOMMTCORE_H
+#define UTIL_RANDOM_RANDOMMTCORE_H
 
-#if defined(_MSC_VER) && (_MSC_VER >= 1020)
 #pragma once
-#endif
 
 namespace util {
     namespace random {

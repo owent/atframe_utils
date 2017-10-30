@@ -9,8 +9,8 @@
  * @history
  */
 
-#ifndef _UTIL_LOG_LUA_LOG_ADAPTER_H_
-#define _UTIL_LOG_LUA_LOG_ADAPTER_H_
+#ifndef UTIL_LOG_LUA_LOG_ADAPTER_H
+#define UTIL_LOG_LUA_LOG_ADAPTER_H
 
 #pragma once
 

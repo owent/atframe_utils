@@ -12,8 +12,10 @@
  *
  */
 
-#ifndef _UTILS_DESIGNPATTERN_NONCOPYABLE_H_
-#define _UTILS_DESIGNPATTERN_NONCOPYABLE_H_
+#ifndef UTILS_DESIGNPATTERN_NONCOPYABLE_H
+#define UTILS_DESIGNPATTERN_NONCOPYABLE_H
+
+#pragma once
 
 #include <config/compiler_features.h>
 

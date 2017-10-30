@@ -11,12 +11,10 @@
  *
  */
 
-#ifndef _UTIL_RANDOM_GENERATOR_H_
-#define _UTIL_RANDOM_GENERATOR_H_
+#ifndef UTIL_RANDOM_GENERATOR_H
+#define UTIL_RANDOM_GENERATOR_H
 
-#if defined(_MSC_VER) && (_MSC_VER >= 1020)
 #pragma once
-#endif
 
 #include <stdint.h>
 #include <ctime>

@@ -16,8 +16,8 @@
  *   2015.11.02 增加内存屏障，保证极端情况下多线程+编译优化导致的指令乱序问题
  */
 
-#ifndef _UTILS_DESIGNPATTERN_SINGLETON_H_
-#define _UTILS_DESIGNPATTERN_SINGLETON_H_
+#ifndef UTILS_DESIGNPATTERN_SINGLETON_H
+#define UTILS_DESIGNPATTERN_SINGLETON_H
 
 #pragma once
 

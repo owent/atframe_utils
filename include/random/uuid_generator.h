@@ -15,8 +15,10 @@
  *
  */
 
-#ifndef _UTIL_UUID_GENERATOR_H_
-#define _UTIL_UUID_GENERATOR_H_
+#ifndef UTIL_UUID_GENERATOR_H
+#define UTIL_UUID_GENERATOR_H
+
+#pragma once
 
 #include <cstring>
 #include <string>

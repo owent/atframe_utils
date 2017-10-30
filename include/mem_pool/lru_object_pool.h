@@ -19,8 +19,10 @@
  *
  */
 
-#ifndef _UTIL_MEMPOOL_LRUOBJECTPOOL_H_
-#define _UTIL_MEMPOOL_LRUOBJECTPOOL_H_
+#ifndef UTIL_MEMPOOL_LRUOBJECTPOOL_H
+#define UTIL_MEMPOOL_LRUOBJECTPOOL_H
+
+#pragma once
 
 #include <algorithm>
 #include <cstddef>

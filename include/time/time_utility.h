@@ -9,8 +9,8 @@
  * @history
  */
 
-#ifndef _UTIL_TIME_TIME_UTILITY_H_
-#define _UTIL_TIME_TIME_UTILITY_H_
+#ifndef UTIL_TIME_TIME_UTILITY_H
+#define UTIL_TIME_TIME_UTILITY_H
 
 #pragma once
 

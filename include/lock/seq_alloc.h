@@ -19,12 +19,10 @@
  *     2015-12-14   created
  */
 
-#ifndef _UTIL_LOCK_SEQ_ALLOC_H_
-#define _UTIL_LOCK_SEQ_ALLOC_H_
+#ifndef UTIL_LOCK_SEQ_ALLOC_H
+#define UTIL_LOCK_SEQ_ALLOC_H
 
-#if defined(_MSC_VER) && (_MSC_VER >= 1020)
 #pragma once
-#endif
 #include <stdint.h>
 
 #include "atomic_int_type.h"

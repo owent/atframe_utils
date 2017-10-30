@@ -10,13 +10,11 @@
 * @history
 *
 */
-#ifndef _STD_EXPLICIT_DECLARE_H_
-#define _STD_EXPLICIT_DECLARE_H_
+#ifndef STD_EXPLICIT_DECLARE_H
+#define STD_EXPLICIT_DECLARE_H
 
 
-#if defined(_MSC_VER) && (_MSC_VER >= 1020)
 #pragma once
-#endif
 
 // ============================================================
 // 公共包含部分

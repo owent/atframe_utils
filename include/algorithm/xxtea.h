@@ -13,8 +13,8 @@
  *
  */
 
-#ifndef _UTIL_ALGORITHM_XXTEA_H_
-#define _UTIL_ALGORITHM_XXTEA_H_
+#ifndef UTIL_ALGORITHM_XXTEA_H
+#define UTIL_ALGORITHM_XXTEA_H
 
 #pragma once
 

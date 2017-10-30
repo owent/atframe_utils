@@ -1,9 +1,7 @@
-﻿#ifndef _CMDOPTIONLIST_H_
-#define _CMDOPTIONLIST_H_
+#ifndef CMDOPTIONLIST_H
+#define CMDOPTIONLIST_H
 
-#if defined(_MSC_VER) && (_MSC_VER >= 1020)
 #pragma once
-#endif
 
 /*
  * cmd_option_list.h

@@ -11,12 +11,10 @@
  *
  */
  
-#ifndef _STD_ATOMIC_H_
-#define _STD_ATOMIC_H_
+#ifndef STD_ATOMIC_H
+#define STD_ATOMIC_H
  
-#if defined(_MSC_VER) && (_MSC_VER >= 1020)
 # pragma once
-#endif
 
 // ============================================================
 // 公共包含部分

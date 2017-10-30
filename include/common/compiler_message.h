@@ -12,13 +12,11 @@
  *
  */
 
-#ifndef _UTIL_COMMON_COMPILER_MESSAGE_H_
-#define _UTIL_COMMON_COMPILER_MESSAGE_H_
+#ifndef UTIL_COMMON_COMPILER_MESSAGE_H
+#define UTIL_COMMON_COMPILER_MESSAGE_H
 
 // 目测主流编译器都支持且有优化， gcc 3.4 and upper, vc, clang, c++ builder xe3, intel c++ and etc.
-//#if defined(_MSC_VER) && (_MSC_VER >= 1020)
 #pragma once
-//#endif
 
 // 宏展开在预处理之后，仅作为参考，不可使用
 

@@ -9,8 +9,8 @@
  * @history
  */
 
-#ifndef _UTIL_LOG_LOG_WRAPPER_H_
-#define _UTIL_LOG_LOG_WRAPPER_H_
+#ifndef UTIL_LOG_LOG_WRAPPER_H
+#define UTIL_LOG_LOG_WRAPPER_H
 
 #pragma once
 

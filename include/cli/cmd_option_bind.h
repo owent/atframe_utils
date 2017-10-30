@@ -1,5 +1,5 @@
-﻿#ifndef _UTIL_CLI_CMDOPTIONBIND_H_
-#define _UTIL_CLI_CMDOPTIONBIND_H_
+#ifndef UTIL_CLI_CMDOPTIONBIND_H
+#define UTIL_CLI_CMDOPTIONBIND_H
 
 #pragma once
 

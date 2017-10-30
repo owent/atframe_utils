@@ -8,8 +8,8 @@
  *
  */
 
-#ifndef _UTILS_NETWORK_HTTP_REQUEST_H_
-#define _UTILS_NETWORK_HTTP_REQUEST_H_
+#ifndef UTILS_NETWORK_HTTP_REQUEST_H
+#define UTILS_NETWORK_HTTP_REQUEST_H
 
 #pragma once
 

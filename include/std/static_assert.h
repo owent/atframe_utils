@@ -10,11 +10,9 @@
 * @history
 *
 */
-#ifndef _STD_STATIC_ASSERT_H_
-#define _STD_STATIC_ASSERT_H_
-#if defined(_MSC_VER) && (_MSC_VER >= 1020)
+#ifndef STD_STATIC_ASSERT_H
+#define STD_STATIC_ASSERT_H
 #pragma once
-#endif
 
 // ============================================================
 // 公共包含部分

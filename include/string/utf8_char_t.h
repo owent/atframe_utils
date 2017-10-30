@@ -11,8 +11,8 @@
  *
  */
 
-#ifndef _UTIL_STRING_UTF8_CHAR_T_H_
-#define _UTIL_STRING_UTF8_CHAR_T_H_
+#ifndef UTIL_STRING_UTF8_CHAR_T_H
+#define UTIL_STRING_UTF8_CHAR_T_H
 
 #pragma once
 
