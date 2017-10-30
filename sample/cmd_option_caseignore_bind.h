@@ -1,9 +1,7 @@
-﻿#ifndef _TEST_CASEIGNORE_BIND_H_
-#define _TEST_CASEIGNORE_BIND_H_
+#ifndef TEST_CASEIGNORE_BIND_H
+#define TEST_CASEIGNORE_BIND_H
 
-#if defined(_MSC_VER) && (_MSC_VER >= 1020)
 # pragma once
-#endif
 
 
 #include <cstdio>

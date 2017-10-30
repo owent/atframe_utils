@@ -1,10 +1,8 @@
-﻿#ifndef _TEST_BINDOBJ_H_
-#define _TEST_BINDOBJ_H_
+#ifndef TEST_BINDOBJ_H
+#define TEST_BINDOBJ_H
 
 
-#if defined(_MSC_VER) && (_MSC_VER >= 1020)
 # pragma once
-#endif
 
 #include <iostream>
 #include <cstdio>
