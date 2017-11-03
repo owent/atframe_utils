@@ -91,6 +91,8 @@ namespace util {
             };
         }
 
+        void log_wrapper::clear_sinks() { log_sinks_.clear(); }
+
         void log_wrapper::update() { util::time::time_utility::update(); }
 
         void log_wrapper::log(const caller_info_t &caller,

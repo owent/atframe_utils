@@ -105,6 +105,11 @@ namespace util {
             void add_sink(log_handler_t h, level_t::type level_min = level_t::LOG_LW_FATAL,
                           level_t::type level_max = level_t::LOG_LW_DEBUG);
 
+            /**
+             * @brief 移除所有后端, std::function无法比较，所以只能全清
+             */
+            void clear_sinks();
+
             inline void set_level(level_t::type l) { log_level_ = l; }
 
             inline level_t::type get_level() const { return log_level_; }
