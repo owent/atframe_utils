@@ -177,23 +177,24 @@ namespace util {
         dh::shared_context::~shared_context() { reset(); }
 
         int dh::shared_context::init(const char *name) {
-            if (method_t::EN_CDT_INVALID != method_) {
-                return error_code_t::ALREADY_INITED;
+            if (NULL == name) {
+                return error_code_t::INVALID_PARAM;
             }
 
             method_t::type method = method_t::EN_CDT_DH;
             if (0 == UTIL_STRFUNC_STRNCASE_CMP("ecdh:", name, 5)) {
-                method = method;
+                method = method_t::EN_CDT_ECDH;
             }
 
-            int ret = error_code_t::OK;
+            int ret = init(method);
+            // init failed
+            if (ret < 0) {
+                return ret;
+            }
+
             switch (method) {
             case method_t::EN_CDT_DH: {
                 // do nothing in client mode
-                if (NULL == name) {
-                    break;
-                }
-
                 FILE *pem = NULL;
                 UTIL_FS_OPEN(pem_file_e, pem, name, "r");
                 UNUSED(pem_file_e);
@@ -268,11 +269,19 @@ namespace util {
             default: { return error_code_t::NOT_SUPPORT; }
             }
 
-            if (0 != ret) {
-                return ret;
+            if (ret < 0) {
+                reset();
             }
 
-                // random engine
+            return ret;
+        }
+
+        int dh::shared_context::init(method_t::type method) {
+            if (method_t::EN_CDT_INVALID != method_) {
+                return error_code_t::ALREADY_INITED;
+            }
+
+// random engine
 #if defined(CRYPTO_USE_OPENSSL) || defined(CRYPTO_USE_LIBRESSL) || defined(CRYPTO_USE_BORINGSSL)
 #elif defined(CRYPTO_USE_MBEDTLS)
             mbedtls_ctr_drbg_init(&random_engine_.ctr_drbg);
@@ -286,7 +295,8 @@ namespace util {
             }
 #endif
             method_ = method;
-            return ret;
+
+            return error_code_t::OK;
         }
 
         void dh::shared_context::reset() {
@@ -387,6 +397,7 @@ namespace util {
                     if (shared_context->is_dh_client_mode()) {
                         dh_context_.openssl_dh_ptr_ = DH_new();
                     } else {
+                        UNUSED(BIO_reset(shared_context->get_dh_parameter().param));
                         dh_context_.openssl_dh_ptr_ = PEM_read_bio_DHparams(shared_context->get_dh_parameter().param, NULL, NULL, NULL);
                     }
 
@@ -737,10 +748,16 @@ namespace util {
                     break;
                 }
 
+                int res = DH_generate_key(dh_context_.openssl_dh_ptr_);
+                if (1 != res) {
+                    ret = details::setup_errorno(*this, ERR_get_error(), error_code_t::INIT_DH_GENERATE_KEY);
+                    break;
+                }
+
                 int errcode = 0;
                 const BIGNUM *self_pubkey = NULL;
                 DH_get0_key(dh_context_.openssl_dh_ptr_, &self_pubkey, NULL);
-                int res = DH_check_pub_key(dh_context_.openssl_dh_ptr_, self_pubkey, &errcode);
+                res = DH_check_pub_key(dh_context_.openssl_dh_ptr_, self_pubkey, &errcode);
                 if (1 != res) {
                     ret = details::setup_errorno(*this, errcode, error_code_t::INIT_DH_GENERATE_KEY);
                     break;

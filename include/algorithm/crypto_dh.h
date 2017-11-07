@@ -125,12 +125,18 @@ namespace util {
                 ~shared_context();
 
                 /**
-                 * @brief initialize a shared context
+                 * @brief initialize a shared context for server mode
                  * @param name algorithm name, ecdh:[ECDH algorithm name] or the path of dh parameter PEM file
-                 *        passing NULL for dh client mode
                  * @return 0 or error code
                  */
                 int init(const char *name);
+
+                /**
+                 * @brief initialize a shared context for client mode
+                 * @param method algorithm method
+                 * @return 0 or error code
+                 */
+                int init(method_t::type method);
 
                 /**
                  * @brief reset shared resource
