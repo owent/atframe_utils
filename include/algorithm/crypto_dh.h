@@ -155,6 +155,7 @@ namespace util {
 
                 inline const dh_param_t &get_dh_parameter() const { return dh_param_; }
                 inline const random_engine_t &get_random_engine() const { return random_engine_; }
+                inline random_engine_t &get_random_engine() { return random_engine_; }
 
             private:
                 method_t::type method_;

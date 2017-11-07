@@ -291,6 +291,7 @@ macro (FindConfigurePackage)
                 if ( ${CONFIGURE_EXEC_FILE} STREQUAL "configure")
                     set(CONFIGURE_EXEC_FILE "./configure")
                 endif()
+                message(STATUS "@${FindConfigurePackage_BUILD_DIRECTORY} Run: ${CONFIGURE_EXEC_FILE} --prefix=${FindConfigurePackage_PREFIX_DIRECTORY} ${FindConfigurePackage_CONFIGURE_FLAGS}")
                 execute_process(
                     COMMAND ${CONFIGURE_EXEC_FILE} "--prefix=${FindConfigurePackage_PREFIX_DIRECTORY}" ${FindConfigurePackage_CONFIGURE_FLAGS}
                     WORKING_DIRECTORY "${FindConfigurePackage_BUILD_DIRECTORY}"
@@ -349,6 +350,7 @@ macro (FindConfigurePackage)
 
                 set(OLD_ENV_PREFIX $ENV{prefix})
                 set(ENV{prefix} ${FindConfigurePackage_PREFIX_DIRECTORY})
+                message(STATUS "@${FindConfigurePackage_BUILD_DIRECTORY} Run: scons ${FindConfigurePackage_SCONS_FLAGS} ${BUILD_WITH_SCONS_PROJECT_DIR}")
                 execute_process(
                     COMMAND "scons" ${FindConfigurePackage_SCONS_FLAGS} ${BUILD_WITH_SCONS_PROJECT_DIR}
                     WORKING_DIRECTORY ${FindConfigurePackage_BUILD_DIRECTORY}
@@ -358,6 +360,7 @@ macro (FindConfigurePackage)
             # build using custom commands(such as gyp)
             elseif(FindConfigurePackage_BUILD_WITH_CUSTOM_COMMAND)
                 foreach(cmd ${FindConfigurePackage_CUSTOM_BUILD_COMMAND})
+                message(STATUS "@${FindConfigurePackage_BUILD_DIRECTORY} Run: ${cmd}")
                     execute_process(
                         COMMAND ${cmd}
                         WORKING_DIRECTORY ${FindConfigurePackage_BUILD_DIRECTORY}

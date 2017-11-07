@@ -287,8 +287,8 @@ namespace util {
             mbedtls_ctr_drbg_init(&random_engine_.ctr_drbg);
             mbedtls_entropy_init(&random_engine_.entropy);
 
-            ret = mbedtls_ctr_drbg_seed(&random_engine_.ctr_drbg, mbedtls_entropy_func, &random_engine_.entropy, NULL, 0);
-            if (0 != ret) {
+            int res = mbedtls_ctr_drbg_seed(&random_engine_.ctr_drbg, mbedtls_entropy_func, &random_engine_.entropy, NULL, 0);
+            if (0 != res) {
                 // clear DH or ECDH data
                 dh_param_.param.clear();
                 return error_code_t::INIT_RANDOM_ENGINE;
@@ -773,7 +773,7 @@ namespace util {
                 size_t psz = dh_context_.mbedtls_dh_ctx_.len;
                 param.resize(psz, 0);
                 int res = mbedtls_dhm_make_public(&dh_context_.mbedtls_dh_ctx_, static_cast<int>(psz), &param[0], psz,
-                                                  mbedtls_ctr_drbg_random, &&shared_context_->get_random_engine().ctr_drbg);
+                                                  mbedtls_ctr_drbg_random, &shared_context_->get_random_engine().ctr_drbg);
 
                 if (0 != res) {
                     ret = details::setup_errorno(*this, res, error_code_t::INIT_DH_GENERATE_KEY);
@@ -868,8 +868,8 @@ namespace util {
                 output.resize(psz, 0);
                 int res;
                 //  if (shared_context_->is_dh_client_mode()) {
-                mbedtls_dhm_calc_secret(&dh_context_.mbedtls_dh_ctx_, &output[0], psz, &psz, mbedtls_ctr_drbg_random,
-                                        &shared_context_->get_random_engine().ctr_drbg);
+                res = mbedtls_dhm_calc_secret(&dh_context_.mbedtls_dh_ctx_, &output[0], psz, &psz, mbedtls_ctr_drbg_random,
+                                              &shared_context_->get_random_engine().ctr_drbg);
                 // } else {
                 // mbedtls_dhm_calc_secret(&dh_context_.mbedtls_dh_ctx_, &output[0], psz, &psz, NULL, NULL);
                 // }
