@@ -1,7 +1,9 @@
+﻿#include <cstring>
+#include <std/smart_ptr.h>
+
 #include "algorithm/crypto_cipher.h"
 #include "common/string_oprs.h"
 #include "frame/test_macros.h"
-#include <cstring>
 
 #ifdef CRYPTO_CIPHER_ENABLED
 
