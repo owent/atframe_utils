@@ -18,7 +18,7 @@ struct openssl_test_init_wrapper {
     ~openssl_test_init_wrapper() { util::crypto::cipher::cleanup_global_algorithm(); }
 };
 
-static std::shared_ptr<openssl_test_init_wrapper> openssl_test_inited = NULL;
+static std::shared_ptr<openssl_test_init_wrapper> openssl_test_inited;
 
 #endif
 
