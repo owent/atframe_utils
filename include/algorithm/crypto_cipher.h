@@ -186,6 +186,7 @@ namespace util {
             static const std::vector<std::string> &get_all_cipher_names();
 
             static int init_global_algorithm();
+            static int cleanup_global_algorithm();
 
         private:
             method_t::type method_;

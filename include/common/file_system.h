@@ -17,11 +17,12 @@
 
 #pragma once
 
-#include <string>
-#include <vector>
-#include <list>
 #include <climits>
 #include <cstdio>
+#include <list>
+#include <string>
+#include <vector>
+
 
 #if defined(__CYGWIN__) // Windows Cygwin
 #define UTIL_FS_POSIX_API
@@ -32,22 +33,26 @@
 #endif
 
 #ifdef UTIL_FS_WINDOWS_API
-#include <io.h>
 #include <direct.h>
+#include <io.h>
+
 #else
-#include <unistd.h>
-#include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/types.h>
+#include <unistd.h>
+
 #endif
 
 #if (defined(_MSC_VER) && _MSC_VER >= 1600) || (defined(__STDC_VERSION__) && __STDC_VERSION__ >= 201112L)
 #define UTIL_FS_OPEN(e, f, path, mode) errno_t e = fopen_s(&f, path, mode)
+#define UTIL_FS_CLOSE(f) fclose(f)
 #define UTIL_FS_C11_API
 #else
 #include <errno.h>
 #define UTIL_FS_OPEN(e, f, path, mode) \
     f = fopen(path, mode);             \
     int e = errno
+#define UTIL_FS_CLOSE(f) fclose(f)
 #endif
 
 
@@ -116,12 +121,12 @@ namespace util {
         static bool is_exist(const char *file_path);
 
         /**
-        * @brief 返回文件的大小
-        * @param file_path [IN] 文件路径
-        * @param sz [OUT] 文件大小
-        * @return 无法打开(不存在，权限不足)返回false, 其他情况返回true
-        */
-        static bool file_size(const char *file_path, size_t& sz);
+         * @brief 返回文件的大小
+         * @param file_path [IN] 文件路径
+         * @param sz [OUT] 文件大小
+         * @return 无法打开(不存在，权限不足)返回false, 其他情况返回true
+         */
+        static bool file_size(const char *file_path, size_t &sz);
 
         /**
          * @brief 创建目录
@@ -133,14 +138,14 @@ namespace util {
         static bool mkdir(const char *dir_path, bool recursion = false, int mode = 0);
 
         /**
-        * @brief 获取目录路径
-        * @param file_path [IN] 文件/目录路径
-        * @param sz [IN] 文件/目录路径长度
-        * @param dir [OUT] 父级目录路径
-        * @param depth [IN] 深度，默认1，表示1级父级目录
-        * @return 成功返回true
-        */
-        static bool dirname(const char *file_path, size_t sz, std::string& dir, int depth = 1);
+         * @brief 获取目录路径
+         * @param file_path [IN] 文件/目录路径
+         * @param sz [IN] 文件/目录路径长度
+         * @param dir [OUT] 父级目录路径
+         * @param depth [IN] 深度，默认1，表示1级父级目录
+         * @return 成功返回true
+         */
+        static bool dirname(const char *file_path, size_t sz, std::string &dir, int depth = 1);
 
         /**
          * @brief 获取当前运行目录
@@ -191,7 +196,7 @@ namespace util {
          */
         static bool is_abs_path(const char *dir_path);
     };
-}
+} // namespace util
 
 
 #endif //_UTIL_COMMON__FILESYSTEM_H

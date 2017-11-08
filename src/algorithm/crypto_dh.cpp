@@ -174,7 +174,20 @@ namespace util {
 
             memset(&random_engine_, 0, sizeof(random_engine_));
         }
+        dh::shared_context::shared_context(creator_helper &helper) : method_(method_t::EN_CDT_INVALID) {
+#if defined(CRYPTO_USE_OPENSSL) || defined(CRYPTO_USE_LIBRESSL) || defined(CRYPTO_USE_BORINGSSL)
+            dh_param_.param = NULL;
+#elif defined(CRYPTO_USE_MBEDTLS)
+#endif
+
+            memset(&random_engine_, 0, sizeof(random_engine_));
+        }
         dh::shared_context::~shared_context() { reset(); }
+
+        dh::shared_context::ptr_t dh::shared_context::create() {
+            creator_helper h;
+            return std::make_shared<dh::shared_context>(h);
+        }
 
         int dh::shared_context::init(const char *name) {
             if (NULL == name) {
@@ -209,13 +222,9 @@ namespace util {
 // Read from pem file
 #if defined(CRYPTO_USE_OPENSSL) || defined(CRYPTO_USE_LIBRESSL) || defined(CRYPTO_USE_BORINGSSL)
                 do {
-                    unsigned char *pem_buf = reinterpret_cast<unsigned char *>(calloc(pem_sz, sizeof(unsigned char)));
-                    if (!pem_buf) {
-                        ret = error_code_t::MALLOC;
-                        break;
-                    }
-                    fread(pem_buf, sizeof(unsigned char), pem_sz, pem);
-                    dh_param_.param = BIO_new_mem_buf(pem_buf, static_cast<int>(pem_sz));
+                    dh_param_.param_buffer.resize(pem_sz);
+                    fread(&dh_param_.param_buffer[0], sizeof(unsigned char), pem_sz, pem);
+                    dh_param_.param = BIO_new_mem_buf(&dh_param_.param_buffer[0], static_cast<int>(pem_sz));
 
                     // check
                     DH *test_dh_ctx = PEM_read_bio_DHparams(dh_param_.param, NULL, NULL, NULL);
@@ -235,6 +244,7 @@ namespace util {
                     if (NULL != dh_param_.param) {
                         BIO_free(dh_param_.param);
                         dh_param_.param = NULL;
+                        dh_param_.param_buffer.clear();
                     }
                 }
 
@@ -256,6 +266,8 @@ namespace util {
                     dh_param_.param.clear();
                 }
 #endif
+
+                UTIL_FS_CLOSE(pem);
                 break;
             }
             case method_t::EN_CDT_ECDH: {
@@ -311,6 +323,7 @@ namespace util {
                 if (NULL != dh_param_.param) {
                     BIO_free(dh_param_.param);
                     dh_param_.param = NULL;
+                    dh_param_.param_buffer.clear();
                 }
 #elif defined(CRYPTO_USE_MBEDTLS)
                 dh_param_.param.clear();

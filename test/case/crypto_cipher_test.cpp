@@ -3,19 +3,25 @@
 #include "frame/test_macros.h"
 #include <cstring>
 
-#ifdef CRYPTO_ENABLED
+#ifdef CRYPTO_CIPHER_ENABLED
 
 #include <sstream>
 
 #if defined(CRYPTO_USE_OPENSSL) || defined(CRYPTO_USE_LIBRESSL) || defined(CRYPTO_USE_BORINGSSL)
-static bool openssl_test_inited = false;
+struct openssl_test_init_wrapper {
+    openssl_test_init_wrapper() { util::crypto::cipher::init_global_algorithm(); }
+
+    ~openssl_test_init_wrapper() { util::crypto::cipher::cleanup_global_algorithm(); }
+};
+
+static std::shared_ptr<openssl_test_init_wrapper> openssl_test_inited = nullptr;
+
 #endif
 
 CASE_TEST(crypto_cipher, get_all_cipher_names) {
 #if defined(CRYPTO_USE_OPENSSL) || defined(CRYPTO_USE_LIBRESSL) || defined(CRYPTO_USE_BORINGSSL)
     if (!openssl_test_inited) {
-        util::crypto::cipher::init_global_algorithm();
-        openssl_test_inited = true;
+        openssl_test_inited = std::make_shared<openssl_test_init_wrapper>();
     }
 #endif
 
@@ -81,8 +87,7 @@ static const unsigned char aes_test_cfb128_ct[3][64] = {
 CASE_TEST(crypto_cipher, aes_cfb) {
 #if defined(CRYPTO_USE_OPENSSL) || defined(CRYPTO_USE_LIBRESSL) || defined(CRYPTO_USE_BORINGSSL)
     if (!openssl_test_inited) {
-        util::crypto::cipher::init_global_algorithm();
-        openssl_test_inited = true;
+        openssl_test_inited = std::make_shared<openssl_test_init_wrapper>();
     }
 #endif
 
@@ -136,8 +141,7 @@ static const unsigned char aes_test_cfb128_nopadding_ct[3][29] = {
 CASE_TEST(crypto_cipher, aes_cfb_nopadding_encrypt) {
 #if defined(CRYPTO_USE_OPENSSL) || defined(CRYPTO_USE_LIBRESSL) || defined(CRYPTO_USE_BORINGSSL)
     if (!openssl_test_inited) {
-        util::crypto::cipher::init_global_algorithm();
-        openssl_test_inited = true;
+        openssl_test_inited = std::make_shared<openssl_test_init_wrapper>();
     }
 #endif
 

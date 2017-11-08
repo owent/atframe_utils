@@ -11,7 +11,7 @@
  *     2015-12-28: 增加缓存超时功能
  *                 增加LRU管理器自适应限制保护（防止频繁调用主动gc时，有效检查列表和元素列表长度降为0）
  *                 增加LRU管理器自适应限制动态增长功能
- *                 增加_UTIL_MEMPOOL_LRUOBJECTPOOL_CHECK_REPUSH宏用于检测上层逻辑可能重复push某一个资源（复杂度会导致复杂度由O(1)=>O(log(n))）
+ *                 增加UTIL_MEMPOOL_LRUOBJECTPOOL_CHECK_REPUSH宏用于检测上层逻辑可能重复push某一个资源（复杂度会导致复杂度由O(1)=>O(log(n))）
  *
  *     2016-02-24: 增加一些基本接口
  *                 empty定义改为const
@@ -40,14 +40,14 @@
     (__cplusplus >= 201103L || (defined(_MSC_VER) && (_MSC_VER == 1500 && defined(_HAS_TR1)) || _MSC_VER > 1500) || \
      (defined(__GNUC__) && defined(__GXX_EXPERIMENTAL_CXX0X__)))
 #include <unordered_map>
-#define _UTIL_MEMPOOL_LRUOBJECTPOOL_MAP(...) std::unordered_map<__VA_ARGS__>
+#define UTIL_MEMPOOL_LRUOBJECTPOOL_MAP(...) std::unordered_map<__VA_ARGS__>
 #else
 #include <map>
-#define _UTIL_MEMPOOL_LRUOBJECTPOOL_MAP(...) std::map<__VA_ARGS__>
+#define UTIL_MEMPOOL_LRUOBJECTPOOL_MAP(...) std::map<__VA_ARGS__>
 #endif
 
 // 开启这个宏在包含此文件会开启对象重复push进同一个池的检测，同时也会导致push、pull和gc的复杂度由O(1)变为O(log(n))
-#ifdef _UTIL_MEMPOOL_LRUOBJECTPOOL_CHECK_REPUSH
+#ifdef UTIL_MEMPOOL_LRUOBJECTPOOL_CHECK_REPUSH
 #include <set>
 #endif
 
@@ -74,8 +74,8 @@ namespace util {
         };
 
         /**
-        * 需要注意保证lru_pool_manager所引用的所有lru_pool仍然有效
-        */
+         * 需要注意保证lru_pool_manager所引用的所有lru_pool仍然有效
+         */
         class lru_pool_manager {
         public:
             typedef std::shared_ptr<lru_pool_manager> ptr_t;
@@ -136,23 +136,23 @@ namespace util {
 #undef _UTIL_MEMPOOL_LRUOBJECTPOOL_SETTER_GETTER
 
             /**
-            * @brief 获取实例缓存数量
-            * @note 如果不是非常了解这个数值的作用，请不要修改它
-            */
+             * @brief 获取实例缓存数量
+             * @note 如果不是非常了解这个数值的作用，请不要修改它
+             */
             inline util::lock::seq_alloc_u64 &item_count() { return item_count_; }
             inline const util::lock::seq_alloc_u64 &item_count() const { return item_count_; }
 
             /**
-            * @brief 获取检测队列长度
-            * @note 如果不是非常了解这个数值的作用，请不要修改它
-            */
+             * @brief 获取检测队列长度
+             * @note 如果不是非常了解这个数值的作用，请不要修改它
+             */
             inline util::lock::seq_alloc_u64 &list_count() { return list_count_; }
             inline const util::lock::seq_alloc_u64 &list_count() const { return list_count_; }
 
             /**
-            * @brief 主动GC，会触发阈值自适应
-            * @return 此次调用回收的元素的个数
-            */
+             * @brief 主动GC，会触发阈值自适应
+             * @return 此次调用回收的元素的个数
+             */
             size_t gc() {
                 // 释放速度过慢，加快每帧释放速度
                 if (gc_list_ > 0) {
@@ -197,10 +197,10 @@ namespace util {
             }
 
             /**
-            * @brief 定时回调
-            * @param tick 用于判定超时的tick时间，时间单位由业务逻辑决定
-            * @return 此次调用回收的元素的个数
-            */
+             * @brief 定时回调
+             * @param tick 用于判定超时的tick时间，时间单位由业务逻辑决定
+             * @return 此次调用回收的元素的个数
+             */
             size_t proc(time_t tick) {
                 last_proc_tick_ = tick;
 
@@ -275,8 +275,8 @@ namespace util {
             }
 
             /**
-            * @brief 添加检查列表
-            */
+             * @brief 添加检查列表
+             */
             void push_check_list(uint64_t push_id, std::weak_ptr<lru_pool_base::list_type_base> list_) {
                 checked_list_.push_back(check_item_t());
                 checked_list_.back().push_id = push_id;
@@ -401,7 +401,7 @@ namespace util {
                         owner_->mgr_->item_count().dec();
                     }
 
-#ifdef _UTIL_MEMPOOL_LRUOBJECTPOOL_CHECK_REPUSH
+#ifdef UTIL_MEMPOOL_LRUOBJECTPOOL_CHECK_REPUSH
                     owner_->check_pushed_.erase(obj.object);
 #endif
 
@@ -418,7 +418,7 @@ namespace util {
             };
 
             typedef std::shared_ptr<list_type> list_ptr_type;
-            typedef _UTIL_MEMPOOL_LRUOBJECTPOOL_MAP(key_t, list_ptr_type) cat_map_type;
+            typedef UTIL_MEMPOOL_LRUOBJECTPOOL_MAP(key_t, list_ptr_type) cat_map_type;
 
             struct flag_t {
                 enum type { INITED = 0, CLEARING };
@@ -452,9 +452,9 @@ namespace util {
             }
 
             /**
-            * @brief 初始化
-            * @param m 所属的全局管理器。相应的事件会通知全局管理器
-            */
+             * @brief 初始化
+             * @param m 所属的全局管理器。相应的事件会通知全局管理器
+             */
             int init(lru_pool_manager::ptr_t m) {
                 set_manager(m);
 
@@ -481,7 +481,7 @@ namespace util {
             }
 
             bool push(key_t id, TObj *obj) {
-#ifdef _UTIL_MEMPOOL_LRUOBJECTPOOL_CHECK_REPUSH
+#ifdef UTIL_MEMPOOL_LRUOBJECTPOOL_CHECK_REPUSH
                 if (check_pushed_.find(obj) != check_pushed_.end()) {
                     return false;
                 }
@@ -527,7 +527,7 @@ namespace util {
                     mgr_->push_check_list(obj_wrapper.push_id, std::dynamic_pointer_cast<lru_pool_base::list_type_base>(list_));
                 }
 
-#ifdef _UTIL_MEMPOOL_LRUOBJECTPOOL_CHECK_REPUSH
+#ifdef UTIL_MEMPOOL_LRUOBJECTPOOL_CHECK_REPUSH
                 check_pushed_.insert(obj);
 #endif
 
@@ -557,7 +557,7 @@ namespace util {
                     mgr_->item_count().dec();
                 }
 
-#ifdef _UTIL_MEMPOOL_LRUOBJECTPOOL_CHECK_REPUSH
+#ifdef UTIL_MEMPOOL_LRUOBJECTPOOL_CHECK_REPUSH
                 check_pushed_.erase(obj_wrapper.object);
 #endif
 
@@ -620,11 +620,11 @@ namespace util {
             lru_pool_manager::ptr_t mgr_;
             util::lock::seq_alloc_u64 push_id_alloc_;
             uint32_t flags_;
-#ifdef _UTIL_MEMPOOL_LRUOBJECTPOOL_CHECK_REPUSH
+#ifdef UTIL_MEMPOOL_LRUOBJECTPOOL_CHECK_REPUSH
             std::set<value_type *> check_pushed_;
 #endif
         };
-    }
-}
+    } // namespace mempool
+} // namespace util
 
 #endif /* _UTIL_MEMPOOL_LRUOBJECTPOOL_H_ */

@@ -630,6 +630,13 @@ namespace util {
 #endif
             return 0;
         }
+
+        int cipher::cleanup_global_algorithm() {
+#if defined(CRYPTO_USE_OPENSSL) || defined(CRYPTO_USE_LIBRESSL) || defined(CRYPTO_USE_BORINGSSL)
+            EVP_cleanup();
+#endif
+            return 0;
+        }
     } // namespace crypto
 } // namespace util
 

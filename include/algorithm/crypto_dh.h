@@ -101,6 +101,7 @@ namespace util {
 #if defined(CRYPTO_USE_OPENSSL) || defined(CRYPTO_USE_LIBRESSL) || defined(CRYPTO_USE_BORINGSSL)
                 typedef struct {
                     BIO *param;
+                    std::vector<unsigned char> param_buffer;
                 } dh_param_t;
 
                 typedef struct {
@@ -120,9 +121,15 @@ namespace util {
 
                 typedef std::shared_ptr<shared_context> ptr_t;
 
-            public:
+            private:
+                struct creator_helper {};
+
                 shared_context();
+
+            public:
+                shared_context(creator_helper &helper);
                 ~shared_context();
+                static ptr_t create();
 
                 /**
                  * @brief initialize a shared context for server mode
