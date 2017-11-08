@@ -1,5 +1,7 @@
-﻿#include <cstring>
+﻿#include <cstdlib>
+#include <cstring>
 #include <std/smart_ptr.h>
+
 
 #include "algorithm/crypto_cipher.h"
 #include "common/string_oprs.h"
@@ -16,7 +18,7 @@ struct openssl_test_init_wrapper {
     ~openssl_test_init_wrapper() { util::crypto::cipher::cleanup_global_algorithm(); }
 };
 
-static std::shared_ptr<openssl_test_init_wrapper> openssl_test_inited = nullptr;
+static std::shared_ptr<openssl_test_init_wrapper> openssl_test_inited = NULL;
 
 #endif
 
