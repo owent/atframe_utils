@@ -849,7 +849,7 @@ namespace util {
                     param.resize(encode_len + curve_grp_len, 0);
 
                     encode_len = EC_POINT_point2oct(group, EC_KEY_get0_public_key(dh_context_.openssl_ecdh_ptr_),
-                                                    POINT_CONVERSION_UNCOMPRESSED, &param[curve_grp_len], curve_grp_len, bn_ctx);
+                                                    POINT_CONVERSION_UNCOMPRESSED, &param[curve_grp_len], encode_len, bn_ctx);
                     BN_CTX_free(bn_ctx);
                 }
 
@@ -888,6 +888,10 @@ namespace util {
         int dh::read_params(const unsigned char *input, size_t ilen) {
             if (!shared_context_) {
                 return details::setup_errorno(*this, 0, error_code_t::NOT_INITED);
+            }
+
+            if (NULL == input || ilen == 0) {
+                return details::setup_errorno(*this, 0, error_code_t::INVALID_PARAM);
             }
 
             int ret = details::setup_errorno(*this, 0, error_code_t::OK);
@@ -1210,6 +1214,10 @@ namespace util {
         int dh::read_public(const unsigned char *input, size_t ilen) {
             if (!shared_context_) {
                 return details::setup_errorno(*this, 0, error_code_t::NOT_INITED);
+            }
+
+            if (NULL == input || ilen == 0) {
+                return details::setup_errorno(*this, 0, error_code_t::INVALID_PARAM);
             }
 
             int ret = details::setup_errorno(*this, 0, error_code_t::OK);
