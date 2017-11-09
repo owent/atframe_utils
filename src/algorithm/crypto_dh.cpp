@@ -35,6 +35,86 @@
 #define s2n(s, c) ((c[0] = (unsigned char)(((s) >> 8) & 0xff), c[1] = (unsigned char)(((s)) & 0xff)), c += 2)
 #endif
 
+// copy from ssl_locl.h
+#ifndef NAMED_CURVE_TYPE
+#define NAMED_CURVE_TYPE 3
+#endif
+
+// copy from t1_lib.c of openssl 1.1.0
+typedef struct {
+    int nid;            /* Curve NID */
+    int secbits;        /* Bits of security (from SP800-57) */
+    unsigned int flags; /* Flags: currently just field type */
+} tls_curve_info;
+
+#ifndef TLS_CURVE_CHAR2
+#define TLS_CURVE_CHAR2 0x1
+#endif
+
+#ifndef TLS_CURVE_PRIME
+#define TLS_CURVE_PRIME 0x0
+#endif
+
+#ifndef TLS_CURVE_CUSTOM
+#define TLS_CURVE_CUSTOM 0x2
+#endif
+
+/*
+ * Table of curve information.
+ * Do not delete entries or reorder this array! It is used as a lookup
+ * table: the index of each entry is one less than the TLS curve id.
+ */
+static const tls_curve_info nid_list[] = {
+    {NID_sect163k1, 80, TLS_CURVE_CHAR2},         /* sect163k1 (1) */
+    {NID_sect163r1, 80, TLS_CURVE_CHAR2},         /* sect163r1 (2) */
+    {NID_sect163r2, 80, TLS_CURVE_CHAR2},         /* sect163r2 (3) */
+    {NID_sect193r1, 80, TLS_CURVE_CHAR2},         /* sect193r1 (4) */
+    {NID_sect193r2, 80, TLS_CURVE_CHAR2},         /* sect193r2 (5) */
+    {NID_sect233k1, 112, TLS_CURVE_CHAR2},        /* sect233k1 (6) */
+    {NID_sect233r1, 112, TLS_CURVE_CHAR2},        /* sect233r1 (7) */
+    {NID_sect239k1, 112, TLS_CURVE_CHAR2},        /* sect239k1 (8) */
+    {NID_sect283k1, 128, TLS_CURVE_CHAR2},        /* sect283k1 (9) */
+    {NID_sect283r1, 128, TLS_CURVE_CHAR2},        /* sect283r1 (10) */
+    {NID_sect409k1, 192, TLS_CURVE_CHAR2},        /* sect409k1 (11) */
+    {NID_sect409r1, 192, TLS_CURVE_CHAR2},        /* sect409r1 (12) */
+    {NID_sect571k1, 256, TLS_CURVE_CHAR2},        /* sect571k1 (13) */
+    {NID_sect571r1, 256, TLS_CURVE_CHAR2},        /* sect571r1 (14) */
+    {NID_secp160k1, 80, TLS_CURVE_PRIME},         /* secp160k1 (15) */
+    {NID_secp160r1, 80, TLS_CURVE_PRIME},         /* secp160r1 (16) */
+    {NID_secp160r2, 80, TLS_CURVE_PRIME},         /* secp160r2 (17) */
+    {NID_secp192k1, 80, TLS_CURVE_PRIME},         /* secp192k1 (18) */
+    {NID_X9_62_prime192v1, 80, TLS_CURVE_PRIME},  /* secp192r1 (19) */
+    {NID_secp224k1, 112, TLS_CURVE_PRIME},        /* secp224k1 (20) */
+    {NID_secp224r1, 112, TLS_CURVE_PRIME},        /* secp224r1 (21) */
+    {NID_secp256k1, 128, TLS_CURVE_PRIME},        /* secp256k1 (22) */
+    {NID_X9_62_prime256v1, 128, TLS_CURVE_PRIME}, /* secp256r1 (23) */
+    {NID_secp384r1, 192, TLS_CURVE_PRIME},        /* secp384r1 (24) */
+    {NID_secp521r1, 256, TLS_CURVE_PRIME},        /* secp521r1 (25) */
+    {NID_brainpoolP256r1, 128, TLS_CURVE_PRIME},  /* brainpoolP256r1 (26) */
+    {NID_brainpoolP384r1, 192, TLS_CURVE_PRIME},  /* brainpoolP384r1 (27) */
+    {NID_brainpoolP512r1, 256, TLS_CURVE_PRIME},  /* brainpool512r1 (28) */
+    // {NID_X25519, 128, TLS_CURVE_CUSTOM},          /* X25519 (29) */
+};
+
+#define OSSL_NELEM(x) (sizeof(x) / sizeof(x[0]))
+
+static int tls1_ec_curve_id2nid(int curve_id, unsigned int *pflags) {
+    const tls_curve_info *cinfo;
+    /* ECC curves from RFC 4492 and RFC 7027 */
+    if ((curve_id < 1) || ((unsigned int)curve_id > OSSL_NELEM(nid_list))) return 0;
+    cinfo = nid_list + curve_id - 1;
+    if (pflags) *pflags = cinfo->flags;
+    return cinfo->nid;
+}
+
+static int tls1_ec_nid2curve_id(int nid) {
+    size_t i;
+    for (i = 0; i < OSSL_NELEM(nid_list); i++) {
+        if (nid_list[i].nid == nid) return i + 1;
+    }
+    return 0;
+}
+
 // adaptor for openssl 1.0.x -> openssl 1.1.x
 #if OPENSSL_VERSION_NUMBER < 0x10100000L
 
@@ -229,7 +309,7 @@ namespace util {
                     return error_code_t::NOT_SUPPORT;
                 }
 
-                    // check if it's available
+// check if it's available
 #if defined(CRYPTO_USE_OPENSSL) || defined(CRYPTO_USE_LIBRESSL) || defined(CRYPTO_USE_BORINGSSL)
                 if (0 == details::supported_dh_curves_openssl[ecp_idx]) {
                     return error_code_t::NOT_SUPPORT;
@@ -398,7 +478,7 @@ namespace util {
             }
 
             method_ = method_t::EN_CDT_INVALID;
-            // random engine
+// random engine
 #if defined(CRYPTO_USE_OPENSSL) || defined(CRYPTO_USE_LIBRESSL) || defined(CRYPTO_USE_BORINGSSL)
 #elif defined(CRYPTO_USE_MBEDTLS)
             mbedtls_ctr_drbg_free(&random_engine_.ctr_drbg);
@@ -552,7 +632,7 @@ namespace util {
                     }
 
                     if (NULL != dh_context_.openssl_ecdh_ptr_) {
-                        DH_KEY_free(dh_context_.openssl_ecdh_ptr_);
+                        EC_KEY_free(dh_context_.openssl_ecdh_ptr_);
                         dh_context_.openssl_ecdh_ptr_ = NULL;
                     }
                 }
@@ -623,7 +703,7 @@ namespace util {
                 }
 
                 if (NULL != dh_context_.openssl_ecdh_ptr_) {
-                    DH_KEY_free(dh_context_.openssl_ecdh_ptr_);
+                    EC_KEY_free(dh_context_.openssl_ecdh_ptr_);
                     dh_context_.openssl_ecdh_ptr_ = NULL;
                 }
 #elif defined(CRYPTO_USE_MBEDTLS)
@@ -736,13 +816,13 @@ namespace util {
                 if (((group = EC_KEY_get0_group(dh_context_.openssl_ecdh_ptr_)) == NULL) ||
                     (EC_KEY_get0_public_key(dh_context_.openssl_ecdh_ptr_) == NULL) ||
                     (EC_KEY_get0_private_key(dh_context_.openssl_ecdh_ptr_) == NULL)) {
-                    ret = details::setup_errorno(*this, ERR_LIB_EC, error_code_t::INIT_DH_GENERATE_KEY);
+                    ret = details::setup_errorno(*this, static_cast<int>(ERR_get_error()), error_code_t::INIT_DH_GENERATE_KEY);
                     break;
                 }
 
                 int curve_id;
                 if ((curve_id = tls1_ec_nid2curve_id(EC_GROUP_get_curve_name(group))) == 0) {
-                    ret = details::setup_errorno(*this, SSL_R_UNSUPPORTED_ELLIPTIC_CURVE, error_code_t::INIT_DH_GENERATE_KEY);
+                    ret = details::setup_errorno(*this, static_cast<int>(ERR_get_error()), error_code_t::INIT_DH_GENERATE_KEY);
                     break;
                 }
 
@@ -755,7 +835,7 @@ namespace util {
                 { // with bn_ctx
                     BN_CTX *bn_ctx = BN_CTX_new();
                     if (NULL == bn_ctx) {
-                        ret = details::setup_errorno(*this, ERR_R_MALLOC_FAILURE, error_code_t::INIT_DH_GENERATE_KEY);
+                        ret = details::setup_errorno(*this, static_cast<int>(ERR_get_error()), error_code_t::INIT_DH_GENERATE_KEY);
                         break;
                     }
 
@@ -774,7 +854,7 @@ namespace util {
                 }
 
                 if (0 == encode_len) {
-                    ret = details::setup_errorno(*this, ERR_LIB_EC, error_code_t::INIT_DH_GENERATE_KEY);
+                    ret = details::setup_errorno(*this, static_cast<int>(ERR_get_error()), error_code_t::INIT_DH_GENERATE_KEY);
                     break;
                 }
 
@@ -954,31 +1034,31 @@ namespace util {
 
                 size_t encoded_pt_len = input[3];
                 if (encoded_pt_len > ilen - curve_grp_len) {
-                    ret = details::setup_errorno(*this, SSL_R_BAD_ECPOINT, error_code_t::INIT_DH_READ_PARAM);
+                    ret = details::setup_errorno(*this, static_cast<int>(ERR_get_error()), error_code_t::INIT_DH_READ_PARAM);
                     break;
                 }
 
                 int curve_id;
-                if ((curve_id = tls1_ec_curve_id2nid(static_cast<int>(input[2]))) == 0) {
-                    ret = details::setup_errorno(*this, SSL_R_UNABLE_TO_FIND_ECDH_PARAMETERS, error_code_t::INIT_DH_READ_PARAM);
+                if ((curve_id = tls1_ec_curve_id2nid(static_cast<int>(input[2]), NULL)) == 0) {
+                    ret = details::setup_errorno(*this, static_cast<int>(ERR_get_error()), error_code_t::INIT_DH_READ_PARAM);
                     break;
                 }
                 EC_GROUP *ngroup = EC_GROUP_new_by_curve_name(curve_id);
                 if (NULL == ngroup) {
-                    ret = details::setup_errorno(*this, ERR_LIB_EC, error_code_t::INIT_DH_READ_PARAM);
+                    ret = details::setup_errorno(*this, static_cast<int>(ERR_get_error()), error_code_t::INIT_DH_READ_PARAM);
                     break;
                 }
 
                 if (EC_KEY_set_group(dh_context_.openssl_ecdh_ptr_, ngroup) == 0) {
-                    ret = details::setup_errorno(*this, ERR_LIB_EC, error_code_t::INIT_DH_READ_PARAM);
+                    ret = details::setup_errorno(*this, static_cast<int>(ERR_get_error()), error_code_t::INIT_DH_READ_PARAM);
                     EC_GROUP_free(ngroup);
                     break;
                 }
                 EC_GROUP_free(ngroup);
 
-                EC_GROUP *group = EC_KEY_get0_group(dh_context_.openssl_ecdh_ptr_);
+                const EC_GROUP *group = EC_KEY_get0_group(dh_context_.openssl_ecdh_ptr_);
                 if (NULL == group) {
-                    ret = details::setup_errorno(*this, ERR_LIB_EC, error_code_t::INIT_DH_READ_PARAM);
+                    ret = details::setup_errorno(*this, static_cast<int>(ERR_get_error()), error_code_t::INIT_DH_READ_PARAM);
                     break;
                 }
 
@@ -990,12 +1070,12 @@ namespace util {
                 { // with bn_ctx
                     BN_CTX *bn_ctx = BN_CTX_new();
                     if (NULL == bn_ctx) {
-                        ret = details::setup_errorno(*this, ERR_R_MALLOC_FAILURE, error_code_t::INIT_DH_READ_PARAM);
+                        ret = details::setup_errorno(*this, static_cast<int>(ERR_get_error()), error_code_t::INIT_DH_READ_PARAM);
                         break;
                     }
 
                     if ((EC_POINT_oct2point(group, dh_context_.peer_ecpoint_, input + curve_grp_len, encoded_pt_len, bn_ctx)) == 0) {
-                        ret = details::setup_errorno(*this, SSL_R_BAD_ECPOINT, error_code_t::INIT_DH_READ_PARAM);
+                        ret = details::setup_errorno(*this, static_cast<int>(ERR_get_error()), error_code_t::INIT_DH_READ_PARAM);
                     }
                     BN_CTX_free(bn_ctx);
                 }
@@ -1032,7 +1112,7 @@ namespace util {
 
                 int res = DH_generate_key(dh_context_.openssl_dh_ptr_);
                 if (1 != res) {
-                    ret = details::setup_errorno(*this, ERR_get_error(), error_code_t::INIT_DH_GENERATE_KEY);
+                    ret = details::setup_errorno(*this, static_cast<int>(ERR_get_error()), error_code_t::INIT_DH_GENERATE_KEY);
                     break;
                 }
 
@@ -1066,7 +1146,43 @@ namespace util {
             }
             case method_t::EN_CDT_ECDH: {
 #if defined(CRYPTO_USE_OPENSSL) || defined(CRYPTO_USE_LIBRESSL) || defined(CRYPTO_USE_BORINGSSL)
-            // TODO
+                if (NULL == dh_context_.openssl_ecdh_ptr_) {
+                    ret = details::setup_errorno(*this, 0, error_code_t::NOT_INITED);
+                    break;
+                }
+
+                int res = EC_KEY_generate_key(dh_context_.openssl_ecdh_ptr_);
+                if (!res) {
+                    ret = details::setup_errorno(*this, static_cast<int>(ERR_get_error()), error_code_t::INIT_DH_GENERATE_KEY);
+                    break;
+                }
+
+                const EC_GROUP *group = EC_KEY_get0_group(dh_context_.openssl_ecdh_ptr_);
+                if (NULL == group) {
+                    ret = details::setup_errorno(*this, static_cast<int>(ERR_get_error()), error_code_t::INIT_DH_GENERATE_KEY);
+                    break;
+                }
+
+                /**
+                 * First check the size of encoding
+                 */
+                size_t encoded_pt_len = EC_POINT_point2oct(group, EC_KEY_get0_public_key(dh_context_.openssl_ecdh_ptr_),
+                                                           POINT_CONVERSION_UNCOMPRESSED, NULL, 0, NULL);
+
+                param.resize(encoded_pt_len + 1, 0);
+                { // with bn_ctx
+                    BN_CTX *bn_ctx = BN_CTX_new();
+                    if (NULL == bn_ctx) {
+                        ret = details::setup_errorno(*this, static_cast<int>(ERR_get_error()), error_code_t::INIT_DH_GENERATE_KEY);
+                        break;
+                    }
+
+                    size_t n = EC_POINT_point2oct(group, EC_KEY_get0_public_key(dh_context_.openssl_ecdh_ptr_),
+                                                  POINT_CONVERSION_UNCOMPRESSED, &param[1], encoded_pt_len, bn_ctx);
+
+                    param[0] = static_cast<unsigned char>(n);
+                    BN_CTX_free(bn_ctx);
+                }
 
 #elif defined(CRYPTO_USE_MBEDTLS)
                 unsigned char buf[CRYPTO_DH_MAX_KEY_LEN];
@@ -1131,7 +1247,7 @@ namespace util {
                 }
                 const EC_GROUP *group = EC_KEY_get0_group(dh_context_.openssl_ecdh_ptr_);
                 if (NULL == group) {
-                    ret = details::setup_errorno(*this, ERR_LIB_EC, error_code_t::INIT_DH_READ_KEY);
+                    ret = details::setup_errorno(*this, static_cast<int>(ERR_get_error()), error_code_t::INIT_DH_READ_KEY);
                     break;
                 }
 
@@ -1140,14 +1256,14 @@ namespace util {
                 }
                 dh_context_.peer_ecpoint_ = EC_POINT_new(group);
                 if (NULL == dh_context_.peer_ecpoint_) {
-                    ret = details::setup_errorno(*this, ERR_R_MALLOC_FAILURE, error_code_t::INIT_DH_READ_KEY);
+                    ret = details::setup_errorno(*this, static_cast<int>(ERR_get_error()), error_code_t::INIT_DH_READ_KEY);
                     break;
                 }
 
                 { // with bn_ctx
                     BN_CTX *bn_ctx = BN_CTX_new();
                     if (NULL == bn_ctx) {
-                        ret = details::setup_errorno(*this, ERR_R_MALLOC_FAILURE, error_code_t::INIT_DH_READ_KEY);
+                        ret = details::setup_errorno(*this, static_cast<int>(ERR_get_error()), error_code_t::INIT_DH_READ_KEY);
                         break;
                     }
 
@@ -1156,20 +1272,20 @@ namespace util {
                      * ClientKeyExchange message.
                      */
                     if ((bn_ctx = BN_CTX_new()) == NULL) {
-                        ret = details::setup_errorno(*this, ERR_R_MALLOC_FAILURE, error_code_t::INIT_DH_READ_KEY);
+                        ret = details::setup_errorno(*this, static_cast<int>(ERR_get_error()), error_code_t::INIT_DH_READ_KEY);
                         break;
                     }
 
                     /* Get encoded point length */
                     size_t point_len = input[0];
                     if (point_len + 1 != ilen) {
-                        ret = details::setup_errorno(*this, ERR_R_LENGTH_MISMATCH, error_code_t::INIT_DH_READ_KEY);
+                        ret = details::setup_errorno(*this, static_cast<int>(ERR_get_error()), error_code_t::INIT_DH_READ_KEY);
                         BN_CTX_free(bn_ctx);
                         break;
                     }
 
                     if (EC_POINT_oct2point(group, dh_context_.peer_ecpoint_, input + 1, point_len, bn_ctx) == 0) {
-                        ret = details::setup_errorno(*this, ERR_LIB_EC, error_code_t::INIT_DH_READ_KEY);
+                        ret = details::setup_errorno(*this, static_cast<int>(ERR_get_error()), error_code_t::INIT_DH_READ_KEY);
                     }
 
                     BN_CTX_free(bn_ctx);
@@ -1249,21 +1365,21 @@ namespace util {
 
                 const EC_GROUP *group = EC_KEY_get0_group(dh_context_.openssl_ecdh_ptr_);
                 if (NULL == group) {
-                    ret = details::setup_errorno(*this, ERR_LIB_EC, error_code_t::INIT_DH_GENERATE_SECRET);
+                    ret = details::setup_errorno(*this, static_cast<int>(ERR_get_error()), error_code_t::INIT_DH_GENERATE_SECRET);
                     break;
                 }
 
                 /* Compute the shared pre-master secret */
                 int field_size = EC_GROUP_get_degree(group);
                 if (field_size <= 0) {
-                    ret = details::setup_errorno(*this, ERR_LIB_EC, error_code_t::INIT_DH_GENERATE_SECRET);
+                    ret = details::setup_errorno(*this, static_cast<int>(ERR_get_error()), error_code_t::INIT_DH_GENERATE_SECRET);
                     break;
                 }
 
                 output.resize(static_cast<size_t>((field_size + 7) / 8), 0);
                 int res = ECDH_compute_key(&output[0], output.size(), dh_context_.peer_ecpoint_, dh_context_.openssl_ecdh_ptr_, NULL);
                 if (res <= 0) {
-                    ret = details::setup_errorno(*this, ERR_LIB_EC, error_code_t::INIT_DH_GENERATE_SECRET);
+                    ret = details::setup_errorno(*this, static_cast<int>(ERR_get_error()), error_code_t::INIT_DH_GENERATE_SECRET);
                     break;
                 }
 

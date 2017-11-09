@@ -90,7 +90,6 @@ CASE_TEST(crypto_dh, dh) {
     CASE_MSG_INFO() << "Test DH algorithm " << test_times << " times, key len " << key_bits << " bits. " << std::endl;
 }
 
-#if defined(CRYPTO_USE_MBEDTLS)
 CASE_TEST(crypto_dh, ecdh) {
     int test_times = 8;
     // 单元测试多次以定位openssl是否内存泄漏的问题
@@ -193,6 +192,5 @@ CASE_TEST(crypto_dh, ecdh) {
                         << std::endl;
     }
 }
-#endif
 
 #endif
