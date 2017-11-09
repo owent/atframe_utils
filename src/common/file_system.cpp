@@ -60,12 +60,15 @@ namespace util {
         long len = ftell(f);
         fseek(f, 0, SEEK_SET);
 
+        bool ret = true;
         out.resize(static_cast<size_t>(len));
-        fread(const_cast<char *>(out.data()), sizeof(char), static_cast<size_t>(len), f);
+        if (0 == fread(const_cast<char *>(out.data()), sizeof(char), static_cast<size_t>(len), f)) {
+            out.clear();
+            ret = false;
+        }
 
         fclose(f);
-
-        return true;
+        return ret;
     }
 
     bool file_system::split_path(std::vector<std::string> &out, const char *path, bool compact) {

@@ -95,12 +95,12 @@ CASE_TEST(crypto_dh, ecdh) {
     // 单元测试多次以定位openssl是否内存泄漏的问题
     const std::vector<std::string> &all_curves = util::crypto::dh::get_all_curve_names();
 
-    clock_t min_cost_clock;
-    clock_t max_cost_clock;
-    size_t min_cost_idx;
-    size_t min_cost_bits;
-    size_t max_cost_idx;
-    size_t max_cost_bits;
+    clock_t min_cost_clock = 0;
+    clock_t max_cost_clock = 0;
+    size_t min_cost_idx = 0;
+    size_t min_cost_bits = 0;
+    size_t max_cost_idx = 0;
+    size_t max_cost_bits = 0;
     for (size_t curve_idx = 0; curve_idx < all_curves.size(); ++curve_idx) {
 
         clock_t beg_time_clk = clock();

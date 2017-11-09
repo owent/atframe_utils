@@ -544,7 +544,10 @@ namespace util {
 #if defined(CRYPTO_USE_OPENSSL) || defined(CRYPTO_USE_LIBRESSL) || defined(CRYPTO_USE_BORINGSSL)
                 do {
                     dh_param_.param_buffer.resize(pem_sz);
-                    fread(&dh_param_.param_buffer[0], sizeof(unsigned char), pem_sz, pem);
+                    if (0 == fread(&dh_param_.param_buffer[0], sizeof(unsigned char), pem_sz, pem)) {
+                        ret = error_code_t::READ_DHPARAM_FILE;
+                        break;
+                    }
                     dh_param_.param = BIO_new_mem_buf(&dh_param_.param_buffer[0], static_cast<int>(pem_sz));
 
                     // check
@@ -572,20 +575,26 @@ namespace util {
 #elif defined(CRYPTO_USE_MBEDTLS)
                 // mbedtls_dhm_read_params must has last character to be zero, so add one zero to the end
                 dh_param_.param.resize(pem_sz * sizeof(unsigned char) + 1, 0);
-                fread(&dh_param_.param[0], sizeof(unsigned char), pem_sz, pem);
+                do {
+                    if (0 == fread(&dh_param_.param[0], sizeof(unsigned char), pem_sz, pem)) {
+                        ret = error_code_t::READ_DHPARAM_FILE;
+                        break;
+                    }
 
-                // test
-                mbedtls_dhm_context test_dh_ctx;
-                mbedtls_dhm_init(&test_dh_ctx);
-                if (0 != mbedtls_dhm_parse_dhm(&test_dh_ctx, reinterpret_cast<const unsigned char *>(dh_param_.param.data()), pem_sz + 1)) {
-                    ret = error_code_t::INIT_DHPARAM;
-                } else {
-                    mbedtls_dhm_free(&test_dh_ctx);
-                }
+                    // test
+                    mbedtls_dhm_context test_dh_ctx;
+                    mbedtls_dhm_init(&test_dh_ctx);
+                    if (0 !=
+                        mbedtls_dhm_parse_dhm(&test_dh_ctx, reinterpret_cast<const unsigned char *>(dh_param_.param.data()), pem_sz + 1)) {
+                        ret = error_code_t::INIT_DHPARAM;
+                    } else {
+                        mbedtls_dhm_free(&test_dh_ctx);
+                    }
 
-                if (error_code_t::OK != ret) {
-                    dh_param_.param.clear();
-                }
+                    if (error_code_t::OK != ret) {
+                        dh_param_.param.clear();
+                    }
+                } while (false);
 #endif
 
                 UTIL_FS_CLOSE(pem);
