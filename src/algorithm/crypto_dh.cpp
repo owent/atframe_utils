@@ -8,6 +8,8 @@
 
 #ifdef CRYPTO_DH_ENABLED
 
+// define max key cache length, the same as MBEDTLS_SSL_MAX_CONTENT_LEN
+#define CRYPTO_DH_MAX_KEY_LEN 1024
 
 #ifndef UNUSED
 #define UNUSED(x) ((void)x)
@@ -169,7 +171,9 @@ namespace util {
         dh::shared_context::shared_context() : method_(method_t::EN_CDT_INVALID) {
 #if defined(CRYPTO_USE_OPENSSL) || defined(CRYPTO_USE_LIBRESSL) || defined(CRYPTO_USE_BORINGSSL)
             dh_param_.param = NULL;
+            dh_param_.ecp_id = 0;
 #elif defined(CRYPTO_USE_MBEDTLS)
+            dh_param_.ecp_id = MBEDTLS_ECP_DP_NONE;
 #endif
 
             memset(&random_engine_, 0, sizeof(random_engine_));
@@ -177,7 +181,9 @@ namespace util {
         dh::shared_context::shared_context(creator_helper &helper) : method_(method_t::EN_CDT_INVALID) {
 #if defined(CRYPTO_USE_OPENSSL) || defined(CRYPTO_USE_LIBRESSL) || defined(CRYPTO_USE_BORINGSSL)
             dh_param_.param = NULL;
+            dh_param_.ecp_id = 0;
 #elif defined(CRYPTO_USE_MBEDTLS)
+            dh_param_.ecp_id = MBEDTLS_ECP_DP_NONE;
 #endif
 
             memset(&random_engine_, 0, sizeof(random_engine_));
@@ -194,9 +200,28 @@ namespace util {
                 return error_code_t::INVALID_PARAM;
             }
 
+            int ecp_idx = 1;
             method_t::type method = method_t::EN_CDT_DH;
             if (0 == UTIL_STRFUNC_STRNCASE_CMP("ecdh:", name, 5)) {
                 method = method_t::EN_CDT_ECDH;
+
+                while (NULL != details::supported_dh_curves[ecp_idx]) {
+                    if (0 == UTIL_STRFUNC_STRCASE_CMP(name + 5, details::supported_dh_curves[ecp_idx])) {
+                        break;
+                    }
+                    ++ecp_idx;
+                }
+
+                if (NULL == details::supported_dh_curves[ecp_idx]) {
+                    return error_code_t::NOT_SUPPORT;
+                }
+
+                    // check if it's available
+#if defined(CRYPTO_USE_OPENSSL) || defined(CRYPTO_USE_LIBRESSL) || defined(CRYPTO_USE_BORINGSSL)
+                if (0 == details::supported_dh_curves_openssl[ecp_idx]) {
+                    return error_code_t::NOT_SUPPORT;
+                }
+#endif
             }
 
             int ret = init(method);
@@ -271,10 +296,22 @@ namespace util {
                 break;
             }
             case method_t::EN_CDT_ECDH: {
-// TODO Check if algorithm available
-// TODO setup ecp
+// check if it's available
 #if defined(CRYPTO_USE_OPENSSL) || defined(CRYPTO_USE_LIBRESSL) || defined(CRYPTO_USE_BORINGSSL)
+                EC_KEY *test_key = EC_KEY_new_by_curve_name(details::supported_dh_curves_openssl[ecp_idx]);
+                if (NULL == test_key) {
+                    ret = error_code_t::NOT_SUPPORT;
+                    break;
+                }
+                EC_KEY_free(test_key);
+                dh_param_.ecp_id = details::supported_dh_curves_openssl[ecp_idx];
 #elif defined(CRYPTO_USE_MBEDTLS)
+                const mbedtls_ecp_curve_info *curve = mbedtls_ecp_curve_info_from_name(details::supported_dh_curves[ecp_idx]);
+                if (NULL == curve) {
+                    ret = error_code_t::NOT_SUPPORT;
+                    break;
+                }
+                dh_param_.ecp_id = curve->grp_id;
 #endif
                 break;
             }
@@ -291,6 +328,10 @@ namespace util {
         int dh::shared_context::init(method_t::type method) {
             if (method_t::EN_CDT_INVALID != method_) {
                 return error_code_t::ALREADY_INITED;
+            }
+
+            if (method_t::EN_CDT_INVALID == method) {
+                return error_code_t::INVALID_PARAM;
             }
 
 // random engine
@@ -317,23 +358,23 @@ namespace util {
             }
 
             switch (method_) {
-            case method_t::EN_CDT_DH: {
+            case method_t::EN_CDT_DH:
+            case method_t::EN_CDT_ECDH: {
 // clear pem file buffer
 #if defined(CRYPTO_USE_OPENSSL) || defined(CRYPTO_USE_LIBRESSL) || defined(CRYPTO_USE_BORINGSSL)
+                // clear dh pem buffer
                 if (NULL != dh_param_.param) {
                     BIO_free(dh_param_.param);
                     dh_param_.param = NULL;
                     dh_param_.param_buffer.clear();
                 }
+                // clear ecp
+                dh_param_.ecp_id = 0;
 #elif defined(CRYPTO_USE_MBEDTLS)
+                // clear dh pem buffer
                 dh_param_.param.clear();
-#endif
-                break;
-            }
-            case method_t::EN_CDT_ECDH: {
-// TODO clear ecp
-#if defined(CRYPTO_USE_OPENSSL) || defined(CRYPTO_USE_LIBRESSL) || defined(CRYPTO_USE_BORINGSSL)
-#elif defined(CRYPTO_USE_MBEDTLS)
+                // clear ecp
+                dh_param_.ecp_id = MBEDTLS_ECP_DP_NONE;
 #endif
                 break;
             }
@@ -373,16 +414,24 @@ namespace util {
             return ret;
         }
 
-        bool dh::shared_context::is_dh_client_mode() const {
-            if (method_t::EN_CDT_DH != method_) {
-                return false;
+        bool dh::shared_context::is_client_mode() const {
+            if (method_t::EN_CDT_DH == method_) {
+#if defined(CRYPTO_USE_OPENSSL) || defined(CRYPTO_USE_LIBRESSL) || defined(CRYPTO_USE_BORINGSSL)
+                return NULL == dh_param_.param;
+#elif defined(CRYPTO_USE_MBEDTLS)
+                return dh_param_.param.empty();
+#endif
             }
 
+            if (method_t::EN_CDT_ECDH == method_) {
 #if defined(CRYPTO_USE_OPENSSL) || defined(CRYPTO_USE_LIBRESSL) || defined(CRYPTO_USE_BORINGSSL)
-            return NULL == dh_param_.param;
+                return dh_param_.ecp_id == 0;
 #elif defined(CRYPTO_USE_MBEDTLS)
-            return dh_param_.param.empty();
+                return dh_param_.ecp_id == MBEDTLS_ECP_DP_NONE;
 #endif
+            }
+
+            return false;
         }
 
         // --------------- shared context ---------------
@@ -407,7 +456,7 @@ namespace util {
 // init DH param file
 #if defined(CRYPTO_USE_OPENSSL) || defined(CRYPTO_USE_LIBRESSL) || defined(CRYPTO_USE_BORINGSSL)
                 do {
-                    if (shared_context->is_dh_client_mode()) {
+                    if (shared_context->is_client_mode()) {
                         dh_context_.openssl_dh_ptr_ = DH_new();
                     } else {
                         UNUSED(BIO_reset(shared_context->get_dh_parameter().param));
@@ -419,7 +468,7 @@ namespace util {
                         break;
                     }
 
-                    // if (!shared_context->is_dh_client_mode() && !DH_generate_key(dh_context_.openssl_dh_ptr_)) {
+                    // if (!shared_context->is_client_mode() && !DH_generate_key(dh_context_.openssl_dh_ptr_)) {
                     //     ret = error_code_t::INIT_DH_GENERATE_KEY;
                     //     break;
                     // }
@@ -443,7 +492,7 @@ namespace util {
                     dh_context_.dh_param_cache_.clear();
 
                     // client mode, just init , do not read PEM file
-                    if (false == shared_context->is_dh_client_mode()) {
+                    if (false == shared_context->is_client_mode()) {
                         int res =
                             mbedtls_dhm_parse_dhm(&dh_context_.mbedtls_dh_ctx_,
                                                   reinterpret_cast<const unsigned char *>(shared_context->get_dh_parameter().param.data()),
@@ -462,8 +511,28 @@ namespace util {
                 break;
             }
             case method_t::EN_CDT_ECDH: {
-                ret = details::setup_errorno(*this, 0, error_code_t::NOT_SUPPORT);
-                // TODO
+// init DH param file
+#if defined(CRYPTO_USE_OPENSSL) || defined(CRYPTO_USE_LIBRESSL) || defined(CRYPTO_USE_BORINGSSL)
+            // TODO
+#elif defined(CRYPTO_USE_MBEDTLS)
+                // mbedtls_dhm_read_params
+                do {
+                    mbedtls_ecdh_init(&dh_context_.mbedtls_ecdh_ctx_);
+                    dh_context_.dh_param_cache_.clear();
+
+                    if (false == shared_context->is_client_mode()) {
+                        int res = mbedtls_ecp_group_load(&dh_context_.mbedtls_ecdh_ctx_.grp, shared_context->get_dh_parameter().ecp_id);
+                        if (0 != res) {
+                            ret = details::setup_errorno(*this, res, error_code_t::INIT_DHPARAM);
+                            break;
+                        }
+                    }
+                } while (false);
+
+                if (0 != ret) {
+                    mbedtls_ecdh_free(&dh_context_.mbedtls_ecdh_ctx_);
+                }
+#endif
                 break;
             }
             default: { details::setup_errorno(*this, 0, error_code_t::NOT_SUPPORT); }
@@ -487,7 +556,7 @@ namespace util {
 
             switch (shared_context->get_method()) {
             case method_t::EN_CDT_DH: {
-// init DH param file
+// clear DH param file and cache
 #if defined(CRYPTO_USE_OPENSSL) || defined(CRYPTO_USE_LIBRESSL) || defined(CRYPTO_USE_BORINGSSL)
                 if (NULL != dh_context_.peer_pubkey_) {
                     BN_free(dh_context_.peer_pubkey_);
@@ -506,9 +575,14 @@ namespace util {
                 break;
             }
             case method_t::EN_CDT_ECDH: {
-                return details::setup_errorno(*this, 0, error_code_t::NOT_SUPPORT);
-                // TODO
-                // break;
+// clear ecdh key and cache
+#if defined(CRYPTO_USE_OPENSSL) || defined(CRYPTO_USE_LIBRESSL) || defined(CRYPTO_USE_BORINGSSL)
+// TODO
+#elif defined(CRYPTO_USE_MBEDTLS)
+                mbedtls_ecdh_free(&dh_context_.mbedtls_ecdh_ctx_);
+                dh_context_.dh_param_cache_.clear();
+#endif
+                break;
             }
             default: { details::setup_errorno(*this, 0, error_code_t::NOT_SUPPORT); }
             }
@@ -598,8 +672,21 @@ namespace util {
                 break;
             }
             case method_t::EN_CDT_ECDH: {
-                ret = details::setup_errorno(*this, 0, error_code_t::NOT_SUPPORT);
-                // TODO
+#if defined(CRYPTO_USE_OPENSSL) || defined(CRYPTO_USE_LIBRESSL) || defined(CRYPTO_USE_BORINGSSL)
+            // TODO
+#elif defined(CRYPTO_USE_MBEDTLS)
+                unsigned char buf[CRYPTO_DH_MAX_KEY_LEN];
+                // size is ecp group(3byte) + point(unknown size)
+                size_t olen = 0;
+                // @see mbedtls_ecdh_make_params, output group and point
+                int res = mbedtls_ecdh_make_params(&dh_context_.mbedtls_ecdh_ctx_, &olen, buf, sizeof(buf), mbedtls_ctr_drbg_random,
+                                                   &shared_context_->get_random_engine().ctr_drbg);
+                if (0 != res) {
+                    ret = details::setup_errorno(*this, res, error_code_t::INIT_DH_GENERATE_KEY);
+                    break;
+                }
+                param.assign(buf, buf + olen);
+#endif
                 break;
             }
             default: { details::setup_errorno(*this, 0, error_code_t::NOT_SUPPORT); }
@@ -737,8 +824,16 @@ namespace util {
                 break;
             }
             case method_t::EN_CDT_ECDH: {
-                ret = details::setup_errorno(*this, 0, error_code_t::NOT_SUPPORT);
-                // TODO
+#if defined(CRYPTO_USE_OPENSSL) || defined(CRYPTO_USE_LIBRESSL) || defined(CRYPTO_USE_BORINGSSL)
+            // TODO
+#elif defined(CRYPTO_USE_MBEDTLS)
+                const unsigned char *dh_params_beg = input;
+                int res = mbedtls_ecdh_read_params(&dh_context_.mbedtls_ecdh_ctx_, &dh_params_beg, dh_params_beg + ilen);
+                if (0 != res) {
+                    ret = details::setup_errorno(*this, res, error_code_t::INIT_DH_READ_PARAM);
+                    break;
+                }
+#endif
                 break;
             }
             default: { details::setup_errorno(*this, 0, error_code_t::NOT_SUPPORT); }
@@ -796,8 +891,24 @@ namespace util {
                 break;
             }
             case method_t::EN_CDT_ECDH: {
-                ret = details::setup_errorno(*this, 0, error_code_t::NOT_SUPPORT);
-                // TODO
+#if defined(CRYPTO_USE_OPENSSL) || defined(CRYPTO_USE_LIBRESSL) || defined(CRYPTO_USE_BORINGSSL)
+            // TODO
+
+#elif defined(CRYPTO_USE_MBEDTLS)
+                unsigned char buf[CRYPTO_DH_MAX_KEY_LEN];
+                // size is point(unknown size)
+                size_t olen = 0;
+                // @see mbedtls_ecdh_make_public, output group and point
+                int res = mbedtls_ecdh_make_public(&dh_context_.mbedtls_ecdh_ctx_, &olen, buf, sizeof(buf), mbedtls_ctr_drbg_random,
+                                                   &shared_context_->get_random_engine().ctr_drbg);
+
+                if (0 != res) {
+                    ret = details::setup_errorno(*this, res, error_code_t::INIT_DH_GENERATE_KEY);
+                    break;
+                }
+
+                param.assign(buf, buf + olen);
+#endif
                 break;
             }
             default: { details::setup_errorno(*this, 0, error_code_t::NOT_SUPPORT); }
@@ -832,15 +943,22 @@ namespace util {
 #elif defined(CRYPTO_USE_MBEDTLS)
                 int res = mbedtls_dhm_read_public(&dh_context_.mbedtls_dh_ctx_, input, ilen);
                 if (0 != res) {
-                    ret = details::setup_errorno(*this, res, error_code_t::INIT_DH_GENERATE_KEY);
+                    ret = details::setup_errorno(*this, res, error_code_t::INIT_DH_READ_KEY);
                     break;
                 }
 #endif
                 break;
             }
             case method_t::EN_CDT_ECDH: {
-                ret = details::setup_errorno(*this, 0, error_code_t::NOT_SUPPORT);
-                // TODO
+#if defined(CRYPTO_USE_OPENSSL) || defined(CRYPTO_USE_LIBRESSL) || defined(CRYPTO_USE_BORINGSSL)
+            // TODO
+#elif defined(CRYPTO_USE_MBEDTLS)
+                int res = mbedtls_ecdh_read_public(&dh_context_.mbedtls_ecdh_ctx_, input, ilen);
+                if (0 != res) {
+                    ret = details::setup_errorno(*this, res, error_code_t::INIT_DH_READ_KEY);
+                    break;
+                }
+#endif
                 break;
             }
             default: { details::setup_errorno(*this, 0, error_code_t::NOT_SUPPORT); }
@@ -880,7 +998,7 @@ namespace util {
                 // generate next_secret
                 output.resize(psz, 0);
                 int res;
-                //  if (shared_context_->is_dh_client_mode()) {
+                //  if (shared_context_->is_client_mode()) {
                 res = mbedtls_dhm_calc_secret(&dh_context_.mbedtls_dh_ctx_, &output[0], psz, &psz, mbedtls_ctr_drbg_random,
                                               &shared_context_->get_random_engine().ctr_drbg);
                 // } else {
@@ -895,8 +1013,23 @@ namespace util {
                 break;
             }
             case method_t::EN_CDT_ECDH: {
-                ret = details::setup_errorno(*this, 0, error_code_t::NOT_SUPPORT);
-                // TODO
+#if defined(CRYPTO_USE_OPENSSL) || defined(CRYPTO_USE_LIBRESSL) || defined(CRYPTO_USE_BORINGSSL)
+            // TODO
+
+#elif defined(CRYPTO_USE_MBEDTLS)
+                unsigned char buf[CRYPTO_DH_MAX_KEY_LEN];
+                // usually is group size
+                size_t olen = 0;
+                int res;
+                res = mbedtls_ecdh_calc_secret(&dh_context_.mbedtls_ecdh_ctx_, &olen, buf, sizeof(buf), mbedtls_ctr_drbg_random,
+                                               &shared_context_->get_random_engine().ctr_drbg);
+                if (0 != res) {
+                    ret = details::setup_errorno(*this, res, error_code_t::INIT_DH_GENERATE_SECRET);
+                    break;
+                }
+
+                output.assign(buf, buf + olen);
+#endif
                 break;
             }
             default: { details::setup_errorno(*this, 0, error_code_t::NOT_SUPPORT); }
@@ -909,12 +1042,15 @@ namespace util {
             static std::vector<std::string> ret;
             if (ret.empty()) {
                 for (int i = 1; details::supported_dh_curves[i] != NULL; ++i) {
+                    if (0 == strlen(details::supported_dh_curves[i])) {
+                        continue;
+                    }
 #if defined(CRYPTO_USE_OPENSSL) || defined(CRYPTO_USE_LIBRESSL) || defined(CRYPTO_USE_BORINGSSL)
                     if (0 != details::supported_dh_curves_openssl[i]) {
-                        ret.push_back(details::supported_dh_curves[i]);
+                        ret.push_back(std::string("ecdh:") + details::supported_dh_curves[i]);
                     }
 #else
-                    ret.push_back(details::supported_dh_curves[i]);
+                    ret.push_back(std::string("ecdh:") + details::supported_dh_curves[i]);
 #endif
                 }
             }

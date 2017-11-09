@@ -5,6 +5,21 @@
 
 #ifdef CRYPTO_DH_ENABLED
 
+CASE_TEST(crypto_dh, get_all_curve_names) {
+    const std::vector<std::string> &all_curves = util::crypto::dh::get_all_curve_names();
+    std::stringstream ss;
+    for (size_t i = 0; i < all_curves.size(); ++i) {
+        if (i) {
+            ss << ",";
+        }
+
+        ss << all_curves[i];
+    }
+
+    CASE_MSG_INFO() << "All curves: " << ss.str() << std::endl;
+    CASE_EXPECT_NE(0, all_curves.size());
+}
+
 CASE_TEST(crypto_dh, dh) {
     int test_times = 32;
     // 单元测试多次以定位openssl是否内存泄漏的问题
@@ -68,5 +83,70 @@ CASE_TEST(crypto_dh, dh) {
         }
     }
 }
+
+#if defined(CRYPTO_USE_MBEDTLS)
+CASE_TEST(crypto_dh, ecdh) {
+    int test_times = 8;
+    int left_times = test_times;
+    // 单元测试多次以定位openssl是否内存泄漏的问题
+    const std::vector<std::string> &all_curves = util::crypto::dh::get_all_curve_names();
+
+    while (left_times-- > 0) {
+        for (size_t curve_idx = 0; curve_idx < all_curves.size(); ++curve_idx) {
+            // client shared context & dh
+            util::crypto::dh cli_dh;
+
+            // server shared context & dh
+            util::crypto::dh svr_dh;
+
+            // server - init: read and setup server dh params
+            {
+                util::crypto::dh::shared_context::ptr_t svr_shctx = util::crypto::dh::shared_context::create();
+                CASE_EXPECT_EQ(0, svr_shctx->init(all_curves[curve_idx].c_str()));
+                CASE_EXPECT_EQ(0, svr_dh.init(svr_shctx));
+            }
+
+            // client - init: read and setup client shared context
+            {
+                util::crypto::dh::shared_context::ptr_t cli_shctx = util::crypto::dh::shared_context::create();
+                CASE_EXPECT_EQ(0, cli_shctx->init(util::crypto::dh::method_t::EN_CDT_ECDH));
+                CASE_EXPECT_EQ(0, cli_dh.init(cli_shctx));
+            }
+
+            std::vector<unsigned char> switch_params;
+            std::vector<unsigned char> switch_public;
+            std::vector<unsigned char> cli_secret;
+            std::vector<unsigned char> svr_secret;
+
+            // step 1 - server: make private key and public key
+            CASE_EXPECT_EQ(0, svr_dh.make_params(switch_params));
+
+            // step 2 - client: read dhparam and public key of server
+            CASE_EXPECT_EQ(0, cli_dh.read_params(switch_params.data(), switch_params.size()));
+
+            // step 3 - client: make public key
+            CASE_EXPECT_EQ(0, cli_dh.make_public(switch_public));
+
+            // step 4 - client: calculate secret
+            CASE_EXPECT_EQ(0, cli_dh.calc_secret(cli_secret));
+
+            // step 5 - server: read public key of client
+            CASE_EXPECT_EQ(0, svr_dh.read_public(switch_public.data(), switch_public.size()));
+
+            // step 6 - server: calculate secret
+            CASE_EXPECT_EQ(0, svr_dh.calc_secret(svr_secret));
+
+            // DH process done
+            CASE_EXPECT_EQ(cli_secret.size(), svr_secret.size());
+            if (cli_secret.size() == svr_secret.size()) {
+                CASE_EXPECT_EQ(0, memcmp(cli_secret.data(), svr_secret.data(), svr_secret.size()));
+            }
+            CASE_EXPECT_GT(cli_secret.size(), 0);
+        }
+    }
+
+    CASE_MSG_INFO() << "Test " << test_times << " times for " << all_curves.size() << " curves done. " << std::endl;
+}
+#endif
 
 #endif

@@ -39,6 +39,7 @@
 #include "mbedtls/ctr_drbg.h"
 #include "mbedtls/dhm.h"
 #include "mbedtls/ecdh.h"
+#include "mbedtls/ecp.h"
 #include "mbedtls/entropy.h"
 
 #define CRYPTO_DH_ENABLED 1
@@ -66,12 +67,18 @@ namespace util {
 
 #if defined(CRYPTO_USE_OPENSSL) || defined(CRYPTO_USE_LIBRESSL) || defined(CRYPTO_USE_BORINGSSL)
             struct dh_context_t {
-                DH *openssl_dh_ptr_;
+                union {
+                    DH *openssl_dh_ptr_;
+                    EC_KEY *openssl_ecdh_ptr_;
+                };
                 BIGNUM *peer_pubkey_;
             };
 #elif defined(CRYPTO_USE_MBEDTLS)
             struct dh_context_t {
-                mbedtls_dhm_context mbedtls_dh_ctx_;
+                union {
+                    mbedtls_dhm_context mbedtls_dh_ctx_;
+                    mbedtls_ecdh_context mbedtls_ecdh_ctx_;
+                };
                 std::vector<unsigned char> dh_param_cache_;
             };
 #endif
@@ -102,6 +109,7 @@ namespace util {
                 typedef struct {
                     BIO *param;
                     std::vector<unsigned char> param_buffer;
+                    int ecp_id;
                 } dh_param_t;
 
                 typedef struct {
@@ -110,6 +118,7 @@ namespace util {
 #elif defined(CRYPTO_USE_MBEDTLS)
                 typedef struct {
                     std::string param;
+                    mbedtls_ecp_group_id ecp_id;
                 } dh_param_t;
 
                 // move mbedtls_ctr_drbg_context and mbedtls_entropy_context here
@@ -156,7 +165,7 @@ namespace util {
                  */
                 int random(void *output, size_t output_sz);
 
-                bool is_dh_client_mode() const;
+                bool is_client_mode() const;
 
                 inline method_t::type get_method() const { return method_; }
 
