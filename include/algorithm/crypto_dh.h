@@ -71,7 +71,10 @@ namespace util {
                     DH *openssl_dh_ptr_;
                     EC_KEY *openssl_ecdh_ptr_;
                 };
-                BIGNUM *peer_pubkey_;
+                union {
+                    BIGNUM *peer_pubkey_;
+                    EC_POINT *peer_ecpoint_;
+                };
             };
 #elif defined(CRYPTO_USE_MBEDTLS)
             struct dh_context_t {
@@ -79,7 +82,6 @@ namespace util {
                     mbedtls_dhm_context mbedtls_dh_ctx_;
                     mbedtls_ecdh_context mbedtls_ecdh_ctx_;
                 };
-                std::vector<unsigned char> dh_param_cache_;
             };
 #endif
 
@@ -143,6 +145,7 @@ namespace util {
                 /**
                  * @brief initialize a shared context for server mode
                  * @param name algorithm name, ecdh:[ECDH algorithm name] or the path of dh parameter PEM file
+                 * @note using RFC 4492 for ECDH algorithm
                  * @return 0 or error code
                  */
                 int init(const char *name);

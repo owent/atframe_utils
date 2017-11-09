@@ -22,10 +22,12 @@ CASE_TEST(crypto_dh, get_all_curve_names) {
 
 CASE_TEST(crypto_dh, dh) {
     int test_times = 32;
+    int left_times = test_times;
+    size_t key_bits = 0;
     // 单元测试多次以定位openssl是否内存泄漏的问题
     // 单元测试发现openssl内部有11处still reachable内存大约72KB。并且不随测试次数增加而增加。初步判断为openssl内部分配的全局数据未释放
 
-    while (test_times-- > 0) {
+    while (left_times-- > 0) {
         // client shared context & dh
         util::crypto::dh cli_dh;
 
@@ -81,18 +83,31 @@ CASE_TEST(crypto_dh, dh) {
         if (cli_secret.size() == svr_secret.size()) {
             CASE_EXPECT_EQ(0, memcmp(cli_secret.data(), svr_secret.data(), svr_secret.size()));
         }
+        CASE_EXPECT_GT(cli_secret.size(), 0);
+        key_bits = cli_secret.size();
     }
+
+    CASE_MSG_INFO() << "Test DH algorithm " << test_times << " times, key len " << key_bits << " bits. " << std::endl;
 }
 
 #if defined(CRYPTO_USE_MBEDTLS)
 CASE_TEST(crypto_dh, ecdh) {
     int test_times = 8;
-    int left_times = test_times;
     // 单元测试多次以定位openssl是否内存泄漏的问题
     const std::vector<std::string> &all_curves = util::crypto::dh::get_all_curve_names();
 
-    while (left_times-- > 0) {
-        for (size_t curve_idx = 0; curve_idx < all_curves.size(); ++curve_idx) {
+    clock_t min_cost_clock;
+    clock_t max_cost_clock;
+    size_t min_cost_idx;
+    size_t min_cost_bits;
+    size_t max_cost_idx;
+    size_t max_cost_bits;
+    for (size_t curve_idx = 0; curve_idx < all_curves.size(); ++curve_idx) {
+
+        clock_t beg_time_clk = clock();
+        int left_times = test_times;
+        size_t secret_bits;
+        while (left_times-- > 0) {
             // client shared context & dh
             util::crypto::dh cli_dh;
 
@@ -141,11 +156,42 @@ CASE_TEST(crypto_dh, ecdh) {
             if (cli_secret.size() == svr_secret.size()) {
                 CASE_EXPECT_EQ(0, memcmp(cli_secret.data(), svr_secret.data(), svr_secret.size()));
             }
-            CASE_EXPECT_GT(cli_secret.size(), 0);
+            secret_bits = cli_secret.size();
+            CASE_EXPECT_GT(secret_bits, 0);
+        }
+
+        clock_t end_time_clk = clock();
+        if (0 == curve_idx) {
+            min_cost_clock = end_time_clk - beg_time_clk;
+            max_cost_clock = end_time_clk - beg_time_clk;
+            min_cost_idx = 0;
+            max_cost_idx = 0;
+            min_cost_bits = secret_bits * 8;
+            max_cost_bits = secret_bits * 8;
+        } else {
+            clock_t off_clk = end_time_clk - beg_time_clk;
+            if (off_clk > max_cost_clock) {
+                max_cost_clock = off_clk;
+                max_cost_idx = curve_idx;
+                max_cost_bits = secret_bits * 8;
+            }
+            if (off_clk < min_cost_clock) {
+                min_cost_clock = off_clk;
+                min_cost_idx = curve_idx;
+                min_cost_bits = secret_bits * 8;
+            }
         }
     }
 
-    CASE_MSG_INFO() << "Test " << test_times << " times for " << all_curves.size() << " curves done. " << std::endl;
+    CASE_MSG_INFO() << "Test ECDH algorithm " << test_times << " times for " << all_curves.size() << " curves done. " << std::endl;
+    if (!all_curves.empty()) {
+        CASE_MSG_INFO() << "  Fastest => " << all_curves[min_cost_idx] << " cost "
+                        << (1000.0 * min_cost_clock / CLOCKS_PER_SEC / test_times) << "ms(avg.) key len " << min_cost_bits << " bits. "
+                        << std::endl;
+        CASE_MSG_INFO() << "  Slowest => " << all_curves[max_cost_idx] << " cost "
+                        << (1000.0 * max_cost_clock / CLOCKS_PER_SEC / test_times) << "ms(avg.) key len " << max_cost_bits << " bits. "
+                        << std::endl;
+    }
 }
 #endif
 
