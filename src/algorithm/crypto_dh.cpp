@@ -1,4 +1,4 @@
-#include <cstring>
+﻿#include <cstring>
 
 #include <common/file_system.h>
 #include <common/string_oprs.h>
@@ -65,35 +65,238 @@ typedef struct {
  * table: the index of each entry is one less than the TLS curve id.
  */
 static const tls_curve_info nid_list[] = {
-    {NID_sect163k1, 80, TLS_CURVE_CHAR2},         /* sect163k1 (1) */
-    {NID_sect163r1, 80, TLS_CURVE_CHAR2},         /* sect163r1 (2) */
-    {NID_sect163r2, 80, TLS_CURVE_CHAR2},         /* sect163r2 (3) */
-    {NID_sect193r1, 80, TLS_CURVE_CHAR2},         /* sect193r1 (4) */
-    {NID_sect193r2, 80, TLS_CURVE_CHAR2},         /* sect193r2 (5) */
-    {NID_sect233k1, 112, TLS_CURVE_CHAR2},        /* sect233k1 (6) */
-    {NID_sect233r1, 112, TLS_CURVE_CHAR2},        /* sect233r1 (7) */
-    {NID_sect239k1, 112, TLS_CURVE_CHAR2},        /* sect239k1 (8) */
-    {NID_sect283k1, 128, TLS_CURVE_CHAR2},        /* sect283k1 (9) */
-    {NID_sect283r1, 128, TLS_CURVE_CHAR2},        /* sect283r1 (10) */
-    {NID_sect409k1, 192, TLS_CURVE_CHAR2},        /* sect409k1 (11) */
-    {NID_sect409r1, 192, TLS_CURVE_CHAR2},        /* sect409r1 (12) */
-    {NID_sect571k1, 256, TLS_CURVE_CHAR2},        /* sect571k1 (13) */
-    {NID_sect571r1, 256, TLS_CURVE_CHAR2},        /* sect571r1 (14) */
-    {NID_secp160k1, 80, TLS_CURVE_PRIME},         /* secp160k1 (15) */
-    {NID_secp160r1, 80, TLS_CURVE_PRIME},         /* secp160r1 (16) */
-    {NID_secp160r2, 80, TLS_CURVE_PRIME},         /* secp160r2 (17) */
-    {NID_secp192k1, 80, TLS_CURVE_PRIME},         /* secp192k1 (18) */
-    {NID_X9_62_prime192v1, 80, TLS_CURVE_PRIME},  /* secp192r1 (19) */
-    {NID_secp224k1, 112, TLS_CURVE_PRIME},        /* secp224k1 (20) */
-    {NID_secp224r1, 112, TLS_CURVE_PRIME},        /* secp224r1 (21) */
-    {NID_secp256k1, 128, TLS_CURVE_PRIME},        /* secp256k1 (22) */
-    {NID_X9_62_prime256v1, 128, TLS_CURVE_PRIME}, /* secp256r1 (23) */
-    {NID_secp384r1, 192, TLS_CURVE_PRIME},        /* secp384r1 (24) */
-    {NID_secp521r1, 256, TLS_CURVE_PRIME},        /* secp521r1 (25) */
-    {NID_brainpoolP256r1, 128, TLS_CURVE_PRIME},  /* brainpoolP256r1 (26) */
-    {NID_brainpoolP384r1, 192, TLS_CURVE_PRIME},  /* brainpoolP384r1 (27) */
-    {NID_brainpoolP512r1, 256, TLS_CURVE_PRIME},  /* brainpool512r1 (28) */
-    // {NID_X25519, 128, TLS_CURVE_CUSTOM},          /* X25519 (29) */
+    {
+#ifdef NID_sect163k1
+        NID_sect163k1
+#else
+        0
+#endif
+        ,
+        80, TLS_CURVE_CHAR2}, /* sect163k1 (1) */
+    {
+#ifdef NID_sect163r1
+        NID_sect163r1
+#else
+        0
+#endif
+        ,
+        80, TLS_CURVE_CHAR2}, /* sect163r1 (2) */
+    {
+#ifdef NID_sect163r2
+        NID_sect163r2
+#else
+        0
+#endif
+        ,
+        80, TLS_CURVE_CHAR2}, /* sect163r2 (3) */
+    {
+#ifdef NID_sect193r1
+        NID_sect193r1
+#else
+        0
+#endif
+        ,
+        80, TLS_CURVE_CHAR2}, /* sect193r1 (4) */
+    {
+#ifdef NID_sect193r2
+        NID_sect193r2
+#else
+        0
+#endif
+        ,
+        80, TLS_CURVE_CHAR2}, /* sect193r2 (5) */
+    {
+#ifdef NID_sect233k1
+        NID_sect233k1
+#else
+        0
+#endif
+        ,
+        112, TLS_CURVE_CHAR2}, /* sect233k1 (6) */
+    {
+#ifdef NID_sect233r1
+        NID_sect233r1
+#else
+        0
+#endif
+        ,
+        112, TLS_CURVE_CHAR2}, /* sect233r1 (7) */
+    {
+#ifdef NID_sect239k1
+        NID_sect239k1
+#else
+        0
+#endif
+        ,
+        112, TLS_CURVE_CHAR2}, /* sect239k1 (8) */
+    {
+#ifdef NID_sect283k1
+        NID_sect283k1
+#else
+        0
+#endif
+        ,
+        128, TLS_CURVE_CHAR2}, /* sect283k1 (9) */
+    {
+#ifdef NID_sect283r1
+        NID_sect283r1
+#else
+        0
+#endif
+        ,
+        128, TLS_CURVE_CHAR2}, /* sect283r1 (10) */
+    {
+#ifdef NID_sect409k1
+        NID_sect409k1
+#else
+        0
+#endif
+        ,
+        192, TLS_CURVE_CHAR2}, /* sect409k1 (11) */
+    {
+#ifdef NID_sect409r1
+        NID_sect409r1
+#else
+        0
+#endif
+        ,
+        192, TLS_CURVE_CHAR2}, /* sect409r1 (12) */
+    {
+#ifdef NID_sect571k1
+        NID_sect571k1
+#else
+        0
+#endif
+        ,
+        256, TLS_CURVE_CHAR2}, /* sect571k1 (13) */
+    {
+#ifdef NID_sect571r1
+        NID_sect571r1
+#else
+        0
+#endif
+        ,
+        256, TLS_CURVE_CHAR2}, /* sect571r1 (14) */
+    {
+#ifdef NID_secp160k1
+        NID_secp160k1
+#else
+        0
+#endif
+        ,
+        80, TLS_CURVE_PRIME}, /* secp160k1 (15) */
+    {
+#ifdef NID_secp160r1
+        NID_secp160r1
+#else
+        0
+#endif
+        ,
+        80, TLS_CURVE_PRIME}, /* secp160r1 (16) */
+    {
+#ifdef NID_secp160r2
+        NID_secp160r2
+#else
+        0
+#endif
+        ,
+        80, TLS_CURVE_PRIME}, /* secp160r2 (17) */
+    {
+#ifdef NID_secp192k1
+        NID_secp192k1
+#else
+        0
+#endif
+        ,
+        80, TLS_CURVE_PRIME}, /* secp192k1 (18) */
+    {
+#ifdef NID_X9_62_prime192v1
+        NID_X9_62_prime192v1
+#else
+        0
+#endif
+        ,
+        80, TLS_CURVE_PRIME}, /* secp192r1 (19) */
+    {
+#ifdef NID_secp224k1
+        NID_secp224k1
+#else
+        0
+#endif
+        ,
+        112, TLS_CURVE_PRIME}, /* secp224k1 (20) */
+    {
+#ifdef NID_secp224r1
+        NID_secp224r1
+#else
+        0
+#endif
+        ,
+        112, TLS_CURVE_PRIME}, /* secp224r1 (21) */
+    {
+#ifdef NID_secp256k1
+        NID_secp256k1
+#else
+        0
+#endif
+        ,
+        128, TLS_CURVE_PRIME}, /* secp256k1 (22) */
+    {
+#ifdef NID_X9_62_prime256v1
+        NID_X9_62_prime256v1
+#else
+        0
+#endif
+        ,
+        128, TLS_CURVE_PRIME}, /* secp256r1 (23) */
+    {
+#ifdef NID_secp384r1
+        NID_secp384r1
+#else
+        0
+#endif
+        ,
+        192, TLS_CURVE_PRIME}, /* secp384r1 (24) */
+    {
+#ifdef NID_secp521r1
+        NID_secp521r1
+#else
+        0
+#endif
+        ,
+        256, TLS_CURVE_PRIME}, /* secp521r1 (25) */
+    {
+#ifdef NID_brainpoolP256r1
+        NID_brainpoolP256r1
+#else
+        0
+#endif
+        ,
+        128, TLS_CURVE_PRIME}, /* brainpoolP256r1 (26) */
+    {
+#ifdef NID_brainpoolP384r1
+        NID_brainpoolP384r1
+#else
+        0
+#endif
+        ,
+        192, TLS_CURVE_PRIME}, /* brainpoolP384r1 (27) */
+    {
+#ifdef NID_brainpoolP512r1
+        NID_brainpoolP512r1
+#else
+        0
+#endif
+        ,
+        256, TLS_CURVE_PRIME}, /* brainpool512r1 (28) */
+    {
+#ifdef NID_X25519
+        NID_X25519
+#else
+        0
+#endif
+        ,
+        128, TLS_CURVE_CUSTOM}, /* X25519 (29) */
 };
 
 #define OSSL_NELEM(x) (sizeof(x) / sizeof(x[0]))
