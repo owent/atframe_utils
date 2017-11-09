@@ -1269,17 +1269,13 @@ namespace util {
                 }
 
                 { // with bn_ctx
-                    BN_CTX *bn_ctx = BN_CTX_new();
-                    if (NULL == bn_ctx) {
-                        ret = details::setup_errorno(*this, static_cast<int>(ERR_get_error()), error_code_t::INIT_DH_READ_KEY);
-                        break;
-                    }
 
                     /*
                      * Get client's public key from encoded point in the
                      * ClientKeyExchange message.
                      */
-                    if ((bn_ctx = BN_CTX_new()) == NULL) {
+                    BN_CTX *bn_ctx = BN_CTX_new();
+                    if (NULL == bn_ctx) {
                         ret = details::setup_errorno(*this, static_cast<int>(ERR_get_error()), error_code_t::INIT_DH_READ_KEY);
                         break;
                     }

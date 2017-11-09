@@ -91,7 +91,7 @@ CASE_TEST(crypto_dh, dh) {
 }
 
 CASE_TEST(crypto_dh, ecdh) {
-    int test_times = 8;
+    int test_times = 16;
     // 单元测试多次以定位openssl是否内存泄漏的问题
     const std::vector<std::string> &all_curves = util::crypto::dh::get_all_curve_names();
 
