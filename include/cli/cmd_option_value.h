@@ -1,4 +1,4 @@
-#ifndef UTIL_CLI_CMDOPTIONVALUE_H
+﻿#ifndef UTIL_CLI_CMDOPTIONVALUE_H
 #define UTIL_CLI_CMDOPTIONVALUE_H
 
 #pragma once
@@ -17,6 +17,7 @@
 #include <sstream>
 #include <stdint.h>
 #include <string>
+#include <vector>
 
 #include "std/smart_ptr.h"
 #include "std/type_traits/remove_cv.h"
@@ -65,7 +66,9 @@ namespace util {
             };
 
         public:
-            cmd_option_value(const char *strData);
+            cmd_option_value(const char *str_data);
+            cmd_option_value(const char *begin, const char *end);
+            cmd_option_value(const std::string& str_data);
 
             template <typename Tr>
             Tr to() const {
@@ -122,6 +125,8 @@ namespace util {
 
             // ============ logic operation ============
             bool to_logic_bool() const;
+
+            void split(char delim, std::vector<cmd_option_value>& out);
         };
     }
 }

@@ -9,6 +9,7 @@
 */
 
 #include "cli/cmd_option_list.h"
+#include "cli/cmd_option.h"
 
 namespace util {
     namespace cli {
@@ -18,13 +19,13 @@ namespace util {
 
         cmd_option_list::cmd_option_list(int argv, const char *argc[]) : ext_param_(NULL) {
             for (int i = 0; i < argv; ++i)
-                keys_.push_back(value_type(new cmd_option_value(argc[i])));
+                keys_.push_back(std::make_shared<cmd_option_value>(argc[i]));
         }
 
         cmd_option_list::cmd_option_list(const std::vector<std::string> &cmds) : ext_param_(NULL) {
             std::vector<std::string>::size_type uSize = cmds.size();
             for (std::vector<std::string>::size_type i = 0; i < uSize; ++i) {
-                keys_.push_back(value_type(new cmd_option_value(cmds[i].c_str())));
+                keys_.push_back(std::make_shared<cmd_option_value>(cmds[i].c_str()));
             }
         }
 
@@ -52,11 +53,13 @@ namespace util {
                     continue;
                 }
 
-                (*key_value_)[std::string(str_key, str_val - 1)] = value_type(new cmd_option_value(str_val));
+                std::string val;
+                cmd_option::get_segment(str_val, val);
+                (*key_value_)[std::string(str_key, str_val - 1)] = std::make_shared<cmd_option_value>(val);
             }
         }
 
-        void cmd_option_list::add(const char *param) { keys_.push_back(value_type(new cmd_option_value(param))); }
+        void cmd_option_list::add(const char *param) { keys_.push_back(std::make_shared<cmd_option_value>(param)); }
 
         void cmd_option_list::clear() {
             key_value_.reset(); // 删除key-value映射
@@ -77,7 +80,7 @@ namespace util {
 
         cmd_option_list::value_type cmd_option_list::get(std::string key, const char *default_val) {
             value_type ret_ptr = get(key);
-            if (ret_ptr.get() == NULL) return value_type(new cmd_option_value(default_val));
+            if (ret_ptr.get() == NULL) return std::make_shared<cmd_option_value>(default_val);
             return ret_ptr;
         }
 

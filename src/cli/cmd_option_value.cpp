@@ -1,18 +1,19 @@
 ﻿/*
- * cmd_option_value.cpp
- *
- *  Created on: 2011-12-29
- *      Author: OWenT
- *
- * 应用程序命令处理
- *
- */
+* cmd_option_value.cpp
+*
+*  Created on: 2011-12-29
+*      Author: OWenT
+*
+* 应用程序命令处理
+*
+*/
 
 #include "cli/cmd_option_value.h"
 #include <algorithm>
 
 namespace util {
     namespace cli {
+
         namespace detail {
             static char tolower(char c) {
                 if (c >= 'A' && c <= 'Z') {
@@ -21,9 +22,11 @@ namespace util {
 
                 return c;
             }
-        } // namespace detail
+        }
 
-        cmd_option_value::cmd_option_value(const char *strData) : data_(strData) {}
+        cmd_option_value::cmd_option_value(const char *str_data) : data_(str_data) {}
+        cmd_option_value::cmd_option_value(const char *begin, const char *end) { data_.assign(begin, end); }
+        cmd_option_value::cmd_option_value(const std::string& str_data) { data_ = str_data; }
 
         const std::string &cmd_option_value::to_cpp_string() const { return data_; }
 
@@ -87,5 +90,28 @@ namespace util {
 
             return true;
         }
-    } // namespace cli
-} // namespace util
+
+        void cmd_option_value::split(char delim, std::vector<cmd_option_value>& out) {
+            size_t len = 1;
+            for (size_t i = 0; i < data_.size(); ++ i) {
+                if (delim == data_[i]) {
+                    ++ len;
+                }
+            }
+
+            out.reserve(len);
+            size_t begin_pos = 0;
+            size_t end_pos = 0;
+            while (end_pos != std::string::npos && begin_pos < data_.size()) {
+                end_pos = data_.find(delim, begin_pos);
+                if (end_pos == std::string::npos && begin_pos < data_.size()) {
+                    out.push_back(cmd_option_value(&data_[begin_pos]));
+                    begin_pos = end_pos;
+                } else {
+                    out.push_back(cmd_option_value(&data_[begin_pos], &data_[end_pos]));
+                    begin_pos = end_pos + 1;
+                }
+            }
+        }
+    }
+}
