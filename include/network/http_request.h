@@ -149,6 +149,11 @@ namespace util {
             typedef std::function<int(http_request &, const progress_t &)> on_progress_fn_t;
             /** parameters: http_request, key, key length, value, value length **/
             typedef std::function<int(http_request &, const char *, size_t, const char *, size_t)> on_header_fn_t;
+            /**
+             * parameters: http_request, origin write data address, origin write data size, real write data address, real write data size
+             */
+            typedef std::function<int(http_request &, const char *, size_t, const char *&, size_t &)>
+                on_write_fn_t; // it's useful if header is Transfer-Encoding: chunked
 
         public:
             static ptr_t create(curl_m_bind_t *, const std::string &url);
@@ -277,6 +282,9 @@ namespace util {
             const on_complete_fn_t &get_on_complete() const;
             void set_on_complete(on_complete_fn_t fn);
 
+            const on_write_fn_t &get_on_write() const;
+            void set_on_write(on_write_fn_t fn);
+
             bool is_running() const;
 
         private:
@@ -348,9 +356,10 @@ namespace util {
             on_complete_fn_t on_complete_fn_;
             on_progress_fn_t on_progress_fn_;
             on_header_fn_t on_header_fn_;
+            on_write_fn_t on_write_fn_;
         };
-    }
-}
+    } // namespace network
+} // namespace util
 #endif
 
 #endif

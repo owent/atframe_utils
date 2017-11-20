@@ -27,7 +27,7 @@ namespace util {
             static const char custom_no_expect_header[] = "Expect:";
             static const char content_type_multipart_post[] = "Content-Type: application/x-www-form-urlencoded";
             // static const char content_type_multipart_form_data[] = "Content-Type: multipart/form-data";
-        }
+        } // namespace detail
 
         http_request::ptr_t http_request::create(curl_m_bind_t *curl_multi, const std::string &url) {
             ptr_t ret = create(curl_multi);
@@ -446,6 +446,9 @@ namespace util {
         const http_request::on_complete_fn_t &http_request::get_on_complete() const { return on_complete_fn_; }
         void http_request::set_on_complete(on_complete_fn_t fn) { on_complete_fn_ = fn; }
 
+        const http_request::on_write_fn_t &http_request::get_on_write() const { return on_write_fn_; }
+        void http_request::set_on_write(on_write_fn_t fn) { on_write_fn_ = fn; }
+
         bool http_request::is_running() const { return CHECK_FLAG(flags_, flag_t::EN_FT_RUNNING); }
 
         void http_request::finish_req_rsp() {
@@ -788,7 +791,16 @@ namespace util {
                 return 0;
             }
 
-            self->response_.write(ptr, size * nmemb);
+            const char *data = ptr;
+            size_t data_len = size * nmemb;
+            if (self->on_write_fn_) {
+                self->on_write_fn_(*self, data, data_len, data, data_len);
+            }
+
+            if (NULL != data && data_len > 0) {
+                self->response_.write(data, data_len);
+            }
+
             return size * nmemb;
         }
 
@@ -872,10 +884,12 @@ namespace util {
                 }
             }
 
+            // Transfer-Encoding: chunked
+
             return size * nitems;
         }
-    }
-}
+    } // namespace network
+} // namespace util
 
 #endif
 
