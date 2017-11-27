@@ -81,7 +81,7 @@ namespace util {
                 return;
             }
 
-            if ('0' == str[0] && 'x' == str[1]) { // hex
+            if ('0' == str[0] && 'x' == ::tolower(str[1])) { // hex
                 for (size_t i = 2; str[i]; ++i) {
                     char c = static_cast<char>(::tolower(str[i]));
                     if (c >= '0' && c <= '9') {
@@ -95,7 +95,7 @@ namespace util {
                     }
                 }
             } else if ('\\' == str[0]) { // oct
-                for (size_t i = 0; str[i] >= '0' && str[i] < '8'; ++i) {
+                for (size_t i = 1; str[i] >= '0' && str[i] < '8'; ++i) {
                     out <<= 3;
                     out += str[i] - '0';
                 }
@@ -205,12 +205,12 @@ namespace util {
         }
 
         /**
-        * @brief 字符转16进制表示
-        * @param src 输入的buffer
-        * @param ss 输入的buffer长度
-        * @param out 输出buffer
-        * @param upper_case 是否大写
-        */
+         * @brief 字符转16进制表示
+         * @param src 输入的buffer
+         * @param ss 输入的buffer长度
+         * @param out 输出buffer
+         * @param upper_case 是否大写
+         */
         template <typename TCh>
         void dumphex(const void *src, size_t ss, TCh *out, bool upper_case = false) {
             const unsigned char *cs = reinterpret_cast<const unsigned char *>(src);
@@ -221,12 +221,12 @@ namespace util {
         }
 
         /**
-        * @brief 字符转16进制表示
-        * @param src 输入的buffer
-        * @param ss 输入的buffer长度
-        * @param out 输出缓冲区
-        * @param upper_case 是否大写
-        */
+         * @brief 字符转16进制表示
+         * @param src 输入的buffer
+         * @param ss 输入的buffer长度
+         * @param out 输出缓冲区
+         * @param upper_case 是否大写
+         */
         template <typename Elem, typename Traits>
         void dumphex(const void *src, size_t ss, std::basic_ostream<Elem, Traits> &out, bool upper_case = false) {
             const unsigned char *cs = reinterpret_cast<const unsigned char *>(src);
@@ -237,7 +237,15 @@ namespace util {
                 out.write(tmp, 2);
             }
         }
-    }
-}
+
+        /**
+         * @brief 版本比较函数
+         * @param l 版本号字符串(a.b.c.d...)，最多不超过16个.且每个数字必须在int64_t以内
+         * @param r 版本号字符串(a.b.c.d...)，最多不超过16个.且每个数字必须在int64_t以内
+         * @return 如果l<r则返回-1，如果l>r则返回1，如果l==r则返回0
+         */
+        int version_compare(const char *l, const char *r);
+    } // namespace string
+} // namespace util
 
 #endif /* _UTIL_COMMON_COMPILER_MESSAGE_H_ */
