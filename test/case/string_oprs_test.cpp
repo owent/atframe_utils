@@ -24,6 +24,7 @@ CASE_TEST(string_oprs, version_compare) {
 
 
     CASE_EXPECT_EQ(0, util::string::version_compare("3.4.0.0.0.0", "3.4"));
+    CASE_EXPECT_EQ(0, util::string::version_compare("", "0.0.0.0"));
 
 
     CASE_EXPECT_EQ(0, util::string::version_compare("1.2.3.4", "1.2.3.4"));

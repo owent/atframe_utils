@@ -18,6 +18,8 @@
 // 目测主流编译器都支持且有优化， gcc 3.4 and upper, vc, clang, c++ builder xe3, intel c++ and etc.
 #pragma once
 
+#include <stdint.h>
+
 #include <algorithm>
 #include <cctype>
 #include <cstdlib>
@@ -239,9 +241,18 @@ namespace util {
         }
 
         /**
+         * @brief 提取版本号
+         * @param v 版本号字符串(a.b.c.d...)
+         * @note 版本号字符串可以是十进制数字或0x开头的十六进制或\开头的八进制,且每个数字必须在int64_t以内
+         * @return 返回剩余字符串地址
+         */
+        const char *version_tok(const char *v, int64_t &out);
+
+        /**
          * @brief 版本比较函数
-         * @param l 版本号字符串(a.b.c.d...)，最多不超过16个.且每个数字必须在int64_t以内
-         * @param r 版本号字符串(a.b.c.d...)，最多不超过16个.且每个数字必须在int64_t以内
+         * @param l 版本号字符串(a.b.c.d...)
+         * @param r 版本号字符串(a.b.c.d...)
+         * @note 版本号字符串可以是十进制数字或0x开头的十六进制或\开头的八进制,且每个数字必须在int64_t以内
          * @return 如果l<r则返回-1，如果l>r则返回1，如果l==r则返回0
          */
         int version_compare(const char *l, const char *r);
