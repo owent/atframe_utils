@@ -14,13 +14,14 @@
 
 #pragma once
 
-#include <cstdlib>
 #include <cstdio>
+#include <cstdlib>
+#include <cstring>
+#include <ctime>
+#include <inttypes.h>
 #include <stdint.h>
 #include <string>
-#include <inttypes.h>
-#include <ctime>
-#include <cstring>
+
 
 namespace util {
     namespace log {
@@ -33,7 +34,7 @@ namespace util {
                 enum type {
                     INDEX = 0x01, // 日志rotation序号
                     DATE = 0x02,  // 日期
-                    TIME = 0x04, // 时间
+                    TIME = 0x04,  // 时间
                 };
             };
 
@@ -102,12 +103,20 @@ namespace util {
             /**
              * @brief 设置工程目录，会影响format时的%s参数，如果文件路径以工程目录开头，则会用~替换
              */
-            static void set_project_directory(const char* dirbuf, size_t dirsz);
+            static void set_project_directory(const char *dirbuf, size_t dirsz);
+
+            /**
+             * @brief 设置工程目录，会影响format时的%s参数，如果文件路径以工程目录开头，则会用~替换
+             * @param name 日志等级的名称（disable/disabled, fatal, error, warn/warning, info, notice, debug）
+             * @return 读取到的等级id,默认会返回debug
+             */
+            static level_t::type get_level_by_name(const char *name);
+
         private:
             static struct tm *get_iso_tm();
             static std::string project_dir_;
         };
-    }
-}
+    } // namespace log
+} // namespace util
 
 #endif

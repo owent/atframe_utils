@@ -61,8 +61,8 @@ while getopts "ab:c:e:hm:o:tus-" OPTION; do
         ;;
         c)
             CC="$OPTARG";
-            CXX="${CC/clang/clang++}";
-            CXX="${CXX/gcc/g++}";
+            CXX="${CC/%clang/clang++}";
+            CXX="${CXX/%gcc/g++}";
         ;;
         e)
             CCACHE="$OPTARG";

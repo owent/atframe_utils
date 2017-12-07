@@ -18,8 +18,6 @@ OWenT’s Utils - Algorithm
 1. [MurmurHash](https://github.com/aappleby/smhasher) 对连续输入有良好散列结果并且性能不错的Hash算法（redis用的是MurmurHash2）
 2. [CityHash](https://code.google.com/p/cityhash/) Google受MurmurHash启发搞出来的新Hash算法，未对小字符串做优化，性能更高一点点，但是实现更为复杂
 3. [FarmHash](https://code.google.com/p/farmhash/) 还是Google搞出来的更新新Hash算法，官方说比CityHash性能还会高一点点。但是实现巨复杂无比
-4. [CRC32/CRC64](https://github.com/owt5008137/libatbus/tree/master/src/detail) @see [libatbus](https://github.com/owt5008137/libatbus)
-5. [CRC16](https://github.com/antirez/redis/blob/unstable/src/crc16.c) @see [redis](https://github.com/antirez/redis)
 
 压缩算法
 ------

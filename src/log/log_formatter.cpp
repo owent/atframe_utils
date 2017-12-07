@@ -391,5 +391,46 @@ if(NULL == tm_obj_ptr) {                \
                 project_dir_.assign(dirbuf, dirsz);
             }
         }
+
+        log_formatter::level_t::type log_formatter::get_level_by_name(const char *name) {
+            // number, directly convert it
+            if (name && (name[0] == '\\' || (name[0] >= '0' && name[0] <= '9'))) {
+                int l = util::string::to_int<int>(name);
+                if (l >= 0 && l <= level_t::LOG_LW_DEBUG) {
+                    return static_cast<level_t::type>(l);
+                }
+
+                return level_t::LOG_LW_DEBUG;
+            }
+
+            // name and convert into level
+
+            if (0 == UTIL_STRFUNC_STRNCASE_CMP("disable", name, 7)) {
+                return level_t::LOG_LW_DISABLED;
+            }
+
+            if (0 == UTIL_STRFUNC_STRNCASE_CMP("fatal", name, 5)) {
+                return level_t::LOG_LW_FATAL;
+            }
+
+            if (0 == UTIL_STRFUNC_STRNCASE_CMP("error", name, 5)) {
+                return level_t::LOG_LW_ERROR;
+            }
+
+            if (0 == UTIL_STRFUNC_STRNCASE_CMP("warn", name, 4)) {
+                return level_t::LOG_LW_WARNING;
+            }
+
+            if (0 == UTIL_STRFUNC_STRNCASE_CMP("info", name, 4)) {
+                return level_t::LOG_LW_INFO;
+            }
+
+            if (0 == UTIL_STRFUNC_STRNCASE_CMP("notice", name, 6)) {
+                return level_t::LOG_LW_NOTICE;
+            }
+
+            return level_t::LOG_LW_DEBUG;
+        }
+
     } // namespace log
 } // namespace util
