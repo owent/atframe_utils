@@ -1,15 +1,15 @@
 ﻿/**
-* @file explicit_declare.h
-* @brief 导入继承关系约束<br />
-* Licensed under the MIT licenses.
-*
-* @version 1.0
-* @author OWenT, owt5008137@live.com
-* @date 2013-12-25
-*
-* @history
-*
-*/
+ * @file explicit_declare.h
+ * @brief 导入继承关系约束<br />
+ * Licensed under the MIT licenses.
+ *
+ * @version 1.0
+ * @author OWenT, owt5008137@live.com
+ * @date 2013-12-25
+ *
+ * @history
+ *
+ */
 #ifndef STD_EXPLICIT_DECLARE_H
 #define STD_EXPLICIT_DECLARE_H
 
@@ -18,83 +18,121 @@
 
 // ============================================================
 // 公共包含部分
-// C++0x/11/14 显示申明
+// C++0x/11/14/17 显示申明
 // ============================================================
 
+#ifndef PARAM_IN
+#if defined(_MSC_VER) && _MSC_VER >= 1700 // vs 2012 or higher
+#define PARAM_IN _In_
+#else
 #define PARAM_IN
+#endif
+#endif
+
+#ifndef PARAM_OUT
+#if defined(_MSC_VER) && _MSC_VER >= 1700 // vs 2012 or higher
+#define PARAM_OUT _Out_
+#else
 #define PARAM_OUT
+#endif
+#endif
+
+#ifndef PARAM_INOUT
+#if defined(_MSC_VER) && _MSC_VER >= 1700 // vs 2012 or higher
+#define PARAM_INOUT _Inout_
+#else
 #define PARAM_INOUT
-
-// default,delete 显示生成默认构造函数申明
-// VC11.0 以上分支判断
-#if defined(_MSC_VER) && _MSC_VER >= 1700
-#define FUNC_DEFAULT = default
-#define FUNC_DELETE = delete
-#elif defined(__clang__) && __clang_major__ >= 3 && defined(__cplusplus) && __cplusplus >= 201103L
-// clang
-#define FUNC_DEFAULT = default
-#define FUNC_DELETE = delete
-#elif defined(__GNUC__) && __GNUC__ >= 4 && (__GNUC__ > 4 || __GNUC_MINOR__ >= 4) && defined(__cplusplus)
-// 采用GCC
-#if __cplusplus >= 201103L || defined(__GXX_EXPERIMENTAL_CXX0X__)
-#define FUNC_DEFAULT = default
-#define FUNC_DELETE = delete
-#else
-#define FUNC_DEFAULT \
-    {}
-#define FUNC_DELETE
 #endif
-#else
-#define FUNC_DEFAULT \
-    {}
-#define FUNC_DELETE
-#endif
-
-// override ,final 显示生成默认构造函数申明
-// VC10.0 以上分支判断
-#if defined(_MSC_VER) && _MSC_VER >= 1600
-#define CLASS_OVERRIDE override
-#if _MSC_VER >= 1700
-#define CLASS_FINAL final
-#else
-#define CLASS_FINAL sealed
-#endif
-#elif defined(__GNUC__) && __GNUC__ >= 4 && (__GNUC__ > 4 || __GNUC_MINOR__ >= 7) && defined(__cplusplus)
-// 采用GCC
-#if __cplusplus >= 201103L || defined(__GXX_EXPERIMENTAL_CXX0X__)
-#define CLASS_OVERRIDE override
-#define CLASS_FINAL final
-#else
-#define CLASS_OVERRIDE
-#define CLASS_FINAL
-#endif
-#else
-#define CLASS_OVERRIDE
-#define CLASS_FINAL
 #endif
 
 
-// deprecated
-// using: DEPRECATED_ATTR int a; class DEPRECATED_ATTR a;
-// using: DEPRECATED_MSG("there is better choose") int a; class DEPRECATED_MSG("there is better choose") a;
+/**
+ * @brief deprecated, 标记为不推荐使用
+ * usage:
+ *   EXPLICIT_DEPRECATED_ATTR int a;
+ *   class EXPLICIT_DEPRECATED_ATTR a;
+ *   EXPLICIT_DEPRECATED_ATTR int a();
+ * usage:
+ *   EXPLICIT_DEPRECATED_MSG("there is better choose") int a;
+ *   class DEPRECATED_MSG("there is better choose") a;
+ *   EXPLICIT_DEPRECATED_MSG("there is better choose") int a();
+ */
 #if defined(__cplusplus) && __cplusplus >= 201402L
-#define DEPRECATED_ATTR [[deprecated]]
+#define EXPLICIT_DEPRECATED_ATTR [[deprecated]]
+#elif defined(__clang__)
+#define EXPLICIT_DEPRECATED_ATTR __attribute__((deprecated))
 #elif defined(__GNUC__) && ((__GNUC__ >= 4) || ((__GNUC__ == 3) && (__GNUC_MINOR__ >= 1)))
-#define DEPRECATED_ATTR __attribute__((deprecated))
+#define EXPLICIT_DEPRECATED_ATTR __attribute__((deprecated))
 #elif defined(_MSC_VER) && _MSC_VER >= 1400 // vs 2005 or higher
-#define DEPRECATED_ATTR __declspec(deprecated)
+#if _MSC_VER >= 1910 && defined(_MSVC_LANG) && _MSVC_LANG >= 201703L
+#define EXPLICIT_DEPRECATED_ATTR [[deprecated]]
 #else
-#define DEPRECATED_ATTR
+#define EXPLICIT_DEPRECATED_ATTR __declspec(deprecated)
+#endif
+#else
+#define EXPLICIT_DEPRECATED_ATTR
 #endif
 
 #if defined(__cplusplus) && __cplusplus >= 201402L
-#define DEPRECATED_MSG(msg) [[deprecated(msg)]]
+#define EXPLICIT_DEPRECATED_MSG(msg) [[deprecated(msg)]]
+#elif defined(__clang__)
+#define EXPLICIT_DEPRECATED_MSG(msg) __attribute__((deprecated(msg)))
 #elif defined(__GNUC__) && ((__GNUC__ >= 4) || ((__GNUC__ == 3) && (__GNUC_MINOR__ >= 1)))
-#define DEPRECATED_MSG(msg) __attribute__((deprecated(msg)))
+#define EXPLICIT_DEPRECATED_MSG(msg) __attribute__((deprecated(msg)))
 #elif defined(_MSC_VER) && _MSC_VER >= 1400 // vs 2005 or higher
-#define DEPRECATED_MSG(msg) __declspec(deprecated(msg))
+#if _MSC_VER >= 1910 && defined(_MSVC_LANG) && _MSVC_LANG >= 201703L
+#define EXPLICIT_DEPRECATED_MSG(msg) [[deprecated(msg)]]
 #else
-#define DEPRECATED_MSG(msg)
+#define EXPLICIT_DEPRECATED_MSG(msg) __declspec(deprecated(msg))
+#endif
+#else
+#define EXPLICIT_DEPRECATED_MSG(msg)
+#endif
+
+/**
+ * @brief nodiscard, 标记禁止忽略返回值
+ * usage:
+ *   EXPLICIT_NODISCARD_ATTR int a;
+ *   class EXPLICIT_NODISCARD_ATTR a;
+ *   EXPLICIT_NODISCARD_ATTR int a();
+ */
+#if defined(__cplusplus) && __cplusplus >= 201703L
+#define EXPLICIT_NODISCARD_ATTR [[nodiscard]]
+#elif defined(__clang__)
+#define EXPLICIT_NODISCARD_ATTR __attribute__((warn_unused_result))
+#elif defined(__GNUC__) && ((__GNUC__ >= 4) || ((__GNUC__ == 3) && (__GNUC_MINOR__ >= 1)))
+#define EXPLICIT_NODISCARD_ATTR __attribute__((warn_unused_result))
+#elif defined(_MSC_VER) && _MSC_VER >= 1700 // vs 2012 or higher
+#if _MSC_VER >= 1910 && defined(_MSVC_LANG) && _MSVC_LANG >= 201703L
+#define EXPLICIT_NODISCARD_ATTR [[nodiscard]]
+#else
+#define EXPLICIT_NODISCARD_ATTR _Check_return_
+#endif
+#else
+#define EXPLICIT_NODISCARD_ATTR
+#endif
+
+/**
+ * @brief maybe_unused, 标记忽略unused警告
+ * usage:
+ *   EXPLICIT_UNUSED_ATTR int a;
+ *   class EXPLICIT_UNUSED_ATTR a;
+ *   EXPLICIT_UNUSED_ATTR int a();
+ */
+#if defined(__cplusplus) && __cplusplus >= 201703L
+#define EXPLICIT_UNUSED_ATTR [[maybe_unused]]
+#elif defined(__clang__)
+#define EXPLICIT_UNUSED_ATTR __attribute__((unused))
+#elif defined(__GNUC__) && ((__GNUC__ >= 4) || ((__GNUC__ == 3) && (__GNUC_MINOR__ >= 1)))
+#define EXPLICIT_UNUSED_ATTR __attribute__((unused))
+#elif defined(_MSC_VER) && _MSC_VER >= 1700 // vs 2012 or higher
+#if _MSC_VER >= 1910 && defined(_MSVC_LANG) && _MSVC_LANG >= 201703L
+#define EXPLICIT_UNUSED_ATTR [[maybe_unused]]
+#else
+#define EXPLICIT_UNUSED_ATTR
+#endif
+#else
+#define EXPLICIT_UNUSED_ATTR
 #endif
 
 #endif

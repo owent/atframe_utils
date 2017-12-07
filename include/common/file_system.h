@@ -23,6 +23,7 @@
 #include <string>
 #include <vector>
 
+#include <std/explicit_declare.h>
 
 #if defined(__CYGWIN__) // Windows Cygwin
 #define UTIL_FS_POSIX_API
@@ -51,7 +52,7 @@
 #include <errno.h>
 #define UTIL_FS_OPEN(e, f, path, mode) \
     f = fopen(path, mode);             \
-    int e = errno
+    EXPLICIT_UNUSED_ATTR int e = errno
 #define UTIL_FS_CLOSE(f) fclose(f)
 #endif
 

@@ -531,7 +531,6 @@ namespace util {
                 // do nothing in client mode
                 FILE *pem = NULL;
                 UTIL_FS_OPEN(pem_file_e, pem, name, "r");
-                UNUSED(pem_file_e);
                 if (NULL == pem) {
                     ret = error_code_t::READ_DHPARAM_FILE;
                     break;

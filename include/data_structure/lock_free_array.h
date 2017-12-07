@@ -11,9 +11,10 @@
  */
 #pragma once
 
-#include <atomic>
 #include <array>
+#include <atomic>
 
+#include "config/compiler_features.h"
 #include "std/explicit_declare.h"
 
 namespace util {
@@ -28,8 +29,8 @@ namespace util {
             typedef TContainer container_type;
 
         private:
-            lock_free_array(const lock_free_array &) FUNC_DELETE;
-            lock_free_array &operator=(const lock_free_array &) FUNC_DELETE;
+            lock_free_array(const lock_free_array &) UTIL_CONFIG_DELETED_FUNCTION;
+            lock_free_array &operator=(const lock_free_array &) UTIL_CONFIG_DELETED_FUNCTION;
 
         public:
             typedef pointer_type iterator;
@@ -143,5 +144,5 @@ namespace util {
             std::atomic<size_t> end_;
             container_type data_;
         };
-    }
-}
+    } // namespace ds
+} // namespace util
