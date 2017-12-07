@@ -14,7 +14,7 @@ namespace util {
 
         // RFC 3986
         static void _init_raw_url_map(uri_map_type &uri_map) {
-            if (uri_map[static_cast<int>('0')]) return;
+            if (uri_map[static_cast<unsigned char>('0')]) return;
 
             for (int i = 0; i < 26; ++i) {
                 uri_map['a' + i] = uri_map['A' + i] = true;
@@ -25,32 +25,32 @@ namespace util {
             }
 
             // -_.
-            const char spec_chars[] = "-_.";
+            const unsigned char spec_chars[] = "-_.";
             for (int i = 0; spec_chars[i]; ++i) {
-                uri_map[static_cast<int>(spec_chars[i])] = true;
+                uri_map[spec_chars[i]] = true;
             }
         }
 
         static void _init_uri_component_map(uri_map_type &uri_map) {
-            if (uri_map[static_cast<int>('0')]) return;
+            if (uri_map[static_cast<unsigned char>('0')]) return;
 
             _init_raw_url_map(uri_map);
 
             // -_.!~*'()
-            const char spec_chars[] = "!~*'()";
+            const unsigned char spec_chars[] = "!~*'()";
             for (int i = 0; spec_chars[i]; ++i) {
-                uri_map[static_cast<int>(spec_chars[i])] = true;
+                uri_map[spec_chars[i]] = true;
             }
         }
 
         static void _init_uri_map(uri_map_type &uri_map) {
-            if (uri_map[static_cast<int>('0')]) return;
+            if (uri_map[static_cast<unsigned char>('0')]) return;
 
             _init_uri_component_map(uri_map);
             // ;/?:@&=+$,#
-            const char spec_chars[] = ";/?:@&=+$,#";
+            const unsigned char spec_chars[] = ";/?:@&=+$,#";
             for (int i = 0; spec_chars[i]; ++i) {
-                uri_map[static_cast<int>(spec_chars[i])] = true;
+                uri_map[spec_chars[i]] = true;
             }
         }
 
@@ -60,9 +60,11 @@ namespace util {
             ret.reserve(sz);
 
             while (sz--) {
-                if (uri_map[static_cast<int>(*data)]) {
+                unsigned char data_uc = static_cast<unsigned char>(*data);
+
+                if (uri_map[data_uc]) {
                     ret += *data;
-                } else if (like_php && ' ' == *data) {
+                } else if (like_php && ' ' == data_uc) {
                     ret += '+';
                 } else {
                     ret += '%';
@@ -79,9 +81,9 @@ namespace util {
                     }
 
                     // 转义前4位
-                    ret += hex_char_map[*data >> 4];
+                    ret += hex_char_map[data_uc >> 4];
                     // 转义后4位
-                    ret += hex_char_map[*data & 0x0F];
+                    ret += hex_char_map[data_uc & 0x0F];
                 }
 
                 ++data;
@@ -94,10 +96,10 @@ namespace util {
             std::string ret;
 
             sz = sz ? sz : strlen(data);
-            static char hex_char_map[256] = {0};
+            static unsigned char hex_char_map[256] = {0};
 
             // 初始化字符表
-            if (0 == hex_char_map[static_cast<int>('A')]) {
+            if (0 == hex_char_map[static_cast<unsigned char>('A')]) {
                 for (int i = 0; i < 10; i++) {
                     hex_char_map['0' + i] = i;
                 }
@@ -113,8 +115,9 @@ namespace util {
                 } else if (*data != '%' || sz < 2) {
                     ret += *data;
                 } else {
-                    const char &high_c = data[1], &low_c = data[2];
-                    ret += (hex_char_map[static_cast<int>(high_c)] << 4) + hex_char_map[static_cast<int>(low_c)];
+                    const unsigned char high_c = static_cast<unsigned char>(data[1]);
+                    const unsigned char low_c = static_cast<unsigned char>(data[2]);
+                    ret += static_cast<unsigned char>((hex_char_map[high_c] << 4) + hex_char_map[low_c]);
                     data += 2;
                     sz -= 2;
                 }
@@ -175,7 +178,7 @@ namespace util {
             sz = sz ? sz : strlen(uri);
             return _decode_uri(uri, sz, true);
         }
-    }
+    } // namespace uri
 
     namespace types {
         void item_impl::append_to(std::string &target, const std::string &key, const std::string &value) const {
@@ -286,9 +289,9 @@ namespace util {
                 if (iter != data_.begin()) {
                     ret += ", ";
                 }
-                ret += '\"' + iter->first + "\": " + (iter->second->type() < ITEM_TYPE_QUERYSTRING
-                                                          ? '\"' + iter->second->to_string(prefix) + '\"'
-                                                          : iter->second->to_string(prefix));
+                ret += '\"' + iter->first + "\": " +
+                       (iter->second->type() < ITEM_TYPE_QUERYSTRING ? '\"' + iter->second->to_string(prefix) + '\"'
+                                                                     : iter->second->to_string(prefix));
             }
 
             ret += "}";
@@ -342,7 +345,7 @@ namespace util {
 
             return ret;
         }
-    }
+    } // namespace types
 
     tquerystring::tquerystring() : spliter_("?#&") {}
 
@@ -450,4 +453,4 @@ namespace util {
     }
 
     std::shared_ptr<types::item_impl> tquerystring::operator[](const std::string &key) { return get(key); }
-}
+} // namespace util
