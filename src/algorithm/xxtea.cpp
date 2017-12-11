@@ -1,4 +1,4 @@
-#include <inttypes.h>
+﻿#include <inttypes.h>
 #include <limits>
 #include <stdint.h>
 #include <stdlib.h>
@@ -15,7 +15,7 @@
 #ifndef XXTEA_GET_UINT32_BE
 #define XXTEA_GET_UINT32_BE(n, b, i)                                                                                                  \
     \
-{                                                                                                                              \
+{                                                                                                                                \
         (n) = ((uint32_t)(b)[(i)] << 24) | ((uint32_t)(b)[(i) + 1] << 16) | ((uint32_t)(b)[(i) + 2] << 8) | ((uint32_t)(b)[(i) + 3]); \
     \
 }
@@ -26,6 +26,27 @@
 #endif
 
 namespace util {
+
+    namespace detail {
+        template <bool CHECK_ENABLE>
+        struct xxtea_check_length;
+
+        template <>
+        struct xxtea_check_length<true> {
+            static bool check_protect(size_t len) { return len > (static_cast<size_t>(std::numeric_limits<uint32_t>::max()) << 2); }
+        };
+
+        template <bool CHECK_ENABLE>
+        struct xxtea_check_length {
+            static bool check_protect(size_t len) { return false; }
+        };
+
+        template <typename Ty>
+        struct xxtea_check_length_delegate {
+            static const bool value = sizeof(Ty) > sizeof(uint32_t);
+        };
+    } // namespace detail
+
     void xxtea_setup(xxtea_key *k, const unsigned char filled[4 * sizeof(uint32_t)]) {
         int i;
 
@@ -41,7 +62,7 @@ namespace util {
             abort();
         }
 
-        if (sizeof(size_t) > sizeof(uint32_t) && len > (static_cast<size_t>(std::numeric_limits<uint32_t>::max()) << 2)) {
+        if (detail::xxtea_check_length<detail::xxtea_check_length_delegate<size_t>::value>::check_protect(len)) {
             abort();
         }
 
@@ -105,7 +126,7 @@ namespace util {
             abort();
         }
 
-        if (sizeof(size_t) > sizeof(uint32_t) && len > (static_cast<size_t>(std::numeric_limits<uint32_t>::max()) << 2)) {
+        if (detail::xxtea_check_length<detail::xxtea_check_length_delegate<size_t>::value>::check_protect(len)) {
             abort();
         }
 
@@ -163,4 +184,4 @@ namespace util {
             *olen = 0;
         }
     }
-}
+} // namespace util

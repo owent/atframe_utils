@@ -254,7 +254,7 @@ CASE_TEST(time_test, jiffies_timer_slot) {
         if (0 == timer_count) {
             ++blank_area[i / short_timer_t::LVL_SIZE];
         } else {
-            CASE_EXPECT_EQ(timer_count, short_timer_t::LVL_GRAN(i / short_timer_t::LVL_SIZE));
+            CASE_EXPECT_EQ(timer_count, static_cast<size_t>(short_timer_t::LVL_GRAN(i / short_timer_t::LVL_SIZE)));
         }
     }
 

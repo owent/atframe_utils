@@ -1,4 +1,4 @@
-#ifndef UTIL_CLI_CMDOPTIONBINDT_MF_CC_H
+﻿#ifndef UTIL_CLI_CMDOPTIONBINDT_MF_CC_H
 #define UTIL_CLI_CMDOPTIONBINDT_MF_CC_H
 
 #pragma once
@@ -83,7 +83,7 @@ namespace util {
                 }
 #endif
             };
-        }
-    }
-}
+        } // namespace binder
+    }     // namespace cli
+} // namespace util
 #endif /* _CMDOPTIONBINDT_MF_CC_H_ */

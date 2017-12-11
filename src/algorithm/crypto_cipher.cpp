@@ -405,7 +405,7 @@ namespace util {
                 return error_code_t::OK;
             }
 
-            return error_code_t::OK;
+            // return error_code_t::OK;
         }
 
         int cipher::encrypt(const unsigned char *input, size_t ilen, unsigned char *output, size_t *olen) {
@@ -441,7 +441,7 @@ namespace util {
                     }
                 }
 
-                if (!(EVP_CipherUpdate(cipher_context_.enc, output, &outl, input, ilen))) {
+                if (!(EVP_CipherUpdate(cipher_context_.enc, output, &outl, input, static_cast<int>(ilen)))) {
                     return details::setup_errorno(*this, -1, error_code_t::CIPHER_OPERATION);
                 }
 
@@ -516,7 +516,7 @@ namespace util {
                     }
                 }
 
-                if (!(EVP_CipherUpdate(cipher_context_.dec, output, &outl, input, ilen))) {
+                if (!(EVP_CipherUpdate(cipher_context_.dec, output, &outl, input, static_cast<int>(ilen)))) {
                     return details::setup_errorno(*this, -1, error_code_t::CIPHER_OPERATION);
                 }
 

@@ -1,4 +1,4 @@
-#ifndef UTIL_CLI_CMDOPTIONBINDTBASE_H
+﻿#ifndef UTIL_CLI_CMDOPTIONBINDTBASE_H
 #define UTIL_CLI_CMDOPTIONBINDTBASE_H
 
 #pragma once
@@ -39,7 +39,7 @@ namespace util {
 
                 void operator()(callback_param args) { param_list_(func_obj_, args, 0); }
             };
-        }
-    }
-}
+        } // namespace binder
+    }     // namespace cli
+} // namespace util
 #endif /* _CMDOPTIONBINDTBASE_H_ */

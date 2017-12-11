@@ -72,11 +72,11 @@ namespace util {
                     // 初始化16进制表
                     if (0 == hex_char_map[0]) {
                         for (int i = 0; i < 10; i++) {
-                            hex_char_map[i] = '0' + i;
+                            hex_char_map[i] = static_cast<char>('0' + i);
                         }
 
                         for (int i = 10; i < 16; i++) {
-                            hex_char_map[i] = 'A' - 10 + i;
+                            hex_char_map[i] = static_cast<char>('A' - 10 + i);
                         }
                     }
 
@@ -101,11 +101,11 @@ namespace util {
             // 初始化字符表
             if (0 == hex_char_map[static_cast<unsigned char>('A')]) {
                 for (int i = 0; i < 10; i++) {
-                    hex_char_map['0' + i] = i;
+                    hex_char_map['0' + i] = static_cast<unsigned char>(i);
                 }
 
                 for (int i = 10; i < 16; i++) {
-                    hex_char_map['A' - 10 + i] = hex_char_map['a' - 10 + i] = i;
+                    hex_char_map['A' - 10 + i] = hex_char_map['a' - 10 + i] = static_cast<unsigned char>(i);
                 }
             }
 

@@ -1,4 +1,4 @@
-#ifndef UTIL_CLI_CMDOPTIONBIND_H
+﻿#ifndef UTIL_CLI_CMDOPTIONBIND_H
 #define UTIL_CLI_CMDOPTIONBIND_H
 
 #pragma once
@@ -28,6 +28,6 @@ namespace util {
             TRANSLATE = 0x0004, // (第三位)转义字符
             CMDSPLIT = 0x0008,  // (第四位)指令分隔符
         };
-    }
-}
+    } // namespace cli
+} // namespace util
 #endif /* _CMDOPTIONBIND_H_ */

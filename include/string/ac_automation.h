@@ -672,7 +672,7 @@ namespace util {
 
                 if (is_no_case_) {
                     string_t res = keyword;
-                    std::transform(res.begin(), res.end(), res.begin(), ::tolower);
+                    std::transform(res.begin(), res.end(), res.begin(), util::string::tolower<char>);
                     storage_[0]->insert(storage_, res.c_str(), res.size(), keyword);
                 } else {
                     storage_[0]->insert(storage_, keyword.c_str(), keyword.size(), keyword);
@@ -693,7 +693,7 @@ namespace util {
                 string_t nocase;
                 if (is_no_case_) {
                     nocase = content;
-                    std::transform(nocase.begin(), nocase.end(), nocase.begin(), ::tolower);
+                    std::transform(nocase.begin(), nocase.end(), nocase.begin(), util::string::tolower<char>);
                     conv_content = &nocase;
                 }
 

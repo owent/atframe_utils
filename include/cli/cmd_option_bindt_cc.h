@@ -1,4 +1,4 @@
-#ifndef UTIL_CLI_CMDOPTIONBINDT_CC_H
+﻿#ifndef UTIL_CLI_CMDOPTIONBINDT_CC_H
 #define UTIL_CLI_CMDOPTIONBINDT_CC_H
 
 #pragma once
@@ -57,7 +57,7 @@ namespace util {
                 }
 #endif
             };
-        }
-    }
-}
+        } // namespace binder
+    }     // namespace cli
+} // namespace util
 #endif /* cmd_option_bindt_cc_caller */

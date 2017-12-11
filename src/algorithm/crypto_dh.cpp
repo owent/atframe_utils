@@ -311,9 +311,11 @@ static int tls1_ec_curve_id2nid(int curve_id, unsigned int *pflags) {
 }
 
 static int tls1_ec_nid2curve_id(int nid) {
-    size_t i;
-    for (i = 0; i < OSSL_NELEM(nid_list); i++) {
-        if (nid_list[i].nid == nid) return i + 1;
+    int i;
+    for (i = 0; i < static_cast<int>(OSSL_NELEM(nid_list)); i++) {
+        if (nid_list[i].nid == nid) {
+            return i + 1;
+        }
     }
     return 0;
 }
@@ -1190,7 +1192,8 @@ namespace util {
                         }
 
                         // param_len += i; // do not use **param_len** any more, it will cause static analysis to report a warning
-                        if (!(dh_context_.peer_pubkey_ = BN_bin2bn(p, i, NULL))) {
+                        dh_context_.peer_pubkey_ = BN_bin2bn(p, i, NULL);
+                        if (!dh_context_.peer_pubkey_) {
                             ret = details::setup_errorno(*this, 0, error_code_t::INIT_DH_READ_KEY);
                             break;
                         }
@@ -1443,7 +1446,7 @@ namespace util {
                 if (NULL != dh_context_.peer_pubkey_) {
                     BN_free(dh_context_.peer_pubkey_);
                 }
-                dh_context_.peer_pubkey_ = BN_bin2bn(input, ilen, NULL);
+                dh_context_.peer_pubkey_ = BN_bin2bn(input, static_cast<int>(ilen), NULL);
                 if (NULL == dh_context_.peer_pubkey_) {
                     ret = details::setup_errorno(*this, 0, error_code_t::INIT_DH_READ_KEY);
                     break;

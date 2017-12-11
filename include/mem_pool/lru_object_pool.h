@@ -165,8 +165,8 @@ namespace util {
                 }
 
                 if (gc_list_ <= 0 && gc_item_ <= 0) {
-                    item_min_bound_ = (item_count_.get() + item_min_bound_) / 2;
-                    item_max_bound_ = (item_count_.get() + item_max_bound_ + 1) / 2;
+                    item_min_bound_ = static_cast<size_t>((item_count_.get() + item_min_bound_) / 2);
+                    item_max_bound_ = static_cast<size_t>((item_count_.get() + item_max_bound_ + 1) / 2);
 
                     if (item_min_bound_ > item_adjust_max_ - 1) {
                         item_min_bound_ = item_adjust_max_ - 1;
@@ -180,7 +180,7 @@ namespace util {
                         item_max_bound_ = item_adjust_min_ + 1;
                     }
 
-                    list_bound_ = (list_count_.get() + list_bound_ + 1) / 2;
+                    list_bound_ = static_cast<size_t>((list_count_.get() + list_bound_ + 1) / 2);
                     if (list_bound_ < list_adjust_min_) {
                         list_bound_ = list_adjust_min_;
                     }

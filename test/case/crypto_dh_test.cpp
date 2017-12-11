@@ -105,7 +105,7 @@ CASE_TEST(crypto_dh, ecdh) {
 
         clock_t beg_time_clk = clock();
         int left_times = test_times;
-        size_t secret_bits;
+        size_t secret_bits = 0;
         while (left_times-- > 0) {
             // client shared context & dh
             util::crypto::dh cli_dh;

@@ -1,22 +1,23 @@
-#ifndef TEST_BINDOBJ_H
+﻿#ifndef TEST_BINDOBJ_H
 #define TEST_BINDOBJ_H
 
 
-# pragma once
+#pragma once
 
-#include <iostream>
-#include <cstdio>
 #include "cli/cmd_option.h"
+#include <cstdio>
+#include <iostream>
+
 
 // 绑定函数对象例程
-struct obj_bind0{
+struct obj_bind0 {
     int m;
-    obj_bind0(int _m): m(_m){}
+    obj_bind0(int _m) : m(_m) {}
 
-    void operator()(util::cli::callback_param par){
+    void operator()(util::cli::callback_param par) {
         printf("On Bind Obj Params:");
         int len = static_cast<int>(par.get_params_number());
-        for (int  i = 0; i < len; ++ i) {
+        for (int i = 0; i < len; ++i) {
             printf(" %s", par[i]->to_string());
         }
 
@@ -24,14 +25,14 @@ struct obj_bind0{
     }
 };
 
-struct obj_bind1{
+struct obj_bind1 {
     int m;
-    obj_bind1(int _m): m(_m){}
+    obj_bind1(int _m) : m(_m) {}
 
-    void operator()(util::cli::callback_param par, int a){
+    void operator()(util::cli::callback_param par, int a) {
         printf("On Bind Obj1 Params:");
         int len = static_cast<int>(par.get_params_number());
-        for (int  i = 0; i < len; ++ i) {
+        for (int i = 0; i < len; ++i) {
             printf(" %s", par[i]->to_string());
         }
 
@@ -39,14 +40,14 @@ struct obj_bind1{
     }
 };
 
-struct obj_bind2{
+struct obj_bind2 {
     int m;
-    obj_bind2(int _m): m(_m){}
+    obj_bind2(int _m) : m(_m) {}
 
-    void operator()(util::cli::callback_param par, int a, double b){
+    void operator()(util::cli::callback_param par, int a, double b) {
         printf("On Bind Obj2 Params:");
         int len = static_cast<int>(par.get_params_number());
-        for (int  i = 0; i < len; ++ i) {
+        for (int i = 0; i < len; ++i) {
             printf(" %s", par[i]->to_string());
         }
 
@@ -54,14 +55,14 @@ struct obj_bind2{
     }
 };
 
-struct obj_bind3{
+struct obj_bind3 {
     int m;
-    obj_bind3(int _m): m(_m){}
+    obj_bind3(int _m) : m(_m) {}
 
-    void operator()(util::cli::callback_param par, int a, double b, bool c){
+    void operator()(util::cli::callback_param par, int a, double b, bool c) {
         printf("On Bind Obj3 Params:");
         int len = static_cast<int>(par.get_params_number());
-        for (int  i = 0; i < len; ++ i) {
+        for (int i = 0; i < len; ++i) {
             printf(" %s", par[i]->to_string());
         }
 

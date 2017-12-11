@@ -1,4 +1,4 @@
-/**
+﻿/**
  * @file xxtea.h
  * @brief XXTEA加密算法
  * Licensed under the MIT licenses.
@@ -28,7 +28,9 @@
 #endif
 
 namespace util {
-    typedef struct { uint32_t data[4]; } xxtea_key;
+    typedef struct {
+        uint32_t data[4];
+    } xxtea_key;
 
     void xxtea_setup(xxtea_key *k, const unsigned char filled[4 * sizeof(uint32_t)]);
 
@@ -75,6 +77,6 @@ namespace util {
      * @note if passed invalid parameter, olen will be set to 0
      */
     void xxtea_decrypt(const xxtea_key *key, const void *input, size_t ilen, void *output, size_t *olen);
-}
+} // namespace util
 
 #endif

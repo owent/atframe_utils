@@ -1,4 +1,4 @@
-#ifndef UTIL_CLI_CMDOPTION_PHOENIX_H
+﻿#ifndef UTIL_CLI_CMDOPTION_PHOENIX_H
 #define UTIL_CLI_CMDOPTION_PHOENIX_H
 
 #pragma once
@@ -140,7 +140,7 @@ namespace util {
             assign_logic_bool_t<T> assign_logic_bool(T &t) {
                 return assign_logic_bool_t<T>(std::ref(t));
             }
-        }
-    }
-}
+        } // namespace phoenix
+    }     // namespace cli
+} // namespace util
 #endif /* CMDOPTION_H_ */

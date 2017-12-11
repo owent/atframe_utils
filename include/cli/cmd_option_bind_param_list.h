@@ -1,4 +1,4 @@
-#ifndef UTIL_CLI_CMDOPTIONBINDPARAMLIST_H
+﻿#ifndef UTIL_CLI_CMDOPTIONBINDPARAMLIST_H
 #define UTIL_CLI_CMDOPTIONBINDPARAMLIST_H
 
 #pragma once
@@ -25,9 +25,9 @@ namespace util {
         namespace binder {
 
             /**
-            *  Maps member pointers into instances of _Mem_fn but leaves all
-            *  primary template handles the non--member-pointer case.
-            */
+             *  Maps member pointers into instances of _Mem_fn but leaves all
+             *  primary template handles the non--member-pointer case.
+             */
             template <typename _Tp>
             struct maybe_wrap_member_pointer {
                 typedef _Tp type;
@@ -40,9 +40,9 @@ namespace util {
 
 
             /**
-            *  Maps member pointers into instances of _Mem_fn but leaves all
-            *  partial specialization handles the member pointer case.
-            */
+             *  Maps member pointers into instances of _Mem_fn but leaves all
+             *  partial specialization handles the member pointer case.
+             */
             template <typename _Tp, typename _Class>
             struct maybe_wrap_member_pointer<_Tp _Class::*> {
                 typedef _Tp _Class::*type;
@@ -59,8 +59,8 @@ namespace util {
             class cmd_option_bind_param_list {
             private:
                 /**
-                * 用于创建存储对象索引和解包索引[0, 1, 2, ..., sizeof...(_Args) - 1]
-                */
+                 * 用于创建存储对象索引和解包索引[0, 1, 2, ..., sizeof...(_Args) - 1]
+                 */
                 template <int... _Index>
                 struct index_args_var_list {};
 
@@ -165,7 +165,7 @@ namespace util {
             };
 
 #endif
-        }
-    }
-}
+        } // namespace binder
+    }     // namespace cli
+} // namespace util
 #endif /* _CMDOPTIONBINDPARAMLIST_H_ */

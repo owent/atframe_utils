@@ -1,4 +1,4 @@
-#ifndef CMDOPTIONLIST_H
+﻿#ifndef CMDOPTIONLIST_H
 #define CMDOPTIONLIST_H
 
 #pragma once
@@ -43,9 +43,8 @@ namespace util {
                 std::string help_msg_;
                 virtual ~cmd_option_bind_base() {}
 
-                static bool sort_by_all_cmds(const help_msg_t& l, const help_msg_t& r) {
-                    return l.all_cmds < r.all_cmds;
-                }
+                static bool sort_by_all_cmds(const help_msg_t &l, const help_msg_t &r) { return l.all_cmds < r.all_cmds; }
+
             public:
                 // 定义参数类型
                 typedef callback_param param_type;
@@ -67,7 +66,7 @@ namespace util {
                     return shared_from_this();
                 }
             };
-        }
+        } // namespace binder
 
 
         class cmd_option_list {
@@ -136,7 +135,7 @@ namespace util {
             // 获取透传参数列表
             void *get_ext_param() const;
         };
-    }
-}
+    } // namespace cli
+} // namespace util
 
 #endif /* _CMDOPTIONLIST_H_ */

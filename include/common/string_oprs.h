@@ -60,6 +60,36 @@
 namespace util {
     namespace string {
         /**
+         * @brief 字符转小写
+         * @param c 字符
+         * @return str 如果是大写字符输出响应的小写字符，否则原样返回
+         * @note 用于替换标准函数里参数是int类型导致的某些编译器warning问题
+         */
+        template <typename TCH = char>
+        static TCH tolower(TCH c) {
+            if (c >= 'A' && c <= 'Z') {
+                return static_cast<TCH>(c - 'A' + 'a');
+            }
+
+            return c;
+        }
+
+        /**
+         * @brief 字符转大写
+         * @param c 字符
+         * @return str 如果是小写字符输出响应的大写字符，否则原样返回
+         * @note 用于替换标准函数里参数是int类型导致的某些编译器warning问题
+         */
+        template <typename TCH = char>
+        static TCH toupper(TCH c) {
+            if (c >= 'a' && c <= 'z') {
+                return static_cast<TCH>(c - 'a' + 'A');
+            }
+
+            return c;
+        }
+
+        /**
          * @brief 字符串转整数
          * @param out 输出的整数
          * @param str 被转换的字符串
@@ -83,9 +113,9 @@ namespace util {
                 return;
             }
 
-            if ('0' == str[0] && 'x' == ::tolower(str[1])) { // hex
+            if ('0' == str[0] && 'x' == tolower(str[1])) { // hex
                 for (size_t i = 2; str[i]; ++i) {
-                    char c = static_cast<char>(::tolower(str[i]));
+                    char c = tolower(str[i]);
                     if (c >= '0' && c <= '9') {
                         out <<= 4;
                         out += c - '0';
