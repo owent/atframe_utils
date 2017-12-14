@@ -34,7 +34,6 @@ void log_sample() {
     filed_backend.set_max_file_size(256);
     filed_backend.set_rotate_size(3);
     filed_backend.set_file_pattern("%Y-%m-%d/%S/%N.log");
-    // filed_backend.set_check_interval(1);
 
     WLOG_GETCAT(util::log::log_wrapper::categorize_t::DEFAULT)->add_sink(filed_backend);
 

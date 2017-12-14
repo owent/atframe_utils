@@ -39,12 +39,22 @@ namespace util {
             ~log_sink_file_backend();
 
         public:
+            /**
+             * @brief 设置文件名模式
+             * @param file_name_pattern 文件名表达式，按时间切割文件最多精确到1秒。可用参数见 log_formatter::format
+             * @see log_formatter::format
+             */
             void set_file_pattern(const std::string &file_name_pattern);
 
             void operator()(const log_formatter::caller_info_t &caller, const char *content, size_t content_size);
 
             inline time_t get_check_interval() const { return check_interval_; }
 
+            /**
+             * @brief 可以强制修改检查文件路径的时间周期，但是不建议这么做，设置文件名模式的时候会自动计算一次
+             * @param check_interval 文件名表达式，按时间切割文件时的文件检查周期
+             * @note 每次调用set_file_pattern后都会自动重置这个值
+             */
             inline log_sink_file_backend &set_check_interval(time_t check_interval) {
                 check_interval_ = check_interval;
                 return *this;
@@ -94,10 +104,10 @@ namespace util {
             size_t max_file_size_;   // log文件size限制
 
 
-            time_t check_interval_;     // 更换文件或目录的检查周期
-            time_t check_expire_point_; // 更换文件或目录的检查周期
+            time_t check_interval_; // 更换文件或目录的检查周期
             bool inited_;
             lock::spin_lock fs_lock_;
+            lock::spin_lock init_lock_;
 
 
             struct file_impl_t {
@@ -105,11 +115,12 @@ namespace util {
                 uint32_t rotation_index;
                 size_t written_size;
                 std::shared_ptr<std::ofstream> opened_file;
+                time_t opened_file_point_; // 打开文件的时间点
                 std::string file_path;
             };
             file_impl_t log_file_;
         };
-    }
-}
+    } // namespace log
+} // namespace util
 
 #endif

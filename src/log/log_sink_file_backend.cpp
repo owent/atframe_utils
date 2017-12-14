@@ -21,22 +21,24 @@ namespace util {
         log_sink_file_backend::log_sink_file_backend()
             : rotation_size_(10),                // 默认10个文件
               max_file_size_(DEFAULT_FILE_SIZE), // 默认文件大小
-              check_interval_(60),               // 默认文件切换检查周期为60秒
-              check_expire_point_(0), inited_(false) {
+              check_interval_(0),                // 默认文件切换检查周期
+              inited_(false) {
 
-            path_pattern_ = "%Y-%m-%d.%N.log"; // 默认文件名规则
-
+            log_file_.opened_file_point_ = 0;
             log_file_.auto_flush = log_formatter::level_t::LOG_LW_DISABLED;
             log_file_.rotation_index = 0;
             log_file_.written_size = 0;
+
+            set_file_pattern("%Y-%m-%d.%N.log"); // 默认文件名规则
         }
 
         log_sink_file_backend::log_sink_file_backend(const std::string &file_name_pattern)
             : rotation_size_(10),                // 默认10个文件
               max_file_size_(DEFAULT_FILE_SIZE), // 默认文件大小
-              check_interval_(60),               // 默认文件切换检查周期为60秒
-              check_expire_point_(0), inited_(false) {
+              check_interval_(0),                // 默认文件切换检查周期
+              inited_(false) {
 
+            log_file_.opened_file_point_ = 0;
             log_file_.auto_flush = log_formatter::level_t::LOG_LW_DISABLED;
             log_file_.rotation_index = 0;
             log_file_.written_size = 0;
@@ -47,9 +49,11 @@ namespace util {
         log_sink_file_backend::log_sink_file_backend(const log_sink_file_backend &other)
             : rotation_size_(other.rotation_size_),   // 默认文件数量
               max_file_size_(other.max_file_size_),   // 默认文件大小
-              check_interval_(other.check_interval_), // 默认文件切换检查周期为60秒
-              check_expire_point_(0), inited_(false) {
-            path_pattern_ = other.path_pattern_;
+              check_interval_(other.check_interval_), // 默认文件切换检查周期
+              inited_(false) {
+
+            log_file_.opened_file_point_ = other.log_file_.opened_file_point_;
+            set_file_pattern(other.path_pattern_);
 
             log_file_.auto_flush = other.log_file_.auto_flush;
 
@@ -63,7 +67,46 @@ namespace util {
         }
 
         void log_sink_file_backend::set_file_pattern(const std::string &file_name_pattern) {
-            path_pattern_ = file_name_pattern;
+            // 计算按时间切换的检测间隔
+            static time_t check_interval[128] = {0};
+            // @see log_formatter::format
+            // 计算检查周期，考虑到某些地区有夏令时，所以最大是小时。Unix时间戳会抹平闰秒，所以可以不考虑闰秒
+            if (check_interval['S'] == 0) {
+                check_interval['f'] = 1;
+                check_interval['R'] = util::time::time_utility::MINITE_SECONDS;
+                check_interval['T'] = 1;
+                check_interval['F'] = util::time::time_utility::HOUR_SECONDS;
+                check_interval['S'] = 1;
+                check_interval['M'] = util::time::time_utility::MINITE_SECONDS;
+                check_interval['I'] = util::time::time_utility::HOUR_SECONDS;
+                check_interval['H'] = util::time::time_utility::HOUR_SECONDS;
+                check_interval['w'] = util::time::time_utility::HOUR_SECONDS;
+                check_interval['d'] = util::time::time_utility::HOUR_SECONDS;
+                check_interval['j'] = util::time::time_utility::HOUR_SECONDS;
+                check_interval['m'] = util::time::time_utility::HOUR_SECONDS;
+                check_interval['y'] = util::time::time_utility::HOUR_SECONDS;
+                check_interval['Y'] = util::time::time_utility::HOUR_SECONDS;
+            }
+
+            {
+                // 改这个成员也要加锁。stl是非线程安全的
+                lock::lock_holder<lock::spin_lock> lkholder(init_lock_);
+
+                // 计算检查周期，考虑到某些地区有夏令时，所以最大是小时。Unix时间戳会抹平闰秒，所以可以不考虑闰秒
+                check_interval_ = 0;
+                for (size_t i = 0; i + 1 < file_name_pattern.size(); ++i) {
+                    if (file_name_pattern[i] == '%') {
+                        int checked = file_name_pattern[i + 1];
+                        if (checked > 0 && checked < 128 && check_interval[checked] > 0) {
+                            if (0 == check_interval_ || check_interval[checked] < check_interval_) {
+                                check_interval_ = check_interval[checked];
+                            }
+                        }
+                    }
+                }
+
+                path_pattern_ = file_name_pattern;
+            }
 
             // 设置文件路径模式， 如果文件已打开，需要重新执行初始化流程
             if (log_file_.opened_file) {
@@ -101,10 +144,14 @@ namespace util {
             if (inited_) {
                 return;
             }
+            // 双检锁，初始化加锁
+            lock::lock_holder<lock::spin_lock> lkholder(init_lock_);
+            if (inited_) {
+                return;
+            }
 
             inited_ = true;
 
-            check_expire_point_ = 0;
             log_file_.rotation_index = 0;
             reset_log_file();
 
@@ -178,6 +225,7 @@ namespace util {
             log_file_.written_size = static_cast<size_t>(of->tellp());
 
             log_file_.opened_file = of;
+            log_file_.opened_file_point_ = util::time::time_utility::get_now();
             log_file_.file_path.assign(log_file, file_path_len);
             return log_file_.opened_file;
         }
@@ -189,17 +237,16 @@ namespace util {
                 log_file_.rotation_index = 0;
             }
             reset_log_file();
-            check_expire_point_ = 0;
         }
 
         void log_sink_file_backend::check_update() {
-            if (0 != check_expire_point_) {
-                if (0 == check_interval_ || util::time::time_utility::get_now() < check_expire_point_) {
+            if (0 != log_file_.opened_file_point_) {
+                if (0 == check_interval_ ||
+                    util::time::time_utility::get_now() / check_interval_ == log_file_.opened_file_point_ / check_interval_) {
                     return;
                 }
             }
 
-            check_expire_point_ = util::time::time_utility::get_now() + check_interval_;
             char log_file[file_system::MAX_PATH_LEN];
             log_formatter::caller_info_t caller;
             caller.rotate_index = log_file_.rotation_index;
@@ -219,6 +266,9 @@ namespace util {
 
             new_file_path.assign(log_file, file_path_len);
             if (new_file_path == old_file_path) {
+                // 本次刷新周期内的文件名未变化，说明检测周期小于实际周期，所以这个周期内不需要再检测了
+                // 因为考虑到夏时令，只要大于小时的配置检测周期都设置为小时，必然会小于实际周期然后走到这里
+                log_file_.opened_file_point_ = util::time::time_utility::get_now();
                 return;
             }
 
@@ -241,8 +291,9 @@ namespace util {
 
             // 必须依赖析构来关闭文件，以防这个文件正在其他地方被引用
             log_file_.opened_file.reset();
+            log_file_.opened_file_point_ = 0;
             log_file_.written_size = 0;
             // log_file_.file_path.clear(); // 保留上一个文件路径，即便已被关闭。用于rotate后的目录变更判定
         }
-    }
-}
+    } // namespace log
+} // namespace util
