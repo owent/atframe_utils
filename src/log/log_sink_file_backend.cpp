@@ -71,21 +71,21 @@ namespace util {
             static time_t check_interval[128] = {0};
             // @see log_formatter::format
             // 计算检查周期，考虑到某些地区有夏令时，所以最大是小时。Unix时间戳会抹平闰秒，所以可以不考虑闰秒
-            if (check_interval['S'] == 0) {
-                check_interval['f'] = 1;
-                check_interval['R'] = util::time::time_utility::MINITE_SECONDS;
-                check_interval['T'] = 1;
-                check_interval['F'] = util::time::time_utility::HOUR_SECONDS;
-                check_interval['S'] = 1;
-                check_interval['M'] = util::time::time_utility::MINITE_SECONDS;
-                check_interval['I'] = util::time::time_utility::HOUR_SECONDS;
-                check_interval['H'] = util::time::time_utility::HOUR_SECONDS;
-                check_interval['w'] = util::time::time_utility::HOUR_SECONDS;
-                check_interval['d'] = util::time::time_utility::HOUR_SECONDS;
-                check_interval['j'] = util::time::time_utility::HOUR_SECONDS;
-                check_interval['m'] = util::time::time_utility::HOUR_SECONDS;
-                check_interval['y'] = util::time::time_utility::HOUR_SECONDS;
-                check_interval['Y'] = util::time::time_utility::HOUR_SECONDS;
+            if (check_interval[(int)'S'] == 0) {
+                check_interval[(int)'f'] = 1;
+                check_interval[(int)'R'] = util::time::time_utility::MINITE_SECONDS;
+                check_interval[(int)'T'] = 1;
+                check_interval[(int)'F'] = util::time::time_utility::HOUR_SECONDS;
+                check_interval[(int)'S'] = 1;
+                check_interval[(int)'M'] = util::time::time_utility::MINITE_SECONDS;
+                check_interval[(int)'I'] = util::time::time_utility::HOUR_SECONDS;
+                check_interval[(int)'H'] = util::time::time_utility::HOUR_SECONDS;
+                check_interval[(int)'w'] = util::time::time_utility::HOUR_SECONDS;
+                check_interval[(int)'d'] = util::time::time_utility::HOUR_SECONDS;
+                check_interval[(int)'j'] = util::time::time_utility::HOUR_SECONDS;
+                check_interval[(int)'m'] = util::time::time_utility::HOUR_SECONDS;
+                check_interval[(int)'y'] = util::time::time_utility::HOUR_SECONDS;
+                check_interval[(int)'Y'] = util::time::time_utility::HOUR_SECONDS;
             }
 
             {
