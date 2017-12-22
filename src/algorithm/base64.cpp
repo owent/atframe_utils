@@ -1,3 +1,4 @@
+#include <assert.h>
 #include <inttypes.h>
 #include <limits>
 #include <stdint.h>
@@ -86,6 +87,24 @@ namespace util {
         return (0);
     }
 
+    int base64_encode(std::string &dst, const unsigned char *src, size_t slen) {
+        size_t olen = 0;
+        util::base64_encode(NULL, 0, &olen, src, slen);
+        dst.resize(olen);
+
+        int ret = base64_encode(reinterpret_cast<unsigned char *>(&dst[0]), dst.size(), &olen, src, slen);
+        assert(0 != ret || dst.size() == olen + 1);
+        // pop back last zero
+        if (!dst.empty() && *dst.rbegin() == 0) {
+            dst.pop_back();
+        }
+        return ret;
+    }
+
+    int base64_encode(std::string &dst, const std::string &in) {
+        return base64_encode(dst, reinterpret_cast<const unsigned char *>(in.c_str()), in.size());
+    }
+
     int base64_decode(unsigned char *dst, size_t dlen, size_t *olen, const unsigned char *src, size_t slen) {
         size_t i, n;
         uint32_t j, x;
@@ -153,5 +172,22 @@ namespace util {
         *olen = p - dst;
 
         return (0);
+    }
+
+    int base64_decode(std::string &dst, const unsigned char *src, size_t slen) {
+        size_t olen = 0;
+
+        if (-2 == util::base64_decode(NULL, 0, &olen, src, slen)) {
+            return -2;
+        }
+
+        dst.resize(olen);
+        int ret = util::base64_decode(reinterpret_cast<unsigned char *>(&dst[0]), dst.size(), &olen, src, slen);
+        assert(0 != ret || olen == dst.size());
+        return ret;
+    }
+
+    int base64_decode(std::string &dst, const std::string &in) {
+        return base64_decode(dst, reinterpret_cast<const unsigned char *>(in.c_str()), in.size());
     }
 } // namespace util

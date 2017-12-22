@@ -27,6 +27,8 @@
 #include <stdint.h>
 #endif
 
+#include <string>
+
 namespace util {
     /**
      * @brief          Encode a buffer into base64 format
@@ -49,6 +51,9 @@ namespace util {
      */
     int base64_encode(unsigned char *dst, size_t dlen, size_t *olen, const unsigned char *src, size_t slen);
 
+    int base64_encode(std::string &dst, const unsigned char *src, size_t slen);
+    int base64_encode(std::string &dst, const std::string &in);
+
     /**
      * @brief          Decode a base64-formatted buffer
      *
@@ -66,6 +71,9 @@ namespace util {
      *                 the required buffer size in *olen
      */
     int base64_decode(unsigned char *dst, size_t dlen, size_t *olen, const unsigned char *src, size_t slen);
+
+    int base64_decode(std::string &dst, const unsigned char *src, size_t slen);
+    int base64_decode(std::string &dst, const std::string &in);
 } // namespace util
 
 #endif
