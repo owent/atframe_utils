@@ -96,7 +96,7 @@ namespace util {
         assert(0 != ret || dst.size() == olen + 1);
         // pop back last zero
         if (!dst.empty() && *dst.rbegin() == 0) {
-            dst.pop_back();
+            dst.resize(dst.size() - 1);
         }
         return ret;
     }
