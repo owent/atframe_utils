@@ -22,9 +22,11 @@ namespace util {
             : rotation_size_(10),                // 默认10个文件
               max_file_size_(DEFAULT_FILE_SIZE), // 默认文件大小
               check_interval_(0),                // 默认文件切换检查周期
+              flush_interval_(0),                // 默认关闭定时刷入
               inited_(false) {
 
             log_file_.opened_file_point_ = 0;
+            log_file_.last_flush_timepoint_ = 0;
             log_file_.auto_flush = log_formatter::level_t::LOG_LW_DISABLED;
             log_file_.rotation_index = 0;
             log_file_.written_size = 0;
@@ -36,9 +38,11 @@ namespace util {
             : rotation_size_(10),                // 默认10个文件
               max_file_size_(DEFAULT_FILE_SIZE), // 默认文件大小
               check_interval_(0),                // 默认文件切换检查周期
+              flush_interval_(0),                // 默认关闭定时刷入
               inited_(false) {
 
             log_file_.opened_file_point_ = 0;
+            log_file_.last_flush_timepoint_ = 0;
             log_file_.auto_flush = log_formatter::level_t::LOG_LW_DISABLED;
             log_file_.rotation_index = 0;
             log_file_.written_size = 0;
@@ -50,9 +54,11 @@ namespace util {
             : rotation_size_(other.rotation_size_),   // 默认文件数量
               max_file_size_(other.max_file_size_),   // 默认文件大小
               check_interval_(other.check_interval_), // 默认文件切换检查周期
+              flush_interval_(0),                     // 默认关闭定时刷入
               inited_(false) {
 
             log_file_.opened_file_point_ = other.log_file_.opened_file_point_;
+            log_file_.last_flush_timepoint_ = other.log_file_.last_flush_timepoint_;
             set_file_pattern(other.path_pattern_);
 
             log_file_.auto_flush = other.log_file_.auto_flush;
@@ -133,7 +139,18 @@ namespace util {
 
             f->write(content, content_size);
             f->put('\n');
+            time_t now = util::time::time_utility::get_now();
+
+            // 日志级别高于指定级别，需要刷入
             if (static_cast<uint32_t>(caller.level_id) <= log_file_.auto_flush) {
+                log_file_.last_flush_timepoint_ = now;
+                f->flush();
+            }
+
+            // 定期刷入
+            if (flush_interval_ > 0 && (log_file_.last_flush_timepoint_ > now // 说明系统时间被改小了
+                                        || log_file_.last_flush_timepoint_ + flush_interval_ <= now)) {
+                log_file_.last_flush_timepoint_ = now;
                 f->flush();
             }
 

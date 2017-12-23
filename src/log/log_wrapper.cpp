@@ -59,17 +59,19 @@ namespace util {
 
 namespace util {
     namespace log {
-        bool log_wrapper::destroyed_ = false;
+        namespace detail {
+            static bool log_wrapper_global_destroyed_ = false;
+        }
 
         log_wrapper::log_wrapper() : log_level_(level_t::LOG_LW_DISABLED) {
             update();
-
-            set_option(options_t::OPT_AUTO_UPDATE_TIME, true);
             prefix_format_ = "[Log %L][%F %T.%f][%s:%n(%C)]: ";
         }
 
         log_wrapper::~log_wrapper() {
-            log_wrapper::destroyed_ = true;
+            if (get_option(options_t::OPT_IS_GLOBAL)) {
+                detail::log_wrapper_global_destroyed_ = true;
+            }
 
             // 重置level，只要内存没释放，就还可以内存访问，但是不能写出日志
             log_level_ = level_t::LOG_LW_DISABLED;
@@ -145,7 +147,7 @@ namespace util {
         }
 
         log_wrapper *log_wrapper::mutable_log_cat(uint32_t cats) {
-            if (log_wrapper::destroyed_) {
+            if (detail::log_wrapper_global_destroyed_) {
                 return NULL;
             }
 
@@ -155,6 +157,7 @@ namespace util {
                 return NULL;
             }
 
+            all_logger[cats].options_.set(options_t::OPT_IS_GLOBAL, true);
             return &all_logger[cats];
         }
     } // namespace log

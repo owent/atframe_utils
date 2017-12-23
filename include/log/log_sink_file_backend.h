@@ -60,8 +60,32 @@ namespace util {
                 return *this;
             }
 
+            /**
+             * @brief 获取定期刷入文件系统的时间间隔
+             * @return 定期刷入文件系统的时间间隔(秒)，0则是未启用定期刷入文件系统的功能
+             */
+            inline time_t get_flush_interval() const { return flush_interval_; }
+
+            /**
+             * @brief 设置定期刷入文件系统的时间间隔
+             * @param v 定期刷入文件系统的时间间隔(秒)，设为0则是关闭定期刷入文件系统的功能
+             */
+            inline log_sink_file_backend &set_flush_interval(time_t v) {
+                flush_interval_ = v;
+                return *this;
+            }
+
+            /**
+             * @brief 获取强制刷入文件系统的日志级别
+             * @return 强制刷入文件系统的日志级别
+             */
             inline uint32_t get_auto_flush() const { return log_file_.auto_flush; }
 
+            /**
+             * @brief 设置强制刷入文件系统的日志级别
+             * @note 如果设置成LOG_LW_WARNING，那么LOG_LW_ERROR和LOG_LW_WARNING的log都会触发强制刷入
+             * @param flush_level 强制刷入文件系统的日志级别，严重性高于这个级别的日志都会触发强制刷入文件系统
+             */
             inline log_sink_file_backend &set_auto_flush(uint32_t flush_level) {
                 log_file_.auto_flush = flush_level;
                 return *this;
@@ -105,6 +129,7 @@ namespace util {
 
 
             time_t check_interval_; // 更换文件或目录的检查周期
+            time_t flush_interval_; // 定时执行文件flush
             bool inited_;
             lock::spin_lock fs_lock_;
             lock::spin_lock init_lock_;
@@ -116,6 +141,7 @@ namespace util {
                 size_t written_size;
                 std::shared_ptr<std::ofstream> opened_file;
                 time_t opened_file_point_; // 打开文件的时间点
+                time_t last_flush_timepoint_;
                 std::string file_path;
             };
             file_impl_t log_file_;

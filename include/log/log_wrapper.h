@@ -29,7 +29,7 @@
 #endif
 
 #ifndef LOG_WRAPPER_CATEGORIZE_SIZE
-#define LOG_WRAPPER_CATEGORIZE_SIZE 32
+#define LOG_WRAPPER_CATEGORIZE_SIZE 16
 #endif
 
 namespace util {
@@ -46,6 +46,8 @@ namespace util {
             struct options_t {
                 enum type {
                     OPT_AUTO_UPDATE_TIME = 0, // 是否自动更新时间（会降低性能）
+                    OPT_USER_MAX,             // 允许外部接口修改的flag范围
+                    OPT_IS_GLOBAL,            // 是否是全局log的tag
                     OPT_MAX
                 };
             };
@@ -127,7 +129,7 @@ namespace util {
             };
 
             inline void set_option(options_t::type t, bool v) {
-                if (t < options_t::OPT_MAX) {
+                if (t >= options_t::OPT_USER_MAX) {
                     return;
                 }
 
@@ -139,7 +141,7 @@ namespace util {
              */
             void write_log(const caller_info_t &caller, const char *content, size_t content_size);
 
-            // TODO 白名单及用户指定日志输出以后有需要再说
+            // 白名单及用户指定日志输出可以针对哪个用户创建log_wrapper实例
 
             static log_wrapper *mutable_log_cat(uint32_t cats = categorize_t::DEFAULT);
 
@@ -148,8 +150,6 @@ namespace util {
             std::list<log_router_t> log_sinks_;
             std::string prefix_format_;
             std::bitset<options_t::OPT_MAX> options_;
-
-            static bool destroyed_; // log模块进入释放阶段，进入释放阶段后log功能会被关闭
         };
     } // namespace log
 } // namespace util
@@ -166,27 +166,52 @@ namespace util {
 // 按分类日志输出工具
 #ifdef _MSC_VER
 
+/** 全局日志输出工具 **/
 #define WCLOGDEFLV(lv, lv_name, cat, ...) \
     if (util::log::log_wrapper::check(WDTLOGGETCAT(cat), lv)) WDTLOGGETCAT(cat)->log(WDTLOGFILENF(lv, lv_name), __VA_ARGS__);
 
-#define WCLOGDEBUG(cat, ...) WCLOGDEFLV(util::log::log_wrapper::level_t::LOG_LW_DEBUG, "Debug", cat, __VA_ARGS__)
-#define WCLOGNOTICE(cat, ...) WCLOGDEFLV(util::log::log_wrapper::level_t::LOG_LW_NOTICE, "Notice", cat, __VA_ARGS__)
-#define WCLOGINFO(cat, ...) WCLOGDEFLV(util::log::log_wrapper::level_t::LOG_LW_INFO, "Info", cat, __VA_ARGS__)
-#define WCLOGWARNING(cat, ...) WCLOGDEFLV(util::log::log_wrapper::level_t::LOG_LW_WARNING, "Warning", cat, __VA_ARGS__)
-#define WCLOGERROR(cat, ...) WCLOGDEFLV(util::log::log_wrapper::level_t::LOG_LW_ERROR, "Error", cat, __VA_ARGS__)
-#define WCLOGFATAL(cat, ...) WCLOGDEFLV(util::log::log_wrapper::level_t::LOG_LW_FATAL, "Fatal", cat, __VA_ARGS__)
+#define WCLOGDEBUG(cat, ...) WCLOGDEFLV(util::log::log_wrapper::level_t::LOG_LW_DEBUG, NULL, cat, __VA_ARGS__)
+#define WCLOGNOTICE(cat, ...) WCLOGDEFLV(util::log::log_wrapper::level_t::LOG_LW_NOTICE, NULL, cat, __VA_ARGS__)
+#define WCLOGINFO(cat, ...) WCLOGDEFLV(util::log::log_wrapper::level_t::LOG_LW_INFO, NULL, cat, __VA_ARGS__)
+#define WCLOGWARNING(cat, ...) WCLOGDEFLV(util::log::log_wrapper::level_t::LOG_LW_WARNING, NULL, cat, __VA_ARGS__)
+#define WCLOGERROR(cat, ...) WCLOGDEFLV(util::log::log_wrapper::level_t::LOG_LW_ERROR, NULL, cat, __VA_ARGS__)
+#define WCLOGFATAL(cat, ...) WCLOGDEFLV(util::log::log_wrapper::level_t::LOG_LW_FATAL, NULL, cat, __VA_ARGS__)
+
+    /** 对指定log_wrapper的日志输出工具 **/
+
+#define WINSTLOGDEFLV(lv, lv_name, inst, ...) \
+    if (inst.check(lv)) inst.log(WDTLOGFILENF(lv, lv_name), __VA_ARGS__);
+
+#define WINSTLOGDEBUG(inst, ...) WINSTLOGDEFLV(util::log::log_wrapper::level_t::LOG_LW_DEBUG, NULL, inst, __VA_ARGS__)
+#define WINSTLOGNOTICE(inst, ...) WINSTLOGDEFLV(util::log::log_wrapper::level_t::LOG_LW_NOTICE, NULL, inst, __VA_ARGS__)
+#define WINSTLOGINFO(inst, ...) WINSTLOGDEFLV(util::log::log_wrapper::level_t::LOG_LW_INFO, NULL, inst, __VA_ARGS__)
+#define WINSTLOGWARNING(inst, ...) WINSTLOGDEFLV(util::log::log_wrapper::level_t::LOG_LW_WARNING, NULL, inst, __VA_ARGS__)
+#define WINSTLOGERROR(inst, ...) WINSTLOGDEFLV(util::log::log_wrapper::level_t::LOG_LW_ERROR, NULL, inst, __VA_ARGS__)
+#define WINSTLOGFATAL(inst, ...) WINSTLOGDEFLV(util::log::log_wrapper::level_t::LOG_LW_FATAL, NULL, inst, __VA_ARGS__)
 
 #else
 
+/** 全局日志输出工具 **/
 #define WCLOGDEFLV(lv, lv_name, cat, args...) \
     if (util::log::log_wrapper::check(WDTLOGGETCAT(cat), lv)) WDTLOGGETCAT(cat)->log(WDTLOGFILENF(lv, lv_name), ##args);
 
-#define WCLOGDEBUG(...) WCLOGDEFLV(util::log::log_wrapper::level_t::LOG_LW_DEBUG, "Debug", __VA_ARGS__)
-#define WCLOGNOTICE(...) WCLOGDEFLV(util::log::log_wrapper::level_t::LOG_LW_NOTICE, "Notice", __VA_ARGS__)
-#define WCLOGINFO(...) WCLOGDEFLV(util::log::log_wrapper::level_t::LOG_LW_INFO, "Info", __VA_ARGS__)
-#define WCLOGWARNING(...) WCLOGDEFLV(util::log::log_wrapper::level_t::LOG_LW_WARNING, "Warning", __VA_ARGS__)
-#define WCLOGERROR(...) WCLOGDEFLV(util::log::log_wrapper::level_t::LOG_LW_ERROR, "Error", __VA_ARGS__)
-#define WCLOGFATAL(...) WCLOGDEFLV(util::log::log_wrapper::level_t::LOG_LW_FATAL, "Fatal", __VA_ARGS__)
+#define WCLOGDEBUG(...) WCLOGDEFLV(util::log::log_wrapper::level_t::LOG_LW_DEBUG, NULL, __VA_ARGS__)
+#define WCLOGNOTICE(...) WCLOGDEFLV(util::log::log_wrapper::level_t::LOG_LW_NOTICE, NULL, __VA_ARGS__)
+#define WCLOGINFO(...) WCLOGDEFLV(util::log::log_wrapper::level_t::LOG_LW_INFO, NULL, __VA_ARGS__)
+#define WCLOGWARNING(...) WCLOGDEFLV(util::log::log_wrapper::level_t::LOG_LW_WARNING, NULL, __VA_ARGS__)
+#define WCLOGERROR(...) WCLOGDEFLV(util::log::log_wrapper::level_t::LOG_LW_ERROR, NULL, __VA_ARGS__)
+#define WCLOGFATAL(...) WCLOGDEFLV(util::log::log_wrapper::level_t::LOG_LW_FATAL, NULL, __VA_ARGS__)
+
+/** 对指定log_wrapper的日志输出工具 **/
+#define WINSTLOGDEFLV(lv, lv_name, inst, args...) \
+    if (inst.check(lv)) inst.log(WDTLOGFILENF(lv, lv_name), ##args);
+
+#define WINSTLOGDEBUG(...) WINSTLOGDEFLV(util::log::log_wrapper::level_t::LOG_LW_DEBUG, NULL, __VA_ARGS__)
+#define WINSTLOGNOTICE(...) WINSTLOGDEFLV(util::log::log_wrapper::level_t::LOG_LW_NOTICE, NULL, __VA_ARGS__)
+#define WINSTLOGINFO(...) WINSTLOGDEFLV(util::log::log_wrapper::level_t::LOG_LW_INFO, NULL, __VA_ARGS__)
+#define WINSTLOGWARNING(...) WINSTLOGDEFLV(util::log::log_wrapper::level_t::LOG_LW_WARNING, NULL, __VA_ARGS__)
+#define WINSTLOGERROR(...) WINSTLOGDEFLV(util::log::log_wrapper::level_t::LOG_LW_ERROR, NULL, __VA_ARGS__)
+#define WINSTLOGFATAL(...) WINSTLOGDEFLV(util::log::log_wrapper::level_t::LOG_LW_FATAL, NULL, __VA_ARGS__)
 
 #endif
 

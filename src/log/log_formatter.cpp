@@ -9,15 +9,48 @@
 
 namespace util {
     namespace log {
+        namespace detail {
+            static const char *log_formatter_get_level_name(int l) {
+                static const char *all_level_name[log_formatter::level_t::LOG_LW_DEBUG + 1] = {NULL};
+
+                if (l > log_formatter::level_t::LOG_LW_DEBUG || l < 0) {
+                    return "Unknown";
+                }
+
+                if (NULL == all_level_name[log_formatter::level_t::LOG_LW_DEBUG]) {
+                    all_level_name[log_formatter::level_t::LOG_LW_DISABLED] = "Disabled";
+                    all_level_name[log_formatter::level_t::LOG_LW_FATAL] = "Fatal";
+                    all_level_name[log_formatter::level_t::LOG_LW_ERROR] = "Error";
+                    all_level_name[log_formatter::level_t::LOG_LW_WARNING] = "Warn";
+                    all_level_name[log_formatter::level_t::LOG_LW_INFO] = "Info";
+                    all_level_name[log_formatter::level_t::LOG_LW_NOTICE] = "Notice";
+                    all_level_name[log_formatter::level_t::LOG_LW_DEBUG] = "Debug";
+                }
+                return all_level_name[l];
+            }
+        } // namespace detail
+
         log_formatter::caller_info_t::caller_info_t()
-            : level_id(level_t::LOG_LW_DISABLED), level_name(NULL), file_path(NULL), line_number(0), func_name(NULL), rotate_index(0) {}
+            : level_id(level_t::LOG_LW_DISABLED), level_name(NULL), file_path(NULL), line_number(0), func_name(NULL), rotate_index(0) {
+            if (NULL == level_name) {
+                level_name = detail::log_formatter_get_level_name(level_id);
+            }
+        }
         log_formatter::caller_info_t::caller_info_t(level_t::type lid, const char *lname, const char *fpath, uint32_t lnum,
                                                     const char *fnname)
-            : level_id(lid), level_name(lname), file_path(fpath), line_number(lnum), func_name(fnname), rotate_index(0) {}
+            : level_id(lid), level_name(lname), file_path(fpath), line_number(lnum), func_name(fnname), rotate_index(0) {
+            if (NULL == level_name) {
+                level_name = detail::log_formatter_get_level_name(level_id);
+            }
+        }
 
         log_formatter::caller_info_t::caller_info_t(level_t::type lid, const char *lname, const char *fpath, uint32_t lnum,
                                                     const char *fnname, uint32_t ridx)
-            : level_id(lid), level_name(lname), file_path(fpath), line_number(lnum), func_name(fnname), rotate_index(ridx) {}
+            : level_id(lid), level_name(lname), file_path(fpath), line_number(lnum), func_name(fnname), rotate_index(ridx) {
+            if (NULL == level_name) {
+                level_name = detail::log_formatter_get_level_name(level_id);
+            }
+        }
 
         std::string log_formatter::project_dir_;
 
