@@ -36,6 +36,8 @@ namespace util {
     namespace log {
         class log_wrapper {
         public:
+            typedef std::shared_ptr<log_wrapper> ptr_t;
+
             struct categorize_t {
                 enum type {
                     DEFAULT = 0, // 服务框架
@@ -63,8 +65,12 @@ namespace util {
                 log_handler_t handle;
             } log_router_t;
 
-        protected:
+        private:
+            struct construct_helper_t {};
             log_wrapper();
+
+        public:
+            log_wrapper(construct_helper_t &h);
             virtual ~log_wrapper();
 
         public:
@@ -144,6 +150,7 @@ namespace util {
             // 白名单及用户指定日志输出可以针对哪个用户创建log_wrapper实例
 
             static log_wrapper *mutable_log_cat(uint32_t cats = categorize_t::DEFAULT);
+            static ptr_t create_user_logger();
 
         private:
             level_t::type log_level_;

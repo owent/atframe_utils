@@ -64,7 +64,15 @@ namespace util {
         }
 
         log_wrapper::log_wrapper() : log_level_(level_t::LOG_LW_DISABLED) {
+            // 默认设为全局logger，如果是用户logger，则create_user_logger里重新设为false
+            options_.set(options_t::OPT_IS_GLOBAL, true);
+
             update();
+            prefix_format_ = "[Log %L][%F %T.%f][%s:%n(%C)]: ";
+        }
+
+        log_wrapper::log_wrapper(construct_helper_t &h) : log_level_(level_t::LOG_LW_DISABLED) {
+            // 这个接口由create_user_logger调用，不设置OPT_IS_GLOBAL
             prefix_format_ = "[Log %L][%F %T.%f][%s:%n(%C)]: ";
         }
 
@@ -157,8 +165,18 @@ namespace util {
                 return NULL;
             }
 
-            all_logger[cats].options_.set(options_t::OPT_IS_GLOBAL, true);
             return &all_logger[cats];
         }
+
+        log_wrapper::ptr_t log_wrapper::create_user_logger() {
+            construct_helper_t h;
+            ptr_t ret = std::make_shared<log_wrapper>(h);
+            if (ret) {
+                ret->options_.set(options_t::OPT_IS_GLOBAL, false);
+            }
+
+            return ret;
+        }
+
     } // namespace log
 } // namespace util
