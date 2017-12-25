@@ -426,6 +426,10 @@ if(NULL == tm_obj_ptr) {                \
         }
 
         log_formatter::level_t::type log_formatter::get_level_by_name(const char *name) {
+            if (NULL == name) {
+                return level_t::LOG_LW_DEBUG;
+            }
+
             // number, directly convert it
             if (name && (name[0] == '\\' || (name[0] >= '0' && name[0] <= '9'))) {
                 int l = util::string::to_int<int>(name);
