@@ -372,6 +372,16 @@ namespace util {
             set_opt_long(CURLOPT_TCP_KEEPINTVL, interval);
         }
 
+        void http_request::set_opt_reuse_connection(bool v) {
+            if (v) {
+                set_opt_long(CURLOPT_FRESH_CONNECT, 0);
+                set_opt_long(CURLOPT_FORBID_REUSE, 0);
+            } else {
+                set_opt_long(CURLOPT_FRESH_CONNECT, 1);
+                set_opt_long(CURLOPT_FORBID_REUSE, 1);
+            }
+        }
+
         // void http_request::set_opt_connect_timeout(time_t timeout_ms) {
         //    set_opt_long(CURLOPT_CONNECTTIMEOUT_MS, timeout_ms);
         //}

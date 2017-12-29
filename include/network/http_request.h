@@ -262,6 +262,8 @@ namespace util {
 
             void set_opt_timeout(time_t timeout_ms);
 
+            void set_opt_reuse_connection(bool v);
+
             void set_libcurl_no_expect();
 
             void append_http_header(const char *http_header);
