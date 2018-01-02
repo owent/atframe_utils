@@ -92,6 +92,7 @@ namespace util {
     }
 
     void xxtea_encrypt(const xxtea_key *key, const void *input, size_t ilen, void *output, size_t *olen) {
+        bool is_success = false;
         do {
             if (NULL == key || input == NULL || ilen <= 0 || output == NULL || NULL == olen) {
                 break;
@@ -113,10 +114,10 @@ namespace util {
             *olen = real_olen;
             util::xxtea_encrypt(key, output, *olen);
 
-            return;
+            is_success = true;
         } while (false);
 
-        if (0 != olen) {
+        if (!is_success && NULL != olen) {
             *olen = 0;
         }
     }
@@ -156,6 +157,7 @@ namespace util {
     }
 
     void xxtea_decrypt(const xxtea_key *key, const void *input, size_t ilen, void *output, size_t *olen) {
+        bool is_success = false;
         do {
             if (NULL == key || input == NULL || ilen <= 0 || output == NULL || NULL == olen) {
                 break;
@@ -177,10 +179,10 @@ namespace util {
             *olen = real_olen;
             util::xxtea_decrypt(key, output, *olen);
 
-            return;
+            is_success = true;
         } while (false);
 
-        if (0 != olen) {
+        if (!is_success && NULL != olen) {
             *olen = 0;
         }
     }
