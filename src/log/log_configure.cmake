@@ -1,15 +1,17 @@
 ﻿
 # Lua模块
-find_package(Lua51)
-if (LUA51_FOUND)
-    include_directories(${LUA_INCLUDE_DIR})
-    list(APPEND EXTENTION_LINK_LIB ${LUA_LIBRARIES})
-    message(STATUS "Lua support enabled.(lua 5.1 detected)")
-elseif(ENABLE_LUA_SUPPORT)
-    message(STATUS "Lua support enabled.(enabled by custom)")
-else()
-    message(STATUS "Lua support disabled")
-    set(LOG_WRAPPER_DISABLE_LUA_SUPPORT 1)
+if (LOG_WRAPPER_ENABLE_LUA_SUPPORT)
+    if (LOG_WRAPPER_CHECK_LUA)
+        find_package(Lua)        
+        if (LUA_FOUND)
+            include_directories(${LUA_INCLUDE_DIR})
+            list(APPEND EXTENTION_LINK_LIB ${LUA_LIBRARIES})
+            message(STATUS "Lua support enabled.(lua ${LUA_VERSION_STRING} detected)")
+        else()
+            set(LOG_WRAPPER_ENABLE_LUA_SUPPORT OFF)
+            message(STATUS "Lua not found and disabled.")
+        endif()
+    endif()
 endif()
 
 # traceback 检测

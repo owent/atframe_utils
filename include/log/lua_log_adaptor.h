@@ -16,14 +16,15 @@
 
 #include "config/atframe_utils_build_feature.h"
 
-#ifndef LOG_WRAPPER_DISABLE_LUA_SUPPORT
+#if defined(LOG_WRAPPER_ENABLE_LUA_SUPPORT) && LOG_WRAPPER_ENABLE_LUA_SUPPORT
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-#include "lua.h"
 #include "lauxlib.h"
+#include "lua.h"
+
 
 
 int lua_log_adaptor_openLib(lua_State *L);

@@ -14,6 +14,8 @@ write_compiler_detection_header(
 # 默认配置选项
 #####################################################################
 option(LIBUNWIND_ENABLED "Enable using libunwind." OFF)
+option(LOG_WRAPPER_ENABLE_LUA_SUPPORT "Enable lua support." ON)
+option(LOG_WRAPPER_CHECK_LUA "Check lua support." ON)
 set(LOG_STACKTRACE_MAX_STACKS "100" CACHE STRING "Max stacks when stacktracing.")
 
 include("${PROJECT_ALL_SOURCE_DIR}/log/log_configure.cmake")

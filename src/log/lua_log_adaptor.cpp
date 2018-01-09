@@ -2,7 +2,7 @@
 
 #include "log/lua_log_adaptor.h"
 
-#ifndef LOG_WRAPPER_DISABLE_LUA_SUPPORT
+#if defined(LOG_WRAPPER_ENABLE_LUA_SUPPORT) && LOG_WRAPPER_ENABLE_LUA_SUPPORT
 
 static int lua_log_adaptor_fn_lua_log(lua_State *L) {
     int top = lua_gettop(L);
