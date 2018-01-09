@@ -349,15 +349,13 @@ namespace util {
             }
 
             size_t ret = 0;
-            void *array[LOG_STACKTRACE_MAX_STACKS_ARRAY_SIZE] = {NULL};
-            size_t size;
-
-            size = backtrace(array, LOG_STACKTRACE_MAX_STACKS_ARRAY_SIZE);
-            char **func_name_cache = backtrace_symbols(array, size);
+            void *stacks[LOG_STACKTRACE_MAX_STACKS_ARRAY_SIZE] = {NULL};
+            size_t size = backtrace(stacks, LOG_STACKTRACE_MAX_STACKS_ARRAY_SIZE);
+            char **func_name_cache = backtrace_symbols(stacks, size);
             size_t skip_frames = 1;
 
             for (size_t i = skip_frames; i < size; i++) {
-                if (NULL == func_name_cache[i]) {
+                if (NULL == func_name_cache[i] || NULL == stacks[i] || 0x01 == reinterpret_cast<intptr_t>(stacks[i])) {
                     break;
                 }
 
