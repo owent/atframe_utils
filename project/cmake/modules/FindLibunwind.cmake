@@ -13,8 +13,6 @@
 #   Libunwind_LIBRARIES                 - Unwind libraries to link against.
 #   Libunwind_HAS_UNW_GETCONTEXT        - True if unw_getcontext() is found (optional).
 #   Libunwind_HAS_UNW_INIT_LOCAL        - True if unw_init_local() is found (optional).
-#   Libunwind_HAS_UNW_BACKTRACE         - True if unw_backtrace() is found (required).
-#   Libunwind_HAS_UNW_BACKTRACE_SKIP    - True if unw_backtrace_skip() is found (optional).
 #   Libunwind_VERSION_STRING            - version number as a string (ex: "5.0.3")
 
 #=============================================================================
@@ -64,33 +62,58 @@ if(Libunwind_INCLUDE_DIR AND EXISTS "${Libunwind_INCLUDE_DIR}/libunwind-common.h
 endif()
 
 if (Libunwind_LIBRARY)
-  include (CheckLibraryExists)
+  find_library(Libunwind_LIBRARY_EXTRA NAMES unwind-${CMAKE_SYSTEM_PROCESSOR} ${_LIBUNWIND_SEARCH_LIB})
+  if (NOT Libunwind_LIBRARY_EXTRA AND ${CMAKE_SYSTEM_PROCESSOR} EQUAL ${CMAKE_HOST_SYSTEM_PROCESSOR})
+    find_library(Libunwind_LIBRARY_EXTRA NAMES unwind-generic ${_LIBUNWIND_SEARCH_LIB})
+  endif()
+  include (CheckCSourceCompiles)
   set(CMAKE_REQUIRED_QUIET_SAVE ${CMAKE_REQUIRED_QUIET})
   set(CMAKE_REQUIRED_QUIET ${LibUnwind_FIND_QUIETLY})
-  check_library_exists(${Libunwind_LIBRARY} unw_getcontext "" Libunwind_HAS_UNW_GETCONTEXT)
-  check_library_exists(${Libunwind_LIBRARY} unw_init_local "" Libunwind_HAS_UNW_INIT_LOCAL)
-  check_library_exists(${Libunwind_LIBRARY} unw_backtrace "" Libunwind_HAS_UNW_BACKTRACE)
-  check_library_exists (${Libunwind_LIBRARY} unw_backtrace_skip "" Libunwind_HAS_UNW_BACKTRACE_SKIP)
+  set(CMAKE_REQUIRED_LIBRARIES_SAVE ${CMAKE_REQUIRED_LIBRARIES})
+  set(CMAKE_REQUIRED_LIBRARIES ${Libunwind_LIBRARY} ${Libunwind_LIBRARY_EXTRA})
+  set(CMAKE_REQUIRED_INCLUDES_SAVE ${CMAKE_REQUIRED_INCLUDES})
+  set(CMAKE_REQUIRED_INCLUDES ${Libunwind_INCLUDE_DIR})
+  check_c_source_compiles("
+  #include <libunwind.h>
+  int main() {
+    unw_context_t unw_ctx;
+    unw_getcontext(&unw_ctx);
+    return 0;
+  }" Libunwind_HAS_UNW_GETCONTEXT)
+  check_c_source_compiles("
+  #include <libunwind.h>
+  int main() {
+    unw_context_t unw_ctx;
+    unw_cursor_t unw_cur;
+    unw_getcontext(&unw_ctx);
+    unw_init_local(&unw_cur, &unw_ctx);
+    return 0;
+  }" Libunwind_HAS_UNW_INIT_LOCAL)
   set(CMAKE_REQUIRED_QUIET ${CMAKE_REQUIRED_QUIET_SAVE})
+  set(CMAKE_REQUIRED_LIBRARIES ${CMAKE_REQUIRED_LIBRARIES_SAVE})
+  set(CMAKE_REQUIRED_INCLUDES ${CMAKE_REQUIRED_INCLUDES_SAVE})
+  unset(CMAKE_REQUIRED_QUIET_SAVE)
+  unset(CMAKE_REQUIRED_LIBRARIES_SAVE)
+  unset(CMAKE_REQUIRED_INCLUDES_SAVE)
 endif ()
 
 include(FindPackageHandleStandardArgs)
-FIND_PACKAGE_HANDLE_STANDARD_ARGS(LibUnwind  REQUIRED_VARS  
+FIND_PACKAGE_HANDLE_STANDARD_ARGS(Libunwind  REQUIRED_VARS  
     Libunwind_INCLUDE_DIR
     Libunwind_LIBRARY
-    Libunwind_HAS_UNW_BACKTRACE
     VERSION_VAR Libunwind_VERSION_STRING
 )
 
 if (Libunwind_FOUND)
   set(LIBUNWIND_FOUND ${Libunwind_FOUND})
-  set(Libunwind_LIBRARIES ${Libunwind_LIBRARY})
+  set(Libunwind_LIBRARIES ${Libunwind_LIBRARY} ${Libunwind_LIBRARY_EXTRA})
+  set(LIBUNWIND_LIBRARIES ${Libunwind_LIBRARIES})
   set(Libunwind_INCLUDE_DIRS ${Libunwind_INCLUDE_DIR})
+  set(LIBUNWIND_INCLUDE_DIRS ${Libunwind_INCLUDE_DIRS})
 else()
   unset(Libunwind_INCLUDE_DIR CACHE )
   unset(Libunwind_LIBRARY CACHE )
-  unset(Libunwind_HAS_UNW_BACKTRACE CACHE )
   unset(Libunwind_VERSION_STRING CACHE )
 endif ()
 
-mark_as_advanced( Libunwind_INCLUDE_DIR Libunwind_LIBRARY )
+mark_as_advanced( Libunwind_INCLUDE_DIR Libunwind_LIBRARY Libunwind_LIBRARY_EXTRA )

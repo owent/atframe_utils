@@ -177,7 +177,7 @@ namespace util {
                     }
 #endif
 
-                    int res = UTIL_STRFUNC_SNPRINTF(buf, bufsz, "Frame #%02d: (%s+0x%llx) [0x%llx]\n", frame_id, func_name,
+                    int res = UTIL_STRFUNC_SNPRINTF(buf, bufsz, "Frame #%02d: (%s+0x%llx) [0x%llx]\r\n", frame_id, func_name,
                                                     static_cast<unsigned long long>(unw_offset),
                                                     static_cast<unsigned long long>(unw_proc.start_ip));
 
@@ -286,6 +286,15 @@ namespace util {
             return ret;
         }
 
+        static void stacktrace_fix_number(std::string &num) UTIL_CONFIG_NOEXCEPT {
+            size_t fixed_len = num.size();
+            while (fixed_len > 0 && (num[fixed_len - 1] > '9' || num[fixed_len - 1] < '0')) {
+                --fixed_len;
+            }
+
+            num.resize(fixed_len);
+        }
+
         static void stacktrace_pick_symbol_info(const char *name, stacktrace_symbol_group_t &out) {
             out.module_name.clear();
             out.func_name.clear();
@@ -311,8 +320,10 @@ namespace util {
                         if ('+' == previous_c) {
                             out.func_offset = "+";
                             out.func_offset.insert(out.func_offset.end(), start, name);
+                            stacktrace_fix_number(out.func_offset);
                         } else {
                             out.func_address.assign(start, name);
+                            stacktrace_fix_number(out.func_address);
                         }
                     } else {
                         if (out.module_name.empty()) {
@@ -367,7 +378,7 @@ namespace util {
                 }
 #endif
 
-                int res = UTIL_STRFUNC_SNPRINTF(buf, bufsz, "Frame #%02d: (%s%s) [%s]\n", static_cast<int>(i - skip_frames),
+                int res = UTIL_STRFUNC_SNPRINTF(buf, bufsz, "Frame #%02d: (%s%s) [%s]\r\n", static_cast<int>(i - skip_frames),
                                                 symbol.func_name.c_str(), symbol.func_offset.c_str(), symbol.func_address.c_str());
 
                 if (res <= 0) {
@@ -430,7 +441,7 @@ namespace util {
                     break;
                 }
 
-                int res = UTIL_STRFUNC_SNPRINTF(buf, bufsz, "Frame #%02d: () [0x%llx]\n", static_cast<int>(i - skip_frames),
+                int res = UTIL_STRFUNC_SNPRINTF(buf, bufsz, "Frame #%02d: () [0x%llx]\r\n", static_cast<int>(i - skip_frames),
                                                 static_cast<unsigned long long>(stacks[i]));
 
                 if (res <= 0) {
@@ -464,7 +475,7 @@ namespace util {
                     break;
                 }
 
-                int res = UTIL_STRFUNC_SNPRINTF(buf, bufsz, "Frame #%02d: () [0x%llx]\n", static_cast<int>(i - skip_frames),
+                int res = UTIL_STRFUNC_SNPRINTF(buf, bufsz, "Frame #%02d: () [0x%llx]\r\n", static_cast<int>(i - skip_frames),
                                                 reinterpret_cast<unsigned long long>(stacks[i]));
 
                 if (res <= 0) {
@@ -494,12 +505,12 @@ namespace util {
                 int res;
                 if (try_read_sym &&
                     SymFromAddr(SymInitializeHelper::Inst().process, reinterpret_cast<ULONG64>(stacks[i]), &displacement, symbol)) {
-                    res = UTIL_STRFUNC_SNPRINTF(buf, bufsz, "Frame #%02d: (%s+0x%llx) [0x%llx]\n", static_cast<int>(i - skip_frames),
+                    res = UTIL_STRFUNC_SNPRINTF(buf, bufsz, "Frame #%02d: (%s+0x%llx) [0x%llx]\r\n", static_cast<int>(i - skip_frames),
                                                 LOG_STACKTRACE_VC_W2A(symbol->Name), static_cast<unsigned long long>(displacement),
                                                 static_cast<unsigned long long>(symbol->Address));
                 } else {
                     try_read_sym = false; // 失败一次基本上就是读不到符号信息了，后面也不需要再尝试了
-                    res = UTIL_STRFUNC_SNPRINTF(buf, bufsz, "Frame #%02d: () [0x%llx]\n", static_cast<int>(i - skip_frames),
+                    res = UTIL_STRFUNC_SNPRINTF(buf, bufsz, "Frame #%02d: () [0x%llx]\r\n", static_cast<int>(i - skip_frames),
                                                 reinterpret_cast<unsigned long long>(stacks[i]));
                 }
 
@@ -545,37 +556,49 @@ namespace util {
                 // No cheking: QueryInterface sets the output parameter to NULL in case of error.
                 dbg_cli->QueryInterface(__uuidof(IDebugSymbols), dbg_sym.to_pvoid_ptr());
 
+                bool try_read_sym = true;
                 for (USHORT i = skip_frames; i < frames_count; ++i) {
                     if (NULL == stacks[i]) {
                         break;
                     }
-
-                    if (!dbg_sym.is_inited()) {
-                        error_msg = "IDebugClient.QueryInterface(IDebugSymbols) failed";
-                        break;
-                    }
                     const ULONG64 offset = reinterpret_cast<ULONG64>(stacks[i]);
 
-                    // 先尝试用栈上的缓冲区
-                    TCHAR func_name[256] = {0};
-                    ULONG size = 0;
-                    bool res_get_name =
-                        (S_OK == dbg_sym->GetNameByOffset(offset, func_name, (ULONG)(sizeof(func_name) / sizeof(func_name[0])), &size, 0));
-
                     int res = 0;
-                    if (!res_get_name && size != 0) { // 栈上的缓冲区不够再用堆内存
-                        std::string result;
-                        result.resize((size + 1) * sizeof(func_name[0]));
-                        res_get_name = (S_OK == dbg_sym->GetNameByOffset(offset, (PSTR)&result[0],
-                                                                         (ULONG)(result.size() / sizeof(func_name[0])), &size, 0));
-
-                        if (res_get_name) {
-                            res = UTIL_STRFUNC_SNPRINTF(buf, bufsz, "Frame #%02d: (%s) [0x%llx]\n", static_cast<int>(i - skip_frames),
-                                                        LOG_STACKTRACE_VC_W2A(result.c_str()), static_cast<unsigned long long>(offset));
+                    if (try_read_sym) {
+                        if (!dbg_sym.is_inited()) {
+                            error_msg = "IDebugClient.QueryInterface(IDebugSymbols) failed";
+                            break;
                         }
-                    } else if (res_get_name) {
-                        res = UTIL_STRFUNC_SNPRINTF(buf, bufsz, "Frame #%02d: (%s) [0x%llx]\n", static_cast<int>(i - skip_frames),
-                                                    LOG_STACKTRACE_VC_W2A(func_name), static_cast<unsigned long long>(offset));
+
+                        // 先尝试用栈上的缓冲区
+                        TCHAR func_name[256] = {0};
+                        ULONG size = 0;
+                        bool res_get_name = (S_OK == dbg_sym->GetNameByOffset(offset, func_name,
+                                                                              (ULONG)(sizeof(func_name) / sizeof(func_name[0])), &size, 0));
+                        if (!res_get_name && size != 0) { // 栈上的缓冲区不够再用堆内存
+                            std::string result;
+                            result.resize((size + 1) * sizeof(func_name[0]));
+                            res_get_name = (S_OK == dbg_sym->GetNameByOffset(offset, (PSTR)&result[0],
+                                                                             (ULONG)(result.size() / sizeof(func_name[0])), &size, 0));
+
+                            if (res_get_name) {
+                                res = UTIL_STRFUNC_SNPRINTF(buf, bufsz, "Frame #%02d: (%s) [0x%llx]\r\n", static_cast<int>(i - skip_frames),
+                                                            LOG_STACKTRACE_VC_W2A(result.c_str()), static_cast<unsigned long long>(offset));
+                            }
+                        } else if (res_get_name) {
+                            res = UTIL_STRFUNC_SNPRINTF(buf, bufsz, "Frame #%02d: (%s) [0x%llx]\r\n", static_cast<int>(i - skip_frames),
+                                                        LOG_STACKTRACE_VC_W2A(func_name), static_cast<unsigned long long>(offset));
+                        }
+
+                        if (!res_get_name) {
+                            try_read_sym = false;
+                        }
+                    }
+
+                    // 读不到符号，就只写出地址
+                    if (!try_read_sym) {
+                        res = UTIL_STRFUNC_SNPRINTF(buf, bufsz, "Frame #%02d: () [0x%llx]\r\n", static_cast<int>(i - skip_frames),
+                                                    static_cast<unsigned long long>(offset));
                     }
 
                     if (res <= 0) {

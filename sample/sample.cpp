@@ -19,39 +19,91 @@
 
 
 //=======================================================================================================
+void log_sample_func1(int times) {
+	if (times > 0) {
+		log_sample_func1(times - 1);
+		return;
+	}
+
+	puts("");
+	puts("===============begin log sample==============");
+
+	WLOG_INIT(util::log::log_wrapper::categorize_t::DEFAULT, util::log::log_wrapper::level_t::LOG_LW_DEBUG);
+	WLOG_GETCAT(util::log::log_wrapper::categorize_t::DEFAULT)->set_stacktrace_level(util::log::log_wrapper::level_t::LOG_LW_INFO);
+
+	PSTDERROR("try to print error log.\n");
+	PSTDOK("try to print ok log.\n");
+
+	WLOGNOTICE("notice log %d", 0);
+
+	util::log::log_sink_file_backend filed_backend;
+	filed_backend.set_max_file_size(256);
+	filed_backend.set_rotate_size(3);
+	filed_backend.set_file_pattern("%Y-%m-%d/%S/%N.log");
+
+	WLOG_GETCAT(util::log::log_wrapper::categorize_t::DEFAULT)->add_sink(filed_backend);
+
+	for (int i = 0; i < 16; ++i) {
+		WLOGDEBUG("first dir test log: %d", i);
+	}
+
+	THREAD_SLEEP_MS(1000);
+	util::time::time_utility::update();
+
+	for (int i = 0; i < 16; ++i) {
+		WLOGDEBUG("second dir log: %d", i);
+	}
+
+	unsigned long long ull_test_in_mingw = 64;
+	WLOGINFO("%llu", ull_test_in_mingw);
+	printf("log are located at %s\n", util::file_system::get_cwd().c_str());
+	puts("===============end log sample==============");
+}
+
+class log_sample_functor2 {
+public:
+	void func2(int times) {
+		if (times & 0x01) {
+			func2(times - 1);
+		} else {
+			log_sample_func1(times - 1);
+		}
+	}
+};
+
+class log_sample_functor3 {
+public:
+	static void func3(int times) {
+		if (times & 0x01) {
+			func3(times - 1);
+		} else {
+			log_sample_functor2 f;
+			f.func2(times - 1);
+		}
+	}
+};
+
+struct log_sample_functor4 {
+	void operator()(int times) {
+		if (times & 0x01) {
+			(*this)(times - 1);
+		} else {
+			log_sample_functor3::func3(times - 1);
+		}
+	}
+};
+
+static void log_sample_func5(int times) {
+	if (times & 0x01) {
+		log_sample_func5(times - 1);
+	} else {
+		log_sample_functor4 f;
+		f(times - 1);
+	}
+}
+
 void log_sample() {
-    puts("");
-    puts("===============begin log sample==============");
-
-    WLOG_INIT(util::log::log_wrapper::categorize_t::DEFAULT, util::log::log_wrapper::level_t::LOG_LW_DEBUG);
-
-    PSTDERROR("try to print error log.\n");
-    PSTDOK("try to print ok log.\n");
-
-    WLOGNOTICE("notice log %d", 0);
-
-    util::log::log_sink_file_backend filed_backend;
-    filed_backend.set_max_file_size(256);
-    filed_backend.set_rotate_size(3);
-    filed_backend.set_file_pattern("%Y-%m-%d/%S/%N.log");
-
-    WLOG_GETCAT(util::log::log_wrapper::categorize_t::DEFAULT)->add_sink(filed_backend);
-
-    for (int i = 0; i < 16; ++i) {
-        WLOGDEBUG("first dir test log: %d", i);
-    }
-
-    THREAD_SLEEP_MS(1000);
-    util::time::time_utility::update();
-
-    for (int i = 0; i < 16; ++i) {
-        WLOGDEBUG("second dir log: %d", i);
-    }
-
-    unsigned long long ull_test_in_mingw = 64;
-    WLOGINFO("%llu", ull_test_in_mingw);
-    printf("log are located at %s\n", util::file_system::get_cwd().c_str());
-    puts("===============end log sample==============");
+	log_sample_func5(9);
 }
 
 //=======================================================================================================
