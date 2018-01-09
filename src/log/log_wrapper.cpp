@@ -11,8 +11,9 @@
 #include "time/time_utility.h"
 
 #include "log/log_formatter.h"
-#include "log/log_wrapper.h"
 #include "log/log_stacktrace.h"
+#include "log/log_wrapper.h"
+
 
 #if defined(THREAD_TLS_ENABLED) && 1 == THREAD_TLS_ENABLED
 namespace util {
@@ -64,8 +65,7 @@ namespace util {
             static bool log_wrapper_global_destroyed_ = false;
         }
 
-        log_wrapper::log_wrapper() : log_level_(level_t::LOG_LW_DISABLED), 
-			stacktrace_level_(level_t::LOG_LW_FATAL, level_t::LOG_LW_ERROR) {
+        log_wrapper::log_wrapper() : log_level_(level_t::LOG_LW_DISABLED), stacktrace_level_(level_t::LOG_LW_FATAL, level_t::LOG_LW_ERROR) {
             // 默认设为全局logger，如果是用户logger，则create_user_logger里重新设为false
             options_.set(options_t::OPT_IS_GLOBAL, true);
 
@@ -73,8 +73,8 @@ namespace util {
             prefix_format_ = "[Log %L][%F %T.%f][%s:%n(%C)]: ";
         }
 
-        log_wrapper::log_wrapper(construct_helper_t &h) : log_level_(level_t::LOG_LW_DISABLED),
-			stacktrace_level_(level_t::LOG_LW_FATAL, level_t::LOG_LW_ERROR) {
+        log_wrapper::log_wrapper(construct_helper_t &h)
+            : log_level_(level_t::LOG_LW_DISABLED), stacktrace_level_(level_t::LOG_LW_FATAL, level_t::LOG_LW_ERROR) {
             // 这个接口由create_user_logger调用，不设置OPT_IS_GLOBAL
             prefix_format_ = "[Log %L][%F %T.%f][%s:%n(%C)]: ";
         }
@@ -106,17 +106,17 @@ namespace util {
 
         void log_wrapper::clear_sinks() { log_sinks_.clear(); }
 
-		void log_wrapper::set_stacktrace_level(level_t::type level_max, level_t::type level_min) {
-			stacktrace_level_.first = level_min;
-			stacktrace_level_.second = level_max;
+        void log_wrapper::set_stacktrace_level(level_t::type level_max, level_t::type level_min) {
+            stacktrace_level_.first = level_min;
+            stacktrace_level_.second = level_max;
 
-			// make sure first <= second
-			if (stacktrace_level_.second < stacktrace_level_.first) {
-				level_t::type tmp = stacktrace_level_.second;
-				stacktrace_level_.second = stacktrace_level_.first;
-				stacktrace_level_.first = tmp;
-			}
-		}
+            // make sure first <= second
+            if (stacktrace_level_.second < stacktrace_level_.first) {
+                level_t::type tmp = stacktrace_level_.second;
+                stacktrace_level_.second = stacktrace_level_.first;
+                stacktrace_level_.first = tmp;
+            }
+        }
 
         void log_wrapper::update() { util::time::time_utility::update(); }
 
@@ -158,15 +158,17 @@ namespace util {
                 }
             }
 
-			if (is_stacktrace_enabled() && caller.level_id >= stacktrace_level_.first && caller.level_id <= stacktrace_level_.second) {
-				size_t left_len = LOG_WRAPPER_MAX_SIZE_PER_LINE - log_size - 1;
-				if (left_len > 2) {
-					log_buffer[log_size++] = '\r';
-					log_buffer[log_size++] = '\n';
-					size_t stacktrace_len = stacktrace_write(log_buffer + log_size, LOG_WRAPPER_MAX_SIZE_PER_LINE - log_size - 1);
-					log_size += stacktrace_len;
-				}
-			}
+            if (is_stacktrace_enabled() && caller.level_id >= stacktrace_level_.first && caller.level_id <= stacktrace_level_.second) {
+                int prt_res =
+                    UTIL_STRFUNC_SNPRINTF(&log_buffer[log_size], LOG_WRAPPER_MAX_SIZE_PER_LINE - log_size, "\r\nCall stacks:\r\n");
+
+                if (prt_res > 0) {
+                    log_size += static_cast<size_t>(prt_res);
+                }
+
+                size_t stacktrace_len = stacktrace_write(log_buffer + log_size, LOG_WRAPPER_MAX_SIZE_PER_LINE - log_size - 1);
+                log_size += stacktrace_len;
+            }
 
             write_log(caller, log_buffer, log_size);
         }
