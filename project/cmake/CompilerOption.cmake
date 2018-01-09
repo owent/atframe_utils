@@ -38,7 +38,7 @@ macro(add_linker_flags_for_runtime)
         list(APPEND CMAKE_MODULE_LINKER_FLAGS ${def})
         list(APPEND CMAKE_SHARED_LINKER_FLAGS ${def})
 	endforeach()
-endmacro(add_linker_flags_for_all)
+endmacro(add_linker_flags_for_runtime)
 
 
 # 编译器选项 (仅做了GCC、VC和Clang兼容)
