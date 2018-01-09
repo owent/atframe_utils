@@ -194,7 +194,7 @@ namespace util {
     /** 对指定log_wrapper的日志输出工具 **/
 
 #define WINSTLOGDEFLV(lv, lv_name, inst, ...) \
-    if (inst.check(lv)) inst.log(WDTLOGFILENF(lv, lv_name), __VA_ARGS__);
+    if ((inst).check(lv)) (inst).log(WDTLOGFILENF(lv, lv_name), __VA_ARGS__);
 
 #define WINSTLOGDEBUG(inst, ...) WINSTLOGDEFLV(util::log::log_wrapper::level_t::LOG_LW_DEBUG, NULL, inst, __VA_ARGS__)
 #define WINSTLOGNOTICE(inst, ...) WINSTLOGDEFLV(util::log::log_wrapper::level_t::LOG_LW_NOTICE, NULL, inst, __VA_ARGS__)
@@ -218,7 +218,7 @@ namespace util {
 
 /** 对指定log_wrapper的日志输出工具 **/
 #define WINSTLOGDEFLV(lv, lv_name, inst, args...) \
-    if (inst.check(lv)) inst.log(WDTLOGFILENF(lv, lv_name), ##args);
+    if ((inst).check(lv)) (inst).log(WDTLOGFILENF(lv, lv_name), ##args);
 
 #define WINSTLOGDEBUG(...) WINSTLOGDEFLV(util::log::log_wrapper::level_t::LOG_LW_DEBUG, NULL, __VA_ARGS__)
 #define WINSTLOGNOTICE(...) WINSTLOGDEFLV(util::log::log_wrapper::level_t::LOG_LW_NOTICE, NULL, __VA_ARGS__)
