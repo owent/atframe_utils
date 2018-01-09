@@ -13,24 +13,15 @@ write_compiler_detection_header(
 
 # 默认配置选项
 #####################################################################
+option(LIBUNWIND_ENABLED "Enable using libunwind." OFF)
+set(LOG_STACKTRACE_MAX_STACKS "100" CACHE STRING "Max stacks when stacktracing.")
+
+include("${PROJECT_ALL_SOURCE_DIR}/log/log_configure.cmake")
 
 # 内存混淆int
 set(ENABLE_MIXEDINT_MAGIC_MASK 0 CACHE STRING "Integer mixed magic mask")
 if (NOT ENABLE_MIXEDINT_MAGIC_MASK)
     set(ENABLE_MIXEDINT_MAGIC_MASK 0)
-endif()
-
-# Lua模块
-find_package(Lua51)
-if (LUA51_FOUND)
-    include_directories(${LUA_INCLUDE_DIR})
-    list(APPEND EXTENTION_LINK_LIB ${LUA_LIBRARIES})
-    message(STATUS "Lua support enabled.(lua 5.1 detected)")
-elseif(ENABLE_LUA_SUPPORT)
-    message(STATUS "Lua support enabled.(enabled by custom)")
-else()
-    message(STATUS "Lua support disabled")
-    set(LOG_WRAPPER_DISABLE_LUA_SUPPORT 1)
 endif()
 
 # libuv
