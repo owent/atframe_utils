@@ -166,7 +166,11 @@ namespace util {
                     log_size += static_cast<size_t>(prt_res);
                 }
 
-                size_t stacktrace_len = stacktrace_write(log_buffer + log_size, LOG_WRAPPER_MAX_SIZE_PER_LINE - log_size - 1);
+                stacktrace_options options;
+                options.skip_start_frames = 1;
+                options.skip_end_frames = 0;
+                options.max_frames = 0;
+                size_t stacktrace_len = stacktrace_write(log_buffer + log_size, LOG_WRAPPER_MAX_SIZE_PER_LINE - log_size - 1, &options);
                 log_size += stacktrace_len;
             }
 

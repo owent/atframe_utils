@@ -9,6 +9,13 @@
 #endif
 #define LOG_STACKTRACE_MAX_STACKS_ARRAY_SIZE (LOG_STACKTRACE_MAX_STACKS + 1)
 
+// disable some warnings in msvc's headers
+#if defined(_MSC_VER)
+#pragma warning(push)
+#pragma warning(disable : 4091)
+#endif
+
+// select method to stacktrace
 #if defined(LOG_STACKTRACE_USING_LIBUNWIND) && LOG_STACKTRACE_USING_LIBUNWIND
 #include <libunwind.h>
 
@@ -114,6 +121,11 @@ public:
 
 #endif
 
+// restore some warnings in msvc's headers
+#if defined(_MSC_VER)
+#pragma warning(pop)
+#endif
+
 // for demangle
 #ifdef __GLIBCXX__
 #include <cxxabi.h>
@@ -125,6 +137,13 @@ public:
 
 namespace util {
     namespace log {
+        namespace details {
+            const stacktrace_options &default_stacktrace_options() {
+                static stacktrace_options opts = {0, 1, 0};
+                return opts;
+            }
+        } // namespace details
+
         bool is_stacktrace_enabled() UTIL_CONFIG_NOEXCEPT {
 #if defined(LOG_STACKTRACE_USING_LIBUNWIND) && LOG_STACKTRACE_USING_LIBUNWIND
             return true;
@@ -142,9 +161,13 @@ namespace util {
         }
 
 #if defined(LOG_STACKTRACE_USING_LIBUNWIND) && LOG_STACKTRACE_USING_LIBUNWIND
-        size_t stacktrace_write(char *buf, size_t bufsz) {
+        size_t stacktrace_write(char *buf, size_t bufsz, const stacktrace_options *options) {
             if (NULL == buf || bufsz <= 0) {
                 return 0;
+            }
+
+            if (NULL == options) {
+                options = &details::default_stacktrace_options();
             }
 
             unw_context_t unw_ctx;
@@ -157,10 +180,36 @@ namespace util {
             func_name_cache[sizeof(func_name_cache) - 1] = 0;
             unw_word_t unw_offset;
             int frame_id = 0;
-            int skip_frames = 1;
+            int skip_frames = 1 + static_cast<int>(options->skip_start_frames);
+            int frames_count = LOG_STACKTRACE_MAX_STACKS;
+
+            if (options->skip_end_frames > 0) {
+                frames_count = 1;
+                while (unw_step(&unw_cur) > 0) {
+                    ++frames_count;
+                }
+
+                // restore cursor
+                unw_init_local(&unw_cur, &unw_ctx);
+
+                if (frames_count <= skip_frames + static_cast<int>(options->skip_end_frames)) {
+                    frames_count = 0;
+                } else {
+                    frames_count -= static_cast<int>(options->skip_end_frames);
+                }
+            }
 
             size_t ret = 0;
             do {
+                if (frames_count <= 0) {
+                    break;
+                }
+                --frames_count;
+
+                if (0 != options->max_frames && frame_id >= static_cast<int>(options->max_frames)) {
+                    break;
+                }
+
                 if (skip_frames <= 0) {
                     unw_get_proc_info(&unw_cur, &unw_proc);
                     if (0 == unw_proc.start_ip) {
@@ -343,18 +392,33 @@ namespace util {
             }
         }
 
-        size_t stacktrace_write(char *buf, size_t bufsz) {
+        size_t stacktrace_write(char *buf, size_t bufsz, const stacktrace_options *options) {
             if (NULL == buf || bufsz <= 0) {
                 return 0;
             }
 
+            if (NULL == options) {
+                options = &details::default_stacktrace_options();
+            }
+
             size_t ret = 0;
             void *stacks[LOG_STACKTRACE_MAX_STACKS_ARRAY_SIZE] = {NULL};
-            size_t size = backtrace(stacks, LOG_STACKTRACE_MAX_STACKS_ARRAY_SIZE);
-            char **func_name_cache = backtrace_symbols(stacks, size);
-            size_t skip_frames = 1;
+            size_t frames_count = backtrace(stacks, LOG_STACKTRACE_MAX_STACKS_ARRAY_SIZE);
+            char **func_name_cache = backtrace_symbols(stacks, frames_count);
+            size_t skip_frames = 1 + static_cast<size_t>(options->skip_start_frames);
 
-            for (size_t i = skip_frames; i < size; i++) {
+            if (frames_count <= skip_frames + options->skip_end_frames) {
+                frames_count = 0;
+            } else if (options->skip_end_frames > 0) {
+                frames_count -= options->skip_end_frames;
+            }
+
+            for (size_t i = skip_frames; i < frames_count; i++) {
+                int frame_id = static_cast<int>(i - skip_frames);
+                if (0 != options->max_frames && frame_id >= static_cast<int>(options->max_frames)) {
+                    break;
+                }
+
                 if (NULL == func_name_cache[i] || NULL == stacks[i] || 0x01 == reinterpret_cast<intptr_t>(stacks[i])) {
                     break;
                 }
@@ -376,8 +440,8 @@ namespace util {
                 }
 #endif
 
-                int res = UTIL_STRFUNC_SNPRINTF(buf, bufsz, "Frame #%02d: (%s%s) [%s]\r\n", static_cast<int>(i - skip_frames),
-                                                symbol.func_name.c_str(), symbol.func_offset.c_str(), symbol.func_address.c_str());
+                int res = UTIL_STRFUNC_SNPRINTF(buf, bufsz, "Frame #%02d: (%s%s) [%s]\r\n", frame_id, symbol.func_name.c_str(),
+                                                symbol.func_offset.c_str(), symbol.func_address.c_str());
 
                 if (res <= 0) {
                     break;
@@ -419,10 +483,15 @@ namespace util {
             return ::_URC_NO_REASON;
         }
 
-        size_t stacktrace_write(char *buf, size_t bufsz) {
+        size_t stacktrace_write(char *buf, size_t bufsz, const stacktrace_options *options) {
             if (NULL == buf || bufsz <= 0) {
                 return 0;
             }
+
+            if (NULL == options) {
+                options = &details::default_stacktrace_options();
+            }
+
             size_t ret = 0;
 
             _Unwind_Word stacks[LOG_STACKTRACE_MAX_STACKS_ARRAY_SIZE];
@@ -433,14 +502,27 @@ namespace util {
 
             ::_Unwind_Backtrace(&stacktrace_unwind_callback, &state);
             size_t frames_count = state.current - &stacks[0];
-            size_t skip_frames = 1;
+            size_t skip_frames = 1 + static_cast<size_t>(options->skip_start_frames);
+
+            if (frames_count <= skip_frames + options->skip_end_frames) {
+                frames_count = 0;
+            } else if (options->skip_end_frames > 0) {
+                frames_count -= options->skip_end_frames;
+            }
+
             for (size_t i = skip_frames; i < frames_count; ++i) {
+                int frame_id = static_cast<int>(i - skip_frames);
+
+                if (0 != options->max_frames && frame_id >= static_cast<int>(options->max_frames)) {
+                    break;
+                }
+
                 if (0 == stacks[i]) {
                     break;
                 }
 
-                int res = UTIL_STRFUNC_SNPRINTF(buf, bufsz, "Frame #%02d: () [0x%llx]\r\n", static_cast<int>(i - skip_frames),
-                                                static_cast<unsigned long long>(stacks[i]));
+                int res =
+                    UTIL_STRFUNC_SNPRINTF(buf, bufsz, "Frame #%02d: () [0x%llx]\r\n", frame_id, static_cast<unsigned long long>(stacks[i]));
 
                 if (res <= 0) {
                     break;
@@ -456,24 +538,40 @@ namespace util {
 
 #elif (defined(LOG_STACKTRACE_USING_DBGHELP) && LOG_STACKTRACE_USING_DBGHELP) || \
     (defined(LOG_STACKTRACE_USING_DBGENG) && LOG_STACKTRACE_USING_DBGENG)
-        size_t stacktrace_write(char *buf, size_t bufsz) {
+        size_t stacktrace_write(char *buf, size_t bufsz, const stacktrace_options *options) {
             if (NULL == buf || bufsz <= 0) {
                 return 0;
+            }
+
+            if (NULL == options) {
+                options = &details::default_stacktrace_options();
             }
 
             PVOID stacks[LOG_STACKTRACE_MAX_STACKS_ARRAY_SIZE];
             USHORT frames_count = CaptureStackBackTrace(0, LOG_STACKTRACE_MAX_STACKS_ARRAY_SIZE, stacks, NULL);
 
             size_t ret = 0;
-            USHORT skip_frames = 1;
+            USHORT skip_frames = 1 + static_cast<USHORT>(options->skip_start_frames);
+
+            if (frames_count <= skip_frames + static_cast<USHORT>(options->skip_end_frames)) {
+                frames_count = 0;
+            } else if (options->skip_end_frames > 0) {
+                frames_count -= static_cast<USHORT>(options->skip_end_frames);
+            }
 
 #if !defined(_MSC_VER)
             for (USHORT i = skip_frames; i < frames_count; ++i) {
+                int frame_id = static_cast<int>(i - skip_frames);
+
+                if (0 != options->max_frames && frame_id >= static_cast<int>(options->max_frames)) {
+                    break;
+                }
+
                 if (NULL == stacks[i]) {
                     break;
                 }
 
-                int res = UTIL_STRFUNC_SNPRINTF(buf, bufsz, "Frame #%02d: () [0x%llx]\r\n", static_cast<int>(i - skip_frames),
+                int res = UTIL_STRFUNC_SNPRINTF(buf, bufsz, "Frame #%02d: () [0x%llx]\r\n", frame_id,
                                                 reinterpret_cast<unsigned long long>(stacks[i]));
 
                 if (res <= 0) {
@@ -496,6 +594,12 @@ namespace util {
 
             bool try_read_sym = true;
             for (USHORT i = skip_frames; i < frames_count; ++i) {
+                int frame_id = static_cast<int>(i - skip_frames);
+
+                if (0 != options->max_frames && frame_id >= static_cast<int>(options->max_frames)) {
+                    break;
+                }
+
                 if (NULL == stacks[i]) {
                     break;
                 }
@@ -503,12 +607,12 @@ namespace util {
                 int res;
                 if (try_read_sym &&
                     SymFromAddr(SymInitializeHelper::Inst().process, reinterpret_cast<ULONG64>(stacks[i]), &displacement, symbol)) {
-                    res = UTIL_STRFUNC_SNPRINTF(buf, bufsz, "Frame #%02d: (%s+0x%llx) [0x%llx]\r\n", static_cast<int>(i - skip_frames),
+                    res = UTIL_STRFUNC_SNPRINTF(buf, bufsz, "Frame #%02d: (%s+0x%llx) [0x%llx]\r\n", frame_id,
                                                 LOG_STACKTRACE_VC_W2A(symbol->Name), static_cast<unsigned long long>(displacement),
                                                 static_cast<unsigned long long>(symbol->Address));
                 } else {
                     try_read_sym = false; // 失败一次基本上就是读不到符号信息了，后面也不需要再尝试了
-                    res = UTIL_STRFUNC_SNPRINTF(buf, bufsz, "Frame #%02d: () [0x%llx]\r\n", static_cast<int>(i - skip_frames),
+                    res = UTIL_STRFUNC_SNPRINTF(buf, bufsz, "Frame #%02d: () [0x%llx]\r\n", frame_id,
                                                 reinterpret_cast<unsigned long long>(stacks[i]));
                 }
 
@@ -556,6 +660,11 @@ namespace util {
 
                 bool try_read_sym = true;
                 for (USHORT i = skip_frames; i < frames_count; ++i) {
+                    int frame_id = static_cast<int>(i - skip_frames);
+                    if (0 != options->max_frames && frame_id >= static_cast<int>(options->max_frames)) {
+                        break;
+                    }
+
                     if (NULL == stacks[i]) {
                         break;
                     }
@@ -580,11 +689,11 @@ namespace util {
                                                                              (ULONG)(result.size() / sizeof(func_name[0])), &size, 0));
 
                             if (res_get_name) {
-                                res = UTIL_STRFUNC_SNPRINTF(buf, bufsz, "Frame #%02d: (%s) [0x%llx]\r\n", static_cast<int>(i - skip_frames),
+                                res = UTIL_STRFUNC_SNPRINTF(buf, bufsz, "Frame #%02d: (%s) [0x%llx]\r\n", frame_id,
                                                             LOG_STACKTRACE_VC_W2A(result.c_str()), static_cast<unsigned long long>(offset));
                             }
                         } else if (res_get_name) {
-                            res = UTIL_STRFUNC_SNPRINTF(buf, bufsz, "Frame #%02d: (%s) [0x%llx]\r\n", static_cast<int>(i - skip_frames),
+                            res = UTIL_STRFUNC_SNPRINTF(buf, bufsz, "Frame #%02d: (%s) [0x%llx]\r\n", frame_id,
                                                         LOG_STACKTRACE_VC_W2A(func_name), static_cast<unsigned long long>(offset));
                         }
 
@@ -595,7 +704,7 @@ namespace util {
 
                     // 读不到符号，就只写出地址
                     if (!try_read_sym) {
-                        res = UTIL_STRFUNC_SNPRINTF(buf, bufsz, "Frame #%02d: () [0x%llx]\r\n", static_cast<int>(i - skip_frames),
+                        res = UTIL_STRFUNC_SNPRINTF(buf, bufsz, "Frame #%02d: () [0x%llx]\r\n", frame_id,
                                                     static_cast<unsigned long long>(offset));
                     }
 
@@ -621,7 +730,7 @@ namespace util {
             return ret;
         }
 #else
-        size_t stacktrace_write(char *buf, size_t bufsz) {
+        size_t stacktrace_write(char *buf, size_t bufsz, const stacktrace_options *options) {
             const char *msg = "stacktrace disabled.";
             if (NULL == buf || bufsz <= strlen(msg)) {
                 return 0;
