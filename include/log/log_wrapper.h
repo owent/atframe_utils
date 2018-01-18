@@ -142,11 +142,9 @@ namespace util {
                 options_.set(t, v);
             };
 
-			void set_stacktrace_level(level_t::type level_max = level_t::LOG_LW_ERROR,
-				level_t::type level_min = level_t::LOG_LW_FATAL);
-			inline const std::pair<level_t::type, level_t::type>& get_stacktrace_level() const {
-				return stacktrace_level_;
-			}
+            void set_stacktrace_level(level_t::type level_max = level_t::LOG_LW_DISABLED,
+                                      level_t::type level_min = level_t::LOG_LW_DISABLED);
+            inline const std::pair<level_t::type, level_t::type> &get_stacktrace_level() const { return stacktrace_level_; }
 
             /**
              * @brief 实际写出到落地接口
@@ -160,7 +158,7 @@ namespace util {
 
         private:
             level_t::type log_level_;
-			std::pair<level_t::type, level_t::type> stacktrace_level_;
+            std::pair<level_t::type, level_t::type> stacktrace_level_;
             std::list<log_router_t> log_sinks_;
             std::string prefix_format_;
             std::bitset<options_t::OPT_MAX> options_;
