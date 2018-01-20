@@ -148,7 +148,12 @@ namespace util {
 
         std::string now_path;
         // 留一个\0和一个分隔符位
-        now_path.reserve(strlen(dir_path) + 2);
+        now_path.reserve(strlen(dir_path) + 4);
+
+        // 初始路径在Unix系统下会被转为相对路径
+        if (NULL != dir_path && ('/' == *dir_path || '\\' == *dir_path)) {
+            now_path = *dir_path;
+        }
 
         for (size_t i = 0; i < path_segs.size(); ++i) {
             now_path += path_segs[i];
