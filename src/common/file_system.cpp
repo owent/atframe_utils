@@ -153,6 +153,12 @@ namespace util {
         // 初始路径在Unix系统下会被转为相对路径
         if (NULL != dir_path && ('/' == *dir_path || '\\' == *dir_path)) {
             now_path = *dir_path;
+
+            // NFS 支持
+            char next_char = *(dir_path + 1);
+            if ('/' == next_char || '\\' == next_char) {
+                now_path += next_char;
+            }
         }
 
         for (size_t i = 0; i < path_segs.size(); ++i) {
@@ -465,7 +471,8 @@ namespace util {
             return false;
         }
 
-        if (dir_path[0] == '/') {
+        // NFS may has a path of "\\DOMAIN\PATH"
+        if (dir_path[0] == '/' || dir_path[0] == '\\') {
             return true;
         }
 
