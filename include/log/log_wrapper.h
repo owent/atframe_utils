@@ -182,6 +182,7 @@ namespace util {
 #define WCLOGDEFLV(lv, lv_name, cat, ...) \
     if (util::log::log_wrapper::check(WDTLOGGETCAT(cat), lv)) WDTLOGGETCAT(cat)->log(WDTLOGFILENF(lv, lv_name), __VA_ARGS__);
 
+#define WCLOGTRACE(cat, ...) WCLOGDEFLV(util::log::log_wrapper::level_t::LOG_LW_TRACE, NULL, cat, __VA_ARGS__)
 #define WCLOGDEBUG(cat, ...) WCLOGDEFLV(util::log::log_wrapper::level_t::LOG_LW_DEBUG, NULL, cat, __VA_ARGS__)
 #define WCLOGNOTICE(cat, ...) WCLOGDEFLV(util::log::log_wrapper::level_t::LOG_LW_NOTICE, NULL, cat, __VA_ARGS__)
 #define WCLOGINFO(cat, ...) WCLOGDEFLV(util::log::log_wrapper::level_t::LOG_LW_INFO, NULL, cat, __VA_ARGS__)
@@ -194,6 +195,7 @@ namespace util {
 #define WINSTLOGDEFLV(lv, lv_name, inst, ...) \
     if ((inst).check(lv)) (inst).log(WDTLOGFILENF(lv, lv_name), __VA_ARGS__);
 
+#define WINSTLOGTRACE(inst, ...) WINSTLOGDEFLV(util::log::log_wrapper::level_t::LOG_LW_TRACE, NULL, inst, __VA_ARGS__)
 #define WINSTLOGDEBUG(inst, ...) WINSTLOGDEFLV(util::log::log_wrapper::level_t::LOG_LW_DEBUG, NULL, inst, __VA_ARGS__)
 #define WINSTLOGNOTICE(inst, ...) WINSTLOGDEFLV(util::log::log_wrapper::level_t::LOG_LW_NOTICE, NULL, inst, __VA_ARGS__)
 #define WINSTLOGINFO(inst, ...) WINSTLOGDEFLV(util::log::log_wrapper::level_t::LOG_LW_INFO, NULL, inst, __VA_ARGS__)
@@ -207,6 +209,7 @@ namespace util {
 #define WCLOGDEFLV(lv, lv_name, cat, args...) \
     if (util::log::log_wrapper::check(WDTLOGGETCAT(cat), lv)) WDTLOGGETCAT(cat)->log(WDTLOGFILENF(lv, lv_name), ##args);
 
+#define WCLOGTRACE(...) WCLOGDEFLV(util::log::log_wrapper::level_t::LOG_LW_TRACE, NULL, __VA_ARGS__)
 #define WCLOGDEBUG(...) WCLOGDEFLV(util::log::log_wrapper::level_t::LOG_LW_DEBUG, NULL, __VA_ARGS__)
 #define WCLOGNOTICE(...) WCLOGDEFLV(util::log::log_wrapper::level_t::LOG_LW_NOTICE, NULL, __VA_ARGS__)
 #define WCLOGINFO(...) WCLOGDEFLV(util::log::log_wrapper::level_t::LOG_LW_INFO, NULL, __VA_ARGS__)
@@ -218,6 +221,7 @@ namespace util {
 #define WINSTLOGDEFLV(lv, lv_name, inst, args...) \
     if ((inst).check(lv)) (inst).log(WDTLOGFILENF(lv, lv_name), ##args);
 
+#define WINSTLOGTRACE(...) WINSTLOGDEFLV(util::log::log_wrapper::level_t::LOG_LW_TRACE, NULL, __VA_ARGS__)
 #define WINSTLOGDEBUG(...) WINSTLOGDEFLV(util::log::log_wrapper::level_t::LOG_LW_DEBUG, NULL, __VA_ARGS__)
 #define WINSTLOGNOTICE(...) WINSTLOGDEFLV(util::log::log_wrapper::level_t::LOG_LW_NOTICE, NULL, __VA_ARGS__)
 #define WINSTLOGINFO(...) WINSTLOGDEFLV(util::log::log_wrapper::level_t::LOG_LW_INFO, NULL, __VA_ARGS__)
@@ -228,6 +232,7 @@ namespace util {
 #endif
 
 // 默认日志输出工具
+#define WLOGTRACE(...) WCLOGTRACE(util::log::log_wrapper::categorize_t::DEFAULT, __VA_ARGS__)
 #define WLOGDEBUG(...) WCLOGDEBUG(util::log::log_wrapper::categorize_t::DEFAULT, __VA_ARGS__)
 #define WLOGNOTICE(...) WCLOGNOTICE(util::log::log_wrapper::categorize_t::DEFAULT, __VA_ARGS__)
 #define WLOGINFO(...) WCLOGINFO(util::log::log_wrapper::categorize_t::DEFAULT, __VA_ARGS__)
@@ -238,44 +243,47 @@ namespace util {
 
 // 控制台输出工具
 #ifdef _MSC_VER
-#define PSTDTERMCOLOR(code, fmt, ...)                                              \
+#define PSTDTERMCOLOR(os_ident, code, fmt, ...)                                        \
     \
-{                                                                             \
-        util::cli::shell_stream::shell_stream_opr log_wrapper_pstd_ss(&std::cout); \
-        log_wrapper_pstd_ss.open(code);                                            \
-        log_wrapper_pstd_ss.close();                                               \
-        printf(fmt, __VA_ARGS__);                                                  \
+{                                                                                 \
+        util::cli::shell_stream::shell_stream_opr log_wrapper_pstd_ss(&std::os_ident); \
+        log_wrapper_pstd_ss.open(code);                                                \
+        log_wrapper_pstd_ss.close();                                                   \
+        printf(fmt, __VA_ARGS__);                                                      \
     \
 }
 
 #else
-#define PSTDTERMCOLOR(code, fmt, args...)                                          \
+#define PSTDTERMCOLOR(os_ident, code, fmt, args...)                                    \
     \
-{                                                                             \
-        util::cli::shell_stream::shell_stream_opr log_wrapper_pstd_ss(&std::cout); \
-        log_wrapper_pstd_ss.open(code);                                            \
-        log_wrapper_pstd_ss.close();                                               \
-        printf(fmt, ##args);                                                       \
+{                                                                                 \
+        util::cli::shell_stream::shell_stream_opr log_wrapper_pstd_ss(&std::os_ident); \
+        log_wrapper_pstd_ss.open(code);                                                \
+        log_wrapper_pstd_ss.close();                                                   \
+        printf(fmt, ##args);                                                           \
     \
 }
 
 #endif
 
 #define PSTDINFO(...) printf(__VA_ARGS__)
-#define PSTDNOTICE(...) PSTDTERMCOLOR(util::cli::shell_font_style::SHELL_FONT_COLOR_YELLOW, __VA_ARGS__)
-#define PSTDWARNING(...) \
-    PSTDTERMCOLOR(util::cli::shell_font_style::SHELL_FONT_SPEC_BOLD | util::cli::shell_font_style::SHELL_FONT_COLOR_YELLOW, __VA_ARGS__)
+#define PSTDNOTICE(...) PSTDTERMCOLOR(cout, util::cli::shell_font_style::SHELL_FONT_COLOR_YELLOW, __VA_ARGS__)
+#define PSTDWARNING(...)                                                                                                          \
+    PSTDTERMCOLOR(cerr, util::cli::shell_font_style::SHELL_FONT_SPEC_BOLD | util::cli::shell_font_style::SHELL_FONT_COLOR_YELLOW, \
+                  __VA_ARGS__)
 #define PSTDERROR(...) \
-    PSTDTERMCOLOR(util::cli::shell_font_style::SHELL_FONT_SPEC_BOLD | util::cli::shell_font_style::SHELL_FONT_COLOR_RED, __VA_ARGS__)
-#define PSTDFATAL(...) PSTDTERMCOLOR(util::cli::shell_font_style::SHELL_FONT_COLOR_MAGENTA, __VA_ARGS__)
-#define PSTDOK(...) PSTDTERMCOLOR(util::cli::shell_font_style::SHELL_FONT_COLOR_GREEN, __VA_ARGS__)
+    PSTDTERMCOLOR(cerr, util::cli::shell_font_style::SHELL_FONT_SPEC_BOLD | util::cli::shell_font_style::SHELL_FONT_COLOR_RED, __VA_ARGS__)
+#define PSTDFATAL(...) PSTDTERMCOLOR(cerr, util::cli::shell_font_style::SHELL_FONT_COLOR_MAGENTA, __VA_ARGS__)
+#define PSTDOK(...) PSTDTERMCOLOR(cout, util::cli::shell_font_style::SHELL_FONT_COLOR_GREEN, __VA_ARGS__)
 //
 #ifndef NDEBUG
-#define PSTDDEBUG(...) PSTDTERMCOLOR(util::cli::shell_font_style::SHELL_FONT_COLOR_CYAN, __VA_ARGS__)
-#define PSTDMARK                                                                                                         \
-    PSTDTERMCOLOR(util::cli::shell_font_style::SHELL_FONT_SPEC_BOLD | util::cli::shell_font_style::SHELL_FONT_COLOR_RED, \
+#define PSTDTRACE(...) PSTDTERMCOLOR(cout, util::cli::shell_font_style::SHELL_FONT_COLOR_CYAN, __VA_ARGS__)
+#define PSTDDEBUG(...) PSTDTERMCOLOR(cout, util::cli::shell_font_style::SHELL_FONT_COLOR_CYAN, __VA_ARGS__)
+#define PSTDMARK                                                                                                               \
+    PSTDTERMCOLOR(cout, util::cli::shell_font_style::SHELL_FONT_SPEC_BOLD | util::cli::shell_font_style::SHELL_FONT_COLOR_RED, \
                   "Mark: %s:%s (function %s)\n", __FILE__, __LINE__, __FUNCTION__)
 #else
+#define PSTDTRACE(...)
 #define PSTDDEBUG(...)
 #define PSTDMARK
 

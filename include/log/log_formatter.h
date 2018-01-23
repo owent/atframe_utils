@@ -47,6 +47,7 @@ namespace util {
                     LOG_LW_INFO,
                     LOG_LW_NOTICE,
                     LOG_LW_DEBUG,
+                    LOG_LW_TRACE,
                 };
             };
 
