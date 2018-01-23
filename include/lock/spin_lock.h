@@ -28,6 +28,16 @@
 
 #pragma once
 
+#if defined(_MSC_VER)
+
+#include <Windows.h> // YieldProcessor
+
+#include <Processthreadsapi.h>
+#include <Synchapi.h> // Windows server
+#include <intrin.h>
+
+#endif
+
 #include <config/atframe_utils_build_feature.h>
 
 #include "atomic_int_type.h"
@@ -38,15 +48,6 @@
  * ==============================================
  */
 #if defined(_MSC_VER)
-
-#include <intrin.h>
-
-#include <Windows.h> // YieldProcessor
-
-#include <Synchapi.h> // Windows server
-
-#include <Processthreadsapi.h>
-
 
 /*
  * See: http://msdn.microsoft.com/en-us/library/windows/desktop/ms687419(v=vs.85).aspx
