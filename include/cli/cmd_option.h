@@ -434,6 +434,19 @@ namespace util {
             }
 
             /**
+             * 处理已分离指令(使用char**存储参数集)
+             * @param argv 参数个数
+             * @param argc 参数列表
+             * @param is_single_cmd 是否强制单指令, 如果不强制, 则指令名称不能重复
+             * @param ext_param 透传参数
+             */
+            inline void start(int argv, char *argc[], bool is_single_cmd = false, void *ext_param = NULL) const {
+                typedef const char *conv_char_t;
+
+                start(argv, (conv_char_t *)argc, is_single_cmd, ext_param);
+            }
+
+            /**
              * 处理已分离指令(使用std::vector<std::string>存储参数集)
              * @param cmds 数据集合
              * @param is_single_cmd 是否强制单指令, 如果不强制, 则指令名称不能重复
