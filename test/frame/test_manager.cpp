@@ -67,17 +67,18 @@ int test_manager::run() {
 
     for (test_data_type::iterator iter = tests_.begin(); iter != tests_.end(); ++iter) {
         bool check_test_group_passed = run_cases_.empty();
+        bool check_test_group_has_cases = false;
 
         if (!check_test_group_passed) {
             check_test_group_passed = run_cases_.end() != run_cases_.find(iter->first);
         }
 
         if (!check_test_group_passed) {
-            check_test_group_passed = run_groups_.end() != run_groups_.find(iter->first);
+            check_test_group_has_cases = run_groups_.end() != run_groups_.find(iter->first);
         }
 
         // skip unknown groups
-        if (!check_test_group_passed) {
+        if (!check_test_group_passed && !check_test_group_has_cases) {
             continue;
         }
 
@@ -90,7 +91,7 @@ int test_manager::run() {
 
         clock_t test_begin_time = clock();
         for (test_type::iterator iter2 = iter->second.begin(); iter2 != iter->second.end(); ++iter2) {
-            bool check_test_case_passed = run_cases_.empty();
+            bool check_test_case_passed = run_cases_.empty() || check_test_group_passed;
             if (!check_test_case_passed) {
                 check_test_case_passed = run_cases_.end() != run_cases_.find(iter2->first);
 
