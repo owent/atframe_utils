@@ -63,15 +63,16 @@ matrix:
     - os: linux
       dist: trusty
       sudo: required
-      env: 
-        - COVERITY_SCAN_BRANCH=1
-        - COVERITY_SCAN_PROJECT_NAME="$TRAVIS_REPO_SLUG"
-        - COVERITY_SCAN_BRANCH_PATTERN="master"
-        - COVERITY_SCAN_NOTIFICATION_EMAIL="owt5008137@live.com"
-        - COVERITY_SCAN_BUILD_COMMAND_PREPEND="REPO_DIR=$PWD; mkdir -p $REPO_DIR/build; cd $REPO_DIR/build; $CMAKE_BIN .. -DCMAKE_BUILD_TYPE=RelWithDebInfo -DPROJECT_ENABLE_UNITTEST=ON -DPROJECT_ENABLE_SAMPLE=ON; make clean"
-        - COVERITY_SCAN_BUILD_COMMAND="make -j 4"
-        - CMAKE_BIN=$CMAKE_PREFIX/bin/cmake 
-        - CTEST_BIN=$CMAKE_PREFIX/bin/ctest
+      env: COVERITY_SCAN_BRANCH=1 CMAKE_BIN=$CMAKE_PREFIX/bin/cmake CTEST_BIN=$CMAKE_PREFIX/bin/ctest
+      addons:
+        coverity_scan:
+          project:
+            name: "$TRAVIS_REPO_SLUG"
+            description: "Build submitted via Travis CI"
+          notification_email: owt5008137@live.com
+          build_command_prepend: "REPO_DIR=$PWD; mkdir -p $REPO_DIR/build; cd $REPO_DIR/build; $CMAKE_BIN .. -DCMAKE_BUILD_TYPE=RelWithDebInfo -DPROJECT_ENABLE_UNITTEST=ON -DPROJECT_ENABLE_SAMPLE=ON; make clean"
+          build_command:   "make -j 4"
+          branch_pattern: master
 
 before_install:
     - if [ "$TRAVIS_OS_NAME" == "linux" ]; then sudo apt-get -qq update; fi
