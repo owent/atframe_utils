@@ -70,7 +70,7 @@ matrix:
             name: "$TRAVIS_REPO_SLUG"
             description: "Build submitted via Travis CI"
           notification_email: owt5008137@live.com
-          build_command_prepend: "REPO_DIR=$PWD; mkdir -p $REPO_DIR/build; cd $REPO_DIR/build; $CMAKE_BIN .. -DCMAKE_BUILD_TYPE=RelWithDebInfo -DPROJECT_ENABLE_UNITTEST=ON -DPROJECT_ENABLE_SAMPLE=ON; make clean"
+          build_command_prepend: "mkdir -p build; cd build; $CMAKE_BIN .. -DCMAKE_BUILD_TYPE=RelWithDebInfo -DPROJECT_ENABLE_UNITTEST=ON -DPROJECT_ENABLE_SAMPLE=ON; make clean"
           build_command:   "make -j 4"
           branch_pattern: master
 
