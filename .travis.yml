@@ -68,7 +68,6 @@ matrix:
         - REPO_DIR=$PWD;
         - if [ -e "$REPO_DIR/build" ]; then rm -rf "$REPO_DIR/build"; fi
         - mkdir -p $REPO_DIR/build && cd $REPO_DIR/build ;
-        - echo "$CMAKE_BIN .. -DPROJECT_ENABLE_UNITTEST=ON -DPROJECT_ENABLE_SAMPLE=ON" ;
         - $CMAKE_BIN .. "-DCMAKE_C_FLAGS=$GCOV_FLAGS" "-DCMAKE_CXX_FLAGS=$GCOV_FLAGS" "-DCMAKE_EXE_LINKER_FLAGS=$GCOV_FLAGS" -DCMAKE_BUILD_TYPE=Debug -DPROJECT_ENABLE_UNITTEST=ON -DPROJECT_ENABLE_SAMPLE=ON ;
         - $CMAKE_BIN --build .
       after_success:
