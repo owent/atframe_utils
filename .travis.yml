@@ -60,7 +60,8 @@ matrix:
     - os: linux
       dist: trusty
       sudo: required
-      env: GCOV_FLAGS='--coverage' CMAKE_BIN=$CMAKE_PREFIX/bin/cmake CTEST_BIN=$CMAKE_PREFIX/bin/ctest
+      env: COVERALLS_SERVICE_NAME=travis-ci GCOV_FLAGS='--coverage -fprofile-arcs -ftest-coverage' CMAKE_BIN=$CMAKE_PREFIX/bin/cmake CTEST_BIN=$CMAKE_PREFIX/bin/ctest
+      # COVERALLS_REPO_TOKEN is set in travis-ci
       script:
         - export CC=$USE_CC ;
         - export CXX=$USE_CXX ;
@@ -68,11 +69,12 @@ matrix:
         - if [ -e "$REPO_DIR/build" ]; then rm -rf "$REPO_DIR/build"; fi
         - mkdir -p $REPO_DIR/build && cd $REPO_DIR/build ;
         - echo "$CMAKE_BIN .. -DPROJECT_ENABLE_UNITTEST=ON -DPROJECT_ENABLE_SAMPLE=ON" ;
-        - $CMAKE_BIN .. -DCMAKE_BUILD_TYPE=RelWithDebInfo -DPROJECT_ENABLE_UNITTEST=ON -DPROJECT_ENABLE_SAMPLE=ON ;
+        - $CMAKE_BIN .. "-DCMAKE_C_FLAGS=$GCOV_FLAGS" "-DCMAKE_CXX_FLAGS=$GCOV_FLAGS" "-DCMAKE_EXE_LINKER_FLAGS=$GCOV_FLAGS" -DCMAKE_BUILD_TYPE=Debug -DPROJECT_ENABLE_UNITTEST=ON -DPROJECT_ENABLE_SAMPLE=ON ;
         - $CMAKE_BIN --build .
       after_success:
+        - $CTEST_BIN . -V
         - pip install --user cpp-coveralls
-        - coveralls -r .. --gcov-options '\-lp' -e sample -e test -e build_*
+        - coveralls -r .. --gcov-options '\-lp' -e sample -e test -e build/CMakeFiles
 
 before_install:
     - if [ "$TRAVIS_OS_NAME" == "linux" ]; then sudo apt-get -qq update; fi
