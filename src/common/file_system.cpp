@@ -89,7 +89,7 @@ namespace util {
             while (true) {
                 size_t read_sz = fread(buf, 1, sizeof(buf), f);
                 ss.write(buf, read_sz);
-                if (read_sz <= sizeof(buf)) {
+                if (read_sz < sizeof(buf)) {
                     break;
                 }
             }
