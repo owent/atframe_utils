@@ -8,6 +8,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <memory>
+#include <sstream>
 
 
 #ifdef UTIL_FS_WINDOWS_API
@@ -61,10 +62,39 @@ namespace util {
         fseek(f, 0, SEEK_SET);
 
         bool ret = true;
-        out.resize(static_cast<size_t>(len));
-        if (0 == fread(const_cast<char *>(out.data()), sizeof(char), static_cast<size_t>(len), f)) {
-            out.clear();
-            ret = false;
+        if (0 != len) {
+            out.resize(static_cast<size_t>(len));
+            if (0 == fread(const_cast<char *>(out.data()), sizeof(char), static_cast<size_t>(len), f)) {
+                out.clear();
+                ret = false;
+            }
+        } else {
+            // fclose(f);
+            // f = NULL;
+            // if (is_binary) {
+            //     UTIL_FS_OPEN(error_code, f, file_path, "rb");
+            //     COMPILER_UNUSED(error_code);
+            // } else {
+            //     UTIL_FS_OPEN(error_code, f, file_path, "r");
+            //     COMPILER_UNUSED(error_code);
+            // }
+
+            // if (NULL == f) {
+            //     return false;
+            // }
+
+            // 虚拟文件ftell(f)会拿不到长度，只能按流来读
+            char buf[4096]; // 4K for each block
+            std::stringstream ss;
+            while (true) {
+                size_t read_sz = fread(buf, 1, sizeof(buf), f);
+                ss.write(buf, read_sz);
+                if (read_sz <= sizeof(buf)) {
+                    break;
+                }
+            }
+
+            ss.str().swap(out);
         }
 
         fclose(f);
