@@ -16,6 +16,13 @@ write_compiler_detection_header(
 option(LIBUNWIND_ENABLED "Enable using libunwind." OFF)
 option(LOG_WRAPPER_ENABLE_LUA_SUPPORT "Enable lua support." ON)
 option(LOG_WRAPPER_CHECK_LUA "Check lua support." ON)
+if (ANDROID)
+    # Android发现偶现_Unwind_Backtrace调用崩溃,默认金庸掉这个功能。
+    # 可以用adb logcat | ./ndk-stack -sym $PROJECT_PATH/obj/local/armeabi 代替
+    option(LOG_WRAPPER_ENABLE_STACKTRACE "Try to enable stacktrace for log." OFF)
+else()
+    option(LOG_WRAPPER_ENABLE_STACKTRACE "Try to enable stacktrace for log." ON)
+endif()
 option(LOCK_DISABLE_MT "Disable multi-thread support lua support." OFF)
 set(LOG_STACKTRACE_MAX_STACKS "100" CACHE STRING "Max stacks when stacktracing.")
 
