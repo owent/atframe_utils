@@ -53,9 +53,11 @@ CASE_TEST(file_system, mkdir_remove) {
         CASE_EXPECT_TRUE(util::file_system::is_exist("test-mkdir/relpath"));
     }
 
-    // remove
+        // remove, only POSIX can remove(directory)
+#if defined(__unix__)
     CASE_EXPECT_TRUE(util::file_system::remove("test-mkdir/relpath"));
     CASE_EXPECT_FALSE(util::file_system::is_exist("test-mkdir/relpath"));
+#endif
 
     std::string dirpath = util::file_system::get_cwd() + "/test-mkdir/abspath";
     if (!util::file_system::is_exist(dirpath.c_str())) {
@@ -63,11 +65,13 @@ CASE_TEST(file_system, mkdir_remove) {
         CASE_EXPECT_TRUE(util::file_system::is_exist(dirpath.c_str()));
     }
 
-    // remove & rename
+// remove & rename, only POSIX can remove(directory)
+#if defined(__unix__)
     CASE_EXPECT_TRUE(util::file_system::rename(dirpath.c_str(), "test-mkdir/relpath"));
     CASE_EXPECT_TRUE(util::file_system::is_exist("test-mkdir/relpath"));
     CASE_EXPECT_FALSE(util::file_system::is_exist(dirpath.c_str()));
     CASE_EXPECT_TRUE(util::file_system::remove("test-mkdir/relpath"));
+#endif
 }
 
 CASE_TEST(file_system, file_size) {
