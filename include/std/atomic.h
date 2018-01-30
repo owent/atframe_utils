@@ -10,17 +10,17 @@
  * @history
  *
  */
- 
+
 #ifndef STD_ATOMIC_H
 #define STD_ATOMIC_H
- 
-# pragma once
+
+#pragma once
 
 // ============================================================
 // 公共包含部分
 // 自动导入atomic库
 // ============================================================
- 
+
 #include <cstddef>
 #if defined(__cplusplus) && __cplusplus >= 201103L
 #include <atomic>
@@ -35,10 +35,10 @@
 #include <atomic>
 #define __UTIL_STD_ATOMIC_STD
 #endif
- 
+
 #if !defined(__UTIL_STD_ATOMIC_STD)
 
-// 采用boost.atomic 
+// 采用boost.atomic
 // @see http://www.boost.org/doc/html/atomic
 
 #include <boost/atomic.hpp>
@@ -47,45 +47,45 @@
 namespace std {
     using boost::atomic;
     using boost::atomic_char;
-    using boost::atomic_uchar;
-    using boost::atomic_schar;
-    using boost::atomic_uint8_t;
-    using boost::atomic_int8_t;
-    using boost::atomic_ushort;
-    using boost::atomic_short;
-    using boost::atomic_uint16_t;
-    using boost::atomic_int16_t;
-    using boost::atomic_uint;
     using boost::atomic_int;
-    using boost::atomic_uint32_t;
+    using boost::atomic_int16_t;
     using boost::atomic_int32_t;
-    using boost::atomic_ulong;
-    using boost::atomic_long;
-    using boost::atomic_uint64_t;
     using boost::atomic_int64_t;
+    using boost::atomic_int8_t;
+    using boost::atomic_long;
+    using boost::atomic_schar;
+    using boost::atomic_short;
+    using boost::atomic_uchar;
+    using boost::atomic_uint;
+    using boost::atomic_uint16_t;
+    using boost::atomic_uint32_t;
+    using boost::atomic_uint64_t;
+    using boost::atomic_uint8_t;
+    using boost::atomic_ulong;
+    using boost::atomic_ushort;
 
-    using boost::atomic_int_least8_t;
-    using boost::atomic_uint_least8_t;
-    using boost::atomic_int_least16_t;
-    using boost::atomic_uint_least16_t;
-    using boost::atomic_int_least32_t;
-    using boost::atomic_uint_least32_t;
-    using boost::atomic_int_least64_t;
-    using boost::atomic_uint_least64_t;
-    using boost::atomic_int_fast8_t;
-    using boost::atomic_uint_fast8_t;
     using boost::atomic_int_fast16_t;
-    using boost::atomic_uint_fast16_t;
     using boost::atomic_int_fast32_t;
-    using boost::atomic_uint_fast32_t;
     using boost::atomic_int_fast64_t;
-    using boost::atomic_uint_fast64_t;
+    using boost::atomic_int_fast8_t;
+    using boost::atomic_int_least16_t;
+    using boost::atomic_int_least32_t;
+    using boost::atomic_int_least64_t;
+    using boost::atomic_int_least8_t;
     using boost::atomic_intmax_t;
+    using boost::atomic_uint_fast16_t;
+    using boost::atomic_uint_fast32_t;
+    using boost::atomic_uint_fast64_t;
+    using boost::atomic_uint_fast8_t;
+    using boost::atomic_uint_least16_t;
+    using boost::atomic_uint_least32_t;
+    using boost::atomic_uint_least64_t;
+    using boost::atomic_uint_least8_t;
     using boost::atomic_uintmax_t;
 
-    using boost::atomic_size_t;
-    using boost::atomic_ptrdiff_t;
     using boost::atomic_intptr_t;
+    using boost::atomic_ptrdiff_t;
+    using boost::atomic_size_t;
     using boost::atomic_uintptr_t;
 
     using boost::atomic_flag;
@@ -119,9 +119,9 @@ namespace std {
 
     using boost::memory_order;
 
-    using boost::atomic_thread_fence;
     using boost::atomic_signal_fence;
-}
+    using boost::atomic_thread_fence;
+} // namespace std
 
 #endif
 

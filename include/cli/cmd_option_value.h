@@ -17,10 +17,11 @@
 #include <sstream>
 #include <stdint.h>
 #include <string>
+#include <type_traits>
 #include <vector>
 
+
 #include "std/smart_ptr.h"
-#include "std/type_traits/remove_cv.h"
 
 #include <common/string_oprs.h>
 
@@ -68,11 +69,11 @@ namespace util {
         public:
             cmd_option_value(const char *str_data);
             cmd_option_value(const char *begin, const char *end);
-            cmd_option_value(const std::string& str_data);
+            cmd_option_value(const std::string &str_data);
 
             template <typename Tr>
             Tr to() const {
-                typedef typename ::util::type_traits::remove_cv<Tr>::type cv_type;
+                typedef typename ::std::remove_cv<Tr>::type cv_type;
                 return string2any::conv(data_, reinterpret_cast<cv_type *>(NULL));
             }
 
@@ -126,9 +127,9 @@ namespace util {
             // ============ logic operation ============
             bool to_logic_bool() const;
 
-            void split(char delim, std::vector<cmd_option_value>& out);
+            void split(char delim, std::vector<cmd_option_value> &out);
         };
-    }
-}
+    } // namespace cli
+} // namespace util
 
 #endif /* _CMDOPTIONVALUE_H_ */

@@ -1,15 +1,15 @@
 ﻿/**
-* @file static_assert.h
-* @brief 导入静态断言（STD_STATIC_ASSERT）<br />
-* Licensed under the MIT licenses.
-*
-* @version 1.0
-* @author OWenT, owt5008137@live.com
-* @date 2013-12-25
-*
-* @history
-*
-*/
+ * @file static_assert.h
+ * @brief 导入静态断言（STD_STATIC_ASSERT）<br />
+ * Licensed under the MIT licenses.
+ *
+ * @version 1.0
+ * @author OWenT, owt5008137@live.com
+ * @date 2013-12-25
+ *
+ * @history
+ *
+ */
 #ifndef STD_STATIC_ASSERT_H
 #define STD_STATIC_ASSERT_H
 #pragma once
@@ -20,18 +20,18 @@
 // ============================================================
 
 /**
-* 导入静态断言（STD_STATIC_ASSERT）
-* 如果是G++且GCC版本高于4.3, 使用关键字static_assert
-* 否则会启用自定义简化的静态断言
-*
-* 如果是VC++且VC++版本高于10.0, 使用关键字static_assert
-* 否则会启用自定义简化的静态断言
-*
-* 如果指定载入了boost库，则启用BOOST中的静态断言
-*
-* 自定义简化的静态断言参照BOOST_STATIC_ASSERT
-*
-*/
+ * 导入静态断言（STD_STATIC_ASSERT）
+ * 如果是G++且GCC版本高于4.3, 使用关键字static_assert
+ * 否则会启用自定义简化的静态断言
+ *
+ * 如果是VC++且VC++版本高于10.0, 使用关键字static_assert
+ * 否则会启用自定义简化的静态断言
+ *
+ * 如果指定载入了boost库，则启用BOOST中的静态断言
+ *
+ * 自定义简化的静态断言参照BOOST_STATIC_ASSERT
+ *
+ */
 
 // VC10.0 SP1以上分支判断
 #if (defined(__cplusplus) && __cplusplus >= 201103L) || (defined(_MSC_VER) && _MSC_VER >= 1600) || \
@@ -81,12 +81,12 @@ namespace util {
         // HP aCC cannot deal with missing names for template value parameters
         template <int x>
         struct static_assert_test {};
-    }
-}
+    } // namespace std
+} // namespace util
 
 #if defined(_MSC_VER) && (_MSC_VER < 1300)
-// __LINE__ macro broken when -ZI is used see Q199057
-// fortunately MSVC ignores duplicate typedef's.
+  // __LINE__ macro broken when -ZI is used see Q199057
+  // fortunately MSVC ignores duplicate typedef's.
 #define STD_STATIC_ASSERT(B) \
     typedef ::util::std::static_assert_test<sizeof(::util::std::STATIC_ASSERTION_FAILURE<(bool)(B)>)> std_static_assert_typedef_
 #elif defined(_MSC_VER)

@@ -22,15 +22,15 @@
 // ============================================================
 
 /**
-* 导入数组（array）
-* 如果是G++且支持c++0x草案1（tr1版本）的array[GCC版本高于4.0]
-* 则会启用GNU-C++的数组
-*
-* 如果是VC++且支持c++0x草案1（tr1版本）的array[VC++版本高于9.0 SP1]
-* 则会启用VC++的数组
-*
-* 否则启用boost中的array库（如果是这种情况需要加入boost库）
-*/
+ * 导入数组（array）
+ * 如果是G++且支持c++0x草案1（tr1版本）的array[GCC版本高于4.0]
+ * 则会启用GNU-C++的数组
+ *
+ * 如果是VC++且支持c++0x草案1（tr1版本）的array[VC++版本高于9.0 SP1]
+ * 则会启用VC++的数组
+ *
+ * 否则启用boost中的array库（如果是这种情况需要加入boost库）
+ */
 
 // VC9.0 SP1以上分支判断
 #if defined(_MSC_VER) && ((_MSC_VER == 1500 && defined(_HAS_TR1)) || _MSC_VER > 1500)
@@ -50,7 +50,7 @@ namespace std {
     using tr1::get;
     using tr1::tuple_element;
     using tr1::tuple_size;
-}
+} // namespace std
 #endif
 
 #else
@@ -61,7 +61,7 @@ namespace std {
     using tr1::get;
     using tr1::tuple_element;
     using tr1::tuple_size;
-}
+} // namespace std
 #endif
 
 #endif

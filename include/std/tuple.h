@@ -23,16 +23,16 @@
 // ============================================================
 
 /**
-* 导入多维元组（tuple）
-* 相当于std::pair的增强版，最多支持10维
-* 如果是G++且支持c++0x草案1（tr1版本）的tuple[GCC版本高于4.0]
-* 则会启用GNU-C++的多维元组
-*
-* 如果是VC++且支持c++0x草案1（tr1版本）的tuple[VC++版本高于9.0 SP1]
-* 则会启用VC++的多维元组
-*
-* 否则启用boost中的tuple库（如果是这种情况需要加入boost库）
-*/
+ * 导入多维元组（tuple）
+ * 相当于std::pair的增强版，最多支持10维
+ * 如果是G++且支持c++0x草案1（tr1版本）的tuple[GCC版本高于4.0]
+ * 则会启用GNU-C++的多维元组
+ *
+ * 如果是VC++且支持c++0x草案1（tr1版本）的tuple[VC++版本高于9.0 SP1]
+ * 则会启用VC++的多维元组
+ *
+ * 否则启用boost中的tuple库（如果是这种情况需要加入boost库）
+ */
 
 
 #include "utility.h"
@@ -58,7 +58,7 @@ namespace std {
     using tr1::tuple;
     using tr1::tuple_element;
     using tr1::tuple_size;
-}
+} // namespace std
 #endif
 #else
 // 采用boost库
@@ -71,7 +71,7 @@ namespace std {
     using tr1::tuple;
     using tr1::tuple_element;
     using tr1::tuple_size;
-}
+} // namespace std
 #endif
 
 #endif

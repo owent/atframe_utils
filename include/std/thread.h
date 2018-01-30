@@ -1,16 +1,16 @@
 ﻿/**
-* @file thread.h
-* @brief 导入多线程特性支持兼容层
-* Licensed under the MIT licenses.
-*
-* @version 1.0
-* @author OWenT, owt5008137@live.com
-* @date 2014.03.13
-*
-* @history
-*   2015-06-06: 适配Android和IOS
-*
-*/
+ * @file thread.h
+ * @brief 导入多线程特性支持兼容层
+ * Licensed under the MIT licenses.
+ *
+ * @version 1.0
+ * @author OWenT, owt5008137@live.com
+ * @date 2014.03.13
+ *
+ * @history
+ *   2015-06-06: 适配Android和IOS
+ *
+ */
 
 #ifndef STD_THREAD_H
 #define STD_THREAD_H
@@ -106,23 +106,23 @@
 #elif defined(__GNUC__) || defined(__clang__)
 #if defined(__i386__) || defined(__x86_64__)
 /**
-* See: Intel(R) 64 and IA-32 Architectures Software Developer's Manual V2
-* PAUSE-Spin Loop Hint, 4-57
-* http://www.intel.com/content/www/us/en/architecture-and-technology/64-ia-32-architectures-software-developer-instruction-set-reference-manual-325383.html?wapkw=instruction+set+reference
-*/
+ * See: Intel(R) 64 and IA-32 Architectures Software Developer's Manual V2
+ * PAUSE-Spin Loop Hint, 4-57
+ * http://www.intel.com/content/www/us/en/architecture-and-technology/64-ia-32-architectures-software-developer-instruction-set-reference-manual-325383.html?wapkw=instruction+set+reference
+ */
 #define THREAD_YIELD() __asm__ __volatile__("pause")
 #elif defined(__ia64__) || defined(__ia64)
 /**
-* See: Intel(R) Itanium(R) Architecture Developer's Manual, Vol.3
-* hint - Performance Hint, 3:145
-* http://www.intel.com/content/www/us/en/processors/itanium/itanium-architecture-vol-3-manual.html
-*/
+ * See: Intel(R) Itanium(R) Architecture Developer's Manual, Vol.3
+ * hint - Performance Hint, 3:145
+ * http://www.intel.com/content/www/us/en/processors/itanium/itanium-architecture-vol-3-manual.html
+ */
 #define THREAD_YIELD() __asm__ __volatile__("hint @pause")
 #elif defined(__arm__) && !defined(__ANDROID__)
 /**
-* See: ARM Architecture Reference Manuals (YIELD)
-* http://infocenter.arm.com/help/index.jsp?topic=/com.arm.doc.subset.architecture.reference/index.html
-*/
+ * See: ARM Architecture Reference Manuals (YIELD)
+ * http://infocenter.arm.com/help/index.jsp?topic=/com.arm.doc.subset.architecture.reference/index.html
+ */
 #define THREAD_YIELD() __asm__ __volatile__("yield")
 #else
 #define THREAD_YIELD()

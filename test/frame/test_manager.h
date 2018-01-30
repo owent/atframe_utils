@@ -16,10 +16,11 @@
 #include <map>
 #include <stdint.h>
 #include <string>
+#include <type_traits>
 #include <vector>
 
+
 #include "cli/shell_font.h"
-#include "std/type_traits/is_xxx_impl.h"
 
 #include "test_case_base.h"
 
@@ -102,9 +103,8 @@ public:
     // expect functions
     template <typename TL, typename TR>
     bool expect_eq(const TL &l, const TR &r, const char *lexpr, const char *rexpr, const char *file, size_t line) {
-        pick_param<TL, TR, util::type_traits::is_pointer<TL>::value || util::type_traits::is_pointer<TR>::value,
-                   util::type_traits::is_integral<TL>::value || util::type_traits::is_integral<TR>::value,
-                   util::type_traits::is_integral<TL>::value && util::type_traits::is_integral<TR>::value>
+        pick_param<TL, TR, std::is_pointer<TL>::value || std::is_pointer<TR>::value,
+                   std::is_integral<TL>::value || std::is_integral<TR>::value, std::is_integral<TL>::value && std::is_integral<TR>::value>
             pp;
         if (pp(l) == pp(r)) {
             ++(*success_counter_ptr);
@@ -123,9 +123,8 @@ public:
 
     template <typename TL, typename TR>
     bool expect_ne(const TL &l, const TR &r, const char *lexpr, const char *rexpr, const char *file, size_t line) {
-        pick_param<TL, TR, util::type_traits::is_pointer<TL>::value || util::type_traits::is_pointer<TR>::value,
-                   util::type_traits::is_integral<TL>::value || util::type_traits::is_integral<TR>::value,
-                   util::type_traits::is_integral<TL>::value && util::type_traits::is_integral<TR>::value>
+        pick_param<TL, TR, std::is_pointer<TL>::value || std::is_pointer<TR>::value,
+                   std::is_integral<TL>::value || std::is_integral<TR>::value, std::is_integral<TL>::value && std::is_integral<TR>::value>
             pp;
 
         if (pp(l) != pp(r)) {
@@ -145,9 +144,8 @@ public:
 
     template <typename TL, typename TR>
     bool expect_lt(const TL &l, const TR &r, const char *lexpr, const char *rexpr, const char *file, size_t line) {
-        pick_param<TL, TR, util::type_traits::is_pointer<TL>::value || util::type_traits::is_pointer<TR>::value,
-                   util::type_traits::is_integral<TL>::value || util::type_traits::is_integral<TR>::value,
-                   util::type_traits::is_integral<TL>::value && util::type_traits::is_integral<TR>::value>
+        pick_param<TL, TR, std::is_pointer<TL>::value || std::is_pointer<TR>::value,
+                   std::is_integral<TL>::value || std::is_integral<TR>::value, std::is_integral<TL>::value && std::is_integral<TR>::value>
             pp;
 
         if (pp(l) < pp(r)) {
@@ -167,9 +165,8 @@ public:
 
     template <typename TL, typename TR>
     bool expect_le(const TL &l, const TR &r, const char *lexpr, const char *rexpr, const char *file, size_t line) {
-        pick_param<TL, TR, util::type_traits::is_pointer<TL>::value || util::type_traits::is_pointer<TR>::value,
-                   util::type_traits::is_integral<TL>::value || util::type_traits::is_integral<TR>::value,
-                   util::type_traits::is_integral<TL>::value && util::type_traits::is_integral<TR>::value>
+        pick_param<TL, TR, std::is_pointer<TL>::value || std::is_pointer<TR>::value,
+                   std::is_integral<TL>::value || std::is_integral<TR>::value, std::is_integral<TL>::value && std::is_integral<TR>::value>
             pp;
 
         if (pp(l) <= pp(r)) {
@@ -189,9 +186,8 @@ public:
 
     template <typename TL, typename TR>
     bool expect_gt(const TL &l, const TR &r, const char *lexpr, const char *rexpr, const char *file, size_t line) {
-        pick_param<TL, TR, util::type_traits::is_pointer<TL>::value || util::type_traits::is_pointer<TR>::value,
-                   util::type_traits::is_integral<TL>::value || util::type_traits::is_integral<TR>::value,
-                   util::type_traits::is_integral<TL>::value && util::type_traits::is_integral<TR>::value>
+        pick_param<TL, TR, std::is_pointer<TL>::value || std::is_pointer<TR>::value,
+                   std::is_integral<TL>::value || std::is_integral<TR>::value, std::is_integral<TL>::value && std::is_integral<TR>::value>
             pp;
 
         if (pp(l) > pp(r)) {
@@ -211,9 +207,8 @@ public:
 
     template <typename TL, typename TR>
     bool expect_ge(const TL &l, const TR &r, const char *lexpr, const char *rexpr, const char *file, size_t line) {
-        pick_param<TL, TR, util::type_traits::is_pointer<TL>::value || util::type_traits::is_pointer<TR>::value,
-                   util::type_traits::is_integral<TL>::value || util::type_traits::is_integral<TR>::value,
-                   util::type_traits::is_integral<TL>::value && util::type_traits::is_integral<TR>::value>
+        pick_param<TL, TR, std::is_pointer<TL>::value || std::is_pointer<TR>::value,
+                   std::is_integral<TL>::value || std::is_integral<TR>::value, std::is_integral<TL>::value && std::is_integral<TR>::value>
             pp;
 
         if (pp(l) >= pp(r)) {

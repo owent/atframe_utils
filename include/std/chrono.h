@@ -55,21 +55,21 @@ namespace std {
 
         using boost::chrono::duration_cast;
 
-        using boost::chrono::system_clock;
-        using boost::chrono::steady_clock;
         using boost::chrono::high_resolution_clock;
+        using boost::chrono::steady_clock;
+        using boost::chrono::system_clock;
         // 下面两个是boost独有，并不在std中
         // using boost::chrono::process_cpu_clock
         // using boost::chrono::thread_clock
 
         using boost::chrono::hours;
-        using boost::chrono::minutes;
-        using boost::chrono::seconds;
-        using boost::chrono::milliseconds;
         using boost::chrono::microseconds;
+        using boost::chrono::milliseconds;
+        using boost::chrono::minutes;
         using boost::chrono::nanoseconds;
-    }
-}
+        using boost::chrono::seconds;
+    } // namespace chrono
+} // namespace std
 #endif
 
 #endif
