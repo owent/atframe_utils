@@ -54,7 +54,7 @@ namespace util {
             : rotation_size_(other.rotation_size_),   // 默认文件数量
               max_file_size_(other.max_file_size_),   // 默认文件大小
               check_interval_(other.check_interval_), // 默认文件切换检查周期
-              flush_interval_(0),                     // 默认关闭定时刷入
+              flush_interval_(other.flush_interval_), // 默认定时刷入周期
               inited_(false) {
 
             log_file_.opened_file_point_ = other.log_file_.opened_file_point_;

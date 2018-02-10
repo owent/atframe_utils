@@ -93,13 +93,13 @@ namespace util {
     void set_##x(size_t v) { x##_ = v; }             \
     size_t get_##x() const { return x##_; }
 
-            _UTIL_MEMPOOL_LRUOBJECTPOOL_SETTER_GETTER(item_min_bound);
-            _UTIL_MEMPOOL_LRUOBJECTPOOL_SETTER_GETTER(item_max_bound);
-            _UTIL_MEMPOOL_LRUOBJECTPOOL_SETTER_GETTER(list_bound);
-            _UTIL_MEMPOOL_LRUOBJECTPOOL_SETTER_GETTER(proc_list_count);
-            _UTIL_MEMPOOL_LRUOBJECTPOOL_SETTER_GETTER(proc_item_count);
-            _UTIL_MEMPOOL_LRUOBJECTPOOL_SETTER_GETTER(gc_list);
-            _UTIL_MEMPOOL_LRUOBJECTPOOL_SETTER_GETTER(gc_item);
+            _UTIL_MEMPOOL_LRUOBJECTPOOL_SETTER_GETTER(item_min_bound);  // 主动GC的保留对象数量
+            _UTIL_MEMPOOL_LRUOBJECTPOOL_SETTER_GETTER(item_max_bound);  // 超出对象数量触发GC
+            _UTIL_MEMPOOL_LRUOBJECTPOOL_SETTER_GETTER(list_bound);      // 超出检查项数量触发GC
+            _UTIL_MEMPOOL_LRUOBJECTPOOL_SETTER_GETTER(proc_list_count); // 每帧最大处理的检查项数量
+            _UTIL_MEMPOOL_LRUOBJECTPOOL_SETTER_GETTER(proc_item_count); // 每帧最大处理的对象数量
+            _UTIL_MEMPOOL_LRUOBJECTPOOL_SETTER_GETTER(gc_list);         // 下一次GC保留的检查项数量
+            _UTIL_MEMPOOL_LRUOBJECTPOOL_SETTER_GETTER(gc_item);         // 下一次GC保留的对象数量
 
             void set_list_tick_timeout(time_t v) { list_tick_timeout_ = v; }
 
