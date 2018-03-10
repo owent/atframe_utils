@@ -40,7 +40,7 @@
 #   <prefix directory>      - prefix directory(default: <work directory>)
 #   <source directory name> - source directory name(default detected by download url)
 #   <zip url>               - from where to download zip when find package failed
-#   <tar url>               - from where to download tar.* when find package failed
+#   <tar url>               - from where to download tar.* or tgz when find package failed
 #   <svn url>               - from where to svn co when find package failed
 #   <git url>               - from where to git clone when find package failed
 #
