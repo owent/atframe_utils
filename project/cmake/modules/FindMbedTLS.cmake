@@ -60,7 +60,7 @@ endif()
 # Normal search.
 set(MbedTLS_CRYPTO_NAMES mbedcrypto libmbedcrypto)
 set(MbedTLS_TLS_NAMES mbedtls libmbedtls)
-set(MbedTLS_X509_NAMES bmbedx509 libmbedx509)
+set(MbedTLS_X509_NAMES mbedx509 libmbedx509)
 
 # Try each search configuration.
 find_path(MbedTLS_INCLUDE_DIRS        NAMES mbedtls/config.h        ${_MBEDTLS_SEARCH_ROOT_INC})
