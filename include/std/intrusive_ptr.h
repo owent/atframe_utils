@@ -58,7 +58,7 @@ namespace std {
         }
 
         template <typename U>
-        intrusive_ptr(intrusive_ptr<U> const &rhs, typename std::enable_if<std::is_convertible<U, T>::value>::type * = NULL)
+        intrusive_ptr(intrusive_ptr<U> const &rhs, typename std::enable_if<std::is_convertible<U *, T *>::value>::type * = NULL)
             : px(rhs.get()) {
             if (px != NULL) {
                 intrusive_ptr_add_ref(px);
@@ -98,8 +98,8 @@ namespace std {
         }
 
         template <typename U>
-        intrusive_ptr(intrusive_ptr<U> &&rhs, typename std::enable_if<std::is_convertible<U, T>::value>::type * = NULL) UTIL_CONFIG_NOEXCEPT
-            : px(rhs.px) {
+        intrusive_ptr(intrusive_ptr<U> &&rhs,
+                      typename std::enable_if<std::is_convertible<U *, T *>::value>::type * = NULL) UTIL_CONFIG_NOEXCEPT : px(rhs.px) {
             rhs.px = NULL;
         }
 
