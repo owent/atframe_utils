@@ -21,6 +21,8 @@
 #include <cstddef>
 #include <ostream>
 
+#include <type_traits>
+
 #include <config/compiler_features.h>
 
 #include <config/atframe_utils_build_feature.h>
@@ -56,7 +58,8 @@ namespace std {
         }
 
         template <typename U>
-        intrusive_ptr(intrusive_ptr<U> const &rhs) : px(rhs.get()) {
+        intrusive_ptr(intrusive_ptr<U> const &rhs, typename std::enable_if<std::is_convertible<U, T>::value>::type * = NULL)
+            : px(rhs.get()) {
             if (px != NULL) {
                 intrusive_ptr_add_ref(px);
             }
@@ -95,7 +98,8 @@ namespace std {
         }
 
         template <typename U>
-        intrusive_ptr(intrusive_ptr<U> &&rhs) UTIL_CONFIG_NOEXCEPT : px(rhs.px) {
+        intrusive_ptr(intrusive_ptr<U> &&rhs, typename std::enable_if<std::is_convertible<U, T>::value>::type * = NULL) UTIL_CONFIG_NOEXCEPT
+            : px(rhs.px) {
             rhs.px = NULL;
         }
 
@@ -252,11 +256,12 @@ namespace std {
 #endif
 
 #define UTIL_INTRUSIVE_PTR_REF_MEMBER_DECL(T)              \
+    \
 private:                                                   \
     UTIL_INTRUSIVE_PTR_ATOMIC_TYPE intrusive_ref_counter_; \
     friend void intrusive_ptr_add_ref(T *p);               \
     friend void intrusive_ptr_release(T *p);               \
-                                                           \
+    \
 public:                                                    \
     const size_t use_count() const { return intrusive_ref_counter_.load(); }
 
