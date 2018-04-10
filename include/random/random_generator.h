@@ -85,6 +85,9 @@ namespace util {
              */
             template <typename ResaultType>
             ResaultType random_between(ResaultType lowest, ResaultType highest) {
+                if (highest <= lowest) {
+                    return lowest;
+                }
                 result_type res = (*this)();
                 return static_cast<ResaultType>(res % static_cast<result_type>(highest - lowest)) + lowest;
             }
