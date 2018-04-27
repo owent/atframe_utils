@@ -29,14 +29,18 @@ mkdir atframe_utils/build && cd atframe_utils/build
 
 # run cmake
 # cmake <atframe_utils dir> [options...]
-cmake .. -DPROJECT_ENABLE_SAMPLE=YES -DPROJECT_ENABLE_UNITTEST=YES
+cmake .. -DPROJECT_ENABLE_SAMPLE=YES -DPROJECT_ENABLE_UNITTEST=YES #  -DCMAKE_INSTALL_PREFIX=<install prefix>
 
 # build
 cmake --build . # using clang or gcc
-# cmake --build . --config RelWithDebInfo # use this if using MSVC
+# cmake --build . --config RelWithDebInfo # using MSVC
 
 # run unit test
 ctest . -V
+
+# run unit test
+cmake --build . --target INSTALL # using clang or gcc
+# cmake --build . --config RelWithDebInfo --target INSTALL # using MSVC
 ~~~~~~~~~~
 
 ## Other options
