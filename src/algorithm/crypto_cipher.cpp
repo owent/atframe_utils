@@ -55,7 +55,7 @@ namespace util {
 #endif
         } // namespace details
 
-        cipher::cipher() : method_(method_t::EN_CMT_INVALID), cipher_kt_(NULL) {}
+        cipher::cipher() : method_(method_t::EN_CMT_INVALID), last_errorno_(0), cipher_kt_(NULL) {}
         cipher::~cipher() { close(); }
 
         int cipher::init(const char *name, int mode) {
@@ -409,7 +409,7 @@ namespace util {
         }
 
         int cipher::encrypt(const unsigned char *input, size_t ilen, unsigned char *output, size_t *olen) {
-            if (input == NULL || ilen <= 0 || output == NULL || NULL == olen || olen <= 0 || *olen < ilen + get_block_size()) {
+            if (input == NULL || ilen <= 0 || output == NULL || NULL == olen || *olen <= 0 || *olen < ilen + get_block_size()) {
                 return details::setup_errorno(*this, -1, error_code_t::INVALID_PARAM);
             }
 
@@ -484,7 +484,7 @@ namespace util {
         }
 
         int cipher::decrypt(const unsigned char *input, size_t ilen, unsigned char *output, size_t *olen) {
-            if (input == NULL || ilen <= 0 || output == NULL || NULL == olen || olen <= 0 || *olen < ilen + get_block_size()) {
+            if (input == NULL || ilen <= 0 || output == NULL || NULL == olen || *olen <= 0 || *olen < ilen + get_block_size()) {
                 return details::setup_errorno(*this, -1, error_code_t::INVALID_PARAM);
             }
 

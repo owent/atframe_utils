@@ -40,7 +40,7 @@ namespace util {
 
             // 第一部分，特殊样式
             if (iFlag & shell_font_style::SHELL_FONT_SPEC_BOLD) {
-                ret += std::string((!bFirst) ? ";" : "") + "1";
+                ret += "1";
                 bFirst = false;
             }
             if (iFlag & shell_font_style::SHELL_FONT_SPEC_UNDERLINE) {

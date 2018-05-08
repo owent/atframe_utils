@@ -538,7 +538,13 @@ namespace util {
                     break;
                 }
                 fseek(pem, 0, SEEK_END);
-                size_t pem_sz = static_cast<size_t>(ftell(pem));
+                size_t pem_sz = 0;
+                {
+                    long pem_sz_l = ftell(pem);
+                    if (pem_sz_l >= 0) {
+                        pem_sz = static_cast<size_t>(pem_sz_l);
+                    }
+                }
                 fseek(pem, 0, SEEK_SET);
 
 // Read from pem file
