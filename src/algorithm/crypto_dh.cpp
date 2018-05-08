@@ -1631,9 +1631,12 @@ namespace util {
                         continue;
                     }
 #if defined(CRYPTO_USE_OPENSSL) || defined(CRYPTO_USE_LIBRESSL) || defined(CRYPTO_USE_BORINGSSL)
-                    if (0 != details::supported_dh_curves_openssl[i] &&
-                        NULL != EC_KEY_new_by_curve_name(details::supported_dh_curves_openssl[i])) {
-                        ret.push_back(std::string("ecdh:") + details::supported_dh_curves[i]);
+                    if (0 != details::supported_dh_curves_openssl[i]) {
+                        EC_GROUP *test_group = EC_GROUP_new_by_curve_name(details::supported_dh_curves_openssl[i]);
+                        if (NULL != test_group) {
+                            ret.push_back(std::string("ecdh:") + details::supported_dh_curves[i]);
+                            EC_GROUP_free(test_group);
+                        }
                     }
 #else
                     ret.push_back(std::string("ecdh:") + details::supported_dh_curves[i]);
