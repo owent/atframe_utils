@@ -359,6 +359,14 @@ namespace util {
 
         void http_request::set_opt_verbose(bool v) { set_opt_bool(CURLOPT_VERBOSE, v); }
 
+        void http_request::set_opt_accept_encoding(const char *enc) {
+#if LIBCURL_VERSION_NUM >= 0x071506
+            set_opt_string(CURLOPT_ACCEPT_ENCODING, enc);
+#else
+            set_opt_string(CURLOPT_ENCODING, enc);
+#endif
+        }
+
         void http_request::set_opt_http_content_decoding(bool v) { set_opt_bool(CURLOPT_HTTP_CONTENT_DECODING, v); }
 
         void http_request::set_opt_keepalive(time_t idle, time_t interval) {
@@ -459,6 +467,27 @@ namespace util {
         const http_request::on_write_fn_t &http_request::get_on_write() const { return on_write_fn_; }
         void http_request::set_on_write(on_write_fn_t fn) { on_write_fn_ = fn; }
 
+        const http_request::on_verbose_fn_t &http_request::get_on_verbose() const { return on_verbose_fn_; }
+
+        void http_request::set_on_verbose(on_verbose_fn_t fn) {
+            on_verbose_fn_ = fn;
+
+            CURL *req = mutable_request();
+            if (NULL == req) {
+                return;
+            }
+
+            if (on_verbose_fn_) {
+                curl_easy_setopt(req, CURLOPT_DEBUGFUNCTION, curl_callback_on_verbose);
+                curl_easy_setopt(req, CURLOPT_DEBUGDATA, this);
+                set_opt_verbose(true);
+            } else {
+                curl_easy_setopt(req, CURLOPT_DEBUGFUNCTION, NULL);
+                curl_easy_setopt(req, CURLOPT_DEBUGDATA, NULL);
+                set_opt_verbose(false);
+            }
+        }
+
         bool http_request::is_running() const { return CHECK_FLAG(flags_, flag_t::EN_FT_RUNNING); }
 
         void http_request::finish_req_rsp() {
@@ -541,7 +570,7 @@ namespace util {
                         if (NULL != val) {
                             curl_formadd(&http_form_.begin, &http_form_.end, CURLFORM_PTRNAME, iter->first.c_str(), CURLFORM_NAMELENGTH,
                                          static_cast<long>(iter->first.size()), CURLFORM_PTRCONTENTS, val->data().c_str(),
-#if LIBCURL_VERSION_MAJOR > 7 || (7 == LIBCURL_VERSION_MAJOR && LIBCURL_VERSION_MINOR >= 46)
+#if LIBCURL_VERSION_NUM >= 0x072e00
                                          CURLFORM_CONTENTLEN, static_cast<curl_off_t>(val->data().size()),
 #else
                                          CURLFORM_CONTENTSLENGTH, static_cast<long>(val->data().size()),
@@ -897,6 +926,17 @@ namespace util {
             // Transfer-Encoding: chunked
 
             return size * nitems;
+        }
+
+        int http_request::curl_callback_on_verbose(CURL *handle, curl_infotype type, char *data, size_t size, void *userptr) {
+            http_request *self = reinterpret_cast<http_request *>(userptr);
+            assert(self);
+
+            if (self && self->on_verbose_fn_) {
+                return self->on_verbose_fn_(*self, type, data, size);
+            }
+
+            return 0;
         }
     } // namespace network
 } // namespace util

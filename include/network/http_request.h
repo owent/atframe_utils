@@ -155,6 +155,10 @@ namespace util {
             typedef std::function<int(http_request &, const char *, size_t, const char *&, size_t &)>
                 on_write_fn_t; // it's useful if header is Transfer-Encoding: chunked
 
+            typedef std::function<int(http_request &, curl_infotype type, char *data,
+                                      size_t size)>
+                on_verbose_fn_t; // it's useful if we want to debug and show verbose info
+
         public:
             static ptr_t create(curl_m_bind_t *, const std::string &url);
 
@@ -254,7 +258,16 @@ namespace util {
 
             void set_opt_follow_location(bool v);
 
+            /**
+             * @brief use set_on_verbose instead
+             */
             void set_opt_verbose(bool v);
+
+            /**
+             * @brief set accept encoding for this request
+             * @param enc pass empty string("") to use all built-in supported encodings, and NULL to disable it
+             */
+            void set_opt_accept_encoding(const char *enc);
 
             void set_opt_http_content_decoding(bool v);
 
@@ -287,6 +300,9 @@ namespace util {
             const on_write_fn_t &get_on_write() const;
             void set_on_write(on_write_fn_t fn);
 
+            const on_verbose_fn_t &get_on_verbose() const;
+            void set_on_verbose(on_verbose_fn_t fn);
+
             bool is_running() const;
 
         private:
@@ -312,6 +328,7 @@ namespace util {
             static int curl_callback_on_progress(void *clientp, double dltotal, double dlnow, double ultotal, double ulnow);
             static size_t curl_callback_on_read(char *buffer, size_t size, size_t nitems, void *instream);
             static size_t curl_callback_on_header(char *buffer, size_t size, size_t nitems, void *userdata);
+            static int curl_callback_on_verbose(CURL *handle, curl_infotype type, char *data, size_t size, void *userptr);
 
         private:
             // event dispatcher
@@ -359,6 +376,7 @@ namespace util {
             on_progress_fn_t on_progress_fn_;
             on_header_fn_t on_header_fn_;
             on_write_fn_t on_write_fn_;
+            on_verbose_fn_t on_verbose_fn_;
         };
     } // namespace network
 } // namespace util

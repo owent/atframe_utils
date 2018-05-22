@@ -11,13 +11,13 @@ namespace util {
     namespace log {
         namespace detail {
             static const char *log_formatter_get_level_name(int l) {
-                static const char *all_level_name[log_formatter::level_t::LOG_LW_DEBUG + 1] = {NULL};
+                static const char *all_level_name[log_formatter::level_t::LOG_LW_TRACE + 1] = {NULL};
 
-                if (l > log_formatter::level_t::LOG_LW_DEBUG || l < 0) {
+                if (l > log_formatter::level_t::LOG_LW_TRACE || l < 0) {
                     return "Unknown";
                 }
 
-                if (NULL == all_level_name[log_formatter::level_t::LOG_LW_DEBUG]) {
+                if (NULL == all_level_name[log_formatter::level_t::LOG_LW_TRACE]) {
                     all_level_name[log_formatter::level_t::LOG_LW_DISABLED] = "Disabled";
                     all_level_name[log_formatter::level_t::LOG_LW_FATAL] = "Fatal";
                     all_level_name[log_formatter::level_t::LOG_LW_ERROR] = "Error";
@@ -25,6 +25,7 @@ namespace util {
                     all_level_name[log_formatter::level_t::LOG_LW_INFO] = "Info";
                     all_level_name[log_formatter::level_t::LOG_LW_NOTICE] = "Notice";
                     all_level_name[log_formatter::level_t::LOG_LW_DEBUG] = "Debug";
+                    all_level_name[log_formatter::level_t::LOG_LW_TRACE] = "Trace";
                 }
                 return all_level_name[l];
             }
@@ -84,19 +85,17 @@ namespace util {
 
 // 时间加缓存，以防使用过程中时间变化
 #define LOG_FMT_FN_TM_MEM(VAR, EXPRESS) \
-    \
-int VAR;                                \
-    \
-if(NULL == tm_obj_ptr) {                \
+                                        \
+    int VAR;                            \
+                                        \
+    if (NULL == tm_obj_ptr) {           \
         tm_obj_cache = *get_iso_tm();   \
         tm_obj_ptr = &tm_obj_cache;     \
         VAR = tm_obj_ptr->EXPRESS;      \
-    \
-}                                  \
-    else {                              \
+                                        \
+    } else {                            \
         VAR = tm_obj_ptr->EXPRESS;      \
-    \
-}
+    }
 
             for (size_t i = 0; i < fmtz && ret < bufz && running; ++i) {
                 if (!need_parse) {
@@ -464,6 +463,14 @@ if(NULL == tm_obj_ptr) {                \
 
             if (0 == UTIL_STRFUNC_STRNCASE_CMP("notice", name, 6)) {
                 return level_t::LOG_LW_NOTICE;
+            }
+
+            if (0 == UTIL_STRFUNC_STRNCASE_CMP("debug", name, 5)) {
+                return level_t::LOG_LW_DEBUG;
+            }
+
+            if (0 == UTIL_STRFUNC_STRNCASE_CMP("trace", name, 5)) {
+                return level_t::LOG_LW_TRACE;
             }
 
             return level_t::LOG_LW_DEBUG;
