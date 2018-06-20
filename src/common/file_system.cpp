@@ -62,10 +62,11 @@ namespace util {
         fseek(f, 0, SEEK_SET);
 
         bool ret = true;
-        if (0 != len) {
+        if (len > 0) {
             out.resize(static_cast<size_t>(len));
-            if (0 == fread(const_cast<char *>(out.data()), sizeof(char), static_cast<size_t>(len), f)) {
-                out.clear();
+            size_t real_read_sz = fread(const_cast<char *>(out.data()), sizeof(char), static_cast<size_t>(len), f);
+            if (real_read_sz < out.size()) {
+                out.resize(real_read_sz);
                 ret = false;
             }
         } else {
@@ -448,7 +449,9 @@ namespace util {
             if (DT_UNKNOWN == child_node->d_type && 0 == accept) {
                 struct stat child_stat;
                 memset(&child_stat, 0, sizeof(struct stat));
-                lstat(child_path.c_str(), &child_stat);
+                if (0 != lstat(child_path.c_str(), &child_stat)) {
+                    continue;
+                }
 
                 if (S_ISDIR(child_stat.st_mode)) {
                     accept = options & dir_opt_t::EN_DOT_TDIR;
