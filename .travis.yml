@@ -121,7 +121,7 @@ script:
 
       MBEDTLS_URL="https://tls.mbed.org/download/mbedtls-$MBEDTLS_VERSION-apache.tgz";
 
-      if [ ! -e "$HOME/prebuilt/mbedtls-$MBEDTLS_VERSION" ]; then
+      if [ ! -e "$HOME/prebuilt/mbedtls-$MBEDTLS_VERSION//include/mbedtls/config.h" ]; then
 
         mkdir -p "$HOME/prebuilt";
 
@@ -131,9 +131,7 @@ script:
 
         tar -axvf "mbedtls-$MBEDTLS_VERSION-apache.tgz";
 
-        mkdir -p "mbedtls-$MBEDTLS_VERSION/build_dir";
-
-        cd "mbedtls-$MBEDTLS_VERSION/build_dir";
+        mkdir -p "mbedtls-$MBEDTLS_VERSION/build_dir" && cd "mbedtls-$MBEDTLS_VERSION/build_dir";
 
         cmake .. -DCMAKE_C_COMPILER=$USE_CC -DCMAKE_CXX_COMPILER=$USE_CXX -DCMAKE_INSTALL_PREFIX=$HOME/prebuilt/mbedtls-$MBEDTLS_VERSION -DENABLE_PROGRAMS=OFF -DENABLE_TESTING=OFF -DUSE_STATIC_MBEDTLS_LIBRARY=ON -DUSE_SHARED_MBEDTLS_LIBRARY=OFF ;
 
