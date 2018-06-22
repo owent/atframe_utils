@@ -53,6 +53,19 @@ matrix:
             - gcc-8-multilib
             - g++-8
             - g++-8-multilib
+    - os: linux
+      dist: trusty
+      sudo: required
+      env: USE_CC=gcc-8 USE_CXX=g++-8 MBEDTLS_VERSION=2.11.0 CMAKE_BIN=$CMAKE_PREFIX/bin/cmake CTEST_BIN=$CMAKE_PREFIX/bin/ctest
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+          packages:
+            - gcc-8
+            - gcc-8-multilib
+            - g++-8
+            - g++-8-multilib
     # - os: linux
     #   dist: trusty
     #   sudo: required
@@ -102,11 +115,41 @@ install:
 script:
   - export CC=$USE_CC ;
   - export CXX=$USE_CXX ;
+  - PROJECT_ADDON_OPTIONS=();
   - REPO_DIR=$PWD;
+  - if [ ! -z "$MBEDTLS_VERSION" ]; then
+
+      MBEDTLS_URL="https://tls.mbed.org/download/mbedtls-$MBEDTLS_VERSION-apache.tgz";
+
+      if [ ! -e "$HOME/prebuilt/mbedtls-$MBEDTLS_VERSION" ]; then
+
+        mkdir -p "$HOME/prebuilt";
+
+        cd "$HOME/prebuilt";
+
+        curl -L -k -o "mbedtls-$MBEDTLS_VERSION-apache.tgz" "$MBEDTLS_URL";
+
+        tar -axvf "mbedtls-$MBEDTLS_VERSION-apache.tgz";
+
+        mkdir -p "mbedtls-$MBEDTLS_VERSION/build_dir";
+
+        cd "mbedtls-$MBEDTLS_VERSION/build_dir";
+
+        cmake .. -DCMAKE_C_COMPILER=$USE_CC -DCMAKE_CXX_COMPILER=$USE_CXX -DCMAKE_INSTALL_PREFIX=$HOME/prebuilt/mbedtls-$MBEDTLS_VERSION -DENABLE_PROGRAMS=OFF -DENABLE_TESTING=OFF -DUSE_STATIC_MBEDTLS_LIBRARY=ON -DUSE_SHARED_MBEDTLS_LIBRARY=OFF ;
+
+        cmake --build . --target install;
+
+        cd "$REPO_DIR";
+
+      fi
+
+      PROJECT_ADDON_OPTIONS=(-DMBEDTLS_ROOT=$HOME/prebuilt/mbedtls-$MBEDTLS_VERSION -DCRYPTO_USE_MBEDTLS=YES);
+      
+    fi
   - if [ -e "$REPO_DIR/build" ]; then rm -rf "$REPO_DIR/build"; fi
   - mkdir -p $REPO_DIR/build && cd $REPO_DIR/build ;
   - echo "$CMAKE_BIN .. -DPROJECT_ENABLE_UNITTEST=ON -DPROJECT_ENABLE_SAMPLE=ON -DCMAKE_C_COMPILER=$USE_CC -DCMAKE_CXX_COMPILER=$USE_CXX" ;
-  - $CMAKE_BIN .. -DCMAKE_BUILD_TYPE=RelWithDebInfo -DPROJECT_ENABLE_UNITTEST=ON -DPROJECT_ENABLE_SAMPLE=ON -DCMAKE_C_COMPILER=$USE_CC -DCMAKE_CXX_COMPILER=$USE_CXX ;
+  - $CMAKE_BIN .. -DCMAKE_BUILD_TYPE=RelWithDebInfo -DPROJECT_ENABLE_UNITTEST=ON -DPROJECT_ENABLE_SAMPLE=ON -DCMAKE_C_COMPILER=$USE_CC -DCMAKE_CXX_COMPILER=$USE_CXX ${PROJECT_ADDON_OPTIONS[@]} ;
   - $CMAKE_BIN --build .
 
 
@@ -119,6 +162,7 @@ cache:
   pip: true
   directories:
   - $CMAKE_PREFIX
+  - "$HOME/prebuilt/mbedtls-$MBEDTLS_VERSION"
 
 branches:
   only:
