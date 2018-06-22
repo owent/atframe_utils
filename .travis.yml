@@ -121,7 +121,7 @@ script:
 
       MBEDTLS_URL="https://tls.mbed.org/download/mbedtls-$MBEDTLS_VERSION-apache.tgz";
 
-      if [ ! -e "$HOME/prebuilt/mbedtls-$MBEDTLS_VERSION//include/mbedtls/config.h" ]; then
+      if [ ! -e "$HOME/prebuilt/mbedtls-$MBEDTLS_VERSION/include/mbedtls/config.h" ]; then
 
         mkdir -p "$HOME/prebuilt";
 
