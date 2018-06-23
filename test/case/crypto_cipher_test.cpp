@@ -1,10 +1,14 @@
 ﻿#include <cstdlib>
 #include <cstring>
+#include <fstream>
+#include <std/chrono.h>
 #include <std/smart_ptr.h>
 
 
 #include "algorithm/crypto_cipher.h"
+#include "common/file_system.h"
 #include "common/string_oprs.h"
+
 #include "frame/test_macros.h"
 
 #ifdef CRYPTO_CIPHER_ENABLED
@@ -242,6 +246,325 @@ CASE_TEST(crypto_cipher, xxtea) {
         CASE_EXPECT_EQ(0, memcmp(buf_out, xtea_test_pt[i], 8));
 
         CASE_EXPECT_EQ(8, olen);
+    }
+}
+
+enum evp_test_operation_type {
+    EN_ETOT_BOTH = 0,
+    EN_ETOT_ENCRYPT = 1,
+    EN_ETOT_DECRYPT = 2,
+};
+
+enum evp_test_key_type {
+    EN_ETKT_NONE = 0,
+    EN_ETKT_CIPHER,
+    EN_ETKT_KEY,
+    EN_ETKT_IV,
+    EN_ETKT_OPERATOR,
+    EN_ETKT_PLAINTEXT,
+    EN_ETKT_CIPHERTEXT,
+    EN_ETKT_AAD,
+    EN_ETKT_TAG,
+    EN_ETKT_RESULT,
+};
+
+struct evp_test_info {
+    std::string cipher;
+    std::string key;
+    std::string iv;
+    evp_test_operation_type operation;
+    std::string plaintext;
+    std::string ciphertext;
+
+    // ========== for aead ==========
+    std::string aad;
+    std::string tag;
+    bool is_final_error;
+};
+
+static void evp_test_reset_info(evp_test_info &info) {
+    info.cipher.clear();
+    info.key.clear();
+    info.iv.clear();
+    info.operation = EN_ETOT_BOTH;
+    info.plaintext.clear();
+    info.ciphertext.clear();
+
+    // ====== aead ======
+    info.aad.clear();
+    info.tag.clear();
+    info.is_final_error = false;
+}
+
+static bool evp_test_is_aead(const evp_test_info &info) { return !info.aad.empty() || !info.tag.empty(); }
+
+static std::pair<evp_test_key_type, std::string> evp_test_parse_line(std::istream &in) {
+    evp_test_key_type ret_key = EN_ETKT_NONE;
+    std::string ret_val;
+
+    std::string line;
+    do {
+        if (!std::getline(in, line)) {
+            break;
+        }
+
+        if (line.empty()) {
+            break;
+        }
+
+        size_t s, e;
+        for (s = 0; s < line.size(); ++s) {
+            if (line[s] != ' ' && line[s] != '\t' && line[s] != '\r' && line[s] != '\n') {
+                break;
+            }
+        }
+
+        // comment or empty line
+        if (s >= line.size() || line[s] == '#') {
+            break;
+        }
+
+        for (e = s; e < line.size(); ++e) {
+            if (line[e] == ' ' || line[e] == '\t' || line[e] == '\r' || line[e] == '\n' || line[e] == '=') {
+                break;
+            }
+        }
+
+        std::string key = line.substr(s, e - s);
+
+        for (s = e; s < line.size(); ++s) {
+            if (line[s] != ' ' && line[s] != '\t' && line[s] != '\r' && line[s] != '\n' && line[s] != '=') {
+                break;
+            }
+        }
+
+        for (e = s; e < line.size(); ++e) {
+            if (line[e] == ' ' || line[e] == '\t' || line[e] == '\r' || line[e] == '\n' || line[e] == '=') {
+                break;
+            }
+        }
+
+        std::string value = line.substr(s, e - s);
+
+        if (0 == UTIL_STRFUNC_STRNCASE_CMP("Cipher", key.c_str(), key.size())) {
+            ret_key = EN_ETKT_CIPHER;
+            ret_val.swap(value);
+            break;
+        }
+
+        if (0 == UTIL_STRFUNC_STRNCASE_CMP("Key", key.c_str(), key.size())) {
+            ret_key = EN_ETKT_KEY;
+            ret_val.swap(value);
+            break;
+        }
+
+        if (0 == UTIL_STRFUNC_STRNCASE_CMP("IV", key.c_str(), key.size())) {
+            ret_key = EN_ETKT_IV;
+            ret_val.swap(value);
+            break;
+        }
+
+        if (0 == UTIL_STRFUNC_STRNCASE_CMP("Operation", key.c_str(), key.size())) {
+            ret_key = EN_ETKT_OPERATOR;
+            ret_val.swap(value);
+            break;
+        }
+
+        if (0 == UTIL_STRFUNC_STRNCASE_CMP("Plaintext", key.c_str(), key.size())) {
+            ret_key = EN_ETKT_PLAINTEXT;
+            ret_val.swap(value);
+            break;
+        }
+
+        if (0 == UTIL_STRFUNC_STRNCASE_CMP("Ciphertext", key.c_str(), key.size())) {
+            ret_key = EN_ETKT_CIPHERTEXT;
+            ret_val.swap(value);
+            break;
+        }
+
+        if (0 == UTIL_STRFUNC_STRNCASE_CMP("AAD", key.c_str(), key.size())) {
+            ret_key = EN_ETKT_AAD;
+            ret_val.swap(value);
+            break;
+        }
+
+        if (0 == UTIL_STRFUNC_STRNCASE_CMP("Tag", key.c_str(), key.size())) {
+            ret_key = EN_ETKT_TAG;
+            ret_val.swap(value);
+            break;
+        }
+
+        if (0 == UTIL_STRFUNC_STRNCASE_CMP("Result", key.c_str(), key.size())) {
+            ret_key = EN_ETKT_RESULT;
+            ret_val.swap(value);
+            break;
+        }
+
+    } while (false);
+
+    return std::make_pair(ret_key, ret_val);
+}
+
+static std::string evp_test_read_hex_bin(const std::string &hex) {
+    std::string ret;
+    ret.resize((hex.size() + 1) / 2);
+    for (size_t i = 0; i < hex.size(); ++i) {
+        char c = hex[i] - '0';
+        if (hex[i] >= 'A' && hex[i] <= 'F') {
+            c = 10 + hex[i] - 'A';
+        } else if (hex[i] >= 'a' && hex[i] <= 'f') {
+            c = 10 + hex[i] - 'a';
+        }
+
+        if (i & 0x01) {
+            ret[i >> 1] = (ret[i >> 1] << 4) | c;
+        } else {
+            ret[i >> 1] = c;
+        }
+    }
+
+    return ret;
+}
+
+static bool evp_test_parse_info(std::istream &in, evp_test_info &info) {
+    evp_test_reset_info(info);
+
+    bool has_begin = false;
+    while (true) {
+        if (in.eof()) {
+            break;
+        }
+
+        std::pair<evp_test_key_type, std::string> res = evp_test_parse_line(in);
+        if (res.first == EN_ETKT_NONE) {
+            if (has_begin) {
+                break;
+            } else {
+                continue;
+            }
+        }
+
+        switch (res.first) {
+        case EN_ETKT_CIPHER:
+            info.cipher = res.second;
+            has_begin = true;
+            break;
+        case EN_ETKT_KEY:
+            info.key = evp_test_read_hex_bin(res.second);
+            has_begin = true;
+            break;
+        case EN_ETKT_IV:
+            info.iv = evp_test_read_hex_bin(res.second);
+            has_begin = true;
+            break;
+        case EN_ETKT_OPERATOR:
+            if (0 == UTIL_STRFUNC_STRNCASE_CMP("ENCRYPT", res.second.c_str(), res.second.size())) {
+                info.operation = EN_ETOT_ENCRYPT;
+            } else if (0 == UTIL_STRFUNC_STRNCASE_CMP("ENCRYPT", res.second.c_str(), res.second.size())) {
+                info.operation = EN_ETOT_DECRYPT;
+            }
+            has_begin = true;
+            break;
+        case EN_ETKT_PLAINTEXT:
+            info.plaintext = evp_test_read_hex_bin(res.second);
+            has_begin = true;
+            break;
+        case EN_ETKT_CIPHERTEXT:
+            info.ciphertext = evp_test_read_hex_bin(res.second);
+            has_begin = true;
+            break;
+        case EN_ETKT_AAD:
+            info.aad = evp_test_read_hex_bin(res.second);
+            has_begin = true;
+            break;
+        case EN_ETKT_TAG:
+            info.tag = evp_test_read_hex_bin(res.second);
+            has_begin = true;
+            break;
+        case EN_ETKT_RESULT:
+            if (0 == UTIL_STRFUNC_STRNCASE_CMP("CIPHERFINAL_ERROR", res.second.c_str(), res.second.size())) {
+                info.is_final_error = true;
+            }
+            has_begin = true;
+            break;
+        default:
+            break;
+        }
+    }
+
+    return has_begin;
+}
+
+CASE_TEST(crypto_cipher, evp_test) {
+    std::string evptest_file_path;
+    util::file_system::dirname(__FILE__, 0, evptest_file_path);
+    evptest_file_path += util::file_system::DIRECTORY_SEPARATOR;
+    evptest_file_path += "evptests.txt";
+
+    CASE_MSG_INFO() << "Load " << evptest_file_path << " for additional cipher tests." << std::endl;
+    std::fstream fin;
+    fin.open(evptest_file_path.c_str(), std::ios::in);
+    evp_test_info info;
+
+    while (evp_test_parse_info(fin, info)) {
+        // AEAD暂不支持，先跳过
+        if (evp_test_is_aead(info)) {
+            continue;
+        }
+
+        int mode = util::crypto::cipher::mode_t::EN_CMODE_ENCRYPT | util::crypto::cipher::mode_t::EN_CMODE_DECRYPT;
+        if (info.operation == EN_ETOT_ENCRYPT) {
+            mode = util::crypto::cipher::mode_t::EN_CMODE_ENCRYPT;
+        } else if (info.operation == EN_ETOT_DECRYPT) {
+            mode = util::crypto::cipher::mode_t::EN_CMODE_DECRYPT;
+        }
+
+        util::crypto::cipher ci;
+        if (0 != ci.init(info.cipher.c_str(), mode)) {
+            CASE_MSG_INFO() << "\tCipher: " << info.cipher << " => not available for current crypto libraries, skipped." << std::endl;
+            continue;
+        }
+
+        if (!info.key.empty()) {
+            CASE_EXPECT_EQ(
+                0, ci.set_key(reinterpret_cast<const unsigned char *>(info.key.c_str()), static_cast<uint32_t>(info.key.size() * 8)));
+        }
+        if (!info.iv.empty()) {
+            CASE_EXPECT_EQ(0,
+                           ci.set_iv(reinterpret_cast<const unsigned char *>(info.iv.c_str()), static_cast<uint32_t>(info.iv.size() * 8)));
+        }
+
+        std::string buffer;
+        buffer.resize(
+            (info.plaintext.size() > info.ciphertext.size() ? info.plaintext.size() : info.ciphertext.size()) + ci.get_block_size(), 0);
+
+        if (mode & util::crypto::cipher::mode_t::EN_CMODE_ENCRYPT) {
+            std::chrono::system_clock::time_point begin = std::chrono::system_clock::now();
+
+            size_t olen = buffer.size();
+            CASE_EXPECT_EQ(0, ci.encrypt(reinterpret_cast<const unsigned char *>(info.plaintext.c_str()), info.plaintext.size(),
+                                         reinterpret_cast<unsigned char *>(&buffer[0]), &olen));
+            CASE_EXPECT_EQ(0, memcmp(info.ciphertext.c_str(), buffer.c_str(), info.ciphertext.size()));
+
+            std::chrono::system_clock::time_point end = std::chrono::system_clock::now();
+            double ns_count = (double)std::chrono::duration_cast<std::chrono::nanoseconds>(end - begin).count();
+            CASE_MSG_INFO() << "\tCipher: " << info.cipher << " => encrypt " << info.plaintext.size() << " bytes in " << ns_count << "ns."
+                            << std::endl;
+        }
+
+        if (mode & util::crypto::cipher::mode_t::EN_CMODE_DECRYPT) {
+            std::chrono::system_clock::time_point begin = std::chrono::system_clock::now();
+
+            size_t olen = buffer.size();
+            CASE_EXPECT_EQ(0, ci.decrypt(reinterpret_cast<const unsigned char *>(info.ciphertext.c_str()), info.ciphertext.size(),
+                                         reinterpret_cast<unsigned char *>(&buffer[0]), &olen));
+            CASE_EXPECT_EQ(0, memcmp(info.plaintext.c_str(), buffer.c_str(), info.plaintext.size()));
+
+            std::chrono::system_clock::time_point end = std::chrono::system_clock::now();
+            double ns_count = (double)std::chrono::duration_cast<std::chrono::nanoseconds>(end - begin).count();
+            CASE_MSG_INFO() << "\tCipher: " << info.cipher << " => decrypt " << info.plaintext.size() << " bytes in " << ns_count << "ns."
+                            << std::endl;
+        }
     }
 }
 
