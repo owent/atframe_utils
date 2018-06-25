@@ -24,9 +24,8 @@
 
 #if defined(CRYPTO_USE_OPENSSL) || defined(CRYPTO_USE_LIBRESSL) || defined(CRYPTO_USE_BORINGSSL)
 
+#include <openssl/err.h>
 #include <openssl/evp.h>
-#include <openssl/md5.h>
-#include <openssl/sha.h>
 
 #define CRYPTO_CIPHER_ENABLED 1
 
@@ -48,16 +47,10 @@
 
 namespace util {
     namespace crypto {
+        struct cipher_interface_info_t;
+
         class cipher {
         public:
-            struct method_t {
-                enum type {
-                    EN_CMT_INVALID = 0, // inner
-                    EN_CMT_XXTEA = 1,   // inner
-                    EN_CMT_CIPHER
-                };
-            };
-
             struct mode_t {
                 enum type { EN_CMODE_ENCRYPT = 0x01, EN_CMODE_DECRYPT = 0x02 };
             };
@@ -107,12 +100,19 @@ namespace util {
              * @brief set last error returned by crypto library
              * @param err error code returned by crypto library
              */
-            inline void set_last_errno(int e) { last_errorno_ = e; }
+            inline void set_last_errno(int64_t e) { last_errorno_ = e; }
             /**
              * @brief get last error returned by crypto library
              * @return last error code returned by crypto library
              */
-            inline int get_last_errno() const { return last_errorno_; }
+            inline int64_t get_last_errno() const { return last_errorno_; }
+
+            /**
+             * @brief if it's a AEAD cipher
+             * @see https://en.wikipedia.org/wiki/Authenticated_encryption
+             * @return if it's AEAD cipher, return true
+             */
+            bool is_aead() const;
 
             /**
              * @brief               get iv size in crypt library
@@ -141,12 +141,18 @@ namespace util {
             int set_key(const unsigned char *key, uint32_t key_bitlen);
 
             /**
-             * @brief               set key
+             * @brief               set initialization vector
              * @param iv            iv value
              * @param iv_len        length of iv, in bytes
              * @return              0 or error code less than 0
              */
             int set_iv(const unsigned char *iv, size_t iv_len);
+
+            /**
+             * @brief               clear initialization vector
+             * @return              0 or error code less than 0
+             */
+            void clear_iv();
 
             /**
              * @biref               encrypt data
@@ -188,9 +194,14 @@ namespace util {
             static int init_global_algorithm();
             static int cleanup_global_algorithm();
 
+
         private:
-            method_t::type method_;
-            int last_errorno_;
+            int init_with_cipher(const cipher_interface_info_t *interface, int mode);
+            int close_with_cipher();
+
+        private:
+            const cipher_interface_info_t *interface_;
+            int64_t last_errorno_;
             const cipher_kt_t *cipher_kt_;
             std::vector<unsigned char> iv_;
             typedef struct {

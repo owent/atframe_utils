@@ -1,3 +1,176 @@
+
+# AES 128 ECB tests (from FIPS-197 test vectors, encrypt)
+
+Cipher = AES-128-ECB
+Key = 000102030405060708090A0B0C0D0E0F
+Operation = ENCRYPT
+Plaintext = 00112233445566778899AABBCCDDEEFF
+Ciphertext = 69C4E0D86A7B0430D8CDB78070B4C55A
+
+# AES 192 ECB tests (from FIPS-197 test vectors, encrypt)
+
+Cipher = AES-192-ECB
+Key = 000102030405060708090A0B0C0D0E0F1011121314151617
+Operation = ENCRYPT
+Plaintext = 00112233445566778899AABBCCDDEEFF
+Ciphertext = DDA97CA4864CDFE06EAF70A0EC0D7191
+
+
+# AES 256 ECB tests (from FIPS-197 test vectors, encrypt)
+
+Cipher = AES-256-ECB
+Key = 000102030405060708090A0B0C0D0E0F101112131415161718191A1B1C1D1E1F
+Operation = ENCRYPT
+Plaintext = 00112233445566778899AABBCCDDEEFF
+Ciphertext = 8EA2B7CA516745BFEAFC49904B496089
+
+# AES tests from NIST document SP800-38A
+# For all ECB encrypts and decrypts, the transformed sequence is
+#   AES-bits-ECB:key::plaintext:ciphertext:encdec
+# ECB-AES128.Encrypt and ECB-AES128.Decrypt
+Cipher = AES-128-ECB
+Key = 2B7E151628AED2A6ABF7158809CF4F3C
+Plaintext = 6BC1BEE22E409F96E93D7E117393172A
+Ciphertext = 3AD77BB40D7A3660A89ECAF32466EF97
+
+Cipher = AES-128-ECB
+Key = 2B7E151628AED2A6ABF7158809CF4F3C
+Plaintext = AE2D8A571E03AC9C9EB76FAC45AF8E51
+Ciphertext = F5D3D58503B9699DE785895A96FDBAAF
+
+Cipher = AES-128-ECB
+Key = 2B7E151628AED2A6ABF7158809CF4F3C
+Plaintext = 30C81C46A35CE411E5FBC1191A0A52EF
+Ciphertext = 43B1CD7F598ECE23881B00E3ED030688
+
+Cipher = AES-128-ECB
+Key = 2B7E151628AED2A6ABF7158809CF4F3C
+Plaintext = F69F2445DF4F9B17AD2B417BE66C3710
+Ciphertext = 7B0C785E27E8AD3F8223207104725DD4
+
+# ECB-AES192.Encrypt and ECB-AES192.Decrypt
+Cipher = AES-192-ECB
+Key = 8E73B0F7DA0E6452C810F32B809079E562F8EAD2522C6B7B
+Plaintext = 6BC1BEE22E409F96E93D7E117393172A
+Ciphertext = BD334F1D6E45F25FF712A214571FA5CC
+
+Cipher = AES-192-ECB
+Key = 8E73B0F7DA0E6452C810F32B809079E562F8EAD2522C6B7B
+Plaintext = AE2D8A571E03AC9C9EB76FAC45AF8E51
+Ciphertext = 974104846D0AD3AD7734ECB3ECEE4EEF
+
+Cipher = AES-192-ECB
+Key = 8E73B0F7DA0E6452C810F32B809079E562F8EAD2522C6B7B
+Plaintext = 30C81C46A35CE411E5FBC1191A0A52EF
+Ciphertext = EF7AFD2270E2E60ADCE0BA2FACE6444E
+
+Cipher = AES-192-ECB
+Key = 8E73B0F7DA0E6452C810F32B809079E562F8EAD2522C6B7B
+Plaintext = F69F2445DF4F9B17AD2B417BE66C3710
+Ciphertext = 9A4B41BA738D6C72FB16691603C18E0E
+
+# ECB-AES256.Encrypt and ECB-AES256.Decrypt
+Cipher = AES-256-ECB
+Key = 603DEB1015CA71BE2B73AEF0857D77811F352C073B6108D72D9810A30914DFF4
+Plaintext = 6BC1BEE22E409F96E93D7E117393172A
+Ciphertext = F3EED1BDB5D2A03C064B5A7E3DB181F8
+
+Cipher = AES-256-ECB
+Key = 603DEB1015CA71BE2B73AEF0857D77811F352C073B6108D72D9810A30914DFF4
+Plaintext = AE2D8A571E03AC9C9EB76FAC45AF8E51
+Ciphertext = 591CCB10D410ED26DC5BA74A31362870
+
+Cipher = AES-256-ECB
+Key = 603DEB1015CA71BE2B73AEF0857D77811F352C073B6108D72D9810A30914DFF4
+Plaintext = 30C81C46A35CE411E5FBC1191A0A52EF
+Ciphertext = B6ED21B99CA6F4F9F153E7B1BEAFED1D
+
+Cipher = AES-256-ECB
+Key = 603DEB1015CA71BE2B73AEF0857D77811F352C073B6108D72D9810A30914DFF4
+Plaintext = F69F2445DF4F9B17AD2B417BE66C3710
+Ciphertext = 23304B7A39F9F3FF067D8D8F9E24ECC7
+
+
+# For all CBC encrypts and decrypts, the transformed sequence is
+#   AES-bits-CBC:key:IV/ciphertext':plaintext:ciphertext:encdec
+# CBC-AES128.Encrypt and CBC-AES128.Decrypt
+Cipher = AES-128-CBC
+Key = 2B7E151628AED2A6ABF7158809CF4F3C
+IV = 000102030405060708090A0B0C0D0E0F
+Plaintext = 6BC1BEE22E409F96E93D7E117393172A
+Ciphertext = 7649ABAC8119B246CEE98E9B12E9197D
+
+Cipher = AES-128-CBC
+Key = 2B7E151628AED2A6ABF7158809CF4F3C
+IV = 7649ABAC8119B246CEE98E9B12E9197D
+Plaintext = AE2D8A571E03AC9C9EB76FAC45AF8E51
+Ciphertext = 5086CB9B507219EE95DB113A917678B2
+
+Cipher = AES-128-CBC
+Key = 2B7E151628AED2A6ABF7158809CF4F3C
+IV = 5086CB9B507219EE95DB113A917678B2
+Plaintext = 30C81C46A35CE411E5FBC1191A0A52EF
+Ciphertext = 73BED6B8E3C1743B7116E69E22229516
+
+Cipher = AES-128-CBC
+Key = 2B7E151628AED2A6ABF7158809CF4F3C
+IV = 73BED6B8E3C1743B7116E69E22229516
+Plaintext = F69F2445DF4F9B17AD2B417BE66C3710
+Ciphertext = 3FF1CAA1681FAC09120ECA307586E1A7
+
+# CBC-AES192.Encrypt and CBC-AES192.Decrypt
+Cipher = AES-192-CBC
+Key = 8E73B0F7DA0E6452C810F32B809079E562F8EAD2522C6B7B
+IV = 000102030405060708090A0B0C0D0E0F
+Plaintext = 6BC1BEE22E409F96E93D7E117393172A
+Ciphertext = 4F021DB243BC633D7178183A9FA071E8
+
+Cipher = AES-192-CBC
+Key = 8E73B0F7DA0E6452C810F32B809079E562F8EAD2522C6B7B
+IV = 4F021DB243BC633D7178183A9FA071E8
+Plaintext = AE2D8A571E03AC9C9EB76FAC45AF8E51
+Ciphertext = B4D9ADA9AD7DEDF4E5E738763F69145A
+
+Cipher = AES-192-CBC
+Key = 8E73B0F7DA0E6452C810F32B809079E562F8EAD2522C6B7B
+IV = B4D9ADA9AD7DEDF4E5E738763F69145A
+Plaintext = 30C81C46A35CE411E5FBC1191A0A52EF
+Ciphertext = 571B242012FB7AE07FA9BAAC3DF102E0
+
+Cipher = AES-192-CBC
+Key = 8E73B0F7DA0E6452C810F32B809079E562F8EAD2522C6B7B
+IV = 571B242012FB7AE07FA9BAAC3DF102E0
+Plaintext = F69F2445DF4F9B17AD2B417BE66C3710
+Ciphertext = 08B0E27988598881D920A9E64F5615CD
+
+# CBC-AES256.Encrypt and CBC-AES256.Decrypt
+Cipher = AES-256-CBC
+Key = 603DEB1015CA71BE2B73AEF0857D77811F352C073B6108D72D9810A30914DFF4
+IV = 000102030405060708090A0B0C0D0E0F
+Plaintext = 6BC1BEE22E409F96E93D7E117393172A
+Ciphertext = F58C4C04D6E5F1BA779EABFB5F7BFBD6
+
+Cipher = AES-256-CBC
+Key = 603DEB1015CA71BE2B73AEF0857D77811F352C073B6108D72D9810A30914DFF4
+IV = F58C4C04D6E5F1BA779EABFB5F7BFBD6
+Plaintext = AE2D8A571E03AC9C9EB76FAC45AF8E51
+Ciphertext = 9CFC4E967EDB808D679F777BC6702C7D
+
+Cipher = AES-256-CBC
+Key = 603DEB1015CA71BE2B73AEF0857D77811F352C073B6108D72D9810A30914DFF4
+IV = 9CFC4E967EDB808D679F777BC6702C7D
+Plaintext = 30C81C46A35CE411E5FBC1191A0A52EF
+Ciphertext = 39F23369A9D9BACFA530E26304231461
+
+Cipher = AES-256-CBC
+Key = 603DEB1015CA71BE2B73AEF0857D77811F352C073B6108D72D9810A30914DFF4
+IV = 39F23369A9D9BACFA530E26304231461
+Plaintext = F69F2445DF4F9B17AD2B417BE66C3710
+Ciphertext = B2EB05E2C39BE9FCDA6C19078C6A9D1B
+
+# We don't support CFB{1,8}-AESxxx.{En,De}crypt
+# For all CFB128 encrypts and decrypts, the transformed sequence is
+#   AES-bits-CFB:key:IV/ciphertext':plaintext:ciphertext:encdec
 # CFB128-AES128.Encrypt
 Cipher = AES-128-CFB
 Key = 2B7E151628AED2A6ABF7158809CF4F3C
@@ -461,6 +634,27 @@ Operation = DECRYPT
 Plaintext = F69F2445DF4F9B17AD2B417BE66C3710
 Ciphertext = 5953ADCE14DB8C7F39F1BD39F359BFFA
 
+
+# AES CCM 256 bit key
+Cipher = aes-256-ccm
+Key = 1bde3251d41a8b5ea013c195ae128b218b3e0306376357077ef1c1c78548b92e
+IV = 5b8e40746f6b98e00f1d13ff41
+AAD = c17a32514eb6103f3249e076d4c871dc97e04b286699e54491dc18f6d734d4c0
+Tag = 2024931d73bca480c24a24ece6b6c2bf
+Plaintext = 53bd72a97089e312422bf72e242377b3c6ee3e2075389b999c4ef7f28bd2b80a
+Ciphertext = 9a5fcccdb4cf04e7293d2775cc76a488f042382d949b43b7d6bb2b9864786726
+
+Cipher = aes-256-ccm
+Key = 1bde3251d41a8b5ea013c195ae128b218b3e0306376357077ef1c1c78548b92e
+IV = 5b8e40746f6b98e00f1d13ff41
+AAD = c17a32514eb6103f3249e076d4c871dc97e04b286699e54491dc18f6d734d4c0
+Tag = 2024931d73bca480c24a24ece6b6c2be
+Plaintext = 53bd72a97089e312422bf72e242377b3c6ee3e2075389b999c4ef7f28bd2b80a
+Ciphertext = 9a5fcccdb4cf04e7293d2775cc76a488f042382d949b43b7d6bb2b9864786726
+Operation = DECRYPT
+Result = CIPHERUPDATE_ERROR
+
+
 # AES GCM test vectors from http://csrc.nist.gov/groups/ST/toolkit/BCM/documents/proposedmodes/gcm/gcm-spec.pdf
 Cipher = aes-128-gcm
 Key = 00000000000000000000000000000000
@@ -832,3 +1026,525 @@ Plaintext = 496e7465726e65742d4472616674732061726520647261667420646f63756d656e74
 Ciphertext = 64a0861575861af460f062c79be643bd5e805cfd345cf389f108670ac76c8cb24c6cfc18755d43eea09ee94e382d26b0bdb7b73c321b0100d4f03b7f355894cf332f830e710b97ce98c8a84abd0b948114ad176e008d33bd60f982b1ff37c8559797a06ef4f0ef61c186324e2b3506383606907b6a7c02b0f9f6157b53c867e4b9166c767b804d46a59b5216cde7a4e99040c5a40433225ee282a1b0a06c523eaf4534d7f83fa1155b0047718cbc546a0d072b04b3564eea1b422273f548271a0bb2316053fa76991955ebd63159434ecebb4e466dae5a1073a6727627097a1049e617d91d361094fa68f0ff77987130305beaba2eda04df997b714d6c6f2c29a6ad5cb4022b02709b
 Operation = DECRYPT
 Result = CIPHERFINAL_ERROR
+
+# BLOWFISH
+Cipher = bf-ecb
+Operation = Encrypt
+Key = 0000000000000000
+Plaintext = 0000000000000000
+Ciphertext = 4ef997456198dd78
+
+Cipher = bf-ecb
+Operation = Encrypt
+Key = ffffffffffffffff
+Plaintext = ffffffffffffffff
+Ciphertext = 51866fd5b85ecb8a
+
+Cipher = bf-ecb
+Operation = Encrypt
+Key = 3000000000000000
+Plaintext = 1000000000000001
+Ciphertext = 7d856f9a613063f2
+
+Cipher = bf-ecb
+Operation = Encrypt
+Key = 1111111111111111
+Plaintext = 1111111111111111
+Ciphertext = 2466dd878b963c9d
+
+Cipher = bf-ecb
+Operation = Encrypt
+Key = 0123456789abcdef
+Plaintext = 1111111111111111
+Ciphertext = 61f9c3802281b096
+
+Cipher = bf-ecb
+Operation = Encrypt
+Key = 1111111111111111
+Plaintext = 0123456789abcdef
+Ciphertext = 7d0cc630afda1ec7
+
+Cipher = bf-ecb
+Operation = Encrypt
+Key = 0000000000000000
+Plaintext = 0000000000000000
+Ciphertext = 4ef997456198dd78
+
+Cipher = bf-ecb
+Operation = Encrypt
+Key = fedcba9876543210
+Plaintext = 0123456789abcdef
+Ciphertext = 0aceab0fc6a0a28d
+
+Cipher = bf-ecb
+Operation = Encrypt
+Key = 7ca110454a1a6e57
+Plaintext = 01a1d6d039776742
+Ciphertext = 59c68245eb05282b
+
+Cipher = bf-ecb
+Operation = Encrypt
+Key = 0131d9619dc1376e
+Plaintext = 5cd54ca83def57da
+Ciphertext = b1b8cc0b250f09a0
+
+Cipher = bf-ecb
+Operation = Encrypt
+Key = 07a1133e4a0b2686
+Plaintext = 0248d43806f67172
+Ciphertext = 1730e5778bea1da4
+
+Cipher = bf-ecb
+Operation = Encrypt
+Key = 3849674c2602319e
+Plaintext = 51454b582ddf440a
+Ciphertext = a25e7856cf2651eb
+
+Cipher = bf-ecb
+Operation = Encrypt
+Key = 04b915ba43feb5b6
+Plaintext = 42fd443059577fa2
+Ciphertext = 353882b109ce8f1a
+
+Cipher = bf-ecb
+Operation = Encrypt
+Key = 0113b970fd34f2ce
+Plaintext = 059b5e0851cf143a
+Ciphertext = 48f4d0884c379918
+
+Cipher = bf-ecb
+Operation = Encrypt
+Key = 0170f175468fb5e6
+Plaintext = 0756d8e0774761d2
+Ciphertext = 432193b78951fc98
+
+Cipher = bf-ecb
+Operation = Encrypt
+Key = 43297fad38e373fe
+Plaintext = 762514b829bf486a
+Ciphertext = 13f04154d69d1ae5
+
+Cipher = bf-ecb
+Operation = Encrypt
+Key = 07a7137045da2a16
+Plaintext = 3bdd119049372802
+Ciphertext = 2eedda93ffd39c79
+
+Cipher = bf-ecb
+Operation = Encrypt
+Key = 04689104c2fd3b2f
+Plaintext = 26955f6835af609a
+Ciphertext = d887e0393c2da6e3
+
+Cipher = bf-ecb
+Operation = Encrypt
+Key = 37d06bb516cb7546
+Plaintext = 164d5e404f275232
+Ciphertext = 5f99d04f5b163969
+
+Cipher = bf-ecb
+Operation = Encrypt
+Key = 1f08260d1ac2465e
+Plaintext = 6b056e18759f5cca
+Ciphertext = 4a057a3b24d3977b
+
+Cipher = bf-ecb
+Operation = Encrypt
+Key = 584023641aba6176
+Plaintext = 004bd6ef09176062
+Ciphertext = 452031c1e4fada8e
+
+Cipher = bf-ecb
+Operation = Encrypt
+Key = 025816164629b007
+Plaintext = 480d39006ee762f2
+Ciphertext = 7555ae39f59b87bd
+
+Cipher = bf-ecb
+Operation = Encrypt
+Key = 49793ebc79b3258f
+Plaintext = 437540c8698f3cfa
+Ciphertext = 53c55f9cb49fc019
+
+Cipher = bf-ecb
+Operation = Encrypt
+Key = 4fb05e1515ab73a7
+Plaintext = 072d43a077075292
+Ciphertext = 7a8e7bfa937e89a3
+
+Cipher = bf-ecb
+Operation = Encrypt
+Key = 49e95d6d4ca229bf
+Plaintext = 02fe55778117f12a
+Ciphertext = cf9c5d7a4986adb5
+
+Cipher = bf-ecb
+Operation = Encrypt
+Key = 018310dc409b26d6
+Plaintext = 1d9d5c5018f728c2
+Ciphertext = d1abb290658bc778
+
+Cipher = bf-ecb
+Operation = Encrypt
+Key = 1c587f1c13924fef
+Plaintext = 305532286d6f295a
+Ciphertext = 55cb3774d13ef201
+
+Cipher = bf-ecb
+Operation = Encrypt
+Key = 0101010101010101
+Plaintext = 0123456789abcdef
+Ciphertext = fa34ec4847b268b2
+
+Cipher = bf-ecb
+Operation = Encrypt
+Key = 1f1f1f1f0e0e0e0e
+Plaintext = 0123456789abcdef
+Ciphertext = a790795108ea3cae
+
+Cipher = bf-ecb
+Operation = Encrypt
+Key = e0fee0fef1fef1fe
+Plaintext = 0123456789abcdef
+Ciphertext = c39e072d9fac631d
+
+Cipher = bf-ecb
+Operation = Encrypt
+Key = 0000000000000000
+Plaintext = ffffffffffffffff
+Ciphertext = 014933e0cdaff6e4
+
+Cipher = bf-ecb
+Operation = Encrypt
+Key = ffffffffffffffff
+Plaintext = 0000000000000000
+Ciphertext = f21e9a77b71c49bc
+
+Cipher = bf-ecb
+Operation = Encrypt
+Key = 0123456789abcdef
+Plaintext = 0000000000000000
+Ciphertext = 245946885754369a
+
+Cipher = bf-ecb
+Operation = Encrypt
+Key = fedcba9876543210
+Plaintext = ffffffffffffffff
+Ciphertext = 6b5c5a9c5d9e0a5a
+
+Cipher = bf-ecb
+Operation = Decrypt
+Key = 0000000000000000
+Ciphertext = 4ef997456198dd78
+Plaintext = 0000000000000000
+
+Cipher = bf-ecb
+Operation = Decrypt
+Key = ffffffffffffffff
+Ciphertext = 51866fd5b85ecb8a
+Plaintext = ffffffffffffffff
+
+Cipher = bf-ecb
+Operation = Decrypt
+Key = 3000000000000000
+Ciphertext = 7d856f9a613063f2
+Plaintext = 1000000000000001
+
+Cipher = bf-ecb
+Operation = Decrypt
+Key = 1111111111111111
+Ciphertext = 2466dd878b963c9d
+Plaintext = 1111111111111111
+
+Cipher = bf-ecb
+Operation = Decrypt
+Key = 0123456789abcdef
+Ciphertext = 61f9c3802281b096
+Plaintext = 1111111111111111
+
+Cipher = bf-ecb
+Operation = Decrypt
+Key = 1111111111111111
+Ciphertext = 7d0cc630afda1ec7
+Plaintext = 0123456789abcdef
+
+Cipher = bf-ecb
+Operation = Decrypt
+Key = 0000000000000000
+Ciphertext = 4ef997456198dd78
+Plaintext = 0000000000000000
+
+Cipher = bf-ecb
+Operation = Decrypt
+Key = fedcba9876543210
+Ciphertext = 0aceab0fc6a0a28d
+Plaintext = 0123456789abcdef
+
+Cipher = bf-ecb
+Operation = Decrypt
+Key = 7ca110454a1a6e57
+Ciphertext = 59c68245eb05282b
+Plaintext = 01a1d6d039776742
+
+Cipher = bf-ecb
+Operation = Decrypt
+Key = 0131d9619dc1376e
+Ciphertext = b1b8cc0b250f09a0
+Plaintext = 5cd54ca83def57da
+
+Cipher = bf-ecb
+Operation = Decrypt
+Key = 07a1133e4a0b2686
+Ciphertext = 1730e5778bea1da4
+Plaintext = 0248d43806f67172
+
+Cipher = bf-ecb
+Operation = Decrypt
+Key = 3849674c2602319e
+Ciphertext = a25e7856cf2651eb
+Plaintext = 51454b582ddf440a
+
+Cipher = bf-ecb
+Operation = Decrypt
+Key = 04b915ba43feb5b6
+Ciphertext = 353882b109ce8f1a
+Plaintext = 42fd443059577fa2
+
+Cipher = bf-ecb
+Operation = Decrypt
+Key = 0113b970fd34f2ce
+Ciphertext = 48f4d0884c379918
+Plaintext = 059b5e0851cf143a
+
+Cipher = bf-ecb
+Operation = Encrypt
+Key = 0170f175468fb5e6
+Plaintext = 0756d8e0774761d2
+Ciphertext = 432193b78951fc98
+
+Cipher = bf-ecb
+Operation = Decrypt
+Key = 43297fad38e373fe
+Ciphertext = 13f04154d69d1ae5
+Plaintext = 762514b829bf486a
+
+Cipher = bf-ecb
+Operation = Decrypt
+Key = 07a7137045da2a16
+Ciphertext = 2eedda93ffd39c79
+Plaintext = 3bdd119049372802
+
+Cipher = bf-ecb
+Operation = Decrypt
+Key = 04689104c2fd3b2f
+Ciphertext = d887e0393c2da6e3
+Plaintext = 26955f6835af609a
+
+Cipher = bf-ecb
+Operation = Decrypt
+Key = 37d06bb516cb7546
+Ciphertext = 5f99d04f5b163969
+Plaintext = 164d5e404f275232
+
+Cipher = bf-ecb
+Operation = Decrypt
+Key = 1f08260d1ac2465e
+Ciphertext = 4a057a3b24d3977b
+Plaintext = 6b056e18759f5cca
+
+Cipher = bf-ecb
+Operation = Decrypt
+Key = 584023641aba6176
+Ciphertext = 452031c1e4fada8e
+Plaintext = 004bd6ef09176062
+
+Cipher = bf-ecb
+Operation = Decrypt
+Key = 025816164629b007
+Ciphertext = 7555ae39f59b87bd
+Plaintext = 480d39006ee762f2
+
+Cipher = bf-ecb
+Operation = Decrypt
+Key = 49793ebc79b3258f
+Ciphertext = 53c55f9cb49fc019
+Plaintext = 437540c8698f3cfa
+
+Cipher = bf-ecb
+Operation = Decrypt
+Key = 4fb05e1515ab73a7
+Ciphertext = 7a8e7bfa937e89a3
+Plaintext = 072d43a077075292
+
+Cipher = bf-ecb
+Operation = Decrypt
+Key = 49e95d6d4ca229bf
+Ciphertext = cf9c5d7a4986adb5
+Plaintext = 02fe55778117f12a
+
+Cipher = bf-ecb
+Operation = Decrypt
+Key = 018310dc409b26d6
+Ciphertext = d1abb290658bc778
+Plaintext = 1d9d5c5018f728c2
+
+Cipher = bf-ecb
+Operation = Decrypt
+Key = 1c587f1c13924fef
+Ciphertext = 55cb3774d13ef201
+Plaintext = 305532286d6f295a
+
+Cipher = bf-ecb
+Operation = Decrypt
+Key = 0101010101010101
+Ciphertext = fa34ec4847b268b2
+Plaintext = 0123456789abcdef
+
+Cipher = bf-ecb
+Operation = Decrypt
+Key = 1f1f1f1f0e0e0e0e
+Ciphertext = a790795108ea3cae
+Plaintext = 0123456789abcdef
+
+Cipher = bf-ecb
+Operation = Decrypt
+Key = e0fee0fef1fef1fe
+Ciphertext = c39e072d9fac631d
+Plaintext = 0123456789abcdef
+
+Cipher = bf-ecb
+Operation = Decrypt
+Key = 0000000000000000
+Ciphertext = 014933e0cdaff6e4
+Plaintext = ffffffffffffffff
+
+Cipher = bf-ecb
+Operation = Decrypt
+Key = ffffffffffffffff
+Ciphertext = f21e9a77b71c49bc
+Plaintext = 0000000000000000
+
+Cipher = bf-ecb
+Operation = Decrypt
+Key = 0123456789abcdef
+Ciphertext = 245946885754369a
+Plaintext = 0000000000000000
+
+Cipher = bf-ecb
+Operation = Decrypt
+Key = fedcba9876543210
+Ciphertext = 6b5c5a9c5d9e0a5a
+Plaintext = ffffffffffffffff
+
+Cipher = bf-cbc 
+Operation = Encrypt
+Key = 0123456789ABCDEFF0E1D2C3B4A59687
+IV = FEDCBA9876543210
+Plaintext = 37363534333231204E6F77206973207468652074696D6520666F722000000000
+Ciphertext = 6b77b4d63006dee605b156e27403979358deb9e7154616d959f1652bd5ff92cc
+
+Cipher = bf-cbc 
+Operation = Decrypt
+Key = 0123456789ABCDEFF0E1D2C3B4A59687
+IV = FEDCBA9876543210
+Ciphertext = 6B77B4D63006DEE605B156E27403979358DEB9E7154616D959F1652BD5FF92CC
+Plaintext = 37363534333231204e6f77206973207468652074696d6520666f722000000000
+
+
+Cipher = bf-cfb 
+Operation = Encrypt
+Key = 0123456789ABCDEFF0E1D2C3B4A59687
+IV = FEDCBA9876543210
+Plaintext = 37363534333231204E6F77206973207468652074696D6520666F722000
+Ciphertext = e73214a2822139caf26ecf6d2eb9e76e3da3de04d1517200519d57a6c3
+
+Cipher = bf-cfb 
+Operation = Decrypt
+Key = 0123456789ABCDEFF0E1D2C3B4A59687
+IV = FEDCBA9876543210
+Ciphertext = E73214A2822139CAF26ECF6D2EB9E76E3DA3DE04D1517200519D57A6C3
+Plaintext = 37363534333231204e6f77206973207468652074696d6520666f722000
+
+
+# DES ECB tests (from destest)
+
+Cipher = DES-ECB
+Key = 0000000000000000
+Plaintext = 0000000000000000
+Ciphertext = 8CA64DE9C1B123A7
+
+Cipher = DES-ECB
+Key = FFFFFFFFFFFFFFFF
+Plaintext = FFFFFFFFFFFFFFFF
+Ciphertext = 7359B2163E4EDC58
+
+Cipher = DES-ECB
+Key = 3000000000000000
+Plaintext = 1000000000000001
+Ciphertext = 958E6E627A05557B
+
+Cipher = DES-ECB
+Key = 1111111111111111
+Plaintext = 1111111111111111
+Ciphertext = F40379AB9E0EC533
+
+Cipher = DES-ECB
+Key = 0123456789ABCDEF
+Plaintext = 1111111111111111
+Ciphertext = 17668DFC7292532D
+
+Cipher = DES-ECB
+Key = 1111111111111111
+Plaintext = 0123456789ABCDEF
+Ciphertext = 8A5AE1F81AB8F2DD
+
+Cipher = DES-ECB
+Key = FEDCBA9876543210
+Plaintext = 0123456789ABCDEF
+Ciphertext = ED39D950FA74BCC4
+
+
+Cipher = des-ede
+Operation = Encrypt
+Key = 0000000000000000FFFFFFFFFFFFFFFF
+Plaintext = 0000000000000000
+Ciphertext = 9295B59BB384736E
+
+Cipher = des-ede
+Operation = Encrypt
+Key = FFFFFFFFFFFFFFFF3000000000000000
+Plaintext = FFFFFFFFFFFFFFFF
+Ciphertext = 199E9D6DF39AA816
+
+Cipher = des-ede
+Operation = Decrypt
+Key = 0000000000000000FFFFFFFFFFFFFFFF
+Ciphertext = 9295B59BB384736E
+Plaintext = 0000000000000000
+
+Cipher = des-ede
+Operation = Decrypt
+Key = FFFFFFFFFFFFFFFF3000000000000000
+Ciphertext = 199E9D6DF39AA816
+Plaintext = FFFFFFFFFFFFFFFF
+
+Cipher = des-ede3-cbc
+Operation = Encrypt
+Key = 0123456789abcdeff1e0d3c2b5a49786fedcba9876543210
+IV = fedcba9876543210
+Plaintext = 37363534333231204E6F77206973207468652074696D6520
+Ciphertext = 3FE301C962AC01D02213763C1CBD4CDC799657C064ECF5D4
+
+Cipher = des-ede3-cbc
+Operation = Decrypt
+Key = 0123456789abcdeff1e0d3c2b5a49786fedcba9876543210
+IV = fedcba9876543210
+Ciphertext = 3FE301C962AC01D02213763C1CBD4CDC799657C064ECF5D4
+Plaintext = 37363534333231204E6F77206973207468652074696D6520
+
+# DES EDE3 CBC tests (from destest)
+Cipher = DES-EDE3-CBC
+Key = 0123456789abcdeff1e0d3c2b5a49786fedcba9876543210
+IV = fedcba9876543210
+Plaintext = 37363534333231204E6F77206973207468652074696D6520666F722000000000
+Ciphertext = 3FE301C962AC01D02213763C1CBD4CDC799657C064ECF5D41C673812CFDE9675

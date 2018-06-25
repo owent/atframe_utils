@@ -496,6 +496,12 @@ static bool evp_test_parse_info(std::istream &in, evp_test_info &info) {
 }
 
 CASE_TEST(crypto_cipher, evp_test) {
+#if defined(CRYPTO_USE_OPENSSL) || defined(CRYPTO_USE_LIBRESSL) || defined(CRYPTO_USE_BORINGSSL)
+    if (!openssl_test_inited) {
+        openssl_test_inited = std::make_shared<openssl_test_init_wrapper>();
+    }
+#endif
+
     std::string evptest_file_path;
     util::file_system::dirname(__FILE__, 0, evptest_file_path);
     evptest_file_path += util::file_system::DIRECTORY_SEPARATOR;
@@ -525,45 +531,102 @@ CASE_TEST(crypto_cipher, evp_test) {
             continue;
         }
 
+        CASE_EXPECT_EQ(evp_test_is_aead(info), ci.is_aead());
+
         if (!info.key.empty()) {
             CASE_EXPECT_EQ(
                 0, ci.set_key(reinterpret_cast<const unsigned char *>(info.key.c_str()), static_cast<uint32_t>(info.key.size() * 8)));
         }
-        if (!info.iv.empty()) {
-            CASE_EXPECT_EQ(0,
-                           ci.set_iv(reinterpret_cast<const unsigned char *>(info.iv.c_str()), static_cast<uint32_t>(info.iv.size() * 8)));
-        }
 
         std::string buffer;
-        buffer.resize(
-            (info.plaintext.size() > info.ciphertext.size() ? info.plaintext.size() : info.ciphertext.size()) + ci.get_block_size(), 0);
+        buffer.resize((info.plaintext.size() > info.ciphertext.size() ? info.plaintext.size() : info.ciphertext.size()) +
+                      ci.get_block_size());
 
         if (mode & util::crypto::cipher::mode_t::EN_CMODE_ENCRYPT) {
             std::chrono::system_clock::time_point begin = std::chrono::system_clock::now();
+            int enc_res = 0;
+            const char *failed_step = "memory check";
+            memset(&buffer[0], 0, buffer.size());
 
-            size_t olen = buffer.size();
-            CASE_EXPECT_EQ(0, ci.encrypt(reinterpret_cast<const unsigned char *>(info.plaintext.c_str()), info.plaintext.size(),
-                                         reinterpret_cast<unsigned char *>(&buffer[0]), &olen));
-            CASE_EXPECT_EQ(0, memcmp(info.ciphertext.c_str(), buffer.c_str(), info.ciphertext.size()));
+            do {
+                if (!info.iv.empty()) {
+                    CASE_EXPECT_EQ(
+                        0, ci.set_iv(reinterpret_cast<const unsigned char *>(info.iv.c_str()), static_cast<uint32_t>(info.iv.size())));
+                } else {
+                    ci.clear_iv();
+                }
 
-            std::chrono::system_clock::time_point end = std::chrono::system_clock::now();
-            double ns_count = (double)std::chrono::duration_cast<std::chrono::nanoseconds>(end - begin).count();
-            CASE_MSG_INFO() << "\tCipher: " << info.cipher << " => encrypt " << info.plaintext.size() << " bytes in " << ns_count << "ns."
-                            << std::endl;
+                size_t olen = buffer.size();
+                enc_res = ci.encrypt(reinterpret_cast<const unsigned char *>(info.plaintext.c_str()), info.plaintext.size(),
+                                     reinterpret_cast<unsigned char *>(&buffer[0]), &olen);
+                CASE_EXPECT_EQ(0, enc_res);
+                if (0 != enc_res) {
+                    failed_step = "encrypt";
+                    break;
+                }
+
+                enc_res = memcmp(info.ciphertext.c_str(), buffer.c_str(), info.ciphertext.size());
+                CASE_EXPECT_EQ(0, enc_res);
+            } while (false);
+
+            if (0 == enc_res) {
+                std::chrono::system_clock::time_point end = std::chrono::system_clock::now();
+                double ns_count = (double)std::chrono::duration_cast<std::chrono::nanoseconds>(end - begin).count();
+                CASE_MSG_INFO() << "\tCipher: " << info.cipher << " => encrypt " << info.plaintext.size() << " bytes in " << ns_count
+                                << "ns." << std::endl;
+            } else {
+                CASE_MSG_INFO() << CASE_MSG_FCOLOR(YELLOW) << "\tCipher: " << info.cipher << " => encrypt " << info.plaintext.size()
+                                << " bytes failed(" << failed_step << ":" << ci.get_last_errno() << ")." << std::endl;
+#if defined(CRYPTO_USE_OPENSSL) || defined(CRYPTO_USE_LIBRESSL) || defined(CRYPTO_USE_BORINGSSL)
+                char err_msg[8192] = {0};
+                ERR_error_string_n(ci.get_last_errno(), err_msg, sizeof(err_msg));
+                CASE_MSG_INFO() << CASE_MSG_FCOLOR(YELLOW) << "\t" << err_msg << std::endl;
+#endif
+            }
         }
 
         if (mode & util::crypto::cipher::mode_t::EN_CMODE_DECRYPT) {
             std::chrono::system_clock::time_point begin = std::chrono::system_clock::now();
+            int dec_res = 0;
+            const char *failed_step = "memory check";
+            memset(&buffer[0], 0, buffer.size());
 
-            size_t olen = buffer.size();
-            CASE_EXPECT_EQ(0, ci.decrypt(reinterpret_cast<const unsigned char *>(info.ciphertext.c_str()), info.ciphertext.size(),
-                                         reinterpret_cast<unsigned char *>(&buffer[0]), &olen));
-            CASE_EXPECT_EQ(0, memcmp(info.plaintext.c_str(), buffer.c_str(), info.plaintext.size()));
+            do {
+                if (!info.iv.empty()) {
+                    CASE_EXPECT_EQ(
+                        0, ci.set_iv(reinterpret_cast<const unsigned char *>(info.iv.c_str()), static_cast<uint32_t>(info.iv.size())));
+                } else {
+                    ci.clear_iv();
+                }
 
-            std::chrono::system_clock::time_point end = std::chrono::system_clock::now();
-            double ns_count = (double)std::chrono::duration_cast<std::chrono::nanoseconds>(end - begin).count();
-            CASE_MSG_INFO() << "\tCipher: " << info.cipher << " => decrypt " << info.plaintext.size() << " bytes in " << ns_count << "ns."
-                            << std::endl;
+                size_t olen = buffer.size();
+                dec_res = ci.decrypt(reinterpret_cast<const unsigned char *>(info.ciphertext.c_str()), info.ciphertext.size(),
+                                     reinterpret_cast<unsigned char *>(&buffer[0]), &olen);
+                CASE_EXPECT_EQ(0, dec_res);
+
+                if (0 != dec_res) {
+                    failed_step = "decrypt";
+                    break;
+                }
+
+                dec_res = memcmp(info.plaintext.c_str(), buffer.c_str(), info.plaintext.size());
+                CASE_EXPECT_EQ(0, dec_res);
+            } while (false);
+
+            if (0 == dec_res) {
+                std::chrono::system_clock::time_point end = std::chrono::system_clock::now();
+                double ns_count = (double)std::chrono::duration_cast<std::chrono::nanoseconds>(end - begin).count();
+                CASE_MSG_INFO() << "\tCipher: " << info.cipher << " => decrypt " << info.plaintext.size() << " bytes in " << ns_count
+                                << "ns." << std::endl;
+            } else {
+                CASE_MSG_INFO() << CASE_MSG_FCOLOR(YELLOW) << "\tCipher: " << info.cipher << " => decrypt " << info.plaintext.size()
+                                << " bytes failed(" << failed_step << ":" << ci.get_last_errno() << ")." << std::endl;
+#if defined(CRYPTO_USE_OPENSSL) || defined(CRYPTO_USE_LIBRESSL) || defined(CRYPTO_USE_BORINGSSL)
+                char err_msg[8192] = {0};
+                ERR_error_string_n(ci.get_last_errno(), err_msg, sizeof(err_msg));
+                CASE_MSG_INFO() << CASE_MSG_FCOLOR(YELLOW) << "\t" << err_msg << std::endl;
+#endif
+            }
         }
     }
 }
