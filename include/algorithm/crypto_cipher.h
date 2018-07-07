@@ -61,8 +61,8 @@ namespace util {
             typedef EVP_MD digest_type_t;
             enum {
                 MAX_KEY_LENGTH = EVP_MAX_KEY_LENGTH, //
-                MAX_IV_LENGTH = EVP_MAX_IV_LENGTH,   //
-                MAX_MD_SIZE = EVP_MAX_MD_SIZE
+                MAX_IV_LENGTH  = EVP_MAX_IV_LENGTH,  //
+                MAX_MD_SIZE    = EVP_MAX_MD_SIZE
             };
 
 #elif defined(CRYPTO_USE_MBEDTLS)
@@ -71,21 +71,23 @@ namespace util {
             typedef mbedtls_md_info_t digest_type_t;
             enum {
                 MAX_KEY_LENGTH = 64, //
-                MAX_IV_LENGTH = MBEDTLS_MAX_IV_LENGTH,
-                MAX_MD_SIZE = MBEDTLS_MD_MAX_SIZE
+                MAX_IV_LENGTH  = MBEDTLS_MAX_IV_LENGTH,
+                MAX_MD_SIZE    = MBEDTLS_MD_MAX_SIZE
             };
 #endif
 
             struct error_code_t {
                 enum type {
-                    OK = 0,
-                    INVALID_PARAM = -1,
-                    NOT_INITED = -2,
-                    ALREADY_INITED = -3,
-                    MALLOC = -4,
-                    CIPHER_DISABLED = -11,
-                    CIPHER_NOT_SUPPORT = -12,
-                    CIPHER_OPERATION = -13,
+                    OK                     = 0,
+                    INVALID_PARAM          = -1,
+                    NOT_INITED             = -2,
+                    ALREADY_INITED         = -3,
+                    MALLOC                 = -4,
+                    CIPHER_DISABLED        = -11,
+                    CIPHER_NOT_SUPPORT     = -12,
+                    CIPHER_OPERATION       = -13,
+                    MUST_CALL_AEAD_API     = -21,
+                    MUST_NOT_CALL_AEAD_API = -22,
                 };
             };
 
@@ -179,6 +181,43 @@ namespace util {
              * @return              0 or error code
              */
             int decrypt(const unsigned char *input, size_t ilen, unsigned char *output, size_t *olen);
+
+
+            /**
+             * @biref               encrypt data
+             * @param input         buffer holding the input data
+             * @param ilen          length of the input data
+             * @param output        buffer for the output data. Should be able to hold at
+             *                      least ilen + block_size. Cannot be the same buffer as
+             *                      input!
+             * @param olen          length of the output data, will be filled with the
+             *                      actual number of bytes written.
+             * @param ad            Additional data to authenticate.
+             * @param ad_len        Length of ad. ad_len must not be greater than 0xFF00
+             * @param tag           buffer for the authentication tag
+             * @param tag_len       desired tag length, tag_len must between [4, 16] and tag_len % 2 == 0
+             * @return              0 or error code
+             */
+            int encrypt_aead(const unsigned char *input, size_t ilen, unsigned char *output, size_t *olen, const unsigned char *ad,
+                             size_t ad_len, unsigned char *tag, size_t tag_len);
+
+            /**
+             * @biref               decrypt data
+             * @param input         buffer holding the input data
+             * @param ilen          length of the input data
+             * @param output        buffer for the output data. Should be able to hold at
+             *                      least ilen + block_size. Cannot be the same buffer as
+             *                      input!
+             * @param olen          length of the output data, will be filled with the
+             *                      actual number of bytes written.
+             * @param ad            Additional data to be authenticated.
+             * @param ad_len        Length of ad. ad_len must not be greater than 0xFF00
+             * @param tag           buffer holding the authentication tag
+             * @param tag_len       length of the authentication tag
+             * @return              0 or error code
+             */
+            int decrypt_aead(const unsigned char *input, size_t ilen, unsigned char *output, size_t *olen, const unsigned char *ad,
+                             size_t ad_len, const unsigned char *tag, size_t tag_len);
 
         public:
             static const cipher_kt_t *get_cipher_by_name(const char *name);

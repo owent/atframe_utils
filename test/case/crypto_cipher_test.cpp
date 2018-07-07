@@ -34,7 +34,7 @@ CASE_TEST(crypto_cipher, get_all_cipher_names) {
 #endif
 
     const std::vector<std::string> &all_ciphers = util::crypto::cipher::get_all_cipher_names();
-    std::stringstream ss;
+    std::stringstream               ss;
     for (size_t i = 0; i < all_ciphers.size(); ++i) {
         if (i) {
             ss << ",";
@@ -49,12 +49,12 @@ CASE_TEST(crypto_cipher, get_all_cipher_names) {
 
 CASE_TEST(crypto_cipher, split_ciphers) {
     std::vector<std::string> all_ciphers;
-    std::string in =
+    std::string              in =
         "xxtea,rc4,aes-128-cfb aes-192-cfb aes-256-cfb aes-128-ctr\raes-192-ctr\naes-256-ctr   bf-cfb:camellia-128-cfb:camellia-"
         "192-cfb;camellia-256-cfb;;;chacha20\tchacha20-poly1305";
 
     std::pair<const char *, const char *> res;
-    res.first = in.c_str();
+    res.first  = in.c_str();
     res.second = in.c_str();
     while (NULL != res.second) {
         res = util::crypto::cipher::ciphertok(res.second);
@@ -120,7 +120,7 @@ CASE_TEST(crypto_cipher, aes_cfb) {
         CASE_EXPECT_EQ(0, ci.set_key(aes_test_cfb128_key[u], 128 + 64 * u));
 
         unsigned char buf_in[64], buf_out[128];
-        size_t olen = sizeof(buf_out);
+        size_t        olen = sizeof(buf_out);
         if (::util::crypto::cipher::mode_t::EN_CMODE_DECRYPT == mode) {
             memcpy(buf_in, aes_test_cfb128_ct[u], 64);
             CASE_EXPECT_EQ(0, ci.decrypt(buf_in, 64, buf_out, &olen));
@@ -166,7 +166,7 @@ CASE_TEST(crypto_cipher, aes_cfb_nopadding_encrypt) {
 
         for (int i = 0; i < 3; ++i) {
             unsigned char buf_in[64] = {0}, buf_out[128] = {0};
-            size_t olen = sizeof(buf_out);
+            size_t        olen = sizeof(buf_out);
             memcpy(buf_in, aes_test_cfb128_nopadding_pt[i], buffer_len);
             CASE_EXPECT_EQ(0, ci.encrypt(buf_in, buffer_len, buf_out, &olen));
             CASE_EXPECT_EQ(0, memcmp(buf_out, aes_test_cfb128_nopadding_ct[i], buffer_len));
@@ -191,7 +191,7 @@ CASE_TEST(crypto_cipher, aes_cfb_nopadding_encrypt) {
 
         for (int i = 0; i < 3; ++i) {
             unsigned char buf_in[64] = {0}, buf_out[128] = {0};
-            size_t olen = sizeof(buf_out);
+            size_t        olen = sizeof(buf_out);
             memcpy(buf_in, aes_test_cfb128_nopadding_ct[i], buffer_len);
             CASE_EXPECT_EQ(0, ci.decrypt(buf_in, buffer_len, buf_out, &olen));
             CASE_EXPECT_EQ(0, memcmp(buf_out, aes_test_cfb128_nopadding_pt[i], buffer_len));
@@ -250,7 +250,7 @@ CASE_TEST(crypto_cipher, xxtea) {
 }
 
 enum evp_test_operation_type {
-    EN_ETOT_BOTH = 0,
+    EN_ETOT_BOTH    = 0,
     EN_ETOT_ENCRYPT = 1,
     EN_ETOT_DECRYPT = 2,
 };
@@ -269,17 +269,17 @@ enum evp_test_key_type {
 };
 
 struct evp_test_info {
-    std::string cipher;
-    std::string key;
-    std::string iv;
+    std::string             cipher;
+    std::string             key;
+    std::string             iv;
     evp_test_operation_type operation;
-    std::string plaintext;
-    std::string ciphertext;
+    std::string             plaintext;
+    std::string             ciphertext;
 
     // ========== for aead ==========
     std::string aad;
     std::string tag;
-    bool is_final_error;
+    bool        is_final_error;
 };
 
 static void evp_test_reset_info(evp_test_info &info) {
@@ -300,7 +300,7 @@ static bool evp_test_is_aead(const evp_test_info &info) { return !info.aad.empty
 
 static std::pair<evp_test_key_type, std::string> evp_test_parse_line(std::istream &in) {
     evp_test_key_type ret_key = EN_ETKT_NONE;
-    std::string ret_val;
+    std::string       ret_val;
 
     std::string line;
     do {
@@ -447,38 +447,38 @@ static bool evp_test_parse_info(std::istream &in, evp_test_info &info) {
         switch (res.first) {
         case EN_ETKT_CIPHER:
             info.cipher = res.second;
-            has_begin = true;
+            has_begin   = true;
             break;
         case EN_ETKT_KEY:
-            info.key = evp_test_read_hex_bin(res.second);
+            info.key  = evp_test_read_hex_bin(res.second);
             has_begin = true;
             break;
         case EN_ETKT_IV:
-            info.iv = evp_test_read_hex_bin(res.second);
+            info.iv   = evp_test_read_hex_bin(res.second);
             has_begin = true;
             break;
         case EN_ETKT_OPERATOR:
             if (0 == UTIL_STRFUNC_STRNCASE_CMP("ENCRYPT", res.second.c_str(), res.second.size())) {
                 info.operation = EN_ETOT_ENCRYPT;
-            } else if (0 == UTIL_STRFUNC_STRNCASE_CMP("ENCRYPT", res.second.c_str(), res.second.size())) {
+            } else if (0 == UTIL_STRFUNC_STRNCASE_CMP("DECRYPT", res.second.c_str(), res.second.size())) {
                 info.operation = EN_ETOT_DECRYPT;
             }
             has_begin = true;
             break;
         case EN_ETKT_PLAINTEXT:
             info.plaintext = evp_test_read_hex_bin(res.second);
-            has_begin = true;
+            has_begin      = true;
             break;
         case EN_ETKT_CIPHERTEXT:
             info.ciphertext = evp_test_read_hex_bin(res.second);
-            has_begin = true;
+            has_begin       = true;
             break;
         case EN_ETKT_AAD:
-            info.aad = evp_test_read_hex_bin(res.second);
+            info.aad  = evp_test_read_hex_bin(res.second);
             has_begin = true;
             break;
         case EN_ETKT_TAG:
-            info.tag = evp_test_read_hex_bin(res.second);
+            info.tag  = evp_test_read_hex_bin(res.second);
             has_begin = true;
             break;
         case EN_ETKT_RESULT:
@@ -513,11 +513,6 @@ CASE_TEST(crypto_cipher, evp_test) {
     evp_test_info info;
 
     while (evp_test_parse_info(fin, info)) {
-        // AEAD暂不支持，先跳过
-        if (evp_test_is_aead(info)) {
-            continue;
-        }
-
         int mode = util::crypto::cipher::mode_t::EN_CMODE_ENCRYPT | util::crypto::cipher::mode_t::EN_CMODE_DECRYPT;
         if (info.operation == EN_ETOT_ENCRYPT) {
             mode = util::crypto::cipher::mode_t::EN_CMODE_ENCRYPT;
@@ -543,9 +538,9 @@ CASE_TEST(crypto_cipher, evp_test) {
                       ci.get_block_size());
 
         if (mode & util::crypto::cipher::mode_t::EN_CMODE_ENCRYPT) {
-            std::chrono::system_clock::time_point begin = std::chrono::system_clock::now();
-            int enc_res = 0;
-            const char *failed_step = "memory check";
+            std::chrono::system_clock::time_point begin       = std::chrono::system_clock::now();
+            int                                   enc_res     = 0;
+            const char *                          failed_step = "memory check";
             memset(&buffer[0], 0, buffer.size());
 
             do {
@@ -557,16 +552,65 @@ CASE_TEST(crypto_cipher, evp_test) {
                 }
 
                 size_t olen = buffer.size();
-                enc_res = ci.encrypt(reinterpret_cast<const unsigned char *>(info.plaintext.c_str()), info.plaintext.size(),
-                                     reinterpret_cast<unsigned char *>(&buffer[0]), &olen);
-                CASE_EXPECT_EQ(0, enc_res);
-                if (0 != enc_res) {
-                    failed_step = "encrypt";
-                    break;
+
+                if (evp_test_is_aead(info)) {
+                    unsigned char aead_tag[16];
+                    size_t        aead_tag_len = sizeof(aead_tag);
+                    if (info.tag.size() < aead_tag_len) {
+                        aead_tag_len = info.tag.size();
+                    }
+                    CASE_EXPECT_LE(info.tag.size(), aead_tag_len);
+
+                    enc_res =
+                        ci.encrypt_aead(reinterpret_cast<const unsigned char *>(info.plaintext.c_str()), info.plaintext.size(),
+                                        reinterpret_cast<unsigned char *>(&buffer[0]), &olen,
+                                        reinterpret_cast<const unsigned char *>(info.aad.c_str()), info.aad.size(), aead_tag, aead_tag_len);
+
+                    if (info.is_final_error) {
+                        CASE_EXPECT_NE(0, enc_res);
+                    } else {
+                        CASE_EXPECT_EQ(0, enc_res);
+                    }
+                    if (0 != enc_res) {
+                        if (!info.is_final_error) {
+                            failed_step = "encrypt(AEAD)";
+                        } else {
+                            enc_res = 0;
+                        }
+                        break;
+                    }
+
+                    int check_data = memcmp(aead_tag, info.tag.c_str(), aead_tag_len);
+                    CASE_EXPECT_EQ(0, check_data);
+                    if (0 != check_data) {
+                        std::cout<< "Expect Tag: ";
+                        util::string::dumphex(info.tag.c_str(), info.tag.size(), std::cout);
+                        std::cout<< std::endl<< "Real   Tag: ";
+                        util::string::dumphex(&aead_tag[0], aead_tag_len, std::cout);
+                        std::cout<< std::endl;
+                    }
+                } else {
+                    enc_res = ci.encrypt(reinterpret_cast<const unsigned char *>(info.plaintext.c_str()), info.plaintext.size(),
+                                         reinterpret_cast<unsigned char *>(&buffer[0]), &olen);
+
+                    CASE_EXPECT_EQ(0, enc_res);
+                    if (0 != enc_res) {
+                        failed_step = "encrypt";
+                        break;
+                    }
                 }
 
-                enc_res = memcmp(info.ciphertext.c_str(), buffer.c_str(), info.ciphertext.size());
-                CASE_EXPECT_EQ(0, enc_res);
+                if (!info.is_final_error) {
+                    enc_res = memcmp(info.ciphertext.c_str(), buffer.c_str(), info.ciphertext.size());
+                    CASE_EXPECT_EQ(0, enc_res);
+                    if (0 != enc_res) {
+                        std::cout<< "Expect CipherText: ";
+                        util::string::dumphex(info.ciphertext.c_str(), info.ciphertext.size(), std::cout);
+                        std::cout<< std::endl<< "Real   CipherText: ";
+                        util::string::dumphex(&buffer[0], olen, std::cout);
+                        std::cout<< std::endl;
+                    }
+                }
             } while (false);
 
             if (0 == enc_res) {
@@ -586,9 +630,9 @@ CASE_TEST(crypto_cipher, evp_test) {
         }
 
         if (mode & util::crypto::cipher::mode_t::EN_CMODE_DECRYPT) {
-            std::chrono::system_clock::time_point begin = std::chrono::system_clock::now();
-            int dec_res = 0;
-            const char *failed_step = "memory check";
+            std::chrono::system_clock::time_point begin       = std::chrono::system_clock::now();
+            int                                   dec_res     = 0;
+            const char *                          failed_step = "memory check";
             memset(&buffer[0], 0, buffer.size());
 
             do {
@@ -600,17 +644,53 @@ CASE_TEST(crypto_cipher, evp_test) {
                 }
 
                 size_t olen = buffer.size();
-                dec_res = ci.decrypt(reinterpret_cast<const unsigned char *>(info.ciphertext.c_str()), info.ciphertext.size(),
-                                     reinterpret_cast<unsigned char *>(&buffer[0]), &olen);
-                CASE_EXPECT_EQ(0, dec_res);
 
-                if (0 != dec_res) {
-                    failed_step = "decrypt";
-                    break;
+                if (evp_test_is_aead(info)) {
+                    // if (info.cipher == "chacha20-poly1305") {
+                    //     puts("debug");
+                    // }
+                    dec_res = ci.decrypt_aead(reinterpret_cast<const unsigned char *>(info.ciphertext.c_str()), info.ciphertext.size(),
+                                        reinterpret_cast<unsigned char *>(&buffer[0]), &olen, 
+                                        reinterpret_cast<const unsigned char *>(info.aad.c_str()), info.aad.size(), 
+                                        reinterpret_cast<const unsigned char *>(info.tag.c_str()), info.tag.size()
+                                        );
+                    
+                    if (info.is_final_error) {
+                        CASE_EXPECT_NE(0, dec_res);
+                    } else {
+                        CASE_EXPECT_EQ(0, dec_res);
+                    }
+
+                    if (0 != dec_res) {
+                        if (!info.is_final_error) {
+                            failed_step = "decrypt(AEAD)";
+                        } else {
+                            dec_res = 0;
+                        }
+                        break;
+                    }
+                } else {
+                    dec_res = ci.decrypt(reinterpret_cast<const unsigned char *>(info.ciphertext.c_str()), info.ciphertext.size(),
+                                        reinterpret_cast<unsigned char *>(&buffer[0]), &olen);
+                    CASE_EXPECT_EQ(0, dec_res);
+
+                    if (0 != dec_res) {
+                        failed_step = "decrypt";
+                        break;
+                    }
                 }
 
-                dec_res = memcmp(info.plaintext.c_str(), buffer.c_str(), info.plaintext.size());
-                CASE_EXPECT_EQ(0, dec_res);
+                if (!info.is_final_error) {
+                    dec_res = memcmp(info.plaintext.c_str(), buffer.c_str(), info.plaintext.size());
+                    CASE_EXPECT_EQ(0, dec_res);
+                    if (0 != dec_res) {
+                        std::cout<< "Expect PlainText: ";
+                        util::string::dumphex(info.plaintext.c_str(), info.plaintext.size(), std::cout);
+                        std::cout<< std::endl<< "Real   PlainText: ";
+                        util::string::dumphex(&buffer[0], olen, std::cout);
+                        std::cout<< std::endl;
+                    }
+                }
             } while (false);
 
             if (0 == dec_res) {
