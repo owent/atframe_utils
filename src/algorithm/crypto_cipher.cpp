@@ -84,9 +84,6 @@ namespace util {
                 {"aes-128-gcm", EN_CIMT_CIPHER, "AES-128-GCM", EN_CIFT_AEAD | EN_CIFT_VARIABLE_IV_LEN},
                 {"aes-192-gcm", EN_CIMT_CIPHER, "AES-192-GCM", EN_CIFT_AEAD | EN_CIFT_VARIABLE_IV_LEN},
                 {"aes-256-gcm", EN_CIMT_CIPHER, "AES-256-GCM", EN_CIFT_AEAD | EN_CIFT_VARIABLE_IV_LEN},
-                {"aes-128-ccm", EN_CIMT_CIPHER, "AES-128-CCM", EN_CIFT_AEAD | EN_CIFT_VARIABLE_IV_LEN | EN_CIFT_AEAD_SET_LENGTH_BEFORE | EN_CIFT_NO_FINISH},
-                {"aes-192-ccm", EN_CIMT_CIPHER, "AES-192-CCM", EN_CIFT_AEAD | EN_CIFT_VARIABLE_IV_LEN | EN_CIFT_AEAD_SET_LENGTH_BEFORE | EN_CIFT_NO_FINISH},
-                {"aes-256-ccm", EN_CIMT_CIPHER, "AES-256-CCM", EN_CIFT_AEAD | EN_CIFT_VARIABLE_IV_LEN | EN_CIFT_AEAD_SET_LENGTH_BEFORE | EN_CIFT_NO_FINISH},
                 {"chacha20-poly1305", // only available on openssl 1.1.0 and upper or boringssl
                  EN_CIMT_CIPHER,
                  "CHACHA20-POLY1305", // only available on later mbedtls version, @see https://github.com/ARMmbed/mbedtls/pull/485
@@ -558,7 +555,7 @@ namespace util {
 
                 if (!iv_.empty()) {
                     if (!EVP_CipherInit_ex(cipher_context_.enc, NULL, NULL, NULL, &iv_[0], -1)) {
-                        return details::setup_errorno(*this, ERR_peek_error(), error_code_t::CIPHER_OPERATION);
+                        return details::setup_errorno(*this, ERR_peek_error(), error_code_t::CIPHER_OPERATION_SET_IV);
                     }
                 }
 
@@ -638,7 +635,7 @@ namespace util {
 
                 if (!iv_.empty()) {
                     if (!EVP_CipherInit_ex(cipher_context_.dec, NULL, NULL, NULL, &iv_[0], -1)) {
-                        return details::setup_errorno(*this, ERR_peek_error(), error_code_t::CIPHER_OPERATION);
+                        return details::setup_errorno(*this, ERR_peek_error(), error_code_t::CIPHER_OPERATION_SET_IV);
                     }
                 }
 
@@ -662,7 +659,7 @@ namespace util {
 
                 return error_code_t::OK;
 #elif defined(CRYPTO_USE_MBEDTLS)
-                if (0 != (interface_->flags & EN_CIFT_DECRYPT_NO_PADDING) && MBEDTLS_MODE_CBC == cipher_context_.enc->cipher_info->mode) {
+                if (0 != (interface_->flags & EN_CIFT_DECRYPT_NO_PADDING) && MBEDTLS_MODE_CBC == cipher_context_.dec->cipher_info->mode) {
                     if ((last_errorno_ = mbedtls_cipher_set_padding_mode(cipher_context_.dec, MBEDTLS_PADDING_NONE)) != 0) {
                         return error_code_t::CIPHER_OPERATION;
                     }
@@ -711,20 +708,26 @@ namespace util {
                 int outl, finish_olen;
 
                 if (!iv_.empty()) {
-                    if (!EVP_CipherInit_ex(cipher_context_.enc, NULL, NULL, NULL, &iv_[0], -1)) {
-                        return details::setup_errorno(*this, ERR_peek_error(), error_code_t::CIPHER_OPERATION);
+                    if (0 != (interface_->flags & EN_CIFT_VARIABLE_IV_LEN)) {
+                        if (!EVP_CIPHER_CTX_ctrl(cipher_context_.enc,
+#if OPENSSL_VERSION_NUMBER >= 0x10100000L
+                                                 EVP_CTRL_AEAD_SET_IVLEN,
+#else
+                                                 EVP_CTRL_GCM_SET_IVLEN,
+#endif
+                                                 static_cast<int>(iv_.size()), 0)) {
+                            return details::setup_errorno(*this, ERR_peek_error(), error_code_t::CIPHER_OPERATION_SET_IV);
+                        }
                     }
 
-                    if (0 != (interface_->flags & EN_CIFT_VARIABLE_IV_LEN)) {
-                        if(!EVP_CIPHER_CTX_ctrl(cipher_context_.enc, EVP_CTRL_AEAD_SET_IVLEN, static_cast<int>(iv_.size()), 0)) {
-                            return details::setup_errorno(*this, ERR_peek_error(), error_code_t::CIPHER_OPERATION);
-                        }
+                    if (!EVP_CipherInit_ex(cipher_context_.enc, NULL, NULL, NULL, &iv_[0], -1)) {
+                        return details::setup_errorno(*this, ERR_peek_error(), error_code_t::CIPHER_OPERATION_SET_IV);
                     }
                 }
 
                 if (0 != (interface_->flags & EN_CIFT_AEAD_SET_LENGTH_BEFORE)) {
                     int tmplen;
-                    if (!EVP_CipherUpdate(cipher_context_.enc, NULL, &tmplen, NULL, static_cast<int>(*olen))) {
+                    if (!EVP_CipherUpdate(cipher_context_.enc, NULL, &tmplen, NULL, static_cast<int>(ilen))) {
                         return details::setup_errorno(*this, ERR_peek_error(), error_code_t::CIPHER_OPERATION);
                     }
                 }
@@ -755,7 +758,13 @@ namespace util {
                 *olen = static_cast<size_t>(outl + finish_olen);
 
                 if (NULL != tag && tag_len > 0) {
-                    if (!EVP_CIPHER_CTX_ctrl(cipher_context_.enc, EVP_CTRL_AEAD_GET_TAG, static_cast<int>(tag_len), tag)) {
+                    if (!EVP_CIPHER_CTX_ctrl(cipher_context_.enc,
+#if OPENSSL_VERSION_NUMBER >= 0x10100000L
+                                             EVP_CTRL_AEAD_GET_TAG,
+#else
+                                             EVP_CTRL_GCM_GET_TAG,
+#endif
+                                             static_cast<int>(tag_len), tag)) {
                         return details::setup_errorno(*this, ERR_peek_error(), error_code_t::CIPHER_OPERATION);
                     }
                 }
@@ -771,8 +780,8 @@ namespace util {
                 // }
 
                 unsigned char empty_iv[MBEDTLS_MAX_IV_LENGTH] = {0};
-                if ((last_errorno_ = mbedtls_cipher_auth_encrypt(cipher_context_.enc, iv_.empty() ? empty_iv : &iv_[0], iv_.size(), input,
-                                                                 ilen, ad, ad_len, output, olen, tag, tag_len)) != 0) {
+                if ((last_errorno_ = mbedtls_cipher_auth_encrypt(cipher_context_.enc, iv_.empty() ? empty_iv : &iv_[0], iv_.size(), ad,
+                                                                 ad_len, input, ilen, output, olen, tag, tag_len)) != 0) {
                     return error_code_t::CIPHER_OPERATION;
                 }
                 return error_code_t::OK;
@@ -820,27 +829,38 @@ namespace util {
                 int outl, finish_olen;
 
                 if (!iv_.empty()) {
-                    if (!EVP_CipherInit_ex(cipher_context_.dec, NULL, NULL, NULL, &iv_[0], -1)) {
-                        return details::setup_errorno(*this, ERR_peek_error(), error_code_t::CIPHER_OPERATION);
+                    if (0 != (interface_->flags & EN_CIFT_VARIABLE_IV_LEN)) {
+                        if (!EVP_CIPHER_CTX_ctrl(cipher_context_.dec,
+#if OPENSSL_VERSION_NUMBER >= 0x10100000L
+                                                 EVP_CTRL_AEAD_SET_IVLEN,
+#else
+                                                 EVP_CTRL_GCM_SET_IVLEN,
+#endif
+                                                 static_cast<int>(iv_.size()), 0)) {
+                            return details::setup_errorno(*this, ERR_peek_error(), error_code_t::CIPHER_OPERATION_SET_IV);
+                        }
                     }
 
-                    if (0 != (interface_->flags & EN_CIFT_VARIABLE_IV_LEN)) {
-                        if(!EVP_CIPHER_CTX_ctrl(cipher_context_.dec, EVP_CTRL_AEAD_SET_IVLEN, static_cast<int>(iv_.size()), 0)) {
-                            return details::setup_errorno(*this, ERR_peek_error(), error_code_t::CIPHER_OPERATION);
-                        }
+                    if (!EVP_CipherInit_ex(cipher_context_.dec, NULL, NULL, NULL, &iv_[0], -1)) {
+                        return details::setup_errorno(*this, ERR_peek_error(), error_code_t::CIPHER_OPERATION_SET_IV);
                     }
                 }
 
                 if (NULL != tag && tag_len > 0) {
-                    if (!(EVP_CIPHER_CTX_ctrl(cipher_context_.dec, EVP_CTRL_AEAD_SET_TAG, static_cast<int>(tag_len),
-                                              const_cast<unsigned char *>(tag)))) {
+                    if (!(EVP_CIPHER_CTX_ctrl(cipher_context_.dec,
+#if OPENSSL_VERSION_NUMBER >= 0x10100000L
+                                              EVP_CTRL_AEAD_SET_TAG,
+#else
+                                              EVP_CTRL_GCM_SET_TAG,
+#endif
+                                              static_cast<int>(tag_len), const_cast<unsigned char *>(tag)))) {
                         return details::setup_errorno(*this, ERR_peek_error(), error_code_t::CIPHER_OPERATION);
                     }
                 }
 
                 if (0 != (interface_->flags & EN_CIFT_AEAD_SET_LENGTH_BEFORE)) {
                     int tmplen;
-                    if (!EVP_CipherUpdate(cipher_context_.dec, NULL, &tmplen, NULL, static_cast<int>(*olen))) {
+                    if (!EVP_CipherUpdate(cipher_context_.dec, NULL, &tmplen, NULL, static_cast<int>(ilen))) {
                         return details::setup_errorno(*this, ERR_peek_error(), error_code_t::CIPHER_OPERATION);
                     }
                 }
@@ -872,7 +892,7 @@ namespace util {
 
                 return error_code_t::OK;
 #elif defined(CRYPTO_USE_MBEDTLS)
-                // if (0 != (interface_->flags & EN_CIFT_DECRYPT_NO_PADDING) && MBEDTLS_MODE_CBC == cipher_context_.enc->cipher_info->mode)
+                // if (0 != (interface_->flags & EN_CIFT_DECRYPT_NO_PADDING) && MBEDTLS_MODE_CBC == cipher_context_.dec->cipher_info->mode)
                 // {
                 //     if ((last_errorno_ = mbedtls_cipher_set_padding_mode(cipher_context_.dec, MBEDTLS_PADDING_NONE)) != 0) {
                 //         return error_code_t::CIPHER_OPERATION;
@@ -880,8 +900,8 @@ namespace util {
                 // }
 
                 unsigned char empty_iv[MBEDTLS_MAX_IV_LENGTH] = {0};
-                if ((last_errorno_ = mbedtls_cipher_auth_decrypt(cipher_context_.dec, iv_.empty() ? empty_iv : &iv_[0], iv_.size(), input,
-                                                                 ilen, ad, ad_len, output, olen, tag, tag_len)) != 0) {
+                if ((last_errorno_ = mbedtls_cipher_auth_decrypt(cipher_context_.dec, iv_.empty() ? empty_iv : &iv_[0], iv_.size(), ad,
+                                                                 ad_len, input, ilen, output, olen, tag, tag_len)) != 0) {
                     return error_code_t::CIPHER_OPERATION;
                 }
                 return error_code_t::OK;

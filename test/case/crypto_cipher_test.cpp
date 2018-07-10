@@ -482,7 +482,8 @@ static bool evp_test_parse_info(std::istream &in, evp_test_info &info) {
             has_begin = true;
             break;
         case EN_ETKT_RESULT:
-            if (0 == UTIL_STRFUNC_STRNCASE_CMP("CIPHERFINAL_ERROR", res.second.c_str(), res.second.size())) {
+            if (0 == UTIL_STRFUNC_STRNCASE_CMP("CIPHERFINAL_ERROR", res.second.c_str(), res.second.size()) ||
+                0 == UTIL_STRFUNC_STRNCASE_CMP("CIPHERUPDATE_ERROR", res.second.c_str(), res.second.size())) {
                 info.is_final_error = true;
             }
             has_begin = true;
@@ -519,6 +520,12 @@ CASE_TEST(crypto_cipher, evp_test) {
         } else if (info.operation == EN_ETOT_DECRYPT) {
             mode = util::crypto::cipher::mode_t::EN_CMODE_DECRYPT;
         }
+
+#if defined(CRYPTO_USE_MBEDTLS)
+        if (info.iv.size() > MBEDTLS_MAX_IV_LENGTH) {
+            continue;
+        }
+#endif
 
         util::crypto::cipher ci;
         if (0 != ci.init(info.cipher.c_str(), mode)) {
@@ -580,14 +587,14 @@ CASE_TEST(crypto_cipher, evp_test) {
                         break;
                     }
 
-                    int check_data = memcmp(aead_tag, info.tag.c_str(), aead_tag_len);
-                    CASE_EXPECT_EQ(0, check_data);
-                    if (0 != check_data) {
-                        std::cout<< "Expect Tag: ";
+                    int check_tag = memcmp(aead_tag, info.tag.c_str(), aead_tag_len);
+                    CASE_EXPECT_EQ(0, check_tag);
+                    if (0 != check_tag) {
+                        std::cout << "Expect Tag: ";
                         util::string::dumphex(info.tag.c_str(), info.tag.size(), std::cout);
-                        std::cout<< std::endl<< "Real   Tag: ";
+                        std::cout << std::endl << "Real   Tag: ";
                         util::string::dumphex(&aead_tag[0], aead_tag_len, std::cout);
-                        std::cout<< std::endl;
+                        std::cout << std::endl;
                     }
                 } else {
                     enc_res = ci.encrypt(reinterpret_cast<const unsigned char *>(info.plaintext.c_str()), info.plaintext.size(),
@@ -604,11 +611,11 @@ CASE_TEST(crypto_cipher, evp_test) {
                     enc_res = memcmp(info.ciphertext.c_str(), buffer.c_str(), info.ciphertext.size());
                     CASE_EXPECT_EQ(0, enc_res);
                     if (0 != enc_res) {
-                        std::cout<< "Expect CipherText: ";
+                        std::cout << "Expect CipherText: ";
                         util::string::dumphex(info.ciphertext.c_str(), info.ciphertext.size(), std::cout);
-                        std::cout<< std::endl<< "Real   CipherText: ";
+                        std::cout << std::endl << "Real   CipherText: ";
                         util::string::dumphex(&buffer[0], olen, std::cout);
-                        std::cout<< std::endl;
+                        std::cout << std::endl;
                     }
                 }
             } while (false);
@@ -650,11 +657,10 @@ CASE_TEST(crypto_cipher, evp_test) {
                     //     puts("debug");
                     // }
                     dec_res = ci.decrypt_aead(reinterpret_cast<const unsigned char *>(info.ciphertext.c_str()), info.ciphertext.size(),
-                                        reinterpret_cast<unsigned char *>(&buffer[0]), &olen, 
-                                        reinterpret_cast<const unsigned char *>(info.aad.c_str()), info.aad.size(), 
-                                        reinterpret_cast<const unsigned char *>(info.tag.c_str()), info.tag.size()
-                                        );
-                    
+                                              reinterpret_cast<unsigned char *>(&buffer[0]), &olen,
+                                              reinterpret_cast<const unsigned char *>(info.aad.c_str()), info.aad.size(),
+                                              reinterpret_cast<const unsigned char *>(info.tag.c_str()), info.tag.size());
+
                     if (info.is_final_error) {
                         CASE_EXPECT_NE(0, dec_res);
                     } else {
@@ -671,7 +677,7 @@ CASE_TEST(crypto_cipher, evp_test) {
                     }
                 } else {
                     dec_res = ci.decrypt(reinterpret_cast<const unsigned char *>(info.ciphertext.c_str()), info.ciphertext.size(),
-                                        reinterpret_cast<unsigned char *>(&buffer[0]), &olen);
+                                         reinterpret_cast<unsigned char *>(&buffer[0]), &olen);
                     CASE_EXPECT_EQ(0, dec_res);
 
                     if (0 != dec_res) {
@@ -684,11 +690,11 @@ CASE_TEST(crypto_cipher, evp_test) {
                     dec_res = memcmp(info.plaintext.c_str(), buffer.c_str(), info.plaintext.size());
                     CASE_EXPECT_EQ(0, dec_res);
                     if (0 != dec_res) {
-                        std::cout<< "Expect PlainText: ";
+                        std::cout << "Expect PlainText: ";
                         util::string::dumphex(info.plaintext.c_str(), info.plaintext.size(), std::cout);
-                        std::cout<< std::endl<< "Real   PlainText: ";
+                        std::cout << std::endl << "Real   PlainText: ";
                         util::string::dumphex(&buffer[0], olen, std::cout);
-                        std::cout<< std::endl;
+                        std::cout << std::endl;
                     }
                 }
             } while (false);

@@ -56,9 +56,9 @@ namespace util {
             };
 
 #if defined(CRYPTO_USE_OPENSSL) || defined(CRYPTO_USE_LIBRESSL) || defined(CRYPTO_USE_BORINGSSL)
-            typedef EVP_CIPHER cipher_kt_t;
+            typedef EVP_CIPHER     cipher_kt_t;
             typedef EVP_CIPHER_CTX cipher_evp_t;
-            typedef EVP_MD digest_type_t;
+            typedef EVP_MD         digest_type_t;
             enum {
                 MAX_KEY_LENGTH = EVP_MAX_KEY_LENGTH, //
                 MAX_IV_LENGTH  = EVP_MAX_IV_LENGTH,  //
@@ -66,9 +66,9 @@ namespace util {
             };
 
 #elif defined(CRYPTO_USE_MBEDTLS)
-            typedef mbedtls_cipher_info_t cipher_kt_t;
+            typedef mbedtls_cipher_info_t    cipher_kt_t;
             typedef mbedtls_cipher_context_t cipher_evp_t;
-            typedef mbedtls_md_info_t digest_type_t;
+            typedef mbedtls_md_info_t        digest_type_t;
             enum {
                 MAX_KEY_LENGTH = 64, //
                 MAX_IV_LENGTH  = MBEDTLS_MAX_IV_LENGTH,
@@ -78,16 +78,17 @@ namespace util {
 
             struct error_code_t {
                 enum type {
-                    OK                     = 0,
-                    INVALID_PARAM          = -1,
-                    NOT_INITED             = -2,
-                    ALREADY_INITED         = -3,
-                    MALLOC                 = -4,
-                    CIPHER_DISABLED        = -11,
-                    CIPHER_NOT_SUPPORT     = -12,
-                    CIPHER_OPERATION       = -13,
-                    MUST_CALL_AEAD_API     = -21,
-                    MUST_NOT_CALL_AEAD_API = -22,
+                    OK                      = 0,
+                    INVALID_PARAM           = -1,
+                    NOT_INITED              = -2,
+                    ALREADY_INITED          = -3,
+                    MALLOC                  = -4,
+                    CIPHER_DISABLED         = -11,
+                    CIPHER_NOT_SUPPORT      = -12,
+                    CIPHER_OPERATION        = -13,
+                    CIPHER_OPERATION_SET_IV = -14,
+                    MUST_CALL_AEAD_API      = -21,
+                    MUST_NOT_CALL_AEAD_API  = -22,
                 };
             };
 
@@ -145,7 +146,7 @@ namespace util {
             /**
              * @brief               set initialization vector
              * @param iv            iv value
-             * @param iv_len        length of iv, in bytes
+             * @param iv_len        length of iv, in bytes, can not be greater than 16 when using mbedtls
              * @return              0 or error code less than 0
              */
             int set_iv(const unsigned char *iv, size_t iv_len);
@@ -228,7 +229,7 @@ namespace util {
              *                      you can use second pointer as the paramter of next call, just like strtok
              */
             static std::pair<const char *, const char *> ciphertok(const char *in);
-            static const std::vector<std::string> &get_all_cipher_names();
+            static const std::vector<std::string> &      get_all_cipher_names();
 
             static int init_global_algorithm();
             static int cleanup_global_algorithm();
@@ -240,9 +241,9 @@ namespace util {
 
         private:
             const cipher_interface_info_t *interface_;
-            int64_t last_errorno_;
-            const cipher_kt_t *cipher_kt_;
-            std::vector<unsigned char> iv_;
+            int64_t                        last_errorno_;
+            const cipher_kt_t *            cipher_kt_;
+            std::vector<unsigned char>     iv_;
             typedef struct {
                 ::util::xxtea_key key;
             } xxtea_context_t;
@@ -252,7 +253,7 @@ namespace util {
             } cipher_context_t;
             union {
                 cipher_context_t cipher_context_;
-                xxtea_context_t xxtea_context_;
+                xxtea_context_t  xxtea_context_;
             };
         };
     } // namespace crypto
