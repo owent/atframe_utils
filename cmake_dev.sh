@@ -19,7 +19,7 @@ else
     CHECK_MSYS="";
 fi
 
-while getopts "ab:c:e:hm:o:tus-" OPTION; do
+while getopts "ab:c:d:e:hm:o:tus-" OPTION; do
     case $OPTION in
         a)
             echo "Ready to check ccc-analyzer and c++-analyzer, please do not use -c to change the compiler when using clang-analyzer.";
@@ -64,6 +64,11 @@ while getopts "ab:c:e:hm:o:tus-" OPTION; do
             CXX="${CC/%clang/clang++}";
             CXX="${CXX/%gcc/g++}";
         ;;
+        d)
+            if [ ! -z "$OPTARG" ]; then
+                CMAKE_OPTIONS="$CMAKE_OPTIONS -DLIBSODIUM_ROOT=$OPTARG";
+            fi
+        ;;
         e)
             CCACHE="$OPTARG";
         ;;
@@ -71,7 +76,9 @@ while getopts "ab:c:e:hm:o:tus-" OPTION; do
             echo "usage: $0 [options] [-- [cmake options...] ]";
             echo "options:";
             echo "-a                            using clang-analyzer.";
+            echo "-b <build type>               set build type(Debug, RelWithDebINfo, Release, MinSizeRel).";
             echo "-c <compiler>                 compiler toolchains(gcc, clang or others).";
+            echo "-d [libsodium root]           set root of libsodium.";
             echo "-e <ccache path>              try to use specify ccache to speed up building.";
             echo "-h                            help message.";
             echo "-m [mbedtls root]             set root of mbedtls.";

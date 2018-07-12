@@ -89,6 +89,14 @@ elseif (NOT CRYPTO_DISABLED)
     endif()
 endif()
 
+if (NOT CRYPTO_DISABLED)
+    find_package(Libsodium)
+    if(LIBSODIUM_FOUND)
+        set(CRYPTO_USE_LIBSODIUM 1)
+        include_directories(${Libsodium_INCLUDE_DIRS})
+    endif()
+endif()
+
 # 测试配置选项
 set(GTEST_ROOT "" CACHE STRING "GTest root directory")
 set(BOOST_ROOT "" CACHE STRING "Boost root directory")

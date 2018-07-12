@@ -6,22 +6,66 @@
 
 #ifdef CRYPTO_CIPHER_ENABLED
 
+#ifdef CRYPTO_USE_LIBSODIUM
+#include <sodium.h>
+#endif
+
+/**
+ * @note boringssl macros
+ *       OPENSSL_IS_BORINGSSL
+ *       BORINGSSL_API_VERSION      9
+ *       OPENSSL_VERSION_NUMBER     0x1010007f
+ * 
+ * @note libressl macros
+ *       LIBRESSL_VERSION_NUMBER    0x2060500fL
+ *       LIBRESSL_VERSION_TEXT      "LibreSSL 2.6.5"
+ *       OPENSSL_VERSION_NUMBER     0x20000000L
+ *       OPENSSL_VERSION_TEXT       LIBRESSL_VERSION_TEXT
+ */
+
+#if defined(CRYPTO_USE_OPENSSL) || defined(CRYPTO_USE_LIBRESSL) || defined(CRYPTO_USE_BORINGSSL)
+
+#if defined(LIBRESSL_VERSION_NUMBER)
+
+#if LIBRESSL_VERSION_NUMBER > 0x2040000fL
+#define CRYPTO_USE_CHACHA20_WITH_CIPHER
+#define CRYPTO_USE_CHACHA20_POLY1305_WITH_CIPHER
+#endif
+
+#elif defined(OPENSSL_IS_BORINGSSL) && defined(BORINGSSL_API_VERSION) 
+
+#if BORINGSSL_API_VERSION >= 4
+#define CRYPTO_USE_CHACHA20_POLY1305_WITH_CIPHER
+#endif
+
+#elif defined(OPENSSL_VERSION_NUMBER)
+
+#if OPENSSL_VERSION_NUMBER >= 0x1010002fL
+#define CRYPTO_USE_CHACHA20_WITH_CIPHER
+#define CRYPTO_USE_CHACHA20_POLY1305_WITH_CIPHER
+#endif
+
+#endif
+
+#endif
+
 namespace util {
     namespace crypto {
         enum cipher_interface_method_t {
-            EN_CIMT_INVALID = 0, // inner
-            EN_CIMT_XXTEA   = 1, // inner
-            EN_CIMT_INNER,       // inner bound
-            EN_CIMT_CIPHER,      // using openssl/libressl/boringssl/mbedtls
-            EN_CIMT_LIBSODIUM,   // using libsodium
+            EN_CIMT_INVALID = 0,                        // inner
+            EN_CIMT_XXTEA   = 1,                        // inner
+            EN_CIMT_INNER,                              // inner bound
+            EN_CIMT_CIPHER,                             // using openssl/libressl/boringssl/mbedtls
+            EN_CIMT_LIBSODIUM,                          // using libsodium
+            EN_CIMT_LIBSODIUM_CHACHA20,
+            EN_CIMT_LIBSODIUM_CHACHA20_IETF,
+            EN_CIMT_LIBSODIUM_XCHACHA20,                // imported in libsodium 1.0.12 or upper
+            EN_CIMT_LIBSODIUM_SALSA20,
+            EN_CIMT_LIBSODIUM_XSALSA20,                 // imported in libsodium 1.0.12 or upper
+            EN_CIMT_LIBSODIUM_CHACHA20_POLY1305,
+            EN_CIMT_LIBSODIUM_CHACHA20_POLY1305_IETF,
+            EN_CIMT_LIBSODIUM_XCHACHA20_POLY1305_IETF,  // imported in libsodium 1.0.12 or upper
         };
-
-        /**
-         * @note boringssl macros
-         *       OPENSSL_IS_BORINGSSL
-         *       BORINGSSL_API_VERSION
-         */
-
 
         enum cipher_interface_flags_t {
             EN_CIFT_NONE                   = 0,      // using inner algorithm
@@ -76,18 +120,47 @@ namespace util {
                 {"camellia-128-cfb", EN_CIMT_CIPHER, "CAMELLIA-128-CFB128", EN_CIFT_NONE},
                 {"camellia-192-cfb", EN_CIMT_CIPHER, "CAMELLIA-192-CFB128", EN_CIFT_NONE},
                 {"camellia-256-cfb", EN_CIMT_CIPHER, "CAMELLIA-256-CFB128", EN_CIFT_NONE},
+
+#if defined(CRYPTO_USE_CHACHA20_WITH_CIPHER)
                 {"chacha20", // only available on openssl 1.1.0 and upper
                  EN_CIMT_CIPHER,
                  "CHACHA20", // only available on later mbedtls version, @see https://github.com/ARMmbed/mbedtls/pull/485
                  EN_CIFT_NONE},
+#endif
+
+#ifdef CRYPTO_USE_LIBSODIUM
+                {"chacha20", EN_CIMT_LIBSODIUM_CHACHA20, "CHACHA20", EN_CIFT_NONE},
+                {"chacha20-ietf", EN_CIMT_LIBSODIUM_CHACHA20_IETF, "CHACHA20-IETF", EN_CIFT_NONE},
+#ifdef crypto_stream_xchacha20_KEYBYTES
+                {"xchacha20", EN_CIMT_LIBSODIUM_XCHACHA20, "XCHACHA20", EN_CIFT_NONE},
+#endif
+                {"salsa20", EN_CIMT_LIBSODIUM_SALSA20, "SALSA20", EN_CIFT_NONE},
+#ifdef crypto_stream_xsalsa20_KEYBYTES
+                {"xsalsa20", EN_CIMT_LIBSODIUM_XSALSA20, "XSALSA20", EN_CIFT_NONE},
+#endif
+
+#endif
 
                 {"aes-128-gcm", EN_CIMT_CIPHER, "AES-128-GCM", EN_CIFT_AEAD | EN_CIFT_VARIABLE_IV_LEN},
                 {"aes-192-gcm", EN_CIMT_CIPHER, "AES-192-GCM", EN_CIFT_AEAD | EN_CIFT_VARIABLE_IV_LEN},
                 {"aes-256-gcm", EN_CIMT_CIPHER, "AES-256-GCM", EN_CIFT_AEAD | EN_CIFT_VARIABLE_IV_LEN},
+
+#if defined(CRYPTO_USE_CHACHA20_POLY1305_WITH_CIPHER)
                 {"chacha20-poly1305", // only available on openssl 1.1.0 and upper or boringssl
                  EN_CIMT_CIPHER,
                  "CHACHA20-POLY1305", // only available on later mbedtls version, @see https://github.com/ARMmbed/mbedtls/pull/485
                  EN_CIFT_AEAD | EN_CIFT_VARIABLE_IV_LEN},
+#endif
+
+#ifdef CRYPTO_USE_LIBSODIUM
+                {"chacha20-poly1305", EN_CIMT_LIBSODIUM_CHACHA20_POLY1305, "CHACHA20-POLY1305", EN_CIFT_AEAD | EN_CIFT_VARIABLE_IV_LEN},
+                {"chacha20-poly1305-ietf", EN_CIMT_LIBSODIUM_CHACHA20_POLY1305_IETF, "CHACHA20-POLY1305-IETF", EN_CIFT_AEAD | EN_CIFT_VARIABLE_IV_LEN},
+#ifdef crypto_aead_xchacha20poly1305_ietf_KEYBYTES
+                {"xchacha20-poly1305-ietf", EN_CIMT_LIBSODIUM_XCHACHA20_POLY1305_IETF, "XCHACHA20-POLY1305-IETF", EN_CIFT_AEAD | EN_CIFT_VARIABLE_IV_LEN},
+#endif
+
+#endif
+
                 {NULL, EN_CIMT_INVALID, NULL, false}, // end
             };
 
