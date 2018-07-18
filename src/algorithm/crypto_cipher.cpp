@@ -1,5 +1,8 @@
-#include <common/string_oprs.h>
 #include <cstring>
+
+#include <common/compiler_message.h>
+#include <common/string_oprs.h>
+#include <config/compiler_features.h>
 
 #include <algorithm/crypto_cipher.h>
 #include <std/static_assert.h>
@@ -15,7 +18,7 @@
  *       OPENSSL_IS_BORINGSSL
  *       BORINGSSL_API_VERSION      9
  *       OPENSSL_VERSION_NUMBER     0x1010007f
- * 
+ *
  * @note libressl macros
  *       LIBRESSL_VERSION_NUMBER    0x2060500fL
  *       LIBRESSL_VERSION_TEXT      "LibreSSL 2.6.5"
@@ -32,7 +35,7 @@
 #define CRYPTO_USE_CHACHA20_POLY1305_WITH_CIPHER
 #endif
 
-#elif defined(OPENSSL_IS_BORINGSSL) && defined(BORINGSSL_API_VERSION) 
+#elif defined(OPENSSL_IS_BORINGSSL) && defined(BORINGSSL_API_VERSION)
 
 #if BORINGSSL_API_VERSION >= 4
 #define CRYPTO_USE_CHACHA20_POLY1305_WITH_CIPHER
@@ -52,19 +55,19 @@
 namespace util {
     namespace crypto {
         enum cipher_interface_method_t {
-            EN_CIMT_INVALID = 0,                        // inner
-            EN_CIMT_XXTEA   = 1,                        // inner
-            EN_CIMT_INNER,                              // inner bound
-            EN_CIMT_CIPHER,                             // using openssl/libressl/boringssl/mbedtls
-            EN_CIMT_LIBSODIUM,                          // using libsodium
+            EN_CIMT_INVALID = 0, // inner
+            EN_CIMT_XXTEA   = 1, // inner
+            EN_CIMT_INNER,       // inner bound
+            EN_CIMT_CIPHER,      // using openssl/libressl/boringssl/mbedtls
+            EN_CIMT_LIBSODIUM,   // using libsodium
             EN_CIMT_LIBSODIUM_CHACHA20,
             EN_CIMT_LIBSODIUM_CHACHA20_IETF,
-            EN_CIMT_LIBSODIUM_XCHACHA20,                // imported in libsodium 1.0.12 or upper
+            EN_CIMT_LIBSODIUM_XCHACHA20, // imported in libsodium 1.0.12 or upper
             EN_CIMT_LIBSODIUM_SALSA20,
-            EN_CIMT_LIBSODIUM_XSALSA20,                 // imported in libsodium 1.0.12 or upper
+            EN_CIMT_LIBSODIUM_XSALSA20, // imported in libsodium 1.0.12 or upper
             EN_CIMT_LIBSODIUM_CHACHA20_POLY1305,
             EN_CIMT_LIBSODIUM_CHACHA20_POLY1305_IETF,
-            EN_CIMT_LIBSODIUM_XCHACHA20_POLY1305_IETF,  // imported in libsodium 1.0.12 or upper
+            EN_CIMT_LIBSODIUM_XCHACHA20_POLY1305_IETF, // imported in libsodium 1.0.12 or upper
         };
 
         enum cipher_interface_flags_t {
@@ -153,10 +156,10 @@ namespace util {
 #endif
 
 #ifdef CRYPTO_USE_LIBSODIUM
-                {"chacha20-poly1305", EN_CIMT_LIBSODIUM_CHACHA20_POLY1305, "CHACHA20-POLY1305", EN_CIFT_AEAD | EN_CIFT_VARIABLE_IV_LEN},
-                {"chacha20-poly1305-ietf", EN_CIMT_LIBSODIUM_CHACHA20_POLY1305_IETF, "CHACHA20-POLY1305-IETF", EN_CIFT_AEAD | EN_CIFT_VARIABLE_IV_LEN},
+                {"chacha20-poly1305", EN_CIMT_LIBSODIUM_CHACHA20_POLY1305, "CHACHA20-POLY1305", EN_CIFT_AEAD},
+                {"chacha20-poly1305-ietf", EN_CIMT_LIBSODIUM_CHACHA20_POLY1305_IETF, "CHACHA20-POLY1305-IETF", EN_CIFT_AEAD},
 #ifdef crypto_aead_xchacha20poly1305_ietf_KEYBYTES
-                {"xchacha20-poly1305-ietf", EN_CIMT_LIBSODIUM_XCHACHA20_POLY1305_IETF, "XCHACHA20-POLY1305-IETF", EN_CIFT_AEAD | EN_CIFT_VARIABLE_IV_LEN},
+                {"xchacha20-poly1305-ietf", EN_CIMT_LIBSODIUM_XCHACHA20_POLY1305_IETF, "XCHACHA20-POLY1305-IETF", EN_CIFT_AEAD},
 #endif
 
 #endif
@@ -200,9 +203,20 @@ namespace util {
 
             switch (interface->method) {
             case EN_CIMT_XXTEA:
+                memset(xxtea_context_.key.data, 0, sizeof(xxtea_context_.key.data));
                 break;
             case EN_CIMT_CIPHER:
                 ret = init_with_cipher(interface, mode);
+                break;
+            case EN_CIMT_LIBSODIUM_CHACHA20:
+            case EN_CIMT_LIBSODIUM_CHACHA20_IETF:
+            case EN_CIMT_LIBSODIUM_XCHACHA20:
+            case EN_CIMT_LIBSODIUM_SALSA20:
+            case EN_CIMT_LIBSODIUM_XSALSA20:
+            case EN_CIMT_LIBSODIUM_CHACHA20_POLY1305:
+            case EN_CIMT_LIBSODIUM_CHACHA20_POLY1305_IETF:
+            case EN_CIMT_LIBSODIUM_XCHACHA20_POLY1305_IETF:
+                memset(libsodium_context_.key, 0, sizeof(libsodium_context_.key));
                 break;
             default:
                 ret = details::setup_errorno(*this, -1, error_code_t::CIPHER_NOT_SUPPORT);
@@ -355,6 +369,17 @@ namespace util {
                 ret = close_with_cipher();
                 break;
 
+            case EN_CIMT_LIBSODIUM_CHACHA20:
+            case EN_CIMT_LIBSODIUM_CHACHA20_IETF:
+            case EN_CIMT_LIBSODIUM_XCHACHA20:
+            case EN_CIMT_LIBSODIUM_SALSA20:
+            case EN_CIMT_LIBSODIUM_XSALSA20:
+            case EN_CIMT_LIBSODIUM_CHACHA20_POLY1305:
+            case EN_CIMT_LIBSODIUM_CHACHA20_POLY1305_IETF:
+            case EN_CIMT_LIBSODIUM_XCHACHA20_POLY1305_IETF:
+                // just do nothing when using xxtea
+                ret = details::setup_errorno(*this, 0, error_code_t::OK);
+                break;
             default:
                 ret = details::setup_errorno(*this, 0, error_code_t::CIPHER_NOT_SUPPORT);
                 break;
@@ -435,6 +460,34 @@ namespace util {
                 } else {
                     return 0;
                 }
+
+#ifdef CRYPTO_USE_LIBSODIUM
+            case EN_CIMT_LIBSODIUM_CHACHA20:
+                return crypto_stream_chacha20_NONCEBYTES;
+            case EN_CIMT_LIBSODIUM_CHACHA20_IETF:
+                return crypto_stream_chacha20_ietf_NONCEBYTES;
+
+#ifdef crypto_stream_xchacha20_NONCEBYTES
+            case EN_CIMT_LIBSODIUM_XCHACHA20:
+                return crypto_stream_xchacha20_NONCEBYTES;
+#endif
+
+            case EN_CIMT_LIBSODIUM_SALSA20:
+                return crypto_stream_salsa20_NONCEBYTES;
+            case EN_CIMT_LIBSODIUM_XSALSA20:
+                return crypto_stream_NONCEBYTES;
+            case EN_CIMT_LIBSODIUM_CHACHA20_POLY1305:
+                return crypto_aead_chacha20poly1305_NPUBBYTES;
+            case EN_CIMT_LIBSODIUM_CHACHA20_POLY1305_IETF:
+                return crypto_aead_chacha20poly1305_IETF_NPUBBYTES;
+
+#ifdef crypto_aead_xchacha20poly1305_ietf_NPUBBYTES
+            case EN_CIMT_LIBSODIUM_XCHACHA20_POLY1305_IETF:
+                return crypto_aead_xchacha20poly1305_ietf_NPUBBYTES;
+#endif
+
+#endif
+
             default:
                 return 0;
             }
@@ -466,6 +519,42 @@ namespace util {
                 } else {
                     return 0;
                 }
+
+#ifdef CRYPTO_USE_LIBSODIUM
+            case EN_CIMT_LIBSODIUM_CHACHA20:
+                UTIL_CONFIG_STATIC_ASSERT(crypto_stream_chacha20_KEYBYTES <= sizeof(libsodium_context_t));
+                return crypto_stream_chacha20_KEYBYTES * 8;
+            case EN_CIMT_LIBSODIUM_CHACHA20_IETF:
+                UTIL_CONFIG_STATIC_ASSERT(crypto_stream_chacha20_ietf_KEYBYTES <= sizeof(libsodium_context_t));
+                return crypto_stream_chacha20_ietf_KEYBYTES * 8;
+
+#ifdef crypto_stream_xchacha20_KEYBYTES
+            case EN_CIMT_LIBSODIUM_XCHACHA20:
+                UTIL_CONFIG_STATIC_ASSERT(crypto_stream_xchacha20_KEYBYTES <= sizeof(libsodium_context_t));
+                return crypto_stream_xchacha20_KEYBYTES * 8;
+#endif
+
+            case EN_CIMT_LIBSODIUM_SALSA20:
+                UTIL_CONFIG_STATIC_ASSERT(crypto_stream_salsa20_KEYBYTES <= sizeof(libsodium_context_t));
+                return crypto_stream_salsa20_KEYBYTES * 8;
+            case EN_CIMT_LIBSODIUM_XSALSA20:
+                UTIL_CONFIG_STATIC_ASSERT(crypto_stream_KEYBYTES <= sizeof(libsodium_context_t));
+                return crypto_stream_KEYBYTES * 8;
+            case EN_CIMT_LIBSODIUM_CHACHA20_POLY1305:
+                UTIL_CONFIG_STATIC_ASSERT(crypto_stream_KEYBYTES <= sizeof(libsodium_context_t));
+                return crypto_aead_chacha20poly1305_KEYBYTES * 8;
+            case EN_CIMT_LIBSODIUM_CHACHA20_POLY1305_IETF:
+                UTIL_CONFIG_STATIC_ASSERT(crypto_aead_chacha20poly1305_IETF_KEYBYTES <= sizeof(libsodium_context_t));
+                return crypto_aead_chacha20poly1305_IETF_KEYBYTES * 8;
+
+#ifdef crypto_aead_xchacha20poly1305_ietf_KEYBYTES
+            case EN_CIMT_LIBSODIUM_XCHACHA20_POLY1305_IETF:
+                UTIL_CONFIG_STATIC_ASSERT(crypto_aead_xchacha20poly1305_ietf_KEYBYTES <= sizeof(libsodium_context_t));
+                return crypto_aead_xchacha20poly1305_ietf_KEYBYTES * 8;
+#endif
+
+#endif
+
             default:
                 return 0;
             }
@@ -497,6 +586,17 @@ namespace util {
                 } else {
                     return 0;
                 }
+
+            case EN_CIMT_LIBSODIUM_CHACHA20:
+            case EN_CIMT_LIBSODIUM_CHACHA20_IETF:
+            case EN_CIMT_LIBSODIUM_XCHACHA20:
+            case EN_CIMT_LIBSODIUM_SALSA20:
+            case EN_CIMT_LIBSODIUM_XSALSA20:
+            case EN_CIMT_LIBSODIUM_CHACHA20_POLY1305:
+            case EN_CIMT_LIBSODIUM_CHACHA20_POLY1305_IETF:
+            case EN_CIMT_LIBSODIUM_XCHACHA20_POLY1305_IETF:
+                return 1; // all block size of chacha20 and
+
             default:
                 return 0;
             }
@@ -553,6 +653,22 @@ namespace util {
                 }
                 return details::setup_errorno(*this, res, error_code_t::OK);
             }
+
+            case EN_CIMT_LIBSODIUM_CHACHA20:
+            case EN_CIMT_LIBSODIUM_CHACHA20_IETF:
+            case EN_CIMT_LIBSODIUM_XCHACHA20:
+            case EN_CIMT_LIBSODIUM_SALSA20:
+            case EN_CIMT_LIBSODIUM_XSALSA20:
+            case EN_CIMT_LIBSODIUM_CHACHA20_POLY1305:
+            case EN_CIMT_LIBSODIUM_CHACHA20_POLY1305_IETF:
+            case EN_CIMT_LIBSODIUM_XCHACHA20_POLY1305_IETF: {
+                if (key_bitlen >= sizeof(libsodium_context_.key) * 8) {
+                    memcpy(libsodium_context_.key, key, sizeof(libsodium_context_.key));
+                } else {
+                    memcpy(libsodium_context_.key, key, key_bitlen / 8);
+                }
+                return details::setup_errorno(*this, 0, error_code_t::OK);
+            }
             default:
                 return details::setup_errorno(*this, -1, error_code_t::NOT_INITED);
             }
@@ -584,6 +700,23 @@ namespace util {
                 iv_.assign(iv, iv + iv_len);
                 return details::setup_errorno(*this, res, error_code_t::OK);
             }
+
+            case EN_CIMT_LIBSODIUM_CHACHA20:
+            case EN_CIMT_LIBSODIUM_CHACHA20_IETF:
+            case EN_CIMT_LIBSODIUM_XCHACHA20:
+            case EN_CIMT_LIBSODIUM_SALSA20:
+            case EN_CIMT_LIBSODIUM_XSALSA20:
+            case EN_CIMT_LIBSODIUM_CHACHA20_POLY1305:
+            case EN_CIMT_LIBSODIUM_CHACHA20_POLY1305_IETF:
+            case EN_CIMT_LIBSODIUM_XCHACHA20_POLY1305_IETF: {
+                if (get_iv_size() != iv_len) {
+                    return details::setup_errorno(*this, -1, error_code_t::INVALID_PARAM);
+                }
+
+                iv_.assign(iv, iv + iv_len);
+                return details::setup_errorno(*this, 0, error_code_t::OK);
+            }
+
             default:
                 return error_code_t::OK;
             }
@@ -604,6 +737,12 @@ namespace util {
                 return details::setup_errorno(*this, -1, error_code_t::INVALID_PARAM);
             }
 
+            if (interface_->method >= EN_CIMT_CIPHER && 0 == (interface_->flags & EN_CIFT_VARIABLE_IV_LEN) && iv_.size() < get_iv_size()) {
+                if (0 != get_iv_size()) {
+                    iv_.resize(get_iv_size(), 0);
+                }
+            }
+
             switch (interface_->method) {
             case EN_CIMT_INVALID:
                 return details::setup_errorno(*this, -1, error_code_t::NOT_INITED);
@@ -615,12 +754,6 @@ namespace util {
             case EN_CIMT_CIPHER: {
                 if (NULL == cipher_context_.enc) {
                     return details::setup_errorno(*this, 0, error_code_t::CIPHER_DISABLED);
-                }
-
-                if (iv_.size() < get_iv_size()) {
-                    if (0 != get_iv_size()) {
-                        iv_.resize(get_iv_size(), 0);
-                    }
                 }
 
 #if defined(CRYPTO_USE_OPENSSL) || defined(CRYPTO_USE_LIBRESSL) || defined(CRYPTO_USE_BORINGSSL)
@@ -666,6 +799,37 @@ namespace util {
                 return error_code_t::OK;
 #endif
             }
+
+#ifdef CRYPTO_USE_LIBSODIUM
+            case EN_CIMT_LIBSODIUM_CHACHA20:
+                if ((last_errorno_ = crypto_stream_chacha20_xor(output, input, ilen, &iv_[0], libsodium_context_.key)) != 0) {
+                    return error_code_t::LIBSODIUM_OPERATION;
+                }
+                return error_code_t::OK;
+            case EN_CIMT_LIBSODIUM_CHACHA20_IETF:
+                if ((last_errorno_ = crypto_stream_chacha20_ietf_xor(output, input, ilen, &iv_[0], libsodium_context_.key)) != 0) {
+                    return error_code_t::LIBSODIUM_OPERATION;
+                }
+                return error_code_t::OK;
+
+#ifdef crypto_stream_xchacha20_KEYBYTES
+                if ((last_errorno_ = crypto_stream_xchacha20_xor(output, input, ilen, &iv_[0], libsodium_context_.key)) != 0) {
+                    return error_code_t::LIBSODIUM_OPERATION;
+                }
+                return error_code_t::OK;
+#endif
+
+            case EN_CIMT_LIBSODIUM_SALSA20:
+                if ((last_errorno_ = crypto_stream_salsa20_xor(output, input, ilen, &iv_[0], libsodium_context_.key)) != 0) {
+                    return error_code_t::LIBSODIUM_OPERATION;
+                }
+                return error_code_t::OK;
+            case EN_CIMT_LIBSODIUM_XSALSA20:
+                if ((last_errorno_ = crypto_stream_xor(output, input, ilen, &iv_[0], libsodium_context_.key)) != 0) {
+                    return error_code_t::LIBSODIUM_OPERATION;
+                }
+                return error_code_t::OK;
+#endif
             default:
                 return details::setup_errorno(*this, -1, error_code_t::NOT_INITED);
             }
@@ -684,6 +848,12 @@ namespace util {
                 return details::setup_errorno(*this, -1, error_code_t::INVALID_PARAM);
             }
 
+            if (interface_->method >= EN_CIMT_CIPHER && 0 == (interface_->flags & EN_CIFT_VARIABLE_IV_LEN) && iv_.size() < get_iv_size()) {
+                if (0 != get_iv_size()) {
+                    iv_.resize(get_iv_size(), 0);
+                }
+            }
+
             switch (interface_->method) {
             case EN_CIMT_INVALID:
                 return details::setup_errorno(*this, -1, error_code_t::NOT_INITED);
@@ -695,12 +865,6 @@ namespace util {
             case EN_CIMT_CIPHER: {
                 if (NULL == cipher_context_.dec) {
                     return details::setup_errorno(*this, 0, error_code_t::CIPHER_DISABLED);
-                }
-
-                if (iv_.size() < get_iv_size()) {
-                    if (0 != get_iv_size()) {
-                        iv_.resize(get_iv_size(), 0);
-                    }
                 }
 
 #if defined(CRYPTO_USE_OPENSSL) || defined(CRYPTO_USE_LIBRESSL) || defined(CRYPTO_USE_BORINGSSL)
@@ -746,6 +910,38 @@ namespace util {
                 return error_code_t::OK;
 #endif
             }
+
+#ifdef CRYPTO_USE_LIBSODIUM
+            case EN_CIMT_LIBSODIUM_CHACHA20:
+                if ((last_errorno_ = crypto_stream_chacha20_xor(output, input, ilen, &iv_[0], libsodium_context_.key)) != 0) {
+                    return error_code_t::LIBSODIUM_OPERATION;
+                }
+                return error_code_t::OK;
+            case EN_CIMT_LIBSODIUM_CHACHA20_IETF:
+                if ((last_errorno_ = crypto_stream_chacha20_ietf_xor(output, input, ilen, &iv_[0], libsodium_context_.key)) != 0) {
+                    return error_code_t::LIBSODIUM_OPERATION;
+                }
+                return error_code_t::OK;
+
+#ifdef crypto_stream_xchacha20_KEYBYTES
+                if ((last_errorno_ = crypto_stream_xchacha20_xor(output, input, ilen, &iv_[0], libsodium_context_.key)) != 0) {
+                    return error_code_t::LIBSODIUM_OPERATION;
+                }
+                return error_code_t::OK;
+#endif
+
+            case EN_CIMT_LIBSODIUM_SALSA20:
+                if ((last_errorno_ = crypto_stream_salsa20_xor(output, input, ilen, &iv_[0], libsodium_context_.key)) != 0) {
+                    return error_code_t::LIBSODIUM_OPERATION;
+                }
+                return error_code_t::OK;
+            case EN_CIMT_LIBSODIUM_XSALSA20:
+                if ((last_errorno_ = crypto_stream_xor(output, input, ilen, &iv_[0], libsodium_context_.key)) != 0) {
+                    return error_code_t::LIBSODIUM_OPERATION;
+                }
+                return error_code_t::OK;
+#endif
+
             default:
                 return details::setup_errorno(*this, -1, error_code_t::NOT_INITED);
             }
@@ -765,16 +961,16 @@ namespace util {
                 return details::setup_errorno(*this, -1, error_code_t::INVALID_PARAM);
             }
 
+            if (interface_->method >= EN_CIMT_CIPHER && 0 == (interface_->flags & EN_CIFT_VARIABLE_IV_LEN) && iv_.size() < get_iv_size()) {
+                if (0 != get_iv_size()) {
+                    iv_.resize(get_iv_size(), 0);
+                }
+            }
+
             switch (interface_->method) {
             case EN_CIMT_CIPHER: {
                 if (NULL == cipher_context_.enc) {
                     return details::setup_errorno(*this, 0, error_code_t::CIPHER_DISABLED);
-                }
-
-                if (0 == (interface_->flags & EN_CIFT_VARIABLE_IV_LEN) && iv_.size() < get_iv_size()) {
-                    if (0 != get_iv_size()) {
-                        iv_.resize(get_iv_size(), 0);
-                    }
                 }
 
 #if defined(CRYPTO_USE_OPENSSL) || defined(CRYPTO_USE_LIBRESSL) || defined(CRYPTO_USE_BORINGSSL)
@@ -860,6 +1056,51 @@ namespace util {
                 return error_code_t::OK;
 #endif
             }
+
+#ifdef CRYPTO_USE_LIBSODIUM
+
+            case EN_CIMT_LIBSODIUM_CHACHA20_POLY1305: {
+                if (crypto_aead_chacha20poly1305_ABYTES > tag_len) {
+                    return error_code_t::LIBSODIUM_OPERATION_TAG_LEN;
+                }
+
+                unsigned long long maclen = tag_len;
+                if ((last_errorno_ = crypto_aead_chacha20poly1305_encrypt_detached(output, tag, &maclen, input, ilen, ad, ad_len, NULL,
+                                                                                   &iv_[0], libsodium_context_.key)) != 0) {
+                    return error_code_t::LIBSODIUM_OPERATION;
+                }
+                return error_code_t::OK;
+            }
+            case EN_CIMT_LIBSODIUM_CHACHA20_POLY1305_IETF: {
+                if (crypto_aead_chacha20poly1305_IETF_ABYTES > tag_len) {
+                    return error_code_t::LIBSODIUM_OPERATION_TAG_LEN;
+                }
+
+                unsigned long long maclen = tag_len;
+                if ((last_errorno_ = crypto_aead_chacha20poly1305_ietf_encrypt_detached(output, tag, &maclen, input, ilen, ad, ad_len, NULL,
+                                                                                        &iv_[0], libsodium_context_.key)) != 0) {
+                    return error_code_t::LIBSODIUM_OPERATION;
+                }
+                return error_code_t::OK;
+            }
+
+#ifdef crypto_aead_xchacha20poly1305_ietf_KEYBYTES
+            case EN_CIMT_LIBSODIUM_XCHACHA20_POLY1305_IETF: {
+                if (crypto_aead_xchacha20poly1305_ietf_ABYTES > tag_len) {
+                    return error_code_t::LIBSODIUM_OPERATION_TAG_LEN;
+                }
+
+                unsigned long long maclen = tag_len;
+                if ((last_errorno_ = crypto_aead_xchacha20poly1305_ietf_encrypt_detached(output, tag, &maclen, input, ilen, ad, ad_len,
+                                                                                         NULL, &iv_[0], libsodium_context_.key)) != 0) {
+                    return error_code_t::LIBSODIUM_OPERATION;
+                }
+                return error_code_t::OK;
+            }
+#endif
+
+#endif
+
             default:
                 return details::setup_errorno(*this, -1, error_code_t::NOT_INITED);
             }
@@ -879,6 +1120,12 @@ namespace util {
                 return details::setup_errorno(*this, -1, error_code_t::INVALID_PARAM);
             }
 
+            if (interface_->method >= EN_CIMT_CIPHER && 0 == (interface_->flags & EN_CIFT_VARIABLE_IV_LEN) && iv_.size() < get_iv_size()) {
+                if (0 != get_iv_size()) {
+                    iv_.resize(get_iv_size(), 0);
+                }
+            }
+
             switch (interface_->method) {
             case EN_CIMT_INVALID:
                 return details::setup_errorno(*this, -1, error_code_t::NOT_INITED);
@@ -890,12 +1137,6 @@ namespace util {
             case EN_CIMT_CIPHER: {
                 if (NULL == cipher_context_.dec) {
                     return details::setup_errorno(*this, 0, error_code_t::CIPHER_DISABLED);
-                }
-
-                if (0 == (interface_->flags & EN_CIFT_VARIABLE_IV_LEN) && iv_.size() < get_iv_size()) {
-                    if (0 != get_iv_size()) {
-                        iv_.resize(get_iv_size(), 0);
-                    }
                 }
 
 #if defined(CRYPTO_USE_OPENSSL) || defined(CRYPTO_USE_LIBRESSL) || defined(CRYPTO_USE_BORINGSSL)
@@ -980,6 +1221,48 @@ namespace util {
                 return error_code_t::OK;
 #endif
             }
+
+#ifdef CRYPTO_USE_LIBSODIUM
+
+            case EN_CIMT_LIBSODIUM_CHACHA20_POLY1305: {
+                if (crypto_aead_chacha20poly1305_ABYTES > tag_len) {
+                    return error_code_t::LIBSODIUM_OPERATION_TAG_LEN;
+                }
+
+                if ((last_errorno_ = crypto_aead_chacha20poly1305_decrypt_detached(output, NULL, input, ilen, tag, ad, ad_len, &iv_[0],
+                                                                                   libsodium_context_.key)) != 0) {
+                    return error_code_t::LIBSODIUM_OPERATION;
+                }
+                return error_code_t::OK;
+            }
+            case EN_CIMT_LIBSODIUM_CHACHA20_POLY1305_IETF: {
+                if (crypto_aead_chacha20poly1305_IETF_ABYTES > tag_len) {
+                    return error_code_t::LIBSODIUM_OPERATION_TAG_LEN;
+                }
+
+                if ((last_errorno_ = crypto_aead_chacha20poly1305_ietf_decrypt_detached(output, NULL, input, ilen, tag, ad, ad_len, &iv_[0],
+                                                                                        libsodium_context_.key)) != 0) {
+                    return error_code_t::LIBSODIUM_OPERATION;
+                }
+
+                return error_code_t::OK;
+            }
+
+#ifdef crypto_aead_xchacha20poly1305_ietf_KEYBYTES
+            case EN_CIMT_LIBSODIUM_XCHACHA20_POLY1305_IETF: {
+                if (crypto_aead_xchacha20poly1305_ietf_ABYTES > tag_len) {
+                    return error_code_t::LIBSODIUM_OPERATION_TAG_LEN;
+                }
+
+                if ((last_errorno_ = crypto_aead_xchacha20poly1305_ietf_decrypt_detached(output, NULL, input, ilen, tag, ad, ad_len,
+                                                                                         &iv_[0], libsodium_context_.key)) != 0) {
+                    return error_code_t::LIBSODIUM_OPERATION;
+                }
+                return error_code_t::OK;
+            }
+#endif
+
+#endif
             default:
                 return details::setup_errorno(*this, -1, error_code_t::NOT_INITED);
             }
@@ -1042,7 +1325,14 @@ namespace util {
                         continue;
                     }
 
-                    if (NULL != get_cipher_by_name(details::supported_ciphers[i].name)) {
+                    if (details::supported_ciphers[i].method == EN_CIMT_CIPHER) {
+                        if (NULL != get_cipher_by_name(details::supported_ciphers[i].name)) {
+                            ret.push_back(details::supported_ciphers[i].name);
+                        }
+                        continue;
+                    }
+
+                    if (details::supported_ciphers[i].method > EN_CIMT_LIBSODIUM) {
                         ret.push_back(details::supported_ciphers[i].name);
                     }
                 }

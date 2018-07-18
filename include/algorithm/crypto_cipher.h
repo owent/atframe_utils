@@ -78,17 +78,19 @@ namespace util {
 
             struct error_code_t {
                 enum type {
-                    OK                      = 0,
-                    INVALID_PARAM           = -1,
-                    NOT_INITED              = -2,
-                    ALREADY_INITED          = -3,
-                    MALLOC                  = -4,
-                    CIPHER_DISABLED         = -11,
-                    CIPHER_NOT_SUPPORT      = -12,
-                    CIPHER_OPERATION        = -13,
-                    CIPHER_OPERATION_SET_IV = -14,
-                    MUST_CALL_AEAD_API      = -21,
-                    MUST_NOT_CALL_AEAD_API  = -22,
+                    OK                          = 0,
+                    INVALID_PARAM               = -1,
+                    NOT_INITED                  = -2,
+                    ALREADY_INITED              = -3,
+                    MALLOC                      = -4,
+                    CIPHER_DISABLED             = -11,
+                    CIPHER_NOT_SUPPORT          = -12,
+                    CIPHER_OPERATION            = -13,
+                    CIPHER_OPERATION_SET_IV     = -14,
+                    LIBSODIUM_OPERATION         = -15,
+                    LIBSODIUM_OPERATION_TAG_LEN = -16,
+                    MUST_CALL_AEAD_API          = -21,
+                    MUST_NOT_CALL_AEAD_API      = -22,
                 };
             };
 
@@ -123,7 +125,7 @@ namespace util {
              */
             uint32_t get_iv_size() const;
 
-            /**
+            /**libsodium_context_
              * @brief               get key length in bits
              * @return              key length in bits
              */
@@ -144,7 +146,7 @@ namespace util {
             int set_key(const unsigned char *key, uint32_t key_bitlen);
 
             /**
-             * @brief               set initialization vector
+             * @brief               selibsodium_context_t initialization vector
              * @param iv            iv value
              * @param iv_len        length of iv, in bytes, can not be greater than 16 when using mbedtls
              * @return              0 or error code less than 0
@@ -248,12 +250,16 @@ namespace util {
                 ::util::xxtea_key key;
             } xxtea_context_t;
             typedef struct {
+                unsigned char key[32];
+            } libsodium_context_t;
+            typedef struct {
                 cipher_evp_t *enc; // used for encrypt
                 cipher_evp_t *dec; // used for decrypt
             } cipher_context_t;
             union {
-                cipher_context_t cipher_context_;
-                xxtea_context_t  xxtea_context_;
+                cipher_context_t    cipher_context_;
+                xxtea_context_t     xxtea_context_;
+                libsodium_context_t libsodium_context_;
             };
         };
     } // namespace crypto

@@ -112,8 +112,8 @@ namespace util {
             inline operator value_type() const UTIL_CONFIG_NOEXCEPT { return load(); }
             inline operator value_type() const volatile UTIL_CONFIG_NOEXCEPT { return load(); }
 
-            inline value_type operator=(value_type desired) UTIL_CONFIG_NOEXCEPT { store(desired); }
-            inline value_type operator=(value_type desired) volatile UTIL_CONFIG_NOEXCEPT { store(desired); }
+            inline value_type operator=(value_type desired) UTIL_CONFIG_NOEXCEPT { store(desired); return desired; }
+            inline value_type operator=(value_type desired) volatile UTIL_CONFIG_NOEXCEPT { store(desired); return desired; }
 
             inline value_type operator++() UTIL_CONFIG_NOEXCEPT { return ++data_; }
             inline value_type operator++() volatile UTIL_CONFIG_NOEXCEPT { return ++data_; }
@@ -380,8 +380,8 @@ namespace util {
             inline operator value_type() const UTIL_CONFIG_NOEXCEPT { return load(); }
             inline operator value_type() const volatile UTIL_CONFIG_NOEXCEPT { return load(); }
 
-            inline value_type operator=(value_type desired) UTIL_CONFIG_NOEXCEPT { store(desired); }
-            inline value_type operator=(value_type desired) volatile UTIL_CONFIG_NOEXCEPT { store(desired); }
+            inline value_type operator=(value_type desired) UTIL_CONFIG_NOEXCEPT { store(desired); return desired; }
+            inline value_type operator=(value_type desired) volatile UTIL_CONFIG_NOEXCEPT { store(desired); return desired; }
 
             inline value_type operator++() UTIL_CONFIG_NOEXCEPT {
 #ifdef __UTIL_LOCK_ATOMIC_INT_ATOMIC_MSVC
@@ -881,8 +881,8 @@ namespace util {
             inline operator value_type() const UTIL_CONFIG_NOEXCEPT { return load(); }
             inline operator value_type() const volatile UTIL_CONFIG_NOEXCEPT { return load(); }
 
-            inline value_type operator=(value_type desired) UTIL_CONFIG_NOEXCEPT { store(desired); }
-            inline value_type operator=(value_type desired) volatile UTIL_CONFIG_NOEXCEPT { store(desired); }
+            inline value_type operator=(value_type desired) UTIL_CONFIG_NOEXCEPT { store(desired); return desired; }
+            inline value_type operator=(value_type desired) volatile UTIL_CONFIG_NOEXCEPT { store(desired); return desired; }
 
             inline value_type operator++() UTIL_CONFIG_NOEXCEPT { return ++data_; }
             inline value_type operator++() volatile UTIL_CONFIG_NOEXCEPT { return ++data_; }
