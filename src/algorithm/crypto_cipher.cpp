@@ -83,6 +83,7 @@ namespace util {
         struct cipher_interface_info_t {
             const char *              name;
             cipher_interface_method_t method;
+            const char *              openssl_name;
             const char *              mbedtls_name;
             uint32_t                  flags;
         };
@@ -96,75 +97,75 @@ namespace util {
             // openssl/libressl/boringssl   @see crypto/objects/obj_dat.h or crypto/obj/obj_dat.h
             // mbedtls                      @see library/cipher_wrap.c
             static const cipher_interface_info_t supported_ciphers[] = {
-                {"xxtea", EN_CIMT_XXTEA, "xxtea", EN_CIFT_NONE},
-                {"rc4", EN_CIMT_CIPHER, "ARC4-128", EN_CIFT_NONE},
-                {"aes-128-cfb", EN_CIMT_CIPHER, "AES-128-CFB128", EN_CIFT_NONE},
-                {"aes-192-cfb", EN_CIMT_CIPHER, "AES-192-CFB128", EN_CIFT_NONE},
-                {"aes-256-cfb", EN_CIMT_CIPHER, "AES-256-CFB128", EN_CIFT_NONE},
-                {"aes-128-ctr", EN_CIMT_CIPHER, "AES-128-CTR", EN_CIFT_NONE},
-                {"aes-192-ctr", EN_CIMT_CIPHER, "AES-192-CTR", EN_CIFT_NONE},
-                {"aes-256-ctr", EN_CIMT_CIPHER, "AES-256-CTR", EN_CIFT_NONE},
-                {"aes-128-ecb", EN_CIMT_CIPHER, "AES-128-ECB", EN_CIFT_ENCRYPT_NO_PADDING | EN_CIFT_DECRYPT_NO_PADDING},
-                {"aes-192-ecb", EN_CIMT_CIPHER, "AES-192-ECB", EN_CIFT_ENCRYPT_NO_PADDING | EN_CIFT_DECRYPT_NO_PADDING},
-                {"aes-256-ecb", EN_CIMT_CIPHER, "AES-256-ECB", EN_CIFT_ENCRYPT_NO_PADDING | EN_CIFT_DECRYPT_NO_PADDING},
-                {"aes-128-cbc", EN_CIMT_CIPHER, "AES-128-CBC", EN_CIFT_ENCRYPT_NO_PADDING | EN_CIFT_DECRYPT_NO_PADDING},
-                {"aes-192-cbc", EN_CIMT_CIPHER, "AES-192-CBC", EN_CIFT_ENCRYPT_NO_PADDING | EN_CIFT_DECRYPT_NO_PADDING},
-                {"aes-256-cbc", EN_CIMT_CIPHER, "AES-256-CBC", EN_CIFT_ENCRYPT_NO_PADDING | EN_CIFT_DECRYPT_NO_PADDING},
-                {"des-ecb", EN_CIMT_CIPHER, "DES-ECB", EN_CIFT_ENCRYPT_NO_PADDING | EN_CIFT_DECRYPT_NO_PADDING},
-                {"des-cbc", EN_CIMT_CIPHER, "DES-CBC", EN_CIFT_ENCRYPT_NO_PADDING | EN_CIFT_DECRYPT_NO_PADDING},
-                {"des-ede", EN_CIMT_CIPHER, "DES-EDE-ECB", EN_CIFT_ENCRYPT_NO_PADDING | EN_CIFT_DECRYPT_NO_PADDING},
-                {"des-ede-cbc", EN_CIMT_CIPHER, "DES-EDE-CBC", EN_CIFT_ENCRYPT_NO_PADDING | EN_CIFT_DECRYPT_NO_PADDING},
-                {"des-ede3", EN_CIMT_CIPHER, "DES-EDE3-ECB", EN_CIFT_ENCRYPT_NO_PADDING | EN_CIFT_DECRYPT_NO_PADDING},
-                {"des-ede3-cbc", EN_CIMT_CIPHER, "DES-EDE3-CBC", EN_CIFT_ENCRYPT_NO_PADDING | EN_CIFT_DECRYPT_NO_PADDING},
+                {"xxtea", EN_CIMT_XXTEA, NULL, "xxtea", EN_CIFT_NONE},
+                {"rc4", EN_CIMT_CIPHER, NULL, "ARC4-128", EN_CIFT_NONE},
+                {"aes-128-cfb", EN_CIMT_CIPHER, NULL, "AES-128-CFB128", EN_CIFT_NONE},
+                {"aes-192-cfb", EN_CIMT_CIPHER, NULL, "AES-192-CFB128", EN_CIFT_NONE},
+                {"aes-256-cfb", EN_CIMT_CIPHER, NULL, "AES-256-CFB128", EN_CIFT_NONE},
+                {"aes-128-ctr", EN_CIMT_CIPHER, NULL, "AES-128-CTR", EN_CIFT_NONE},
+                {"aes-192-ctr", EN_CIMT_CIPHER, NULL, "AES-192-CTR", EN_CIFT_NONE},
+                {"aes-256-ctr", EN_CIMT_CIPHER, NULL, "AES-256-CTR", EN_CIFT_NONE},
+                {"aes-128-ecb", EN_CIMT_CIPHER, NULL, "AES-128-ECB", EN_CIFT_ENCRYPT_NO_PADDING | EN_CIFT_DECRYPT_NO_PADDING},
+                {"aes-192-ecb", EN_CIMT_CIPHER, NULL, "AES-192-ECB", EN_CIFT_ENCRYPT_NO_PADDING | EN_CIFT_DECRYPT_NO_PADDING},
+                {"aes-256-ecb", EN_CIMT_CIPHER, NULL, "AES-256-ECB", EN_CIFT_ENCRYPT_NO_PADDING | EN_CIFT_DECRYPT_NO_PADDING},
+                {"aes-128-cbc", EN_CIMT_CIPHER, NULL, "AES-128-CBC", EN_CIFT_ENCRYPT_NO_PADDING | EN_CIFT_DECRYPT_NO_PADDING},
+                {"aes-192-cbc", EN_CIMT_CIPHER, NULL, "AES-192-CBC", EN_CIFT_ENCRYPT_NO_PADDING | EN_CIFT_DECRYPT_NO_PADDING},
+                {"aes-256-cbc", EN_CIMT_CIPHER, NULL, "AES-256-CBC", EN_CIFT_ENCRYPT_NO_PADDING | EN_CIFT_DECRYPT_NO_PADDING},
+                {"des-ecb", EN_CIMT_CIPHER, NULL, "DES-ECB", EN_CIFT_ENCRYPT_NO_PADDING | EN_CIFT_DECRYPT_NO_PADDING},
+                {"des-cbc", EN_CIMT_CIPHER, NULL, "DES-CBC", EN_CIFT_ENCRYPT_NO_PADDING | EN_CIFT_DECRYPT_NO_PADDING},
+                {"des-ede", EN_CIMT_CIPHER, NULL, "DES-EDE-ECB", EN_CIFT_ENCRYPT_NO_PADDING | EN_CIFT_DECRYPT_NO_PADDING},
+                {"des-ede-cbc", EN_CIMT_CIPHER, NULL, "DES-EDE-CBC", EN_CIFT_ENCRYPT_NO_PADDING | EN_CIFT_DECRYPT_NO_PADDING},
+                {"des-ede3", EN_CIMT_CIPHER, NULL, "DES-EDE3-ECB", EN_CIFT_ENCRYPT_NO_PADDING | EN_CIFT_DECRYPT_NO_PADDING},
+                {"des-ede3-cbc", EN_CIMT_CIPHER, NULL, "DES-EDE3-CBC", EN_CIFT_ENCRYPT_NO_PADDING | EN_CIFT_DECRYPT_NO_PADDING},
                 // {"bf-ecb", EN_CIMT_CIPHER, "BLOWFISH-ECB", EN_CIFT_ENCRYPT_NO_PADDING | EN_CIFT_DECRYPT_NO_PADDING},
                 // this unit test of this cipher can not passed in all libraries
-                {"bf-cbc", EN_CIMT_CIPHER, "BLOWFISH-CBC", EN_CIFT_ENCRYPT_NO_PADDING | EN_CIFT_DECRYPT_NO_PADDING},
-                {"bf-cfb", EN_CIMT_CIPHER, "BLOWFISH-CFB64", EN_CIFT_NONE},
-                {"camellia-128-cfb", EN_CIMT_CIPHER, "CAMELLIA-128-CFB128", EN_CIFT_NONE},
-                {"camellia-192-cfb", EN_CIMT_CIPHER, "CAMELLIA-192-CFB128", EN_CIFT_NONE},
-                {"camellia-256-cfb", EN_CIMT_CIPHER, "CAMELLIA-256-CFB128", EN_CIFT_NONE},
+                {"bf-cbc", EN_CIMT_CIPHER, NULL, "BLOWFISH-CBC", EN_CIFT_ENCRYPT_NO_PADDING | EN_CIFT_DECRYPT_NO_PADDING},
+                {"bf-cfb", EN_CIMT_CIPHER, NULL, "BLOWFISH-CFB64", EN_CIFT_NONE},
+                {"camellia-128-cfb", EN_CIMT_CIPHER, NULL, "CAMELLIA-128-CFB128", EN_CIFT_NONE},
+                {"camellia-192-cfb", EN_CIMT_CIPHER, NULL, "CAMELLIA-192-CFB128", EN_CIFT_NONE},
+                {"camellia-256-cfb", EN_CIMT_CIPHER, NULL, "CAMELLIA-256-CFB128", EN_CIFT_NONE},
 
 #if defined(CRYPTO_USE_CHACHA20_WITH_CIPHER)
                 {"chacha20", // only available on openssl 1.1.0 and upper
                  EN_CIMT_CIPHER,
-                 "CHACHA20", // only available on later mbedtls version, @see https://github.com/ARMmbed/mbedtls/pull/485
+                 NULL, "CHACHA20", // only available on later mbedtls version, @see https://github.com/ARMmbed/mbedtls/pull/485
                  EN_CIFT_NONE},
 #endif
 
 #ifdef CRYPTO_USE_LIBSODIUM
-                {"chacha20", EN_CIMT_LIBSODIUM_CHACHA20, "CHACHA20", EN_CIFT_NONE},
-                {"chacha20-ietf", EN_CIMT_LIBSODIUM_CHACHA20_IETF, "CHACHA20-IETF", EN_CIFT_NONE},
+                {"chacha20", EN_CIMT_LIBSODIUM_CHACHA20, NULL, "CHACHA20", EN_CIFT_NONE},
+                {"chacha20-ietf", EN_CIMT_LIBSODIUM_CHACHA20_IETF, NULL, "CHACHA20-IETF", EN_CIFT_NONE},
 #ifdef crypto_stream_xchacha20_KEYBYTES
-                {"xchacha20", EN_CIMT_LIBSODIUM_XCHACHA20, "XCHACHA20", EN_CIFT_NONE},
+                {"xchacha20", EN_CIMT_LIBSODIUM_XCHACHA20, NULL, "XCHACHA20", EN_CIFT_NONE},
 #endif
-                {"salsa20", EN_CIMT_LIBSODIUM_SALSA20, "SALSA20", EN_CIFT_NONE},
+                {"salsa20", EN_CIMT_LIBSODIUM_SALSA20, NULL, "SALSA20", EN_CIFT_NONE},
 #ifdef crypto_stream_xsalsa20_KEYBYTES
-                {"xsalsa20", EN_CIMT_LIBSODIUM_XSALSA20, "XSALSA20", EN_CIFT_NONE},
+                {"xsalsa20", EN_CIMT_LIBSODIUM_XSALSA20, NULL, "XSALSA20", EN_CIFT_NONE},
 #endif
 
 #endif
 
-                {"aes-128-gcm", EN_CIMT_CIPHER, "AES-128-GCM", EN_CIFT_AEAD | EN_CIFT_VARIABLE_IV_LEN},
-                {"aes-192-gcm", EN_CIMT_CIPHER, "AES-192-GCM", EN_CIFT_AEAD | EN_CIFT_VARIABLE_IV_LEN},
-                {"aes-256-gcm", EN_CIMT_CIPHER, "AES-256-GCM", EN_CIFT_AEAD | EN_CIFT_VARIABLE_IV_LEN},
+                {"aes-128-gcm", EN_CIMT_CIPHER, NULL, "AES-128-GCM", EN_CIFT_AEAD | EN_CIFT_VARIABLE_IV_LEN},
+                {"aes-192-gcm", EN_CIMT_CIPHER, NULL, "AES-192-GCM", EN_CIFT_AEAD | EN_CIFT_VARIABLE_IV_LEN},
+                {"aes-256-gcm", EN_CIMT_CIPHER, NULL, "AES-256-GCM", EN_CIFT_AEAD | EN_CIFT_VARIABLE_IV_LEN},
 
 #if defined(CRYPTO_USE_CHACHA20_POLY1305_WITH_CIPHER)
-                {"chacha20-poly1305", // only available on openssl 1.1.0 and upper or boringssl
+                {"chacha20-poly1305-ietf", // only available on openssl 1.1.0 and upper or boringssl
                  EN_CIMT_CIPHER,
-                 "CHACHA20-POLY1305", // only available on later mbedtls version, @see https://github.com/ARMmbed/mbedtls/pull/485
+                 "chacha20-poly1305", "CHACHA20-POLY1305", // only available on later mbedtls version, @see https://github.com/ARMmbed/mbedtls/pull/485
                  EN_CIFT_AEAD | EN_CIFT_VARIABLE_IV_LEN},
 #endif
 
 #ifdef CRYPTO_USE_LIBSODIUM
-                {"chacha20-poly1305", EN_CIMT_LIBSODIUM_CHACHA20_POLY1305, "CHACHA20-POLY1305", EN_CIFT_AEAD},
-                {"chacha20-poly1305-ietf", EN_CIMT_LIBSODIUM_CHACHA20_POLY1305_IETF, "CHACHA20-POLY1305-IETF", EN_CIFT_AEAD},
+                {"chacha20-poly1305", EN_CIMT_LIBSODIUM_CHACHA20_POLY1305, NULL, "CHACHA20-POLY1305", EN_CIFT_AEAD},
+                {"chacha20-poly1305-ietf", EN_CIMT_LIBSODIUM_CHACHA20_POLY1305_IETF, NULL, "CHACHA20-POLY1305-IETF", EN_CIFT_AEAD},
 #ifdef crypto_aead_xchacha20poly1305_ietf_KEYBYTES
-                {"xchacha20-poly1305-ietf", EN_CIMT_LIBSODIUM_XCHACHA20_POLY1305_IETF, "XCHACHA20-POLY1305-IETF", EN_CIFT_AEAD},
+                {"xchacha20-poly1305-ietf", EN_CIMT_LIBSODIUM_XCHACHA20_POLY1305_IETF, NULL, "XCHACHA20-POLY1305-IETF", EN_CIFT_AEAD},
 #endif
 
 #endif
 
-                {NULL, EN_CIMT_INVALID, NULL, false}, // end
+                {NULL, EN_CIMT_INVALID, NULL, NULL, false}, // end
             };
 
             static const cipher_interface_info_t *get_cipher_interface_by_name(const char *name) {
@@ -1276,7 +1277,11 @@ namespace util {
             }
 
 #if defined(CRYPTO_USE_OPENSSL) || defined(CRYPTO_USE_LIBRESSL) || defined(CRYPTO_USE_BORINGSSL)
-            return EVP_get_cipherbyname(interface->name);
+            if (NULL == interface->openssl_name) {
+                return EVP_get_cipherbyname(interface->name);
+            } else {
+                return EVP_get_cipherbyname(interface->openssl_name);
+            }
 #elif defined(CRYPTO_USE_MBEDTLS)
             return mbedtls_cipher_info_from_string(interface->mbedtls_name);
 #endif
@@ -1316,10 +1321,6 @@ namespace util {
             static std::vector<std::string> ret;
             if (ret.empty()) {
                 for (size_t i = 0; NULL != details::supported_ciphers[i].name; ++i) {
-                    if (details::supported_ciphers[i].flags & EN_CIFT_AEAD) {
-                        continue;
-                    }
-
                     if (details::supported_ciphers[i].method < EN_CIMT_INNER) {
                         ret.push_back(details::supported_ciphers[i].name);
                         continue;
