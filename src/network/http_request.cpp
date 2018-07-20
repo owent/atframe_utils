@@ -369,7 +369,8 @@ namespace util {
 
         void http_request::set_opt_http_content_decoding(bool v) { set_opt_bool(CURLOPT_HTTP_CONTENT_DECODING, v); }
 
-        void http_request::set_opt_keepalive(time_t idle, time_t interval) {
+        bool http_request::set_opt_keepalive(time_t idle, time_t interval) {
+#if LIBCURL_VERSION_NUM >= 0x071900
             if (0 == idle && 0 == interval) {
                 set_opt_bool(CURLOPT_TCP_KEEPALIVE, false);
             } else {
@@ -378,6 +379,11 @@ namespace util {
 
             set_opt_long(CURLOPT_TCP_KEEPIDLE, idle);
             set_opt_long(CURLOPT_TCP_KEEPINTVL, interval);
+
+            return true;
+#else
+            return false;
+#endif
         }
 
         void http_request::set_opt_reuse_connection(bool v) {

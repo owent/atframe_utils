@@ -11,6 +11,21 @@
 
 #ifdef CRYPTO_USE_LIBSODIUM
 #include <sodium.h>
+
+#define LIBSODIUM_BLOCK_SIZE 64
+typedef uint64_t libsodium_counter_t;
+#define LIBSODIUM_COUNTER_SIZE sizeof(libsodium_counter_t)
+
+static inline libsodium_counter_t libsodium_get_block(const unsigned char *p) {
+    return ((uint32_t)(p)[0]) | (((uint32_t)(p)[1]) << 8) | (((uint32_t)p[2]) << 16) | (((uint32_t)(p)[3]) << 24);
+}
+
+static inline libsodium_counter_t libsodium_get_counter(const unsigned char *iv) {
+    uint32_t low  = libsodium_get_block(iv);
+    uint32_t high = libsodium_get_block(iv + 4);
+    return (((libsodium_counter_t)(high)) << 32) | low;
+}
+
 #endif
 
 /**
@@ -127,8 +142,8 @@ namespace util {
 
 #if defined(CRYPTO_USE_CHACHA20_WITH_CIPHER)
                 {"chacha20", // only available on openssl 1.1.0 and upper
-                 EN_CIMT_CIPHER,
-                 NULL, "CHACHA20", // only available on later mbedtls version, @see https://github.com/ARMmbed/mbedtls/pull/485
+                 EN_CIMT_CIPHER, NULL,
+                 "CHACHA20", // only available on later mbedtls version, @see https://github.com/ARMmbed/mbedtls/pull/485
                  EN_CIFT_NONE},
 #endif
 
@@ -151,8 +166,8 @@ namespace util {
 
 #if defined(CRYPTO_USE_CHACHA20_POLY1305_WITH_CIPHER)
                 {"chacha20-poly1305-ietf", // only available on openssl 1.1.0 and upper or boringssl
-                 EN_CIMT_CIPHER,
-                 "chacha20-poly1305", "CHACHA20-POLY1305", // only available on later mbedtls version, @see https://github.com/ARMmbed/mbedtls/pull/485
+                 EN_CIMT_CIPHER, "chacha20-poly1305",
+                 "CHACHA20-POLY1305", // only available on later mbedtls version, @see https://github.com/ARMmbed/mbedtls/pull/485
                  EN_CIFT_AEAD | EN_CIFT_VARIABLE_IV_LEN},
 #endif
 
@@ -464,19 +479,19 @@ namespace util {
 
 #ifdef CRYPTO_USE_LIBSODIUM
             case EN_CIMT_LIBSODIUM_CHACHA20:
-                return crypto_stream_chacha20_NONCEBYTES;
+                return LIBSODIUM_COUNTER_SIZE + crypto_stream_chacha20_NONCEBYTES;
             case EN_CIMT_LIBSODIUM_CHACHA20_IETF:
-                return crypto_stream_chacha20_ietf_NONCEBYTES;
+                return LIBSODIUM_COUNTER_SIZE + crypto_stream_chacha20_ietf_NONCEBYTES;
 
 #ifdef crypto_stream_xchacha20_NONCEBYTES
             case EN_CIMT_LIBSODIUM_XCHACHA20:
-                return crypto_stream_xchacha20_NONCEBYTES;
+                return LIBSODIUM_COUNTER_SIZE + crypto_stream_xchacha20_NONCEBYTES;
 #endif
 
             case EN_CIMT_LIBSODIUM_SALSA20:
-                return crypto_stream_salsa20_NONCEBYTES;
+                return LIBSODIUM_COUNTER_SIZE + crypto_stream_salsa20_NONCEBYTES;
             case EN_CIMT_LIBSODIUM_XSALSA20:
-                return crypto_stream_NONCEBYTES;
+                return LIBSODIUM_COUNTER_SIZE + crypto_stream_xsalsa20_NONCEBYTES;
             case EN_CIMT_LIBSODIUM_CHACHA20_POLY1305:
                 return crypto_aead_chacha20poly1305_NPUBBYTES;
             case EN_CIMT_LIBSODIUM_CHACHA20_POLY1305_IETF:
@@ -539,10 +554,10 @@ namespace util {
                 UTIL_CONFIG_STATIC_ASSERT(crypto_stream_salsa20_KEYBYTES <= sizeof(libsodium_context_t));
                 return crypto_stream_salsa20_KEYBYTES * 8;
             case EN_CIMT_LIBSODIUM_XSALSA20:
-                UTIL_CONFIG_STATIC_ASSERT(crypto_stream_KEYBYTES <= sizeof(libsodium_context_t));
-                return crypto_stream_KEYBYTES * 8;
+                UTIL_CONFIG_STATIC_ASSERT(crypto_stream_xsalsa20_KEYBYTES <= sizeof(libsodium_context_t));
+                return crypto_stream_xsalsa20_KEYBYTES * 8;
             case EN_CIMT_LIBSODIUM_CHACHA20_POLY1305:
-                UTIL_CONFIG_STATIC_ASSERT(crypto_stream_KEYBYTES <= sizeof(libsodium_context_t));
+                UTIL_CONFIG_STATIC_ASSERT(crypto_aead_chacha20poly1305_KEYBYTES <= sizeof(libsodium_context_t));
                 return crypto_aead_chacha20poly1305_KEYBYTES * 8;
             case EN_CIMT_LIBSODIUM_CHACHA20_POLY1305_IETF:
                 UTIL_CONFIG_STATIC_ASSERT(crypto_aead_chacha20poly1305_IETF_KEYBYTES <= sizeof(libsodium_context_t));
@@ -803,30 +818,35 @@ namespace util {
 
 #ifdef CRYPTO_USE_LIBSODIUM
             case EN_CIMT_LIBSODIUM_CHACHA20:
-                if ((last_errorno_ = crypto_stream_chacha20_xor(output, input, ilen, &iv_[0], libsodium_context_.key)) != 0) {
+                if ((last_errorno_ = crypto_stream_chacha20_xor_ic(output, input, ilen, &iv_[LIBSODIUM_COUNTER_SIZE],
+                                                                   libsodium_get_counter(&iv_[0]), libsodium_context_.key)) != 0) {
                     return error_code_t::LIBSODIUM_OPERATION;
                 }
                 return error_code_t::OK;
             case EN_CIMT_LIBSODIUM_CHACHA20_IETF:
-                if ((last_errorno_ = crypto_stream_chacha20_ietf_xor(output, input, ilen, &iv_[0], libsodium_context_.key)) != 0) {
+                if ((last_errorno_ = crypto_stream_chacha20_ietf_xor_ic(output, input, ilen, &iv_[LIBSODIUM_COUNTER_SIZE],
+                                                                        libsodium_get_counter(&iv_[0]), libsodium_context_.key)) != 0) {
                     return error_code_t::LIBSODIUM_OPERATION;
                 }
                 return error_code_t::OK;
 
 #ifdef crypto_stream_xchacha20_KEYBYTES
-                if ((last_errorno_ = crypto_stream_xchacha20_xor(output, input, ilen, &iv_[0], libsodium_context_.key)) != 0) {
+                if ((last_errorno_ = crypto_stream_xchacha20_xor_ic(output, input, ilen, &iv_[LIBSODIUM_COUNTER_SIZE],
+                                                                    libsodium_get_counter(&iv_[0]), libsodium_context_.key)) != 0) {
                     return error_code_t::LIBSODIUM_OPERATION;
                 }
                 return error_code_t::OK;
 #endif
 
             case EN_CIMT_LIBSODIUM_SALSA20:
-                if ((last_errorno_ = crypto_stream_salsa20_xor(output, input, ilen, &iv_[0], libsodium_context_.key)) != 0) {
+                if ((last_errorno_ = crypto_stream_salsa20_xor_ic(output, input, ilen, &iv_[LIBSODIUM_COUNTER_SIZE],
+                                                                  libsodium_get_counter(&iv_[0]), libsodium_context_.key)) != 0) {
                     return error_code_t::LIBSODIUM_OPERATION;
                 }
                 return error_code_t::OK;
             case EN_CIMT_LIBSODIUM_XSALSA20:
-                if ((last_errorno_ = crypto_stream_xor(output, input, ilen, &iv_[0], libsodium_context_.key)) != 0) {
+                if ((last_errorno_ = crypto_stream_xsalsa20_xor_ic(output, input, ilen, &iv_[LIBSODIUM_COUNTER_SIZE],
+                                                                   libsodium_get_counter(&iv_[0]), libsodium_context_.key)) != 0) {
                     return error_code_t::LIBSODIUM_OPERATION;
                 }
                 return error_code_t::OK;
@@ -914,30 +934,35 @@ namespace util {
 
 #ifdef CRYPTO_USE_LIBSODIUM
             case EN_CIMT_LIBSODIUM_CHACHA20:
-                if ((last_errorno_ = crypto_stream_chacha20_xor(output, input, ilen, &iv_[0], libsodium_context_.key)) != 0) {
+                if ((last_errorno_ = crypto_stream_chacha20_xor_ic(output, input, ilen, &iv_[LIBSODIUM_COUNTER_SIZE],
+                                                                   libsodium_get_counter(&iv_[0]), libsodium_context_.key)) != 0) {
                     return error_code_t::LIBSODIUM_OPERATION;
                 }
                 return error_code_t::OK;
             case EN_CIMT_LIBSODIUM_CHACHA20_IETF:
-                if ((last_errorno_ = crypto_stream_chacha20_ietf_xor(output, input, ilen, &iv_[0], libsodium_context_.key)) != 0) {
+                if ((last_errorno_ = crypto_stream_chacha20_ietf_xor_ic(output, input, ilen, &iv_[LIBSODIUM_COUNTER_SIZE],
+                                                                        libsodium_get_counter(&iv_[0]), libsodium_context_.key)) != 0) {
                     return error_code_t::LIBSODIUM_OPERATION;
                 }
                 return error_code_t::OK;
 
 #ifdef crypto_stream_xchacha20_KEYBYTES
-                if ((last_errorno_ = crypto_stream_xchacha20_xor(output, input, ilen, &iv_[0], libsodium_context_.key)) != 0) {
+                if ((last_errorno_ = crypto_stream_xchacha20_xor_ic(output, input, ilen, &iv_[LIBSODIUM_COUNTER_SIZE],
+                                                                    libsodium_get_counter(&iv_[0]), libsodium_context_.key)) != 0) {
                     return error_code_t::LIBSODIUM_OPERATION;
                 }
                 return error_code_t::OK;
 #endif
 
             case EN_CIMT_LIBSODIUM_SALSA20:
-                if ((last_errorno_ = crypto_stream_salsa20_xor(output, input, ilen, &iv_[0], libsodium_context_.key)) != 0) {
+                if ((last_errorno_ = crypto_stream_salsa20_xor_ic(output, input, ilen, &iv_[LIBSODIUM_COUNTER_SIZE],
+                                                                  libsodium_get_counter(&iv_[0]), libsodium_context_.key)) != 0) {
                     return error_code_t::LIBSODIUM_OPERATION;
                 }
                 return error_code_t::OK;
             case EN_CIMT_LIBSODIUM_XSALSA20:
-                if ((last_errorno_ = crypto_stream_xor(output, input, ilen, &iv_[0], libsodium_context_.key)) != 0) {
+                if ((last_errorno_ = crypto_stream_xsalsa20_xor_ic(output, input, ilen, &iv_[LIBSODIUM_COUNTER_SIZE],
+                                                                   libsodium_get_counter(&iv_[0]), libsodium_context_.key)) != 0) {
                     return error_code_t::LIBSODIUM_OPERATION;
                 }
                 return error_code_t::OK;

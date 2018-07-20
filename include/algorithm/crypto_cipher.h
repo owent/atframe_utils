@@ -149,6 +149,8 @@ namespace util {
              * @brief               selibsodium_context_t initialization vector
              * @param iv            iv value
              * @param iv_len        length of iv, in bytes, can not be greater than 16 when using mbedtls
+             * @note                if using chacha20,chacha20-ietf,xchacha20,salsa20 or xsalsa20, the first 
+             *                      8 bytes is the counter, and the rest is the nonce.
              * @return              0 or error code less than 0
              */
             int set_iv(const unsigned char *iv, size_t iv_len);

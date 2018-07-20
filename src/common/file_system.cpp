@@ -42,6 +42,10 @@
 
 #endif
 
+#if (defined(GNUC) || defined(GNUG)) && !(defined(clang) && defined(apple_build_version)) && (GNUC * 100 + GNUC_MINOR * 10) >= 800
+#pragma GCC diagnostic ignored "-Wstringop-truncation"
+#endif
+
 namespace util {
     bool file_system::get_file_content(std::string &out, const char *file_path, bool is_binary) {
         FILE *f = NULL;

@@ -271,7 +271,14 @@ namespace util {
 
             void set_opt_http_content_decoding(bool v);
 
-            void set_opt_keepalive(time_t idle, time_t interval);
+            /**
+             * @brief set keepalive option for libcurl
+             * @param idle should be greater than interval @see CURLOPT_TCP_KEEPIDLE
+             * @param interval @see CURLOPT_TCP_KEEPINTVL
+             * @note set idle and interval into 0 to disable keepalive
+             * @return true if it's supported
+             */
+            bool set_opt_keepalive(time_t idle, time_t interval);
 
             void set_opt_timeout(time_t timeout_ms);
 
