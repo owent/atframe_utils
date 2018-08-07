@@ -89,7 +89,7 @@ namespace util {
             // }
 
             // 虚拟文件ftell(f)会拿不到长度，只能按流来读
-            char buf[4096]; // 4K for each block
+            char              buf[4096]; // 4K for each block
             std::stringstream ss;
             while (true) {
                 size_t read_sz = fread(buf, 1, sizeof(buf), f);
@@ -120,7 +120,7 @@ namespace util {
 #endif
 
         char *saveptr = NULL;
-        char *token = SAFE_STRTOK_S(opr_path, "\\/", &saveptr);
+        char *token   = SAFE_STRTOK_S(opr_path, "\\/", &saveptr);
         while (NULL != token) {
             if (0 != strlen(token)) {
 
@@ -167,7 +167,7 @@ namespace util {
     bool file_system::mkdir(const char *dir_path, bool recursion, int mode) {
 #ifndef UTIL_FS_WINDOWS_API
         if (0 == mode) {
-            mode = S_IRWXU | S_IRWXG | S_IRGRP | S_IWGRP | S_IROTH;
+            mode = S_IRWXU | S_IRWXG | S_IRWXO;
         }
 #endif
         if (!recursion) {
@@ -243,7 +243,7 @@ namespace util {
 
     std::string file_system::get_cwd() {
         std::string ret;
-        char *res = NULL;
+        char *      res = NULL;
 #ifdef UTIL_FS_WINDOWS_API
         res = _getcwd(NULL, 0);
 #else
@@ -304,7 +304,7 @@ namespace util {
     }
 
     int file_system::scan_dir(const char *dir_path, std::list<std::string> &out, int options) {
-        int ret = 0;
+        int         ret      = 0;
         std::string base_dir = dir_path ? dir_path : "";
 
         // 转为绝对路径
@@ -323,7 +323,7 @@ namespace util {
         }
 
         _finddata_t child_node;
-        intptr_t cache = _findfirst((base_dir + "*").c_str(), &child_node);
+        intptr_t    cache = _findfirst((base_dir + "*").c_str(), &child_node);
 
         if (-1 == cache) {
             return errno;
@@ -336,7 +336,7 @@ namespace util {
             child_path = base_dir;
             child_path += child_node.name;
 
-            int accept = 0;
+            int  accept  = 0;
             bool is_link = false;
 
             // Windows 版本暂不支持软链接
@@ -354,7 +354,7 @@ namespace util {
 
             DWORD flag = GetFileAttributes(VC_TEXT(child_path.c_str()));
             if (FILE_ATTRIBUTE_REPARSE_POINT & flag) {
-                accept = options & dir_opt_t::EN_DOT_TLNK;
+                accept  = options & dir_opt_t::EN_DOT_TLNK;
                 is_link = true;
             }
 
