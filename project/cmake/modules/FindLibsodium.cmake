@@ -18,9 +18,6 @@
 #   Libsodium_INCLUDE_DIRS      - where to find uv.h, etc.
 #   Libsodium_LIBRARIES         - List of all libraries when using mbemtls.
 #   Libsodium_FOUND             - True if mbemtls found.
-#   Libsodium_TLS_LIBRARIES     - List of tls libraries when using mbemtls.
-#   Libsodium_CRYPTO_LIBRARIES  - List of crypto libraries when using mbemtls.
-#   Libsodium_X509_LIBRARIES    - List of x509 libraries when using mbemtls.
 #
 # ::
 #

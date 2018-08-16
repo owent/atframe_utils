@@ -34,6 +34,31 @@ source_group_by_dir(HEADER_LIST)
 source_group_by_dir(SRC_LIST)
 add_library(${PROJECT_LIB_LINK} ${HEADER_LIST} ${SRC_LIST})
 
+
+if (CRYPTO_USE_OPENSSL OR CRYPTO_USE_LIBRESSL OR CRYPTO_USE_BORINGSSL)
+    find_package(OpenSSL)
+    list(APPEND PROJECT_DEP_LINK_NAMES ${OPENSSL_CRYPTO_LIBRARY})
+    if(UNIX)
+        find_library(TRY_FIND_DL dl)
+        if (TRY_FIND_DL)
+            list(APPEND PROJECT_DEP_LINK_NAMES dl)
+        endif()
+    endif()
+elseif (CRYPTO_USE_MBEDTLS)
+    find_package(MbedTLS)
+    list(APPEND PROJECT_DEP_LINK_NAMES ${MbedTLS_CRYPTO_LIBRARIES})
+endif()
+
+if(LIBSODIUM_FOUND)
+    list(APPEND PROJECT_DEP_LINK_NAMES ${Libsodium_LIBRARIES})
+endif()
+
+if (LOG_STACKTRACE_USING_LIBUNWIND)
+    list(APPEND PROJECT_DEP_LINK_NAMES ${Libunwind_LIBRARIES})
+endif()
+
+target_link_libraries(${PROJECT_LIB_LINK} ${PROJECT_DEP_LINK_NAMES})
+
 configure_file(
     "${PROJECT_ALL_INCLUDE_DIR}/config/atframe_utils_build_feature.h.in"
     "${PROJECT_ALL_INCLUDE_DIR}/config/atframe_utils_build_feature.h"
