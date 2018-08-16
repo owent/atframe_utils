@@ -24,7 +24,7 @@ namespace util {
     namespace network {
         namespace detail {
             /* initialize custom header list (stating that Expect: 100-continue is not wanted */
-            static const char custom_no_expect_header[] = "Expect:";
+            static const char custom_no_expect_header[]     = "Expect:";
             static const char content_type_multipart_post[] = "Content-Type: application/x-www-form-urlencoded";
             // static const char content_type_multipart_form_data[] = "Content-Type: multipart/form-data";
         } // namespace detail
@@ -51,12 +51,12 @@ namespace util {
 
         http_request::http_request(curl_m_bind_t *curl_multi)
             : timeout_ms_(0), bind_m_(curl_multi), request_(NULL), flags_(0), response_code_(0), last_error_code_(0), priv_data_(NULL) {
-            http_form_.begin = NULL;
-            http_form_.end = NULL;
-            http_form_.headerlist = NULL;
-            http_form_.posted_size = 0;
+            http_form_.begin         = NULL;
+            http_form_.end           = NULL;
+            http_form_.headerlist    = NULL;
+            http_form_.posted_size   = 0;
             http_form_.uploaded_file = NULL;
-            http_form_.flags = 0;
+            http_form_.flags         = 0;
             set_user_agent("libcurl");
         }
 
@@ -165,7 +165,7 @@ namespace util {
 
         void http_request::remove_curl_request() {
             CURL *req = request_;
-            request_ = NULL;
+            request_  = NULL;
             if (NULL != req) {
                 if (NULL != bind_m_ && CHECK_FLAG(flags_, flag_t::EN_FT_CURL_MULTI_HANDLE)) {
                     last_error_code_ = curl_multi_remove_handle(bind_m_->curl_multi, req);
@@ -178,7 +178,7 @@ namespace util {
             if (NULL != http_form_.begin) {
                 curl_formfree(http_form_.begin);
                 http_form_.begin = NULL;
-                http_form_.end = NULL;
+                http_form_.end   = NULL;
                 http_form_.qs_fields.clear();
             }
 
@@ -231,7 +231,7 @@ namespace util {
 
         const std::string &http_request::get_user_agent() const { return useragent_; }
 
-        std::string &http_request::post_data() { return post_data_; }
+        std::string &      http_request::post_data() { return post_data_; }
         const std::string &http_request::post_data() const { return post_data_; }
 
         int http_request::get_response_code() const {
@@ -424,7 +424,7 @@ namespace util {
         }
 
         const http_request::on_progress_fn_t &http_request::get_on_progress() const { return on_progress_fn_; }
-        void http_request::set_on_progress(on_progress_fn_t fn) {
+        void                                  http_request::set_on_progress(on_progress_fn_t fn) {
             on_progress_fn_ = fn;
 
             CURL *req = mutable_request();
@@ -444,7 +444,7 @@ namespace util {
         }
 
         const http_request::on_header_fn_t &http_request::get_on_header() const { return on_header_fn_; }
-        void http_request::set_on_header(on_header_fn_t fn) {
+        void                                http_request::set_on_header(on_header_fn_t fn) {
             on_header_fn_ = fn;
 
             CURL *req = mutable_request();
@@ -462,16 +462,16 @@ namespace util {
         }
 
         const http_request::on_success_fn_t &http_request::get_on_success() const { return on_success_fn_; }
-        void http_request::set_on_success(on_success_fn_t fn) { on_success_fn_ = fn; }
+        void                                 http_request::set_on_success(on_success_fn_t fn) { on_success_fn_ = fn; }
 
         const http_request::on_error_fn_t &http_request::get_on_error() const { return on_error_fn_; }
-        void http_request::set_on_error(on_error_fn_t fn) { on_error_fn_ = fn; }
+        void                               http_request::set_on_error(on_error_fn_t fn) { on_error_fn_ = fn; }
 
         const http_request::on_complete_fn_t &http_request::get_on_complete() const { return on_complete_fn_; }
-        void http_request::set_on_complete(on_complete_fn_t fn) { on_complete_fn_ = fn; }
+        void                                  http_request::set_on_complete(on_complete_fn_t fn) { on_complete_fn_ = fn; }
 
         const http_request::on_write_fn_t &http_request::get_on_write() const { return on_write_fn_; }
-        void http_request::set_on_write(on_write_fn_t fn) { on_write_fn_ = fn; }
+        void                               http_request::set_on_write(on_write_fn_t fn) { on_write_fn_ = fn; }
 
         const http_request::on_verbose_fn_t &http_request::get_on_verbose() const { return on_verbose_fn_; }
 
@@ -532,7 +532,7 @@ namespace util {
                 curl_easy_setopt(request_, CURLOPT_WRITEDATA, this);
                 curl_easy_setopt(request_, CURLOPT_WRITEFUNCTION, curl_callback_on_write);
                 curl_easy_setopt(request_, CURLOPT_ERRORBUFFER, error_buffer_);
-                error_buffer_[0] = 0;
+                error_buffer_[0]                         = 0;
                 error_buffer_[sizeof(error_buffer_) - 1] = 0;
             }
 
@@ -611,7 +611,7 @@ namespace util {
                 return ret;
             }
 
-            ret->sockfd = sockfd;
+            ret->sockfd     = sockfd;
             ret->bind_multi = req->bind_m_;
             uv_poll_init_socket(req->bind_m_->ev_loop, &ret->poll_object, sockfd);
             ret->poll_object.data = ret;
@@ -623,7 +623,7 @@ namespace util {
 
         void http_request::check_multi_info(CURLM *curl_handle) {
             CURLMsg *message;
-            int pending;
+            int      pending;
 
             while ((message = curl_multi_info_read(curl_handle, &pending))) {
                 switch (message->msg) {
@@ -634,7 +634,7 @@ namespace util {
 
                     if (NULL != req) {
                         http_request::ptr_t req_p = req->shared_from_this();
-                        req->last_error_code_ = message->data.result;
+                        req->last_error_code_     = message->data.result;
                         // this may cause req not available any more
                         req_p->finish_req_rsp();
 
@@ -677,8 +677,8 @@ namespace util {
             manager->ev_timeout.data = manager.get();
 
             int ret = curl_multi_setopt(manager->curl_multi, CURLMOPT_SOCKETFUNCTION, http_request::curl_callback_handle_socket);
-            ret = (CURLE_OK != ret) || curl_multi_setopt(manager->curl_multi, CURLMOPT_SOCKETDATA, manager.get());
-            ret = (CURLE_OK != ret) ||
+            ret     = (CURLE_OK != ret) || curl_multi_setopt(manager->curl_multi, CURLMOPT_SOCKETDATA, manager.get());
+            ret     = (CURLE_OK != ret) ||
                   curl_multi_setopt(manager->curl_multi, CURLMOPT_TIMERFUNCTION, http_request::curl_callback_start_timer);
             ret = (CURLE_OK != ret) || curl_multi_setopt(manager->curl_multi, CURLMOPT_TIMERDATA, manager.get());
 
@@ -693,7 +693,7 @@ namespace util {
             assert(manager->ev_loop);
             assert(manager->curl_multi);
 
-            int ret = curl_multi_cleanup(manager->curl_multi);
+            int ret             = curl_multi_cleanup(manager->curl_multi);
             manager->curl_multi = NULL;
 
             // hold self in case of timer in libuv invalid
@@ -756,10 +756,6 @@ namespace util {
                 flags |= CURL_CSELECT_OUT;
             }
 
-            if (0 == flags) {
-                return;
-            }
-
             curl_multi_socket_action(context->bind_multi->curl_multi, context->sockfd, flags, &running_handles);
             check_multi_info(context->bind_multi->curl_multi);
         }
@@ -788,7 +784,7 @@ namespace util {
                         assert(req->bind_m_);
                         assert(req->bind_m_->curl_multi);
 
-                        context = malloc_poll(req, s);
+                        context               = malloc_poll(req, s);
                         req->last_error_code_ = curl_multi_assign(req->bind_m_->curl_multi, s, context);
                     }
                 }
@@ -836,8 +832,8 @@ namespace util {
                 return 0;
             }
 
-            const char *data = ptr;
-            size_t data_len = size * nmemb;
+            const char *data     = ptr;
+            size_t      data_len = size * nmemb;
             if (self->on_write_fn_) {
                 self->on_write_fn_(*self, data, data_len, data, data_len);
             }
@@ -858,9 +854,9 @@ namespace util {
 
             progress_t progress;
             progress.dltotal = dltotal;
-            progress.dlnow = dlnow;
+            progress.dlnow   = dlnow;
             progress.ultotal = ultotal;
-            progress.ulnow = ulnow;
+            progress.ulnow   = ulnow;
 
             return self->on_progress_fn_(*self, progress);
         }
@@ -904,9 +900,9 @@ namespace util {
                 --nwrite;
             }
 
-            const char *key = buffer;
-            size_t keylen = 0;
-            const char *val = NULL;
+            const char *key    = buffer;
+            size_t      keylen = 0;
+            const char *val    = NULL;
 
             for (; keylen < nwrite; ++keylen) {
                 if (':' == key[keylen]) {
