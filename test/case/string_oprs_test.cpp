@@ -56,3 +56,24 @@ CASE_TEST(tquerystring, encode_uri_utf8) {
 
     CASE_EXPECT_EQ("\xe4\xbd\xa0\xe5\xa5\xbd", util::uri::decode_uri_component("%E4%BD%A0%E5%A5%BD"));
 }
+
+
+CASE_TEST(string_oprs, trim) {
+    const char *test_origin           = "  \t \n \rtrim done\t\n";
+    const char *test_after_trim_left  = "trim done\t\n";
+    const char *test_after_trim_right = "  \t \n \rtrim done";
+    const char *test_after_trim_all   = "trim done";
+
+    std::pair<const char *, size_t> trim_left_res  = util::string::trim(test_origin, 0, true, false);
+    std::pair<const char *, size_t> trim_right_res = util::string::trim(test_origin, 0, false, true);
+    std::pair<const char *, size_t> trim_all_res   = util::string::trim(test_origin, 0);
+
+    CASE_EXPECT_EQ(0, UTIL_STRFUNC_STRNCMP(trim_left_res.first, test_after_trim_left, trim_left_res.second));
+    CASE_EXPECT_EQ(strlen(test_after_trim_left), trim_left_res.second);
+
+    CASE_EXPECT_EQ(0, UTIL_STRFUNC_STRNCMP(trim_right_res.first, test_after_trim_right, trim_right_res.second));
+    CASE_EXPECT_EQ(strlen(test_after_trim_right), trim_right_res.second);
+
+    CASE_EXPECT_EQ(0, UTIL_STRFUNC_STRNCMP(trim_all_res.first, test_after_trim_all, trim_all_res.second));
+    CASE_EXPECT_EQ(strlen(test_after_trim_all), trim_all_res.second);
+}

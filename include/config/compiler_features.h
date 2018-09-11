@@ -637,6 +637,8 @@
 
 #  if defined(UTIL_CONFIG_COMPILER_CXX_NULLPTR) && UTIL_CONFIG_COMPILER_CXX_NULLPTR
 #    define UTIL_CONFIG_NULLPTR nullptr
+#  elif UTIL_CONFIG_COMPILER_IS_GNU
+#    define UTIL_CONFIG_NULLPTR __null
 #  else
 #    define UTIL_CONFIG_NULLPTR 0
 #  endif

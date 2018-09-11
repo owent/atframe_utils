@@ -25,6 +25,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <ostream>
+#include <utility>
 
 
 #if defined(_MSC_VER) && _MSC_VER >= 1600
@@ -87,6 +88,61 @@ namespace util {
             }
 
             return c;
+        }
+
+        /**
+         * @brief 是否是空白字符
+         * @param c 字符
+         * @return 如果是空白字符，返回true，否则返回false
+         */
+        template <typename TCH>
+        inline bool is_space(const TCH &c) {
+            return ' ' == c || '\t' == c || '\r' == c || '\n' == c;
+        }
+
+        /**
+         * @brief 移除两边或一边的空白字符
+         * @param str_begin 字符串起始地址
+         * @param sz 字符串长度，填0则会自动判定长度
+         * @param trim_left 是否移除左边的空白字符
+         * @param trim_right 是否移除右边的空白字符
+         * @return 返回子串的起始地址和长度
+         * @note 注意，返回的字符串是源的子串，共享地址。并且不保证以0结尾，需要用返回的长度来判定子串长度
+         */
+        template <typename TCH>
+        inline std::pair<const TCH *, size_t> trim(const TCH *str_begin, size_t sz, bool trim_left = true, bool trim_right = true) {
+            if (0 == sz) {
+                const TCH *str_end = str_begin;
+                while (str_end && *str_end) {
+                    ++str_end;
+                }
+
+                sz = str_end - str_begin;
+            }
+
+            if (trim_left && str_begin) {
+                while (*str_begin && sz > 0) {
+                    if (!is_space(*str_begin)) {
+                        break;
+                    }
+
+                    --sz;
+                    ++str_begin;
+                }
+            }
+
+            size_t sub_str_sz = sz;
+            if (trim_right && str_begin) {
+                while (sub_str_sz > 0) {
+                    if (is_space(str_begin[sub_str_sz - 1])) {
+                        --sub_str_sz;
+                    } else {
+                        break;
+                    }
+                }
+            }
+
+            return std::make_pair(str_begin, sub_str_sz);
         }
 
         /**
@@ -198,7 +254,7 @@ namespace util {
         template <typename TCh>
         void serialization(const void *src, size_t ss, TCh *out, size_t &os) {
             const TCh *cs = reinterpret_cast<const TCh *>(src);
-            size_t i, j;
+            size_t     i, j;
             for (i = 0, j = 0; i < ss && j < os; ++i) {
                 if (cs[i] >= 32 && cs[i] < 127) {
                     out[j] = cs[i];
@@ -224,7 +280,7 @@ namespace util {
         template <typename Elem, typename Traits>
         void serialization(const void *src, size_t ss, std::basic_ostream<Elem, Traits> &out) {
             const Elem *cs = reinterpret_cast<const Elem *>(src);
-            size_t i;
+            size_t      i;
             for (i = 0; i < ss; ++i) {
                 if (cs[i] >= 32 && cs[i] < 127) {
                     out.put(cs[i]);
@@ -246,7 +302,7 @@ namespace util {
         template <typename TCh>
         void dumphex(const void *src, size_t ss, TCh *out, bool upper_case = false) {
             const unsigned char *cs = reinterpret_cast<const unsigned char *>(src);
-            size_t i;
+            size_t               i;
             for (i = 0; i < ss; ++i) {
                 hex<TCh, unsigned char>(&out[i << 1], cs[i], upper_case);
             }
@@ -262,8 +318,8 @@ namespace util {
         template <typename Elem, typename Traits>
         void dumphex(const void *src, size_t ss, std::basic_ostream<Elem, Traits> &out, bool upper_case = false) {
             const unsigned char *cs = reinterpret_cast<const unsigned char *>(src);
-            size_t i;
-            Elem tmp[2];
+            size_t               i;
+            Elem                 tmp[2];
             for (i = 0; i < ss; ++i) {
                 hex<Elem, unsigned char>(tmp, cs[i], upper_case);
                 out.write(tmp, 2);
