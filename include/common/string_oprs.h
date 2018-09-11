@@ -25,6 +25,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <ostream>
+#include <string>
 #include <utility>
 
 
@@ -342,6 +343,16 @@ namespace util {
          * @return 如果l<r则返回-1，如果l>r则返回1，如果l==r则返回0
          */
         int version_compare(const char *l, const char *r);
+
+        /**
+         * @brief 版本号字符串标准化，把版本号字符串处理为以十进制表示并以.分隔的形式。移除所有无效字符
+         * @param v 版本号字符串(a.b.c.d...)
+         * @note 版本号字符串可以是十进制数字或0x开头的十六进制或\开头的八进制,且每个数字必须在int64_t以内
+         * @note 返回的版本号字符串会移除末尾的.0，即 1.2.0.0和1.2...都会输出1.2
+         * @note 空的版本号字符串会返回0
+         * @return 返回标准化的版本号字符
+         */
+        std::string version_normalize(const char *v);
     } // namespace string
 } // namespace util
 
