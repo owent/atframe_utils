@@ -66,10 +66,13 @@ namespace util {
                 ss << n;
             }
 
-            std::string ret = ss.str();
-            while (ret.size() > 2 && ret[ret.size() - 2] == '.' && ret[ret.size() - 1] == '0') {
-                ret.pop_back();
-                ret.pop_back();
+            std::string ret    = ss.str();
+            size_t      resize = ret.size();
+            while (resize > 2 && ret[resize - 2] == '.' && ret[resize - 1] == '0') {
+                resize -= 2;
+            }
+            if (resize != ret.size()) {
+                ret.resize(resize);
             }
 
             if (ret.empty()) {
