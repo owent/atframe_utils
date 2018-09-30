@@ -5,7 +5,7 @@
  * Licensed under the MIT licenses.
  * @version 1.0
  * @author OWenT
- * @date 2013年8月5日
+ * @date 2018年09月30日
  *
  * @history
  *
@@ -16,8 +16,9 @@
 
 #pragma once
 
-#include <stdint.h>
 #include <ctime>
+#include <stdint.h>
+
 
 #include <cstddef>
 #include <limits>
@@ -25,6 +26,7 @@
 
 #include "random_mt_core.h"
 #include "random_xor_combine_core.h"
+#include "random_xoshiro_core.h"
 
 namespace util {
     namespace random {
@@ -34,7 +36,7 @@ namespace util {
         template <typename CoreType>
         class random_manager_wrapper {
         public:
-            typedef CoreType core_type;
+            typedef CoreType                        core_type;
             typedef typename core_type::result_type result_type;
 
         private:
@@ -44,7 +46,7 @@ namespace util {
             random_manager_wrapper() {}
             random_manager_wrapper(result_type rd_seed) : core_(rd_seed) {}
 
-            inline core_type &get_core() { return core_; }
+            inline core_type &      get_core() { return core_; }
             inline const core_type &get_core() const { return core_; }
 
             /**
@@ -94,22 +96,37 @@ namespace util {
         };
 
         // ============== 随机数生成器 - 梅森旋转算法(STL 标准算法) ==============
-        typedef random_manager_wrapper<core::mersenne_twister<uint32_t, 351, 175, 19, 0xccab8ee7, 11, 0xffffffff, 7, 0x31b6ab00, 15,
-                                                              0xffe50000, 17, 1812433253> > mt11213b;
+        typedef random_manager_wrapper<
+            core::mersenne_twister<uint32_t, 351, 175, 19, 0xccab8ee7, 11, 0xffffffff, 7, 0x31b6ab00, 15, 0xffe50000, 17, 1812433253> >
+            mt11213b;
 
-        typedef random_manager_wrapper<core::mersenne_twister<uint32_t, 624, 397, 31, 0x9908b0df, 11, 0xffffffff, 7, 0x9d2c5680, 15,
-                                                              0xefc60000, 18, 1812433253> > mt19937;
+        typedef random_manager_wrapper<
+            core::mersenne_twister<uint32_t, 624, 397, 31, 0x9908b0df, 11, 0xffffffff, 7, 0x9d2c5680, 15, 0xefc60000, 18, 1812433253> >
+            mt19937;
 
         typedef random_manager_wrapper<
             core::mersenne_twister<uint64_t, 312, 156, 31, 0xb5026f5aa96619e9ULL, 29, 0x5555555555555555ULL, 17, 0x71d67fffeda60000ULL, 37,
-                                   0xfff7eee000000000ULL, 43, 6364136223846793005ULL> > mt19937_64;
+                                   0xfff7eee000000000ULL, 43, 6364136223846793005ULL> >
+            mt19937_64;
 
         // ============== 随机数生成器 - taus 算法(比梅森旋转算法消耗更少的内存，但是循环节更小) ==============
         typedef random_manager_wrapper<
             core::xor_combine_engine<core::xor_combine_engine<core::linear_feedback_shift_engine<uint32_t, 32, 31, 13, 12>, 0,
                                                               core::linear_feedback_shift_engine<uint32_t, 32, 29, 2, 4>, 0>,
-                                     0, core::linear_feedback_shift_engine<uint32_t, 32, 28, 3, 17>, 0> > taus88;
-    }
-}
+                                     0, core::linear_feedback_shift_engine<uint32_t, 32, 28, 3, 17>, 0> >
+            taus88;
+
+        // ============== 随机数生成器 - xoshiro 算法(比梅森旋转算法消耗更少的内存，但是循环节更小，随机性比taus好) ==============
+        // @see http://xoshiro.di.unimi.it
+        // 循环节： 2^128 − 1
+        typedef random_manager_wrapper<core::xoshinro_engine_128<false> > xoroshiro128_starstar;
+        // 循环节： 2^128 − 1，少一次旋转，更快一点点
+        typedef random_manager_wrapper<core::xoshinro_engine_128<true> > xoroshiro128_plus;
+        // 循环节： 2^256 − 1
+        typedef random_manager_wrapper<core::xoshinro_engine_256<false> > xoshiro256_starstar;
+        // 循环节： 2^256 − 1，少一次旋转，更快一点点
+        typedef random_manager_wrapper<core::xoshinro_engine_256<true> > xoshiro256_plus;
+    } // namespace random
+} // namespace util
 
 #endif /* _UTIL_RANDOM_GENERATOR_H_ */
