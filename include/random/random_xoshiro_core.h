@@ -44,22 +44,22 @@ namespace util {
                     return (x << k) | (x >> ((sizeof(result_type) * 8) - static_cast<result_type>(k)));
                 }
 
-                template <bool is_plus>
-                inline result_type next_init();
+                template <class, bool>
+                struct next_init;
 
-                template <>
-                inline result_type next_init<true>() {
-                    return xoshinro_seed_[0] + xoshinro_seed_[3];
-                }
+                template <class T>
+                struct next_init<T, true> {
+                    static inline result_type call(seed_type &s) { return s[0] + s[3]; }
+                };
 
-                template <>
-                inline result_type next_init<false>() {
-                    return rotl(xoshinro_seed_[iidx] * 5, 7) * 9;
-                }
+                template <class T>
+                struct next_init<T, false> {
+                    static inline result_type call(seed_type &s) { return rotl(s[iidx] * 5, 7) * 9; }
+                };
 
             protected:
                 result_type next() {
-                    const result_type ret = next_init<is_plus>();
+                    const result_type ret = next_init<UIntType, is_plus>::call(xoshinro_seed_);
                     const result_type t   = xoshinro_seed_[1] << n1;
 
                     xoshinro_seed_[2] ^= xoshinro_seed_[0];
@@ -73,13 +73,13 @@ namespace util {
                     return ret;
                 }
 
-                void jump(const result_type JUMP[4]) {
+                void jump(const seed_type &JUMP) {
                     result_type s0 = 0;
                     result_type s1 = 0;
                     result_type s2 = 0;
                     result_type s3 = 0;
-                    for (int i = 0; i < sizeof(JUMP) / sizeof(JUMP[0]); i++) {
-                        for (int b = 0; b < sizeof(result_type) * 8; b++) {
+                    for (size_t i = 0; i < sizeof(JUMP) / sizeof(JUMP[0]); i++) {
+                        for (size_t b = 0; b < sizeof(result_type) * 8; b++) {
                             if (JUMP[i] & result_type(1) << b) {
                                 s0 ^= xoshinro_seed_[0];
                                 s1 ^= xoshinro_seed_[1];
@@ -113,19 +113,14 @@ namespace util {
 
                 void init_seed(result_type s) {
                     xoshinro_seed_[0] = s;
-                    xoshinro_seed_[1] = s;
-                    xoshinro_seed_[2] = s;
-                    xoshinro_seed_[3] = s;
+                    xoshinro_seed_[1] = 0xff;
+                    xoshinro_seed_[2] = 0;
+                    xoshinro_seed_[3] = 0;
 
-                    result_type s0 = next();
-                    result_type s1 = next();
-                    result_type s2 = next();
-                    result_type s3 = next();
-
-                    xoshinro_seed_[2] = s0;
-                    xoshinro_seed_[3] = s1;
-                    xoshinro_seed_[1] = s2;
-                    xoshinro_seed_[0] = s3;
+                    // just like in lua 5.4
+                    for (int i = 0; i < 16; ++i) {
+                        next();
+                    }
                 }
 
                 template <class It>
@@ -138,6 +133,11 @@ namespace util {
                         } else {
                             xoshinro_seed_[i] = 0;
                         }
+                    }
+
+                    // just like in lua 5.4
+                    for (int i = 0; i < 16; ++i) {
+                        next();
                     }
                 }
 
