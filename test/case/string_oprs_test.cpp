@@ -101,3 +101,40 @@ CASE_TEST(string_oprs, trim) {
     CASE_EXPECT_EQ(0, UTIL_STRFUNC_STRNCMP(trim_all_res.first, test_after_trim_all, trim_all_res.second));
     CASE_EXPECT_EQ(strlen(test_after_trim_all), trim_all_res.second);
 }
+
+
+CASE_TEST(string_oprs, reverse) {
+    char t1[] = "abcdefg";
+    char t2[] = "abcdefg";
+
+    util::string::reverse(t1, NULL);
+    util::string::reverse(t2, t2 + 7);
+
+    CASE_EXPECT_EQ(t1, "gfedcba");
+    CASE_EXPECT_EQ(t2, "gfedcba");
+}
+
+
+CASE_TEST(string_oprs, int2str) {
+    char buffer[32];
+
+    CASE_EXPECT_EQ(9, util::string::int2str(buffer, 9, 123456789U);
+    buffer[9] = 0;
+    CASE_EXPECT_EQ("123456789", buffer);
+
+    CASE_EXPECT_EQ(10, util::string::int2str(buffer, sizeof(buffer), -123456789);
+    buffer[10] = 0;
+    CASE_EXPECT_EQ("-123456789", buffer);
+
+    CASE_EXPECT_EQ(18, util::string::int2str(buffer, sizeof(buffer), 123456789123456789ULL);
+    buffer[18] = 0;
+    CASE_EXPECT_EQ("123456789123456789", buffer);
+
+    CASE_EXPECT_EQ(19, util::string::int2str(buffer, sizeof(buffer), -123456789123456789LL);
+    buffer[19] = 0;
+    CASE_EXPECT_EQ("-123456789123456789", buffer);
+
+
+    CASE_EXPECT_EQ(0, util::string::int2str(buffer, 0, 123456789U);
+    CASE_EXPECT_EQ(0, util::string::int2str(buffer, 8, 123456789U);
+}

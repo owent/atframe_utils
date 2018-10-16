@@ -28,6 +28,8 @@
 #include <string>
 #include <utility>
 
+#include <type_traits>
+
 
 #if defined(_MSC_VER) && _MSC_VER >= 1600
 #define UTIL_STRFUNC_STRCASE_CMP(l, r) _stricmp(l, r)
@@ -111,7 +113,7 @@ namespace util {
          * @note 注意，返回的字符串是源的子串，共享地址。并且不保证以0结尾，需要用返回的长度来判定子串长度
          */
         template <typename TCH>
-        inline std::pair<const TCH *, size_t> trim(const TCH *str_begin, size_t sz, bool trim_left = true, bool trim_right = true) {
+        std::pair<const TCH *, size_t> trim(const TCH *str_begin, size_t sz, bool trim_left = true, bool trim_right = true) {
             if (0 == sz) {
                 const TCH *str_end = str_begin;
                 while (str_end && *str_end) {
@@ -144,6 +146,107 @@ namespace util {
             }
 
             return std::make_pair(str_begin, sub_str_sz);
+        }
+
+        /**
+         * @brief 翻转字符串
+         * @param begin 字符串起始地址
+         * @param end 字符串结束地址,填入NULL，则从begin开是找到\0结束
+         */
+        template <typename TCH>
+        void reverse(TCH *begin, TCH *end) {
+            if (NULL == begin) {
+                return;
+            }
+
+            if (NULL == end) {
+                end = begin;
+                while (*end) {
+                    ++end;
+                }
+            }
+
+            if (begin >= end) {
+                return;
+            }
+
+            --end;
+            while (begin < end) {
+                TCH c  = *end;
+                *end   = *begin;
+                *begin = c;
+                ++begin;
+                --end;
+            }
+        }
+
+        template <typename T>
+        size_t int2str_unsigned(const char *str, size_t strsz, typename std::remove_cv<T>::type in) {
+            if (0 == strsz) {
+                return 0;
+            }
+
+            if (0 == in) {
+                *str = '0';
+                return 1;
+            }
+
+            size_t ret = 0;
+            while (ret < strsz && in > 0) {
+                str[ret] = (in % 10) + '0';
+
+                in /= 10;
+                ++ret;
+            }
+
+            if (in > 0 && ret >= strsz) {
+                return 0;
+            }
+
+            reverse(str, str + ret);
+            return ret;
+        }
+
+        template <typename T>
+        size_t int2str_signed(const char *str, size_t strsz, typename std::remove_cv<T>::type in) {
+            if (0 == strsz) {
+                return 0;
+            }
+
+            if (in < 0) {
+                *str       = '-';
+                size_t ret = int2str_unsigned(str + 1, strsz - 1, -in);
+                if (0 == ret) {
+                    return 0;
+                }
+
+                return ret + 1;
+            } else {
+                return int2str_unsigned(str, strsz, in);
+            }
+        }
+
+        template <typename T>
+        struct int2str_helper {
+            typedef T                                    value_type_s;
+            typedef typename std::make_unsigned<T>::type value_type_u;
+
+            static inline size_t call(const char *str, size_t strsz, const value_type_s &in) { return int2str_signed(str, strsz, in); }
+
+            static inline size_t call(const char *str, size_t strsz, const value_type_u &in) { return int2str_unsigned(str, strsz, in); }
+        };
+
+
+        /**
+         * @brief 整数转字符串
+         * @param str 输出的字符串缓冲区
+         * @param strsz 字符串缓冲区长度
+         * @param in 输入的数字
+         * @return 返回输出的数据长度，失败返回0
+         */
+        template <typename T>
+        inline size_t int2str(const char *str, size_t strsz, const typename std::remove_cv<T>::type &in) {
+            return int2str_helper<typename std::make_signed<typename std::remove_cv<T>::type>::type>::call(str, strsz, in);
         }
 
         /**
