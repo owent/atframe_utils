@@ -153,8 +153,9 @@ namespace util {
          * @param begin 字符串起始地址
          * @param end 字符串结束地址,填入NULL，则从begin开是找到\0结束
          */
-        template <typename TCH>
-        void reverse(TCH *begin, TCH *end) {
+        template <typename TCH, typename TCHE>
+        void reverse(TCH *begin, const TCHE &end_any) {
+            TCH *end = reinterpret_cast<TCH *>(end_any);
             if (NULL == begin) {
                 return;
             }
@@ -181,7 +182,7 @@ namespace util {
         }
 
         template <typename T>
-        size_t int2str_unsigned(const char *str, size_t strsz, typename std::remove_cv<T>::type in) {
+        size_t int2str_unsigned(char *str, size_t strsz, T in) {
             if (0 == strsz) {
                 return 0;
             }
@@ -208,21 +209,21 @@ namespace util {
         }
 
         template <typename T>
-        size_t int2str_signed(const char *str, size_t strsz, typename std::remove_cv<T>::type in) {
+        size_t int2str_signed(char *str, size_t strsz, T in) {
             if (0 == strsz) {
                 return 0;
             }
 
             if (in < 0) {
                 *str       = '-';
-                size_t ret = int2str_unsigned(str + 1, strsz - 1, -in);
+                size_t ret = int2str_unsigned(str + 1, strsz - 1, static_cast<typename std::make_unsigned<T>::type>(-in));
                 if (0 == ret) {
                     return 0;
                 }
 
                 return ret + 1;
             } else {
-                return int2str_unsigned(str, strsz, in);
+                return int2str_unsigned(str, strsz, static_cast<typename std::make_unsigned<T>::type>(in));
             }
         }
 
@@ -231,9 +232,9 @@ namespace util {
             typedef T                                    value_type_s;
             typedef typename std::make_unsigned<T>::type value_type_u;
 
-            static inline size_t call(const char *str, size_t strsz, const value_type_s &in) { return int2str_signed(str, strsz, in); }
+            static inline size_t call(char *str, size_t strsz, value_type_s in) { return int2str_signed(str, strsz, in); }
 
-            static inline size_t call(const char *str, size_t strsz, const value_type_u &in) { return int2str_unsigned(str, strsz, in); }
+            static inline size_t call(char *str, size_t strsz, value_type_u in) { return int2str_unsigned(str, strsz, in); }
         };
 
 
@@ -245,7 +246,7 @@ namespace util {
          * @return 返回输出的数据长度，失败返回0
          */
         template <typename T>
-        inline size_t int2str(const char *str, size_t strsz, const typename std::remove_cv<T>::type &in) {
+        inline size_t int2str(char *str, size_t strsz, const T &in) {
             return int2str_helper<typename std::make_signed<typename std::remove_cv<T>::type>::type>::call(str, strsz, in);
         }
 
