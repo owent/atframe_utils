@@ -20,7 +20,7 @@ void print_vec(const TOS &os, const std::vector<TVEC> &vec) {
     os << " ]" << std::endl;
 }
 
-#if defined(UTIL_CONFIG_COMPILER_CXX_RVALUE_REFERENCES) && UTIL_CONFIG_COMPILER_CXX_RVALUE_REFERENCES
+#if defined(UTIL_CONFIG_COMPILER_CXX_RVALUE_REFERENCES) && UTIL_CONFIG_COMPILER_CXX_RVALUE_REFERENCES && __cplusplus >= 201103L
 #define MOVE_RND_ENGINE(x) std::move(x)
 #else
 #define MOVE_RND_ENGINE(x) x
