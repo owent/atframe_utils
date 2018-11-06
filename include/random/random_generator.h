@@ -25,6 +25,8 @@
 #include <limits>
 #include <numeric>
 
+#include <config/compiler_features.h>
+
 #include "random_mt_core.h"
 #include "random_xor_combine_core.h"
 #include "random_xoshiro_core.h"
@@ -60,8 +62,8 @@ namespace util {
             random_manager_wrapper() {}
             random_manager_wrapper(result_type rd_seed) : core_(rd_seed) {}
 
-            inline core_type &      get_core() { return core_; }
-            inline const core_type &get_core() const { return core_; }
+            inline core_type &      get_core() UTIL_CONFIG_NOEXCEPT { return core_; }
+            inline const core_type &get_core() const UTIL_CONFIG_NOEXCEPT { return core_; }
 
             /**
              * 初始化随机数种子
@@ -84,13 +86,13 @@ namespace util {
              * 产生一个随机数
              * @return 产生的随机数
              */
-            result_type random() { return core_(); }
+            result_type random() UTIL_CONFIG_NOEXCEPT { return core_(); }
 
             /**
              * 产生一个随机数
              * @return 产生的随机数
              */
-            result_type operator()() { return random(); }
+            result_type operator()() UTIL_CONFIG_NOEXCEPT { return random(); }
 
             /**
              * 产生一个随机数
@@ -110,16 +112,16 @@ namespace util {
 
         public:
             // ------------ Support for UniformRandomBitGenerator ------------
-            static inline result_type min() { return std::numeric_limits<result_type>::min(); }
-            static inline result_type max() { return std::numeric_limits<result_type>::max(); }
-            inline result_type        g() { return random(); }
+            static inline UTIL_CONFIG_CONSTEXPR result_type min() UTIL_CONFIG_NOEXCEPT { return std::numeric_limits<result_type>::min(); }
+            static inline UTIL_CONFIG_CONSTEXPR result_type max() UTIL_CONFIG_NOEXCEPT { return std::numeric_limits<result_type>::max(); }
+            inline result_type                              g() UTIL_CONFIG_NOEXCEPT { return random(); }
 
             // ------------ Support for RandomFunc ------------
             /**
              * 产生一个随机数
              * @return 产生的随机数
              */
-            inline result_type operator()(result_type mod) {
+            inline result_type operator()(result_type mod) UTIL_CONFIG_NOEXCEPT {
                 if (0 == mod) {
                     return random();
                 } else {
@@ -129,7 +131,7 @@ namespace util {
 
             template <typename RandomIt>
             void shuffle(RandomIt first, RandomIt last) {
-#if defined(__cplusplus) && __cplusplus >= 201103L 
+#if defined(__cplusplus) && __cplusplus >= 201103L
                 std::shuffle(first, last, std::move(*this));
 #elif defined(_MSVC_LANG) && _MSVC_LANG >= 201402L
                 std::shuffle(first, last, std::move(*this));
