@@ -28,10 +28,23 @@
 #include "random_xor_combine_core.h"
 #include "random_xoshiro_core.h"
 
+
+#ifdef max
+#undef max
+#endif
+
+#ifdef min
+#undef min
+#endif
+
 namespace util {
     namespace random {
         /**
          * 随机数包装类，用以提供高级功能
+         * 支持 UniformRandomBitGenerator
+         * @see https://en.cppreference.com/w/cpp/named_req/UniformRandomBitGenerator
+         * 支持 std::random_shuffle 里的 RandomFunc
+         * @see https://en.cppreference.com/w/cpp/algorithm/random_shuffle
          */
         template <typename CoreType>
         class random_manager_wrapper {
@@ -92,6 +105,25 @@ namespace util {
                 }
                 result_type res = (*this)();
                 return static_cast<ResaultType>(res % static_cast<result_type>(highest - lowest)) + lowest;
+            }
+
+        public:
+            // ------------ Support for UniformRandomBitGenerator ------------
+            static inline result_type min() { return std::numeric_limits<result_type>::min(); }
+            static inline result_type max() { return std::numeric_limits<result_type>::max(); }
+            inline result_type        g() { return random(); }
+
+            // ------------ Support for RandomFunc ------------
+            /**
+             * 产生一个随机数
+             * @return 产生的随机数
+             */
+            inline result_type operator()(result_type mod) {
+                if (0 == mod) {
+                    return random();
+                } else {
+                    return random() % mod;
+                }
             }
         };
 

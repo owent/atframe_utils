@@ -1,7 +1,30 @@
-﻿#include <time.h>
+﻿#include <algorithm>
+#include <time.h>
+
+#include <config/compiler_features.h>
 
 #include "frame/test_macros.h"
 #include "random/random_generator.h"
+
+template <typename TOS, typename TVEC>
+void print_vec(const TOS &os, const std::vector<TVEC> &vec) {
+    os << "[ ";
+    for (size_t i = 0; i < vec.size(); ++i) {
+        if (i > 0) {
+            os << ", ";
+        }
+
+        os << vec[i];
+    }
+
+    os << " ]" << std::endl;
+}
+
+#if defined(UTIL_CONFIG_COMPILER_CXX_RVALUE_REFERENCES) && UTIL_CONFIG_COMPILER_CXX_RVALUE_REFERENCES
+#define MOVE_RND_ENGINE(x) std::move(x)
+#else
+#define MOVE_RND_ENGINE(x) x
+#endif
 
 CASE_TEST(random_test, random_gen_mt19937) {
     util::random::mt19937 gen1;
@@ -14,6 +37,13 @@ CASE_TEST(random_test, random_gen_mt19937) {
     CASE_EXPECT_EQ(static_cast<uint32_t>(2991312382), a1);
     CASE_EXPECT_EQ(static_cast<uint32_t>(3062119789), a2);
     CASE_EXPECT_EQ(static_cast<uint32_t>(1228959102), a3);
+
+    std::vector<uint32_t> shuffle_arr;
+    for (int i = 0; i < 10; ++i) {
+        shuffle_arr.push_back(gen1.random());
+    }
+    std::random_shuffle(shuffle_arr.begin(), shuffle_arr.end(), MOVE_RND_ENGINE(gen1));
+    print_vec(CASE_MSG_INFO() << "random_shuffle => ", shuffle_arr);
 }
 
 CASE_TEST(random_test, random_gen_mt19937_64) {
@@ -27,6 +57,13 @@ CASE_TEST(random_test, random_gen_mt19937_64) {
     CASE_EXPECT_EQ(10254371118423419891ULL, a1);
     CASE_EXPECT_EQ(8078970281289081ULL, a2);
     CASE_EXPECT_EQ(13774509987902109069ULL, a3);
+
+    std::vector<uint64_t> shuffle_arr;
+    for (int i = 0; i < 10; ++i) {
+        shuffle_arr.push_back(gen1.random());
+    }
+    std::random_shuffle(shuffle_arr.begin(), shuffle_arr.end(), MOVE_RND_ENGINE(gen1));
+    print_vec(CASE_MSG_INFO() << "random_shuffle => ", shuffle_arr);
 }
 
 CASE_TEST(random_test, random_gen_64_mt11213B) {
@@ -40,6 +77,13 @@ CASE_TEST(random_test, random_gen_64_mt11213B) {
     CASE_EXPECT_EQ(static_cast<uint32_t>(3740219552), a1);
     CASE_EXPECT_EQ(static_cast<uint32_t>(740436508), a2);
     CASE_EXPECT_EQ(static_cast<uint32_t>(649207690), a3);
+
+    std::vector<uint64_t> shuffle_arr;
+    for (int i = 0; i < 10; ++i) {
+        shuffle_arr.push_back(gen1.random());
+    }
+    std::random_shuffle(shuffle_arr.begin(), shuffle_arr.end(), MOVE_RND_ENGINE(gen1));
+    print_vec(CASE_MSG_INFO() << "random_shuffle => ", shuffle_arr);
 }
 
 CASE_TEST(random_test, random_gen_taus88) {
@@ -53,6 +97,13 @@ CASE_TEST(random_test, random_gen_taus88) {
     CASE_EXPECT_EQ(static_cast<uint32_t>(43258884), a1);
     CASE_EXPECT_EQ(static_cast<uint32_t>(1073987586), a2);
     CASE_EXPECT_EQ(static_cast<uint32_t>(2769562570), a3);
+
+    std::vector<uint32_t> shuffle_arr;
+    for (int i = 0; i < 10; ++i) {
+        shuffle_arr.push_back(gen1.random());
+    }
+    std::random_shuffle(shuffle_arr.begin(), shuffle_arr.end(), MOVE_RND_ENGINE(gen1));
+    print_vec(CASE_MSG_INFO() << "random_shuffle => ", shuffle_arr);
 }
 
 CASE_TEST(random_test, xoroshiro128_starstar) {
@@ -93,6 +144,14 @@ CASE_TEST(random_test, xoroshiro128_starstar) {
     for (size_t i = 0; i < sizeof(checked4) / sizeof(checked4[0]); ++i) {
         CASE_EXPECT_EQ(gen1.random(), checked4[i]);
     }
+
+
+    std::vector<uint32_t> shuffle_arr;
+    for (int i = 0; i < 10; ++i) {
+        shuffle_arr.push_back(gen1.random());
+    }
+    std::random_shuffle(shuffle_arr.begin(), shuffle_arr.end(), MOVE_RND_ENGINE(gen1));
+    print_vec(CASE_MSG_INFO() << "random_shuffle => ", shuffle_arr);
 }
 
 CASE_TEST(random_test, xoroshiro128_plus) {
@@ -133,6 +192,14 @@ CASE_TEST(random_test, xoroshiro128_plus) {
     for (size_t i = 0; i < sizeof(checked4) / sizeof(checked4[0]); ++i) {
         CASE_EXPECT_EQ(gen1.random(), checked4[i]);
     }
+
+
+    std::vector<uint32_t> shuffle_arr;
+    for (int i = 0; i < 10; ++i) {
+        shuffle_arr.push_back(gen1.random());
+    }
+    std::random_shuffle(shuffle_arr.begin(), shuffle_arr.end(), MOVE_RND_ENGINE(gen1));
+    print_vec(CASE_MSG_INFO() << "random_shuffle => ", shuffle_arr);
 }
 
 
@@ -190,6 +257,14 @@ CASE_TEST(random_test, xoshiro256_starstar) {
     for (size_t i = 0; i < sizeof(checked6) / sizeof(checked6[0]); ++i) {
         CASE_EXPECT_EQ(gen1.random(), checked6[i]);
     }
+
+
+    std::vector<uint64_t> shuffle_arr;
+    for (int i = 0; i < 10; ++i) {
+        shuffle_arr.push_back(gen1.random());
+    }
+    std::random_shuffle(shuffle_arr.begin(), shuffle_arr.end(), MOVE_RND_ENGINE(gen1));
+    print_vec(CASE_MSG_INFO() << "random_shuffle => ", shuffle_arr);
 }
 
 
@@ -247,4 +322,12 @@ CASE_TEST(random_test, xoshiro256_plus) {
     for (size_t i = 0; i < sizeof(checked6) / sizeof(checked6[0]); ++i) {
         CASE_EXPECT_EQ(gen1.random(), checked6[i]);
     }
+
+
+    std::vector<uint64_t> shuffle_arr;
+    for (int i = 0; i < 10; ++i) {
+        shuffle_arr.push_back(gen1.random());
+    }
+    std::random_shuffle(shuffle_arr.begin(), shuffle_arr.end(), MOVE_RND_ENGINE(gen1));
+    print_vec(CASE_MSG_INFO() << "random_shuffle => ", shuffle_arr);
 }
