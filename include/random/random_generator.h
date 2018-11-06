@@ -20,6 +20,7 @@
 #include <stdint.h>
 
 
+#include <algorithm>
 #include <cstddef>
 #include <limits>
 #include <numeric>
@@ -124,6 +125,17 @@ namespace util {
                 } else {
                     return random() % mod;
                 }
+            }
+
+            template <typename RandomIt>
+            void shuffle(RandomIt first, RandomIt last) {
+#if defined(__cplusplus) && __cplusplus >= 201103L 
+                std::shuffle(first, last, std::move(*this));
+#elif defined(_MSVC_LANG) && _MSVC_LANG >= 201402L
+                std::shuffle(first, last, std::move(*this));
+#else
+                std::random_shuffle(first, last, *this);
+#endif
             }
         };
 
