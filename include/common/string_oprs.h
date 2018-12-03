@@ -247,7 +247,12 @@ namespace util {
          */
         template <typename T>
         inline size_t int2str(char *str, size_t strsz, const T &in) {
-            return int2str_helper<typename std::make_signed<typename std::remove_cv<T>::type>::type>::call(str, strsz, in);
+            size_t ret = int2str_helper<typename std::make_signed<typename std::remove_cv<T>::type>::type>::call(str, strsz, in);
+            if (ret < strsz) {
+                str[ret] = 0;
+            }
+
+            return ret;
         }
 
         /**
