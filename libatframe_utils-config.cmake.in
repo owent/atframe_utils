@@ -1,0 +1,69 @@
+#.rst:
+# libatframe_utils-config.cmake
+# --------
+#
+# Find the native libatframe_utils includes and library.
+#
+#
+# Result Variables
+# ^^^^^^^^^^^^^^^^
+#
+# This module defines the following variables:
+#
+# ::
+#
+#   Libatframe_utils_INCLUDE_DIRS   - where to find config/atframe_utils_build_feature.h , etc.
+#   Libatframe_utils_LIBRARY_DIRS   - where to find (lib)atframe_utils.(a/so/lib/dll/dylib), etc.
+#   Libatframe_utils_LIBRARIES      - List of libraries when using libatframe_utils.
+#   Libatframe_utils_FOUND          - True if libatframe_utils found.
+#   Libatframe_utils_VERSION        - Full version of libatframe_utils
+#
+# ::
+#
+
+#=============================================================================
+# Copyright 2018 OWenT.
+#
+# Distributed under the OSI-approved BSD License (the "License");
+# see accompanying file Copyright.txt for details.
+#
+# This software is distributed WITHOUT ANY WARRANTY; without even the
+# implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+# See the License for more information.
+#=============================================================================
+# (To distribute this file outside of CMake, substitute the full
+#  License text for the above reference.)
+
+set(Libatframe_utils_VERSION "@LIBATFRAME_UTILS_VERSION@")
+
+@PACKAGE_INIT@
+
+################################################################################
+# libatframe_utils source dir
+set(Libatframe_utils_SOURCE_DIR "@PROJECT_SOURCE_DIR@")
+
+set_and_check(Libatframe_utils_INCLUDE_DIRS "@PACKAGE_INCLUDE_INSTALL_DIR@")
+set_and_check(Libatframe_utils_LIBRARY_DIRS "@PACKAGE_CMAKE_INSTALL_LIBDIR@")
+
+
+# Normal search.
+set(Libatframe_utils_NAMES atframe_utils libatframe_utils)
+
+# Try each search configuration.
+find_library(Libatframe_utils_LIBRARIES    NAMES ${Libatframe_utils_NAMES}    PATHS ${Libatframe_utils_LIBRARY_DIRS} NO_DEFAULT_PATH)
+
+mark_as_advanced(Libatframe_utils_INCLUDE_DIRS Libatframe_utils_LIBRARY_DIRS Libatframe_utils_LIBRARIES Libcotask_LIBRARIES)
+
+# handle the QUIETLY and REQUIRED arguments and set LIBATFRAME_UTILS_FOUND to TRUE if
+# all listed variables are TRUE
+include("FindPackageHandleStandardArgs")
+FIND_PACKAGE_HANDLE_STANDARD_ARGS(Libatframe_utils 
+    FOUND_VAR Libatframe_utils_FOUND
+    REQUIRED_VARS Libatframe_utils_INCLUDE_DIRS Libatframe_utils_LIBRARIES)
+
+if (Libatframe_utils_FOUND)
+    set(LIBATFRAME_UTILS_FOUND ${Libatframe_utils_FOUND})
+endif()
+
+
+# check_required_components(Libatframe_utils)
