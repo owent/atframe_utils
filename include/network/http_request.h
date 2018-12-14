@@ -48,7 +48,7 @@ namespace util {
             /**
              * @brief types
              */
-            typedef http_request self_type;
+            typedef http_request               self_type;
             typedef std::shared_ptr<self_type> ptr_t;
 
             struct method_t {
@@ -61,68 +61,68 @@ namespace util {
              */
             struct status_code_t {
                 enum group {
-                    EN_ECG_INFOMATION = 1,
-                    EN_ECG_SUCCESS = 2,
-                    EN_ECG_REDIRECTION = 3,
+                    EN_ECG_INFOMATION   = 1,
+                    EN_ECG_SUCCESS      = 2,
+                    EN_ECG_REDIRECTION  = 3,
                     EN_ECG_CLIENT_ERROR = 4,
                     EN_ECG_SERVER_ERROR = 5,
                 };
 
                 enum type {
-                    EN_SCT_CONTINUE = 100,
-                    EN_SCT_SWITCHING_PROTOCOL = 101,
-                    EN_SCT_OK = 200,
-                    EN_SCT_CREATED = 201,
-                    EN_SCT_ACCPTED = 202,
-                    EN_SCT_NO_AUTH_INFO = 203,
-                    EN_SCT_NO_CONTENT = 204,
-                    EN_SCT_RESET_CONTENT = 205,
-                    EN_SCT_PARTIAL_CONTENT = 206,
-                    EN_SCT_MULTIPLE_CHOICES = 300,
-                    EN_SCT_MOVE_PERMANENTLY = 301,
-                    EN_SCT_FOUND = 302,
-                    EN_SCT_SEE_OTHER = 303,
-                    EN_SCT_NOT_MODIFIED = 304,
-                    EN_SCT_USE_PROXY = 305,
-                    EN_SCT_UNUSED = 306,
-                    EN_SCT_TEMPORARY_REDIRECT = 307,
-                    EN_SCT_BAD_REQUEST = 400,
-                    EN_SCT_UNAUTHORIZED = 401,
-                    EN_SCT_PAYMENT_REQUIRED = 402,
-                    EN_SCT_FORBIDDEN = 403,
-                    EN_SCT_NOT_FOUND = 404,
-                    EN_SCT_METHOD_NOT_ALLOWED = 405,
-                    EN_SCT_NOT_ACCEPTABLE = 406,
+                    EN_SCT_CONTINUE                      = 100,
+                    EN_SCT_SWITCHING_PROTOCOL            = 101,
+                    EN_SCT_OK                            = 200,
+                    EN_SCT_CREATED                       = 201,
+                    EN_SCT_ACCPTED                       = 202,
+                    EN_SCT_NO_AUTH_INFO                  = 203,
+                    EN_SCT_NO_CONTENT                    = 204,
+                    EN_SCT_RESET_CONTENT                 = 205,
+                    EN_SCT_PARTIAL_CONTENT               = 206,
+                    EN_SCT_MULTIPLE_CHOICES              = 300,
+                    EN_SCT_MOVE_PERMANENTLY              = 301,
+                    EN_SCT_FOUND                         = 302,
+                    EN_SCT_SEE_OTHER                     = 303,
+                    EN_SCT_NOT_MODIFIED                  = 304,
+                    EN_SCT_USE_PROXY                     = 305,
+                    EN_SCT_UNUSED                        = 306,
+                    EN_SCT_TEMPORARY_REDIRECT            = 307,
+                    EN_SCT_BAD_REQUEST                   = 400,
+                    EN_SCT_UNAUTHORIZED                  = 401,
+                    EN_SCT_PAYMENT_REQUIRED              = 402,
+                    EN_SCT_FORBIDDEN                     = 403,
+                    EN_SCT_NOT_FOUND                     = 404,
+                    EN_SCT_METHOD_NOT_ALLOWED            = 405,
+                    EN_SCT_NOT_ACCEPTABLE                = 406,
                     EN_SCT_PROXY_AUTHENTICATION_REQUIRED = 407,
-                    EN_SCT_REQUEST_TIMEOUT = 408,
-                    EN_SCT_CONFLICT = 409,
-                    EN_SCT_GONE = 410,
-                    EN_SCT_LENGTH_REQUIRED = 411,
-                    EN_SCT_PRECONDITION_FAILED = 412,
-                    EN_SCT_REQUEST_ENTITY_TOO_LARGE = 413,
-                    EN_SCT_REQUEST_URI_TOO_LONG = 414,
-                    EN_SCT_UNSUPPORTED_MEDIA_TYPE = 415,
+                    EN_SCT_REQUEST_TIMEOUT               = 408,
+                    EN_SCT_CONFLICT                      = 409,
+                    EN_SCT_GONE                          = 410,
+                    EN_SCT_LENGTH_REQUIRED               = 411,
+                    EN_SCT_PRECONDITION_FAILED           = 412,
+                    EN_SCT_REQUEST_ENTITY_TOO_LARGE      = 413,
+                    EN_SCT_REQUEST_URI_TOO_LONG          = 414,
+                    EN_SCT_UNSUPPORTED_MEDIA_TYPE        = 415,
                     EN_SCT_REQUEST_RANGE_NOT_SATISFIABLE = 416,
-                    EN_SCT_EXPECTATION_FAILED = 417,
-                    EN_SCT_NOT_IMPLEMENTED = 501,
-                    EN_SCT_BAD_GATEWAY = 502,
-                    EN_SCT_SERVICE_UNAVAILABLE = 503,
-                    EN_SCT_GATEWAY_TIMEOUT = 504,
-                    EN_SCT_HTTP_VERSION_NOT_SUPPORTED = 505,
+                    EN_SCT_EXPECTATION_FAILED            = 417,
+                    EN_SCT_NOT_IMPLEMENTED               = 501,
+                    EN_SCT_BAD_GATEWAY                   = 502,
+                    EN_SCT_SERVICE_UNAVAILABLE           = 503,
+                    EN_SCT_GATEWAY_TIMEOUT               = 504,
+                    EN_SCT_HTTP_VERSION_NOT_SUPPORTED    = 505,
                 };
             };
 
             struct flag_t {
                 enum type {
                     EN_FT_CURL_MULTI_HANDLE = 0x01,
-                    EN_FT_RUNNING = 0x02,
-                    EN_FT_CLEANING = 0x04,
+                    EN_FT_RUNNING           = 0x02,
+                    EN_FT_CLEANING          = 0x04,
                 };
             };
 
             struct curl_m_bind_t {
                 uv_loop_t *ev_loop;
-                CURLM *curl_multi;
+                CURLM *    curl_multi;
                 uv_timer_t ev_timeout;
 
                 curl_m_bind_t();
@@ -132,8 +132,8 @@ namespace util {
 
             struct curl_poll_context_t {
                 curl_m_bind_t *bind_multi;
-                uv_poll_t poll_object;
-                curl_socket_t sockfd;
+                uv_poll_t      poll_object;
+                curl_socket_t  sockfd;
             };
 
             typedef std::function<int(http_request &)> on_error_fn_t;
@@ -185,13 +185,13 @@ namespace util {
 
             void cleanup();
 
-            void set_url(const std::string &v);
+            void               set_url(const std::string &v);
             const std::string &get_url() const;
 
-            void set_user_agent(const std::string &v);
+            void               set_user_agent(const std::string &v);
             const std::string &get_user_agent() const;
 
-            std::string &post_data();
+            std::string &      post_data();
             const std::string &post_data() const;
 
             int get_response_code() const;
@@ -200,7 +200,7 @@ namespace util {
 
             inline const char *get_error_msg() const { return error_buffer_; }
 
-            inline std::stringstream &get_response_stream() { return response_; }
+            inline std::stringstream &      get_response_stream() { return response_; }
             inline const std::stringstream &get_response_stream() const { return response_; }
 
             int add_form_file(const std::string &fieldname, const char *filename);
@@ -221,7 +221,7 @@ namespace util {
                 return add_form_field(fieldname, val);
             }
 
-            inline void set_priv_data(void *v) { priv_data_ = v; }
+            inline void  set_priv_data(void *v) { priv_data_ = v; }
             inline void *get_priv_data() const { return priv_data_; }
 
             // ======== set options of libcurl @see https://curl.haxx.se/libcurl/c/curl_easy_setopt.html for detail ========
@@ -290,25 +290,25 @@ namespace util {
             // -------- set options of libcurl @see https://curl.haxx.se/libcurl/c/curl_easy_setopt.html for detail --------
 
             const on_progress_fn_t &get_on_progress() const;
-            void set_on_progress(on_progress_fn_t fn);
+            void                    set_on_progress(on_progress_fn_t fn);
 
             const on_header_fn_t &get_on_header() const;
-            void set_on_header(on_header_fn_t fn);
+            void                  set_on_header(on_header_fn_t fn);
 
             const on_success_fn_t &get_on_success() const;
-            void set_on_success(on_success_fn_t fn);
+            void                   set_on_success(on_success_fn_t fn);
 
             const on_error_fn_t &get_on_error() const;
-            void set_on_error(on_error_fn_t fn);
+            void                 set_on_error(on_error_fn_t fn);
 
             const on_complete_fn_t &get_on_complete() const;
-            void set_on_complete(on_complete_fn_t fn);
+            void                    set_on_complete(on_complete_fn_t fn);
 
             const on_write_fn_t &get_on_write() const;
-            void set_on_write(on_write_fn_t fn);
+            void                 set_on_write(on_write_fn_t fn);
 
             const on_verbose_fn_t &get_on_verbose() const;
-            void set_on_verbose(on_verbose_fn_t fn);
+            void                   set_on_verbose(on_verbose_fn_t fn);
 
             bool is_running() const;
 
@@ -320,7 +320,7 @@ namespace util {
             void build_http_form(method_t::type method);
 
             static curl_poll_context_t *malloc_poll(http_request *req, curl_socket_t sockfd);
-            static void free_poll(curl_poll_context_t *);
+            static void                 free_poll(curl_poll_context_t *);
 
             static void check_multi_info(CURLM *curl_handle);
 
@@ -329,13 +329,13 @@ namespace util {
             static void ev_callback_on_timeout(uv_timer_t *handle);
             static void ev_callback_curl_perform(uv_poll_t *req, int status, int events);
 
-            static void curl_callback_start_timer(CURLM *multi, long timeout_ms, void *userp);
-            static int curl_callback_handle_socket(CURL *easy, curl_socket_t s, int action, void *userp, void *socketp);
+            static int    curl_callback_start_timer(CURLM *multi, long timeout_ms, void *userp);
+            static int    curl_callback_handle_socket(CURL *easy, curl_socket_t s, int action, void *userp, void *socketp);
             static size_t curl_callback_on_write(char *ptr, size_t size, size_t nmemb, void *userdata);
-            static int curl_callback_on_progress(void *clientp, double dltotal, double dlnow, double ultotal, double ulnow);
+            static int    curl_callback_on_progress(void *clientp, double dltotal, double dlnow, double ultotal, double ulnow);
             static size_t curl_callback_on_read(char *buffer, size_t size, size_t nitems, void *instream);
             static size_t curl_callback_on_header(char *buffer, size_t size, size_t nitems, void *userdata);
-            static int curl_callback_on_verbose(CURL *handle, curl_infotype type, char *data, size_t size, void *userptr);
+            static int    curl_callback_on_verbose(CURL *handle, curl_infotype type, char *data, size_t size, void *userptr);
 
         private:
             // event dispatcher
@@ -343,33 +343,33 @@ namespace util {
 
             // curl resource
             curl_m_bind_t *bind_m_;
-            CURL *request_;
-            int flags_;
+            CURL *         request_;
+            int            flags_;
 
             // data and resource
-            std::string url_;
-            std::string post_data_;
+            std::string       url_;
+            std::string       post_data_;
             std::stringstream response_;
-            mutable int response_code_;
-            int last_error_code_;
-            void *priv_data_;
-            std::string useragent_;
+            mutable int       response_code_;
+            int               last_error_code_;
+            void *            priv_data_;
+            std::string       useragent_;
 
             typedef struct {
-                curl_httppost *begin;
-                curl_httppost *end;
-                curl_slist *headerlist;
+                curl_httppost *    begin;
+                curl_httppost *    end;
+                curl_slist *       headerlist;
                 util::tquerystring qs_fields;
 
                 size_t posted_size;
-                FILE *uploaded_file;
-                int flags;
+                FILE * uploaded_file;
+                int    flags;
 
                 enum flag_t {
-                    EN_FLFT_HAS_FORM_FILE = 0x01,
-                    EN_FLFT_HAS_FORM_FIELD = 0x02,
+                    EN_FLFT_HAS_FORM_FILE       = 0x01,
+                    EN_FLFT_HAS_FORM_FIELD      = 0x02,
                     EN_FLFT_WRITE_FORM_USE_FUNC = 0x04,
-                    EN_FLFT_LIBCURL_NO_EXPECT = 0x08,
+                    EN_FLFT_LIBCURL_NO_EXPECT   = 0x08,
                 };
             } form_list_t;
             form_list_t http_form_;
@@ -377,13 +377,13 @@ namespace util {
             char error_buffer_[CURL_ERROR_SIZE];
 
             // callbacks
-            on_error_fn_t on_error_fn_;
-            on_success_fn_t on_success_fn_;
+            on_error_fn_t    on_error_fn_;
+            on_success_fn_t  on_success_fn_;
             on_complete_fn_t on_complete_fn_;
             on_progress_fn_t on_progress_fn_;
-            on_header_fn_t on_header_fn_;
-            on_write_fn_t on_write_fn_;
-            on_verbose_fn_t on_verbose_fn_;
+            on_header_fn_t   on_header_fn_;
+            on_write_fn_t    on_write_fn_;
+            on_verbose_fn_t  on_verbose_fn_;
         };
     } // namespace network
 } // namespace util

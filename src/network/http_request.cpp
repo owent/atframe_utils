@@ -742,36 +742,40 @@ namespace util {
             curl_poll_context_t *context = reinterpret_cast<curl_poll_context_t *>(req->data);
             assert(context);
 
-            uv_timer_stop(&context->bind_multi->ev_timeout);
             int running_handles;
             int flags = 0;
 
-            if (status < 0) {
-                flags |= CURL_CSELECT_ERR;
-            }
-            if (events & UV_READABLE) {
-                flags |= CURL_CSELECT_IN;
-            }
-            if (events & UV_WRITABLE) {
-                flags |= CURL_CSELECT_OUT;
-            }
+            if (0 != context->sockfd) {
+                if (events & UV_READABLE) {
+                    flags |= CURL_CSELECT_IN;
+                }
+                if (events & UV_WRITABLE) {
+                    flags |= CURL_CSELECT_OUT;
+                }
 
-            curl_multi_socket_action(context->bind_multi->curl_multi, context->sockfd, flags, &running_handles);
+                curl_multi_socket_action(context->bind_multi->curl_multi, context->sockfd, flags, &running_handles);
+            }
             check_multi_info(context->bind_multi->curl_multi);
         }
 
-        void http_request::curl_callback_start_timer(CURLM *multi, long timeout_ms, void *userp) {
+        int http_request::curl_callback_start_timer(CURLM *multi, long timeout_ms, void *userp) {
             curl_m_bind_t *bind = reinterpret_cast<curl_m_bind_t *>(userp);
             assert(bind);
 
             // @see https://curl.haxx.se/libcurl/c/evhiperfifo.html
             // @see https://gist.github.com/clemensg/5248927
             // @see https://curl.haxx.se/libcurl/c/multi-uv.html
-            if (timeout_ms <= 0) {
-                timeout_ms = 1;
+            if (timeout_ms < 0) {
+                uv_timer_stop(&bind->ev_timeout);
+            } else {
+                if (timeout_ms == 0) {
+                    timeout_ms = 1;
+                }
+
+                uv_timer_start(&bind->ev_timeout, http_request::ev_callback_on_timeout, static_cast<uint64_t>(timeout_ms), 0);
             }
 
-            uv_timer_start(&bind->ev_timeout, http_request::ev_callback_on_timeout, static_cast<uint64_t>(timeout_ms), 0);
+            return 0;
         }
 
         int http_request::curl_callback_handle_socket(CURL *easy, curl_socket_t s, int action, void *userp, void *socketp) {
@@ -811,6 +815,9 @@ namespace util {
             case CURL_POLL_REMOVE: {
                 if (context) {
                     CURLM *curl_multi = context->bind_multi->curl_multi;
+
+                    // reset fd first, or libuv may call poll callback and cause a coredump
+                    context->sockfd = 0;
 
                     // already removed by libcurl
                     uv_poll_stop(&context->poll_object);
