@@ -117,6 +117,7 @@ namespace util {
                     EN_FT_CURL_MULTI_HANDLE = 0x01,
                     EN_FT_RUNNING           = 0x02,
                     EN_FT_CLEANING          = 0x04,
+                    EN_FT_STOPING           = 0x08,
                 };
             };
 
@@ -134,6 +135,7 @@ namespace util {
                 curl_m_bind_t *bind_multi;
                 uv_poll_t      poll_object;
                 curl_socket_t  sockfd;
+                bool           is_removed;
             };
 
             typedef std::function<int(http_request &)> on_error_fn_t;
@@ -141,10 +143,10 @@ namespace util {
             typedef std::function<int(http_request &)> on_complete_fn_t;
 
             struct progress_t {
-                double dltotal; /** total download size **/
-                double dlnow;   /** already downloaded size **/
-                double ultotal; /** total upload size **/
-                double ulnow;   /** already uploaded size **/
+                size_t dltotal; /** total download size **/
+                size_t dlnow;   /** already downloaded size **/
+                size_t ultotal; /** total upload size **/
+                size_t ulnow;   /** already uploaded size **/
             };
             typedef std::function<int(http_request &, const progress_t &)> on_progress_fn_t;
             /** parameters: http_request, key, key length, value, value length **/
@@ -180,10 +182,6 @@ namespace util {
             int start(method_t::type method = method_t::EN_MT_GET, bool wait = false);
 
             int stop();
-
-            void remove_curl_request();
-
-            void cleanup();
 
             void               set_url(const std::string &v);
             const std::string &get_url() const;
@@ -313,6 +311,10 @@ namespace util {
             bool is_running() const;
 
         private:
+            void remove_curl_request();
+
+            void cleanup();
+
             void finish_req_rsp();
 
             CURL *mutable_request();
@@ -332,7 +334,11 @@ namespace util {
             static int    curl_callback_start_timer(CURLM *multi, long timeout_ms, void *userp);
             static int    curl_callback_handle_socket(CURL *easy, curl_socket_t s, int action, void *userp, void *socketp);
             static size_t curl_callback_on_write(char *ptr, size_t size, size_t nmemb, void *userdata);
-            static int    curl_callback_on_progress(void *clientp, double dltotal, double dlnow, double ultotal, double ulnow);
+#if LIBCURL_VERSION_NUM >= 0x072000
+            static int curl_callback_on_progress(void *clientp, curl_off_t dltotal, curl_off_t dlnow, curl_off_t ultotal, curl_off_t ulnow);
+#else
+            static int curl_callback_on_progress(void *clientp, double dltotal, double dlnow, double ultotal, double ulnow);
+#endif
             static size_t curl_callback_on_read(char *buffer, size_t size, size_t nitems, void *instream);
             static size_t curl_callback_on_header(char *buffer, size_t size, size_t nitems, void *userdata);
             static int    curl_callback_on_verbose(CURL *handle, curl_infotype type, char *data, size_t size, void *userptr);

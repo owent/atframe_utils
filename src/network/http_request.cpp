@@ -4,6 +4,8 @@
 #include <common/file_system.h>
 #include <string/tquerystring.h>
 
+// #include <log/log_wrapper.h>
+
 #include "network/http_request.h"
 
 #if defined(NETWORK_EVPOLL_ENABLE_LIBUV) && defined(NETWORK_ENABLE_CURL)
@@ -159,7 +161,21 @@ namespace util {
                 return -1;
             }
 
-            cleanup();
+            // if not set on_progress_fn_, setup process function to abort transfer
+            // @see https://curl.haxx.se/libcurl/c/CURLOPT_PROGRESSFUNCTION.html
+            // @see https://curl.haxx.se/libcurl/c/CURLOPT_XFERINFOFUNCTION.html
+            if (!on_progress_fn_) {
+                set_opt_bool(CURLOPT_NOPROGRESS, false);
+#if LIBCURL_VERSION_NUM >= 0x072000
+                curl_easy_setopt(request_, CURLOPT_XFERINFOFUNCTION, curl_callback_on_progress);
+                curl_easy_setopt(request_, CURLOPT_XFERINFODATA, this);
+#else
+                curl_easy_setopt(request_, CURLOPT_PROGRESSFUNCTION, curl_callback_on_progress);
+                curl_easy_setopt(request_, CURLOPT_PROGRESSDATA, this);
+#endif
+            }
+            SET_FLAG(flags_, flag_t::EN_FT_STOPING);
+
             return 0;
         }
 
@@ -168,12 +184,14 @@ namespace util {
             request_  = NULL;
             if (NULL != req) {
                 if (NULL != bind_m_ && CHECK_FLAG(flags_, flag_t::EN_FT_CURL_MULTI_HANDLE)) {
+                    // can not be called inside socket callback
                     last_error_code_ = curl_multi_remove_handle(bind_m_->curl_multi, req);
                     UNSET_FLAG(flags_, flag_t::EN_FT_CURL_MULTI_HANDLE);
                 }
 
                 curl_easy_cleanup(req);
             }
+            UNSET_FLAG(flags_, flag_t::EN_FT_STOPING);
 
             if (NULL != http_form_.begin) {
                 curl_formfree(http_form_.begin);
@@ -434,12 +452,22 @@ namespace util {
 
             if (on_progress_fn_) {
                 set_opt_bool(CURLOPT_NOPROGRESS, false);
+#if LIBCURL_VERSION_NUM >= 0x072000
+                curl_easy_setopt(req, CURLOPT_XFERINFOFUNCTION, curl_callback_on_progress);
+                curl_easy_setopt(req, CURLOPT_XFERINFODATA, this);
+#else
                 curl_easy_setopt(req, CURLOPT_PROGRESSFUNCTION, curl_callback_on_progress);
                 curl_easy_setopt(req, CURLOPT_PROGRESSDATA, this);
-            } else {
+#endif
+            } else if (false == CHECK_FLAG(flags_, flag_t::EN_FT_STOPING)) {
                 set_opt_bool(CURLOPT_NOPROGRESS, true);
+#if LIBCURL_VERSION_NUM >= 0x072000
+                curl_easy_setopt(req, CURLOPT_XFERINFOFUNCTION, NULL);
+                curl_easy_setopt(req, CURLOPT_XFERINFODATA, NULL);
+#else
                 curl_easy_setopt(req, CURLOPT_PROGRESSFUNCTION, NULL);
                 curl_easy_setopt(req, CURLOPT_PROGRESSDATA, NULL);
+#endif
             }
         }
 
@@ -615,6 +643,7 @@ namespace util {
             ret->bind_multi = req->bind_m_;
             uv_poll_init_socket(req->bind_m_->ev_loop, &ret->poll_object, sockfd);
             ret->poll_object.data = ret;
+            ret->is_removed       = false;
 
             return ret;
         }
@@ -745,7 +774,8 @@ namespace util {
             int running_handles;
             int flags = 0;
 
-            if (0 != context->sockfd) {
+            // WLOGWARNING(" ====== [HTTP] ====== sock %d evpoll %d for %p start", context->sockfd, events, context);
+            if (false == context->is_removed) {
                 if (events & UV_READABLE) {
                     flags |= CURL_CSELECT_IN;
                 }
@@ -755,7 +785,9 @@ namespace util {
 
                 curl_multi_socket_action(context->bind_multi->curl_multi, context->sockfd, flags, &running_handles);
             }
+            // WLOGWARNING(" ====== [HTTP] ====== sock %d evpoll %d for %p after socket action", context->sockfd, events, context);
             check_multi_info(context->bind_multi->curl_multi);
+            // WLOGWARNING(" ====== [HTTP] ====== sock %d evpoll %d for %p done", context->sockfd, events, context);
         }
 
         int http_request::curl_callback_start_timer(CURLM *multi, long timeout_ms, void *userp) {
@@ -801,23 +833,27 @@ namespace util {
             int res = 0;
             switch (action) {
             case CURL_POLL_IN: {
+                // WLOGWARNING(" ====== [HTTP] ====== sock %d poll in %p", s, context);
                 res = uv_poll_start(&context->poll_object, UV_READABLE, ev_callback_curl_perform);
                 break;
             }
             case CURL_POLL_OUT: {
+                // WLOGWARNING(" ====== [HTTP] ====== sock %d poll out %p", s, context);
                 res = uv_poll_start(&context->poll_object, UV_WRITABLE, ev_callback_curl_perform);
                 break;
             }
             case CURL_POLL_INOUT: {
+                // WLOGWARNING(" ====== [HTTP] ====== sock %d poll inout %p", s, context);
                 res = uv_poll_start(&context->poll_object, UV_READABLE | UV_WRITABLE, ev_callback_curl_perform);
                 break;
             }
             case CURL_POLL_REMOVE: {
+                // WLOGWARNING(" ====== [HTTP] ====== sock %d poll remove %p", s, context);
                 if (context) {
                     CURLM *curl_multi = context->bind_multi->curl_multi;
 
-                    // reset fd first, or libuv may call poll callback and cause a coredump
-                    context->sockfd = 0;
+                    // set removed first, or libuv may call poll callback and cause a coredump
+                    context->is_removed = true;
 
                     // already removed by libcurl
                     uv_poll_stop(&context->poll_object);
@@ -852,21 +888,34 @@ namespace util {
             return size * nmemb;
         }
 
+#if LIBCURL_VERSION_NUM >= 0x072000
+        int http_request::curl_callback_on_progress(void *clientp, curl_off_t dltotal, curl_off_t dlnow, curl_off_t ultotal,
+                                                    curl_off_t ulnow) {
+#else
         int http_request::curl_callback_on_progress(void *clientp, double dltotal, double dlnow, double ultotal, double ulnow) {
+#endif
             http_request *self = reinterpret_cast<http_request *>(clientp);
-            assert(self);
-            if (NULL == self || !self->on_progress_fn_) {
-                return 0;
+            int           ret  = 0;
+            if (NULL == self) {
+                return ret;
             }
 
-            progress_t progress;
-            progress.dltotal = dltotal;
-            progress.dlnow   = dlnow;
-            progress.ultotal = ultotal;
-            progress.ulnow   = ulnow;
+            if (self->on_progress_fn_) {
+                progress_t progress;
+                progress.dltotal = static_cast<size_t>(dltotal);
+                progress.dlnow   = static_cast<size_t>(dlnow);
+                progress.ultotal = static_cast<size_t>(ultotal);
+                progress.ulnow   = static_cast<size_t>(ulnow);
 
-            return self->on_progress_fn_(*self, progress);
-        }
+                ret = self->on_progress_fn_(*self, progress);
+            }
+
+            if (0 == ret && CHECK_FLAG(self->flags_, flag_t::EN_FT_STOPING)) {
+                ret = -1;
+            }
+
+            return ret;
+        } // namespace network
 
         size_t http_request::curl_callback_on_read(char *buffer, size_t size, size_t nitems, void *instream) {
             http_request *self = reinterpret_cast<http_request *>(instream);
