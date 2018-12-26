@@ -18,10 +18,12 @@
 
 #pragma once
 
+#include "spin_lock.h"
+
 #include <inttypes.h>
 #include <stdint.h>
 
-#include "spin_lock.h"
+
 
 namespace util {
     namespace lock {
