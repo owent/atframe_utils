@@ -96,7 +96,7 @@ namespace util {
         }
 
         size_t log_wrapper::sink_size() const {
-            util::lock::read_lock_holder holder(log_sinks_lock_);
+            util::lock::read_lock_holder<util::lock::spin_rw_lock> holder(log_sinks_lock_);
 
             return log_sinks_.size();
         }
@@ -108,13 +108,13 @@ namespace util {
                 router.level_min = level_min;
                 router.level_max = level_max;
 
-                util::lock::write_lock_holder holder(log_sinks_lock_);
+                util::lock::write_lock_holder<util::lock::spin_rw_lock> holder(log_sinks_lock_);
                 log_sinks_.push_back(router);
             };
         }
 
         void log_wrapper::pop_sink() {
-            util::lock::write_lock_holder holder(log_sinks_lock_);
+            util::lock::write_lock_holder<util::lock::spin_rw_lock> holder(log_sinks_lock_);
 
             if (log_sinks_.empty()) {
                 return;
@@ -124,7 +124,7 @@ namespace util {
         }
 
         bool log_wrapper::set_sink(size_t idx, level_t::type level_min, level_t::type level_max) {
-            util::lock::write_lock_holder holder(log_sinks_lock_);
+            util::lock::write_lock_holder<util::lock::spin_rw_lock> holder(log_sinks_lock_);
 
             if (log_sinks_.size() <= idx) {
                 return false;
@@ -142,7 +142,7 @@ namespace util {
 
 
         void log_wrapper::clear_sinks() {
-            util::lock::write_lock_holder holder(log_sinks_lock_);
+            util::lock::write_lock_holder<util::lock::spin_rw_lock> holder(log_sinks_lock_);
             log_sinks_.clear();
         }
 
@@ -218,7 +218,7 @@ namespace util {
         }
 
         void log_wrapper::write_log(const caller_info_t &caller, const char *content, size_t content_size) {
-            util::lock::read_lock_holder holder(log_sinks_lock_);
+            util::lock::read_lock_holder<util::lock::spin_rw_lock> holder(log_sinks_lock_);
 
             for (std::list<log_router_t>::iterator iter = log_sinks_.begin(); iter != log_sinks_.end(); ++iter) {
                 if (caller.level_id >= iter->level_min && caller.level_id <= iter->level_max) {

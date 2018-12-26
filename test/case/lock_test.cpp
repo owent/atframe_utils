@@ -97,7 +97,7 @@ CASE_TEST(lock_test, spin_rw_lock_holder) {
     util::lock::spin_rw_lock lock;
 
     {
-        util::lock::read_lock_holder holder(lock);
+        util::lock::read_lock_holder<util::lock::spin_rw_lock> holder(lock);
         CASE_EXPECT_TRUE(holder.is_available());
 
         CASE_EXPECT_TRUE(lock.is_read_locked());
@@ -108,7 +108,7 @@ CASE_TEST(lock_test, spin_rw_lock_holder) {
     CASE_EXPECT_FALSE(lock.is_write_locked());
 
     {
-        util::lock::write_lock_holder holder(lock);
+        util::lock::write_lock_holder<util::lock::spin_rw_lock> holder(lock);
         CASE_EXPECT_TRUE(holder.is_available());
 
         CASE_EXPECT_FALSE(lock.is_read_locked());
