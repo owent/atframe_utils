@@ -36,8 +36,12 @@ namespace util {
                 >
                 lock_status_;
 
-            static const uint32_t WRITE_LOCK_FLAG      = 0x01;
-            static const uint32_t MAX_READ_LOCK_HOLDER = UINT32_MAX - 1;
+            enum {
+                WRITE_LOCK_FLAG = 0x01,
+            };
+            enum {
+                MAX_READ_LOCK_HOLDER = UINT32_MAX - 1,
+            };
 
         public:
             spin_rw_lock() { lock_status_.store(0); }
