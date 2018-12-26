@@ -305,7 +305,8 @@ namespace util {
             // char has no cas api in msvc
             union {
                 volatile value_type data_;
-                volatile short padding;
+                volatile short padding_for_char;
+                volatile typename detail::atomic_msvc_oprs<sizeof(value_type)>::opr_t padding_for_opr;
             };
 #else
             volatile value_type data_;
