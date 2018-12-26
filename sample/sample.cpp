@@ -40,6 +40,8 @@ void log_sample_func1(int times) {
     WLOG_INIT(util::log::log_wrapper::categorize_t::DEFAULT, util::log::log_wrapper::level_t::LOG_LW_DEBUG);
     WLOG_GETCAT(util::log::log_wrapper::categorize_t::DEFAULT)->set_stacktrace_level(util::log::log_wrapper::level_t::LOG_LW_INFO);
 
+    WLOG_GETCAT(util::log::log_wrapper::categorize_t::DEFAULT)->clear_sinks();
+
     PSTDERROR("try to print error log.\n");
     PSTDOK("try to print ok log.\n");
 
@@ -65,8 +67,18 @@ void log_sample_func1(int times) {
 
     unsigned long long ull_test_in_mingw = 64;
     WLOGINFO("%llu", ull_test_in_mingw);
+
+    WLOG_GETCAT(util::log::log_wrapper::categorize_t::DEFAULT)
+        ->set_sink(WLOG_GETCAT(util::log::log_wrapper::categorize_t::DEFAULT)->sink_size() - 1,
+                   util::log::log_wrapper::level_t::LOG_LW_DEBUG, util::log::log_wrapper::level_t::LOG_LW_DEBUG);
+    WLOGDEBUG("Debug still available %llu", ull_test_in_mingw);
+    WLOGINFO("Info not available now %llu", ull_test_in_mingw);
+
     printf("log are located at %s\n", util::file_system::get_cwd().c_str());
     puts("===============end log sample==============");
+
+    WLOG_GETCAT(util::log::log_wrapper::categorize_t::DEFAULT)->pop_sink();
+    WLOGERROR("No log sink now");
 }
 
 class log_sample_functor2 {

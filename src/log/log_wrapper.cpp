@@ -33,7 +33,7 @@ namespace util {
     namespace log {
         namespace detail {
             static pthread_once_t gt_get_log_tls_once = PTHREAD_ONCE_INIT;
-            static pthread_key_t gt_get_log_tls_key;
+            static pthread_key_t  gt_get_log_tls_key;
 
             static void dtor_pthread_get_log_tls(void *p) {
                 char *buffer_block = reinterpret_cast<char *>(p);
@@ -95,27 +95,66 @@ namespace util {
             return 0;
         }
 
+        size_t log_wrapper::sink_size() const {
+            util::lock::read_lock_holder holder(log_sinks_lock_);
+
+            return log_sinks_.size();
+        }
+
         void log_wrapper::add_sink(log_handler_t h, level_t::type level_min, level_t::type level_max) {
             if (h) {
                 log_router_t router;
-                router.handle = h;
+                router.handle    = h;
                 router.level_min = level_min;
                 router.level_max = level_max;
+
+                util::lock::write_lock_holder holder(log_sinks_lock_);
                 log_sinks_.push_back(router);
             };
         }
 
-        void log_wrapper::clear_sinks() { log_sinks_.clear(); }
+        void log_wrapper::pop_sink() {
+            util::lock::write_lock_holder holder(log_sinks_lock_);
+
+            if (log_sinks_.empty()) {
+                return;
+            }
+
+            log_sinks_.pop_front();
+        }
+
+        bool log_wrapper::set_sink(size_t idx, level_t::type level_min, level_t::type level_max) {
+            util::lock::write_lock_holder holder(log_sinks_lock_);
+
+            if (log_sinks_.size() <= idx) {
+                return false;
+            }
+
+            std::list<log_router_t>::iterator beg = log_sinks_.begin();
+            if (idx > 0) {
+                std::advance(beg, idx);
+            }
+
+            (*beg).level_min = level_min;
+            (*beg).level_max = level_max;
+            return true;
+        }
+
+
+        void log_wrapper::clear_sinks() {
+            util::lock::write_lock_holder holder(log_sinks_lock_);
+            log_sinks_.clear();
+        }
 
         void log_wrapper::set_stacktrace_level(level_t::type level_max, level_t::type level_min) {
-            stacktrace_level_.first = level_min;
+            stacktrace_level_.first  = level_min;
             stacktrace_level_.second = level_max;
 
             // make sure first <= second
             if (stacktrace_level_.second < stacktrace_level_.first) {
-                level_t::type tmp = stacktrace_level_.second;
+                level_t::type tmp        = stacktrace_level_.second;
                 stacktrace_level_.second = stacktrace_level_.first;
-                stacktrace_level_.first = tmp;
+                stacktrace_level_.first  = tmp;
             }
         }
 
@@ -132,8 +171,8 @@ namespace util {
                 update();
             }
 
-            char *log_buffer = detail::get_log_tls_buffer();
-            size_t log_size = 0;
+            char * log_buffer = detail::get_log_tls_buffer();
+            size_t log_size   = 0;
             {
                 if (!log_sinks_.empty()) {
                     // format => "[Log    DEBUG][2015-01-12 10:09:08.]
@@ -151,9 +190,9 @@ namespace util {
 
                     if (start_index < LOG_WRAPPER_MAX_SIZE_PER_LINE) {
                         log_buffer[start_index] = 0;
-                        log_size = start_index;
+                        log_size                = start_index;
                     } else {
-                        log_size = LOG_WRAPPER_MAX_SIZE_PER_LINE;
+                        log_size                                      = LOG_WRAPPER_MAX_SIZE_PER_LINE;
                         log_buffer[LOG_WRAPPER_MAX_SIZE_PER_LINE - 1] = 0;
                     }
                 }
@@ -169,9 +208,9 @@ namespace util {
 
                 stacktrace_options options;
                 options.skip_start_frames = 1;
-                options.skip_end_frames = 0;
-                options.max_frames = 0;
-                size_t stacktrace_len = stacktrace_write(log_buffer + log_size, LOG_WRAPPER_MAX_SIZE_PER_LINE - log_size - 1, &options);
+                options.skip_end_frames   = 0;
+                options.max_frames        = 0;
+                size_t stacktrace_len     = stacktrace_write(log_buffer + log_size, LOG_WRAPPER_MAX_SIZE_PER_LINE - log_size - 1, &options);
                 log_size += stacktrace_len;
             }
 
@@ -179,6 +218,8 @@ namespace util {
         }
 
         void log_wrapper::write_log(const caller_info_t &caller, const char *content, size_t content_size) {
+            util::lock::read_lock_holder holder(log_sinks_lock_);
+
             for (std::list<log_router_t>::iterator iter = log_sinks_.begin(); iter != log_sinks_.end(); ++iter) {
                 if (caller.level_id >= iter->level_min && caller.level_id <= iter->level_max) {
                     iter->handle(caller, content, content_size);
@@ -202,7 +243,7 @@ namespace util {
 
         log_wrapper::ptr_t log_wrapper::create_user_logger() {
             construct_helper_t h;
-            ptr_t ret = std::make_shared<log_wrapper>(h);
+            ptr_t              ret = std::make_shared<log_wrapper>(h);
             if (ret) {
                 ret->options_.set(options_t::OPT_IS_GLOBAL, false);
             }
