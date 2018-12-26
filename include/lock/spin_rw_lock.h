@@ -18,14 +18,10 @@
 
 #pragma once
 
-#include <limits>
-
+#include <inttypes.h>
+#include <stdint.h>
 
 #include "spin_lock.h"
-
-#ifdef max
-#undef max
-#endif
 
 namespace util {
     namespace lock {
@@ -41,7 +37,7 @@ namespace util {
                 lock_status_;
 
             static const uint32_t WRITE_LOCK_FLAG      = 0x01;
-            static const uint32_t MAX_READ_LOCK_HOLDER = std::numeric_limits<uint32_t>::max() - 1;
+            static const uint32_t MAX_READ_LOCK_HOLDER = UINT32_MAX - 1;
 
         public:
             spin_rw_lock() { lock_status_.store(0); }
