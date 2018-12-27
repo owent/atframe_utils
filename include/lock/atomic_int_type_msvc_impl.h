@@ -41,27 +41,22 @@ namespace util {
 
             template <>
             struct atomic_msvc_oprs<1> {
-                typedef char  opr_t;
-                typedef SHORT padding_t;
+                typedef SHORT opr_t;
 
                 static opr_t exchange(volatile opr_t *target, opr_t value, ::util::lock::memory_order order) {
-                    return InterlockedExchange8(target, value);
+                    return InterlockedExchange16(target, value);
                 }
 
                 static opr_t cas(volatile opr_t *target, opr_t value, opr_t expected, ::util::lock::memory_order order) {
-                    volatile SHORT *star        = reinterpret_cast<volatile SHORT *>(target);
-                    SHORT           real_expect = expected;
-                    real_expect |= 0xFF00 & *star;
-
                     switch (order) {
                     case ::util::lock::memory_order_relaxed:
-                        return static_cast<opr_t>(InterlockedCompareExchangeNoFence16(star, value, real_expect));
+                        return static_cast<opr_t>(InterlockedCompareExchangeNoFence16(target, value, expected));
                     case ::util::lock::memory_order_acquire:
-                        return static_cast<opr_t>(InterlockedCompareExchangeAcquire16(star, value, real_expect));
+                        return static_cast<opr_t>(InterlockedCompareExchangeAcquire16(target, value, expected));
                     case ::util::lock::memory_order_release:
-                        return static_cast<opr_t>(InterlockedCompareExchangeRelease16(star, value, real_expect));
+                        return static_cast<opr_t>(InterlockedCompareExchangeRelease16(target, value, expected));
                     default:
-                        return static_cast<opr_t>(InterlockedCompareExchange16(star, value, real_expect));
+                        return static_cast<opr_t>(InterlockedCompareExchange16(target, value, expected));
                     }
                 }
 
@@ -106,21 +101,20 @@ namespace util {
                 }
 
                 static opr_t and (volatile opr_t * target, opr_t value, ::util::lock::memory_order order) {
-                    return InterlockedAnd8(target, value);
+                    return InterlockedAnd16(target, value);
                 }
 
                 static opr_t or (volatile opr_t * target, opr_t value, ::util::lock::memory_order order) {
-                    return InterlockedOr8(target, value);
+                    return InterlockedOr16(target, value);
                 }
 
                 static opr_t xor
-                    (volatile opr_t * target, opr_t value, ::util::lock::memory_order order) { return InterlockedXor8(target, value); }
+                    (volatile opr_t * target, opr_t value, ::util::lock::memory_order order) { return InterlockedXor16(target, value); }
             };
 
             template <>
             struct atomic_msvc_oprs<2> {
                 typedef SHORT opr_t;
-                typedef SHORT padding_t;
 
                 static opr_t exchange(volatile opr_t *target, opr_t value, ::util::lock::memory_order order) {
                     return InterlockedExchange16(target, value);
@@ -215,28 +209,22 @@ namespace util {
 
             template <>
             struct atomic_msvc_oprs<4> {
-                typedef int32_t opr_t;
-                typedef LONG    padding_t;
+                typedef LONG opr_t;
 
                 static opr_t exchange(volatile opr_t *target, opr_t value, ::util::lock::memory_order order) {
-                    volatile LONG *star = reinterpret_cast<volatile LONG *>(target);
-                    return InterlockedExchange(star, value);
+                    return InterlockedExchange(target, value);
                 }
 
                 static opr_t cas(volatile opr_t *target, opr_t value, opr_t expected, ::util::lock::memory_order order) {
-                    volatile LONG *star        = reinterpret_cast<volatile LONG *>(target);
-                    LONG           real_expect = expected;
-                    real_expect |= ((0x00000000 & static_cast<LONG>(-1)) & *target);
-
                     switch (order) {
                     case ::util::lock::memory_order_relaxed:
-                        return static_cast<opr_t>(InterlockedCompareExchangeNoFence(star, value, real_expect));
+                        return static_cast<opr_t>(InterlockedCompareExchangeNoFence(target, value, expected));
                     case ::util::lock::memory_order_acquire:
-                        return static_cast<opr_t>(InterlockedCompareExchangeAcquire(star, value, real_expect));
+                        return static_cast<opr_t>(InterlockedCompareExchangeAcquire(target, value, expected));
                     case ::util::lock::memory_order_release:
-                        return static_cast<opr_t>(InterlockedCompareExchangeRelease(star, value, real_expect));
+                        return static_cast<opr_t>(InterlockedCompareExchangeRelease(target, value, expected));
                     default:
-                        return static_cast<opr_t>(InterlockedCompareExchange(star, value, real_expect));
+                        return static_cast<opr_t>(InterlockedCompareExchange(target, value, expected));
                     }
                 }
 
@@ -281,25 +269,21 @@ namespace util {
                 }
 
                 static opr_t and (volatile opr_t * target, opr_t value, ::util::lock::memory_order order) {
-                    volatile LONG *star = reinterpret_cast<volatile LONG *>(target);
-                    return InterlockedAnd(star, value);
+                    return InterlockedAnd(target, value);
                 }
 
                 static opr_t or (volatile opr_t * target, opr_t value, ::util::lock::memory_order order) {
-                    volatile LONG *star = reinterpret_cast<volatile LONG *>(target);
-                    return InterlockedOr(star, value);
+                    return InterlockedOr(target, value);
                 }
 
                 static opr_t xor (volatile opr_t * target, opr_t value, ::util::lock::memory_order order) {
-                    volatile LONG *star = reinterpret_cast<volatile LONG *>(target);
-                    return InterlockedXor(star, value);
+                    return InterlockedXor(target, value);
                 }
             };
 
             template <>
             struct atomic_msvc_oprs<8> {
                 typedef LONGLONG opr_t;
-                typedef LONGLONG padding_t;
 
                 static opr_t exchange(volatile opr_t *target, opr_t value, ::util::lock::memory_order order) {
                     switch (order) {
@@ -419,8 +403,7 @@ namespace util {
 
             template <int INT_SIZE>
             struct atomic_msvc_oprs {
-                typedef LONG     opr_t;
-                typedef LONGLONG padding_t;
+                typedef LONGLONG opr_t;
 
                 static opr_t exchange(volatile opr_t *target, opr_t value, ::util::lock::memory_order order) {
                     switch (order) {

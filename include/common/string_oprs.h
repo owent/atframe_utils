@@ -154,7 +154,7 @@ namespace util {
          * @param end 字符串结束地址,填入NULL，则从begin开是找到\0结束
          */
         template <typename TCH, typename TCHE>
-        void reverse(TCH *begin, const TCHE &end_any) {
+        void reverse(TCH *begin, TCHE end_any) {
             TCH *end = reinterpret_cast<TCH *>(end_any);
             if (NULL == begin) {
                 return;
@@ -179,6 +179,11 @@ namespace util {
                 ++begin;
                 --end;
             }
+        }
+
+        template <typename TCH>
+        inline void reverse(TCH *begin, int end_any) {
+            reverse<TCH, TCH *>(begin, reinterpret_cast<TCH *>(static_cast<intptr_t>(end_any)));
         }
 
         template <typename T>
