@@ -18,14 +18,13 @@
 
 #pragma once
 
-// @see https://en.cppreference.com/w/cpp/types/integer#Notes
-#ifndef __STDC_LIMIT_MACROS
-#define __STDC_LIMIT_MACROS
-#endif
+#include <cstring>
+#include <limits>
+#include <numeric>
 
 #include <inttypes.h>
-#include <limits.h>
 #include <stdint.h>
+
 
 #include "spin_lock.h"
 
