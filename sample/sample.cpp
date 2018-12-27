@@ -181,11 +181,9 @@ void tquerystring_sample() {
 
 //=======================================================================================================
 void hash_sample() {
-    puts("");
-    puts("===============begin hash sample==============");
+    std::cout << std::endl << "===============begin hash sample=============="<< std::endl;
     char str_buff[] = "Hello World!\nI'm OWenT\n";
-    printf("Hashed String: \n%s\n", str_buff);
-
+    std::cout << "Hashed String: " << std::endl << str_buff << std::endl;
     std::cout << "FNV-1:   " << util::hash::hash_fnv1<uint32_t>(str_buff, strlen(str_buff)) << std::endl;
     std::cout << "FNV-1A:  " << util::hash::hash_fnv1a<uint32_t>(str_buff, strlen(str_buff)) << std::endl;
     std::cout << "SDBM:    " << util::hash::hash_sdbm<uint32_t>(str_buff, strlen(str_buff)) << std::endl;
@@ -196,7 +194,7 @@ void hash_sample() {
     std::cout << "BKDR:    " << util::hash::hash_bkdr<uint32_t>(str_buff, strlen(str_buff)) << std::endl;
     std::cout << "DJB:     " << util::hash::hash_djb<uint32_t>(str_buff, strlen(str_buff)) << std::endl;
     std::cout << "AP:      " << util::hash::hash_ap<uint32_t>(str_buff, strlen(str_buff)) << std::endl;
-    puts("===============end hash sample==============");
+    std::cout << "===============end hash sample==============" << std::endl;
 }
 //=======================================================================================================
 
