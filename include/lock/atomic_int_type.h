@@ -30,7 +30,7 @@
 #include <atomic>
 #define __UTIL_LOCK_ATOMIC_INT_TYPE_ATOMIC_STD
 
-#elif defined(_MSC_VER) && (_MSC_VER > 1700 || (defined(_HAS_CPP0X) && _HAS_CPP0X)) // VC 11,2012
+#elif defined(_MSC_VER) && (_MSC_VER > 1900) // VC 14.0,2015
 
 #include <atomic>
 #define __UTIL_LOCK_ATOMIC_INT_TYPE_ATOMIC_STD
