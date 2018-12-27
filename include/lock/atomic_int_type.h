@@ -30,7 +30,7 @@
 #include <atomic>
 #define __UTIL_LOCK_ATOMIC_INT_TYPE_ATOMIC_STD
 
-#elif defined(_MSC_VER) && (_MSC_VER > 1900) // VC 14.0,2015
+#elif defined(_MSC_VER) && (_MSC_VER >= 1900) // 1900 means VC 14.0,2015, there some problem with std::atomic implement in old MSVC
 
 #include <atomic>
 #define __UTIL_LOCK_ATOMIC_INT_TYPE_ATOMIC_STD
