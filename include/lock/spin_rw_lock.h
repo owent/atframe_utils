@@ -20,6 +20,7 @@
 
 #include "spin_lock.h"
 
+#include <limits.h>
 #include <inttypes.h>
 #include <stdint.h>
 
