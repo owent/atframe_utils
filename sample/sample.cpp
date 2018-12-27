@@ -19,6 +19,11 @@
 #include "string/tquerystring.h"
 
 
+#define CALL_SAMPLE(x) \
+    std::cout << std::endl << "=============== begin " << #x << " =============="<<std::endl; \
+    x();                                                                                     \
+    std::cout << "===============  end " << #x << "  ==============" << std::endl
+
 //=======================================================================================================
 void log_sample_func1(int times) {
     if (times > 0) {
@@ -26,22 +31,25 @@ void log_sample_func1(int times) {
         return;
     }
 
-    puts("");
-    puts("===============begin log sample==============");
-
     if (util::log::is_stacktrace_enabled()) {
-        puts("----------------test stacktrace begin--------------");
+        std::cout << "----------------test stacktrace begin--------------" << std::endl;
         char buffer[2048] = {0};
         util::log::stacktrace_write(buffer, sizeof(buffer));
-        puts(buffer);
-        puts("----------------test stacktrace end--------------");
+        std::cout << buffer << std::endl;
+        std::cout << "----------------test stacktrace end--------------" << std::endl;
     }
 
     WLOG_INIT(util::log::log_wrapper::categorize_t::DEFAULT, util::log::log_wrapper::level_t::LOG_LW_DEBUG);
     WLOG_GETCAT(util::log::log_wrapper::categorize_t::DEFAULT)->set_stacktrace_level(util::log::log_wrapper::level_t::LOG_LW_INFO);
 
+    WLOG_GETCAT(util::log::log_wrapper::categorize_t::DEFAULT)->clear_sinks();
+
+    std::cout << "----------------setup log_wrapper done--------------" << std::endl;
+
     PSTDERROR("try to print error log.\n");
     PSTDOK("try to print ok log.\n");
+
+    std::cout << "----------------sample for PSTDOK/PSTDERROR done--------------" << std::endl;
 
     WLOGNOTICE("notice log %d", 0);
 
@@ -51,6 +59,7 @@ void log_sample_func1(int times) {
     filed_backend.set_file_pattern("%Y-%m-%d/%S/%N.log");
 
     WLOG_GETCAT(util::log::log_wrapper::categorize_t::DEFAULT)->add_sink(filed_backend);
+    std::cout << "----------------setup file system log sink done--------------" << std::endl;
 
     for (int i = 0; i < 16; ++i) {
         WLOGDEBUG("first dir test log: %d", i);
@@ -65,8 +74,17 @@ void log_sample_func1(int times) {
 
     unsigned long long ull_test_in_mingw = 64;
     WLOGINFO("%llu", ull_test_in_mingw);
-    printf("log are located at %s\n", util::file_system::get_cwd().c_str());
-    puts("===============end log sample==============");
+
+    WLOG_GETCAT(util::log::log_wrapper::categorize_t::DEFAULT)
+        ->set_sink(WLOG_GETCAT(util::log::log_wrapper::categorize_t::DEFAULT)->sink_size() - 1,
+                   util::log::log_wrapper::level_t::LOG_LW_DEBUG, util::log::log_wrapper::level_t::LOG_LW_DEBUG);
+    WLOGDEBUG("Debug still available %llu", ull_test_in_mingw);
+    WLOGINFO("Info not available now %llu", ull_test_in_mingw);
+
+    std::cout<< "log are located at "<< util::file_system::get_cwd().c_str()<< std::endl;
+
+    WLOG_GETCAT(util::log::log_wrapper::categorize_t::DEFAULT)->pop_sink();
+    WLOGERROR("No log sink now");
 }
 
 class log_sample_functor2 {
@@ -117,16 +135,12 @@ void log_sample() { log_sample_func5(9); }
 
 //=======================================================================================================
 void random_sample() {
-    printf("\n");
-    printf("===============begin random sample==============\n");
     util::random::mt19937 gen1;
     gen1.init_seed(123);
 
-    printf("Random - mt19937: %u\n", gen1.random());
-    printf("Random - mt19937: %u\n", gen1());
-    printf("Random - mt19937 - between [100, 10000): %d\n", gen1.random_between(100, 10000));
-
-    printf("===============end random sample==============\n");
+    std::cout << "Random - mt19937: %u" << gen1.random() << std::endl;
+    std::cout << "Random - mt19937: %u" << gen1() << std::endl;
+    std::cout << "Random - mt19937 - between [100, 10000): %d" << gen1.random_between(100, 10000) << std::endl;
 }
 
 //=======================================================================================================
@@ -134,9 +148,6 @@ void random_sample() {
 
 //=======================================================================================================
 void tquerystring_sample() {
-    printf("\n");
-    printf("===============begin querystring sample==============\n");
-
     util::tquerystring encode, decode;
 
     encode.set("a", "wulala");
@@ -161,19 +172,14 @@ void tquerystring_sample() {
 
     decode.decode(encode.to_string().c_str());
     std::cout << "decode => " << decode.to_string() << std::endl;
-
-    printf("===============end querystring sample================\n");
 }
 
 //=======================================================================================================
 
 //=======================================================================================================
 void hash_sample() {
-    puts("");
-    puts("===============begin hash sample==============");
     char str_buff[] = "Hello World!\nI'm OWenT\n";
-    printf("Hashed String: \n%s\n", str_buff);
-
+    std::cout << "Hashed String: " << std::endl << str_buff << std::endl;
     std::cout << "FNV-1:   " << util::hash::hash_fnv1<uint32_t>(str_buff, strlen(str_buff)) << std::endl;
     std::cout << "FNV-1A:  " << util::hash::hash_fnv1a<uint32_t>(str_buff, strlen(str_buff)) << std::endl;
     std::cout << "SDBM:    " << util::hash::hash_sdbm<uint32_t>(str_buff, strlen(str_buff)) << std::endl;
@@ -184,7 +190,6 @@ void hash_sample() {
     std::cout << "BKDR:    " << util::hash::hash_bkdr<uint32_t>(str_buff, strlen(str_buff)) << std::endl;
     std::cout << "DJB:     " << util::hash::hash_djb<uint32_t>(str_buff, strlen(str_buff)) << std::endl;
     std::cout << "AP:      " << util::hash::hash_ap<uint32_t>(str_buff, strlen(str_buff)) << std::endl;
-    puts("===============end hash sample==============");
 }
 //=======================================================================================================
 
@@ -192,10 +197,7 @@ void hash_sample() {
 extern int cmd_option_sample_main();
 
 void cmd_option_sample() {
-    puts("");
-    puts("===============begin cmd_option sample==============");
     cmd_option_sample_main();
-    puts("===============end cmd_option sample==============");
 }
 //=======================================================================================================
 
@@ -203,10 +205,11 @@ void cmd_option_sample() {
 int main(int argc, char **argv) {
     util::time::time_utility::update();
 
-    tquerystring_sample();
-    hash_sample();
-    random_sample();
-    log_sample();
-    cmd_option_sample();
+    CALL_SAMPLE(tquerystring_sample);
+    CALL_SAMPLE(hash_sample);
+    CALL_SAMPLE(random_sample);
+    CALL_SAMPLE(log_sample);
+    CALL_SAMPLE(cmd_option_sample);
+
     return 0;
 }

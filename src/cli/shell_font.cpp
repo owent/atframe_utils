@@ -39,7 +39,7 @@ namespace util {
             bool bFirst = true;
 
             // 第一部分，特殊样式
-            if (shell_font_style::SHELL_FONT_SPEC_BOLD) {
+            if (iFlag & shell_font_style::SHELL_FONT_SPEC_BOLD) {
                 ret += "1";
                 bFirst = false;
             }

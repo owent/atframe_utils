@@ -22,6 +22,8 @@
 
 #include "cli/shell_font.h"
 
+#include "lock/spin_rw_lock.h"
+
 #include "log_formatter.h"
 
 #ifndef LOG_WRAPPER_MAX_SIZE_PER_LINE
@@ -41,7 +43,7 @@ namespace util {
             struct categorize_t {
                 enum type {
                     DEFAULT = 0, // 服务框架
-                    MAX = LOG_WRAPPER_CATEGORIZE_SIZE
+                    MAX     = LOG_WRAPPER_CATEGORIZE_SIZE
                 };
             };
 
@@ -55,7 +57,7 @@ namespace util {
             };
 
         public:
-            typedef log_formatter::level_t level_t;
+            typedef log_formatter::level_t       level_t;
             typedef log_formatter::caller_info_t caller_info_t;
 
             typedef std::function<void(const caller_info_t &caller, const char *content, size_t content_size)> log_handler_t;
@@ -105,13 +107,30 @@ namespace util {
                 return logger->log_level_ >= level;
             }
 
-            inline const std::list<log_router_t> &get_sinks() const { return log_sinks_; }
+            size_t sink_size() const;
 
             /**
-             * @brief 添加落地接口
+             * @brief 添加后端接口
+             * @param h 输出函数
+             * @param level_min 最低日志级别
+             * @param level_min 最高日志级别
              */
             void add_sink(log_handler_t h, level_t::type level_min = level_t::LOG_LW_FATAL,
                           level_t::type level_max = level_t::LOG_LW_DEBUG);
+
+            /**
+             * @brief 移除最后一个后端接口
+             */
+            void pop_sink();
+
+            /**
+             * @brief 设置后端接口的日志级别
+             * @param idx 后端接口索引
+             * @param level_min 最低日志级别
+             * @param level_min 最高日志级别
+             * @return 如果没找到则返回false，成功返回true
+             */
+            bool set_sink(size_t idx, level_t::type level_min = level_t::LOG_LW_FATAL, level_t::type level_max = level_t::LOG_LW_DEBUG);
 
             /**
              * @brief 移除所有后端, std::function无法比较，所以只能全清
@@ -142,8 +161,8 @@ namespace util {
                 options_.set(t, v);
             };
 
-            void set_stacktrace_level(level_t::type level_max = level_t::LOG_LW_DISABLED,
-                                      level_t::type level_min = level_t::LOG_LW_DISABLED);
+            void                                                  set_stacktrace_level(level_t::type level_max = level_t::LOG_LW_DISABLED,
+                                                                                       level_t::type level_min = level_t::LOG_LW_DISABLED);
             inline const std::pair<level_t::type, level_t::type> &get_stacktrace_level() const { return stacktrace_level_; }
 
             /**
@@ -154,14 +173,15 @@ namespace util {
             // 白名单及用户指定日志输出可以针对哪个用户创建log_wrapper实例
 
             static log_wrapper *mutable_log_cat(uint32_t cats = categorize_t::DEFAULT);
-            static ptr_t create_user_logger();
+            static ptr_t        create_user_logger();
 
         private:
-            level_t::type log_level_;
+            level_t::type                           log_level_;
             std::pair<level_t::type, level_t::type> stacktrace_level_;
-            std::list<log_router_t> log_sinks_;
-            std::string prefix_format_;
-            std::bitset<options_t::OPT_MAX> options_;
+            std::string                             prefix_format_;
+            std::bitset<options_t::OPT_MAX>         options_;
+            std::list<log_router_t>                 log_sinks_;
+            mutable util::lock::spin_rw_lock        log_sinks_lock_;
         };
     } // namespace log
 } // namespace util
@@ -190,7 +210,7 @@ namespace util {
 #define WCLOGERROR(cat, ...) WCLOGDEFLV(util::log::log_wrapper::level_t::LOG_LW_ERROR, NULL, cat, __VA_ARGS__)
 #define WCLOGFATAL(cat, ...) WCLOGDEFLV(util::log::log_wrapper::level_t::LOG_LW_FATAL, NULL, cat, __VA_ARGS__)
 
-    /** 对指定log_wrapper的日志输出工具 **/
+/** 对指定log_wrapper的日志输出工具 **/
 
 #define WINSTLOGDEFLV(lv, lv_name, inst, ...) \
     if ((inst).check(lv)) (inst).log(WDTLOGFILENF(lv, lv_name), __VA_ARGS__);
@@ -244,25 +264,23 @@ namespace util {
 // 控制台输出工具
 #ifdef _MSC_VER
 #define PSTDTERMCOLOR(os_ident, code, fmt, ...)                                        \
-    \
-{                                                                                 \
+                                                                                       \
+    {                                                                                  \
         util::cli::shell_stream::shell_stream_opr log_wrapper_pstd_ss(&std::os_ident); \
         log_wrapper_pstd_ss.open(code);                                                \
         log_wrapper_pstd_ss.close();                                                   \
         printf(fmt, __VA_ARGS__);                                                      \
-    \
-}
+    }
 
 #else
 #define PSTDTERMCOLOR(os_ident, code, fmt, args...)                                    \
-    \
-{                                                                                 \
+                                                                                       \
+    {                                                                                  \
         util::cli::shell_stream::shell_stream_opr log_wrapper_pstd_ss(&std::os_ident); \
         log_wrapper_pstd_ss.open(code);                                                \
         log_wrapper_pstd_ss.close();                                                   \
         printf(fmt, ##args);                                                           \
-    \
-}
+    }
 
 #endif
 

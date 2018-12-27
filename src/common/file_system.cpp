@@ -71,7 +71,8 @@ namespace util {
             size_t real_read_sz = fread(const_cast<char *>(out.data()), sizeof(char), static_cast<size_t>(len), f);
             if (real_read_sz < out.size()) {
                 out.resize(real_read_sz);
-                ret = false;
+                // CLRF maybe converted into CL or RF on text mode 
+                ret = !is_binary;
             }
         } else {
             // fclose(f);

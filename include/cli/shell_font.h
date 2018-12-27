@@ -18,6 +18,18 @@
 #include <map>
 #include <string>
 
+/**
+ * Window 控制台相关
+ * @see https://msdn.microsoft.com/zh-cn/windows/apps/ms686047%28v=vs.100%29.aspx
+ * @see https://github.com/owent-utils/python/blob/master/print_color.py
+ */
+#ifdef _MSC_VER
+
+#include <Windows.h>
+
+#define SHELL_FONT_USING_WIN32_CONSOLE
+
+#endif
 
 namespace util {
     namespace cli {
@@ -134,20 +146,6 @@ namespace util {
              */
             static std::string GetStyleCloseCode();
         };
-
-
-        /**
-         * Window 控制台相关
-         * @see https://msdn.microsoft.com/zh-cn/windows/apps/ms686047%28v=vs.100%29.aspx
-         * @see https://github.com/owent-utils/python/blob/master/print_color.py
-         */
-#ifdef _MSC_VER
-
-#include <Windows.h>
-
-#define SHELL_FONT_USING_WIN32_CONSOLE
-
-#endif
 
 
         class shell_stream {
