@@ -20,10 +20,6 @@
 
 #include "spin_lock.h"
 
-#include <inttypes.h>
-#include <stdint.h>
-
-
 
 namespace util {
     namespace lock {
@@ -31,9 +27,9 @@ namespace util {
         private:
             ::util::lock::atomic_int_type<
 #if defined(LOCK_DISABLE_MT) && LOCK_DISABLE_MT
-                ::util::lock::unsafe_int_type<uint32_t>
+                ::util::lock::unsafe_int_type<int32_t>
 #else
-                uint32_t
+                int32_t
 #endif
                 >
                 lock_status_;
@@ -42,7 +38,7 @@ namespace util {
                 WRITE_LOCK_FLAG = 0x01,
             };
             enum {
-                MAX_READ_LOCK_HOLDER = UINT32_MAX - 1,
+                MAX_READ_LOCK_HOLDER = INT32_MAX - 1,
             };
 
         public:
@@ -59,7 +55,7 @@ namespace util {
             bool is_read_locked() { return lock_status_.load(::util::lock::memory_order_acquire) >= 2; }
 
             bool try_read_lock() {
-                uint32_t src_status = lock_status_.load(::util::lock::memory_order_acquire);
+                int32_t src_status = lock_status_.load(::util::lock::memory_order_acquire);
                 while (true) {
                     // failed if already lock writable
                     if (src_status & WRITE_LOCK_FLAG) {
@@ -71,7 +67,7 @@ namespace util {
                         return false;
                     }
 
-                    uint32_t dst_status = src_status + 2;
+                    int32_t dst_status = src_status + 2;
                     if (lock_status_.compare_exchange_weak(src_status, dst_status, ::util::lock::memory_order_acq_rel)) {
                         return true;
                     }
@@ -79,13 +75,13 @@ namespace util {
             }
 
             bool try_read_unlock() {
-                uint32_t src_status = lock_status_.load(::util::lock::memory_order_acquire);
+                int32_t src_status = lock_status_.load(::util::lock::memory_order_acquire);
                 while (true) {
                     if (src_status < 2) {
                         return false;
                     }
 
-                    uint32_t dst_status = src_status - 2;
+                    int32_t dst_status = src_status - 2;
                     if (lock_status_.compare_exchange_weak(src_status, dst_status, ::util::lock::memory_order_acq_rel)) {
                         return true;
                     }
@@ -97,7 +93,7 @@ namespace util {
                 unsigned char try_times                = 0;
 
                 while (true) {
-                    uint32_t src_status = lock_status_.load(::util::lock::memory_order_acquire);
+                    int32_t src_status = lock_status_.load(::util::lock::memory_order_acquire);
                     // already lock writable
                     if (is_already_lock_writable) {
                         if (src_status < 2) {
@@ -115,7 +111,7 @@ namespace util {
                     }
 
                     // lock writable and then wait for all read lock to free
-                    uint32_t dst_status = src_status + WRITE_LOCK_FLAG;
+                    int32_t dst_status = src_status + WRITE_LOCK_FLAG;
                     if (lock_status_.compare_exchange_weak(src_status, dst_status, ::util::lock::memory_order_acq_rel)) {
                         is_already_lock_writable = true;
                     }
@@ -127,7 +123,7 @@ namespace util {
             bool is_write_locked() { return 0 != (lock_status_.load(::util::lock::memory_order_acquire) & WRITE_LOCK_FLAG); }
 
             bool try_write_lock() {
-                uint32_t src_status = lock_status_.load(::util::lock::memory_order_acquire);
+                int32_t src_status = lock_status_.load(::util::lock::memory_order_acquire);
                 while (true) {
                     // failed if already locked
                     if (src_status & WRITE_LOCK_FLAG) {
@@ -139,7 +135,7 @@ namespace util {
                         return false;
                     }
 
-                    uint32_t dst_status = src_status + WRITE_LOCK_FLAG;
+                    int32_t dst_status = src_status + WRITE_LOCK_FLAG;
                     if (lock_status_.compare_exchange_weak(src_status, dst_status, ::util::lock::memory_order_acq_rel)) {
                         return true;
                     }
@@ -147,13 +143,13 @@ namespace util {
             }
 
             bool try_write_unlock() {
-                uint32_t src_status = lock_status_.load(::util::lock::memory_order_acquire);
+                int32_t src_status = lock_status_.load(::util::lock::memory_order_acquire);
                 while (true) {
                     if (0 == (src_status & WRITE_LOCK_FLAG)) {
                         return false;
                     }
 
-                    uint32_t dst_status = src_status - WRITE_LOCK_FLAG;
+                    int32_t dst_status = src_status - WRITE_LOCK_FLAG;
                     if (lock_status_.compare_exchange_weak(src_status, dst_status, ::util::lock::memory_order_acq_rel)) {
                         return true;
                     }

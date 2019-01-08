@@ -138,9 +138,9 @@ void random_sample() {
     util::random::mt19937 gen1;
     gen1.init_seed(123);
 
-    std::cout << "Random - mt19937: %u" << gen1.random() << std::endl;
-    std::cout << "Random - mt19937: %u" << gen1() << std::endl;
-    std::cout << "Random - mt19937 - between [100, 10000): %d" << gen1.random_between(100, 10000) << std::endl;
+    std::cout << "Random - mt19937: " << gen1.random() << std::endl;
+    std::cout << "Random - mt19937: " << gen1() << std::endl;
+    std::cout << "Random - mt19937 - between [100, 10000): " << gen1.random_between(100, 10000) << std::endl;
 }
 
 //=======================================================================================================

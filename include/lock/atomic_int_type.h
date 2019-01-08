@@ -20,6 +20,33 @@
 
 #pragma once
 
+#if __cplusplus >= 201103L || defined(__GXX_EXPERIMENTAL_CXX0X__)
+#include <cstdint>
+#elif defined(_MSC_VER) && defined(_MSVC_LANG) && _MSVC_LANG >= 201402L
+#include <cstdint>
+#else
+
+// patch for old gcc
+#ifndef __STDC_LIMIT_MACROS
+#define _UNDEF__STDC_LIMIT_MACROS
+#define __STDC_LIMIT_MACROS
+#endif
+#ifndef __STDC_CONSTANT_MACROS
+#define _UNDEF__STDC_CONSTANT_MACROS
+#define __STDC_CONSTANT_MACROS
+#endif
+#include <stdint.h>
+#ifdef _UNDEF__STDC_LIMIT_MACROS
+#undef __STDC_LIMIT_MACROS
+#undef _UNDEF__STDC_LIMIT_MACROS
+#endif
+#ifdef _UNDEF__STDC_CONSTANT_MACROS
+#undef __STDC_CONSTANT_MACROS
+#undef _UNDEF__STDC_CONSTANT_MACROS
+#endif
+
+#endif
+
 #if defined(__cplusplus) && __cplusplus >= 201103L
 
 #include <atomic>
@@ -30,7 +57,7 @@
 #include <atomic>
 #define __UTIL_LOCK_ATOMIC_INT_TYPE_ATOMIC_STD
 
-#elif defined(_MSC_VER) && (_MSC_VER > 1700 || (defined(_HAS_CPP0X) && _HAS_CPP0X)) // VC 11,2012
+#elif defined(_MSC_VER) && (_MSC_VER >= 1900) // 1900 means VC 14.0,2015, there some problem with std::atomic implement in old MSVC
 
 #include <atomic>
 #define __UTIL_LOCK_ATOMIC_INT_TYPE_ATOMIC_STD
@@ -323,12 +350,13 @@ namespace util {
             atomic_int_type() UTIL_CONFIG_NOEXCEPT : data_() {
 #ifdef __UTIL_LOCK_ATOMIC_INT_ATOMIC_MSVC
 #if __cplusplus >= 201703L
-                if constexpr (sizeof(data_) != sizeof(value_type)) {
+                if
+                    constexpr(sizeof(data_) != sizeof(value_type)) {
 #else
                 if (sizeof(data_) != sizeof(value_type)) {
 #endif
-                    data_ = static_cast<value_type>(data_);
-                }
+                        data_ = static_cast<value_type>(data_);
+                    }
 #endif
             }
 
@@ -481,8 +509,7 @@ namespace util {
 #ifdef __UTIL_LOCK_ATOMIC_INT_ATOMIC_MSVC
                 typedef detail::atomic_msvc_oprs<sizeof(value_type)> int_opr_t;
                 typedef typename int_opr_t::opr_t                    opr_t;
-                return static_cast<value_type>(static_cast<value_type>(
-                    int_opr_t::exchange(&data_, static_cast<opr_t>(desired), order)));
+                return static_cast<value_type>(static_cast<value_type>(int_opr_t::exchange(&data_, static_cast<opr_t>(desired), order)));
 
 #elif defined(__UTIL_LOCK_ATOMIC_INT_ATOMIC_GCC_ATOMIC)
                 return __atomic_exchange_n(&data_, desired, order);
@@ -519,8 +546,8 @@ namespace util {
 #ifdef __UTIL_LOCK_ATOMIC_INT_ATOMIC_MSVC
                 typedef detail::atomic_msvc_oprs<sizeof(value_type)> int_opr_t;
                 typedef typename int_opr_t::opr_t                    opr_t;
-                if (expected == static_cast<value_type>(int_opr_t::cas(&data_, static_cast<opr_t>(desired),
-                                                                       static_cast<opr_t>(expected), success))) {
+                if (expected ==
+                    static_cast<value_type>(int_opr_t::cas(&data_, static_cast<opr_t>(desired), static_cast<opr_t>(expected), success))) {
                     return true;
                 } else {
                     expected = static_cast<value_type>(data_);
@@ -544,8 +571,8 @@ namespace util {
 #ifdef __UTIL_LOCK_ATOMIC_INT_ATOMIC_MSVC
                 typedef detail::atomic_msvc_oprs<sizeof(value_type)> int_opr_t;
                 typedef typename int_opr_t::opr_t                    opr_t;
-                if (expected == static_cast<value_type>(int_opr_t::cas(&data_, static_cast<opr_t>(desired),
-                                                                       static_cast<opr_t>(expected), success))) {
+                if (expected ==
+                    static_cast<value_type>(int_opr_t::cas(&data_, static_cast<opr_t>(desired), static_cast<opr_t>(expected), success))) {
                     return true;
                 } else {
                     expected = static_cast<value_type>(data_);
@@ -569,8 +596,8 @@ namespace util {
 #ifdef __UTIL_LOCK_ATOMIC_INT_ATOMIC_MSVC
                 typedef detail::atomic_msvc_oprs<sizeof(value_type)> int_opr_t;
                 typedef typename int_opr_t::opr_t                    opr_t;
-                if (expected == static_cast<value_type>(int_opr_t::cas(&data_,
-                                                                       static_cast<opr_t>(desired), static_cast<opr_t>(expected), order))) {
+                if (expected ==
+                    static_cast<value_type>(int_opr_t::cas(&data_, static_cast<opr_t>(desired), static_cast<opr_t>(expected), order))) {
                     return true;
                 } else {
                     expected = static_cast<value_type>(data_);
@@ -595,8 +622,8 @@ namespace util {
 #ifdef __UTIL_LOCK_ATOMIC_INT_ATOMIC_MSVC
                 typedef detail::atomic_msvc_oprs<sizeof(value_type)> int_opr_t;
                 typedef typename int_opr_t::opr_t                    opr_t;
-                if (expected == static_cast<value_type>(int_opr_t::cas(&data_, static_cast<opr_t>(desired),
-                                                                       static_cast<opr_t>(expected), order))) {
+                if (expected ==
+                    static_cast<value_type>(int_opr_t::cas(&data_, static_cast<opr_t>(desired), static_cast<opr_t>(expected), order))) {
                     return true;
                 } else {
                     expected = data_;
@@ -620,8 +647,8 @@ namespace util {
 #ifdef __UTIL_LOCK_ATOMIC_INT_ATOMIC_MSVC
                 typedef detail::atomic_msvc_oprs<sizeof(value_type)> int_opr_t;
                 typedef typename int_opr_t::opr_t                    opr_t;
-                if (expected == static_cast<value_type>(int_opr_t::cas(&data_, static_cast<opr_t>(desired),
-                                                                       static_cast<opr_t>(expected), success))) {
+                if (expected ==
+                    static_cast<value_type>(int_opr_t::cas(&data_, static_cast<opr_t>(desired), static_cast<opr_t>(expected), success))) {
                     return true;
                 } else {
                     expected = data_;
@@ -645,8 +672,8 @@ namespace util {
 #ifdef __UTIL_LOCK_ATOMIC_INT_ATOMIC_MSVC
                 typedef detail::atomic_msvc_oprs<sizeof(value_type)> int_opr_t;
                 typedef typename int_opr_t::opr_t                    opr_t;
-                if (expected == static_cast<value_type>(int_opr_t::cas(&data_, static_cast<opr_t>(desired),
-                                                                       static_cast<opr_t>(expected), success))) {
+                if (expected ==
+                    static_cast<value_type>(int_opr_t::cas(&data_, static_cast<opr_t>(desired), static_cast<opr_t>(expected), success))) {
                     return true;
                 } else {
                     expected = data_;
@@ -671,8 +698,8 @@ namespace util {
 #ifdef __UTIL_LOCK_ATOMIC_INT_ATOMIC_MSVC
                 typedef detail::atomic_msvc_oprs<sizeof(value_type)> int_opr_t;
                 typedef typename int_opr_t::opr_t                    opr_t;
-                if (expected == static_cast<value_type>(int_opr_t::cas(&data_,
-                                                                       static_cast<opr_t>(desired), static_cast<opr_t>(expected), order))) {
+                if (expected ==
+                    static_cast<value_type>(int_opr_t::cas(&data_, static_cast<opr_t>(desired), static_cast<opr_t>(expected), order))) {
                     return true;
                 } else {
                     expected = static_cast<value_type>(data_);
@@ -697,8 +724,8 @@ namespace util {
 #ifdef __UTIL_LOCK_ATOMIC_INT_ATOMIC_MSVC
                 typedef detail::atomic_msvc_oprs<sizeof(value_type)> int_opr_t;
                 typedef typename int_opr_t::opr_t                    opr_t;
-                if (expected == static_cast<value_type>(int_opr_t::cas(&data_, static_cast<opr_t>(desired),
-                                                                       static_cast<opr_t>(expected), order))) {
+                if (expected ==
+                    static_cast<value_type>(int_opr_t::cas(&data_, static_cast<opr_t>(desired), static_cast<opr_t>(expected), order))) {
                     return true;
                 } else {
                     expected = static_cast<value_type>(data_);
@@ -722,8 +749,7 @@ namespace util {
 #ifdef __UTIL_LOCK_ATOMIC_INT_ATOMIC_MSVC
                 typedef detail::atomic_msvc_oprs<sizeof(value_type)> int_opr_t;
                 typedef typename int_opr_t::opr_t                    opr_t;
-                return static_cast<value_type>(int_opr_t::add(&data_, static_cast<opr_t>(arg), order)) -
-                       arg;
+                return static_cast<value_type>(int_opr_t::add(&data_, static_cast<opr_t>(arg), order)) - arg;
 
 #elif defined(__UTIL_LOCK_ATOMIC_INT_ATOMIC_GCC_ATOMIC)
                 return __atomic_fetch_add(&data_, arg, order);
@@ -750,8 +776,7 @@ namespace util {
 #ifdef __UTIL_LOCK_ATOMIC_INT_ATOMIC_MSVC
                 typedef detail::atomic_msvc_oprs<sizeof(value_type)> int_opr_t;
                 typedef typename int_opr_t::opr_t                    opr_t;
-                return static_cast<value_type>(int_opr_t::sub(&data_, static_cast<opr_t>(arg), order)) +
-                       arg;
+                return static_cast<value_type>(int_opr_t::sub(&data_, static_cast<opr_t>(arg), order)) + arg;
 
 #elif defined(__UTIL_LOCK_ATOMIC_INT_ATOMIC_GCC_ATOMIC)
                 return __atomic_fetch_sub(&data_, arg, order);
@@ -832,8 +857,7 @@ namespace util {
 #ifdef __UTIL_LOCK_ATOMIC_INT_ATOMIC_MSVC
                 typedef detail::atomic_msvc_oprs<sizeof(value_type)> int_opr_t;
                 typedef typename int_opr_t::opr_t                    opr_t;
-                return static_cast<value_type>(int_opr_t:: xor
-                                               (&data_, static_cast<opr_t>(arg), order));
+                return static_cast<value_type>(int_opr_t:: xor (&data_, static_cast<opr_t>(arg), order));
 
 #elif defined(__UTIL_LOCK_ATOMIC_INT_ATOMIC_GCC_ATOMIC)
                 return __atomic_fetch_xor(&data_, arg, order);
