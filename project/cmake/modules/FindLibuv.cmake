@@ -55,7 +55,7 @@ if(LIBUV_ROOT)
 endif()
 
 # Normal search.
-set(Libuv_NAMES uv libuv)
+set(Libuv_NAMES uv libuv uv_a)
 
 # Try each search configuration.
 find_path(Libuv_INCLUDE_DIRS    NAMES uv.h            ${_LIBUV_SEARCH_ROOT_INC})
