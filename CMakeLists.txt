@@ -1,5 +1,8 @@
 cmake_minimum_required(VERSION 3.7.0)
-cmake_policy(SET CMP0074 NEW)
+
+if (CMAKE_VERSION VERSION_GREATER_EQUAL "3.13")
+    cmake_policy(SET CMP0074 NEW)
+endif()
 
 enable_testing()
 
