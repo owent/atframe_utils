@@ -51,11 +51,15 @@ endif()
 
 if(LIBUV_ROOT)
   set(_LIBUV_SEARCH_ROOT_INC PATHS ${LIBUV_ROOT} ${LIBUV_ROOT}/include NO_DEFAULT_PATH)
-  set(_LIBUV_SEARCH_ROOT_LIB PATHS ${LIBUV_ROOT} ${LIBUV_ROOT}/lib NO_DEFAULT_PATH)
+  if(CMAKE_SIZEOF_VOID_P MATCHES 8)
+    set(_LIBUV_SEARCH_ROOT_LIB PATHS ${LIBUV_ROOT} ${LIBUV_ROOT}/lib64 ${LIBUV_ROOT}/lib NO_DEFAULT_PATH)
+  else()
+    set(_LIBUV_SEARCH_ROOT_LIB PATHS ${LIBUV_ROOT} ${LIBUV_ROOT}/lib NO_DEFAULT_PATH)
+  endif()
 endif()
 
 # Normal search.
-set(Libuv_NAMES uv libuv uv_a)
+set(Libuv_NAMES uv_a libuv_a uv libuv)
 
 # Try each search configuration.
 find_path(Libuv_INCLUDE_DIRS    NAMES uv.h            ${_LIBUV_SEARCH_ROOT_INC})

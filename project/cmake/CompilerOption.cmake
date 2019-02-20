@@ -1,5 +1,6 @@
 ﻿# 默认配置选项
 #####################################################################
+option(COMPILER_OPTION_MSVC_ZC_CPP "Add /Zc:__cplusplus for MSVC (let __cplusplus be equal to _MSVC_LANG) when it support." ON)
 
 if (CMAKE_CONFIGURATION_TYPES)
 	message(STATUS "Available Build Type: ${CMAKE_CONFIGURATION_TYPES}")
@@ -160,7 +161,7 @@ elseif(MSVC)
         message(STATUS "MSVC ${MSVC_VERSION} found. using /std:c++17")
     endif()
     # 设置 __cplusplus 宏为标准值, @see https://docs.microsoft.com/zh-cn/cpp/build/reference/zc-cplusplus
-    if (MSVC_VERSION GREATER_EQUAL 1914)
+    if (MSVC_VERSION GREATER_EQUAL 1914 AND COMPILER_OPTION_MSVC_ZC_CPP)
         add_definitions(/Zc:__cplusplus)
     endif()
 endif()

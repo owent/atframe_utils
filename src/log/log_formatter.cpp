@@ -19,13 +19,13 @@ namespace util {
 
                 if (NULL == all_level_name[log_formatter::level_t::LOG_LW_TRACE]) {
                     all_level_name[log_formatter::level_t::LOG_LW_DISABLED] = "Disabled";
-                    all_level_name[log_formatter::level_t::LOG_LW_FATAL] = "Fatal";
-                    all_level_name[log_formatter::level_t::LOG_LW_ERROR] = "Error";
-                    all_level_name[log_formatter::level_t::LOG_LW_WARNING] = "Warn";
-                    all_level_name[log_formatter::level_t::LOG_LW_INFO] = "Info";
-                    all_level_name[log_formatter::level_t::LOG_LW_NOTICE] = "Notice";
-                    all_level_name[log_formatter::level_t::LOG_LW_DEBUG] = "Debug";
-                    all_level_name[log_formatter::level_t::LOG_LW_TRACE] = "Trace";
+                    all_level_name[log_formatter::level_t::LOG_LW_FATAL]    = "Fatal";
+                    all_level_name[log_formatter::level_t::LOG_LW_ERROR]    = "Error";
+                    all_level_name[log_formatter::level_t::LOG_LW_WARNING]  = "Warn";
+                    all_level_name[log_formatter::level_t::LOG_LW_INFO]     = "Info";
+                    all_level_name[log_formatter::level_t::LOG_LW_NOTICE]   = "Notice";
+                    all_level_name[log_formatter::level_t::LOG_LW_DEBUG]    = "Debug";
+                    all_level_name[log_formatter::level_t::LOG_LW_TRACE]    = "Trace";
                 }
                 return all_level_name[l];
             }
@@ -55,10 +55,10 @@ namespace util {
 
         std::string log_formatter::project_dir_;
 
-        bool log_formatter::check(int32_t flags, int32_t checked) { return (flags & checked) == checked; }
+        bool log_formatter::check_flag(int32_t flags, int32_t checked) { return (flags & checked) == checked; }
 
         struct tm *log_formatter::get_iso_tm() {
-            static time_t tm_tp = 0;
+            static time_t    tm_tp = 0;
             static struct tm tm_obj;
             if (tm_tp != util::time::time_utility::get_now()) {
                 tm_tp = util::time::time_utility::get_now();
@@ -78,23 +78,23 @@ namespace util {
                 return 0;
             }
 
-            bool need_parse = false, running = true;
-            size_t ret = 0;
-            struct tm tm_obj_cache;
+            bool       need_parse = false, running = true;
+            size_t     ret = 0;
+            struct tm  tm_obj_cache;
             struct tm *tm_obj_ptr = NULL;
 
 // 时间加缓存，以防使用过程中时间变化
-#define LOG_FMT_FN_TM_MEM(VAR, EXPRESS) \
-                                        \
-    int VAR;                            \
-                                        \
-    if (NULL == tm_obj_ptr) {           \
-        tm_obj_cache = *get_iso_tm();   \
-        tm_obj_ptr = &tm_obj_cache;     \
-        VAR = tm_obj_ptr->EXPRESS;      \
-                                        \
-    } else {                            \
-        VAR = tm_obj_ptr->EXPRESS;      \
+#define LOG_FMT_FN_TM_MEM(VAR, EXPRESS)     \
+                                            \
+    int VAR;                                \
+                                            \
+    if (NULL == tm_obj_ptr) {               \
+        tm_obj_cache = *get_iso_tm();       \
+        tm_obj_ptr   = &tm_obj_cache;       \
+        VAR          = tm_obj_ptr->EXPRESS; \
+                                            \
+    } else {                                \
+        VAR = tm_obj_ptr->EXPRESS;          \
     }
 
             for (size_t i = 0; i < fmtz && ret < bufz && running; ++i) {
@@ -266,7 +266,7 @@ namespace util {
                     if (bufz - ret < 3) {
                         running = false;
                     } else {
-                        time_t ms = ::util::time::time_utility::get_now_usec() / 1000;
+                        time_t ms   = ::util::time::time_utility::get_now_usec() / 1000;
                         buff[ret++] = static_cast<char>(ms / 100 + '0');
                         buff[ret++] = static_cast<char>((ms / 10) % 10 + '0');
                         buff[ret++] = static_cast<char>(ms % 10 + '0');

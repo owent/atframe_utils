@@ -98,9 +98,9 @@ namespace util {
 #endif
 
             // 一般日志级别检查
-            inline bool check(level_t::type level) const { return log_level_ >= level; }
+            inline bool check_level(level_t::type level) const { return log_level_ >= level; }
 
-            static inline bool check(const log_wrapper *logger, level_t::type level) {
+            static inline bool check_level(const log_wrapper *logger, level_t::type level) {
                 if (NULL == logger) {
                     return false;
                 }
@@ -200,7 +200,7 @@ namespace util {
 
 /** 全局日志输出工具 **/
 #define WCLOGDEFLV(lv, lv_name, cat, ...) \
-    if (util::log::log_wrapper::check(WDTLOGGETCAT(cat), lv)) WDTLOGGETCAT(cat)->log(WDTLOGFILENF(lv, lv_name), __VA_ARGS__);
+    if (util::log::log_wrapper::check_level(WDTLOGGETCAT(cat), lv)) WDTLOGGETCAT(cat)->log(WDTLOGFILENF(lv, lv_name), __VA_ARGS__);
 
 #define WCLOGTRACE(cat, ...) WCLOGDEFLV(util::log::log_wrapper::level_t::LOG_LW_TRACE, NULL, cat, __VA_ARGS__)
 #define WCLOGDEBUG(cat, ...) WCLOGDEFLV(util::log::log_wrapper::level_t::LOG_LW_DEBUG, NULL, cat, __VA_ARGS__)
@@ -213,7 +213,7 @@ namespace util {
 /** 对指定log_wrapper的日志输出工具 **/
 
 #define WINSTLOGDEFLV(lv, lv_name, inst, ...) \
-    if ((inst).check(lv)) (inst).log(WDTLOGFILENF(lv, lv_name), __VA_ARGS__);
+    if ((inst).check_level(lv)) (inst).log(WDTLOGFILENF(lv, lv_name), __VA_ARGS__);
 
 #define WINSTLOGTRACE(inst, ...) WINSTLOGDEFLV(util::log::log_wrapper::level_t::LOG_LW_TRACE, NULL, inst, __VA_ARGS__)
 #define WINSTLOGDEBUG(inst, ...) WINSTLOGDEFLV(util::log::log_wrapper::level_t::LOG_LW_DEBUG, NULL, inst, __VA_ARGS__)
@@ -227,7 +227,7 @@ namespace util {
 
 /** 全局日志输出工具 **/
 #define WCLOGDEFLV(lv, lv_name, cat, args...) \
-    if (util::log::log_wrapper::check(WDTLOGGETCAT(cat), lv)) WDTLOGGETCAT(cat)->log(WDTLOGFILENF(lv, lv_name), ##args);
+    if (util::log::log_wrapper::check_level(WDTLOGGETCAT(cat), lv)) WDTLOGGETCAT(cat)->log(WDTLOGFILENF(lv, lv_name), ##args);
 
 #define WCLOGTRACE(...) WCLOGDEFLV(util::log::log_wrapper::level_t::LOG_LW_TRACE, NULL, __VA_ARGS__)
 #define WCLOGDEBUG(...) WCLOGDEFLV(util::log::log_wrapper::level_t::LOG_LW_DEBUG, NULL, __VA_ARGS__)
@@ -239,7 +239,7 @@ namespace util {
 
 /** 对指定log_wrapper的日志输出工具 **/
 #define WINSTLOGDEFLV(lv, lv_name, inst, args...) \
-    if ((inst).check(lv)) (inst).log(WDTLOGFILENF(lv, lv_name), ##args);
+    if ((inst).check_level(lv)) (inst).log(WDTLOGFILENF(lv, lv_name), ##args);
 
 #define WINSTLOGTRACE(...) WINSTLOGDEFLV(util::log::log_wrapper::level_t::LOG_LW_TRACE, NULL, __VA_ARGS__)
 #define WINSTLOGDEBUG(...) WINSTLOGDEFLV(util::log::log_wrapper::level_t::LOG_LW_DEBUG, NULL, __VA_ARGS__)

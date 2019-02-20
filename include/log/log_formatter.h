@@ -33,8 +33,8 @@ namespace util {
             struct flag_t {
                 enum type {
                     INDEX = 0x01, // 日志rotation序号
-                    DATE = 0x02,  // 日期
-                    TIME = 0x04,  // 时间
+                    DATE  = 0x02, // 日期
+                    TIME  = 0x04, // 时间
                 };
             };
 
@@ -53,11 +53,11 @@ namespace util {
 
             struct caller_info_t {
                 level_t::type level_id;
-                const char *level_name;
-                const char *file_path;
-                uint32_t line_number;
-                const char *func_name;
-                uint32_t rotate_index;
+                const char *  level_name;
+                const char *  file_path;
+                uint32_t      line_number;
+                const char *  func_name;
+                uint32_t      rotate_index;
 
                 caller_info_t();
                 caller_info_t(level_t::type lid, const char *lname, const char *fpath, uint32_t lnum, const char *fnname);
@@ -65,7 +65,7 @@ namespace util {
             };
 
         public:
-            static bool check(int32_t flags, int32_t checked);
+            static bool check_flag(int32_t flags, int32_t checked);
 
             /**
              * @brief 格式化到缓冲区，如果缓冲区不足忽略后面的数据
@@ -114,7 +114,7 @@ namespace util {
             static level_t::type get_level_by_name(const char *name);
 
         private:
-            static struct tm *get_iso_tm();
+            static struct tm * get_iso_tm();
             static std::string project_dir_;
         };
     } // namespace log
