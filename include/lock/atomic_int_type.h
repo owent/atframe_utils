@@ -20,7 +20,7 @@
 
 #pragma once
 
-#if __cplusplus >= 201103L || defined(__GXX_EXPERIMENTAL_CXX0X__)
+#if __cplusplus >= 201103L
 #include <cstdint>
 #elif defined(_MSC_VER) && defined(_MSVC_LANG) && _MSVC_LANG >= 201402L
 #include <cstdint>
@@ -35,6 +35,7 @@
 #define _UNDEF__STDC_CONSTANT_MACROS
 #define __STDC_CONSTANT_MACROS
 #endif
+#include <limits.h>
 #include <stdint.h>
 #ifdef _UNDEF__STDC_LIMIT_MACROS
 #undef __STDC_LIMIT_MACROS
