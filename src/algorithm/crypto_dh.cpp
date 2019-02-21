@@ -373,7 +373,7 @@ static inline void DH_get0_key(const DH *dh, const BIGNUM **pub_key, const BIGNU
 /**
  * @see crypto/dh/dh_lib.c in openssl 1.1.x
  */
-static inline EXPLICIT_UNUSED_ATTR int DH_set0_key(DH *dh, BIGNUM *pub_key, BIGNUM *priv_key) {
+EXPLICIT_UNUSED_ATTR static inline int DH_set0_key(DH *dh, BIGNUM *pub_key, BIGNUM *priv_key) {
     /* If the field pub_key in dh is NULL, the corresponding input
      * parameters MUST be non-NULL.  The priv_key field may
      * be left NULL.
