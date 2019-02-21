@@ -7,6 +7,7 @@
 #include <std/static_assert.h>
 
 #include <config/compiler_features.h>
+#include <std/explicit_declare.h>
 
 #if defined(UTIL_CONFIG_COMPILER_CXX_STATIC_ASSERT) && UTIL_CONFIG_COMPILER_CXX_STATIC_ASSERT
 #include <type_traits>
@@ -42,9 +43,9 @@
 
 // copy from t1_lib.c of openssl 1.1.0
 typedef struct {
-    int nid;            /* Curve NID */
-    int secbits;        /* Bits of security (from SP800-57) */
-    unsigned int flags; /* Flags: currently just field type */
+    int          nid;     /* Curve NID */
+    int          secbits; /* Bits of security (from SP800-57) */
+    unsigned int flags;   /* Flags: currently just field type */
 } tls_curve_info;
 
 #ifndef TLS_CURVE_CHAR2
@@ -372,7 +373,7 @@ static inline void DH_get0_key(const DH *dh, const BIGNUM **pub_key, const BIGNU
 /**
  * @see crypto/dh/dh_lib.c in openssl 1.1.x
  */
-static inline int DH_set0_key(DH *dh, BIGNUM *pub_key, BIGNUM *priv_key) {
+static inline EXPLICIT_UNUSED_ATTR int DH_set0_key(DH *dh, BIGNUM *pub_key, BIGNUM *priv_key) {
     /* If the field pub_key in dh is NULL, the corresponding input
      * parameters MUST be non-NULL.  The priv_key field may
      * be left NULL.
@@ -461,7 +462,7 @@ namespace util {
         // =============== shared context ===============
         dh::shared_context::shared_context() : method_(method_t::EN_CDT_INVALID) {
 #if defined(CRYPTO_USE_OPENSSL) || defined(CRYPTO_USE_LIBRESSL) || defined(CRYPTO_USE_BORINGSSL)
-            dh_param_.param = NULL;
+            dh_param_.param  = NULL;
             dh_param_.ecp_id = 0;
 #elif defined(CRYPTO_USE_MBEDTLS)
             dh_param_.ecp_id = MBEDTLS_ECP_DP_NONE;
@@ -475,7 +476,7 @@ namespace util {
         }
         dh::shared_context::shared_context(creator_helper &helper) : method_(method_t::EN_CDT_INVALID) {
 #if defined(CRYPTO_USE_OPENSSL) || defined(CRYPTO_USE_LIBRESSL) || defined(CRYPTO_USE_BORINGSSL)
-            dh_param_.param = NULL;
+            dh_param_.param  = NULL;
             dh_param_.ecp_id = 0;
 #elif defined(CRYPTO_USE_MBEDTLS)
             dh_param_.ecp_id = MBEDTLS_ECP_DP_NONE;
@@ -498,8 +499,8 @@ namespace util {
                 return error_code_t::INVALID_PARAM;
             }
 
-            int ecp_idx = 1;
-            method_t::type method = method_t::EN_CDT_DH;
+            int            ecp_idx = 1;
+            method_t::type method  = method_t::EN_CDT_DH;
             if (0 == UTIL_STRFUNC_STRNCASE_CMP("ecdh:", name, 5)) {
                 method = method_t::EN_CDT_ECDH;
 
@@ -956,7 +957,7 @@ namespace util {
                     ret = error_code_t::INIT_DH_GENERATE_KEY;
                     break;
                 }
-                int errcode = 0;
+                int           errcode     = 0;
                 const BIGNUM *self_pubkey = NULL;
                 DH_get0_key(dh_context_.openssl_dh_ptr_, &self_pubkey, NULL);
                 res = DH_check_pub_key(dh_context_.openssl_dh_ptr_, self_pubkey, &errcode);
@@ -975,7 +976,7 @@ namespace util {
                     DH_get0_pqg(dh_context_.openssl_dh_ptr_, &r[0], NULL, &r[1]);
                     DH_get0_key(dh_context_.openssl_dh_ptr_, &r[2], NULL);
 
-                    size_t olen = 0;
+                    size_t       olen  = 0;
                     unsigned int nr[4] = {0};
                     for (int i = 0; i < 4 && r[i] != NULL; i++) {
                         nr[i] = BN_num_bytes(r[i]);
@@ -995,8 +996,8 @@ namespace util {
 
 #elif defined(CRYPTO_USE_MBEDTLS)
                 // size is P,G,GX
-                size_t psz = mbedtls_mpi_size(&dh_context_.mbedtls_dh_ctx_.P);
-                size_t gsz = mbedtls_mpi_size(&dh_context_.mbedtls_dh_ctx_.G);
+                size_t psz  = mbedtls_mpi_size(&dh_context_.mbedtls_dh_ctx_.P);
+                size_t gsz  = mbedtls_mpi_size(&dh_context_.mbedtls_dh_ctx_.G);
                 size_t olen = 0;
                 // @see mbedtls_dhm_make_params, output P,G,GX. GX is smaller than P
                 // each big number has 2 byte length
@@ -1130,7 +1131,7 @@ namespace util {
                     // @see int ssl3_get_key_exchange(SSL *s) in s3_clnt.c                                          -- openssl 1.0.x
                     // @see int tls_process_ske_dhe(SSL *s, PACKET *pkt, EVP_PKEY **pkey, int *al) in statem_clnt.c -- openssl 1.1.x
                     {
-                        unsigned int i = 0, param_len = 2, n = static_cast<unsigned int>(ilen);
+                        unsigned int         i = 0, param_len = 2, n = static_cast<unsigned int>(ilen);
                         const unsigned char *p = reinterpret_cast<const unsigned char *>(input);
 
                         // P
@@ -1229,7 +1230,7 @@ namespace util {
 
 #elif defined(CRYPTO_USE_MBEDTLS)
                 unsigned char *dh_params_beg = const_cast<unsigned char *>(input);
-                int res = mbedtls_dhm_read_params(&dh_context_.mbedtls_dh_ctx_, &dh_params_beg, dh_params_beg + ilen);
+                int            res           = mbedtls_dhm_read_params(&dh_context_.mbedtls_dh_ctx_, &dh_params_beg, dh_params_beg + ilen);
                 if (0 != res) {
                     ret = details::setup_errorno(*this, res, error_code_t::INIT_DH_READ_PARAM);
                     break;
@@ -1306,7 +1307,7 @@ namespace util {
 
 #elif defined(CRYPTO_USE_MBEDTLS)
                 const unsigned char *dh_params_beg = input;
-                int res = mbedtls_ecdh_read_params(&dh_context_.mbedtls_ecdh_ctx_, &dh_params_beg, dh_params_beg + ilen);
+                int                  res = mbedtls_ecdh_read_params(&dh_context_.mbedtls_ecdh_ctx_, &dh_params_beg, dh_params_beg + ilen);
                 if (0 != res) {
                     ret = details::setup_errorno(*this, res, error_code_t::INIT_DH_READ_PARAM);
                     break;
@@ -1340,7 +1341,7 @@ namespace util {
                     break;
                 }
 
-                int errcode = 0;
+                int           errcode     = 0;
                 const BIGNUM *self_pubkey = NULL;
                 DH_get0_key(dh_context_.openssl_dh_ptr_, &self_pubkey, NULL);
                 res = DH_check_pub_key(dh_context_.openssl_dh_ptr_, self_pubkey, &errcode);
@@ -1611,7 +1612,7 @@ namespace util {
                 unsigned char buf[CRYPTO_DH_MAX_KEY_LEN];
                 // usually is group size
                 size_t olen = 0;
-                int res;
+                int    res;
                 res = mbedtls_ecdh_calc_secret(&dh_context_.mbedtls_ecdh_ctx_, &olen, buf, sizeof(buf), mbedtls_ctr_drbg_random,
                                                &shared_context_->get_random_engine().ctr_drbg);
                 if (0 != res) {
