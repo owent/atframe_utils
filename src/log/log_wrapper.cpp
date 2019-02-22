@@ -15,7 +15,7 @@
 #include "log/log_wrapper.h"
 
 
-#if defined(THREAD_TLS_ENABLED) && 1 == THREAD_TLS_ENABLED
+#if !(defined(THREAD_TLS_USE_PTHREAD) && THREAD_TLS_USE_PTHREAD) && defined(THREAD_TLS_ENABLED) && 1 == THREAD_TLS_ENABLED
 namespace util {
     namespace log {
         namespace detail {

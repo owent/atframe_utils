@@ -16,6 +16,14 @@ write_compiler_detection_header(
 option(LIBUNWIND_ENABLED "Enable using libunwind." OFF)
 option(LOG_WRAPPER_ENABLE_LUA_SUPPORT "Enable lua support." ON)
 option(LOG_WRAPPER_CHECK_LUA "Check lua support." ON)
+set(LOG_WRAPPER_MAX_SIZE_PER_LINE "2097152" CACHE STRING "Max size in one log line.")
+set(LOG_WRAPPER_CATEGORIZE_SIZE "16" CACHE STRING "Default log categorize number.")
+
+find_package(Threads)
+if (CMAKE_USE_PTHREADS_INIT)
+    set(THREAD_TLS_USE_PTHREAD 1)
+endif ()
+
 if (ANDROID)
     # Android发现偶现_Unwind_Backtrace调用崩溃,默认金庸掉这个功能。
     # 可以用adb logcat | ./ndk-stack -sym $PROJECT_PATH/obj/local/armeabi 代替

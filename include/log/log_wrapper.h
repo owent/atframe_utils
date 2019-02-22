@@ -19,20 +19,13 @@
 #include <bitset>
 #include <list>
 
+#include <config/atframe_utils_build_feature.h>
 
 #include "cli/shell_font.h"
 
 #include "lock/spin_rw_lock.h"
 
 #include "log_formatter.h"
-
-#ifndef LOG_WRAPPER_MAX_SIZE_PER_LINE
-#define LOG_WRAPPER_MAX_SIZE_PER_LINE (1024 * 1024 * 2)
-#endif
-
-#ifndef LOG_WRAPPER_CATEGORIZE_SIZE
-#define LOG_WRAPPER_CATEGORIZE_SIZE 16
-#endif
 
 namespace util {
     namespace log {

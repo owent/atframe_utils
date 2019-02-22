@@ -68,21 +68,21 @@ namespace util {
         template <typename TCmdStr>
         class cmd_option_bind : public binder::cmd_option_bind_base {
         public:
-            typedef unsigned char uc_t;
-            typedef cmd_option_bind<TCmdStr> self_type;
-            typedef binder::cmd_option_bind_base::help_msg_t help_msg_t;
-            typedef binder::cmd_option_bind_base::help_list_t help_list_t;
+            typedef unsigned char                                 uc_t;
+            typedef cmd_option_bind<TCmdStr>                      self_type;
+            typedef binder::cmd_option_bind_base::help_msg_t      help_msg_t;
+            typedef binder::cmd_option_bind_base::help_list_t     help_list_t;
             typedef std::shared_ptr<binder::cmd_option_bind_base> func_ptr_t;
-            typedef std::map<TCmdStr, func_ptr_t> funmap_type;
+            typedef std::map<TCmdStr, func_ptr_t>                 funmap_type;
 
         protected:
-            static short map_value_[256];  // 记录不同字符的映射关系
-            static char trans_value_[256]; // 记录特殊转义字符
+            static short map_value_[256];   // 记录不同字符的映射关系
+            static char  trans_value_[256]; // 记录特殊转义字符
 
             funmap_type callback_funcs_;    // 记录命令的映射函数
             funmap_type callback_children_; // 子命令组额外索引
-            int help_cmd_style_;
-            int help_description_style_;
+            int         help_cmd_style_;
+            int         help_description_style_;
 
             /**
              * 执行命令
@@ -133,7 +133,7 @@ namespace util {
                     }
 
                     help_list_t::iterator iter_m;
-                    help_msg_t *obj;
+                    help_msg_t *          obj;
                     for (iter_m = msg.begin(), obj = NULL; iter_m != msg.end(); ++iter_m) {
                         if ((*iter_m).binded_obj == iter->second) {
                             obj = &(*iter_m);
@@ -153,7 +153,7 @@ namespace util {
                         msg.push_back(help_msg_t());
                         obj = &msg.back();
                         assert(obj);
-                        obj->binded_obj = iter->second;
+                        obj->binded_obj  = iter->second;
                         obj->description = iter->second->get_help_msg();
                     }
 
@@ -178,7 +178,7 @@ namespace util {
                 for (help_list_t::iterator iter = msgs.begin(); iter != msgs.end(); ++iter) {
                     std::sort((*iter).cmd_paths.begin(), (*iter).cmd_paths.end());
                     std::stringstream ss;
-                    bool not_first = false;
+                    bool              not_first = false;
                     for (std::vector<std::string>::iterator cmd_it = (*iter).cmd_paths.begin(); cmd_it != (*iter).cmd_paths.end();
                          ++cmd_it) {
                         if (not_first) {
@@ -222,6 +222,8 @@ namespace util {
              * @return 未解析部分的开始位置
              */
             static const char *get_segment(const char *begin_str, std::string &val) {
+                init_char_set();
+
                 val.clear();
                 char flag; // 字符串开闭字符
 
@@ -267,6 +269,8 @@ namespace util {
              * @return 分离结果
              */
             static std::vector<std::string> split_cmd(const char *begin_str) {
+                init_char_set();
+
                 std::vector<std::string> ret;
                 for (const char *begin_ptr = begin_str; (*begin_ptr);) {
                     std::string cmd_content;
@@ -287,12 +291,7 @@ namespace util {
             }
 
         private:
-            /**
-             * 构造函数
-             */
-            cmd_option_bind()
-                : help_cmd_style_(shell_font_style::SHELL_FONT_COLOR_YELLOW | shell_font_style::SHELL_FONT_SPEC_BOLD),
-                  help_description_style_(0) {
+            static void init_char_set() {
                 // 如果已初始化则跳过
                 if (map_value_[(uc_t)' '] & SPLITCHAR) return;
 
@@ -310,29 +309,38 @@ namespace util {
                 for (int i = 0; i < 256; ++i)
                     trans_value_[i] = (uc_t)i;
 
-                trans_value_[(uc_t)'0'] = '\0';
-                trans_value_[(uc_t)'a'] = '\a';
-                trans_value_[(uc_t)'b'] = '\b';
-                trans_value_[(uc_t)'f'] = '\f';
-                trans_value_[(uc_t)'r'] = '\r';
-                trans_value_[(uc_t)'n'] = '\n';
-                trans_value_[(uc_t)'t'] = '\t';
-                trans_value_[(uc_t)'v'] = '\v';
+                trans_value_[(uc_t)'0']  = '\0';
+                trans_value_[(uc_t)'a']  = '\a';
+                trans_value_[(uc_t)'b']  = '\b';
+                trans_value_[(uc_t)'f']  = '\f';
+                trans_value_[(uc_t)'r']  = '\r';
+                trans_value_[(uc_t)'n']  = '\n';
+                trans_value_[(uc_t)'t']  = '\t';
+                trans_value_[(uc_t)'v']  = '\v';
                 trans_value_[(uc_t)'\\'] = '\\';
                 trans_value_[(uc_t)'\''] = '\'';
                 trans_value_[(uc_t)'\"'] = '\"';
             }
 
+            /**
+             * 构造函数
+             */
+            cmd_option_bind()
+                : help_cmd_style_(shell_font_style::SHELL_FONT_COLOR_YELLOW | shell_font_style::SHELL_FONT_SPEC_BOLD),
+                  help_description_style_(0) {
+                init_char_set();
+            }
+
         public:
             typedef std::shared_ptr<cmd_option_bind> ptr_type;
-            static ptr_type create() { return ptr_type(new cmd_option_bind()); }
+            static ptr_type                          create() { return ptr_type(new cmd_option_bind()); }
 
             /**
              * 获取已绑定的指令列表
              * @return 指令列表指针
              */
             std::shared_ptr<std::vector<const char *> > get_cmd_names() const {
-                typename funmap_type::const_iterator iter = callback_funcs_.begin();
+                typename funmap_type::const_iterator        iter = callback_funcs_.begin();
                 std::shared_ptr<std::vector<const char *> > ret_ptr =
                     std::shared_ptr<std::vector<const char *> >(new std::vector<const char *>());
                 while (iter != callback_funcs_.end()) {
@@ -353,18 +361,18 @@ namespace util {
                 return iter->second;
             }
 
-            size_t size() const { return callback_funcs_.size(); }
-            size_t empty() const { return callback_funcs_.empty(); }
+            size_t             size() const { return callback_funcs_.size(); }
+            size_t             empty() const { return callback_funcs_.empty(); }
             const funmap_type &get_all() const { return callback_funcs_; }
 
-            size_t children_size() const { return callback_children_.size(); }
-            size_t children_empty() const { return callback_children_.empty(); }
+            size_t             children_size() const { return callback_children_.size(); }
+            size_t             children_empty() const { return callback_children_.empty(); }
             const funmap_type &get_all_children() const { return callback_children_; }
 
             const int get_help_cmd_style() const { return help_cmd_style_; }
-            void set_help_cmd_style(int style) { help_cmd_style_ = style; }
+            void      set_help_cmd_style(int style) { help_cmd_style_ = style; }
             const int get_help_description_style() const { return help_description_style_; }
-            void set_help_description_style(int style) { help_description_style_ = style; }
+            void      set_help_description_style(int style) { help_description_style_ = style; }
 
             /**
              * 处理指令
@@ -381,9 +389,9 @@ namespace util {
              * @param is_single_cmd 是否强制单指令, 如果不强制, 则指令名称不能重复
              */
             void start(callback_param args, bool is_single_cmd = false) const {
-                int argv = static_cast<int>(args.get_params_number());
+                int             argv = static_cast<int>(args.get_params_number());
                 cmd_option_list cmd_args;
-                TCmdStr cmd_content = is_single_cmd ? "@OnError" : "@OnDefault";
+                TCmdStr         cmd_content = is_single_cmd ? "@OnError" : "@OnDefault";
                 for (int i = -1; i < argv;) {
                     ++i;
                     cmd_args.clear();
@@ -466,7 +474,7 @@ namespace util {
              */
             void start(const char *cmd_content, bool is_single_cmd = false, void *ext_param = NULL) const {
                 cmd_option_list cmds;
-                std::string seg;
+                std::string     seg;
 
                 // 分离指令
                 while (*cmd_content) {
@@ -540,7 +548,7 @@ namespace util {
              */
             virtual std::string get_help_msg(const char *prefix_data = "") const {
                 std::set<typename funmap_type::mapped_type> set_obj;
-                std::string help_msg_content;
+                std::string                                 help_msg_content;
 
                 for (typename funmap_type::const_iterator iter = callback_funcs_.begin(); iter != callback_funcs_.end(); ++iter) {
                     // 删除重复的引用对象
@@ -582,15 +590,15 @@ namespace util {
             std::shared_ptr<binder::cmd_option_bindt<typename binder::maybe_wrap_member_pointer<_F>::caller_type,
                                                      binder::cmd_option_bind_param_list<_Args...> > >
             bind_cmd(const std::string &cmd_content, _F raw_fn, _Args... args) {
-                typedef binder::cmd_option_bind_param_list<_Args...> list_type;
-                typedef typename binder::maybe_wrap_member_pointer<_F>::caller_type caller_type;
+                typedef binder::cmd_option_bind_param_list<_Args...>                       list_type;
+                typedef typename binder::maybe_wrap_member_pointer<_F>::caller_type        caller_type;
                 typedef std::shared_ptr<binder::cmd_option_bindt<caller_type, list_type> > obj_type;
 
                 obj_type fn = obj_type(new binder::cmd_option_bindt<caller_type, list_type>(caller_type(raw_fn), list_type(args...)));
 
                 std::vector<std::string> cmds = split_cmd(cmd_content.c_str());
                 for (std::vector<std::string>::size_type index = 0; index < cmds.size(); ++index) {
-                    TCmdStr cmd_obj = TCmdStr(cmds[index].c_str(), cmds[index].size());
+                    TCmdStr cmd_obj          = TCmdStr(cmds[index].c_str(), cmds[index].size());
                     callback_funcs_[cmd_obj] = fn;
                 }
 
@@ -706,12 +714,12 @@ namespace util {
              *      *.bind_cmd(命令名称, cmd_option_bind<TCmdStr> 结构引用)
              * 推荐使用上一种，可以减少一次结构复制
              */
-            std::shared_ptr<binder::cmd_option_bind_base> bind_child_cmd(const std::string cmd_content,
+            std::shared_ptr<binder::cmd_option_bind_base> bind_child_cmd(const std::string                             cmd_content,
                                                                          std::shared_ptr<binder::cmd_option_bind_base> base_node) {
                 std::vector<std::string> cmds = split_cmd(cmd_content.c_str());
                 for (std::vector<std::string>::size_type index = 0; index < cmds.size(); ++index) {
-                    TCmdStr cmd_obj = TCmdStr(cmds[index].c_str(), cmds[index].size());
-                    callback_funcs_[cmd_obj] = base_node;
+                    TCmdStr cmd_obj             = TCmdStr(cmds[index].c_str(), cmds[index].size());
+                    callback_funcs_[cmd_obj]    = base_node;
                     callback_children_[cmd_obj] = base_node;
                 }
 
@@ -720,10 +728,10 @@ namespace util {
 
             std::shared_ptr<binder::cmd_option_bind_base> bind_child_cmd(const std::string cmd_content, ptr_type cmd_opt) {
                 std::shared_ptr<binder::cmd_option_bind_base> base_node = std::dynamic_pointer_cast<binder::cmd_option_bind_base>(cmd_opt);
-                std::vector<std::string> cmds = split_cmd(cmd_content.c_str());
+                std::vector<std::string>                      cmds      = split_cmd(cmd_content.c_str());
                 for (std::vector<std::string>::size_type index = 0; index < cmds.size(); ++index) {
-                    TCmdStr cmd_obj = TCmdStr(cmds[index].c_str(), cmds[index].size());
-                    callback_funcs_[cmd_obj] = base_node;
+                    TCmdStr cmd_obj             = TCmdStr(cmds[index].c_str(), cmds[index].size());
+                    callback_funcs_[cmd_obj]    = base_node;
                     callback_children_[cmd_obj] = base_node;
                 }
 
@@ -738,7 +746,7 @@ namespace util {
         char cmd_option_bind<Ty>::trans_value_[256] = {0};
 
         // 类型重定义
-        typedef cmd_option_bind<std::string> cmd_option;
+        typedef cmd_option_bind<std::string>          cmd_option;
         typedef cmd_option_bind<cmd_option_ci_string> cmd_option_ci;
     } // namespace cli
 } // namespace util

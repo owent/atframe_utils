@@ -17,7 +17,7 @@ static int lua_log_adaptor_fn_lua_log(lua_State *L) {
     util::log::log_wrapper::level_t::type level = WLOG_LEVELID(luaL_checkinteger(L, 2));
 
     util::log::log_wrapper *logger = WDTLOGGETCAT(cat);
-    if (NULL != logger && logger->check(level)) {
+    if (NULL != logger && logger->check_level(level)) {
         // TODO: 是否填充lua文件名和行号？但是那个操作比较耗性能
         util::log::log_wrapper::caller_info_t caller(level, "Lua", NULL, 0, NULL);
 
