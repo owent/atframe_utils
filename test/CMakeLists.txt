@@ -21,6 +21,11 @@ source_group_by_dir(PROJECT_TEST_SRC_LIST)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/test")
 
 add_executable(atframe_utils_unit_test ${PROJECT_TEST_SRC_LIST})
+
+if (MSVC)
+    set_property(TARGET atframe_utils_unit_test PROPERTY FOLDER "atframework")
+endif (MSVC)
+
 target_link_libraries(atframe_utils_unit_test
     ${PROJECT_LIB_LINK}
     ${PROJECT_TEST_LIB_LINK}

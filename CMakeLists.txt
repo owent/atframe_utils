@@ -45,6 +45,9 @@ source_group_by_dir(HEADER_LIST)
 source_group_by_dir(SRC_LIST)
 add_library(${PROJECT_LIB_LINK} ${HEADER_LIST} ${SRC_LIST})
 
+if (MSVC)
+    set_property(TARGET ${PROJECT_LIB_LINK} PROPERTY FOLDER "atframework")
+endif (MSVC)
 
 if (CRYPTO_USE_OPENSSL OR CRYPTO_USE_LIBRESSL OR CRYPTO_USE_BORINGSSL)
     find_package(OpenSSL)
