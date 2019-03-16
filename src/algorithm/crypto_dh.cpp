@@ -6,8 +6,8 @@
 #include <algorithm/crypto_dh.h>
 #include <std/static_assert.h>
 
+#include <common/compiler_message.h>
 #include <config/compiler_features.h>
-#include <config/compiler_message.h>
 #include <std/explicit_declare.h>
 
 #if defined(UTIL_CONFIG_COMPILER_CXX_STATIC_ASSERT) && UTIL_CONFIG_COMPILER_CXX_STATIC_ASSERT
