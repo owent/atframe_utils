@@ -15,4 +15,8 @@ add_executable(${BIN_NAME} ${SRC_LIST_SAMPLE})
 
 target_link_libraries(${BIN_NAME} ${PROJECT_LIB_LINK} ${COMPILER_OPTION_EXTERN_CXX_LIBS})
 
+if (MSVC)
+    set_property(TARGET ${BIN_NAME} PROPERTY FOLDER "atframework/sample")
+endif (MSVC)
+
 add_test(NAME test COMMAND ${BIN_NAME})

@@ -3,6 +3,7 @@ cmake_minimum_required(VERSION 3.7.0)
 if (CMAKE_VERSION VERSION_GREATER_EQUAL "3.13")
     cmake_policy(SET CMP0074 NEW)
 endif()
+set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
 enable_testing()
 
@@ -41,8 +42,13 @@ file(GLOB_RECURSE HEADER_LIST "${PROJECT_ALL_INCLUDE_DIR}/*.h" "${PROJECT_ALL_IN
 # lib名称
 set(PROJECT_LIB_LINK atframe_utils)
 
+if (COMPILER_STRICT_CFLAGS)
+    add_definitions(${COMPILER_STRICT_CFLAGS})
+endif ()
+
 source_group_by_dir(HEADER_LIST)
 source_group_by_dir(SRC_LIST)
+
 add_library(${PROJECT_LIB_LINK} ${HEADER_LIST} ${SRC_LIST})
 
 if (MSVC)

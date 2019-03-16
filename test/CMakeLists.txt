@@ -33,4 +33,8 @@ target_link_libraries(atframe_utils_unit_test
     ${COMPILER_OPTION_EXTERN_CXX_LIBS}
 )
 
+if (MSVC)
+    set_property(TARGET atframe_utils_unit_test PROPERTY FOLDER "atframework/test")
+endif (MSVC)
+
 add_test(NAME test COMMAND atframe_utils_unit_test)
