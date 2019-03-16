@@ -630,7 +630,7 @@ CASE_TEST(crypto_cipher, evp_test) {
                                 << " bytes failed(" << failed_step << ":" << ci.get_last_errno() << ")." << std::endl;
 #if defined(CRYPTO_USE_OPENSSL) || defined(CRYPTO_USE_LIBRESSL) || defined(CRYPTO_USE_BORINGSSL)
                 char err_msg[8192] = {0};
-                ERR_error_string_n(ci.get_last_errno(), err_msg, sizeof(err_msg));
+                ERR_error_string_n((unsigned long)ci.get_last_errno(), err_msg, sizeof(err_msg));
                 CASE_MSG_INFO() << CASE_MSG_FCOLOR(YELLOW) << "\t" << err_msg << std::endl;
 #endif
             }
@@ -709,7 +709,7 @@ CASE_TEST(crypto_cipher, evp_test) {
                                 << " bytes failed(" << failed_step << ":" << ci.get_last_errno() << ")." << std::endl;
 #if defined(CRYPTO_USE_OPENSSL) || defined(CRYPTO_USE_LIBRESSL) || defined(CRYPTO_USE_BORINGSSL)
                 char err_msg[8192] = {0};
-                ERR_error_string_n(ci.get_last_errno(), err_msg, sizeof(err_msg));
+                ERR_error_string_n((unsigned long)ci.get_last_errno(), err_msg, sizeof(err_msg));
                 CASE_MSG_INFO() << CASE_MSG_FCOLOR(YELLOW) << "\t" << err_msg << std::endl;
 #endif
             }

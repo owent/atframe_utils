@@ -7,6 +7,7 @@
 #include <std/static_assert.h>
 
 #include <config/compiler_features.h>
+#include <config/compiler_message.h>
 #include <std/explicit_declare.h>
 
 #if defined(UTIL_CONFIG_COMPILER_CXX_STATIC_ASSERT) && UTIL_CONFIG_COMPILER_CXX_STATIC_ASSERT
@@ -534,6 +535,7 @@ namespace util {
                 // do nothing in client mode
                 FILE *pem = NULL;
                 UTIL_FS_OPEN(pem_file_e, pem, name, "r");
+                COMPILER_UNUSED(pem_file_e);
                 if (NULL == pem) {
                     ret = error_code_t::READ_DHPARAM_FILE;
                     break;
