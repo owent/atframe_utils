@@ -146,15 +146,13 @@
 #if defined(__cplusplus) && __cplusplus >= 201703L
 #define EXPLICIT_FALLTHROUGH [[fallthrough]];
 #elif defined(__clang__) && ((__clang_major__ * 100) + __clang_minor__) >= 309
-#if defined(__apple_build_version__)
-#define EXPLICIT_FALLTHROUGH [[clang::__fallthrough__]];
-#elif __has_cpp_attribute(clang::fallthrough)
+#if defined(__has_warning) && __has_feature(cxx_attributes) && __has_warning("-Wimplicit-fallthrough")
 #define EXPLICIT_FALLTHROUGH [[clang::fallthrough]];
 #else
 #define EXPLICIT_FALLTHROUGH
 #endif
 #elif defined(__GNUC__) && (__GNUC__ >= 7)
-#define EXPLICIT_FALLTHROUGH __attribute__((fallthrough));
+#define EXPLICIT_FALLTHROUGH [[gnu::fallthrough]];
 #elif defined(_MSC_VER) && _MSC_VER >= 1700 // vs 2012 or higher
 #if _MSC_VER >= 1910 && defined(_MSVC_LANG) && _MSVC_LANG >= 201703L
 #define EXPLICIT_FALLTHROUGH [[fallthrough]];
