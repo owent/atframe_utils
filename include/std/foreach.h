@@ -31,26 +31,26 @@
  *       //std::map
  *       std::map<int, int> mp;
  *       //...
- *       typedef std::pair<const int, int> map_pair; // 由于foreach是宏定义，所以类型里带逗号的话必须这么处理，否则编译器会认为这个逗号是参数分隔符
- *       owent_foreach(map_pair& pr, mp) {
- *           pr.second = 0;
+ *       typedef std::pair<const int, int> map_pair; //
+ * 由于foreach是宏定义，所以类型里带逗号的话必须这么处理，否则编译器会认为这个逗号是参数分隔符 owent_foreach(map_pair& pr, mp) { pr.second =
+ * 0;
  *       }
  *
  * @history
  *   2012.07.19 增加对有const申明的stl容器的支持
  *
  */
- 
+
 #ifndef owent_foreach
- 
-# pragma once
- 
+
+#pragma once
+
 // ============================================================
 // 公共基础库
 // foreach，实现原理类似boost的foreach
 // 自动采用编译器提供的foreach功能
 // ============================================================
-  
+
 /**
  * foreach函数
  * 如果是G++且版本高于4.6且开启了c++0x或c++11, 或者是支持C++11的VC++
@@ -64,214 +64,193 @@
  *
  * 否则自定义foreach方法
  */
-  
+
+#include "explicit_declare.h"
+
 // VC11.0 SP1以上分支判断
-#if defined(_MSC_VER) && (_MSC_VER > 1500 || (_MSC_VER == 1500 && defined (_HAS_TR1)))
-    #if _MSC_VER >= 1700
-        // 采用 VC 的range-based-for循环
-        #define owent_foreach(VAR, COL) for(VAR : COL)
-    #else
-        // 采用 VC 的 for each (object var in collection_to_loop)
-        #define owent_foreach(VAR, COL) for each (VAR in COL)
-    #endif
-#elif defined(__clang__) && __clang_major__ >= 3 && defined(__cplusplus) && __cplusplus >= 201103L
-    // 采用 clang 的range-based-for循环
-    #define owent_foreach(VAR, COL) for(VAR : COL)
-#elif defined(__GNUC__) && (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 6)) && (__cplusplus >= 201103L || defined(__GXX_EXPERIMENTAL_CXX0X__))
-    // 采用G++ 的range-based-for循环
-    #define owent_foreach(VAR, COL) for(VAR : COL)
-#elif defined(OWENT_WITH_BOOST_HPP) && defined(OWENT_ENABLE_BOOST_FOREACH)
-    #include <boost/foreach.hpp>
-    #define owent_foreach(VAR, COL) BOOST_FOREACH(VAR, COL)
+#if defined(_MSC_VER) && (_MSC_VER > 1500 || (_MSC_VER == 1500 && defined(_HAS_TR1)))
+#if _MSC_VER >= 1700
+// 采用 VC 的range-based-for循环
+#define owent_foreach(VAR, COL) for (VAR : COL)
 #else
-    #include <cstddef>
-    // 功能受限的foreach函数
-    namespace foreach_detail{
-        ///////////////////////////////////////////////////////////////////////////////
-        // 自动类型
-        ///////////////////////////////////////////////////////////////////////////////
-        struct auto_any_base
-        {
-            // 用于宏定义中的初始化判断
-            operator bool() const
-            {
-                return false;
-            }
-        };
- 
-        template<typename T>
-        struct auto_any : auto_any_base
-        {
-            explicit auto_any(T const &t)
-              : item(t)
-            {
-            }
- 
-            // 声明为永久可变
-            mutable T item;
-        };
- 
-         // 设置flag为false
-        inline bool set_false(bool &b)
-        {
-            b = false;
-            return false;
-        }
-
-
-        typedef auto_any_base const& auto_any_t;
-        #define OWENT_FOREACH_ANY_TYPE(x) auto_any<x>
-        #define OWENT_FOREACH_ARRAY_DECL(x, y, z) x (&y)[z]
-        #define OWENT_FOREACH_ALLOC_DECL(x, y) x& y
-        #if defined(_MSC_VER) && _MSC_VER <= 1500
-        // 某些版本的VC,由于语句块变量作用域的问题(比如VC 6)
-        // 需要使用__LINE__来创建唯一标识符（参自BOOST_FOREACH）
-            #define OWENT_FOREACH_CAT(x, y) x ## y
-            #define OWENT_FOREACH_ID(x) OWENT_FOREACH_CAT(x, __LINE__)
-        #else
-            #define OWENT_FOREACH_ID(x) x
-        #endif
- 
-        template<typename _Ty> inline
-        _Ty& auto_any_cast(auto_any_t a)
-        {
-            return static_cast<auto_any<_Ty> const &>(a).item;
-        }
- 
-        /////////////////////////////////////////////////////////////////////////////
-        // 获取开始位置
-        /////////////////////////////////////////////////////////////////////////////
-     
-        // 模板类迭代器
-        template<typename _Ty> inline
-        OWENT_FOREACH_ANY_TYPE(typename _Ty::const_iterator) begin(OWENT_FOREACH_ALLOC_DECL(const _Ty, c))
-        {   // 获取容器起始迭代器
-            return OWENT_FOREACH_ANY_TYPE(typename _Ty::const_iterator)(c.begin());
-        }
- 
-        template<typename _Ty> inline
-        OWENT_FOREACH_ANY_TYPE(typename _Ty::iterator) begin(OWENT_FOREACH_ALLOC_DECL(_Ty, c))
-        {   // 获取容器起始迭代器
-            return OWENT_FOREACH_ANY_TYPE(typename _Ty::iterator)(c.begin());
-        }
- 
-        // 数组指针
-        template<typename _Ty, std::size_t _Size> inline
-        OWENT_FOREACH_ANY_TYPE(const _Ty*) begin(OWENT_FOREACH_ARRAY_DECL(const _Ty, arr, _Size))
-        {   
-            return OWENT_FOREACH_ANY_TYPE(const _Ty*)(arr);
-        }
- 
-        template<typename _Ty, std::size_t _Size> inline
-        OWENT_FOREACH_ANY_TYPE(_Ty*) begin(OWENT_FOREACH_ARRAY_DECL(_Ty, arr, _Size))
-        {   
-            return OWENT_FOREACH_ANY_TYPE(_Ty*)(arr);
-        }
- 
-        /////////////////////////////////////////////////////////////////////////////
-        // 移动游标
-        /////////////////////////////////////////////////////////////////////////////
-     
-        // 模板类迭代器
-        template<typename _Ty> inline
-        void next(OWENT_FOREACH_ALLOC_DECL(const _Ty, _Array), auto_any_t cur)
-        {
-            ++ auto_any_cast<typename _Ty::const_iterator>(cur);
-        }
- 
-        template<typename _Ty> inline
-        void next(OWENT_FOREACH_ALLOC_DECL(_Ty, _Array), auto_any_t cur)
-        {
-            ++ auto_any_cast<typename _Ty::iterator>(cur);
-        }
- 
-        // 数组指针
-        template<typename _Ty, std::size_t _Size> inline
-        void next(OWENT_FOREACH_ARRAY_DECL(const _Ty, arr, _Size), auto_any_t cur)
-        {
-            ++ auto_any_cast<const _Ty*>(cur);
-        }
- 
-        template<typename _Ty, std::size_t _Size> inline
-        void next(OWENT_FOREACH_ARRAY_DECL(_Ty, arr, _Size), auto_any_t cur)
-        {
-            ++ auto_any_cast<_Ty*>(cur);
-        }
-     
-     
-        /////////////////////////////////////////////////////////////////////////////
-        // 判断是否结束
-        /////////////////////////////////////////////////////////////////////////////
- 
-        // 模板类迭代器
-        template<typename _Ty> inline
-        bool end(OWENT_FOREACH_ALLOC_DECL(const _Ty, _Array), auto_any_t cur)
-        {
-            return auto_any_cast<typename _Ty::const_iterator>(cur) == _Array.end();
-        }
- 
-        template<typename _Ty> inline
-        bool end(OWENT_FOREACH_ALLOC_DECL(_Ty, _Array), auto_any_t cur)
-        {
-            return auto_any_cast<typename _Ty::iterator>(cur) == _Array.end();
-        }
- 
-        // 数组指针
-        template<typename _Ty, std::size_t _Size> inline
-        bool end(OWENT_FOREACH_ARRAY_DECL(const _Ty, arr, _Size), auto_any_t cur)
-        {
-            return static_cast<std::size_t>(auto_any_cast<const _Ty*>(cur) - arr) >= _Size;
-        }
- 
-        template<typename _Ty, std::size_t _Size> inline
-        bool end(OWENT_FOREACH_ARRAY_DECL(_Ty, arr, _Size), auto_any_t cur)
-        {
-            return static_cast<std::size_t>(auto_any_cast<_Ty*>(cur) - arr) >= _Size;
-        }
- 
-        /////////////////////////////////////////////////////////////////////////////
-        // 数据转换
-        /////////////////////////////////////////////////////////////////////////////
-     
-        // 模板类迭代器内容
-        template<typename _Ty> inline
-        typename _Ty::const_iterator& deref(OWENT_FOREACH_ALLOC_DECL(const _Ty, arr), auto_any_t cur)
-        {
-            return auto_any_cast<typename _Ty::const_iterator>(cur);
-        }
- 
-        template<typename _Ty> inline
-        typename _Ty::iterator& deref(OWENT_FOREACH_ALLOC_DECL(_Ty, arr), auto_any_t cur)
-        {
-            return auto_any_cast<typename _Ty::iterator>(cur);
-        }
- 
-        // 数组元素
-        template<typename _Ty, std::size_t _Size> inline
-        const _Ty*& deref(OWENT_FOREACH_ARRAY_DECL(const _Ty, arr, _Size), auto_any_t cur)
-        {
-            return auto_any_cast<const _Ty*>(cur);
-        }
- 
-        template<typename _Ty, std::size_t _Size> inline
-        _Ty*& deref(OWENT_FOREACH_ARRAY_DECL(_Ty, arr, _Size), auto_any_t cur)
-        {
-            return auto_any_cast<_Ty*>(cur);
-        }
-    }
- 
-    #define OWENT_FOREACH(VAR, COL)                                                                                         \
-        if (foreach_detail::auto_any_t OWENT_FOREACH_ID(_owent_foreach_cur) = foreach_detail::begin(COL)){ } else           \
-        for (bool OWENT_FOREACH_ID(_owent_foreach_flag) = true;                                                             \
-            OWENT_FOREACH_ID(_owent_foreach_flag) && !foreach_detail::end(COL, OWENT_FOREACH_ID(_owent_foreach_cur));       \
-            OWENT_FOREACH_ID(_owent_foreach_flag)? foreach_detail::next(COL, OWENT_FOREACH_ID(_owent_foreach_cur)): (void)0)\
-                                                                                                                            \
-            if (foreach_detail::set_false(OWENT_FOREACH_ID(_owent_foreach_flag))){ } else                                   \
-            for (VAR = *foreach_detail::deref(COL, OWENT_FOREACH_ID(_owent_foreach_cur));                                   \
-                !OWENT_FOREACH_ID(_owent_foreach_flag);                                                                     \
-                OWENT_FOREACH_ID(_owent_foreach_flag) = true)
- 
-    #define owent_foreach(VAR, COL) OWENT_FOREACH(VAR, COL)
+// 采用 VC 的 for each (object var in collection_to_loop)
+#define owent_foreach(VAR, COL) for \
+    each(VAR in COL)
 #endif
- 
+#elif defined(__clang__) && __clang_major__ >= 3 && defined(__cplusplus) && __cplusplus >= 201103L
+// 采用 clang 的range-based-for循环
+#define owent_foreach(VAR, COL) for (VAR : COL)
+#elif defined(__GNUC__) && (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 6)) && \
+    (__cplusplus >= 201103L || defined(__GXX_EXPERIMENTAL_CXX0X__))
+// 采用G++ 的range-based-for循环
+#define owent_foreach(VAR, COL) for (VAR : COL)
+#elif defined(OWENT_WITH_BOOST_HPP) && defined(OWENT_ENABLE_BOOST_FOREACH)
+#include <boost/foreach.hpp>
+#define owent_foreach(VAR, COL) BOOST_FOREACH (VAR, COL)
+#else
+#include <cstddef>
+// 功能受限的foreach函数
+namespace foreach_detail {
+    ///////////////////////////////////////////////////////////////////////////////
+    // 自动类型
+    ///////////////////////////////////////////////////////////////////////////////
+    struct auto_any_base {
+        // 用于宏定义中的初始化判断
+        operator bool() const { return false; }
+    };
+
+    template <typename T>
+    struct auto_any : auto_any_base {
+        explicit auto_any(T const &t) : item(t) {}
+
+        // 声明为永久可变
+        mutable T item;
+    };
+
+    // 设置flag为false
+    inline bool set_false(bool &b) {
+        b = false;
+        return false;
+    }
+
+
+    typedef auto_any_base const &auto_any_t;
+#define OWENT_FOREACH_ANY_TYPE(x) auto_any<x>
+#define OWENT_FOREACH_ARRAY_DECL(x, y, z) EXPLICIT_UNUSED_ATTR x(&y)[z]
+#define OWENT_FOREACH_ALLOC_DECL(x, y) EXPLICIT_UNUSED_ATTR x &y
+#if defined(_MSC_VER) && _MSC_VER <= 1500
+    // 某些版本的VC,由于语句块变量作用域的问题(比如VC 6)
+    // 需要使用__LINE__来创建唯一标识符（参自BOOST_FOREACH）
+#define OWENT_FOREACH_CAT(x, y) x##y
+#define OWENT_FOREACH_ID(x) OWENT_FOREACH_CAT(x, __LINE__)
+#else
+#define OWENT_FOREACH_ID(x) x
+#endif
+
+    template <typename _Ty>
+    inline _Ty &auto_any_cast(auto_any_t a) {
+        return static_cast<auto_any<_Ty> const &>(a).item;
+    }
+
+    /////////////////////////////////////////////////////////////////////////////
+    // 获取开始位置
+    /////////////////////////////////////////////////////////////////////////////
+
+    // 模板类迭代器
+    template <typename _Ty>
+    inline OWENT_FOREACH_ANY_TYPE(typename _Ty::const_iterator) begin(OWENT_FOREACH_ALLOC_DECL(const _Ty, c)) { // 获取容器起始迭代器
+        return OWENT_FOREACH_ANY_TYPE(typename _Ty::const_iterator)(c.begin());
+    }
+
+    template <typename _Ty>
+    inline OWENT_FOREACH_ANY_TYPE(typename _Ty::iterator) begin(OWENT_FOREACH_ALLOC_DECL(_Ty, c)) { // 获取容器起始迭代器
+        return OWENT_FOREACH_ANY_TYPE(typename _Ty::iterator)(c.begin());
+    }
+
+    // 数组指针
+    template <typename _Ty, std::size_t _Size>
+    inline OWENT_FOREACH_ANY_TYPE(const _Ty *) begin(OWENT_FOREACH_ARRAY_DECL(const _Ty, arr, _Size)) {
+        return OWENT_FOREACH_ANY_TYPE(const _Ty *)(arr);
+    }
+
+    template <typename _Ty, std::size_t _Size>
+    inline OWENT_FOREACH_ANY_TYPE(_Ty *) begin(OWENT_FOREACH_ARRAY_DECL(_Ty, arr, _Size)) {
+        return OWENT_FOREACH_ANY_TYPE(_Ty *)(arr);
+    }
+
+    /////////////////////////////////////////////////////////////////////////////
+    // 移动游标
+    /////////////////////////////////////////////////////////////////////////////
+
+    // 模板类迭代器
+    template <typename _Ty>
+    inline void next(OWENT_FOREACH_ALLOC_DECL(const _Ty, _Array), auto_any_t cur) {
+        ++auto_any_cast<typename _Ty::const_iterator>(cur);
+    }
+
+    template <typename _Ty>
+    inline void next(OWENT_FOREACH_ALLOC_DECL(_Ty, _Array), auto_any_t cur) {
+        ++auto_any_cast<typename _Ty::iterator>(cur);
+    }
+
+    // 数组指针
+    template <typename _Ty, std::size_t _Size>
+    inline void next(OWENT_FOREACH_ARRAY_DECL(const _Ty, arr, _Size), auto_any_t cur) {
+        ++auto_any_cast<const _Ty *>(cur);
+    }
+
+    template <typename _Ty, std::size_t _Size>
+    inline void next(OWENT_FOREACH_ARRAY_DECL(_Ty, arr, _Size), auto_any_t cur) {
+        ++auto_any_cast<_Ty *>(cur);
+    }
+
+
+    /////////////////////////////////////////////////////////////////////////////
+    // 判断是否结束
+    /////////////////////////////////////////////////////////////////////////////
+
+    // 模板类迭代器
+    template <typename _Ty>
+    inline bool end(OWENT_FOREACH_ALLOC_DECL(const _Ty, _Array), auto_any_t cur) {
+        return auto_any_cast<typename _Ty::const_iterator>(cur) == _Array.end();
+    }
+
+    template <typename _Ty>
+    inline bool end(OWENT_FOREACH_ALLOC_DECL(_Ty, _Array), auto_any_t cur) {
+        return auto_any_cast<typename _Ty::iterator>(cur) == _Array.end();
+    }
+
+    // 数组指针
+    template <typename _Ty, std::size_t _Size>
+    inline bool end(OWENT_FOREACH_ARRAY_DECL(const _Ty, arr, _Size), auto_any_t cur) {
+        return static_cast<std::size_t>(auto_any_cast<const _Ty *>(cur) - arr) >= _Size;
+    }
+
+    template <typename _Ty, std::size_t _Size>
+    inline bool end(OWENT_FOREACH_ARRAY_DECL(_Ty, arr, _Size), auto_any_t cur) {
+        return static_cast<std::size_t>(auto_any_cast<_Ty *>(cur) - arr) >= _Size;
+    }
+
+    /////////////////////////////////////////////////////////////////////////////
+    // 数据转换
+    /////////////////////////////////////////////////////////////////////////////
+
+    // 模板类迭代器内容
+    template <typename _Ty>
+    inline typename _Ty::const_iterator &deref(OWENT_FOREACH_ALLOC_DECL(const _Ty, arr), auto_any_t cur) {
+        return auto_any_cast<typename _Ty::const_iterator>(cur);
+    }
+
+    template <typename _Ty>
+    inline typename _Ty::iterator &deref(OWENT_FOREACH_ALLOC_DECL(_Ty, arr), auto_any_t cur) {
+        return auto_any_cast<typename _Ty::iterator>(cur);
+    }
+
+    // 数组元素
+    template <typename _Ty, std::size_t _Size>
+    inline const _Ty *&deref(OWENT_FOREACH_ARRAY_DECL(const _Ty, arr, _Size), auto_any_t cur) {
+        return auto_any_cast<const _Ty *>(cur);
+    }
+
+    template <typename _Ty, std::size_t _Size>
+    inline _Ty *&deref(OWENT_FOREACH_ARRAY_DECL(_Ty, arr, _Size), auto_any_t cur) {
+        return auto_any_cast<_Ty *>(cur);
+    }
+} // namespace foreach_detail
+
+#define OWENT_FOREACH(VAR, COL)                                                                                                       \
+    if (foreach_detail::auto_any_t OWENT_FOREACH_ID(_owent_foreach_cur) = foreach_detail::begin(COL)) {                               \
+    } else                                                                                                                            \
+        for (bool OWENT_FOREACH_ID(_owent_foreach_flag) = true;                                                                       \
+             OWENT_FOREACH_ID(_owent_foreach_flag) && !foreach_detail::end(COL, OWENT_FOREACH_ID(_owent_foreach_cur));                \
+             OWENT_FOREACH_ID(_owent_foreach_flag) ? foreach_detail::next(COL, OWENT_FOREACH_ID(_owent_foreach_cur)) : (void)0)       \
+                                                                                                                                      \
+            if (foreach_detail::set_false(OWENT_FOREACH_ID(_owent_foreach_flag))) {                                                   \
+            } else                                                                                                                    \
+                for (VAR = *foreach_detail::deref(COL, OWENT_FOREACH_ID(_owent_foreach_cur)); !OWENT_FOREACH_ID(_owent_foreach_flag); \
+                     OWENT_FOREACH_ID(_owent_foreach_flag) = true)
+
+#define owent_foreach(VAR, COL) OWENT_FOREACH(VAR, COL)
+#endif
+
 #endif

@@ -146,7 +146,9 @@
 #if defined(__cplusplus) && __cplusplus >= 201703L
 #define EXPLICIT_FALLTHROUGH [[fallthrough]];
 #elif defined(__clang__) && ((__clang_major__ * 100) + __clang_minor__) >= 309
-#if __has_cpp_attribute(clang::fallthrough)
+#if defined(__apple_build_version__)
+#define EXPLICIT_FALLTHROUGH [[clang::__fallthrough__]];
+#elif __has_cpp_attribute(clang::fallthrough)
 #define EXPLICIT_FALLTHROUGH [[clang::fallthrough]];
 #else
 #define EXPLICIT_FALLTHROUGH
