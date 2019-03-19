@@ -131,7 +131,7 @@ if(NOT DEFINED COMPILER_OPTION_LOADED)
 
     elseif( ${CMAKE_CXX_COMPILER_ID} STREQUAL "AppleClang")
         # add_definitions(-Wall -Werror)
-        list(APPEND COMPILER_STRICT_EXTRA_CFLAGS -Wextra)
+        list(APPEND COMPILER_STRICT_EXTRA_CFLAGS -Wextra -Wno-implicit-fallthrough)
         list(APPEND COMPILER_STRICT_CFLAGS -Wall -Werror)
         if (CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL "6.0")
             set(CMAKE_C_STANDARD 11)
