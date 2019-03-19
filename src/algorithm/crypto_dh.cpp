@@ -475,7 +475,7 @@ namespace util {
 
             memset(&random_engine_, 0, sizeof(random_engine_));
         }
-        dh::shared_context::shared_context(creator_helper &helper) : method_(method_t::EN_CDT_INVALID) {
+        dh::shared_context::shared_context(creator_helper &) : method_(method_t::EN_CDT_INVALID) {
 #if defined(CRYPTO_USE_OPENSSL) || defined(CRYPTO_USE_LIBRESSL) || defined(CRYPTO_USE_BORINGSSL)
             dh_param_.param  = NULL;
             dh_param_.ecp_id = 0;

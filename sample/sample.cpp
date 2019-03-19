@@ -19,9 +19,9 @@
 #include "string/tquerystring.h"
 
 
-#define CALL_SAMPLE(x) \
-    std::cout << std::endl << "=============== begin " << #x << " =============="<<std::endl; \
-    x();                                                                                     \
+#define CALL_SAMPLE(x)                                                                          \
+    std::cout << std::endl << "=============== begin " << #x << " ==============" << std::endl; \
+    x();                                                                                        \
     std::cout << "===============  end " << #x << "  ==============" << std::endl
 
 //=======================================================================================================
@@ -81,7 +81,7 @@ void log_sample_func1(int times) {
     WLOGDEBUG("Debug still available %llu", ull_test_in_mingw);
     WLOGINFO("Info not available now %llu", ull_test_in_mingw);
 
-    std::cout<< "log are located at "<< util::file_system::get_cwd().c_str()<< std::endl;
+    std::cout << "log are located at " << util::file_system::get_cwd().c_str() << std::endl;
 
     WLOG_GETCAT(util::log::log_wrapper::categorize_t::DEFAULT)->pop_sink();
     WLOGERROR("No log sink now");
@@ -196,13 +196,11 @@ void hash_sample() {
 //=======================================================================================================
 extern int cmd_option_sample_main();
 
-void cmd_option_sample() {
-    cmd_option_sample_main();
-}
+void cmd_option_sample() { cmd_option_sample_main(); }
 //=======================================================================================================
 
 
-int main(int argc, char **argv) {
+int main(int, char **) {
     util::time::time_utility::update();
 
     CALL_SAMPLE(tquerystring_sample);

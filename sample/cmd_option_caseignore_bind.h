@@ -8,7 +8,7 @@
 #include <cstdio>
 
 
-void bind_ci_cmd_print(util::cli::callback_param par) { puts("ci: do nothing! - free func without parameter\n"); }
+void bind_ci_cmd_print(util::cli::callback_param) { puts("ci: do nothing! - free func without parameter\n"); }
 
 void bind_ci_cmd_print2(util::cli::callback_param par, double d) {
     printf("ci: Free Fun B2 Params Num: %d, d => %lf\n", static_cast<int>(par.get_params_number()), d);

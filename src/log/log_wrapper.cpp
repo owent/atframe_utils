@@ -74,7 +74,7 @@ namespace util {
             prefix_format_ = "[Log %L][%F %T.%f][%s:%n(%C)]: ";
         }
 
-        log_wrapper::log_wrapper(construct_helper_t &h)
+        log_wrapper::log_wrapper(construct_helper_t &)
             : log_level_(level_t::LOG_LW_DISABLED), stacktrace_level_(level_t::LOG_LW_DISABLED, level_t::LOG_LW_DISABLED) {
             // 这个接口由create_user_logger调用，不设置OPT_IS_GLOBAL
             prefix_format_ = "[Log %L][%F %T.%f][%s:%n(%C)]: ";

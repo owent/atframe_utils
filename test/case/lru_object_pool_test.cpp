@@ -14,11 +14,11 @@ static int g_stat_lru[4] = {0, 0, 0, 0};
 
 struct test_lru_action : public util::mempool::lru_default_action<test_lru_data> {
     typedef util::mempool::lru_default_action<test_lru_data> base_type;
-    void push(test_lru_data *obj) { ++g_stat_lru[0]; }
+    void                                                     push(test_lru_data *) { ++g_stat_lru[0]; }
 
-    void pull(test_lru_data *obj) { ++g_stat_lru[1]; }
+    void pull(test_lru_data *) { ++g_stat_lru[1]; }
 
-    void reset(test_lru_data *obj) { ++g_stat_lru[2]; }
+    void reset(test_lru_data *) { ++g_stat_lru[2]; }
 
     void gc(test_lru_data *obj) {
         ++g_stat_lru[3];
@@ -29,9 +29,9 @@ struct test_lru_action : public util::mempool::lru_default_action<test_lru_data>
 CASE_TEST(lru_object_pool_test, basic) {
     {
         typedef util::mempool::lru_pool<uint32_t, test_lru_data, test_lru_action> test_lru_pool_t;
-        util::mempool::lru_pool_manager::ptr_t mgr = util::mempool::lru_pool_manager::create();
-        test_lru_pool_t lru;
-        test_lru_data *check_ptr;
+        util::mempool::lru_pool_manager::ptr_t                                    mgr = util::mempool::lru_pool_manager::create();
+        test_lru_pool_t                                                           lru;
+        test_lru_data *                                                           check_ptr;
         lru.init(mgr);
 
         memset(&g_stat_lru, 0, sizeof(g_stat_lru));
@@ -75,8 +75,8 @@ CASE_TEST(lru_object_pool_test, basic) {
 
 CASE_TEST(lru_object_pool_test, inner_gc_proc) {
     typedef util::mempool::lru_pool<uint32_t, test_lru_data, test_lru_action> test_lru_pool_t;
-    util::mempool::lru_pool_manager::ptr_t mgr = util::mempool::lru_pool_manager::create();
-    test_lru_pool_t lru;
+    util::mempool::lru_pool_manager::ptr_t                                    mgr = util::mempool::lru_pool_manager::create();
+    test_lru_pool_t                                                           lru;
     lru.init(mgr);
     mgr->set_proc_item_count(16);
     mgr->set_proc_list_count(16);
@@ -131,8 +131,8 @@ CASE_TEST(lru_object_pool_test, inner_gc_proc) {
 
 CASE_TEST(lru_object_pool_test, timeout) {
     typedef util::mempool::lru_pool<uint32_t, test_lru_data, test_lru_action> test_lru_pool_t;
-    util::mempool::lru_pool_manager::ptr_t mgr = util::mempool::lru_pool_manager::create();
-    test_lru_pool_t lru;
+    util::mempool::lru_pool_manager::ptr_t                                    mgr = util::mempool::lru_pool_manager::create();
+    test_lru_pool_t                                                           lru;
     lru.init(mgr);
     mgr->set_proc_item_count(16);
     mgr->set_proc_list_count(16);
@@ -186,10 +186,10 @@ CASE_TEST(lru_object_pool_test, timeout) {
 
 struct test_lru_action_donothing : public util::mempool::lru_default_action<test_lru_action_donothing> {
     typedef util::mempool::lru_default_action<test_lru_action_donothing> base_type;
-    void push(void *obj) {}
-    void pull(void *obj) {}
-    void reset(void *obj) {}
-    void gc(void *obj) {}
+    void                                                                 push(void *) {}
+    void                                                                 pull(void *) {}
+    void                                                                 reset(void *) {}
+    void                                                                 gc(void *) {}
 };
 
 CASE_TEST(lru_object_pool_test, adjust_bound) {
@@ -226,8 +226,8 @@ CASE_TEST(lru_object_pool_test, adjust_bound) {
     // push and make cache larger
     {
         typedef util::mempool::lru_pool<uint32_t, void, test_lru_action_donothing> test_lru_pool_t;
-        util::mempool::lru_pool_manager::ptr_t mgr = util::mempool::lru_pool_manager::create();
-        test_lru_pool_t lru;
+        util::mempool::lru_pool_manager::ptr_t                                     mgr = util::mempool::lru_pool_manager::create();
+        test_lru_pool_t                                                            lru;
         lru.init(mgr);
 
         mgr->set_item_max_bound(32);

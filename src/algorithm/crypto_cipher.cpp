@@ -645,13 +645,13 @@ namespace util {
 
                 if (NULL != cipher_context_.enc) {
                     if (!EVP_CipherInit_ex(cipher_context_.enc, NULL, NULL, key, NULL, -1)) {
-                        res = ERR_peek_error();
+                        res = (int)ERR_peek_error();
                     }
                 }
 
                 if (NULL != cipher_context_.dec) {
                     if (!EVP_CipherInit_ex(cipher_context_.dec, NULL, NULL, key, NULL, -1)) {
-                        res = ERR_peek_error();
+                        res = (int)ERR_peek_error();
                     }
                 }
 

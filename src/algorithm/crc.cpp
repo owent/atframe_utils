@@ -149,7 +149,7 @@ namespace util {
         size_t j;
         for (j = 0; j < l; ++j) {
             unsigned char byte = s[j];
-            init_val = (init_val << 8) ^ detail::crc16_tab[((init_val >> 8) ^ byte) & 0x00FF];
+            init_val           = (init_val << 8) ^ detail::crc16_tab[((init_val >> 8) ^ (uint16_t)byte) & 0x00FF];
         }
         return init_val;
     }
@@ -158,7 +158,7 @@ namespace util {
         size_t j;
         for (j = 0; j < l; ++j) {
             unsigned char byte = s[j];
-            init_val = detail::crc32_tab[static_cast<unsigned char>(init_val) ^ byte] ^ (init_val >> 8);
+            init_val           = detail::crc32_tab[static_cast<unsigned char>(init_val) ^ (uint32_t)byte] ^ (init_val >> 8);
         }
 
         return init_val;
@@ -168,7 +168,7 @@ namespace util {
         size_t j;
         for (j = 0; j < l; ++j) {
             unsigned char byte = s[j];
-            init_val = detail::crc64_tab[static_cast<unsigned char>(init_val) ^ byte] ^ (init_val >> 8);
+            init_val           = detail::crc64_tab[static_cast<unsigned char>(init_val) ^ (uint64_t)byte] ^ (init_val >> 8);
         }
 
         return init_val;

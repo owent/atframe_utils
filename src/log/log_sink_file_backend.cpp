@@ -25,11 +25,11 @@ namespace util {
               flush_interval_(0),                // 默认关闭定时刷入
               inited_(false) {
 
-            log_file_.opened_file_point_ = 0;
+            log_file_.opened_file_point_    = 0;
             log_file_.last_flush_timepoint_ = 0;
-            log_file_.auto_flush = log_formatter::level_t::LOG_LW_DISABLED;
-            log_file_.rotation_index = 0;
-            log_file_.written_size = 0;
+            log_file_.auto_flush            = log_formatter::level_t::LOG_LW_DISABLED;
+            log_file_.rotation_index        = 0;
+            log_file_.written_size          = 0;
 
             set_file_pattern("%Y-%m-%d.%N.log"); // 默认文件名规则
         }
@@ -41,11 +41,11 @@ namespace util {
               flush_interval_(0),                // 默认关闭定时刷入
               inited_(false) {
 
-            log_file_.opened_file_point_ = 0;
+            log_file_.opened_file_point_    = 0;
             log_file_.last_flush_timepoint_ = 0;
-            log_file_.auto_flush = log_formatter::level_t::LOG_LW_DISABLED;
-            log_file_.rotation_index = 0;
-            log_file_.written_size = 0;
+            log_file_.auto_flush            = log_formatter::level_t::LOG_LW_DISABLED;
+            log_file_.rotation_index        = 0;
+            log_file_.written_size          = 0;
 
             set_file_pattern(file_name_pattern);
         }
@@ -57,7 +57,7 @@ namespace util {
               flush_interval_(other.flush_interval_), // 默认定时刷入周期
               inited_(false) {
 
-            log_file_.opened_file_point_ = other.log_file_.opened_file_point_;
+            log_file_.opened_file_point_    = other.log_file_.opened_file_point_;
             log_file_.last_flush_timepoint_ = other.log_file_.last_flush_timepoint_;
             set_file_pattern(other.path_pattern_);
 
@@ -173,11 +173,11 @@ namespace util {
             reset_log_file();
 
             log_formatter::caller_info_t caller;
-            char log_file[file_system::MAX_PATH_LEN];
+            char                         log_file[file_system::MAX_PATH_LEN];
 
             for (size_t i = 0; max_file_size_ > 0 && i < rotation_size_; ++i) {
-                caller.rotate_index = (log_file_.rotation_index + i) % rotation_size_;
-                size_t fsz = 0;
+                caller.rotate_index = static_cast<uint32_t>((log_file_.rotation_index + i) % rotation_size_);
+                size_t fsz          = 0;
                 log_formatter::format(log_file, sizeof(log_file), path_pattern_.c_str(), path_pattern_.size(), caller);
                 file_system::file_size(log_file, fsz);
 
@@ -201,9 +201,9 @@ namespace util {
             // 打开新文件要加锁
             lock::lock_holder<lock::spin_lock> lkholder(fs_lock_);
 
-            char log_file[file_system::MAX_PATH_LEN];
+            char                         log_file[file_system::MAX_PATH_LEN];
             log_formatter::caller_info_t caller;
-            caller.rotate_index = log_file_.rotation_index;
+            caller.rotate_index  = log_file_.rotation_index;
             size_t file_path_len = log_formatter::format(log_file, sizeof(log_file), path_pattern_.c_str(), path_pattern_.size(), caller);
             if (file_path_len <= 0) {
                 std::cerr << "log.format " << path_pattern_ << " failed" << std::endl;
@@ -241,7 +241,7 @@ namespace util {
             of->seekp(0, std::ios_base::end);
             log_file_.written_size = static_cast<size_t>(of->tellp());
 
-            log_file_.opened_file = of;
+            log_file_.opened_file        = of;
             log_file_.opened_file_point_ = util::time::time_utility::get_now();
             log_file_.file_path.assign(log_file, file_path_len);
             return log_file_.opened_file;
@@ -264,9 +264,9 @@ namespace util {
                 }
             }
 
-            char log_file[file_system::MAX_PATH_LEN];
+            char                         log_file[file_system::MAX_PATH_LEN];
             log_formatter::caller_info_t caller;
-            caller.rotate_index = log_file_.rotation_index;
+            caller.rotate_index  = log_file_.rotation_index;
             size_t file_path_len = log_formatter::format(log_file, sizeof(log_file), path_pattern_.c_str(), path_pattern_.size(), caller);
             if (file_path_len <= 0) {
                 return;
@@ -309,7 +309,7 @@ namespace util {
             // 必须依赖析构来关闭文件，以防这个文件正在其他地方被引用
             log_file_.opened_file.reset();
             log_file_.opened_file_point_ = 0;
-            log_file_.written_size = 0;
+            log_file_.written_size       = 0;
             // log_file_.file_path.clear(); // 保留上一个文件路径，即便已被关闭。用于rotate后的目录变更判定
         }
     } // namespace log

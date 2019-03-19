@@ -170,8 +170,8 @@ namespace util {
                 options = &details::default_stacktrace_options();
             }
 
-            unw_context_t unw_ctx;
-            unw_cursor_t unw_cur;
+            unw_context_t   unw_ctx;
+            unw_cursor_t    unw_cur;
             unw_proc_info_t unw_proc;
             unw_getcontext(&unw_ctx);
             unw_init_local(&unw_cur, &unw_ctx);
@@ -179,9 +179,9 @@ namespace util {
             char func_name_cache[4096];
             func_name_cache[sizeof(func_name_cache) - 1] = 0;
             unw_word_t unw_offset;
-            int frame_id = 0;
-            int skip_frames = 1 + static_cast<int>(options->skip_start_frames);
-            int frames_count = LOG_STACKTRACE_MAX_STACKS;
+            int        frame_id     = 0;
+            int        skip_frames  = 1 + static_cast<int>(options->skip_start_frames);
+            int        frames_count = LOG_STACKTRACE_MAX_STACKS;
 
             if (options->skip_end_frames > 0) {
                 frames_count = 1;
@@ -219,7 +219,7 @@ namespace util {
 
                     const char *func_name = func_name_cache;
 #if defined(USING_LIBSTDCXX_ABI) || defined(USING_LIBCXX_ABI)
-                    int cxx_abi_status;
+                    int   cxx_abi_status;
                     char *realfunc_name = abi::__cxa_demangle(func_name_cache, 0, 0, &cxx_abi_status);
                     if (NULL != realfunc_name) {
                         func_name = realfunc_name;
@@ -404,7 +404,7 @@ namespace util {
             size_t ret = 0;
             void *stacks[LOG_STACKTRACE_MAX_STACKS_ARRAY_SIZE] = {NULL};
             size_t frames_count = backtrace(stacks, LOG_STACKTRACE_MAX_STACKS_ARRAY_SIZE);
-            char **func_name_cache = backtrace_symbols(stacks, frames_count);
+            char **func_name_cache = backtrace_symbols(stacks, (int)frames_count);
             size_t skip_frames = 1 + static_cast<size_t>(options->skip_start_frames);
 
             if (frames_count <= skip_frames + options->skip_end_frames) {
@@ -547,10 +547,10 @@ namespace util {
                 options = &details::default_stacktrace_options();
             }
 
-            PVOID stacks[LOG_STACKTRACE_MAX_STACKS_ARRAY_SIZE];
+            PVOID  stacks[LOG_STACKTRACE_MAX_STACKS_ARRAY_SIZE];
             USHORT frames_count = CaptureStackBackTrace(0, LOG_STACKTRACE_MAX_STACKS_ARRAY_SIZE, stacks, NULL);
 
-            size_t ret = 0;
+            size_t ret         = 0;
             USHORT skip_frames = 1 + static_cast<USHORT>(options->skip_start_frames);
 
             if (frames_count <= skip_frames + static_cast<USHORT>(options->skip_end_frames)) {
@@ -586,10 +586,10 @@ namespace util {
 #elif (defined(LOG_STACKTRACE_USING_DBGHELP) && LOG_STACKTRACE_USING_DBGHELP)
             USES_CONVERSION;
             SYMBOL_INFO *symbol;
-            DWORD64 displacement = 0;
+            DWORD64      displacement = 0;
 
-            symbol = (SYMBOL_INFO *)malloc(sizeof(SYMBOL_INFO) + (MAX_SYM_NAME + 1) * sizeof(TCHAR));
-            symbol->MaxNameLen = MAX_SYM_NAME;
+            symbol               = (SYMBOL_INFO *)malloc(sizeof(SYMBOL_INFO) + (MAX_SYM_NAME + 1) * sizeof(TCHAR));
+            symbol->MaxNameLen   = MAX_SYM_NAME;
             symbol->SizeOfStruct = sizeof(SYMBOL_INFO);
 
             bool try_read_sym = true;
@@ -612,7 +612,7 @@ namespace util {
                                                 static_cast<unsigned long long>(symbol->Address));
                 } else {
                     try_read_sym = false; // 失败一次基本上就是读不到符号信息了，后面也不需要再尝试了
-                    res = UTIL_STRFUNC_SNPRINTF(buf, bufsz, "Frame #%02d: () [0x%llx]\r\n", frame_id,
+                    res          = UTIL_STRFUNC_SNPRINTF(buf, bufsz, "Frame #%02d: () [0x%llx]\r\n", frame_id,
                                                 reinterpret_cast<unsigned long long>(stacks[i]));
                 }
 
@@ -629,10 +629,10 @@ namespace util {
 #else
             USES_CONVERSION;
 
-            log_stacktrace_com_holder<IDebugClient> dbg_cli;
+            log_stacktrace_com_holder<IDebugClient>  dbg_cli;
             log_stacktrace_com_holder<IDebugControl> dbg_ctrl;
             log_stacktrace_com_holder<IDebugSymbols> dbg_sym;
-            const char *error_msg = NULL;
+            const char *                             error_msg = NULL;
             do {
                 if (S_OK != ::DebugCreate(__uuidof(IDebugClient), dbg_cli.to_pvoid_ptr())) {
                     error_msg = "DebugCreate(IDebugClient) failed";
@@ -679,8 +679,8 @@ namespace util {
 
                         // 先尝试用栈上的缓冲区
                         TCHAR func_name[256] = {0};
-                        ULONG size = 0;
-                        bool res_get_name = (S_OK == dbg_sym->GetNameByOffset(offset, func_name,
+                        ULONG size           = 0;
+                        bool  res_get_name   = (S_OK == dbg_sym->GetNameByOffset(offset, func_name,
                                                                               (ULONG)(sizeof(func_name) / sizeof(func_name[0])), &size, 0));
                         if (!res_get_name && size != 0) { // 栈上的缓冲区不够再用堆内存
                             std::string result;

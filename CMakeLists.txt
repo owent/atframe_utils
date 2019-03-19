@@ -42,6 +42,10 @@ file(GLOB_RECURSE HEADER_LIST "${PROJECT_ALL_INCLUDE_DIR}/*.h" "${PROJECT_ALL_IN
 # lib名称
 set(PROJECT_LIB_LINK atframe_utils)
 
+if (COMPILER_STRICT_EXTRA_CFLAGS)
+    add_definitions(${COMPILER_STRICT_EXTRA_CFLAGS})
+endif ()
+
 if (COMPILER_STRICT_CFLAGS)
     add_definitions(${COMPILER_STRICT_CFLAGS})
 endif ()

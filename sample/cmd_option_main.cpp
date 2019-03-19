@@ -19,7 +19,7 @@ foo *g_test = NULL;
 
 class foo {
 public:
-    void print_t(util::cli::callback_param par, std::string &str) {
+    void print_t(util::cli::callback_param, std::string &str) {
         printf("sizeof(float) => %d\n", static_cast<int>(sizeof(float)));
         printf("sizeof(double) => %d\n", static_cast<int>(sizeof(double)));
         printf("sizeof(long double) => %d\n", static_cast<int>(sizeof(long double)));
@@ -47,7 +47,7 @@ public:
 };
 
 class foo2 : public foo {
-    void print(util::cli::callback_param par, std::string &str) { str = "Hello World! - child"; }
+    void print(util::cli::callback_param, std::string &str) { str = "Hello World! - child"; }
 };
 
 void print(util::cli::callback_param par, std::string *str) {
@@ -58,7 +58,7 @@ void print(util::cli::callback_param par, std::string *str) {
     (*str) = par.get("par1")->to_string();
 }
 
-void print(util::cli::callback_param par) { puts("do nothing! - free func without parameter\n"); }
+void print(util::cli::callback_param) { puts("do nothing! - free func without parameter\n"); }
 
 void print2(util::cli::callback_param par, double d) {
     printf("Free Fun B2 Params Num: %d, d => %lf\n", static_cast<int>(par.get_params_number()), d);
@@ -69,7 +69,7 @@ void print3(util::cli::callback_param par, double d, int i) {
 }
 
 
-static int complex_bind_func(util::cli::callback_param par, int i) {
+static int complex_bind_func(util::cli::callback_param, int i) {
     printf("%d\n", i);
     return 0;
 }
@@ -80,10 +80,10 @@ static void on_error(util::cli::callback_param par) {
 }
 
 int cmd_option_sample_main() {
-    util::cli::cmd_option::ptr_type co = util::cli::cmd_option::create();
+    util::cli::cmd_option::ptr_type co  = util::cli::cmd_option::create();
     util::cli::cmd_option::ptr_type cco = util::cli::cmd_option::create();
 
-    foo f, *pf = new foo2();
+    foo         f, *pf = new foo2();
     std::string str;
 
     // 绑定错误处理函数

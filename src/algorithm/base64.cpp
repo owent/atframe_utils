@@ -17,7 +17,7 @@ namespace util {
     namespace detail {
         typedef const unsigned char base_enc_map_t[64];
         typedef const unsigned char base_dec_map_t[128];
-        static base_enc_map_t base64_enc_map_basic = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P',
+        static base_enc_map_t       base64_enc_map_basic = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P',
                                                       'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', 'a', 'b', 'c', 'd', 'e', 'f',
                                                       'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v',
                                                       'w', 'x', 'y', 'z', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '+', '/'};
@@ -59,8 +59,8 @@ namespace util {
 
         static int base64_encode_inner(unsigned char *dst, size_t dlen, size_t *olen, const unsigned char *src, size_t slen,
                                        base_enc_map_t &base64_enc_map, unsigned char padding_char) {
-            size_t i, n, nopadding;
-            int C1, C2, C3;
+            size_t         i, n, nopadding;
+            int            C1, C2, C3;
             unsigned char *p;
 
             if (slen == 0) {
@@ -122,7 +122,7 @@ namespace util {
             }
 
             *olen = p - dst;
-            *p = 0;
+            *p    = 0;
 
             return (0);
         }
@@ -150,8 +150,8 @@ namespace util {
 
         static int base64_decode_inner(unsigned char *dst, size_t dlen, size_t *olen, const unsigned char *src, size_t slen,
                                        base_dec_map_t &base64_dec_map, unsigned char padding_char) {
-            size_t i, n;
-            uint32_t j, x;
+            size_t         i, n;
+            size_t         j, x;
             unsigned char *p;
 
             /* First pass: check for validity and get output length */
