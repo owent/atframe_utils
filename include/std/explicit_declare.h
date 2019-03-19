@@ -146,7 +146,11 @@
 #if defined(__cplusplus) && __cplusplus >= 201703L
 #define EXPLICIT_FALLTHROUGH [[fallthrough]];
 #elif defined(__clang__) && ((__clang_major__ * 100) + __clang_minor__) >= 309
+#if __has_cpp_attribute(clang::fallthrough)
 #define EXPLICIT_FALLTHROUGH [[clang::fallthrough]];
+#else
+#define EXPLICIT_FALLTHROUGH
+#endif
 #elif defined(__GNUC__) && (__GNUC__ >= 7)
 #define EXPLICIT_FALLTHROUGH __attribute__((fallthrough));
 #elif defined(_MSC_VER) && _MSC_VER >= 1700 // vs 2012 or higher
