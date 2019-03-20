@@ -286,7 +286,7 @@ namespace util {
                 }
 
                 template <typename TC>
-                static inline bool equal_char(TC l, char r) {
+                static inline bool equal_char(TC, char) {
                     return false;
                 }
 
@@ -297,7 +297,7 @@ namespace util {
 
 
             private:
-                actrie(storage_t &storage, uint32_t failed_idx = 0) : failed_(failed_idx) {}
+                actrie(storage_t &, uint32_t failed_idx = 0) : failed_(failed_idx) {}
 
                 struct protect_constructor_helper {};
 
