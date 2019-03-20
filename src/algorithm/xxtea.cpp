@@ -13,12 +13,9 @@
  * 32-bit integer manipulation macros (big endian)
  */
 #ifndef XXTEA_GET_UINT32_BE
-#define XXTEA_GET_UINT32_BE(n, b, i)                                                                                                  \
-    \
-{                                                                                                                                \
-        (n) = ((uint32_t)(b)[(i)] << 24) | ((uint32_t)(b)[(i) + 1] << 16) | ((uint32_t)(b)[(i) + 2] << 8) | ((uint32_t)(b)[(i) + 3]); \
-    \
-}
+#define XXTEA_GET_UINT32_BE(n, b, i) \
+                                     \
+    { (n) = ((uint32_t)(b)[(i)] << 24) | ((uint32_t)(b)[(i) + 1] << 16) | ((uint32_t)(b)[(i) + 2] << 8) | ((uint32_t)(b)[(i) + 3]); }
 #endif
 
 #if defined(max)
@@ -38,7 +35,7 @@ namespace util {
 
         template <bool CHECK_ENABLE>
         struct xxtea_check_length {
-            static bool check_protect(size_t len) { return false; }
+            static bool check_protect(size_t) { return false; }
         };
 
         template <typename Ty>
@@ -71,14 +68,14 @@ namespace util {
         }
 
         uint32_t *v = reinterpret_cast<uint32_t *>(buffer);
-        uint32_t n = static_cast<uint32_t>(len >> 2);
+        uint32_t  n = static_cast<uint32_t>(len >> 2);
 
         uint32_t y, z, sum;
         uint32_t p, rounds, e;
 
         rounds = 6 + 52 / n;
-        sum = 0;
-        z = v[n - 1];
+        sum    = 0;
+        z      = v[n - 1];
         do {
             sum += XXTEA_DELTA;
             e = (sum >> 2) & 3;
@@ -136,14 +133,14 @@ namespace util {
         }
 
         uint32_t *v = reinterpret_cast<uint32_t *>(buffer);
-        uint32_t n = static_cast<uint32_t>(len >> 2);
+        uint32_t  n = static_cast<uint32_t>(len >> 2);
 
         uint32_t y, z, sum;
         uint32_t p, rounds, e;
 
         rounds = 6 + 52 / n;
-        sum = rounds * XXTEA_DELTA;
-        y = v[0];
+        sum    = rounds * XXTEA_DELTA;
+        y      = v[0];
         do {
             e = (sum >> 2) & 3;
             for (p = n - 1; p > 0; p--) {

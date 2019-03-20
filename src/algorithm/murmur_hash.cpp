@@ -118,7 +118,6 @@ namespace util {
             case 1:
                 h ^= data[0];
                 h *= m;
-                EXPLICIT_FALLTHROUGH
             };
 
             // Do a few final mixes of the hash to ensure the last few
@@ -183,7 +182,6 @@ namespace util {
             case 1:
                 h ^= uint64_t(data2[0]);
                 h *= m;
-                EXPLICIT_FALLTHROUGH
             };
 
             h ^= h >> r;
@@ -243,7 +241,6 @@ namespace util {
             case 1:
                 h2 ^= ((unsigned char *)data)[0];
                 h2 *= m;
-                EXPLICIT_FALLTHROUGH
             };
 
             h1 ^= h2 >> 18;
@@ -309,7 +306,6 @@ namespace util {
                 k1 = ROTL32(k1, 15);
                 k1 *= c2;
                 h1 ^= k1;
-                EXPLICIT_FALLTHROUGH
             };
 
             //----------
@@ -457,7 +453,6 @@ namespace util {
                 k1 = ROTL32(k1, 15);
                 k1 *= c2;
                 h1 ^= k1;
-                EXPLICIT_FALLTHROUGH
             };
 
             //----------
@@ -594,7 +589,6 @@ namespace util {
                 k1 = ROTL64(k1, 31);
                 k1 *= c2;
                 h1 ^= k1;
-                EXPLICIT_FALLTHROUGH
             };
 
             //----------
