@@ -59,9 +59,9 @@ namespace util {
             class list_type_base {
             public:
                 virtual uint64_t tail_id() const = 0;
-                virtual size_t size() const = 0;
-                virtual bool gc() = 0;
-                virtual bool empty() const = 0;
+                virtual size_t   size() const    = 0;
+                virtual bool     gc()            = 0;
+                virtual bool     empty() const   = 0;
 
             protected:
                 list_type_base() {}
@@ -81,8 +81,8 @@ namespace util {
             typedef std::shared_ptr<lru_pool_manager> ptr_t;
 
             struct check_item_t {
-                uint64_t push_id;
-                time_t push_tick;
+                uint64_t                                     push_id;
+                time_t                                       push_tick;
                 std::weak_ptr<lru_pool_base::list_type_base> list_;
             };
 
@@ -90,7 +90,7 @@ namespace util {
             static ptr_t create() { return ptr_t(new lru_pool_manager()); }
 
 #define _UTIL_MEMPOOL_LRUOBJECTPOOL_SETTER_GETTER(x) \
-    void set_##x(size_t v) { x##_ = v; }             \
+    void   set_##x(size_t v) { x##_ = v; }           \
     size_t get_##x() const { return x##_; }
 
             _UTIL_MEMPOOL_LRUOBJECTPOOL_SETTER_GETTER(item_min_bound);  // 主动GC的保留对象数量
@@ -139,14 +139,14 @@ namespace util {
              * @brief 获取实例缓存数量
              * @note 如果不是非常了解这个数值的作用，请不要修改它
              */
-            inline util::lock::seq_alloc_u64 &item_count() { return item_count_; }
+            inline util::lock::seq_alloc_u64 &      item_count() { return item_count_; }
             inline const util::lock::seq_alloc_u64 &item_count() const { return item_count_; }
 
             /**
              * @brief 获取检测队列长度
              * @note 如果不是非常了解这个数值的作用，请不要修改它
              */
-            inline util::lock::seq_alloc_u64 &list_count() { return list_count_; }
+            inline util::lock::seq_alloc_u64 &      list_count() { return list_count_; }
             inline const util::lock::seq_alloc_u64 &list_count() const { return list_count_; }
 
             /**
@@ -211,7 +211,7 @@ namespace util {
                     }
                 }
 
-                size_t ret = 0;
+                size_t ret           = 0;
                 size_t left_list_num = proc_list_count_;
                 size_t left_item_num = proc_item_count_;
 
@@ -279,8 +279,8 @@ namespace util {
              */
             void push_check_list(uint64_t push_id, std::weak_ptr<lru_pool_base::list_type_base> list_) {
                 checked_list_.push_back(check_item_t());
-                checked_list_.back().push_id = push_id;
-                checked_list_.back().list_ = list_;
+                checked_list_.back().push_id   = push_id;
+                checked_list_.back().list_     = list_;
                 checked_list_.back().push_tick = last_proc_tick_;
 
                 list_count_.inc();
@@ -332,16 +332,16 @@ namespace util {
             }
 
         private:
-            size_t item_min_bound_;
-            size_t item_max_bound_;
+            size_t                    item_min_bound_;
+            size_t                    item_max_bound_;
             util::lock::seq_alloc_u64 item_count_;
-            size_t list_bound_;
+            size_t                    list_bound_;
             util::lock::seq_alloc_u64 list_count_;
-            size_t proc_list_count_;
-            size_t proc_item_count_;
-            size_t gc_list_;
-            size_t gc_item_;
-            std::list<check_item_t> checked_list_;
+            size_t                    proc_list_count_;
+            size_t                    proc_item_count_;
+            size_t                    gc_list_;
+            size_t                    gc_item_;
+            std::list<check_item_t>   checked_list_;
 
             // 自适应下限
             size_t item_adjust_min_;
@@ -356,24 +356,24 @@ namespace util {
 
         template <typename TObj>
         struct lru_default_action {
-            void push(TObj *obj) {}
-            void pull(TObj *obj) {}
-            void reset(TObj *obj) {}
+            void push(TObj *) {}
+            void pull(TObj *) {}
+            void reset(TObj *) {}
             void gc(TObj *obj) { delete obj; }
         };
 
         template <typename TKey, typename TObj, typename TAction = lru_default_action<TObj> >
         class lru_pool : public lru_pool_base {
         public:
-            typedef TKey key_t;
-            typedef TObj value_type;
+            typedef TKey    key_t;
+            typedef TObj    value_type;
             typedef TAction action_type;
 
             class list_type : public lru_pool_base::list_type_base {
             public:
                 struct wrapper {
                     value_type *object;
-                    uint64_t push_id;
+                    uint64_t    push_id;
                 };
 
                 virtual uint64_t tail_id() const {
@@ -413,8 +413,8 @@ namespace util {
                 virtual bool empty() const { return cache_.empty(); }
 
                 lru_pool<TKey, TObj, TAction> *owner_;
-                key_t id_;
-                std::list<wrapper> cache_;
+                key_t                          id_;
+                std::list<wrapper>             cache_;
             };
 
             typedef std::shared_ptr<list_type> list_ptr_type;
@@ -439,7 +439,7 @@ namespace util {
 
                 ~flag_guard() { unset(flag_set, flag_opt); }
 
-                uint32_t &flag_set;
+                uint32_t &            flag_set;
                 typename flag_t::type flag_opt;
             };
 
@@ -505,7 +505,7 @@ namespace util {
                     }
 
                     list_->owner_ = this;
-                    list_->id_ = id;
+                    list_->id_    = id;
                 }
 
                 typename list_type::wrapper obj_wrapper;
@@ -616,10 +616,10 @@ namespace util {
             const cat_map_type &data() const { return data_; }
 
         private:
-            cat_map_type data_;
-            lru_pool_manager::ptr_t mgr_;
+            cat_map_type              data_;
+            lru_pool_manager::ptr_t   mgr_;
             util::lock::seq_alloc_u64 push_id_alloc_;
-            uint32_t flags_;
+            uint32_t                  flags_;
 #ifdef UTIL_MEMPOOL_LRUOBJECTPOOL_CHECK_REPUSH
             std::set<value_type *> check_pushed_;
 #endif
