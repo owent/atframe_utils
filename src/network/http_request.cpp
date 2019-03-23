@@ -763,7 +763,7 @@ namespace util {
             check_multi_info(bind->curl_multi);
         }
 
-        void http_request::ev_callback_curl_perform(uv_poll_t *req, int status, int events) {
+        void http_request::ev_callback_curl_perform(uv_poll_t *req, int, int events) {
             assert(req && req->data);
             if (NULL == req || NULL == req->data) {
                 return;
@@ -790,7 +790,7 @@ namespace util {
             // WLOGWARNING(" ====== [HTTP] ====== sock %d evpoll %d for %p done", context->sockfd, events, context);
         }
 
-        int http_request::curl_callback_start_timer(CURLM *multi, long timeout_ms, void *userp) {
+        int http_request::curl_callback_start_timer(CURLM *, long timeout_ms, void *userp) {
             curl_m_bind_t *bind = reinterpret_cast<curl_m_bind_t *>(userp);
             assert(bind);
 
@@ -810,7 +810,7 @@ namespace util {
             return 0;
         }
 
-        int http_request::curl_callback_handle_socket(CURL *easy, curl_socket_t s, int action, void *userp, void *socketp) {
+        int http_request::curl_callback_handle_socket(CURL *easy, curl_socket_t s, int action, void *, void *socketp) {
             curl_poll_context_t *context = reinterpret_cast<curl_poll_context_t *>(socketp);
             if (action == CURL_POLL_IN || action == CURL_POLL_OUT || action == CURL_POLL_INOUT) {
                 if (NULL == context) {
@@ -986,7 +986,7 @@ namespace util {
             return size * nitems;
         }
 
-        int http_request::curl_callback_on_verbose(CURL *handle, curl_infotype type, char *data, size_t size, void *userptr) {
+        int http_request::curl_callback_on_verbose(CURL *, curl_infotype type, char *data, size_t size, void *userptr) {
             http_request *self = reinterpret_cast<http_request *>(userptr);
             assert(self);
 
