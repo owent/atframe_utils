@@ -1,7 +1,7 @@
 ﻿# 默认配置选项
 #####################################################################
-if(NOT DEFINED COMPILER_OPTION_LOADED)
-    set(COMPILER_OPTION_LOADED 1)
+if(NOT DEFINED __COMPILER_OPTION_LOADED)
+    set(__COMPILER_OPTION_LOADED 1)
     option(COMPILER_OPTION_MSVC_ZC_CPP "Add /Zc:__cplusplus for MSVC (let __cplusplus be equal to _MSVC_LANG) when it support." ON)
     set(CMAKE_POSITION_INDEPENDENT_CODE ON CACHE BOOL "Enable IndependentCode")
 
