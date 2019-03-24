@@ -19,7 +19,7 @@
 
 #include <cstring>
 
-#include "design_pattern/noncopyable.h"
+#include "config/compiler_features.h"
 
 namespace util {
     namespace lock {
@@ -76,7 +76,7 @@ namespace util {
 
         template <typename TLock, typename TLockAct = detail::default_lock_action<TLock>,
                   typename TUnlockAct = detail::default_unlock_action<TLock> >
-        class lock_holder : public ::util::design_pattern::noncopyable {
+        class lock_holder {
         public:
             typedef TLock value_type;
 
@@ -93,6 +93,10 @@ namespace util {
             }
 
             bool is_available() const { return NULL != lock_flag_; }
+
+        private:
+            lock_holder(const lock_holder &) UTIL_CONFIG_DELETED_FUNCTION;
+            lock_holder &operator=(const lock_holder &) UTIL_CONFIG_DELETED_FUNCTION;
 
         private:
             value_type *lock_flag_;

@@ -20,7 +20,7 @@
 
 #pragma once
 
-#include <std/explicit_declare.h>
+#include "std/explicit_declare.h"
 
 #if __cplusplus >= 201103L
 #include <cstdint>
@@ -79,9 +79,10 @@
 #include "atomic_int_type_msvc_impl.h"
 #endif
 
-#include <config/compile_optimize.h>
-#include <config/compiler_features.h>
 #include <cstddef>
+
+#include "config/compile_optimize.h"
+#include "config/compiler_features.h"
 
 
 namespace util {
