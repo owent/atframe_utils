@@ -12,6 +12,7 @@
 #     BUILD_WITH_CUSTOM_COMMAND
 #     CONFIGURE_FLAGS [configure options...]
 #     CMAKE_FLAGS [cmake options...]
+#     CMAKE_INHIRT_BUILD_ENV
 #     SCONS_FLAGS [scons options...]
 #     CUSTOM_BUILD_COMMAND [custom build cmd...]
 #     MAKE_FLAGS [make options...]
@@ -117,7 +118,7 @@ endfunction()
 
 macro (FindConfigurePackage)
     include(CMakeParseArguments)
-    set(optionArgs BUILD_WITH_CONFIGURE BUILD_WITH_CMAKE BUILD_WITH_SCONS BUILD_WITH_CUSTOM_COMMAND)
+    set(optionArgs BUILD_WITH_CONFIGURE BUILD_WITH_CMAKE BUILD_WITH_SCONS BUILD_WITH_CUSTOM_COMMAND CMAKE_INHIRT_BUILD_ENV)
     set(oneValueArgs PACKAGE WORKING_DIRECTORY BUILD_DIRECTORY PREFIX_DIRECTORY SRC_DIRECTORY_NAME PROJECT_DIRECTORY MSVC_CONFIGURE ZIP_URL TAR_URL SVN_URL GIT_URL GIT_BRANCH)
     set(multiValueArgs CONFIGURE_CMD CONFIGURE_FLAGS CMAKE_FLAGS SCONS_FLAGS MAKE_FLAGS CUSTOM_BUILD_COMMAND PREBUILD_COMMAND)
     cmake_parse_arguments(FindConfigurePackage "${optionArgs}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN} )
@@ -313,13 +314,58 @@ macro (FindConfigurePackage)
                     set(BUILD_WITH_CMAKE_PROJECT_DIR ".")
                 endif()
                 message(STATUS "@${FindConfigurePackage_BUILD_DIRECTORY} Run: ${CMAKE_COMMAND} ${BUILD_WITH_CMAKE_PROJECT_DIR} -G '${CMAKE_GENERATOR}' -DCMAKE_INSTALL_PREFIX=${FindConfigurePackage_PREFIX_DIRECTORY} ${FindConfigurePackage_CMAKE_FLAGS}")
+                set (FindConfigurePackage_BUILD_WITH_CMAKE_GENERATOR -G ${CMAKE_GENERATOR})
+                if (CMAKE_GENERATOR_PLATFORM)
+                    list (APPEND FindConfigurePackage_BUILD_WITH_CMAKE_GENERATOR -A ${CMAKE_GENERATOR_PLATFORM})
+                endif ()
+                list (APPEND FindConfigurePackage_BUILD_WITH_CMAKE_GENERATOR "-DCMAKE_INSTALL_PREFIX=${FindConfigurePackage_PREFIX_DIRECTORY}")
+
+                if (FindConfigurePackage_CMAKE_INHIRT_BUILD_ENV)
+                    set (FindConfigurePackage_CMAKE_INHIRT_BUILD_ENV OFF)
+                    set (INHERIT_VARS 
+                        CMAKE_C_FLAGS CMAKE_C_FLAGS_DEBUG CMAKE_C_FLAGS_RELEASE CMAKE_C_FLAGS_RELWITHDEBINFO CMAKE_C_FLAGS_MINSIZEREL
+                        CMAKE_CXX_FLAGS CMAKE_CXX_FLAGS_DEBUG CMAKE_CXX_FLAGS_RELEASE CMAKE_CXX_FLAGS_RELWITHDEBINFO CMAKE_CXX_FLAGS_MINSIZEREL
+                        CMAKE_ASM_FLAGS CMAKE_EXE_LINKER_FLAGS CMAKE_MODULE_LINKER_FLAGS CMAKE_SHARED_LINKER_FLAGS CMAKE_STATIC_LINKER_FLAGS
+                        CMAKE_TOOLCHAIN_FILE CMAKE_C_COMPILER CMAKE_CXX_COMPILER CMAKE_AR
+                        CMAKE_C_COMPILER_LAUNCHER CMAKE_CXX_COMPILER_LAUNCHER CMAKE_RANLIB CMAKE_SYSTEM_NAME 
+                        CMAKE_SYSROOT CMAKE_SYSROOT_COMPILE # CMAKE_SYSTEM_LIBRARY_PATH # CMAKE_SYSTEM_LIBRARY_PATH ninja里解出的参数不对，原因未知
+                        CMAKE_OSX_SYSROOT CMAKE_OSX_ARCHITECTURES 
+                        ANDROID_TOOLCHAIN ANDROID_ABI ANDROID_STL ANDROID_PIE ANDROID_PLATFORM ANDROID_CPP_FEATURES
+                        ANDROID_ALLOW_UNDEFINED_SYMBOLS ANDROID_ARM_MODE ANDROID_ARM_NEON ANDROID_DISABLE_NO_EXECUTE ANDROID_DISABLE_RELRO
+                        ANDROID_DISABLE_FORMAT_STRING_CHECKS ANDROID_CCACHE
+                    )
+                
+                    foreach (VAR_NAME IN LISTS INHERIT_VARS)
+                        # message(STATUS "${VAR_NAME}=${${VAR_NAME}}")
+                        if (DEFINED ${VAR_NAME})
+                            # message(STATUS "DEFINED ${VAR_NAME}")
+                            set(VAR_VALUE "${${VAR_NAME}}")
+                            if (VAR_VALUE)
+                                # message(STATUS "SET ${VAR_NAME}")
+                                list (APPEND FindConfigurePackage_BUILD_WITH_CMAKE_GENERATOR "-D${VAR_NAME}=${VAR_VALUE}")
+                            endif ()
+                            unset(VAR_VALUE)
+                        endif ()
+                    endforeach ()
+
+                    unset (INHERIT_VARS)
+                endif ()
+
                 execute_process(
                     COMMAND 
                         ${CMAKE_COMMAND} ${BUILD_WITH_CMAKE_PROJECT_DIR} 
-                        -G "${CMAKE_GENERATOR}"
-                        "-DCMAKE_INSTALL_PREFIX=${FindConfigurePackage_PREFIX_DIRECTORY}" ${FindConfigurePackage_CMAKE_FLAGS}
+                        ${FindConfigurePackage_BUILD_WITH_CMAKE_GENERATOR}
+                        ${FindConfigurePackage_CMAKE_FLAGS}
                     WORKING_DIRECTORY ${FindConfigurePackage_BUILD_DIRECTORY}
                 )
+
+                if (MSVC)
+                    set(FindConfigurePackage_BUILD_WITH_CMAKE_MULTI_CORE_BUILD_FLAG "--" "/m")
+                else ()
+                    include(ProcessorCount)
+                    ProcessorCount(CPU_CORE_NUM)
+                    set(FindConfigurePackage_BUILD_WITH_CMAKE_MULTI_CORE_BUILD_FLAG "--" "-j${CPU_CORE_NUM}")
+                endif ()
 
                 # cmake --build and install
                 if(MSVC)
@@ -328,14 +374,19 @@ macro (FindConfigurePackage)
                     endif()
                     execute_process(
                         COMMAND ${CMAKE_COMMAND} --build . --target install --config ${FindConfigurePackage_MSVC_CONFIGURE}
+                            ${FindConfigurePackage_BUILD_WITH_CMAKE_MULTI_CORE_BUILD_FLAG}
                         WORKING_DIRECTORY ${FindConfigurePackage_BUILD_DIRECTORY}
                     )
                 else()
                     execute_process(
                         COMMAND ${CMAKE_COMMAND} --build . --target install
+                            ${FindConfigurePackage_BUILD_WITH_CMAKE_MULTI_CORE_BUILD_FLAG}
                         WORKING_DIRECTORY ${FindConfigurePackage_BUILD_DIRECTORY}
                     )
                 endif()
+
+                # adaptor for new cmake module
+                set ("${FindConfigurePackage_PACKAGE}_ROOT" ${FindConfigurePackage_PREFIX_DIRECTORY})
 
             # build using scons
             elseif(FindConfigurePackage_BUILD_WITH_SCONS)
