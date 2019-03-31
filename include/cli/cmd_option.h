@@ -362,11 +362,11 @@ namespace util {
             }
 
             size_t             size() const { return callback_funcs_.size(); }
-            size_t             empty() const { return callback_funcs_.empty(); }
+            bool               empty() const { return callback_funcs_.empty(); }
             const funmap_type &get_all() const { return callback_funcs_; }
 
             size_t             children_size() const { return callback_children_.size(); }
-            size_t             children_empty() const { return callback_children_.empty(); }
+            bool               children_empty() const { return callback_children_.empty(); }
             const funmap_type &get_all_children() const { return callback_children_; }
 
             int  get_help_cmd_style() const { return help_cmd_style_; }
