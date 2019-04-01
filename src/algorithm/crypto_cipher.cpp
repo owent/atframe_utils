@@ -65,6 +65,24 @@ static inline libsodium_counter_t libsodium_get_counter(const unsigned char *iv)
 
 #endif
 
+// compact for old openssl and openssl compatible library(libressl, for example)
+
+#ifndef EVP_CTRL_AEAD_SET_IVLEN
+#define EVP_CTRL_AEAD_SET_IVLEN EVP_CTRL_GCM_SET_IVLEN
+#endif
+
+#ifndef EVP_CTRL_AEAD_GET_TAG
+#define EVP_CTRL_AEAD_GET_TAG EVP_CTRL_GCM_GET_TAG
+#endif
+
+#ifndef EVP_CTRL_AEAD_SET_IVLEN
+#define EVP_CTRL_AEAD_SET_IVLEN EVP_CTRL_GCM_SET_IVLEN
+#endif
+
+#ifndef EVP_CTRL_AEAD_SET_TAG
+#define EVP_CTRL_AEAD_SET_TAG EVP_CTRL_GCM_SET_TAG
+#endif
+
 #endif
 
 namespace util {
@@ -1004,13 +1022,7 @@ namespace util {
 
                 if (!iv_.empty()) {
                     if (0 != (interface_->flags & EN_CIFT_VARIABLE_IV_LEN)) {
-                        if (!EVP_CIPHER_CTX_ctrl(cipher_context_.enc,
-#if OPENSSL_VERSION_NUMBER >= 0x10100000L
-                                                 EVP_CTRL_AEAD_SET_IVLEN,
-#else
-                                                 EVP_CTRL_GCM_SET_IVLEN,
-#endif
-                                                 static_cast<int>(iv_.size()), 0)) {
+                        if (!EVP_CIPHER_CTX_ctrl(cipher_context_.enc, EVP_CTRL_AEAD_SET_IVLEN, static_cast<int>(iv_.size()), 0)) {
                             return details::setup_errorno(*this, ERR_peek_error(), error_code_t::CIPHER_OPERATION_SET_IV);
                         }
                     }
@@ -1053,13 +1065,7 @@ namespace util {
                 *olen = static_cast<size_t>(outl + finish_olen);
 
                 if (NULL != tag && tag_len > 0) {
-                    if (!EVP_CIPHER_CTX_ctrl(cipher_context_.enc,
-#if OPENSSL_VERSION_NUMBER >= 0x10100000L
-                                             EVP_CTRL_AEAD_GET_TAG,
-#else
-                                             EVP_CTRL_GCM_GET_TAG,
-#endif
-                                             static_cast<int>(tag_len), tag)) {
+                    if (!EVP_CIPHER_CTX_ctrl(cipher_context_.enc, EVP_CTRL_AEAD_GET_TAG, static_cast<int>(tag_len), tag)) {
                         return details::setup_errorno(*this, ERR_peek_error(), error_code_t::CIPHER_OPERATION);
                     }
                 }
@@ -1170,13 +1176,7 @@ namespace util {
 
                 if (!iv_.empty()) {
                     if (0 != (interface_->flags & EN_CIFT_VARIABLE_IV_LEN)) {
-                        if (!EVP_CIPHER_CTX_ctrl(cipher_context_.dec,
-#if OPENSSL_VERSION_NUMBER >= 0x10100000L
-                                                 EVP_CTRL_AEAD_SET_IVLEN,
-#else
-                                                 EVP_CTRL_GCM_SET_IVLEN,
-#endif
-                                                 static_cast<int>(iv_.size()), 0)) {
+                        if (!EVP_CIPHER_CTX_ctrl(cipher_context_.dec, EVP_CTRL_AEAD_SET_IVLEN, static_cast<int>(iv_.size()), 0)) {
                             return details::setup_errorno(*this, ERR_peek_error(), error_code_t::CIPHER_OPERATION_SET_IV);
                         }
                     }
@@ -1187,13 +1187,8 @@ namespace util {
                 }
 
                 if (NULL != tag && tag_len > 0) {
-                    if (!(EVP_CIPHER_CTX_ctrl(cipher_context_.dec,
-#if OPENSSL_VERSION_NUMBER >= 0x10100000L
-                                              EVP_CTRL_AEAD_SET_TAG,
-#else
-                                              EVP_CTRL_GCM_SET_TAG,
-#endif
-                                              static_cast<int>(tag_len), const_cast<unsigned char *>(tag)))) {
+                    if (!(EVP_CIPHER_CTX_ctrl(cipher_context_.dec, EVP_CTRL_AEAD_SET_TAG, static_cast<int>(tag_len),
+                                              const_cast<unsigned char *>(tag)))) {
                         return details::setup_errorno(*this, ERR_peek_error(), error_code_t::CIPHER_OPERATION);
                     }
                 }
