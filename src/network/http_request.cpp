@@ -654,7 +654,8 @@ namespace util {
             CURLMsg *message;
             int      pending;
 
-            while ((message = curl_multi_info_read(curl_handle, &pending))) {
+            for (message = curl_multi_info_read(curl_handle, &pending); NULL != message;
+                 message = curl_multi_info_read(curl_handle, &pending)) {
                 switch (message->msg) {
                 case CURLMSG_DONE: {
                     http_request *req = NULL;
