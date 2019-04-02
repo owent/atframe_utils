@@ -22,11 +22,7 @@
 
 #include "std/explicit_declare.h"
 
-#if __cplusplus >= 201103L
-#include <cstdint>
-#elif defined(_MSC_VER) && defined(_MSVC_LANG) && _MSVC_LANG >= 201402L
-#include <cstdint>
-#else
+#if defined(__GNUC__)
 
 // patch for old gcc
 #ifndef __STDC_LIMIT_MACROS
@@ -48,6 +44,12 @@
 #undef _UNDEF__STDC_CONSTANT_MACROS
 #endif
 
+#endif
+
+#if __cplusplus >= 201103L
+#include <cstdint>
+#elif defined(_MSC_VER) && defined(_MSVC_LANG) && _MSVC_LANG >= 201402L
+#include <cstdint>
 #endif
 
 #if defined(__cplusplus) && __cplusplus >= 201103L
