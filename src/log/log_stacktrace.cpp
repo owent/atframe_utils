@@ -730,7 +730,7 @@ namespace util {
             return ret;
         }
 #else
-        size_t stacktrace_write(char *buf, size_t bufsz, const stacktrace_options *options) {
+        size_t stacktrace_write(char *buf, size_t bufsz, const stacktrace_options *) {
             const char *msg = "stacktrace disabled.";
             if (NULL == buf || bufsz <= strlen(msg)) {
                 return 0;
