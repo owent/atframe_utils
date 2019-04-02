@@ -22,6 +22,10 @@ set(LOG_WRAPPER_CATEGORIZE_SIZE "16" CACHE STRING "Default log categorize number
 find_package(Threads)
 if (CMAKE_USE_PTHREADS_INIT)
     set(THREAD_TLS_USE_PTHREAD 1)
+    list(APPEND COMPILER_OPTION_EXTERN_CXX_LIBS pthread)
+    if (THREADS_PREFER_PTHREAD_FLAG)
+        add_definitions(${THREADS_PREFER_PTHREAD_FLAG})
+    endif ()
 endif ()
 
 if (ANDROID)

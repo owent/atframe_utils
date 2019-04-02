@@ -41,8 +41,6 @@ endif()
 include_directories(${PROJECT_TEST_INC_DIR})
 
 # ================ multi thread ================
-find_package(Threads)
 if (CMAKE_USE_PTHREADS_INIT)
     add_definitions(-D_POSIX_MT_)
-    list(APPEND PROJECT_TEST_LIB_LINK pthread)
 endif ()
