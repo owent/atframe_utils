@@ -521,7 +521,7 @@ namespace util {
         return false;
     }
 
-    bool file_system::link(const char *oldpath, const char *newpath, int options) {
+    int file_system::link(const char *oldpath, const char *newpath, int options) {
         if ((options & link_opt_t::EN_LOT_FORCE_REWRITE) && is_exist(newpath)) {
             remove(newpath);
         }

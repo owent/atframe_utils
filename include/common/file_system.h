@@ -213,7 +213,7 @@ namespace util {
          * @param options 链接选项
          * @return 成功返回0，错误返回错误码(不同平台错误码不同)
          */
-        static bool link(const char *oldpath, const char *newpath, int options = link_opt_t::EN_LOT_DEFAULT);
+        static int link(const char *oldpath, const char *newpath, int options = link_opt_t::EN_LOT_DEFAULT);
     };
 } // namespace util
 
