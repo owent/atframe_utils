@@ -95,6 +95,15 @@ namespace util {
             };
         };
 
+        struct link_opt_t {
+            enum type {
+                EN_LOT_DEFAULT        = 0x00, // hard link for default
+                EN_LOT_SYMBOLIC_LINK  = 0x01, // or soft link
+                EN_LOT_DIRECTORY_LINK = 0x02, // it's used only for windows
+                EN_LOT_FORCE_REWRITE  = 0x04, // delete the old file if it's exists
+            };
+        };
+
     public:
         /**
          * @brief 获取文件内容
@@ -196,6 +205,15 @@ namespace util {
          * @return 是绝对路径返回true
          */
         static bool is_abs_path(const char *dir_path);
+
+        /**
+         * @brief 创建链接
+         * @param oldpath 老的文件/目录路径
+         * @param newpath 新的文件/目录路径
+         * @param options 链接选项
+         * @return 成功返回0，错误返回错误码(不同平台错误码不同)
+         */
+        static bool link(const char *oldpath, const char *newpath, int options = link_opt_t::EN_LOT_DEFAULT);
     };
 } // namespace util
 

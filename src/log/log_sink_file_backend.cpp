@@ -6,6 +6,7 @@
 #include <sstream>
 
 #include "common/file_system.h"
+#include "common/string_oprs.h"
 #include "lock/lock_holder.h"
 #include "time/time_utility.h"
 
@@ -60,6 +61,7 @@ namespace util {
             log_file_.opened_file_point_    = other.log_file_.opened_file_point_;
             log_file_.last_flush_timepoint_ = other.log_file_.last_flush_timepoint_;
             set_file_pattern(other.path_pattern_);
+            alias_writing_pattern_ = other.alias_writing_pattern_;
 
             log_file_.auto_flush = other.log_file_.auto_flush;
 
@@ -244,6 +246,40 @@ namespace util {
             log_file_.opened_file        = of;
             log_file_.opened_file_point_ = util::time::time_utility::get_now();
             log_file_.file_path.assign(log_file, file_path_len);
+
+            // 硬链接别名
+            if (!alias_writing_pattern_.empty()) {
+                char   alias_log_file[file_system::MAX_PATH_LEN];
+                size_t file_path_len = log_formatter::format(alias_log_file, sizeof(alias_log_file), alias_writing_pattern_.c_str(),
+                                                             alias_writing_pattern_.size(), caller);
+                if (file_path_len <= 0) {
+                    std::cerr << "log.format for writing alias " << alias_writing_pattern_ << " failed" << std::endl;
+                    return log_file_.opened_file;
+                }
+
+                if (0 == UTIL_STRFUNC_STRNCASE_CMP(log_file, alias_log_file, sizeof(alias_log_file))) {
+                    return log_file_.opened_file;
+                }
+
+                int res = util::file_system::link(log_file, alias_log_file, util::file_system::link_opt_t::EN_LOT_FORCE_REWRITE);
+                if (res != 0) {
+                    std::cerr << "link(" << log_file << ", " << alias_log_file << ") failed, errno: " << res << std::endl;
+#ifdef UTIL_FS_WINDOWS_API
+                    std::cerr << "    you can use FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM"
+                              << " | FORMAT_MESSAGE_IGNORE_INSERTS, NULL, " << res << ", MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), "
+                              << "(LPTSTR) &lpMsgBuf, 0, NULL) to get the error message, see "
+                              << "https://docs.microsoft.com/en-us/windows/desktop/api/WinBase/nf-winbase-formatmessage and "
+                              << "https://docs.microsoft.com/en-us/windows/desktop/Debug/retrieving-the-last-error-code for more details"
+                              << std::endl;
+#else
+                    std::cerr << "    you can use strerror(" << res << ") to get the error message, see "
+                              << "http://man7.org/linux/man-pages/man3/strerror.3.html or "
+                              << "https://linux.die.net/man/3/strerror for more details" << std::endl;
+#endif
+                    return log_file_.opened_file;
+                }
+            }
+
             return log_file_.opened_file;
         }
 

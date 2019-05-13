@@ -34,7 +34,9 @@
 
 #include <dirent.h>
 #include <errno.h>
+#include <fcntl.h>
 #include <sys/types.h>
+#include <unistd.h>
 
 #define FUNC_ACCESS(x) access(x, F_OK)
 #define SAFE_STRTOK_S(...) strtok_r(__VA_ARGS__)
@@ -67,7 +69,7 @@ namespace util {
             size_t real_read_sz = fread(const_cast<char *>(out.data()), sizeof(char), static_cast<size_t>(len), f);
             if (real_read_sz < out.size()) {
                 out.resize(real_read_sz);
-                // CLRF maybe converted into CL or RF on text mode 
+                // CLRF maybe converted into CL or RF on text mode
                 ret = !is_binary;
             }
         } else {
@@ -517,5 +519,51 @@ namespace util {
 #endif
 
         return false;
+    }
+
+    bool file_system::link(const char *oldpath, const char *newpath, int options) {
+        if ((options & link_opt_t::EN_LOT_FORCE_REWRITE) && is_exist(newpath)) {
+            remove(newpath);
+        }
+
+#if defined(UTIL_FS_WINDOWS_API)
+
+#ifdef _MSC_VER
+        USES_CONVERSION;
+#endif
+
+        if (options & link_opt_t::EN_LOT_SYMBOLIC_LINK) {
+            DWORD dwFlags = 0;
+            if (options & link_opt_t::EN_LOT_DIRECTORY_LINK) {
+                dwFlags |= SYMBOLIC_LINK_FLAG_DIRECTORY | SYMBOLIC_LINK_FLAG_ALLOW_UNPRIVILEGED_CREATE;
+            }
+
+            if (CreateSymbolicLink(VC_TEXT(newpath), VC_TEXT(oldpath), dwFlags)) {
+                return 0;
+            }
+
+            return static_cast<int>(GetLastError());
+        } else {
+            if (CreateHardLink(VC_TEXT(newpath), VC_TEXT(oldpath), NULL)) {
+                return 0;
+            }
+
+            return static_cast<int>(GetLastError());
+        }
+
+#else
+        int opts = 0;
+        if (options & link_opt_t::EN_LOT_SYMBOLIC_LINK) {
+            opts = AT_SYMLINK_FOLLOW;
+        }
+
+        int res = ::linkat(AT_FDCWD, oldpath, AT_FDCWD, newpath, opts);
+        if (0 == res) {
+            return 0;
+        }
+
+        return errno;
+
+#endif
     }
 } // namespace util

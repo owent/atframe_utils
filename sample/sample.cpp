@@ -57,6 +57,7 @@ void log_sample_func1(int times) {
     filed_backend.set_max_file_size(256);
     filed_backend.set_rotate_size(3);
     filed_backend.set_file_pattern("%Y-%m-%d/%S/%N.log");
+    filed_backend.set_writing_alias_pattern("%Y-%m-%d/%S/current.log");
 
     WLOG_GETCAT(util::log::log_wrapper::categorize_t::DEFAULT)->add_sink(filed_backend);
     std::cout << "----------------setup file system log sink done--------------" << std::endl;

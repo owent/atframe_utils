@@ -46,6 +46,19 @@ namespace util {
              */
             void set_file_pattern(const std::string &file_name_pattern);
 
+            /**
+             * @brief 设置正在写出的文件别名模式
+             * @param file_name_pattern 文件名表达式，按时间切割文件最多精确到1秒。可用参数见 log_formatter::format
+             * @see log_formatter::format
+             */
+            inline void set_writing_alias_pattern(const std::string &file_name_pattern) { alias_writing_pattern_ = file_name_pattern; }
+
+            /**
+             * @brief 获取正在写出的文件别名模式
+             * @return 正在写出的文件别名模式
+             */
+            inline const std::string &get_writing_alias_pattern(const std::string &file_name_pattern) { return file_name_pattern; }
+
             void operator()(const log_formatter::caller_info_t &caller, const char *content, size_t content_size);
 
             inline time_t get_check_interval() const { return check_interval_; }
@@ -123,26 +136,28 @@ namespace util {
         private:
             // 第一个first表示是否需要format
             std::string path_pattern_;
+            // 对正在写出的文件增加别名
+            std::string alias_writing_pattern_;
 
             uint32_t rotation_size_; // 轮询滚动size
-            size_t max_file_size_;   // log文件size限制
+            size_t   max_file_size_; // log文件size限制
 
 
-            time_t check_interval_; // 更换文件或目录的检查周期
-            time_t flush_interval_; // 定时执行文件flush
-            bool inited_;
+            time_t          check_interval_; // 更换文件或目录的检查周期
+            time_t          flush_interval_; // 定时执行文件flush
+            bool            inited_;
             lock::spin_lock fs_lock_;
             lock::spin_lock init_lock_;
 
 
             struct file_impl_t {
-                uint32_t auto_flush; // 当日记级别高于或等于这个时，将会强制执行一次flush
-                uint32_t rotation_index;
-                size_t written_size;
+                uint32_t                       auto_flush; // 当日记级别高于或等于这个时，将会强制执行一次flush
+                uint32_t                       rotation_index;
+                size_t                         written_size;
                 std::shared_ptr<std::ofstream> opened_file;
-                time_t opened_file_point_; // 打开文件的时间点
-                time_t last_flush_timepoint_;
-                std::string file_path;
+                time_t                         opened_file_point_; // 打开文件的时间点
+                time_t                         last_flush_timepoint_;
+                std::string                    file_path;
             };
             file_impl_t log_file_;
         };
