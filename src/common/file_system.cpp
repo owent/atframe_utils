@@ -535,7 +535,10 @@ namespace util {
         if (options & link_opt_t::EN_LOT_SYMBOLIC_LINK) {
             DWORD dwFlags = 0;
             if (options & link_opt_t::EN_LOT_DIRECTORY_LINK) {
-                dwFlags |= SYMBOLIC_LINK_FLAG_DIRECTORY | SYMBOLIC_LINK_FLAG_ALLOW_UNPRIVILEGED_CREATE;
+                dwFlags |= SYMBOLIC_LINK_FLAG_DIRECTORY;
+#if defined(SYMBOLIC_LINK_FLAG_ALLOW_UNPRIVILEGED_CREATE)
+                dwFlags |= SYMBOLIC_LINK_FLAG_ALLOW_UNPRIVILEGED_CREATE;
+#endif
             }
 
             if (CreateSymbolicLink(VC_TEXT(newpath), VC_TEXT(oldpath), dwFlags)) {

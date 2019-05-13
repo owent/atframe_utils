@@ -203,13 +203,16 @@ namespace util {
             // 打开新文件要加锁
             lock::lock_holder<lock::spin_lock> lkholder(fs_lock_);
 
-            char                         log_file[file_system::MAX_PATH_LEN];
+            char                         log_file[file_system::MAX_PATH_LEN + 1];
             log_formatter::caller_info_t caller;
             caller.rotate_index  = log_file_.rotation_index;
             size_t file_path_len = log_formatter::format(log_file, sizeof(log_file), path_pattern_.c_str(), path_pattern_.size(), caller);
             if (file_path_len <= 0) {
                 std::cerr << "log.format " << path_pattern_ << " failed" << std::endl;
                 return std::shared_ptr<std::ofstream>();
+            }
+            if (file_path_len < sizeof(log_file)) {
+                log_file[file_path_len] = 0;
             }
 
             std::shared_ptr<std::ofstream> of = std::make_shared<std::ofstream>();
@@ -249,12 +252,16 @@ namespace util {
 
             // 硬链接别名
             if (!alias_writing_pattern_.empty()) {
-                char   alias_log_file[file_system::MAX_PATH_LEN];
-                size_t file_path_len = log_formatter::format(alias_log_file, sizeof(alias_log_file), alias_writing_pattern_.c_str(),
+                char   alias_log_file[file_system::MAX_PATH_LEN + 1];
+                file_path_len = log_formatter::format(alias_log_file, sizeof(alias_log_file), alias_writing_pattern_.c_str(),
                                                              alias_writing_pattern_.size(), caller);
                 if (file_path_len <= 0) {
                     std::cerr << "log.format for writing alias " << alias_writing_pattern_ << " failed" << std::endl;
                     return log_file_.opened_file;
+                }
+
+                if (file_path_len < sizeof(alias_log_file)) {
+                    alias_log_file[file_path_len] = 0;
                 }
 
                 if (0 == UTIL_STRFUNC_STRNCASE_CMP(log_file, alias_log_file, sizeof(alias_log_file))) {
