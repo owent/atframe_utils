@@ -1,4 +1,8 @@
-﻿# platform check 
+﻿if (CMAKE_VERSION VERSION_GREATER_EQUAL "3.10")
+    include_guard(GLOBAL)
+endif()
+
+# platform check 
 # default to x86 platform.  We'll check for X64 in a bit
 
 if(NOT DEFINED __FIND_PLATFORM_LOADED)

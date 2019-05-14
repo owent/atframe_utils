@@ -1,4 +1,8 @@
-﻿# 默认配置选项
+﻿if (CMAKE_VERSION VERSION_GREATER_EQUAL "3.10")
+    include_guard(GLOBAL)
+endif()
+
+# 默认配置选项
 #####################################################################
 if(NOT DEFINED __COMPILER_OPTION_LOADED)
     set(__COMPILER_OPTION_LOADED 1)
