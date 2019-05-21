@@ -2,6 +2,8 @@
 // Created by 欧文韬 on 2015/6/2.
 //
 
+#include <std/explicit_declare.h>
+
 #include "common/file_system.h"
 #include "common/compiler_message.h"
 #include <cstdio>
@@ -163,7 +165,7 @@ namespace util {
         return true;
     }
 
-    bool file_system::mkdir(const char *dir_path, bool recursion, int mode) {
+    bool file_system::mkdir(const char *dir_path, bool recursion, EXPLICIT_UNUSED_ATTR int mode) {
 #ifndef UTIL_FS_WINDOWS_API
         if (0 == mode) {
             mode = S_IRWXU | S_IRWXG | S_IRWXO;
