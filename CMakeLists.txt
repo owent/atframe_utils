@@ -53,8 +53,11 @@ endif ()
 source_group_by_dir(HEADER_LIST)
 source_group_by_dir(SRC_LIST)
 
-add_library(${PROJECT_LIB_LINK} ${HEADER_LIST} ${SRC_LIST})
-
+add_library(${PROJECT_LIB_LINK} STATIC ${HEADER_LIST} ${SRC_LIST})
+set_target_properties(${PROJECT_LIB_LINK} PROPERTIES 
+    C_VISIBILITY_PRESET "default"
+    CXX_VISIBILITY_PRESET "default"
+)
 if (MSVC)
     set_property(TARGET ${PROJECT_LIB_LINK} PROPERTY FOLDER "atframework")
 endif (MSVC)
