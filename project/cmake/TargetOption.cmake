@@ -1,4 +1,8 @@
-﻿# 设置实际的默认编译输出目录，为防止呗外部模块设置，所以要先判定一下
+﻿if (CMAKE_VERSION VERSION_GREATER_EQUAL "3.10")
+    include_guard(GLOBAL)
+endif()
+
+# 设置实际的默认编译输出目录，为防止呗外部模块设置，所以要先判定一下
 
 if(NOT DEFINED __TARGET_OPTION_LOADED)
     set(__TARGET_OPTION_LOADED 1)

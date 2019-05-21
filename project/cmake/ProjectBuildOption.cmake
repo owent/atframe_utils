@@ -1,4 +1,8 @@
-﻿# 功能检测选项
+﻿if (CMAKE_VERSION VERSION_GREATER_EQUAL "3.10")
+    include_guard(GLOBAL)
+endif()
+
+# 功能检测选项
 include(WriteCompilerDetectionHeader)
 
 # generate check header
@@ -22,7 +26,9 @@ set(LOG_WRAPPER_CATEGORIZE_SIZE "16" CACHE STRING "Default log categorize number
 find_package(Threads)
 if (CMAKE_USE_PTHREADS_INIT)
     set(THREAD_TLS_USE_PTHREAD 1)
-    list(APPEND COMPILER_OPTION_EXTERN_CXX_LIBS pthread)
+    if(NOT ANDROID)
+        list(APPEND COMPILER_OPTION_EXTERN_CXX_LIBS pthread)
+    endif ()
     if (THREADS_PREFER_PTHREAD_FLAG)
         add_definitions(${THREADS_PREFER_PTHREAD_FLAG})
     endif ()
