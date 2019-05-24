@@ -235,10 +235,12 @@ namespace std {
         return const_cast<T *>(p.get());
     }
 
+#if defined(LIBATFRAME_UTILS_ENABLE_RTTI) && LIBATFRAME_UTILS_ENABLE_RTTI
     template <typename T, typename U>
     intrusive_ptr<T> dynamic_pointer_cast(intrusive_ptr<U> const &p) {
         return dynamic_cast<T *>(p.get());
     }
+#endif
 
     // operator<<
     template <typename E, typename T, typename Y>

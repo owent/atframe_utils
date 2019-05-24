@@ -30,6 +30,7 @@
 #include <sstream>
 #include <vector>
 
+#include <config/atframe_utils_build_feature.h>
 
 #include "std/ref.h"
 #include "std/smart_ptr.h"
@@ -143,7 +144,11 @@ namespace util {
 
                     // all children do not make a help_msg_t
                     if (callback_children_.find(iter->first) != callback_children_.end()) {
+#if defined(LIBATFRAME_UTILS_ENABLE_RTTI) && LIBATFRAME_UTILS_ENABLE_RTTI
                         self_type *child = dynamic_cast<self_type *>(iter->second.get());
+#else
+                        self_type *child = static_cast<self_type *>(iter->second.get());
+#endif
                         assert(child);
                         child->list_help_msg(msg, (prefix + " ") + iter->first.c_str());
                         continue;

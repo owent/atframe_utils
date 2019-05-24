@@ -599,7 +599,11 @@ namespace util {
                      iter != http_form_.qs_fields.data().end(); ++iter) {
 
                     if (util::types::ITEM_TYPE_STRING == iter->second->type()) {
+#if defined(LIBATFRAME_UTILS_ENABLE_RTTI) && LIBATFRAME_UTILS_ENABLE_RTTI
                         util::types::item_string *val = dynamic_cast<util::types::item_string *>(iter->second.get());
+#else
+                        util::types::item_string *val = static_cast<util::types::item_string *>(iter->second.get());
+#endif
 
                         if (NULL != val) {
                             curl_formadd(&http_form_.begin, &http_form_.end, CURLFORM_PTRNAME, iter->first.c_str(), CURLFORM_NAMELENGTH,

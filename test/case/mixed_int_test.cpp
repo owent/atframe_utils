@@ -6,7 +6,9 @@
 #include "algorithm/mixed_int.h"
 
 CASE_TEST(mixed_int_test, basic) {
+#if defined(LIBATFRAME_UTILS_ENABLE_RTTI) && LIBATFRAME_UTILS_ENABLE_RTTI
     CASE_EXPECT_TRUE(typeid(uint32_t) != typeid(mixed_uint32_t));
+#endif
 
     {
         mixed_uint8_t a1 = 123;
