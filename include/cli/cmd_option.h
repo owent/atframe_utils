@@ -732,7 +732,11 @@ namespace util {
             }
 
             std::shared_ptr<binder::cmd_option_bind_base> bind_child_cmd(const std::string cmd_content, ptr_type cmd_opt) {
+#if defined(LIBATFRAME_UTILS_ENABLE_RTTI) && LIBATFRAME_UTILS_ENABLE_RTTI
                 std::shared_ptr<binder::cmd_option_bind_base> base_node = std::dynamic_pointer_cast<binder::cmd_option_bind_base>(cmd_opt);
+#else
+                std::shared_ptr<binder::cmd_option_bind_base> base_node = std::static_pointer_cast<binder::cmd_option_bind_base>(cmd_opt);
+#endif
                 std::vector<std::string>                      cmds      = split_cmd(cmd_content.c_str());
                 for (std::vector<std::string>::size_type index = 0; index < cmds.size(); ++index) {
                     TCmdStr cmd_obj             = TCmdStr(cmds[index].c_str(), cmds[index].size());

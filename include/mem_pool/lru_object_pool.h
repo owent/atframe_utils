@@ -31,6 +31,7 @@
 #include <list>
 #include <stdint.h>
 
+#include <config/atframe_utils_build_feature.h>
 
 #include "std/smart_ptr.h"
 
@@ -524,7 +525,11 @@ namespace util {
                     mgr_->item_count().inc();
 
                     // 推送check list
+#if defined(LIBATFRAME_UTILS_ENABLE_RTTI) && LIBATFRAME_UTILS_ENABLE_RTTI
                     mgr_->push_check_list(obj_wrapper.push_id, std::dynamic_pointer_cast<lru_pool_base::list_type_base>(list_));
+#else
+                    mgr_->push_check_list(obj_wrapper.push_id, std::static_pointer_cast<lru_pool_base::list_type_base>(list_));
+#endif
                 }
 
 #ifdef UTIL_MEMPOOL_LRUOBJECTPOOL_CHECK_REPUSH
