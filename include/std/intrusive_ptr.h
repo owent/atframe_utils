@@ -47,7 +47,7 @@ namespace std {
     class intrusive_ptr {
     public:
         typedef intrusive_ptr<T> self_type;
-        typedef T element_type;
+        typedef T                element_type;
 
         UTIL_CONFIG_CONSTEXPR intrusive_ptr() UTIL_CONFIG_NOEXCEPT : px(NULL) {}
 
@@ -86,7 +86,7 @@ namespace std {
             return *this;
         }
 
-            // Move support
+        // Move support
 
 #if defined(UTIL_CONFIG_COMPILER_CXX_RVALUE_REFERENCES) && UTIL_CONFIG_COMPILER_CXX_RVALUE_REFERENCES
 
@@ -125,7 +125,7 @@ namespace std {
 
         inline element_type *detach() UTIL_CONFIG_NOEXCEPT {
             element_type *ret = px;
-            px = NULL;
+            px                = NULL;
             return ret;
         }
 
@@ -146,8 +146,8 @@ namespace std {
 
         inline void swap(intrusive_ptr &rhs) UTIL_CONFIG_NOEXCEPT {
             element_type *tmp = px;
-            px = rhs.px;
-            rhs.px = tmp;
+            px                = rhs.px;
+            rhs.px            = tmp;
         }
 
     private:
@@ -257,15 +257,15 @@ namespace std {
 #define UTIL_INTRUSIVE_PTR_ATOMIC_TYPE ::util::lock::atomic_int_type<size_t>
 #endif
 
-#define UTIL_INTRUSIVE_PTR_REF_MEMBER_DECL(T)              \
-    \
-private:                                                   \
-    UTIL_INTRUSIVE_PTR_ATOMIC_TYPE intrusive_ref_counter_; \
-    friend void intrusive_ptr_add_ref(T *p);               \
-    friend void intrusive_ptr_release(T *p);               \
-    \
-public:                                                    \
-    const size_t use_count() const { return intrusive_ref_counter_.load(); }
+#define UTIL_INTRUSIVE_PTR_REF_MEMBER_DECL(T)                   \
+                                                                \
+private:                                                        \
+    UTIL_INTRUSIVE_PTR_ATOMIC_TYPE intrusive_ref_counter_;      \
+    friend void                    intrusive_ptr_add_ref(T *p); \
+    friend void                    intrusive_ptr_release(T *p); \
+                                                                \
+public:                                                         \
+    size_t use_count() const { return intrusive_ref_counter_.load(); }
 
 #define UTIL_INTRUSIVE_PTR_REF_FN_DECL(T) \
     void intrusive_ptr_add_ref(T *p);     \
