@@ -321,7 +321,7 @@ namespace util {
                 return iter->second->parse(keys, index + 1, value);
             }
 
-            return false;
+            // return false;
         }
 
         bool item_object::encode(std::string &output, const char *prefix) const {
