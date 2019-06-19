@@ -18,6 +18,8 @@
 #include <map>
 #include <string>
 
+#include <config/compiler_features.h>
+
 /**
  * Window 控制台相关
  * @see https://msdn.microsoft.com/zh-cn/windows/apps/ms686047%28v=vs.100%29.aspx
@@ -69,33 +71,33 @@ namespace util {
 
         struct shell_font_style {
             enum shell_font_spec {
-                SHELL_FONT_SPEC_NULL = 0x00,
-                SHELL_FONT_SPEC_BOLD = 0x01,
+                SHELL_FONT_SPEC_NULL      = 0x00,
+                SHELL_FONT_SPEC_BOLD      = 0x01,
                 SHELL_FONT_SPEC_UNDERLINE = 0x02,
-                SHELL_FONT_SPEC_FLASH = 0x04,
-                SHELL_FONT_SPEC_DARK = 0x08,
+                SHELL_FONT_SPEC_FLASH     = 0x04,
+                SHELL_FONT_SPEC_DARK      = 0x08,
             };
 
             enum shell_font_color {
-                SHELL_FONT_COLOR_BLACK = 0x0100, // 30
-                SHELL_FONT_COLOR_RED = 0x0200,
-                SHELL_FONT_COLOR_GREEN = 0x0400,
-                SHELL_FONT_COLOR_YELLOW = 0x0800,
-                SHELL_FONT_COLOR_BLUE = 0x1000,
+                SHELL_FONT_COLOR_BLACK   = 0x0100, // 30
+                SHELL_FONT_COLOR_RED     = 0x0200,
+                SHELL_FONT_COLOR_GREEN   = 0x0400,
+                SHELL_FONT_COLOR_YELLOW  = 0x0800,
+                SHELL_FONT_COLOR_BLUE    = 0x1000,
                 SHELL_FONT_COLOR_MAGENTA = 0x2000,
-                SHELL_FONT_COLOR_CYAN = 0x4000,
-                SHELL_FONT_COLOR_WHITE = 0x8000,
+                SHELL_FONT_COLOR_CYAN    = 0x4000,
+                SHELL_FONT_COLOR_WHITE   = 0x8000,
             };
 
             enum shell_font_background_color {
-                SHELL_FONT_BACKGROUND_COLOR_BLACK = 0x010000, // 40
-                SHELL_FONT_BACKGROUND_COLOR_RED = 0x020000,
-                SHELL_FONT_BACKGROUND_COLOR_GREEN = 0x040000,
-                SHELL_FONT_BACKGROUND_COLOR_YELLOW = 0x080000,
-                SHELL_FONT_BACKGROUND_COLOR_BLUE = 0x100000,
+                SHELL_FONT_BACKGROUND_COLOR_BLACK   = 0x010000, // 40
+                SHELL_FONT_BACKGROUND_COLOR_RED     = 0x020000,
+                SHELL_FONT_BACKGROUND_COLOR_GREEN   = 0x040000,
+                SHELL_FONT_BACKGROUND_COLOR_YELLOW  = 0x080000,
+                SHELL_FONT_BACKGROUND_COLOR_BLUE    = 0x100000,
                 SHELL_FONT_BACKGROUND_COLOR_MAGENTA = 0x200000,
-                SHELL_FONT_BACKGROUND_COLOR_CYAN = 0x400000,
-                SHELL_FONT_BACKGROUND_COLOR_WHITE = 0x800000,
+                SHELL_FONT_BACKGROUND_COLOR_CYAN    = 0x400000,
+                SHELL_FONT_BACKGROUND_COLOR_WHITE   = 0x800000,
             };
         };
 
@@ -179,6 +181,14 @@ namespace util {
                     (*pOs) << v;
                     return (*this);
                 }
+
+#if defined(UTIL_CONFIG_COMPILER_CXX_NULLPTR) && UTIL_CONFIG_COMPILER_CXX_NULLPTR
+                const shell_stream_opr &operator<<(std::nullptr_t) const {
+                    close();
+                    (*pOs) << "nullptr";
+                    return (*this);
+                }
+#endif
 
                 const shell_stream_opr &operator<<(shell_font_style::shell_font_spec style) const {
                     open(style);
