@@ -562,7 +562,7 @@ namespace util {
             opts = AT_SYMLINK_FOLLOW;
         }
 
-        int res = ::linkat(AT_FDCWD, oldpath, AT_FDCWD, newpath, opts);
+        int res = linkat(AT_FDCWD, oldpath, AT_FDCWD, newpath, opts);
         if (0 == res) {
             return 0;
         }
