@@ -251,10 +251,11 @@ namespace util {
             log_file_.file_path.assign(log_file, file_path_len);
 
             // 硬链接别名
+#if !defined(UTIL_FS_DISABLE_LINK)
             if (!alias_writing_pattern_.empty()) {
-                char   alias_log_file[file_system::MAX_PATH_LEN + 1];
+                char alias_log_file[file_system::MAX_PATH_LEN + 1];
                 file_path_len = log_formatter::format(alias_log_file, sizeof(alias_log_file), alias_writing_pattern_.c_str(),
-                                                             alias_writing_pattern_.size(), caller);
+                                                      alias_writing_pattern_.size(), caller);
                 if (file_path_len <= 0) {
                     std::cerr << "log.format for writing alias " << alias_writing_pattern_ << " failed" << std::endl;
                     return log_file_.opened_file;
@@ -286,6 +287,7 @@ namespace util {
                     return log_file_.opened_file;
                 }
             }
+#endif
 
             return log_file_.opened_file;
         }

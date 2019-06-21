@@ -4,8 +4,8 @@
 
 #include <std/explicit_declare.h>
 
-#include "common/file_system.h"
 #include "common/compiler_message.h"
+#include "common/file_system.h"
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
@@ -523,6 +523,7 @@ namespace util {
         return false;
     }
 
+#if !defined(UTIL_FS_DISABLE_LINK)
     int file_system::link(const char *oldpath, const char *newpath, int options) {
         if ((options & link_opt_t::EN_LOT_FORCE_REWRITE) && is_exist(newpath)) {
             remove(newpath);
@@ -562,7 +563,7 @@ namespace util {
             opts = AT_SYMLINK_FOLLOW;
         }
 
-        int res = linkat(AT_FDCWD, oldpath, AT_FDCWD, newpath, opts);
+        int res = ::linkat(AT_FDCWD, oldpath, AT_FDCWD, newpath, opts);
         if (0 == res) {
             return 0;
         }
@@ -571,4 +572,6 @@ namespace util {
 
 #endif
     }
+#endif
+
 } // namespace util

@@ -42,6 +42,14 @@
 #include <sys/types.h>
 #include <unistd.h>
 
+#if defined(__ANDROID__)
+#define UTIL_FS_DISABLE_LINK 1
+#elif defined(__APPLE__)
+#if __dest_os != __mac_os_x
+#define UTIL_FS_DISABLE_LINK 1
+#endif
+#endif
+
 #endif
 
 #if (defined(_MSC_VER) && _MSC_VER >= 1600) || (defined(__STDC_VERSION__) && __STDC_VERSION__ >= 201112L)
@@ -50,8 +58,8 @@
 #define UTIL_FS_C11_API
 #else
 #include <errno.h>
-#define UTIL_FS_OPEN(e, f, path, mode) \
-    f = fopen(path, mode);             \
+#define UTIL_FS_OPEN(e, f, path, mode)              \
+    f                          = fopen(path, mode); \
     EXPLICIT_UNUSED_ATTR int e = errno
 #define UTIL_FS_CLOSE(f) fclose(f)
 #endif
@@ -85,11 +93,11 @@ namespace util {
                 EN_DOT_RLNK = 0x0004, // 解析符号链接
                 EN_DOT_RECU = 0x0010, // 对目录递归扫描而不是列举出出目录名
 
-                EN_DOT_TDIR = 0x0100,  // 包含目录
-                EN_DOT_TREG = 0x0200,  // 包含文件
-                EN_DOT_TLNK = 0x0400,  // 包含符号链接
+                EN_DOT_TDIR  = 0x0100, // 包含目录
+                EN_DOT_TREG  = 0x0200, // 包含文件
+                EN_DOT_TLNK  = 0x0400, // 包含符号链接
                 EN_DOT_TSOCK = 0x0800, // 包含Unix Sock
-                EN_DOT_TOTH = 0x1000,  // 其他类型
+                EN_DOT_TOTH  = 0x1000, // 其他类型
 
                 EN_DOT_DAFAULT = 0xFF00, // 默认规则
             };
@@ -206,6 +214,7 @@ namespace util {
          */
         static bool is_abs_path(const char *dir_path);
 
+#if !defined(UTIL_FS_DISABLE_LINK)
         /**
          * @brief 创建链接
          * @param oldpath 老的文件/目录路径
@@ -214,6 +223,7 @@ namespace util {
          * @return 成功返回0，错误返回错误码(不同平台错误码不同)
          */
         static int link(const char *oldpath, const char *newpath, int options = link_opt_t::EN_LOT_DEFAULT);
+#endif
     };
 } // namespace util
 
