@@ -17,6 +17,7 @@
 #     CUSTOM_BUILD_COMMAND [custom build cmd...]
 #     MAKE_FLAGS [make options...]
 #     PREBUILD_COMMAND [pre build cmd...]
+#     RESET_FIND_VARS [cmake vars]
 #     WORKING_DIRECTORY <work directory>
 #     BUILD_DIRECTORY <build directory>
 #     PREFIX_DIRECTORY <prefix directory>
@@ -120,7 +121,7 @@ macro (FindConfigurePackage)
     include(CMakeParseArguments)
     set(optionArgs BUILD_WITH_CONFIGURE BUILD_WITH_CMAKE BUILD_WITH_SCONS BUILD_WITH_CUSTOM_COMMAND CMAKE_INHIRT_BUILD_ENV)
     set(oneValueArgs PACKAGE WORKING_DIRECTORY BUILD_DIRECTORY PREFIX_DIRECTORY SRC_DIRECTORY_NAME PROJECT_DIRECTORY MSVC_CONFIGURE ZIP_URL TAR_URL SVN_URL GIT_URL GIT_BRANCH)
-    set(multiValueArgs CONFIGURE_CMD CONFIGURE_FLAGS CMAKE_FLAGS SCONS_FLAGS MAKE_FLAGS CUSTOM_BUILD_COMMAND PREBUILD_COMMAND)
+    set(multiValueArgs CONFIGURE_CMD CONFIGURE_FLAGS CMAKE_FLAGS RESET_FIND_VARS SCONS_FLAGS MAKE_FLAGS CUSTOM_BUILD_COMMAND PREBUILD_COMMAND)
     cmake_parse_arguments(FindConfigurePackage "${optionArgs}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN} )
 
     # some module is not match standard, using upper case but package name
@@ -422,6 +423,10 @@ macro (FindConfigurePackage)
                 message(FATAL_ERROR "build type is required")
             endif()
 
+            # reset vars before retry to find package
+            foreach (RESET_VAR ${FindConfigurePackage_RESET_FIND_VARS})
+                unset (${RESET_VAR} CACHE)
+            endforeach()
             find_package(${FindConfigurePackage_PACKAGE})
         endif()
     endif()
