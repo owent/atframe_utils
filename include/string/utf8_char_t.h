@@ -55,7 +55,7 @@ namespace util {
 
             static inline size_t length(const char *s) {
                 size_t ret = 1;
-                char c = (*s);
+                char c = s? (*s): 0;
 
                 if (!(c & 0x80)) {
                     return ret;
