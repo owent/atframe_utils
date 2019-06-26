@@ -1,6 +1,8 @@
 ﻿#include <assert.h>
 #include <cstring>
 
+#include <std/explicit_declare.h>
+
 #include <common/file_system.h>
 #include <string/tquerystring.h>
 
@@ -387,7 +389,7 @@ namespace util {
 
         void http_request::set_opt_http_content_decoding(bool v) { set_opt_bool(CURLOPT_HTTP_CONTENT_DECODING, v); }
 
-        bool http_request::set_opt_keepalive(time_t idle, time_t interval) {
+        bool http_request::set_opt_keepalive(EXPLICIT_UNUSED_ATTR time_t idle, EXPLICIT_UNUSED_ATTR time_t interval) {
 #if LIBCURL_VERSION_NUM >= 0x071900
             if (0 == idle && 0 == interval) {
                 set_opt_bool(CURLOPT_TCP_KEEPALIVE, false);
