@@ -131,7 +131,7 @@ macro (FindConfigurePackage)
                     FindConfigurePackageDownloadFile("${FindConfigurePackage_TAR_URL}" "${FindConfigurePackage_WORKING_DIRECTORY}/${DOWNLOAD_FILENAME}")
                 endif()
 
-                execute_process(COMMAND ${CMAKE_COMMAND} -E tar xvf ${DOWNLOAD_NATIVE_FILENAME}
+                execute_process(COMMAND ${CMAKE_COMMAND} -E tar xvf "${FindConfigurePackage_WORKING_DIRECTORY}/${DOWNLOAD_FILENAME}"
                     WORKING_DIRECTORY ${FindConfigurePackage_WORKING_DIRECTORY}
                 )
 
