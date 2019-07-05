@@ -101,7 +101,7 @@ macro (FindConfigurePackage)
     string(TOUPPER "${FindConfigurePackage_PACKAGE}_FOUND" FIND_CONFIGURE_PACKAGE_UPPER_NAME)
 
     # step 1. find using standard method
-    find_package(${FindConfigurePackage_PACKAGE})
+    find_package(${FindConfigurePackage_PACKAGE} QUIET)
     if(NOT ${FindConfigurePackage_PACKAGE}_FOUND AND NOT ${FIND_CONFIGURE_PACKAGE_UPPER_NAME})
         if(NOT FindConfigurePackage_PREFIX_DIRECTORY)
             # prefix
@@ -111,7 +111,7 @@ macro (FindConfigurePackage)
         list(APPEND CMAKE_FIND_ROOT_PATH ${FindConfigurePackage_PREFIX_DIRECTORY})
 
         # step 2. find in prefix
-        find_package(${FindConfigurePackage_PACKAGE})
+        find_package(${FindConfigurePackage_PACKAGE} QUIET)
 
         # step 3. build
         if(NOT ${FindConfigurePackage_PACKAGE}_FOUND AND NOT ${FIND_CONFIGURE_PACKAGE_UPPER_NAME})
