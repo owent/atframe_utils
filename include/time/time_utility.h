@@ -85,6 +85,25 @@ namespace util {
              */
             static time_t get_now_usec();
 
+            /**
+             * @brief 设置时间的全局偏移（Debug功能）
+             * @note 影响now()、get_now()和get_now_usec()的返回结果，用于模拟时间
+             */
+            static void set_global_now_offset(const std::chrono::system_clock::duration& offset);
+
+            /**
+             * @brief 设置时间的全局偏移（Debug功能）
+             * @note 影响now()、get_now()和get_now_usec()的返回结果，用于模拟时间
+             * @return 当前的时间全局偏移
+             */
+            static std::chrono::system_clock::duration get_global_now_offset();
+
+            /**
+             * @brief 重置时间的全局偏移（Debug功能）
+             * @note 影响now()、get_now()和get_now_usec()的返回结果，还原成真实时间
+             */
+            static void reset_global_now_offset();
+
             // ====================== 后面的函数都和时区相关 ======================
             /**
              * @brief 获取系统时区时间偏移(忽略自定义偏移)
@@ -210,6 +229,9 @@ namespace util {
 
             // 时区时间的人为偏移
             static time_t custom_zone_offset_;
+
+            // 时间的全局偏移（Debug功能）
+            static std::chrono::system_clock::duration global_now_offset_;
         };
     }
 }

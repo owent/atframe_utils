@@ -7,6 +7,7 @@ namespace util {
         time_t time_utility::now_unix_;
         time_t time_utility::now_usec_ = 0;
         time_t time_utility::custom_zone_offset_ = -time_utility::YEAR_SECONDS;
+        std::chrono::system_clock::duration time_utility::global_now_offset_ = std::chrono::system_clock::duration::zero();
 
         time_utility::time_utility() {}
         time_utility::~time_utility() {}
@@ -14,9 +15,9 @@ namespace util {
         void time_utility::update(raw_time_t *t) {
             // raw_time_t prev_tp = now_;
             if (NULL != t) {
-                now_ = *t;
+                now_ = *t + global_now_offset_;
             } else {
-                now_ = std::chrono::system_clock::now();
+                now_ = std::chrono::system_clock::now() + global_now_offset_;
             }
 
             // reset unix timestamp
@@ -39,6 +40,22 @@ namespace util {
         time_t time_utility::get_now_usec() { return now_usec_; }
 
         time_t time_utility::get_now() { return now_unix_; }
+
+        void time_utility::set_global_now_offset(const std::chrono::system_clock::duration& offset) {
+            raw_time_t old_now = now() - global_now_offset_;
+            global_now_offset_ = offset;
+            update(&old_now);
+        }
+
+        std::chrono::system_clock::duration time_utility::get_global_now_offset() {
+            return global_now_offset_;
+        }
+
+        void time_utility::reset_global_now_offset() {
+            raw_time_t old_now = now() - global_now_offset_;
+            global_now_offset_ = std::chrono::system_clock::duration::zero();
+            update(&old_now);
+        }
 
         // ====================== 后面的函数都和时区相关 ======================
         time_t time_utility::get_sys_zone_offset() {

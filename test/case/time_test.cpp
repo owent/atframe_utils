@@ -6,6 +6,17 @@
 #include "time/time_utility.h"
 #include <time/jiffies_timer.h>
 
+CASE_TEST(time_test, global_offset) {
+    util::time::time_utility::update();
+    time_t now = util::time::time_utility::get_now();
+
+    util::time::time_utility::set_global_now_offset(std::chrono::duration_cast<std::chrono::system_clock::duration>(std::chrono::seconds(5)));
+    CASE_EXPECT_EQ(now + 5, util::time::time_utility::get_now());
+    CASE_EXPECT_EQ(std::chrono::duration_cast<std::chrono::system_clock::duration>(std::chrono::seconds(5)), util::time::time_utility::get_global_now_offset());
+    util::time::time_utility::reset_global_now_offset();
+    CASE_EXPECT_EQ(now, util::time::time_utility::get_now());
+}
+
 CASE_TEST(time_test, zone_offset) {
     util::time::time_utility::update();
     time_t offset = util::time::time_utility::get_sys_zone_offset() - 5 * util::time::time_utility::HOUR_SECONDS;
