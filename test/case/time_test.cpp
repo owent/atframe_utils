@@ -12,7 +12,7 @@ CASE_TEST(time_test, global_offset) {
 
     util::time::time_utility::set_global_now_offset(std::chrono::duration_cast<std::chrono::system_clock::duration>(std::chrono::seconds(5)));
     CASE_EXPECT_EQ(now + 5, util::time::time_utility::get_now());
-    CASE_EXPECT_EQ(std::chrono::duration_cast<std::chrono::system_clock::duration>(std::chrono::seconds(5)), util::time::time_utility::get_global_now_offset());
+    CASE_EXPECT_EQ(std::chrono::duration_cast<std::chrono::system_clock::duration>(std::chrono::seconds(5)).count(), util::time::time_utility::get_global_now_offset().count());
     util::time::time_utility::reset_global_now_offset();
     CASE_EXPECT_EQ(now, util::time::time_utility::get_now());
 }
