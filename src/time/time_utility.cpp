@@ -7,6 +7,7 @@ namespace util {
         time_t time_utility::now_unix_;
         time_t time_utility::now_usec_ = 0;
         time_t time_utility::custom_zone_offset_ = -time_utility::YEAR_SECONDS;
+        std::chrono::system_clock::duration time_utility::global_now_offset_ = std::chrono::system_clock::duration::zero();
 
         time_utility::time_utility() {}
         time_utility::~time_utility() {}
@@ -14,9 +15,9 @@ namespace util {
         void time_utility::update(raw_time_t *t) {
             // raw_time_t prev_tp = now_;
             if (NULL != t) {
-                now_ = *t;
+                now_ = *t + global_now_offset_;
             } else {
-                now_ = std::chrono::system_clock::now();
+                now_ = std::chrono::system_clock::now() + global_now_offset_;
             }
 
             // reset unix timestamp
@@ -39,6 +40,22 @@ namespace util {
         time_t time_utility::get_now_usec() { return now_usec_; }
 
         time_t time_utility::get_now() { return now_unix_; }
+
+        void time_utility::set_global_now_offset(const std::chrono::system_clock::duration& offset) {
+            raw_time_t old_now = now() - global_now_offset_;
+            global_now_offset_ = offset;
+            update(&old_now);
+        }
+
+        std::chrono::system_clock::duration time_utility::get_global_now_offset() {
+            return global_now_offset_;
+        }
+
+        void time_utility::reset_global_now_offset() {
+            raw_time_t old_now = now() - global_now_offset_;
+            global_now_offset_ = std::chrono::system_clock::duration::zero();
+            update(&old_now);
+        }
 
         // ====================== 后面的函数都和时区相关 ======================
         time_t time_utility::get_sys_zone_offset() {
@@ -69,7 +86,7 @@ namespace util {
 
         time_t time_utility::get_today_now_offset() {
             time_t curr_time = get_now();
-            curr_time -= get_sys_zone_offset();
+            curr_time -= get_zone_offset();
 
             // 仅考虑时区, 不是标准意义上的当天时间，忽略记闰秒之类的偏移(偏移量很少，忽略不计吧)
             if (curr_time < 0) {
@@ -115,13 +132,46 @@ namespace util {
             return checked + offset + get_zone_offset();
         }
 
+        time_utility::raw_time_desc_t time_utility::get_local_tm(time_t t) {
+            return get_gmt_tm(t - get_zone_offset());
+        }
+
+        time_utility::raw_time_desc_t time_utility::get_gmt_tm(time_t t) {
+            struct tm ttm;
+            UTIL_STRFUNC_GMTIME_S(&t, &ttm);
+            return ttm;
+        }
+
+        bool time_utility::is_leap_year(int year) {
+            if (year & 0x03) {
+                return false;
+            }
+
+            return year % 100 != 0 || (year % 400 == 0 && year % 3200 != 0) || year % 172800 == 0;
+        }
+
+        bool time_utility::is_same_year(time_t left, time_t right) {
+            std::tm left_tm = get_local_tm(left);
+            std::tm right_tm = get_local_tm(right);
+
+            return left_tm.tm_year == right_tm.tm_year;
+        }
+
+        int time_utility::get_year_day(time_t t) {
+            std::tm ttm = get_local_tm(t);
+            return ttm.tm_yday;
+        }
+
         bool time_utility::is_same_month(time_t left, time_t right) {
-            std::tm left_tm;
-            std::tm right_tm;
-            UTIL_STRFUNC_LOCALTIME_S(&left, &left_tm);
-            UTIL_STRFUNC_LOCALTIME_S(&right, &right_tm);
+            std::tm left_tm = get_local_tm(left);
+            std::tm right_tm = get_local_tm(right);
 
             return left_tm.tm_year == right_tm.tm_year && left_tm.tm_mon == right_tm.tm_mon;
+        }
+
+        int time_utility::get_month_day(time_t t) {
+            std::tm ttm = get_local_tm(t);
+            return ttm.tm_mday;
         }
 
         bool time_utility::is_same_week(time_t left, time_t right, time_t week_first) {

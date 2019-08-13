@@ -35,7 +35,7 @@
 
 #else
 #define UTIL_STRFUNC_LOCALTIME_S(time_t_ptr, tm_ptr) (*(tm_ptr) = *localtime(time_t_ptr))
-#define UTIL_STRFUNC_GMTIME_S(time_t_ptr, tm_ptr) (*(tm_ptr) = gmtime(time_t_ptr))
+#define UTIL_STRFUNC_GMTIME_S(time_t_ptr, tm_ptr) (*(tm_ptr) = *gmtime(time_t_ptr))
 
 #endif
 
@@ -52,6 +52,7 @@ namespace util {
             };
 
             typedef std::chrono::system_clock::time_point raw_time_t;
+            typedef struct tm raw_time_desc_t;
 
         private:
             time_utility();
@@ -84,6 +85,25 @@ namespace util {
              * @return 当前时间的微妙部分
              */
             static time_t get_now_usec();
+
+            /**
+             * @brief 设置时间的全局偏移（Debug功能）
+             * @note 影响now()、get_now()和get_now_usec()的返回结果，用于模拟时间
+             */
+            static void set_global_now_offset(const std::chrono::system_clock::duration& offset);
+
+            /**
+             * @brief 设置时间的全局偏移（Debug功能）
+             * @note 影响now()、get_now()和get_now_usec()的返回结果，用于模拟时间
+             * @return 当前的时间全局偏移
+             */
+            static std::chrono::system_clock::duration get_global_now_offset();
+
+            /**
+             * @brief 重置时间的全局偏移（Debug功能）
+             * @note 影响now()、get_now()和get_now_usec()的返回结果，还原成真实时间
+             */
+            static void reset_global_now_offset();
 
             // ====================== 后面的函数都和时区相关 ======================
             /**
@@ -165,10 +185,51 @@ namespace util {
             static time_t get_any_day_offset(time_t checked, time_t offset = 0);
 
             /**
+             * @brief 获取当前时区指定时间的详细信息
+             * @param t (必须大于0)
+             * @return 时间描述
+             */
+            static raw_time_desc_t get_local_tm(time_t t);
+
+            /**
+             * @brief 获取时指定太平洋时间的详细信息
+             * @note 建议使用这个接口来代替gmtime_s/gmtime_s，这样里面会适配跨平台的调用且不会报warning
+             * @param t (必须大于0)
+             * @return 时间描述
+             */
+            static raw_time_desc_t get_gmt_tm(time_t t);
+
+            /**
+             * @brief 判定当前年是否是闰年
+             * @return 闰年返回 true
+             */
+            static bool is_leap_year(int year);
+
+            /**
+             * @brief 判定当前时区时间是否是同一个年
+             * @return 同一月返回 true
+             */
+            static bool is_same_year(time_t left, time_t right);
+
+            /**
+             * @brief 判定当前时区时间是本年第几天
+             * @param t (必须大于0)
+             * @return 本年第几天，0-365，和struct tm的tm_yday保持一致
+             */
+            static int get_year_day(time_t t);
+
+            /**
              * @brief 判定当前时区时间是否是同一个月
              * @return 同一月返回 true
              */
             static bool is_same_month(time_t left, time_t right);
+
+            /**
+             * @brief 判定当前时区时间是本月第几天
+             * @param t (必须大于0)
+             * @return 本月第几天，1-31，和struct tm的tm_mday保持一致
+             */
+            static int get_month_day(time_t t);
 
             /**
              * @brief [快速非严格]判定当前时区时间是否是同一个周
@@ -210,6 +271,9 @@ namespace util {
 
             // 时区时间的人为偏移
             static time_t custom_zone_offset_;
+
+            // 时间的全局偏移（Debug功能）
+            static std::chrono::system_clock::duration global_now_offset_;
         };
     }
 }

@@ -169,6 +169,8 @@ CASE_TEST(lock_test, spin_rw_lock_mt) {
         if (write_lock_thd[i]->joinable()) {
             write_lock_thd[i]->join();
         }
+
+        delete write_lock_thd[i];
     }
 
 

@@ -6,6 +6,17 @@
 #include "time/time_utility.h"
 #include <time/jiffies_timer.h>
 
+CASE_TEST(time_test, global_offset) {
+    util::time::time_utility::update();
+    time_t now = util::time::time_utility::get_now();
+
+    util::time::time_utility::set_global_now_offset(std::chrono::duration_cast<std::chrono::system_clock::duration>(std::chrono::seconds(5)));
+    CASE_EXPECT_EQ(now + 5, util::time::time_utility::get_now());
+    CASE_EXPECT_EQ(std::chrono::duration_cast<std::chrono::system_clock::duration>(std::chrono::seconds(5)).count(), util::time::time_utility::get_global_now_offset().count());
+    util::time::time_utility::reset_global_now_offset();
+    CASE_EXPECT_EQ(now, util::time::time_utility::get_now());
+}
+
 CASE_TEST(time_test, zone_offset) {
     util::time::time_utility::update();
     time_t offset = util::time::time_utility::get_sys_zone_offset() - 5 * util::time::time_utility::HOUR_SECONDS;
@@ -148,8 +159,147 @@ CASE_TEST(time_test, get_week_day) {
     CASE_EXPECT_EQ(util::time::time_utility::get_week_day(lt), util::time::time_utility::get_week_day(rt));
 }
 
-CASE_TEST(time_test, is_same_month) {
+CASE_TEST(time_test, is_same_year) {
     // nothing todo use libc now
+    struct tm tobj;
+    time_t lt, rt, tnow;
+
+    util::time::time_utility::update();
+    tnow = util::time::time_utility::get_now();
+    UTIL_STRFUNC_LOCALTIME_S(&tnow, &tobj);
+
+    tobj.tm_mday = 1;
+    tobj.tm_mon = 0;
+    tobj.tm_isdst = 0;
+    tobj.tm_hour = 0;
+    tobj.tm_min = 0;
+    tobj.tm_sec = 1;
+    lt = mktime(&tobj);
+
+    tobj.tm_yday = 364;
+    // 闰年多一天
+    if (::util::time::time_utility::is_leap_year(tobj.tm_year + 1900)) {
+        ++tobj.tm_yday;
+    }
+    tobj.tm_mon = 11;
+    tobj.tm_mday = 31;
+    tobj.tm_isdst = 0;
+    tobj.tm_hour = 23;
+    tobj.tm_min = 59;
+    tobj.tm_sec = 58;
+    rt = mktime(&tobj);
+
+    CASE_EXPECT_TRUE(::util::time::time_utility::is_same_year(lt, rt));
+    CASE_EXPECT_FALSE(::util::time::time_utility::is_same_year(lt, rt + 3));
+}
+
+CASE_TEST(time_test, get_year_day) {
+    struct tm tobj;
+    time_t lt, rt, tnow;
+
+    util::time::time_utility::update();
+    tnow = util::time::time_utility::get_now();
+    UTIL_STRFUNC_LOCALTIME_S(&tnow, &tobj);
+
+    tobj.tm_yday = 0;
+    tobj.tm_mon = 0;
+    tobj.tm_mday = 1;
+    tobj.tm_isdst = 0;
+    tobj.tm_hour = 0;
+    tobj.tm_min = 0;
+    tobj.tm_sec = 1;
+    lt = mktime(&tobj);
+
+    tobj.tm_yday = 364;
+    // 闰年多一天
+    if (::util::time::time_utility::is_leap_year(tobj.tm_year + 1900)) {
+        ++tobj.tm_yday;
+    }
+    tobj.tm_mon = 11;
+    tobj.tm_mday = 31;
+    tobj.tm_isdst = 0;
+    tobj.tm_hour = 23;
+    tobj.tm_min = 59;
+    tobj.tm_sec = 58;
+    rt = mktime(&tobj);
+
+    CASE_EXPECT_EQ(::util::time::time_utility::get_year_day(lt), 0);
+    CASE_EXPECT_EQ(::util::time::time_utility::get_year_day(rt), tobj.tm_yday);
+    CASE_EXPECT_EQ(::util::time::time_utility::get_year_day(rt + 3), 0);
+}
+
+CASE_TEST(time_test, is_same_month) {
+    struct tm tobj;
+    time_t lt, rt, tnow;
+
+    util::time::time_utility::update();
+    tnow = util::time::time_utility::get_now();
+    UTIL_STRFUNC_LOCALTIME_S(&tnow, &tobj);
+
+    tobj.tm_mon = 7;
+    tobj.tm_mday = 1;
+    tobj.tm_isdst = 0;
+    tobj.tm_hour = 0;
+    tobj.tm_min = 0;
+    tobj.tm_sec = 1;
+    lt = mktime(&tobj);
+
+    tobj.tm_mday = 31;
+    tobj.tm_isdst = 0;
+    tobj.tm_hour = 23;
+    tobj.tm_min = 59;
+    tobj.tm_sec = 58;
+    rt = mktime(&tobj);
+
+    // nothing todo use libc now
+    CASE_EXPECT_TRUE(::util::time::time_utility::is_same_month(lt, rt));
+    CASE_EXPECT_FALSE(::util::time::time_utility::is_same_month(lt, rt + 3));
+}
+
+CASE_TEST(time_test, get_month_day) {
+    struct tm tobj;
+    time_t lt, rt, tnow;
+
+    util::time::time_utility::update();
+    tnow = util::time::time_utility::get_now();
+    UTIL_STRFUNC_LOCALTIME_S(&tnow, &tobj);
+
+    tobj.tm_mday = 1;
+    tobj.tm_isdst = 0;
+    tobj.tm_hour = 0;
+    tobj.tm_min = 0;
+    tobj.tm_sec = 1;
+    lt = mktime(&tobj);
+
+    tobj.tm_isdst = 0;
+    tobj.tm_hour = 23;
+    tobj.tm_min = 59;
+    tobj.tm_sec = 58;
+    rt = mktime(&tobj);
+
+    CASE_EXPECT_EQ(::util::time::time_utility::get_month_day(lt), ::util::time::time_utility::get_month_day(rt));
+    CASE_EXPECT_NE(::util::time::time_utility::get_month_day(lt), ::util::time::time_utility::get_month_day(rt + 3));
+    CASE_EXPECT_EQ(1, ::util::time::time_utility::get_month_day(rt));
+    CASE_EXPECT_EQ(2, ::util::time::time_utility::get_month_day(rt + 3));
+
+    tobj.tm_mon = 7;
+    tobj.tm_mday = 31;
+    tobj.tm_isdst = 0;
+    tobj.tm_hour = 0;
+    tobj.tm_min = 0;
+    tobj.tm_sec = 1;
+    lt = mktime(&tobj);
+
+    tobj.tm_isdst = 0;
+    tobj.tm_hour = 23;
+    tobj.tm_min = 59;
+    tobj.tm_sec = 58;
+    rt = mktime(&tobj);
+
+    CASE_EXPECT_EQ(::util::time::time_utility::get_month_day(lt), ::util::time::time_utility::get_month_day(rt));
+    CASE_EXPECT_NE(::util::time::time_utility::get_month_day(lt), ::util::time::time_utility::get_month_day(rt + 3));
+    CASE_EXPECT_EQ(31, ::util::time::time_utility::get_month_day(rt));
+    CASE_EXPECT_EQ(1, ::util::time::time_utility::get_month_day(rt + 3));
 }
 
 typedef util::time::jiffies_timer<6, 3, 4> short_timer_t;

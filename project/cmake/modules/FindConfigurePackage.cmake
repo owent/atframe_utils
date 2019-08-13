@@ -75,36 +75,9 @@ function(FindConfigurePackageDownloadFile from to)
 endfunction()
 
 function(FindConfigurePackageUnzip src work_dir)
-    find_program(ZIP_EXECUTABLE 7z PATHS "$ENV{ProgramFiles}/7-Zip")
-    if(ZIP_EXECUTABLE)
-        execute_process(COMMAND ${ZIP_EXECUTABLE}
-            x -r -y ${src}
-            WORKING_DIRECTORY ${work_dir}
-        )
-    endif()
-
-    if(NOT ZIP_EXECUTABLE)
-        find_program(ZIP_EXECUTABLE wzzip PATHS "$ENV{ProgramFiles}/WinZip")
-        if(ZIP_EXECUTABLE)
-            execute_process(COMMAND ${ZIP_EXECUTABLE} -f "${src}"
-                WORKING_DIRECTORY ${work_dir}
-            )
-        endif()
-    endif()
-
-    if(NOT ZIP_EXECUTABLE)
-        find_package(Cygwin)
-        find_program(ZIP_EXECUTABLE unzip PATHS "${CYGWIN_INSTALL_PATH}/bin")
-        if(ZIP_EXECUTABLE)
-            execute_process(COMMAND ${ZIP_EXECUTABLE} -o ${src}
-                WORKING_DIRECTORY ${work_dir}
-            )
-        endif()
-    endif()
-
-    if(NOT ZIP_EXECUTABLE)
-        message(STATUS "unzip tools not found, skip ${src}")
-    endif()
+    execute_process(COMMAND ${CMAKE_COMMAND} -E tar xvf ${src}
+        WORKING_DIRECTORY ${work_dir}
+    )
 endfunction()
 
 function(FindConfigurePackageRemoveEmptyDir DIR)
@@ -128,7 +101,7 @@ macro (FindConfigurePackage)
     string(TOUPPER "${FindConfigurePackage_PACKAGE}_FOUND" FIND_CONFIGURE_PACKAGE_UPPER_NAME)
 
     # step 1. find using standard method
-    find_package(${FindConfigurePackage_PACKAGE})
+    find_package(${FindConfigurePackage_PACKAGE} QUIET)
     if(NOT ${FindConfigurePackage_PACKAGE}_FOUND AND NOT ${FIND_CONFIGURE_PACKAGE_UPPER_NAME})
         if(NOT FindConfigurePackage_PREFIX_DIRECTORY)
             # prefix
@@ -138,7 +111,7 @@ macro (FindConfigurePackage)
         list(APPEND CMAKE_FIND_ROOT_PATH ${FindConfigurePackage_PREFIX_DIRECTORY})
 
         # step 2. find in prefix
-        find_package(${FindConfigurePackage_PACKAGE})
+        find_package(${FindConfigurePackage_PACKAGE} QUIET)
 
         # step 3. build
         if(NOT ${FindConfigurePackage_PACKAGE}_FOUND AND NOT ${FIND_CONFIGURE_PACKAGE_UPPER_NAME})
@@ -158,27 +131,9 @@ macro (FindConfigurePackage)
                     FindConfigurePackageDownloadFile("${FindConfigurePackage_TAR_URL}" "${FindConfigurePackage_WORKING_DIRECTORY}/${DOWNLOAD_FILENAME}")
                 endif()
 
-                find_program(TAR_EXECUTABLE tar PATHS "${CYGWIN_INSTALL_PATH}/bin")
-                if(TAR_EXECUTABLE AND NOT EXISTS ${FindConfigurePackage_DOWNLOAD_SOURCE_DIR})
-                    file(TO_NATIVE_PATH "${FindConfigurePackage_WORKING_DIRECTORY}/${DOWNLOAD_FILENAME}" DOWNLOAD_NATIVE_FILENAME)
-                    if(APPLE)
-                        execute_process(COMMAND ${TAR_EXECUTABLE} -xvf ${DOWNLOAD_NATIVE_FILENAME}
-                            WORKING_DIRECTORY ${FindConfigurePackage_WORKING_DIRECTORY}
-                        )
-                    elseif(MINGW)
-                        execute_process(COMMAND ${TAR_EXECUTABLE} -axvf ${DOWNLOAD_FILENAME}
-                            WORKING_DIRECTORY ${FindConfigurePackage_WORKING_DIRECTORY}
-                        )
-                    else()
-                        execute_process(COMMAND ${TAR_EXECUTABLE} -axvf ${DOWNLOAD_NATIVE_FILENAME}
-                            WORKING_DIRECTORY ${FindConfigurePackage_WORKING_DIRECTORY}
-                        )
-                    endif()
-                endif()
-
-                if(NOT TAR_EXECUTABLE)
-                    message(STATUS "tar not found skip ${FindConfigurePackage_TAR_URL}")
-                endif()
+                execute_process(COMMAND ${CMAKE_COMMAND} -E tar xvf "${FindConfigurePackage_WORKING_DIRECTORY}/${DOWNLOAD_FILENAME}"
+                    WORKING_DIRECTORY ${FindConfigurePackage_WORKING_DIRECTORY}
+                )
 
                 if (EXISTS ${FindConfigurePackage_DOWNLOAD_SOURCE_DIR})
                     set (FindConfigurePackage_UNPACK_SOURCE YES)

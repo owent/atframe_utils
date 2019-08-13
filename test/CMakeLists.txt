@@ -30,6 +30,7 @@ target_link_libraries(atframe_utils_unit_test
     ${PROJECT_LIB_LINK}
     ${PROJECT_TEST_LIB_LINK}
     ${3RD_PARTY_LIBUV_LINK_NAME}
+    ${ATFRAME_UTILS_BIN_CRYPT_LINK_NAME}
     ${PROJECT_DEP_LINK_NAMES}
     ${COMPILER_OPTION_EXTERN_CXX_LIBS}
 )

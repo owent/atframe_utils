@@ -110,11 +110,18 @@ elseif (NOT CRYPTO_DISABLED)
     endif()
 endif()
 
+if (OPENSSL_FOUND)
+    list(APPEND ATFRAME_UTILS_BIN_CRYPT_LINK_NAME ${OPENSSL_CRYPTO_LIBRARY})
+elseif (MBEDTLS_FOUND)
+    list(APPEND ATFRAME_UTILS_BIN_CRYPT_LINK_NAME ${MbedTLS_CRYPTO_LIBRARIES})
+endif()
+
 if (NOT CRYPTO_DISABLED)
     find_package(Libsodium)
     if(LIBSODIUM_FOUND)
         set(CRYPTO_USE_LIBSODIUM 1)
         include_directories(${Libsodium_INCLUDE_DIRS})
+        list(APPEND ATFRAME_UTILS_BIN_CRYPT_LINK_NAME ${Libsodium_LIBRARIES})
     endif()
 endif()
 
