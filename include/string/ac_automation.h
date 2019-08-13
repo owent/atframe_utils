@@ -297,7 +297,7 @@ namespace util {
 
 
             private:
-                actrie(storage_t &, uint32_t failed_idx = 0) : failed_(failed_idx) {}
+                actrie(storage_t &, uint32_t failed_idx = 0) : idx_(0), failed_(failed_idx) {}
 
                 struct protect_constructor_helper {};
 

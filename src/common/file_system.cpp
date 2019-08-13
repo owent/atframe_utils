@@ -183,11 +183,11 @@ namespace util {
         }
 
         std::string now_path;
-        // 留一个\0和一个分隔符位
-        now_path.reserve(strlen(dir_path) + 4);
-
         // 初始路径在Unix系统下会被转为相对路径
         if (NULL != dir_path && ('/' == *dir_path || '\\' == *dir_path)) {
+            // 留一个\0和一个分隔符位
+            now_path.reserve(strlen(dir_path) + 4);
+            
             now_path = *dir_path;
 
             // NFS 支持
