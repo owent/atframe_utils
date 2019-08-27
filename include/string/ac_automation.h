@@ -302,7 +302,7 @@ namespace util {
                 struct protect_constructor_helper {};
 
             public:
-                actrie(protect_constructor_helper, storage_t &, uint32_t failed_idx = 0) : failed_(failed_idx) {}
+                actrie(protect_constructor_helper, storage_t &, uint32_t failed_idx = 0) : idx_(0), failed_(failed_idx) {}
 
                 inline uint32_t get_idx() const { return idx_; }
 
