@@ -258,14 +258,15 @@ namespace util {
                 return true;
             }
 
-            bool erase_check_list(check_list_t::const_iterator iter) {
-                if (iter == checked_list_.end()) {
-                    return false;
-                }
-                checked_list_.erase(iter);
-                item_count_.dec();
-                return true;
-            }
+            // GCC 4.4 don't support erase(const_iterator)
+            // bool erase_check_list(check_list_t::const_iterator iter) {
+            //     if (iter == checked_list_.end()) {
+            //         return false;
+            //     }
+            //     checked_list_.erase(iter);
+            //     item_count_.dec();
+            //     return true;
+            // }
 
             check_list_t::iterator end_check_list() { return checked_list_.end(); }
 
