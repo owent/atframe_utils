@@ -43,9 +43,9 @@ namespace util {
                 }
             };
 
-            utf8_char_t(const char& c) {
+            utf8_char_t(const char &c) {
                 const char *str = &c;
-                size_t len = length(str);
+                size_t      len = length(str);
                 for (size_t i = 0; i < len; ++i) {
                     data[i] = str[i];
                 }
@@ -55,7 +55,10 @@ namespace util {
 
             static inline size_t length(const char *s) {
                 size_t ret = 1;
-                char c = s? (*s): 0;
+                char   c   = 0;
+                if (NULL != s) {
+                    c = *s;
+                }
 
                 if (!(c & 0x80)) {
                     return ret;
@@ -132,22 +135,22 @@ namespace util {
 
             template <typename CH, typename CHT>
             friend std::basic_ostream<CH, CHT> &operator<<(std::basic_ostream<CH, CHT> &os, const utf8_char_t &self) {
-                os.write((CH*)self.data, self.length());
+                os.write((CH *)self.data, self.length());
                 return os;
             }
 
             template <typename CH, typename CHT>
             friend std::basic_istream<CH, CHT> &operator>>(std::basic_istream<CH, CHT> &is, utf8_char_t &self) {
                 self.data[0] = 0;
-                is.read((CH*)&self.data[0], 1);
+                is.read((CH *)&self.data[0], 1);
                 size_t len = self.length();
                 if (len > 1) {
-                    is.read((CH*)&self.data[1], len - 1);
+                    is.read((CH *)&self.data[1], len - 1);
                 }
                 return is;
             }
         };
-    }
-}
+    } // namespace string
+} // namespace util
 
 #endif

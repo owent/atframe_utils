@@ -120,11 +120,11 @@ CASE_TEST(lru_map_test, emplace) {
     vec.push_back(1002);
     vec.push_back(1003);
 
-    insert_pair_t res = lru.insert(std::move(lru_t::value_type(1, std::make_shared<std::vector<long> >(std::move(vec)))));
+    insert_pair_t res = lru.insert(lru_t::value_type(1, std::make_shared<std::vector<long> >(std::move(vec))));
     CASE_EXPECT_TRUE(res.second);
 
     vec.push_back(1004);
-    res = lru.insert(std::move(lru_t::value_type(1, std::make_shared<std::vector<long> >(vec))));
+    res = lru.insert(lru_t::value_type(1, std::make_shared<std::vector<long> >(vec)));
     CASE_EXPECT_FALSE(res.second);
 
     CASE_EXPECT_EQ(3, lru.front().second->size());

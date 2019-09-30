@@ -32,9 +32,17 @@
      (defined(__GNUC__) && defined(__GXX_EXPERIMENTAL_CXX0X__)))
 #include <unordered_map>
 #define UTIL_MEMPOOL_LRU_MAP_IS_HASHMAP 1
+
+#if UTIL_CONFIG_COMPILER_IS_GNU && (__GNUC__ * 100 + __GNUC_MINOR__) <= 407
+#define UTIL_MEMPOOL_LRU_MAP_DISABLE_RESERVE 1
+#else
+#define UTIL_MEMPOOL_LRU_MAP_DISABLE_RESERVE 0
+#endif
+
 #else
 #include <map>
 #define UTIL_MEMPOOL_LRU_MAP_IS_HASHMAP 0
+#define UTIL_MEMPOOL_LRU_MAP_DISABLE_RESERVE 0
 #endif
 
 namespace util {
@@ -120,7 +128,14 @@ namespace util {
 
             inline bool      empty() const { return kv_data_.empty(); }
             inline size_type size() const { return kv_data_.size(); }
-            inline void      reserve(size_type s) { kv_data_.reserve(s); }
+
+#if UTIL_MEMPOOL_LRU_MAP_DISABLE_RESERVE
+            inline void reserve(size_type) { /* do nothing, some old compiler don't support this. */
+            }
+#else
+
+            inline void reserve(size_type s) { kv_data_.reserve(s); }
+#endif
 
             void swap(self_type &other) {
                 other.visit_history_.swap(visit_history_);
