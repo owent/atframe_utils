@@ -46,7 +46,7 @@ CASE_TEST(lru_object_pool_test, basic) {
         CASE_EXPECT_EQ(0, g_stat_lru[3]);
 
         CASE_EXPECT_EQ(3, mgr->item_count().get());
-        CASE_EXPECT_EQ(3, mgr->list_count().get());
+        CASE_EXPECT_EQ(lru.size(), mgr->item_count().get());
 
         CASE_EXPECT_EQ(NULL, lru.pull(789));
         CASE_EXPECT_EQ(check_ptr, lru.pull(456));
@@ -79,7 +79,6 @@ CASE_TEST(lru_object_pool_test, inner_gc_proc) {
     test_lru_pool_t                                                           lru;
     lru.init(mgr);
     mgr->set_proc_item_count(16);
-    mgr->set_proc_list_count(16);
 
     mgr->set_item_max_bound(32);
 
@@ -105,27 +104,32 @@ CASE_TEST(lru_object_pool_test, inner_gc_proc) {
 
     CASE_EXPECT_TRUE(lru.push(123, new test_lru_data()));
     CASE_EXPECT_EQ(1, g_stat_lru[3]);
+    CASE_EXPECT_EQ(32, mgr->item_count().get());
+    CASE_EXPECT_EQ(lru.size(), mgr->item_count().get());
+
     mgr->set_item_max_bound(8);
+
     CASE_EXPECT_TRUE(lru.push(123, new test_lru_data()));
-    CASE_EXPECT_EQ(8, g_stat_lru[3]);
-    CASE_EXPECT_EQ(41, mgr->list_count().get());
-    CASE_EXPECT_EQ(26, mgr->item_count().get());
+    CASE_EXPECT_EQ(17, g_stat_lru[3]);
+    CASE_EXPECT_EQ(17, mgr->item_count().get());
+    CASE_EXPECT_EQ(lru.size(), mgr->item_count().get());
 
-    CASE_EXPECT_EQ(1, mgr->proc(1));
-    CASE_EXPECT_EQ(25, mgr->list_count().get());
-    CASE_EXPECT_EQ(25, mgr->item_count().get());
+    mgr->set_proc_item_count(4);
+    CASE_EXPECT_EQ(4, mgr->proc(1));
+    CASE_EXPECT_EQ(13, mgr->item_count().get());
+    CASE_EXPECT_EQ(lru.size(), mgr->item_count().get());
 
-    CASE_EXPECT_EQ(16, mgr->proc(2));
-    CASE_EXPECT_EQ(9, mgr->list_count().get());
+    CASE_EXPECT_EQ(4, mgr->proc(2));
     CASE_EXPECT_EQ(9, mgr->item_count().get());
+    CASE_EXPECT_EQ(lru.size(), mgr->item_count().get());
 
     CASE_EXPECT_EQ(1, mgr->proc(3));
-    CASE_EXPECT_EQ(8, mgr->list_count().get());
     CASE_EXPECT_EQ(8, mgr->item_count().get());
+    CASE_EXPECT_EQ(lru.size(), mgr->item_count().get());
 
     CASE_EXPECT_EQ(0, mgr->proc(4));
-    CASE_EXPECT_EQ(8, mgr->list_count().get());
     CASE_EXPECT_EQ(8, mgr->item_count().get());
+    CASE_EXPECT_EQ(lru.size(), mgr->item_count().get());
 }
 
 
@@ -135,7 +139,6 @@ CASE_TEST(lru_object_pool_test, timeout) {
     test_lru_pool_t                                                           lru;
     lru.init(mgr);
     mgr->set_proc_item_count(16);
-    mgr->set_proc_list_count(16);
 
     mgr->set_item_max_bound(32);
     mgr->set_list_tick_timeout(60);
@@ -164,24 +167,24 @@ CASE_TEST(lru_object_pool_test, timeout) {
     CASE_EXPECT_EQ(0, g_stat_lru[1]);
     CASE_EXPECT_EQ(0, g_stat_lru[2]);
     CASE_EXPECT_EQ(0, g_stat_lru[3]);
-    CASE_EXPECT_EQ(32, mgr->list_count().get());
     CASE_EXPECT_EQ(32, mgr->item_count().get());
+    CASE_EXPECT_EQ(lru.size(), mgr->item_count().get());
 
     mgr->proc(62);
     CASE_EXPECT_EQ(32, g_stat_lru[0]);
     CASE_EXPECT_EQ(0, g_stat_lru[1]);
     CASE_EXPECT_EQ(0, g_stat_lru[2]);
     CASE_EXPECT_EQ(16, g_stat_lru[3]);
-    CASE_EXPECT_EQ(16, mgr->list_count().get());
     CASE_EXPECT_EQ(16, mgr->item_count().get());
+    CASE_EXPECT_EQ(lru.size(), mgr->item_count().get());
 
     mgr->proc(62);
     CASE_EXPECT_EQ(32, g_stat_lru[0]);
     CASE_EXPECT_EQ(0, g_stat_lru[1]);
     CASE_EXPECT_EQ(0, g_stat_lru[2]);
     CASE_EXPECT_EQ(24, g_stat_lru[3]);
-    CASE_EXPECT_EQ(8, mgr->list_count().get());
     CASE_EXPECT_EQ(8, mgr->item_count().get());
+    CASE_EXPECT_EQ(lru.size(), mgr->item_count().get());
 }
 
 struct test_lru_action_donothing : public util::mempool::lru_default_action<test_lru_action_donothing> {
@@ -197,30 +200,21 @@ CASE_TEST(lru_object_pool_test, adjust_bound) {
     {
         util::mempool::lru_pool_manager::ptr_t mgr = util::mempool::lru_pool_manager::create();
         mgr->set_proc_item_count(16);
-        mgr->set_proc_list_count(16);
 
         mgr->set_item_max_bound(32);
         mgr->set_list_tick_timeout(60);
         mgr->set_item_adjust_min(mgr->get_item_max_bound() / 4);
-        mgr->set_list_adjust_min(mgr->get_list_bound() / 4);
         size_t imb = mgr->get_item_max_bound();
-        size_t lmb = mgr->get_list_bound();
 
         CASE_EXPECT_NE(imb, mgr->get_item_adjust_min());
-        CASE_EXPECT_NE(lmb, mgr->get_list_adjust_min());
 
         for (int i = 0; i < 1024; ++i) {
             mgr->gc();
         }
 
         CASE_EXPECT_NE(imb, mgr->get_item_max_bound());
-        CASE_EXPECT_NE(lmb, mgr->get_list_bound());
-
         CASE_EXPECT_EQ(mgr->get_item_max_bound(), mgr->get_item_adjust_min() + 1);
-        CASE_EXPECT_EQ(mgr->get_list_bound(), mgr->get_list_adjust_min());
-
         CASE_EXPECT_NE(0, mgr->get_item_max_bound());
-        CASE_EXPECT_NE(0, mgr->get_list_bound());
     }
 
     // push and make cache larger
@@ -232,8 +226,6 @@ CASE_TEST(lru_object_pool_test, adjust_bound) {
 
         mgr->set_item_max_bound(32);
         mgr->set_item_adjust_max(64);
-        mgr->set_list_bound(64);
-        mgr->set_list_adjust_max(128);
 
         for (int i = 0; i < 128; ++i) {
             lru.push(0, &mgr);
@@ -241,13 +233,13 @@ CASE_TEST(lru_object_pool_test, adjust_bound) {
 
         CASE_EXPECT_EQ(64, mgr->get_item_max_bound());
 
-        mgr->set_item_max_bound(256);
-        mgr->set_item_adjust_max(256);
+        mgr->set_item_max_bound(96);
+        mgr->set_item_adjust_max(128);
         for (int i = 0; i < 128; ++i) {
             lru.push(0, &mgr);
         }
-        CASE_EXPECT_EQ(128, mgr->get_list_bound());
         CASE_EXPECT_EQ(128, mgr->item_count().get());
-        CASE_EXPECT_EQ(128, mgr->list_count().get());
+
+        CASE_EXPECT_EQ(lru.size(), mgr->item_count().get());
     }
 }
