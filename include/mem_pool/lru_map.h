@@ -49,10 +49,11 @@ namespace util {
     namespace mempool {
         template <class TKEY, class TVALUE>
         struct lru_map_type_traits {
-            typedef TKEY                                            key_type;
-            typedef TVALUE                                          mapped_type;
-            typedef std::pair<const TKEY, std::shared_ptr<TVALUE> > value_type;
-            typedef size_t                                          size_type;
+            typedef TKEY                              key_type;
+            typedef TVALUE                            mapped_type;
+            typedef std::shared_ptr<TVALUE>           store_type;
+            typedef std::pair<const TKEY, store_type> value_type;
+            typedef size_t                            size_type;
 
             typedef std::list<value_type>              list_type;
             typedef typename list_type::iterator       iterator;
@@ -72,6 +73,7 @@ namespace util {
             typedef typename lru_map_type_traits<TKEY, TVALUE>::mapped_type mapped_type;
             typedef typename lru_map_type_traits<TKEY, TVALUE>::value_type  value_type;
             typedef typename lru_map_type_traits<TKEY, TVALUE>::size_type   size_type;
+            typedef typename lru_map_type_traits<TKEY, TVALUE>::store_type  store_type;
             typedef TAlloc                                                  allocator_type;
             typedef value_type &                                            reference;
             typedef const value_type &                                      const_reference;
