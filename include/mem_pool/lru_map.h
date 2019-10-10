@@ -149,7 +149,33 @@ namespace util {
                 visit_history_.clear();
             }
 
-            std::pair<iterator, bool> insert(value_type &value) {
+            template <class TPARAMKEY, class TPARAMVALUE>
+            std::pair<iterator, bool> insert_key_value(const TPARAMKEY &key, const TPARAMVALUE &copy_value) {
+                return insert_key_value(key, std::make_shared<mapped_type>(copy_value));
+            }
+
+            template <class TPARAMKEY, class TPARAMVALUE>
+            std::pair<iterator, bool> insert_key_value(const TPARAMKEY &key, const std::shared_ptr<TPARAMVALUE> &value) {
+                typename lru_key_value_map_type::iterator it = kv_data_.find(key);
+                if (it != kv_data_.end()) {
+                    return std::pair<iterator, bool>(visit_history_.end(), false);
+                }
+
+                typename lru_history_list_type::iterator res = visit_history_.insert(visit_history_.end(), value_type(key, value));
+                if (res == visit_history_.end()) {
+                    return std::pair<iterator, bool>(res, false);
+                }
+                kv_data_[key] = res;
+                return std::pair<iterator, bool>(res, true);
+            }
+
+            template <class TCKEY, class TCVALUE>
+            std::pair<iterator, bool> insert(const std::pair<TCKEY, TCVALUE> &value) {
+                return insert_key_value(value.first, value.second);
+            }
+
+#if UTIL_CONFIG_COMPILER_CXX_RVALUE_REFERENCES
+            std::pair<iterator, bool> insert(value_type &&value) {
                 key_type                                  key = value.first;
                 typename lru_key_value_map_type::iterator it  = kv_data_.find(key);
                 if (it != kv_data_.end()) {
@@ -164,46 +190,21 @@ namespace util {
                 return std::pair<iterator, bool>(res, true);
             }
 
-            std::pair<iterator, bool> insert(std::pair<TKEY, std::shared_ptr<TVALUE> > &value) {
-                key_type                                  key = value.first;
-                typename lru_key_value_map_type::iterator it  = kv_data_.find(key);
-                if (it != kv_data_.end()) {
-                    return std::pair<iterator, bool>(visit_history_.end(), false);
-                }
-
-                typename lru_history_list_type::iterator res =
-                    visit_history_.insert(visit_history_.end(), value_type(value.first, value.second));
-                if (res == visit_history_.end()) {
-                    return std::pair<iterator, bool>(res, false);
-                }
-                kv_data_[key] = res;
-                return std::pair<iterator, bool>(res, true);
+            template <class TPARAMKEY, class TPARAMVALUE>
+            std::pair<iterator, bool> insert_key_value(TPARAMKEY &&key, std::shared_ptr<TPARAMVALUE> &&value) {
+                return insert(value_type(std::forward<TPARAMKEY>(key), value));
             }
 
             template <class TPARAMKEY, class TPARAMVALUE>
-            std::pair<iterator, bool> insert_key_value(const TPARAMKEY &key, const TPARAMVALUE &copy_value) {
-                return insert(value_type(key, std::make_shared<mapped_type>(copy_value)));
+            std::pair<iterator, bool> insert_key_value(TPARAMKEY &&key, std::shared_ptr<TPARAMVALUE> &value) {
+                return insert(value_type(std::forward<TPARAMKEY>(key), value));
             }
 
-            template <class TPARAMKEY, class TPARAMVALUE>
-            std::pair<iterator, bool> insert_key_value(const TPARAMKEY &key, std::shared_ptr<TPARAMVALUE> &value) {
-                return insert(value_type(key, value));
-            }
-
-#if UTIL_CONFIG_COMPILER_CXX_RVALUE_REFERENCES
             template <class TPARAMKEY, class TPARAMVALUE>
             std::pair<iterator, bool> insert_key_value(TPARAMKEY &&key, TPARAMVALUE &&copy_value) {
                 return insert(
                     value_type(std::forward<TPARAMKEY>(key), std::make_shared<mapped_type>(std::forward<TPARAMVALUE>(copy_value))));
             }
-
-            template <class TPARAMKEY, class TPARAMVALUE>
-            std::pair<iterator, bool> insert_key_value(TPARAMKEY &&key, std::shared_ptr<TPARAMVALUE> &&value) {
-                return insert(value_type(std::forward<TPARAMKEY>(key), std::forward<TPARAMVALUE>(value)));
-            }
-
-            std::pair<iterator, bool> insert(value_type &&value) { return insert(value); }
-            std::pair<iterator, bool> insert(std::pair<TKEY, std::shared_ptr<TVALUE> > &&value) { return insert(value); }
 #endif
 
             template <class InputIt>

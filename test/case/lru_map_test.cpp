@@ -45,9 +45,10 @@ CASE_TEST(lru_map_test, basic_container) {
     // insert invalid
     res = lru.insert_key_value(1, 1001);
     CASE_EXPECT_FALSE(res.second);
-    res = lru.insert_key_value(2, 1002);
+    res = lru.insert_key_value(2, std::make_shared<long>(1002));
     CASE_EXPECT_FALSE(res.second);
-    res = lru.insert_key_value(3, 1003);
+    std::shared_ptr<long> value_1003 = std::make_shared<long>(1003);
+    res                              = lru.insert_key_value(3, value_1003);
     CASE_EXPECT_FALSE(res.second);
     res = lru.insert_key_value(4, 1004);
     CASE_EXPECT_FALSE(res.second);
