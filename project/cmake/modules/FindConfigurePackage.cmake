@@ -90,6 +90,25 @@ function(FindConfigurePackageRemoveEmptyDir DIR)
     endif()
 endfunction()
 
+if (CMAKE_VERSION VERSION_GREATER_EQUAL "3.12")
+    include(ProcessorCount)
+    ProcessorCount(CPU_CORE_NUM)
+    set(FindConfigurePackageCMakeBuildMultiJobs "--parallel" ${CPU_CORE_NUM} CACHE INTERNAL "Build options for multi-jobs")
+    unset(CPU_CORE_NUM)
+elseif ( (CMAKE_MAKE_PROGRAM STREQUAL "make") OR (CMAKE_MAKE_PROGRAM STREQUAL "gmake") OR (CMAKE_MAKE_PROGRAM STREQUAL "ninja") )
+    include(ProcessorCount)
+    ProcessorCount(CPU_CORE_NUM)
+    set(FindConfigurePackageCMakeBuildMultiJobs "--" "-j${CPU_CORE_NUM}" CACHE INTERNAL "Build options for multi-jobs")
+    unset(CPU_CORE_NUM)
+elseif ( CMAKE_MAKE_PROGRAM STREQUAL "xcodebuild" )
+    include(ProcessorCount)
+    ProcessorCount(CPU_CORE_NUM)
+    set(FindConfigurePackageCMakeBuildMultiJobs "--" "-jobs" ${CPU_CORE_NUM} CACHE INTERNAL "Build options for multi-jobs")
+    unset(CPU_CORE_NUM)
+elseif (CMAKE_VS_MSBUILD_COMMAND)
+    set(FindConfigurePackageCMakeBuildMultiJobs "--" "/m" CACHE INTERNAL "Build options for multi-jobs")
+endif()
+
 macro (FindConfigurePackage)
     include(CMakeParseArguments)
     set(optionArgs BUILD_WITH_CONFIGURE BUILD_WITH_CMAKE BUILD_WITH_SCONS BUILD_WITH_CUSTOM_COMMAND CMAKE_INHIRT_BUILD_ENV)
@@ -315,14 +334,6 @@ macro (FindConfigurePackage)
                     WORKING_DIRECTORY ${FindConfigurePackage_BUILD_DIRECTORY}
                 )
 
-                if (MSVC)
-                    set(FindConfigurePackage_BUILD_WITH_CMAKE_MULTI_CORE_BUILD_FLAG "--" "/m")
-                else ()
-                    include(ProcessorCount)
-                    ProcessorCount(CPU_CORE_NUM)
-                    set(FindConfigurePackage_BUILD_WITH_CMAKE_MULTI_CORE_BUILD_FLAG "--" "-j${CPU_CORE_NUM}")
-                endif ()
-
                 # cmake --build and install
                 if(MSVC)
                     if (NOT FindConfigurePackage_MSVC_CONFIGURE)
@@ -330,13 +341,13 @@ macro (FindConfigurePackage)
                     endif()
                     execute_process(
                         COMMAND ${CMAKE_COMMAND} --build . --target install --config ${FindConfigurePackage_MSVC_CONFIGURE}
-                            ${FindConfigurePackage_BUILD_WITH_CMAKE_MULTI_CORE_BUILD_FLAG}
+                            ${FindConfigurePackageCMakeBuildMultiJobs}
                         WORKING_DIRECTORY ${FindConfigurePackage_BUILD_DIRECTORY}
                     )
                 else()
                     execute_process(
                         COMMAND ${CMAKE_COMMAND} --build . --target install
-                            ${FindConfigurePackage_BUILD_WITH_CMAKE_MULTI_CORE_BUILD_FLAG}
+                            ${FindConfigurePackageCMakeBuildMultiJobs}
                         WORKING_DIRECTORY ${FindConfigurePackage_BUILD_DIRECTORY}
                     )
                 endif()
