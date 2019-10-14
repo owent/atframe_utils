@@ -17,6 +17,9 @@
  *                 empty定义改为const
  *                 尽早析构空list
  *
+ *     2019-09-30: 优化内部实现
+ *                 尽快清理无效的检查列表
+ *
  */
 
 #ifndef UTIL_MEMPOOL_LRUOBJECTPOOL_H
@@ -25,6 +28,7 @@
 #pragma once
 
 #include <algorithm>
+#include <assert.h>
 #include <cstddef>
 #include <ctime>
 #include <limits>
@@ -59,10 +63,9 @@ namespace util {
         public:
             class list_type_base {
             public:
-                virtual uint64_t tail_id() const = 0;
-                virtual size_t   size() const    = 0;
-                virtual bool     gc()            = 0;
-                virtual bool     empty() const   = 0;
+                virtual size_t size() const  = 0;
+                virtual bool   gc()          = 0;
+                virtual bool   empty() const = 0;
 
             protected:
                 list_type_base() {}
@@ -82,10 +85,11 @@ namespace util {
             typedef std::shared_ptr<lru_pool_manager> ptr_t;
 
             struct check_item_t {
-                uint64_t                                     push_id;
                 time_t                                       push_tick;
                 std::weak_ptr<lru_pool_base::list_type_base> list_;
             };
+
+            typedef std::list<check_item_t> check_list_t;
 
         public:
             static ptr_t create() { return ptr_t(new lru_pool_manager()); }
@@ -96,10 +100,7 @@ namespace util {
 
             _UTIL_MEMPOOL_LRUOBJECTPOOL_SETTER_GETTER(item_min_bound);  // 主动GC的保留对象数量
             _UTIL_MEMPOOL_LRUOBJECTPOOL_SETTER_GETTER(item_max_bound);  // 超出对象数量触发GC
-            _UTIL_MEMPOOL_LRUOBJECTPOOL_SETTER_GETTER(list_bound);      // 超出检查项数量触发GC
-            _UTIL_MEMPOOL_LRUOBJECTPOOL_SETTER_GETTER(proc_list_count); // 每帧最大处理的检查项数量
             _UTIL_MEMPOOL_LRUOBJECTPOOL_SETTER_GETTER(proc_item_count); // 每帧最大处理的对象数量
-            _UTIL_MEMPOOL_LRUOBJECTPOOL_SETTER_GETTER(gc_list);         // 下一次GC保留的检查项数量
             _UTIL_MEMPOOL_LRUOBJECTPOOL_SETTER_GETTER(gc_item);         // 下一次GC保留的对象数量
 
             void set_list_tick_timeout(time_t v) { list_tick_timeout_ = v; }
@@ -120,52 +121,20 @@ namespace util {
 
             size_t get_item_adjust_max() const { return item_adjust_max_; }
 
-            void set_list_adjust_min(size_t v) {
-                list_adjust_min_ = v;
-                list_adjust_max_ = list_adjust_min_ >= list_adjust_max_ ? (list_adjust_min_ + 1) : list_adjust_max_;
-            }
-
-            size_t get_list_adjust_min() const { return list_adjust_min_; }
-
-            void set_list_adjust_max(size_t v) {
-                list_adjust_max_ = v;
-                list_adjust_min_ = list_adjust_min_ < list_adjust_max_ ? list_adjust_min_ : (list_adjust_max_ - 1);
-            }
-
-            size_t get_list_adjust_max() const { return list_adjust_max_; }
-
 #undef _UTIL_MEMPOOL_LRUOBJECTPOOL_SETTER_GETTER
 
             /**
              * @brief 获取实例缓存数量
              * @note 如果不是非常了解这个数值的作用，请不要修改它
              */
-            inline util::lock::seq_alloc_u64 &      item_count() { return item_count_; }
             inline const util::lock::seq_alloc_u64 &item_count() const { return item_count_; }
-
-            /**
-             * @brief 获取检测队列长度
-             * @note 如果不是非常了解这个数值的作用，请不要修改它
-             */
-            inline util::lock::seq_alloc_u64 &      list_count() { return list_count_; }
-            inline const util::lock::seq_alloc_u64 &list_count() const { return list_count_; }
 
             /**
              * @brief 主动GC，会触发阈值自适应
              * @return 此次调用回收的元素的个数
              */
             size_t gc() {
-                // 释放速度过慢，加快每帧释放速度
-                if (gc_list_ > 0) {
-                    proc_list_count_ = proc_list_count_ * 13 / 10;
-                }
-
-                // 释放速度过慢，加快每帧释放速度
-                if (gc_item_ > 0) {
-                    proc_item_count_ = proc_item_count_ * 13 / 10;
-                }
-
-                if (gc_list_ <= 0 && gc_item_ <= 0) {
+                if (gc_item_ <= 0) {
                     item_min_bound_ = static_cast<size_t>((item_count_.get() + item_min_bound_) / 2);
                     item_max_bound_ = static_cast<size_t>((item_count_.get() + item_max_bound_ + 1) / 2);
 
@@ -181,16 +150,6 @@ namespace util {
                         item_max_bound_ = item_adjust_min_ + 1;
                     }
 
-                    list_bound_ = static_cast<size_t>((list_count_.get() + list_bound_ + 1) / 2);
-                    if (list_bound_ < list_adjust_min_) {
-                        list_bound_ = list_adjust_min_;
-                    }
-
-                    if (list_bound_ > list_adjust_max_) {
-                        list_bound_ = list_adjust_max_;
-                    }
-
-                    gc_list_ = list_bound_;
                     gc_item_ = item_min_bound_;
                 }
 
@@ -205,7 +164,7 @@ namespace util {
             size_t proc(time_t tick) {
                 last_proc_tick_ = tick;
 
-                if (gc_list_ <= 0 && gc_item_ <= 0) {
+                if (gc_item_ <= 0) {
                     // 如果没有失效的check list缓存则不用继续走资源回收流程
                     if (checked_list_.empty() || check_tick(checked_list_.front().push_tick)) {
                         return 0;
@@ -213,27 +172,14 @@ namespace util {
                 }
 
                 size_t ret           = 0;
-                size_t left_list_num = proc_list_count_;
                 size_t left_item_num = proc_item_count_;
 
-                while (true) {
-                    if (left_list_num <= 0) {
-                        break;
-                    }
-
-                    if (left_item_num <= 0) {
-                        break;
-                    }
-
+                while (left_item_num > 0) {
                     if (0 != gc_item_ && item_count_.get() <= gc_item_) {
                         gc_item_ = 0;
                     }
 
-                    if (0 != gc_list_ && list_count_.get() <= gc_list_) {
-                        gc_list_ = 0;
-                    }
-
-                    if (0 == gc_item_ && 0 == gc_list_) {
+                    if (0 == gc_item_) {
                         // 如果没有失效的check list缓存则后续流程也可以取消
                         if (checked_list_.empty() || check_tick(checked_list_.front().push_tick)) {
                             break;
@@ -241,34 +187,37 @@ namespace util {
                     }
 
                     if (checked_list_.empty()) {
-                        gc_list_ = 0;
                         gc_item_ = 0;
-                        list_count_.set(0);
                         item_count_.set(0);
                         break;
                     }
 
                     check_item_t checked_item = checked_list_.front();
-                    checked_list_.pop_front();
-                    list_count_.dec();
-                    --left_list_num;
 
                     if (checked_item.list_.expired()) {
+                        item_count_.dec();
+                        checked_list_.pop_front();
                         continue;
                     }
 
                     std::shared_ptr<lru_pool_base::list_type_base> tar_ls = checked_item.list_.lock();
                     if (!tar_ls) {
-                        continue;
-                    }
-
-                    if (tar_ls->tail_id() != checked_item.push_id) {
+                        item_count_.dec();
+                        checked_list_.pop_front();
                         continue;
                     }
 
                     if (tar_ls->gc()) {
                         ++ret;
                         --left_item_num;
+                    } else {
+                        // protect codes. it should not run
+                        assert(false);
+                        if (left_item_num > 10) {
+                            left_item_num = 10;
+                        } else {
+                            --left_item_num;
+                        }
                     }
                 }
 
@@ -278,13 +227,15 @@ namespace util {
             /**
              * @brief 添加检查列表
              */
-            void push_check_list(uint64_t push_id, std::weak_ptr<lru_pool_base::list_type_base> list_) {
-                checked_list_.push_back(check_item_t());
-                checked_list_.back().push_id   = push_id;
-                checked_list_.back().list_     = list_;
-                checked_list_.back().push_tick = last_proc_tick_;
+            check_list_t::iterator push_check_list(std::weak_ptr<lru_pool_base::list_type_base> list_) {
+                check_list_t::iterator ret = checked_list_.insert(checked_list_.end(), check_item_t());
+                if (ret == checked_list_.end()) {
+                    return ret;
+                }
+                (*ret).list_     = list_;
+                (*ret).push_tick = last_proc_tick_;
 
-                list_count_.inc();
+                item_count_.inc();
 
                 if (item_count_.get() > item_max_bound_) {
                     inner_gc();
@@ -293,33 +244,43 @@ namespace util {
                     if (item_max_bound_ < item_adjust_max_) {
                         ++item_max_bound_;
                     }
-                } else if (list_count_.get() > list_bound_) {
-                    inner_gc();
-
-                    // 自适应，慢速增大上限值
-                    if (list_bound_ < list_adjust_max_) {
-                        ++list_bound_;
-                    }
                 }
+
+                return ret;
             }
+
+            bool erase_check_list(check_list_t::iterator iter) {
+                if (iter == checked_list_.end()) {
+                    return false;
+                }
+                checked_list_.erase(iter);
+                item_count_.dec();
+                return true;
+            }
+
+            // GCC 4.4 don't support erase(const_iterator)
+            // bool erase_check_list(check_list_t::const_iterator iter) {
+            //     if (iter == checked_list_.end()) {
+            //         return false;
+            //     }
+            //     checked_list_.erase(iter);
+            //     item_count_.dec();
+            //     return true;
+            // }
+
+            check_list_t::iterator end_check_list() { return checked_list_.end(); }
 
         private:
             lru_pool_manager()
-                : item_min_bound_(0), item_max_bound_(1024), list_bound_(2048), proc_list_count_(16), proc_item_count_(16), gc_list_(0),
-                  gc_item_(0), item_adjust_min_(256), item_adjust_max_(std::numeric_limits<size_t>::max()), list_adjust_min_(512),
-                  list_adjust_max_(std::numeric_limits<size_t>::max()), last_proc_tick_(0), list_tick_timeout_(0) {
+                : item_min_bound_(0), item_max_bound_(1024), proc_item_count_(std::numeric_limits<size_t>::max()), gc_item_(0),
+                  item_adjust_min_(256), item_adjust_max_(std::numeric_limits<size_t>::max()), last_proc_tick_(0), list_tick_timeout_(0) {
                 item_count_.set(0);
-                list_count_.set(0);
             }
 
             lru_pool_manager(const lru_pool_manager &);
             lru_pool_manager &operator=(const lru_pool_manager &);
 
             size_t inner_gc() {
-                if (gc_list_ <= 0) {
-                    gc_list_ = list_bound_;
-                }
-
                 if (gc_item_ <= 0) {
                     gc_item_ = item_max_bound_;
                 }
@@ -336,19 +297,13 @@ namespace util {
             size_t                    item_min_bound_;
             size_t                    item_max_bound_;
             util::lock::seq_alloc_u64 item_count_;
-            size_t                    list_bound_;
-            util::lock::seq_alloc_u64 list_count_;
-            size_t                    proc_list_count_;
             size_t                    proc_item_count_;
-            size_t                    gc_list_;
             size_t                    gc_item_;
-            std::list<check_item_t>   checked_list_;
+            check_list_t              checked_list_;
 
             // 自适应下限
             size_t item_adjust_min_;
             size_t item_adjust_max_;
-            size_t list_adjust_min_;
-            size_t list_adjust_max_;
 
             // 检查列表，tick有效期
             time_t last_proc_tick_;
@@ -370,20 +325,19 @@ namespace util {
             typedef TObj    value_type;
             typedef TAction action_type;
 
+            class list_type;
+            typedef std::shared_ptr<list_type> list_ptr_type;
+            typedef UTIL_MEMPOOL_LRUOBJECTPOOL_MAP(key_t, list_ptr_type) cat_map_type;
+
             class list_type : public lru_pool_base::list_type_base {
             public:
                 struct wrapper {
-                    value_type *object;
-                    uint64_t    push_id;
+                    value_type *                                      object;
+                    typename lru_pool_manager::check_list_t::iterator refer_iterator;
                 };
 
-                virtual uint64_t tail_id() const {
-                    if (cache_.empty()) {
-                        return 0;
-                    }
-
-                    return cache_.back().push_id;
-                }
+                list_type(lru_pool<TKey, TObj, TAction> &owner, key_t id) : owner_(&owner), id_(id) {}
+                virtual ~list_type() { clear_manager(); }
 
                 virtual size_t size() const { return cache_.size(); };
 
@@ -395,16 +349,16 @@ namespace util {
                     wrapper obj = cache_.back();
                     cache_.pop_back();
 
-                    TAction act;
-                    act.gc(obj.object);
-
-                    if (owner_->mgr_) {
-                        owner_->mgr_->item_count().dec();
+                    if (owner_ && owner_->mgr_) {
+                        owner_->mgr_->erase_check_list(obj.refer_iterator);
                     }
 
 #ifdef UTIL_MEMPOOL_LRUOBJECTPOOL_CHECK_REPUSH
                     owner_->check_pushed_.erase(obj.object);
 #endif
+
+                    TAction act;
+                    act.gc(obj.object);
 
                     // NOTICE, it's iterator may be used in for - loop now, can not erase it
                     // owner_->data_.erase(id_);
@@ -413,13 +367,77 @@ namespace util {
 
                 virtual bool empty() const { return cache_.empty(); }
 
+                void clear_manager() {
+                    if (!owner_->mgr_) {
+                        return;
+                    }
+
+                    typename lru_pool_manager::check_list_t::iterator end_iter = owner_->mgr_->end_check_list();
+                    for (typename std::list<wrapper>::iterator iter = cache_.begin(); iter != cache_.end(); ++iter) {
+                        if (owner_->mgr_->erase_check_list((*iter).refer_iterator)) {
+                            (*iter).refer_iterator = end_iter;
+                        }
+                    }
+                }
+
+                void setup_manager(list_ptr_type &self) {
+                    if (!owner_->mgr_) {
+                        return;
+                    }
+
+                    for (typename std::list<wrapper>::iterator iter = cache_.begin(); iter != cache_.end(); ++iter) {
+#if defined(LIBATFRAME_UTILS_ENABLE_RTTI) && LIBATFRAME_UTILS_ENABLE_RTTI
+                        (*iter).refer_iterator =
+                            owner_->mgr_->push_check_list(std::dynamic_pointer_cast<lru_pool_base::list_type_base>(self));
+#else
+                        (*iter).refer_iterator =
+                            owner_->mgr_->push_check_list(std::static_pointer_cast<lru_pool_base::list_type_base>(self));
+#endif
+                    }
+                }
+
+                bool push(value_type *obj, list_ptr_type &self) {
+                    // push, FILO
+                    typename std::list<wrapper>::iterator iter = cache_.insert(cache_.begin(), wrapper());
+                    if (iter == cache_.end()) {
+                        return false;
+                    }
+
+                    (*iter).object = obj;
+                    if (owner_->mgr_) {
+#if defined(LIBATFRAME_UTILS_ENABLE_RTTI) && LIBATFRAME_UTILS_ENABLE_RTTI
+                        (*iter).refer_iterator =
+                            owner_->mgr_->push_check_list(std::dynamic_pointer_cast<lru_pool_base::list_type_base>(self));
+#else
+                        (*iter).refer_iterator =
+                            owner_->mgr_->push_check_list(std::static_pointer_cast<lru_pool_base::list_type_base>(self));
+#endif
+                    }
+
+                    return true;
+                }
+
+                value_type *pull() {
+                    // pull, FILO
+                    if (cache_.empty()) {
+                        return NULL;
+                    }
+
+                    wrapper res = cache_.front();
+                    cache_.pop_front();
+
+                    if (owner_->mgr_) {
+                        owner_->mgr_->erase_check_list(res.refer_iterator);
+                    }
+
+                    return res.object;
+                }
+
+            private:
                 lru_pool<TKey, TObj, TAction> *owner_;
                 key_t                          id_;
                 std::list<wrapper>             cache_;
             };
-
-            typedef std::shared_ptr<list_type> list_ptr_type;
-            typedef UTIL_MEMPOOL_LRUOBJECTPOOL_MAP(key_t, list_ptr_type) cat_map_type;
 
             struct flag_t {
                 enum type { INITED = 0, CLEARING };
@@ -445,7 +463,7 @@ namespace util {
             };
 
         public:
-            lru_pool() : flags_(0) { push_id_alloc_.set(0); }
+            lru_pool() : flags_(0) {}
 
             virtual ~lru_pool() {
                 set_manager(lru_pool_manager::ptr_t());
@@ -464,20 +482,22 @@ namespace util {
             }
 
             void set_manager(lru_pool_manager::ptr_t m) {
-                size_t s = 0;
+                if (mgr_ == m) {
+                    return;
+                }
+
                 for (typename cat_map_type::iterator iter = data_.begin(); iter != data_.end(); ++iter) {
                     if (iter->second) {
-                        s += iter->second->size();
+                        iter->second->clear_manager();
                     }
                 }
 
-                if (mgr_) {
-                    mgr_->item_count().sub(s);
-                }
-
                 mgr_ = m;
-                if (m) {
-                    m->item_count().add(s);
+
+                for (typename cat_map_type::iterator iter = data_.begin(); iter != data_.end(); ++iter) {
+                    if (iter->second) {
+                        iter->second->setup_manager(iter->second);
+                    }
                 }
             }
 
@@ -500,37 +520,18 @@ namespace util {
 
                 list_ptr_type &list_ = data_[id];
                 if (!list_) {
-                    list_ = std::make_shared<list_type>();
+                    list_ = std::make_shared<list_type>(*this, id);
                     if (!list_) {
                         return false;
                     }
-
-                    list_->owner_ = this;
-                    list_->id_    = id;
                 }
 
-                typename list_type::wrapper obj_wrapper;
-
-                obj_wrapper.object = obj;
-                while (0 == (obj_wrapper.push_id = push_id_alloc_.inc()))
-                    ;
-
-                // 推送node, FILO
-                list_->cache_.push_front(obj_wrapper);
+                if (!list_->push(obj, list_)) {
+                    return false;
+                }
 
                 TAction act;
                 act.push(obj);
-
-                if (mgr_) {
-                    mgr_->item_count().inc();
-
-                    // 推送check list
-#if defined(LIBATFRAME_UTILS_ENABLE_RTTI) && LIBATFRAME_UTILS_ENABLE_RTTI
-                    mgr_->push_check_list(obj_wrapper.push_id, std::dynamic_pointer_cast<lru_pool_base::list_type_base>(list_));
-#else
-                    mgr_->push_check_list(obj_wrapper.push_id, std::static_pointer_cast<lru_pool_base::list_type_base>(list_));
-#endif
-                }
 
 #ifdef UTIL_MEMPOOL_LRUOBJECTPOOL_CHECK_REPUSH
                 check_pushed_.insert(obj);
@@ -545,32 +546,29 @@ namespace util {
                     return NULL;
                 }
 
-                if (!iter->second || iter->second->cache_.empty()) {
+                if (!iter->second || iter->second->empty()) {
                     data_.erase(iter);
                     return NULL;
                 }
 
-                // 拉取node, FILO
-                typename list_type::wrapper obj_wrapper = iter->second->cache_.front();
-                iter->second->cache_.pop_front();
-
-                TAction act;
-                act.pull(obj_wrapper.object);
-                act.reset(obj_wrapper.object);
-
-                if (mgr_) {
-                    mgr_->item_count().dec();
-                }
-
-#ifdef UTIL_MEMPOOL_LRUOBJECTPOOL_CHECK_REPUSH
-                check_pushed_.erase(obj_wrapper.object);
-#endif
+                TObj *ret = iter->second->pull();
 
                 if (iter->second->empty()) {
                     data_.erase(iter);
                 }
 
-                return obj_wrapper.object;
+                if (NULL == ret) {
+                    return ret;
+                }
+
+                TAction act;
+                act.pull(ret);
+                act.reset(ret);
+
+#ifdef UTIL_MEMPOOL_LRUOBJECTPOOL_CHECK_REPUSH
+                check_pushed_.erase(ret);
+#endif
+                return ret;
             }
 
             void clear() {
@@ -621,10 +619,9 @@ namespace util {
             const cat_map_type &data() const { return data_; }
 
         private:
-            cat_map_type              data_;
-            lru_pool_manager::ptr_t   mgr_;
-            util::lock::seq_alloc_u64 push_id_alloc_;
-            uint32_t                  flags_;
+            cat_map_type            data_;
+            lru_pool_manager::ptr_t mgr_;
+            uint32_t                flags_;
 #ifdef UTIL_MEMPOOL_LRUOBJECTPOOL_CHECK_REPUSH
             std::set<value_type *> check_pushed_;
 #endif

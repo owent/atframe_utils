@@ -75,6 +75,32 @@ function(FindConfigurePackageDownloadFile from to)
 endfunction()
 
 function(FindConfigurePackageUnzip src work_dir)
+    if (CMAKE_HOST_UNIX)
+        find_program (FindConfigurePackage_UNZIP_BIN unzip)
+        if (FindConfigurePackage_UNZIP_BIN)
+            execute_process(COMMAND ${FindConfigurePackage_UNZIP_BIN} -uo ${src}
+                WORKING_DIRECTORY ${work_dir}
+            )
+            return()
+        endif ()
+    endif ()
+    # fallback
+    execute_process(COMMAND ${CMAKE_COMMAND} -E tar xvf ${src}
+        WORKING_DIRECTORY ${work_dir}
+    )
+endfunction()
+
+function(FindConfigurePackageTarXV src work_dir)
+    if (CMAKE_HOST_UNIX)
+        find_program (FindConfigurePackage_TAR_BIN tar)
+        if (FindConfigurePackage_TAR_BIN)
+            execute_process(COMMAND ${FindConfigurePackage_TAR_BIN} -xvf ${src}
+                WORKING_DIRECTORY ${work_dir}
+            )
+            return()
+        endif ()
+    endif ()
+    # fallback
     execute_process(COMMAND ${CMAKE_COMMAND} -E tar xvf ${src}
         WORKING_DIRECTORY ${work_dir}
     )
@@ -150,9 +176,7 @@ macro (FindConfigurePackage)
                     FindConfigurePackageDownloadFile("${FindConfigurePackage_TAR_URL}" "${FindConfigurePackage_WORKING_DIRECTORY}/${DOWNLOAD_FILENAME}")
                 endif()
 
-                execute_process(COMMAND ${CMAKE_COMMAND} -E tar xvf "${FindConfigurePackage_WORKING_DIRECTORY}/${DOWNLOAD_FILENAME}"
-                    WORKING_DIRECTORY ${FindConfigurePackage_WORKING_DIRECTORY}
-                )
+                FindConfigurePackageTarXV("${FindConfigurePackage_WORKING_DIRECTORY}/${DOWNLOAD_FILENAME}" ${FindConfigurePackage_WORKING_DIRECTORY})
 
                 if (EXISTS ${FindConfigurePackage_DOWNLOAD_SOURCE_DIR})
                     set (FindConfigurePackage_UNPACK_SOURCE YES)
