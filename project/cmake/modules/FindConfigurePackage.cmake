@@ -137,6 +137,10 @@ elseif (CMAKE_VS_MSBUILD_COMMAND)
     set(FindConfigurePackageCMakeBuildMultiJobs "--" "/m" CACHE INTERNAL "Build options for multi-jobs")
 endif()
 
+if (NOT FindConfigurePackageGitFetchDepth)
+    set (FindConfigurePackageGitFetchDepth 100 CACHE STRING "Defalut depth of git clone/fetch")
+endif ()
+
 macro (FindConfigurePackage)
     include(CMakeParseArguments)
     set(optionArgs BUILD_WITH_CONFIGURE BUILD_WITH_CMAKE BUILD_WITH_SCONS BUILD_WITH_CUSTOM_COMMAND CMAKE_INHIRT_BUILD_ENV)
@@ -227,7 +231,7 @@ macro (FindConfigurePackage)
                         if (NOT FindConfigurePackage_GIT_BRANCH)
                             set(FindConfigurePackage_GIT_BRANCH master)
                         endif()
-                        execute_process(COMMAND ${GIT_EXECUTABLE} clone --depth=1 -b ${FindConfigurePackage_GIT_BRANCH} ${FindConfigurePackage_GIT_URL} ${FindConfigurePackage_SRC_DIRECTORY_NAME}
+                        execute_process(COMMAND ${GIT_EXECUTABLE} clone "--depth=${FindConfigurePackageGitFetchDepth}" -b ${FindConfigurePackage_GIT_BRANCH} ${FindConfigurePackage_GIT_URL} ${FindConfigurePackage_SRC_DIRECTORY_NAME}
                             WORKING_DIRECTORY ${FindConfigurePackage_WORKING_DIRECTORY}
                         )
                     else()
