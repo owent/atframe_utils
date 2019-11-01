@@ -16,13 +16,15 @@
 #     SCONS_FLAGS [scons options...]
 #     CUSTOM_BUILD_COMMAND [custom build cmd...]
 #     MAKE_FLAGS [make options...]
-#     PREBUILD_COMMAND [pre build cmd...]
+#     PREBUILD_COMMAND [run cmd before build ...]
+#     AFTERBUILD_COMMAND [run cmd after build ...]
 #     RESET_FIND_VARS [cmake vars]
 #     WORKING_DIRECTORY <work directory>
 #     BUILD_DIRECTORY <build directory>
 #     PREFIX_DIRECTORY <prefix directory>
 #     SRC_DIRECTORY_NAME <source directory name>
 #     MSVC_CONFIGURE [Debug/Release/RelWithDebInfo/MinSizeRel]
+#     INSTALL_TARGET <target name: install>
 #     ZIP_URL <zip url>
 #     TAR_URL <tar url>
 #     SVN_URL <svn url>
@@ -116,13 +118,39 @@ function(FindConfigurePackageRemoveEmptyDir DIR)
     endif()
 endfunction()
 
+if (CMAKE_VERSION VERSION_GREATER_EQUAL "3.12")
+    include(ProcessorCount)
+    ProcessorCount(CPU_CORE_NUM)
+    set(FindConfigurePackageCMakeBuildMultiJobs "--parallel" ${CPU_CORE_NUM} CACHE INTERNAL "Build options for multi-jobs")
+    unset(CPU_CORE_NUM)
+elseif ( (CMAKE_MAKE_PROGRAM STREQUAL "make") OR (CMAKE_MAKE_PROGRAM STREQUAL "gmake") OR (CMAKE_MAKE_PROGRAM STREQUAL "ninja") )
+    include(ProcessorCount)
+    ProcessorCount(CPU_CORE_NUM)
+    set(FindConfigurePackageCMakeBuildMultiJobs "--" "-j${CPU_CORE_NUM}" CACHE INTERNAL "Build options for multi-jobs")
+    unset(CPU_CORE_NUM)
+elseif ( CMAKE_MAKE_PROGRAM STREQUAL "xcodebuild" )
+    include(ProcessorCount)
+    ProcessorCount(CPU_CORE_NUM)
+    set(FindConfigurePackageCMakeBuildMultiJobs "--" "-jobs" ${CPU_CORE_NUM} CACHE INTERNAL "Build options for multi-jobs")
+    unset(CPU_CORE_NUM)
+elseif (CMAKE_VS_MSBUILD_COMMAND)
+    set(FindConfigurePackageCMakeBuildMultiJobs "--" "/m" CACHE INTERNAL "Build options for multi-jobs")
+endif()
+
+if (NOT FindConfigurePackageGitFetchDepth)
+    set (FindConfigurePackageGitFetchDepth 100 CACHE STRING "Defalut depth of git clone/fetch")
+endif ()
+
 macro (FindConfigurePackage)
     include(CMakeParseArguments)
     set(optionArgs BUILD_WITH_CONFIGURE BUILD_WITH_CMAKE BUILD_WITH_SCONS BUILD_WITH_CUSTOM_COMMAND CMAKE_INHIRT_BUILD_ENV)
-    set(oneValueArgs PACKAGE WORKING_DIRECTORY BUILD_DIRECTORY PREFIX_DIRECTORY SRC_DIRECTORY_NAME PROJECT_DIRECTORY MSVC_CONFIGURE ZIP_URL TAR_URL SVN_URL GIT_URL GIT_BRANCH)
-    set(multiValueArgs CONFIGURE_CMD CONFIGURE_FLAGS CMAKE_FLAGS RESET_FIND_VARS SCONS_FLAGS MAKE_FLAGS CUSTOM_BUILD_COMMAND PREBUILD_COMMAND)
+    set(oneValueArgs PACKAGE WORKING_DIRECTORY BUILD_DIRECTORY PREFIX_DIRECTORY SRC_DIRECTORY_NAME PROJECT_DIRECTORY MSVC_CONFIGURE ZIP_URL TAR_URL SVN_URL GIT_URL GIT_BRANCH INSTALL_TARGET)
+    set(multiValueArgs CONFIGURE_CMD CONFIGURE_FLAGS CMAKE_FLAGS RESET_FIND_VARS SCONS_FLAGS MAKE_FLAGS CUSTOM_BUILD_COMMAND PREBUILD_COMMAND AFTERBUILD_COMMAND)
     cmake_parse_arguments(FindConfigurePackage "${optionArgs}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN} )
 
+    if (NOT FindConfigurePackage_INSTALL_TARGET)
+        set (FindConfigurePackage_INSTALL_TARGET "install")
+    endif ()
     # some module is not match standard, using upper case but package name
     string(TOUPPER "${FindConfigurePackage_PACKAGE}_FOUND" FIND_CONFIGURE_PACKAGE_UPPER_NAME)
 
@@ -203,7 +231,7 @@ macro (FindConfigurePackage)
                         if (NOT FindConfigurePackage_GIT_BRANCH)
                             set(FindConfigurePackage_GIT_BRANCH master)
                         endif()
-                        execute_process(COMMAND ${GIT_EXECUTABLE} clone --depth=1 -b ${FindConfigurePackage_GIT_BRANCH} ${FindConfigurePackage_GIT_URL} ${FindConfigurePackage_SRC_DIRECTORY_NAME}
+                        execute_process(COMMAND ${GIT_EXECUTABLE} clone "--depth=${FindConfigurePackageGitFetchDepth}" -b ${FindConfigurePackage_GIT_BRANCH} ${FindConfigurePackage_GIT_URL} ${FindConfigurePackage_SRC_DIRECTORY_NAME}
                             WORKING_DIRECTORY ${FindConfigurePackage_WORKING_DIRECTORY}
                         )
                     else()
@@ -279,7 +307,7 @@ macro (FindConfigurePackage)
                 )
 
                 execute_process(
-                    COMMAND "make" ${FindConfigurePackage_MAKE_FLAGS} "install"
+                    COMMAND "make" ${FindConfigurePackage_MAKE_FLAGS} ${FindConfigurePackage_INSTALL_TARGET}
                     WORKING_DIRECTORY ${FindConfigurePackage_BUILD_DIRECTORY}
                 )
 
@@ -339,28 +367,20 @@ macro (FindConfigurePackage)
                     WORKING_DIRECTORY ${FindConfigurePackage_BUILD_DIRECTORY}
                 )
 
-                if (MSVC)
-                    set(FindConfigurePackage_BUILD_WITH_CMAKE_MULTI_CORE_BUILD_FLAG "--" "/m")
-                else ()
-                    include(ProcessorCount)
-                    ProcessorCount(CPU_CORE_NUM)
-                    set(FindConfigurePackage_BUILD_WITH_CMAKE_MULTI_CORE_BUILD_FLAG "--" "-j${CPU_CORE_NUM}")
-                endif ()
-
                 # cmake --build and install
                 if(MSVC)
                     if (NOT FindConfigurePackage_MSVC_CONFIGURE)
                         set(FindConfigurePackage_MSVC_CONFIGURE RelWithDebInfo)
                     endif()
                     execute_process(
-                        COMMAND ${CMAKE_COMMAND} --build . --target install --config ${FindConfigurePackage_MSVC_CONFIGURE}
-                            ${FindConfigurePackage_BUILD_WITH_CMAKE_MULTI_CORE_BUILD_FLAG}
+                        COMMAND ${CMAKE_COMMAND} --build . --target ${FindConfigurePackage_INSTALL_TARGET} --config ${FindConfigurePackage_MSVC_CONFIGURE}
+                            ${FindConfigurePackageCMakeBuildMultiJobs}
                         WORKING_DIRECTORY ${FindConfigurePackage_BUILD_DIRECTORY}
                     )
                 else()
                     execute_process(
-                        COMMAND ${CMAKE_COMMAND} --build . --target install
-                            ${FindConfigurePackage_BUILD_WITH_CMAKE_MULTI_CORE_BUILD_FLAG}
+                        COMMAND ${CMAKE_COMMAND} --build . --target ${FindConfigurePackage_INSTALL_TARGET}
+                            ${FindConfigurePackageCMakeBuildMultiJobs}
                         WORKING_DIRECTORY ${FindConfigurePackage_BUILD_DIRECTORY}
                     )
                 endif()
@@ -402,6 +422,15 @@ macro (FindConfigurePackage)
                 message(FATAL_ERROR "build type is required")
             endif()
 
+            # afterbuild commands
+            foreach(cmd ${FindConfigurePackage_AFTERBUILD_COMMAND})
+                message(STATUS "FindConfigurePackage - Run: ${cmd} @ ${FindConfigurePackage_BUILD_DIRECTORY}")
+                execute_process(
+                    COMMAND ${cmd}
+                    WORKING_DIRECTORY ${FindConfigurePackage_BUILD_DIRECTORY}
+                )
+            endforeach()
+
             # reset vars before retry to find package
             foreach (RESET_VAR ${FindConfigurePackage_RESET_FIND_VARS})
                 unset (${RESET_VAR} CACHE)
@@ -409,6 +438,7 @@ macro (FindConfigurePackage)
             find_package(${FindConfigurePackage_PACKAGE})
         endif()
     endif()
+    unset (FindConfigurePackage_INSTALL_TARGET)
 endmacro(FindConfigurePackage)
 
 
