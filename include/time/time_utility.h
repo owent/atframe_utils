@@ -45,14 +45,14 @@ namespace util {
         public:
             enum {
                 MINITE_SECONDS = 60,
-                HOUR_SECONDS = MINITE_SECONDS * 60,
-                DAY_SECONDS = HOUR_SECONDS * 24,
-                WEEK_SECONDS = DAY_SECONDS * 7,
-                YEAR_SECONDS = DAY_SECONDS * 365,
+                HOUR_SECONDS   = MINITE_SECONDS * 60,
+                DAY_SECONDS    = HOUR_SECONDS * 24,
+                WEEK_SECONDS   = DAY_SECONDS * 7,
+                YEAR_SECONDS   = DAY_SECONDS * 365,
             };
 
             typedef std::chrono::system_clock::time_point raw_time_t;
-            typedef struct tm raw_time_desc_t;
+            typedef struct tm                             raw_time_desc_t;
 
         private:
             time_utility();
@@ -90,7 +90,7 @@ namespace util {
              * @brief 设置时间的全局偏移（Debug功能）
              * @note 影响now()、get_now()和get_now_usec()的返回结果，用于模拟时间
              */
-            static void set_global_now_offset(const std::chrono::system_clock::duration& offset);
+            static void set_global_now_offset(const std::chrono::system_clock::duration &offset);
 
             /**
              * @brief 设置时间的全局偏移（Debug功能）
@@ -259,6 +259,28 @@ namespace util {
              */
             static int get_week_day(time_t t);
 
+            /**
+             * @brief 获取一天的开始时间的时间戳
+             * @param t 基于该时间的天,填0使用get_now()返回的时间
+             * @return t所在天的开始时间戳
+             */
+            static time_t get_day_start_time(time_t t = 0);
+
+            /**
+             * @brief 获取一天的开始时间的时间戳
+             * @param t 基于该时间的周,填0使用get_now()返回的时间
+             * @param week_first 一周的第一天，0表示周日，1表示周一，以此类推
+             * @return t所在周的开始时间戳
+             */
+            static time_t get_week_start_time(time_t t = 0, time_t week_first = 0);
+
+            /**
+             * @brief 获取一天的开始时间的时间戳
+             * @param t 基于该时间的月,填0使用get_now()返回的时间
+             * @return t所在月的开始时间戳
+             */
+            static time_t get_month_start_time(time_t t = 0);
+
         private:
             // 当前时间
             static raw_time_t now_;
@@ -275,7 +297,7 @@ namespace util {
             // 时间的全局偏移（Debug功能）
             static std::chrono::system_clock::duration global_now_offset_;
         };
-    }
-}
+    } // namespace time
+} // namespace util
 
 #endif // _UTIL_TIME_TIME_UTILITY_H_

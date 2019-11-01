@@ -10,9 +10,11 @@ CASE_TEST(time_test, global_offset) {
     util::time::time_utility::update();
     time_t now = util::time::time_utility::get_now();
 
-    util::time::time_utility::set_global_now_offset(std::chrono::duration_cast<std::chrono::system_clock::duration>(std::chrono::seconds(5)));
+    util::time::time_utility::set_global_now_offset(
+        std::chrono::duration_cast<std::chrono::system_clock::duration>(std::chrono::seconds(5)));
     CASE_EXPECT_EQ(now + 5, util::time::time_utility::get_now());
-    CASE_EXPECT_EQ(std::chrono::duration_cast<std::chrono::system_clock::duration>(std::chrono::seconds(5)).count(), util::time::time_utility::get_global_now_offset().count());
+    CASE_EXPECT_EQ(std::chrono::duration_cast<std::chrono::system_clock::duration>(std::chrono::seconds(5)).count(),
+                   util::time::time_utility::get_global_now_offset().count());
     util::time::time_utility::reset_global_now_offset();
     CASE_EXPECT_EQ(now, util::time::time_utility::get_now());
 }
@@ -31,13 +33,13 @@ CASE_TEST(time_test, zone_offset) {
 CASE_TEST(time_test, today_offset) {
     using std::abs;
     struct tm tobj;
-    time_t tnow, loffset, cnow;
+    time_t    tnow, loffset, cnow;
     util::time::time_utility::update();
 
     tnow = util::time::time_utility::get_now();
     UTIL_STRFUNC_LOCALTIME_S(&tnow, &tobj);
     loffset = tobj.tm_hour * util::time::time_utility::HOUR_SECONDS + tobj.tm_min * util::time::time_utility::MINITE_SECONDS + tobj.tm_sec;
-    cnow = util::time::time_utility::get_today_offset(loffset);
+    cnow    = util::time::time_utility::get_today_offset(loffset);
 
     // 只有闰秒误差，肯定在5秒以内
     // 容忍夏时令误差，所以要加一小时
@@ -51,24 +53,24 @@ CASE_TEST(time_test, today_offset) {
 
 CASE_TEST(time_test, is_same_day) {
     struct tm tobj;
-    time_t lt, rt;
+    time_t    lt, rt;
     util::time::time_utility::update();
     lt = util::time::time_utility::get_now();
     UTIL_STRFUNC_LOCALTIME_S(&lt, &tobj);
 
     tobj.tm_isdst = 0;
-    tobj.tm_hour = 0;
-    tobj.tm_min = 0;
-    tobj.tm_sec = 5;
-    lt = mktime(&tobj);
-    rt = lt + 5;
+    tobj.tm_hour  = 0;
+    tobj.tm_min   = 0;
+    tobj.tm_sec   = 5;
+    lt            = mktime(&tobj);
+    rt            = lt + 5;
     CASE_EXPECT_TRUE(util::time::time_utility::is_same_day(lt, rt));
 
     tobj.tm_isdst = 0;
-    tobj.tm_hour = 23;
-    tobj.tm_min = 59;
-    tobj.tm_sec = 55;
-    rt = mktime(&tobj);
+    tobj.tm_hour  = 23;
+    tobj.tm_min   = 59;
+    tobj.tm_sec   = 55;
+    rt            = mktime(&tobj);
     CASE_EXPECT_TRUE(util::time::time_utility::is_same_day(lt, rt));
 
     lt = rt - 5;
@@ -80,43 +82,43 @@ CASE_TEST(time_test, is_same_day) {
 
 CASE_TEST(time_test, is_same_day_with_offset) {
     struct tm tobj;
-    time_t lt, rt;
-    int zero_hore = 5;
-    time_t day_offset = zero_hore * util::time::time_utility::HOUR_SECONDS;
+    time_t    lt, rt;
+    int       zero_hore  = 5;
+    time_t    day_offset = zero_hore * util::time::time_utility::HOUR_SECONDS;
 
     util::time::time_utility::update();
     lt = util::time::time_utility::get_now();
     UTIL_STRFUNC_LOCALTIME_S(&lt, &tobj);
 
     tobj.tm_isdst = 0;
-    tobj.tm_hour = zero_hore;
-    tobj.tm_min = 0;
-    tobj.tm_sec = 5;
-    lt = mktime(&tobj);
-    rt = lt + 5;
+    tobj.tm_hour  = zero_hore;
+    tobj.tm_min   = 0;
+    tobj.tm_sec   = 5;
+    lt            = mktime(&tobj);
+    rt            = lt + 5;
     CASE_EXPECT_TRUE(util::time::time_utility::is_same_day(lt, rt, day_offset));
 
     tobj.tm_isdst = 0;
-    tobj.tm_hour = zero_hore - 1;
-    tobj.tm_min = 59;
-    tobj.tm_sec = 55;
-    rt = mktime(&tobj);
+    tobj.tm_hour  = zero_hore - 1;
+    tobj.tm_min   = 59;
+    tobj.tm_sec   = 55;
+    rt            = mktime(&tobj);
     CASE_EXPECT_FALSE(util::time::time_utility::is_same_day(lt, rt, day_offset));
 }
 
 CASE_TEST(time_test, is_same_week) {
     struct tm tobj;
-    time_t lt, rt, tnow;
+    time_t    lt, rt, tnow;
 
     util::time::time_utility::update();
     tnow = util::time::time_utility::get_now();
     UTIL_STRFUNC_LOCALTIME_S(&tnow, &tobj);
 
     tobj.tm_isdst = 0;
-    tobj.tm_hour = 0;
-    tobj.tm_min = 0;
-    tobj.tm_sec = 5;
-    lt = mktime(&tobj);
+    tobj.tm_hour  = 0;
+    tobj.tm_min   = 0;
+    tobj.tm_sec   = 5;
+    lt            = mktime(&tobj);
     lt -= util::time::time_utility::DAY_SECONDS * tobj.tm_wday;
     rt = lt + util::time::time_utility::WEEK_SECONDS;
     CASE_EXPECT_FALSE(util::time::time_utility::is_same_week(lt, rt));
@@ -128,7 +130,7 @@ CASE_TEST(time_test, is_same_week) {
 
 CASE_TEST(time_test, get_week_day) {
     struct tm tobj;
-    time_t lt, rt, tnow;
+    time_t    lt, rt, tnow;
 
     util::time::time_utility::update();
     tnow = util::time::time_utility::get_now();
@@ -137,16 +139,16 @@ CASE_TEST(time_test, get_week_day) {
     bool isdst = tobj.tm_isdst > 0;
 
     tobj.tm_isdst = 0;
-    tobj.tm_hour = 0;
-    tobj.tm_min = 0;
-    tobj.tm_sec = 5;
-    lt = mktime(&tobj);
+    tobj.tm_hour  = 0;
+    tobj.tm_min   = 0;
+    tobj.tm_sec   = 5;
+    lt            = mktime(&tobj);
 
     tobj.tm_isdst = 0;
-    tobj.tm_hour = 23;
-    tobj.tm_min = 59;
-    tobj.tm_sec = 55;
-    rt = mktime(&tobj);
+    tobj.tm_hour  = 23;
+    tobj.tm_min   = 59;
+    tobj.tm_sec   = 55;
+    rt            = mktime(&tobj);
 
     CASE_MSG_INFO() << "lt=" << lt << ",tnow=" << tnow << ",rt=" << rt << std::endl;
     // 夏时令会导致lt和rt可能提前一天
@@ -162,32 +164,32 @@ CASE_TEST(time_test, get_week_day) {
 CASE_TEST(time_test, is_same_year) {
     // nothing todo use libc now
     struct tm tobj;
-    time_t lt, rt, tnow;
+    time_t    lt, rt, tnow;
 
     util::time::time_utility::update();
     tnow = util::time::time_utility::get_now();
     UTIL_STRFUNC_LOCALTIME_S(&tnow, &tobj);
 
-    tobj.tm_mday = 1;
-    tobj.tm_mon = 0;
+    tobj.tm_mday  = 1;
+    tobj.tm_mon   = 0;
     tobj.tm_isdst = 0;
-    tobj.tm_hour = 0;
-    tobj.tm_min = 0;
-    tobj.tm_sec = 1;
-    lt = mktime(&tobj);
+    tobj.tm_hour  = 0;
+    tobj.tm_min   = 0;
+    tobj.tm_sec   = 1;
+    lt            = mktime(&tobj);
 
     tobj.tm_yday = 364;
     // 闰年多一天
     if (::util::time::time_utility::is_leap_year(tobj.tm_year + 1900)) {
         ++tobj.tm_yday;
     }
-    tobj.tm_mon = 11;
-    tobj.tm_mday = 31;
+    tobj.tm_mon   = 11;
+    tobj.tm_mday  = 31;
     tobj.tm_isdst = 0;
-    tobj.tm_hour = 23;
-    tobj.tm_min = 59;
-    tobj.tm_sec = 58;
-    rt = mktime(&tobj);
+    tobj.tm_hour  = 23;
+    tobj.tm_min   = 59;
+    tobj.tm_sec   = 58;
+    rt            = mktime(&tobj);
 
     CASE_EXPECT_TRUE(::util::time::time_utility::is_same_year(lt, rt));
     CASE_EXPECT_FALSE(::util::time::time_utility::is_same_year(lt, rt + 3));
@@ -195,33 +197,33 @@ CASE_TEST(time_test, is_same_year) {
 
 CASE_TEST(time_test, get_year_day) {
     struct tm tobj;
-    time_t lt, rt, tnow;
+    time_t    lt, rt, tnow;
 
     util::time::time_utility::update();
     tnow = util::time::time_utility::get_now();
     UTIL_STRFUNC_LOCALTIME_S(&tnow, &tobj);
 
-    tobj.tm_yday = 0;
-    tobj.tm_mon = 0;
-    tobj.tm_mday = 1;
+    tobj.tm_yday  = 0;
+    tobj.tm_mon   = 0;
+    tobj.tm_mday  = 1;
     tobj.tm_isdst = 0;
-    tobj.tm_hour = 0;
-    tobj.tm_min = 0;
-    tobj.tm_sec = 1;
-    lt = mktime(&tobj);
+    tobj.tm_hour  = 0;
+    tobj.tm_min   = 0;
+    tobj.tm_sec   = 1;
+    lt            = mktime(&tobj);
 
     tobj.tm_yday = 364;
     // 闰年多一天
     if (::util::time::time_utility::is_leap_year(tobj.tm_year + 1900)) {
         ++tobj.tm_yday;
     }
-    tobj.tm_mon = 11;
-    tobj.tm_mday = 31;
+    tobj.tm_mon   = 11;
+    tobj.tm_mday  = 31;
     tobj.tm_isdst = 0;
-    tobj.tm_hour = 23;
-    tobj.tm_min = 59;
-    tobj.tm_sec = 58;
-    rt = mktime(&tobj);
+    tobj.tm_hour  = 23;
+    tobj.tm_min   = 59;
+    tobj.tm_sec   = 58;
+    rt            = mktime(&tobj);
 
     CASE_EXPECT_EQ(::util::time::time_utility::get_year_day(lt), 0);
     CASE_EXPECT_EQ(::util::time::time_utility::get_year_day(rt), tobj.tm_yday);
@@ -230,26 +232,26 @@ CASE_TEST(time_test, get_year_day) {
 
 CASE_TEST(time_test, is_same_month) {
     struct tm tobj;
-    time_t lt, rt, tnow;
+    time_t    lt, rt, tnow;
 
     util::time::time_utility::update();
     tnow = util::time::time_utility::get_now();
     UTIL_STRFUNC_LOCALTIME_S(&tnow, &tobj);
 
-    tobj.tm_mon = 7;
-    tobj.tm_mday = 1;
+    tobj.tm_mon   = 7;
+    tobj.tm_mday  = 1;
     tobj.tm_isdst = 0;
-    tobj.tm_hour = 0;
-    tobj.tm_min = 0;
-    tobj.tm_sec = 1;
-    lt = mktime(&tobj);
+    tobj.tm_hour  = 0;
+    tobj.tm_min   = 0;
+    tobj.tm_sec   = 1;
+    lt            = mktime(&tobj);
 
-    tobj.tm_mday = 31;
+    tobj.tm_mday  = 31;
     tobj.tm_isdst = 0;
-    tobj.tm_hour = 23;
-    tobj.tm_min = 59;
-    tobj.tm_sec = 58;
-    rt = mktime(&tobj);
+    tobj.tm_hour  = 23;
+    tobj.tm_min   = 59;
+    tobj.tm_sec   = 58;
+    rt            = mktime(&tobj);
 
     // nothing todo use libc now
     CASE_EXPECT_TRUE(::util::time::time_utility::is_same_month(lt, rt));
@@ -258,48 +260,87 @@ CASE_TEST(time_test, is_same_month) {
 
 CASE_TEST(time_test, get_month_day) {
     struct tm tobj;
-    time_t lt, rt, tnow;
+    time_t    lt, rt, tnow;
 
     util::time::time_utility::update();
     tnow = util::time::time_utility::get_now();
     UTIL_STRFUNC_LOCALTIME_S(&tnow, &tobj);
 
-    tobj.tm_mday = 1;
+    tobj.tm_mday  = 1;
     tobj.tm_isdst = 0;
-    tobj.tm_hour = 0;
-    tobj.tm_min = 0;
-    tobj.tm_sec = 1;
-    lt = mktime(&tobj);
+    tobj.tm_hour  = 0;
+    tobj.tm_min   = 0;
+    tobj.tm_sec   = 1;
+    lt            = mktime(&tobj);
 
     tobj.tm_isdst = 0;
-    tobj.tm_hour = 23;
-    tobj.tm_min = 59;
-    tobj.tm_sec = 58;
-    rt = mktime(&tobj);
+    tobj.tm_hour  = 23;
+    tobj.tm_min   = 59;
+    tobj.tm_sec   = 58;
+    rt            = mktime(&tobj);
 
     CASE_EXPECT_EQ(::util::time::time_utility::get_month_day(lt), ::util::time::time_utility::get_month_day(rt));
     CASE_EXPECT_NE(::util::time::time_utility::get_month_day(lt), ::util::time::time_utility::get_month_day(rt + 3));
     CASE_EXPECT_EQ(1, ::util::time::time_utility::get_month_day(rt));
     CASE_EXPECT_EQ(2, ::util::time::time_utility::get_month_day(rt + 3));
 
-    tobj.tm_mon = 7;
-    tobj.tm_mday = 31;
+    tobj.tm_mon   = 7;
+    tobj.tm_mday  = 31;
     tobj.tm_isdst = 0;
-    tobj.tm_hour = 0;
-    tobj.tm_min = 0;
-    tobj.tm_sec = 1;
-    lt = mktime(&tobj);
+    tobj.tm_hour  = 0;
+    tobj.tm_min   = 0;
+    tobj.tm_sec   = 1;
+    lt            = mktime(&tobj);
 
     tobj.tm_isdst = 0;
-    tobj.tm_hour = 23;
-    tobj.tm_min = 59;
-    tobj.tm_sec = 58;
-    rt = mktime(&tobj);
+    tobj.tm_hour  = 23;
+    tobj.tm_min   = 59;
+    tobj.tm_sec   = 58;
+    rt            = mktime(&tobj);
 
     CASE_EXPECT_EQ(::util::time::time_utility::get_month_day(lt), ::util::time::time_utility::get_month_day(rt));
     CASE_EXPECT_NE(::util::time::time_utility::get_month_day(lt), ::util::time::time_utility::get_month_day(rt + 3));
     CASE_EXPECT_EQ(31, ::util::time::time_utility::get_month_day(rt));
     CASE_EXPECT_EQ(1, ::util::time::time_utility::get_month_day(rt + 3));
+}
+
+CASE_TEST(time_test, get_day_start_time) {
+    time_t lt, rt, tnow;
+    tnow = util::time::time_utility::get_now();
+    lt   = util::time::time_utility::get_day_start_time(tnow);
+    rt   = lt + util::time::time_utility::DAY_SECONDS;
+
+    CASE_EXPECT_TRUE(::util::time::time_utility::is_same_day(lt, tnow));
+    CASE_EXPECT_TRUE(::util::time::time_utility::is_same_day(lt, lt + 1));
+    CASE_EXPECT_FALSE(::util::time::time_utility::is_same_day(lt, lt - 1));
+    CASE_EXPECT_FALSE(::util::time::time_utility::is_same_day(lt, rt));
+    CASE_EXPECT_TRUE(::util::time::time_utility::is_same_day(lt, rt - 1));
+}
+
+CASE_TEST(time_test, get_week_start_time) {
+    time_t lt, rt, tnow;
+    tnow = util::time::time_utility::get_now();
+    lt   = util::time::time_utility::get_week_start_time(tnow, 1);
+    rt   = lt + util::time::time_utility::WEEK_SECONDS;
+
+    CASE_EXPECT_TRUE(::util::time::time_utility::is_same_week(lt, tnow, 1));
+    CASE_EXPECT_TRUE(::util::time::time_utility::is_same_week(lt, lt + 1, 1));
+    CASE_EXPECT_FALSE(::util::time::time_utility::is_same_week(lt, lt - 1, 1));
+    CASE_EXPECT_FALSE(::util::time::time_utility::is_same_week(lt, rt, 1));
+    CASE_EXPECT_TRUE(::util::time::time_utility::is_same_week(lt, rt - 1, 1));
+}
+
+CASE_TEST(time_test, get_month_start_time) {
+    time_t lt, rt, tnow;
+    tnow = util::time::time_utility::get_now();
+    lt   = util::time::time_utility::get_month_start_time(tnow);
+    rt   = util::time::time_utility::get_month_start_time(lt + 32 * util::time::time_utility::DAY_SECONDS);
+
+    CASE_EXPECT_TRUE(::util::time::time_utility::is_same_month(lt, tnow));
+    CASE_EXPECT_TRUE(::util::time::time_utility::is_same_month(lt, lt + 1));
+    CASE_EXPECT_FALSE(::util::time::time_utility::is_same_month(lt, lt - 1));
+    CASE_EXPECT_FALSE(::util::time::time_utility::is_same_month(lt, rt));
+    CASE_EXPECT_TRUE(::util::time::time_utility::is_same_month(lt, rt - 1));
 }
 
 typedef util::time::jiffies_timer<6, 3, 4> short_timer_t;
@@ -320,8 +361,8 @@ struct jiffies_timer_fn {
 
 CASE_TEST(time_test, jiffies_timer_basic) {
     short_timer_t short_timer;
-    int count = 0;
-    time_t max_tick = short_timer.get_max_tick_distance() + 1;
+    int           count    = 0;
+    time_t        max_tick = short_timer.get_max_tick_distance() + 1;
 
     CASE_EXPECT_EQ(short_timer_t::error_type_t::EN_JTET_NOT_INITED, short_timer.add_timer(123, jiffies_timer_fn(NULL), NULL));
     CASE_EXPECT_EQ(short_timer_t::error_type_t::EN_JTET_NOT_INITED, short_timer.tick(456));
@@ -388,9 +429,9 @@ CASE_TEST(time_test, jiffies_timer_basic) {
 }
 
 CASE_TEST(time_test, jiffies_timer_slot) {
-    size_t timer_list_count[short_timer_t::WHEEL_SIZE] = {0};
+    size_t timer_list_count[short_timer_t::WHEEL_SIZE]                     = {0};
     time_t blank_area[short_timer_t::WHEEL_SIZE / short_timer_t::LVL_SIZE] = {0};
-    time_t max_tick = short_timer_t::get_max_tick_distance();
+    time_t max_tick                                                        = short_timer_t::get_max_tick_distance();
     for (time_t i = 0; i <= max_tick; ++i) {
         size_t idx = short_timer_t::calc_wheel_index(i, 0);
         CASE_EXPECT_LT(idx, static_cast<size_t>(short_timer_t::WHEEL_SIZE));

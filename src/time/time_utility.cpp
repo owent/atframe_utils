@@ -3,11 +3,11 @@
 
 namespace util {
     namespace time {
-        time_utility::raw_time_t time_utility::now_;
-        time_t time_utility::now_unix_;
-        time_t time_utility::now_usec_ = 0;
-        time_t time_utility::custom_zone_offset_ = -time_utility::YEAR_SECONDS;
-        std::chrono::system_clock::duration time_utility::global_now_offset_ = std::chrono::system_clock::duration::zero();
+        time_utility::raw_time_t            time_utility::now_;
+        time_t                              time_utility::now_unix_;
+        time_t                              time_utility::now_usec_           = 0;
+        time_t                              time_utility::custom_zone_offset_ = -time_utility::YEAR_SECONDS;
+        std::chrono::system_clock::duration time_utility::global_now_offset_  = std::chrono::system_clock::duration::zero();
 
         time_utility::time_utility() {}
         time_utility::~time_utility() {}
@@ -25,7 +25,7 @@ namespace util {
 
             // reset usec
             ::util::time::time_utility::raw_time_t padding_time = ::util::time::time_utility::raw_time_t::clock::from_time_t(now_unix_);
-            now_usec_ = static_cast<time_t>(
+            now_usec_                                           = static_cast<time_t>(
                 std::chrono::duration_cast<std::chrono::microseconds>(::util::time::time_utility::now() - padding_time).count());
             if (now_usec_ < 0) {
                 now_usec_ = 0;
@@ -41,15 +41,13 @@ namespace util {
 
         time_t time_utility::get_now() { return now_unix_; }
 
-        void time_utility::set_global_now_offset(const std::chrono::system_clock::duration& offset) {
+        void time_utility::set_global_now_offset(const std::chrono::system_clock::duration &offset) {
             raw_time_t old_now = now() - global_now_offset_;
             global_now_offset_ = offset;
             update(&old_now);
         }
 
-        std::chrono::system_clock::duration time_utility::get_global_now_offset() {
-            return global_now_offset_;
-        }
+        std::chrono::system_clock::duration time_utility::get_global_now_offset() { return global_now_offset_; }
 
         void time_utility::reset_global_now_offset() {
             raw_time_t old_now = now() - global_now_offset_;
@@ -59,15 +57,15 @@ namespace util {
 
         // ====================== 后面的函数都和时区相关 ======================
         time_t time_utility::get_sys_zone_offset() {
-            time_t ret = 0;
+            time_t    ret = 0;
             struct tm t;
             memset(&t, 0, sizeof(t));
-            t.tm_year = 70;
-            t.tm_mon = 0;
-            t.tm_mday = 2; // VC 在时区offset是负数的时候会出错，所以改成从第二天开始然后减一天
-            t.tm_hour = 0;
-            t.tm_min = 0;
-            t.tm_sec = 0;
+            t.tm_year  = 70;
+            t.tm_mon   = 0;
+            t.tm_mday  = 2; // VC 在时区offset是负数的时候会出错，所以改成从第二天开始然后减一天
+            t.tm_hour  = 0;
+            t.tm_min   = 0;
+            t.tm_sec   = 0;
             t.tm_isdst = 0;
 
             ret = mktime(&t);
@@ -132,9 +130,7 @@ namespace util {
             return checked + offset + get_zone_offset();
         }
 
-        time_utility::raw_time_desc_t time_utility::get_local_tm(time_t t) {
-            return get_gmt_tm(t - get_zone_offset());
-        }
+        time_utility::raw_time_desc_t time_utility::get_local_tm(time_t t) { return get_gmt_tm(t - get_zone_offset()); }
 
         time_utility::raw_time_desc_t time_utility::get_gmt_tm(time_t t) {
             struct tm ttm;
@@ -151,7 +147,7 @@ namespace util {
         }
 
         bool time_utility::is_same_year(time_t left, time_t right) {
-            std::tm left_tm = get_local_tm(left);
+            std::tm left_tm  = get_local_tm(left);
             std::tm right_tm = get_local_tm(right);
 
             return left_tm.tm_year == right_tm.tm_year;
@@ -163,7 +159,7 @@ namespace util {
         }
 
         bool time_utility::is_same_month(time_t left, time_t right) {
-            std::tm left_tm = get_local_tm(left);
+            std::tm left_tm  = get_local_tm(left);
             std::tm right_tm = get_local_tm(right);
 
             return left_tm.tm_year == right_tm.tm_year && left_tm.tm_mon == right_tm.tm_mon;
@@ -198,5 +194,45 @@ namespace util {
             t /= DAY_SECONDS;
             return static_cast<int>((t + 4) % 7);
         }
-    }
-}
+
+        time_t time_utility::get_day_start_time(time_t t) {
+            if (0 == t) {
+                t = get_now();
+            }
+
+            return get_any_day_offset(t, 0);
+        }
+
+        time_t time_utility::get_week_start_time(time_t t, time_t week_first) {
+            if (0 == t) {
+                t = get_now();
+            }
+
+            time_t ct = t - get_zone_offset();
+
+            if (week_first >= 7 || week_first < 0) {
+                week_first %= 7;
+            }
+
+            ct += (4 - week_first) * DAY_SECONDS;
+            ct %= WEEK_SECONDS;
+            return t - ct;
+        }
+
+        time_t time_utility::get_month_start_time(time_t t) {
+            if (0 == t) {
+                t = get_now();
+            }
+
+            // Maybe we have change the default offset
+            time_t local_offset = get_zone_offset() - get_sys_zone_offset();
+
+            std::tm ttm = get_local_tm(t - local_offset);
+            ttm.tm_sec  = 0;
+            ttm.tm_min  = 0;
+            ttm.tm_hour = 0;
+            ttm.tm_mday = 1;
+            return mktime(&ttm) + local_offset;
+        }
+    } // namespace time
+} // namespace util
