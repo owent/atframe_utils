@@ -87,6 +87,18 @@ namespace util {
             static time_t get_now_usec();
 
             /**
+             * @brief 获取原始系统时间对象,不受set_global_now_offset()影响
+             * @return 最后一次update的时间
+             */
+            static raw_time_t sys_now();
+
+            /**
+             * @brief 获取系统当前Unix时间戳,不受set_global_now_offset()影响
+             * @return 最后一次update的时间
+             */
+            static time_t get_sys_now();
+
+            /**
              * @brief 设置时间的全局偏移（Debug功能）
              * @note 影响now()、get_now()和get_now_usec()的返回结果，用于模拟时间
              */

@@ -41,6 +41,10 @@ namespace util {
 
         time_t time_utility::get_now() { return now_unix_; }
 
+        time_utility::raw_time_t time_utility::sys_now() { return now_ - global_now_offset_; }
+
+        time_t time_utility::get_sys_now() { return std::chrono::system_clock::to_time_t(sys_now()); }
+
         void time_utility::set_global_now_offset(const std::chrono::system_clock::duration &offset) {
             raw_time_t old_now = now() - global_now_offset_;
             global_now_offset_ = offset;
