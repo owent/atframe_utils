@@ -64,6 +64,10 @@
 
 #elif defined(_MSC_VER) && (_MSC_VER >= 1900) // 1900 means VC 14.0,2015, there some problem with std::atomic implement in old MSVC
 
+// VS 2013 or below may cause deadlock, more details can be seen at:
+//   https://ci.appveyor.com/project/owt5008137/atframe-utils/builds/21245325
+//   https://devblogs.microsoft.com/cppblog/stl-fixes-in-vs-2015-part-2/
+
 #include <atomic>
 #define __UTIL_LOCK_ATOMIC_INT_TYPE_ATOMIC_STD
 
