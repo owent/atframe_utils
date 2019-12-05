@@ -12,17 +12,18 @@
 #
 # ::
 #
-#   Libatframe_utils_INCLUDE_DIRS   - where to find config/atframe_utils_build_feature.h , etc.
-#   Libatframe_utils_LIBRARY_DIRS   - where to find (lib)atframe_utils.(a/so/lib/dll/dylib), etc.
-#   Libatframe_utils_LIBRARIES      - List of libraries when using libatframe_utils.
-#   Libatframe_utils_FOUND          - True if libatframe_utils found.
-#   Libatframe_utils_VERSION        - Full version of libatframe_utils
+#   Libatframe_utils_INCLUDE_DIRS       - where to find config/atframe_utils_build_feature.h , etc.
+#   Libatframe_utils_LIBRARY_DIRS       - where to find (lib)atframe_utils.(a/so/lib/dll/dylib), etc.
+#   Libatframe_utils_LIBRARIES          - List of static libraries when using libatframe_utils.
+#   Libatframe_utils_DYNAMIC_LIBRARIES  - List of dynamic libraries when using libatframe_utils.
+#   Libatframe_utils_FOUND              - True if libatframe_utils found.
+#   Libatframe_utils_VERSION            - Full version of libatframe_utils
 #
 # ::
 #
 
 #=============================================================================
-# Copyright 2018 OWenT.
+# Copyright 2019 OWenT.
 #
 # Distributed under the OSI-approved BSD License (the "License");
 # see accompanying file Copyright.txt for details.
@@ -45,21 +46,18 @@ set(Libatframe_utils_SOURCE_DIR "@PROJECT_SOURCE_DIR@")
 set_and_check(Libatframe_utils_INCLUDE_DIRS "@PACKAGE_INCLUDE_INSTALL_DIR@")
 set_and_check(Libatframe_utils_LIBRARY_DIRS "@PACKAGE_CMAKE_INSTALL_LIBDIR@")
 
+include("${CMAKE_CURRENT_LIST_DIR}/@PROJECT_LIB_EXPORT_NAME@.cmake")
 
 # Normal search.
-set(Libatframe_utils_NAMES atframe_utils libatframe_utils)
-
-# Try each search configuration.
-find_library(Libatframe_utils_LIBRARIES    NAMES ${Libatframe_utils_NAMES}    PATHS ${Libatframe_utils_LIBRARY_DIRS} NO_DEFAULT_PATH)
-
-mark_as_advanced(Libatframe_utils_INCLUDE_DIRS Libatframe_utils_LIBRARY_DIRS Libatframe_utils_LIBRARIES Libcotask_LIBRARIES)
+set(Libatframe_utils_LIBRARIES atframe::atframe_utils)
+set(Libatframe_utils_DYNAMIC_LIBRARIES atframe::atframe_utils_dyn)
 
 # handle the QUIETLY and REQUIRED arguments and set LIBATFRAME_UTILS_FOUND to TRUE if
 # all listed variables are TRUE
 include("FindPackageHandleStandardArgs")
 FIND_PACKAGE_HANDLE_STANDARD_ARGS(Libatframe_utils 
     FOUND_VAR Libatframe_utils_FOUND
-    REQUIRED_VARS Libatframe_utils_INCLUDE_DIRS Libatframe_utils_LIBRARIES)
+    REQUIRED_VARS Libatframe_utils_INCLUDE_DIRS)
 
 if (Libatframe_utils_FOUND)
     set(LIBATFRAME_UTILS_FOUND ${Libatframe_utils_FOUND})

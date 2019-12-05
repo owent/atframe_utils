@@ -24,6 +24,7 @@
 #include <vector>
 
 #include <std/explicit_declare.h>
+#include <config/compile_optimize.h>
 
 #if defined(__CYGWIN__) // Windows Cygwin
 #define UTIL_FS_POSIX_API
@@ -66,7 +67,7 @@
 
 
 namespace util {
-    class file_system {
+    class UTIL_SYMBOL_VISIBLE file_system {
     public:
         static const char DIRECTORY_SEPARATOR =
 #ifdef _WIN32

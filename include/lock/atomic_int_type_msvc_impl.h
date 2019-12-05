@@ -22,6 +22,8 @@
 
 #include <stdint.h>
 
+#include "config/atframe_utils_build_feature.h"
+
 namespace util {
     namespace lock {
 
@@ -37,10 +39,10 @@ namespace util {
         namespace detail {
 
             template <int INT_SIZE>
-            struct atomic_msvc_oprs;
+            struct LIBATFRAME_UTILS_API_HEAD_ONLY atomic_msvc_oprs;
 
             template <>
-            struct atomic_msvc_oprs<1> {
+            struct LIBATFRAME_UTILS_API_HEAD_ONLY atomic_msvc_oprs<1> {
                 typedef SHORT opr_t;
 
                 static opr_t exchange(volatile opr_t *target, opr_t value, ::util::lock::memory_order order) {
@@ -113,7 +115,7 @@ namespace util {
             };
 
             template <>
-            struct atomic_msvc_oprs<2> {
+            struct LIBATFRAME_UTILS_API_HEAD_ONLY atomic_msvc_oprs<2> {
                 typedef SHORT opr_t;
 
                 static opr_t exchange(volatile opr_t *target, opr_t value, ::util::lock::memory_order order) {
@@ -208,7 +210,7 @@ namespace util {
             };
 
             template <>
-            struct atomic_msvc_oprs<4> {
+            struct LIBATFRAME_UTILS_API_HEAD_ONLY atomic_msvc_oprs<4> {
                 typedef LONG opr_t;
 
                 static opr_t exchange(volatile opr_t *target, opr_t value, ::util::lock::memory_order order) {
@@ -282,7 +284,7 @@ namespace util {
             };
 
             template <>
-            struct atomic_msvc_oprs<8> {
+            struct LIBATFRAME_UTILS_API_HEAD_ONLY atomic_msvc_oprs<8> {
                 typedef LONGLONG opr_t;
 
                 static opr_t exchange(volatile opr_t *target, opr_t value, ::util::lock::memory_order order) {
@@ -402,7 +404,7 @@ namespace util {
             };
 
             template <int INT_SIZE>
-            struct atomic_msvc_oprs {
+            struct LIBATFRAME_UTILS_API_HEAD_ONLY atomic_msvc_oprs {
                 typedef LONGLONG opr_t;
 
                 static opr_t exchange(volatile opr_t *target, opr_t value, ::util::lock::memory_order order) {

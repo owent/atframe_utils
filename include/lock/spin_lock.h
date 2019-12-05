@@ -163,7 +163,7 @@ namespace util {
          * @brief 自旋锁
          * @see http://www.boost.org/doc/libs/1_61_0/doc/html/atomic/usage_examples.html#boost_atomic.usage_examples.example_spinlock
          */
-        class spin_lock {
+        class LIBATFRAME_UTILS_API_HEAD_ONLY spin_lock {
         private:
             typedef enum { UNLOCKED = 0, LOCKED = 1 } lock_state_t;
             ::util::lock::atomic_int_type<

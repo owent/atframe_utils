@@ -23,7 +23,7 @@
 
 namespace util {
     namespace lock {
-        class spin_rw_lock {
+        class LIBATFRAME_UTILS_API_HEAD_ONLY spin_rw_lock {
         private:
             ::util::lock::atomic_int_type<
 #if defined(LOCK_DISABLE_MT) && LOCK_DISABLE_MT

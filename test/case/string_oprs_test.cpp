@@ -8,48 +8,48 @@
 
 CASE_TEST(string_oprs, version_compare) {
 
-    CASE_EXPECT_EQ(-1, util::string::version_compare("1.0.0.0", "1.0.0.1"));
-    CASE_EXPECT_EQ(1, util::string::version_compare("1.0.0.1", "1.0.0.0"));
-    CASE_EXPECT_EQ(0, util::string::version_compare("1.0.0.1", "1.0.0.1"));
+    CASE_EXPECT_EQ(-1, util_string_version_compare("1.0.0.0", "1.0.0.1"));
+    CASE_EXPECT_EQ(1, util_string_version_compare("1.0.0.1", "1.0.0.0"));
+    CASE_EXPECT_EQ(0, util_string_version_compare("1.0.0.1", "1.0.0.1"));
 
 
-    CASE_EXPECT_EQ(0, util::string::version_compare("2.3.4.0", "2.3.4"));
-    CASE_EXPECT_EQ(0, util::string::version_compare("0.2.3.4", ".2.3.4"));
+    CASE_EXPECT_EQ(0, util_string_version_compare("2.3.4.0", "2.3.4"));
+    CASE_EXPECT_EQ(0, util_string_version_compare("0.2.3.4", ".2.3.4"));
 
-    CASE_EXPECT_EQ(1, util::string::version_compare("1.2.3.4", "0.2.3.4"));
-    CASE_EXPECT_EQ(-1, util::string::version_compare("1.2.3.4", "2.3.4"));
-    CASE_EXPECT_EQ(1, util::string::version_compare("1.2.3.4", ".2.3.4"));
+    CASE_EXPECT_EQ(1, util_string_version_compare("1.2.3.4", "0.2.3.4"));
+    CASE_EXPECT_EQ(-1, util_string_version_compare("1.2.3.4", "2.3.4"));
+    CASE_EXPECT_EQ(1, util_string_version_compare("1.2.3.4", ".2.3.4"));
 
-    CASE_EXPECT_EQ(-1, util::string::version_compare("0.2.3.4", "1.2.3.4"));
-    CASE_EXPECT_EQ(1, util::string::version_compare("2.3.4", "1.2.3.4"));
-    CASE_EXPECT_EQ(-1, util::string::version_compare(".2.3.4", "1.2.3.4"));
-
-
-    CASE_EXPECT_EQ(0, util::string::version_compare("3.4.0.0.0.0", "3.4"));
-    CASE_EXPECT_EQ(0, util::string::version_compare("", "0.0.0.0"));
+    CASE_EXPECT_EQ(-1, util_string_version_compare("0.2.3.4", "1.2.3.4"));
+    CASE_EXPECT_EQ(1, util_string_version_compare("2.3.4", "1.2.3.4"));
+    CASE_EXPECT_EQ(-1, util_string_version_compare(".2.3.4", "1.2.3.4"));
 
 
-    CASE_EXPECT_EQ(0, util::string::version_compare("1.2.3.4", "1.2.3.4"));
-    CASE_EXPECT_EQ(0, util::string::version_compare("   1.2.3.4", "1.2.3.4"));
-    CASE_EXPECT_EQ(0, util::string::version_compare("1  .2.3.4", "1.2.3.4"));
-    CASE_EXPECT_EQ(0, util::string::version_compare("1.  2.3.4", "1.2.3.4"));
-    CASE_EXPECT_EQ(0, util::string::version_compare("1.2  .3.4", "1.2.3.4"));
-    CASE_EXPECT_EQ(0, util::string::version_compare("1.2  .  3.4", "1.2.3.4"));
-    CASE_EXPECT_EQ(0, util::string::version_compare("1.2  .  3  .4", "1.2.3.4"));
-    CASE_EXPECT_EQ(0, util::string::version_compare("1.2  .  3  .4  ", "1.2.3.4"));
+    CASE_EXPECT_EQ(0, util_string_version_compare("3.4.0.0.0.0", "3.4"));
+    CASE_EXPECT_EQ(0, util_string_version_compare("", "0.0.0.0"));
+
+
+    CASE_EXPECT_EQ(0, util_string_version_compare("1.2.3.4", "1.2.3.4"));
+    CASE_EXPECT_EQ(0, util_string_version_compare("   1.2.3.4", "1.2.3.4"));
+    CASE_EXPECT_EQ(0, util_string_version_compare("1  .2.3.4", "1.2.3.4"));
+    CASE_EXPECT_EQ(0, util_string_version_compare("1.  2.3.4", "1.2.3.4"));
+    CASE_EXPECT_EQ(0, util_string_version_compare("1.2  .3.4", "1.2.3.4"));
+    CASE_EXPECT_EQ(0, util_string_version_compare("1.2  .  3.4", "1.2.3.4"));
+    CASE_EXPECT_EQ(0, util_string_version_compare("1.2  .  3  .4", "1.2.3.4"));
+    CASE_EXPECT_EQ(0, util_string_version_compare("1.2  .  3  .4  ", "1.2.3.4"));
 }
 
 CASE_TEST(string_oprs, version_normalize) {
-    std::string t1  = util::string::version_normalize("1.2.3.4");
-    std::string t2  = util::string::version_normalize("   \t\r  \n1. 2.   3  . 4 \t");
-    std::string t3  = util::string::version_normalize("..3.4");
-    std::string t4  = util::string::version_normalize("1.2..");
-    std::string t5  = util::string::version_normalize("1...4");
-    std::string t6  = util::string::version_normalize("1.2.0.0...");
-    std::string t7  = util::string::version_normalize("0.0.0...");
-    std::string t8  = util::string::version_normalize("....");
-    std::string t9  = util::string::version_normalize("0");
-    std::string t10 = util::string::version_normalize("");
+    std::string t1  = util_string_version_normalize("1.2.3.4");
+    std::string t2  = util_string_version_normalize("   \t\r  \n1. 2.   3  . 4 \t");
+    std::string t3  = util_string_version_normalize("..3.4");
+    std::string t4  = util_string_version_normalize("1.2..");
+    std::string t5  = util_string_version_normalize("1...4");
+    std::string t6  = util_string_version_normalize("1.2.0.0...");
+    std::string t7  = util_string_version_normalize("0.0.0...");
+    std::string t8  = util_string_version_normalize("....");
+    std::string t9  = util_string_version_normalize("0");
+    std::string t10 = util_string_version_normalize("");
 
     CASE_EXPECT_EQ("1.2.3.4", t1.c_str());
     CASE_EXPECT_EQ("1.2.3.4", t2.c_str());

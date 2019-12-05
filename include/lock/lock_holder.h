@@ -20,12 +20,13 @@
 #include <cstring>
 
 #include "config/compiler_features.h"
+#include "config/atframe_utils_build_feature.h"
 
 namespace util {
     namespace lock {
         namespace detail {
             template <typename TLock>
-            struct default_lock_action {
+            struct LIBATFRAME_UTILS_API_HEAD_ONLY default_lock_action {
                 bool operator()(TLock &lock) const {
                     lock.lock();
                     return true;
@@ -33,22 +34,22 @@ namespace util {
             };
 
             template <typename TLock>
-            struct default_try_lock_action {
+            struct LIBATFRAME_UTILS_API_HEAD_ONLY default_try_lock_action {
                 bool operator()(TLock &lock) const { return lock.try_lock(); }
             };
 
             template <typename TLock>
-            struct default_unlock_action {
+            struct LIBATFRAME_UTILS_API_HEAD_ONLY default_unlock_action {
                 void operator()(TLock &lock) const { lock.unlock(); }
             };
 
             template <typename TLock>
-            struct default_try_unlock_action {
+            struct LIBATFRAME_UTILS_API_HEAD_ONLY default_try_unlock_action {
                 bool operator()(TLock &lock) const { return lock.try_unlock(); }
             };
 
             template <typename TLock>
-            struct default_read_lock_action {
+            struct LIBATFRAME_UTILS_API_HEAD_ONLY default_read_lock_action {
                 bool operator()(TLock &lock) const {
                     lock.read_lock();
                     return true;
@@ -56,12 +57,12 @@ namespace util {
             };
 
             template <typename TLock>
-            struct default_read_unlock_action {
+            struct LIBATFRAME_UTILS_API_HEAD_ONLY default_read_unlock_action {
                 void operator()(TLock &lock) const { lock.read_unlock(); }
             };
 
             template <typename TLock>
-            struct default_write_lock_action {
+            struct LIBATFRAME_UTILS_API_HEAD_ONLY default_write_lock_action {
                 bool operator()(TLock &lock) const {
                     lock.write_lock();
                     return true;
@@ -69,14 +70,14 @@ namespace util {
             };
 
             template <typename TLock>
-            struct default_write_unlock_action {
+            struct LIBATFRAME_UTILS_API_HEAD_ONLY default_write_unlock_action {
                 void operator()(TLock &lock) const { lock.write_unlock(); }
             };
         } // namespace detail
 
         template <typename TLock, typename TLockAct = detail::default_lock_action<TLock>,
                   typename TUnlockAct = detail::default_unlock_action<TLock> >
-        class lock_holder {
+        class LIBATFRAME_UTILS_API_HEAD_ONLY lock_holder {
         public:
             typedef TLock value_type;
 
@@ -103,7 +104,7 @@ namespace util {
         };
 
         template <typename TLock>
-        class read_lock_holder
+        class LIBATFRAME_UTILS_API_HEAD_ONLY read_lock_holder
             : public lock_holder<TLock, detail::default_read_lock_action<TLock>, detail::default_read_unlock_action<TLock> > {
         public:
             read_lock_holder(TLock &lock)
@@ -111,7 +112,7 @@ namespace util {
         };
 
         template <typename TLock>
-        class write_lock_holder
+        class LIBATFRAME_UTILS_API_HEAD_ONLY write_lock_holder
             : public lock_holder<TLock, detail::default_write_lock_action<TLock>, detail::default_write_unlock_action<TLock> > {
         public:
             write_lock_holder(TLock &lock)

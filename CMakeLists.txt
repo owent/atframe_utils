@@ -40,7 +40,8 @@ file(GLOB_RECURSE SRC_LIST "${PROJECT_ALL_SOURCE_DIR}/*.c" "${PROJECT_ALL_SOURCE
 file(GLOB_RECURSE HEADER_LIST "${PROJECT_ALL_INCLUDE_DIR}/*.h" "${PROJECT_ALL_INCLUDE_DIR}/*.hpp")
 
 # lib名称
-set(PROJECT_LIB_LINK atframe_utils)
+set(PROJECT_LIB_NAME atframe_utils)
+set(PROJECT_LIB_EXPORT_NAME "${PROJECT_LIB_NAME}-target")
 
 if (COMPILER_STRICT_EXTRA_CFLAGS)
     add_definitions(${COMPILER_STRICT_EXTRA_CFLAGS})
@@ -53,13 +54,29 @@ endif ()
 source_group_by_dir(HEADER_LIST)
 source_group_by_dir(SRC_LIST)
 
-add_library(${PROJECT_LIB_LINK} STATIC ${HEADER_LIST} ${SRC_LIST})
-set_target_properties(${PROJECT_LIB_LINK} PROPERTIES 
-    C_VISIBILITY_PRESET "default"
-    CXX_VISIBILITY_PRESET "default"
-)
+if(BUILD_SHARED_LIBS)
+    add_library(${PROJECT_LIB_NAME} SHARED ${HEADER_LIST} ${SRC_LIST})
+    set_target_properties(${PROJECT_LIB_NAME} PROPERTIES 
+        C_VISIBILITY_PRESET "default"
+        CXX_VISIBILITY_PRESET "default"
+    )
+    target_compile_definitions(${PROJECT_LIB_NAME}
+        PRIVATE LIBATFRAME_UTILS_API_NATIVE=1 LIBATFRAME_UTILS_API_DLL=1
+    )
+    set_target_properties(${PROJECT_LIB_NAME} PROPERTIES INTERFACE_COMPILE_DEFINITIONS LIBATFRAME_UTILS_API_DLL=1)
+else ()
+    add_library(${PROJECT_LIB_NAME} STATIC ${HEADER_LIST} ${SRC_LIST})
+    set_target_properties(${PROJECT_LIB_NAME} PROPERTIES 
+        C_VISIBILITY_PRESET "default"
+        CXX_VISIBILITY_PRESET "default"
+    )
+    target_compile_definitions(${PROJECT_LIB_NAME}
+        PRIVATE LIBATFRAME_UTILS_API_NATIVE=1
+    )
+endif()
+
 if (MSVC)
-    set_property(TARGET ${PROJECT_LIB_LINK} PROPERTY FOLDER "atframework")
+    set_property(TARGET ${PROJECT_LIB_NAME} PROPERTY FOLDER "atframework")
 endif (MSVC)
 
 if (OPENSSL_FOUND)
@@ -83,7 +100,13 @@ if (LOG_STACKTRACE_USING_LIBUNWIND)
     list(APPEND PROJECT_DEP_LINK_NAMES ${Libunwind_LIBRARIES})
 endif()
 
-target_link_libraries(${PROJECT_LIB_LINK} ${PROJECT_DEP_LINK_NAMES})
+target_link_libraries(${PROJECT_LIB_NAME} ${PROJECT_DEP_LINK_NAMES})
+target_link_libraries(${PROJECT_LIB_DYNAMIC_NAME} ${PROJECT_LIB_NAME}
+    ${ATFRAME_UTILS_NETWORK_LINK_NAME}
+    ${ATFRAME_UTILS_BIN_CRYPT_LINK_NAME}
+    ${PROJECT_DEP_LINK_NAMES}
+    ${COMPILER_OPTION_EXTERN_CXX_LIBS}
+)
 
 configure_file(
     "${PROJECT_ALL_INCLUDE_DIR}/config/atframe_utils_build_feature.h.in"
@@ -99,7 +122,8 @@ if (PROJECT_ENABLE_UNITTEST)
     add_subdirectory("${CMAKE_CURRENT_LIST_DIR}/test")
 endif()
 
-install(TARGETS ${PROJECT_LIB_LINK}
+install(TARGETS ${PROJECT_LIB_NAME}
+    EXPORT ${PROJECT_LIB_EXPORT_NAME}
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
     ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
@@ -111,7 +135,6 @@ install(DIRECTORY ${PROJECT_ALL_INCLUDE_DIR}
     PATTERN ".svn" EXCLUDE
     PATTERN ".git" EXCLUDE
 )
-
 
 ## 生成文档和导入配置
 
@@ -137,7 +160,19 @@ write_basic_package_version_file(
     COMPATIBILITY SameMajorVersion
 )
 
+export(TARGETS ${PROJECT_LIB_NAME}
+    FILE "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/cmake/${PROJECT_LIB_EXPORT_NAME}.cmake"
+    NAMESPACE atframe::
+    EXPORT_LINK_INTERFACE_LIBRARIES
+)
+
 install(
     FILES "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/cmake/libatframe_utils-config.cmake" "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/cmake/libatframe_utils-config-version.cmake"
+    DESTINATION ${CMAKE_INSTALL_CMAKEDIR}
+)
+
+install(
+    EXPORT ${PROJECT_LIB_EXPORT_NAME}
+    NAMESPACE "atframe::"
     DESTINATION ${CMAKE_INSTALL_CMAKEDIR}
 )

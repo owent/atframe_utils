@@ -10,7 +10,7 @@ CMAKE_OPTIONS="";
 CMAKE_CLANG_TIDY="";
 CMAKE_CLANG_ANALYZER=0;
 CMAKE_CLANG_ANALYZER_PATH="";
-BUILD_DIR=$(echo "build_$SYS_NAME" | tr '[:upper:]' '[:lower:]');
+BUILD_DIR=$(echo "build_jobs_$SYS_NAME" | tr '[:upper:]' '[:lower:]');
 CMAKE_BUILD_TYPE=Debug;
 
 if [ ! -z "$MSYSTEM" ]; then

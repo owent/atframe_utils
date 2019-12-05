@@ -164,6 +164,8 @@ if(NOT DEFINED __COMPILER_OPTION_LOADED)
         endif()
     elseif(MSVC)
         list(APPEND COMPILER_STRICT_CFLAGS /W4 /wd4100 /wd4125 /wd4566 /wd4127 /wd4512 /WX)
+        add_linker_flags_for_runtime(/ignore:4217)
+        
         add_definitions(/MP /EHsc)
         if (MSVC_VERSION GREATER_EQUAL 1910)
             add_definitions(/std:c++17)

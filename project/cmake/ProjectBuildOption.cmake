@@ -66,12 +66,17 @@ if (ENABLE_NETWORK)
 
     # curl
     find_package(CURL)
-    if(CURL_FOUND)
+    if(CURL_FOUND AND CURL_LIBRARIES)
         message(STATUS "Curl support enabled")
         set(NETWORK_ENABLE_CURL 1)
         include_directories(${CURL_INCLUDE_DIRS})
+        list(APPEND ATFRAME_UTILS_NETWORK_LINK_NAME ${CURL_LIBRARIES})
     else()
         message(STATUS "Curl support disabled")
+    endif()
+
+    if(Libuv_FOUND)
+        list(APPEND ATFRAME_UTILS_NETWORK_LINK_NAME ${Libuv_LIBRARIES})
     endif()
 endif()
 

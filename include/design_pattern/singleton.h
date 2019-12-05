@@ -14,6 +14,8 @@
  *   2012.07.20 为线程安全而改进实现方式
  *   2015.01.10 改为使用双检锁实现线程安全
  *   2015.11.02 增加内存屏障，保证极端情况下多线程+编译优化导致的指令乱序问题
+ *   2019-12-05 移除对noncopyable的继承链，以适应用于dllexport时自带的 util::design_pattern::noncopyable 未导出的问题
+ *              增加nomovable实现
  */
 
 #ifndef UTILS_DESIGNPATTERN_SINGLETON_H
@@ -24,18 +26,38 @@
 #include <cstddef>
 #include <memory>
 
-#include "noncopyable.h"
+#include <config/compiler_features.h>
+#include <config/compile_optimize.h>
 
-#include "lock/spin_lock.h"
 #include "lock/lock_holder.h"
+#include "lock/spin_lock.h"
 #include "std/smart_ptr.h"
+
+/**
+ * @brief if you are under Windows, you may want to declare import/export of singleton<T>
+ * @usage UTIL_DESIGN_PATTERN_SINGLETON_IMPORT(Your Class Name)
+ *        UTIL_DESIGN_PATTERN_SINGLETON_EXPORT(Your Class Name)
+ */
+#if defined(_WIN32) || defined(__WIN32__) || defined(WIN32) || defined(__CYGWIN__)
+    #define UTIL_DESIGN_PATTERN_SINGLETON_IMPORT(T)                                         \
+        template UTIL_SYMBOL_IMPORT ::util::design_pattern::wrapper::singleton_wrapper<T>   \
+        template UTIL_SYMBOL_IMPORT ::util::design_pattern::singleton<T>;
+        
+    #define UTIL_DESIGN_PATTERN_SINGLETON_EXPORT(T)                                         \
+        template UTIL_SYMBOL_EXPORT ::util::design_pattern::wrapper::singleton_wrapper<T>   \
+        template UTIL_SYMBOL_EXPORT ::util::design_pattern::singleton<T>;
+
+#else
+    #define UTIL_DESIGN_PATTERN_SINGLETON_IMPORT(T)
+    #define UTIL_DESIGN_PATTERN_SINGLETON_EXPORT(T)
+#endif
 
 namespace util {
     namespace design_pattern {
 
         namespace wrapper {
             template <class T>
-            class singleton_wrapper : public T {
+            class UTIL_SYMBOL_VISIBLE singleton_wrapper : public T {
             public:
                 static bool destroyed_;
                 ~singleton_wrapper() { destroyed_ = true; }
@@ -43,17 +65,24 @@ namespace util {
 
             template <class T>
             bool singleton_wrapper<T>::destroyed_ = false;
-        }
+        } // namespace wrapper
 
         template <typename T>
-        class singleton : public noncopyable {
+        class UTIL_SYMBOL_VISIBLE singleton {
         public:
             /**
              * @brief 自身类型声明
              */
-            typedef T self_type;
+            typedef T                          self_type;
             typedef std::shared_ptr<self_type> ptr_t;
 
+        private:
+            singleton(const singleton &) UTIL_CONFIG_DELETED_FUNCTION;
+            singleton &operator=(const singleton &) UTIL_CONFIG_DELETED_FUNCTION;
+#if defined(UTIL_CONFIG_COMPILER_CXX_RVALUE_REFERENCES) && UTIL_CONFIG_COMPILER_CXX_RVALUE_REFERENCES
+            singleton(singleton &&) UTIL_CONFIG_DELETED_FUNCTION;
+            singleton &operator=(singleton &&) UTIL_CONFIG_DELETED_FUNCTION;
+#endif
         protected:
             /**
              * @brief 虚类，禁止直接构造
@@ -85,13 +114,13 @@ namespace util {
             static self_type *instance() { return me().get(); }
 
             /**
-            * @brief 获取原始指针
-            * @return T* instance
-            */
+             * @brief 获取原始指针
+             * @return T* instance
+             */
             static ptr_t &me() {
                 static ptr_t inst;
                 if (!inst) {
-                    static util::lock::spin_lock lock;
+                    static util::lock::spin_lock                   lock;
                     util::lock::lock_holder<util::lock::spin_lock> lock_opr(lock);
 
                     UTIL_LOCK_ATOMIC_THREAD_FENCE(::util::lock::memory_order_acquire);
@@ -101,7 +130,7 @@ namespace util {
                         }
 
                         ptr_t new_data = std::make_shared<wrapper::singleton_wrapper<self_type> >();
-                        inst = new_data;
+                        inst           = new_data;
                     } while (false);
 
                     UTIL_LOCK_ATOMIC_THREAD_FENCE(::util::lock::memory_order_release);
@@ -117,6 +146,6 @@ namespace util {
              */
             static bool is_instance_destroyed() { return wrapper::singleton_wrapper<T>::destroyed_; }
         };
-    }
-}
+    } // namespace design_pattern
+} // namespace util
 #endif

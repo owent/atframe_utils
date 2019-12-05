@@ -89,7 +89,7 @@
 
 #include "config/compile_optimize.h"
 #include "config/compiler_features.h"
-
+#include "config/atframe_utils_build_feature.h"
 
 namespace util {
     namespace lock {
@@ -112,7 +112,7 @@ namespace util {
          * @note Ty can only be a integer or enum, can not be bool or raw pointer
          */
         template <typename Ty = int>
-        class atomic_int_type {
+        class LIBATFRAME_UTILS_API_HEAD_ONLY atomic_int_type {
         public:
             typedef Ty value_type;
 
@@ -339,7 +339,7 @@ namespace util {
 #endif
 
         template <typename Ty = int>
-        class atomic_int_type {
+        class LIBATFRAME_UTILS_API_HEAD_ONLY atomic_int_type {
         public:
             typedef Ty value_type;
 
@@ -906,12 +906,12 @@ namespace util {
 
         // used for unsafe (not multi-thread safe)
         template <typename Ty = int>
-        struct unsafe_int_type {
+        struct LIBATFRAME_UTILS_API_HEAD_ONLY unsafe_int_type {
             typedef Ty value_type;
         };
 
         template <typename Ty>
-        class atomic_int_type<unsafe_int_type<Ty> > {
+        class LIBATFRAME_UTILS_API_HEAD_ONLY atomic_int_type<unsafe_int_type<Ty> > {
         public:
             typedef typename unsafe_int_type<Ty>::value_type value_type;
 

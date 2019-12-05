@@ -30,7 +30,7 @@
 namespace util {
     namespace lock {
         template <typename Ty>
-        class seq_alloc {
+        class LIBATFRAME_UTILS_API_HEAD_ONLY seq_alloc {
         public:
             typedef Ty value_type;
 

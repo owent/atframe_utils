@@ -30,6 +30,7 @@
 
 #include <type_traits>
 
+#include <config/atframe_utils_build_feature.h>
 
 #if defined(_MSC_VER) && _MSC_VER >= 1600
 #define UTIL_STRFUNC_STRCASE_CMP(l, r) _stricmp(l, r)
@@ -70,7 +71,7 @@ namespace util {
          * @note 用于替换标准函数里参数是int类型导致的某些编译器warning问题
          */
         template <typename TCH = char>
-        static TCH tolower(TCH c) {
+        LIBATFRAME_UTILS_API_HEAD_ONLY TCH tolower(TCH c) {
             if (c >= 'A' && c <= 'Z') {
                 return static_cast<TCH>(c - 'A' + 'a');
             }
@@ -85,7 +86,7 @@ namespace util {
          * @note 用于替换标准函数里参数是int类型导致的某些编译器warning问题
          */
         template <typename TCH = char>
-        static TCH toupper(TCH c) {
+        LIBATFRAME_UTILS_API_HEAD_ONLY TCH toupper(TCH c) {
             if (c >= 'a' && c <= 'z') {
                 return static_cast<TCH>(c - 'a' + 'A');
             }
@@ -99,7 +100,7 @@ namespace util {
          * @return 如果是空白字符，返回true，否则返回false
          */
         template <typename TCH>
-        inline bool is_space(const TCH &c) {
+        LIBATFRAME_UTILS_API_HEAD_ONLY  inline bool is_space(const TCH &c) {
             return ' ' == c || '\t' == c || '\r' == c || '\n' == c;
         }
 
@@ -113,7 +114,7 @@ namespace util {
          * @note 注意，返回的字符串是源的子串，共享地址。并且不保证以0结尾，需要用返回的长度来判定子串长度
          */
         template <typename TCH>
-        std::pair<const TCH *, size_t> trim(const TCH *str_begin, size_t sz, bool trim_left = true, bool trim_right = true) {
+        LIBATFRAME_UTILS_API_HEAD_ONLY std::pair<const TCH *, size_t> trim(const TCH *str_begin, size_t sz, bool trim_left = true, bool trim_right = true) {
             if (0 == sz) {
                 const TCH *str_end = str_begin;
                 while (str_end && *str_end) {
@@ -154,7 +155,7 @@ namespace util {
          * @param end 字符串结束地址,填入NULL，则从begin开是找到\0结束
          */
         template <typename TCH, typename TCHE>
-        void reverse(TCH *begin, TCHE end_any) {
+        LIBATFRAME_UTILS_API_HEAD_ONLY void reverse(TCH *begin, TCHE end_any) {
             TCH *end = reinterpret_cast<TCH *>(end_any);
             if (NULL == begin) {
                 return;
@@ -182,12 +183,12 @@ namespace util {
         }
 
         template <typename TCH>
-        inline void reverse(TCH *begin, int end_any) {
+        LIBATFRAME_UTILS_API_HEAD_ONLY inline void reverse(TCH *begin, int end_any) {
             reverse<TCH, TCH *>(begin, reinterpret_cast<TCH *>(static_cast<intptr_t>(end_any)));
         }
 
         template <typename T>
-        size_t int2str_unsigned(char *str, size_t strsz, T in) {
+        LIBATFRAME_UTILS_API_HEAD_ONLY size_t int2str_unsigned(char *str, size_t strsz, T in) {
             if (0 == strsz) {
                 return 0;
             }
@@ -214,7 +215,7 @@ namespace util {
         }
 
         template <typename T>
-        size_t int2str_signed(char *str, size_t strsz, T in) {
+        LIBATFRAME_UTILS_API_HEAD_ONLY size_t int2str_signed(char *str, size_t strsz, T in) {
             if (0 == strsz) {
                 return 0;
             }
@@ -233,7 +234,7 @@ namespace util {
         }
 
         template <typename T>
-        struct int2str_helper {
+        struct LIBATFRAME_UTILS_API_HEAD_ONLY int2str_helper {
             typedef T                                    value_type_s;
             typedef typename std::make_unsigned<T>::type value_type_u;
 
@@ -251,7 +252,7 @@ namespace util {
          * @return 返回输出的数据长度，失败返回0
          */
         template <typename T>
-        inline size_t int2str(char *str, size_t strsz, const T &in) {
+        LIBATFRAME_UTILS_API_HEAD_ONLY inline size_t int2str(char *str, size_t strsz, const T &in) {
             size_t ret = int2str_helper<typename std::make_signed<typename std::remove_cv<T>::type>::type>::call(str, strsz, in);
             if (ret < strsz) {
                 str[ret] = 0;
@@ -267,7 +268,7 @@ namespace util {
          * @note 性能肯定比sscanf系，和iostream系高。strtol系就不知道了
          */
         template <typename T>
-        void str2int(T &out, const char *str) {
+        LIBATFRAME_UTILS_API_HEAD_ONLY void str2int(T &out, const char *str) {
             out = static_cast<T>(0);
             if (NULL == str || !(*str)) {
                 return;
@@ -320,7 +321,7 @@ namespace util {
          * @return 输出的整数
          */
         template <typename T>
-        inline T to_int(const char *str) {
+        LIBATFRAME_UTILS_API_HEAD_ONLY inline T to_int(const char *str) {
             T ret = 0;
             str2int(ret, str);
             return ret;
@@ -333,7 +334,7 @@ namespace util {
          * @param upper_case 输出大写字符？
          */
         template <typename TStr, typename TCh>
-        void hex(TStr *out, TCh c, bool upper_case = false) {
+        LIBATFRAME_UTILS_API_HEAD_ONLY void hex(TStr *out, TCh c, bool upper_case = false) {
             out[0] = static_cast<TStr>((c >> 4) & 0x0F);
             out[1] = static_cast<TStr>(c & 0x0F);
 
@@ -353,7 +354,7 @@ namespace util {
          * @param upper_case 输出大写字符？
          */
         template <typename TStr, typename TCh>
-        void oct(TStr *out, TCh c) {
+        LIBATFRAME_UTILS_API_HEAD_ONLY void oct(TStr *out, TCh c) {
             out[0] = static_cast<TStr>(((c >> 6) & 0x07) + '0');
             out[1] = static_cast<TStr>(((c >> 3) & 0x07) + '0');
             out[2] = static_cast<TStr>((c & 0x07) + '0');
@@ -367,7 +368,7 @@ namespace util {
          * @param os 输出buffer长度，回传输出缓冲区使用的长度
          */
         template <typename TCh>
-        void serialization(const void *src, size_t ss, TCh *out, size_t &os) {
+        LIBATFRAME_UTILS_API_HEAD_ONLY void serialization(const void *src, size_t ss, TCh *out, size_t &os) {
             const TCh *cs = reinterpret_cast<const TCh *>(src);
             size_t     i, j;
             for (i = 0, j = 0; i < ss && j < os; ++i) {
@@ -393,7 +394,7 @@ namespace util {
          * @param out 输出缓冲区
          */
         template <typename Elem, typename Traits>
-        void serialization(const void *src, size_t ss, std::basic_ostream<Elem, Traits> &out) {
+        LIBATFRAME_UTILS_API_HEAD_ONLY void serialization(const void *src, size_t ss, std::basic_ostream<Elem, Traits> &out) {
             const Elem *cs = reinterpret_cast<const Elem *>(src);
             size_t      i;
             for (i = 0; i < ss; ++i) {
@@ -415,7 +416,7 @@ namespace util {
          * @param upper_case 是否大写
          */
         template <typename TCh>
-        void dumphex(const void *src, size_t ss, TCh *out, bool upper_case = false) {
+        LIBATFRAME_UTILS_API_HEAD_ONLY void dumphex(const void *src, size_t ss, TCh *out, bool upper_case = false) {
             const unsigned char *cs = reinterpret_cast<const unsigned char *>(src);
             size_t               i;
             for (i = 0; i < ss; ++i) {
@@ -431,7 +432,7 @@ namespace util {
          * @param upper_case 是否大写
          */
         template <typename Elem, typename Traits>
-        void dumphex(const void *src, size_t ss, std::basic_ostream<Elem, Traits> &out, bool upper_case = false) {
+        LIBATFRAME_UTILS_API_HEAD_ONLY void dumphex(const void *src, size_t ss, std::basic_ostream<Elem, Traits> &out, bool upper_case = false) {
             const unsigned char *cs = reinterpret_cast<const unsigned char *>(src);
             size_t               i;
             Elem                 tmp[2];
@@ -447,7 +448,7 @@ namespace util {
          * @note 版本号字符串可以是十进制数字或0x开头的十六进制或\开头的八进制,且每个数字必须在int64_t以内
          * @return 返回剩余字符串地址
          */
-        const char *version_tok(const char *v, int64_t &out);
+        LIBATFRAME_UTILS_API const char * version_tok(const char *v, int64_t &out);
 
         /**
          * @brief 版本比较函数
@@ -456,7 +457,7 @@ namespace util {
          * @note 版本号字符串可以是十进制数字或0x开头的十六进制或\开头的八进制,且每个数字必须在int64_t以内
          * @return 如果l<r则返回-1，如果l>r则返回1，如果l==r则返回0
          */
-        int version_compare(const char *l, const char *r);
+        LIBATFRAME_UTILS_API int version_compare(const char *l, const char *r);
 
         /**
          * @brief 版本号字符串标准化，把版本号字符串处理为以十进制表示并以.分隔的形式。移除所有无效字符
@@ -466,8 +467,12 @@ namespace util {
          * @note 空的版本号字符串会返回0
          * @return 返回标准化的版本号字符
          */
-        std::string version_normalize(const char *v);
+        LIBATFRAME_UTILS_API std::string version_normalize(const char *v);
     } // namespace string
 } // namespace util
+
+extern "C" LIBATFRAME_UTILS_API const char * __cdecl util_string_version_tok(const char *v, int64_t &out);
+extern "C" LIBATFRAME_UTILS_API int __cdecl util_string_version_compare(const char *l, const char *r);
+LIBATFRAME_UTILS_API std::string util_string_version_normalize(const char *v);
 
 #endif /* _UTIL_COMMON_COMPILER_MESSAGE_H_ */

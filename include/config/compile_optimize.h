@@ -43,40 +43,18 @@
 // ---------------- branch prediction information ----------------
 
 // ================ import/export ================
+// @see https://gcc.gnu.org/wiki/Visibility
+// @see http://releases.llvm.org/9.0.0/tools/clang/docs/AttributeReference.html
 // 不支持 borland/sunpro_cc/xlcpp
 
 // ================ import/export: for compilers ================
-#if defined(__INTEL_COMPILER) || defined(__ICL) || defined(__ICC) || defined(__ECC)
-//  Intel
-//
-// Dynamic shared object (DSO) and dynamic-link library (DLL) support
-//
-#if defined(__GNUC__) && (__GNUC__ >= 4)
-#define UTIL_SYMBOL_EXPORT __attribute__((visibility("default")))
-#define UTIL_SYMBOL_IMPORT
-#define UTIL_SYMBOL_VISIBLE __attribute__((visibility("default")))
-#endif
-
-#elif defined __clang__ && !defined(__CUDACC__) && !defined(__ibmxl__)
-// when using clang and cuda at same time, you want to appear as gcc
-//  Clang C++ emulates GCC, so it has to appear early.
-//
-
-// Dynamic shared object (DSO) and dynamic-link library (DLL) support
-//
-#if !defined(_WIN32) && !defined(__WIN32__) && !defined(WIN32)
-#define UTIL_SYMBOL_EXPORT __attribute__((__visibility__("default")))
-#define UTIL_SYMBOL_IMPORT
-#define UTIL_SYMBOL_VISIBLE __attribute__((__visibility__("default")))
-#endif
-
-#elif defined(__GNUC__) && !defined(__ibmxl__)
-//  GNU C++:
+#if defined(__GNUC__) && !defined(__ibmxl__)
+//  GNU C++/Clang
 //
 // Dynamic shared object (DSO) and dynamic-link library (DLL) support
 //
 #if __GNUC__ >= 4
-#if (defined(_WIN32) || defined(__WIN32__) || defined(WIN32)) && !defined(__CYGWIN__)
+#if defined(_WIN32) || defined(__WIN32__) || defined(WIN32) || defined(__CYGWIN__)
 // All Win32 development environments, including 64-bit Windows and MinGW, define
 // _WIN32 or one of its variant spellings. Note that Cygwin is a POSIX environment,
 // so does not define _WIN32 or its variants.
@@ -85,15 +63,19 @@
 #define UTIL_SYMBOL_IMPORT __attribute__((__dllimport__))
 #else
 #define UTIL_SYMBOL_EXPORT __attribute__((__visibility__("default")))
-#define UTIL_SYMBOL_IMPORT
-#endif
+#define UTIL_SYMBOL_IMPORT __attribute__((__visibility__("default")))
 #define UTIL_SYMBOL_VISIBLE __attribute__((__visibility__("default")))
+#define UTIL_SYMBOL_HIDDEN __attribute__((__visibility__("hidden")))
+#endif
 #else
 // config/platform/win32.hpp will define UTIL_SYMBOL_EXPORT, etc., unless already defined
 #define UTIL_SYMBOL_EXPORT
+#define UTIL_SYMBOL_IMPORT
+#define UTIL_SYMBOL_VISIBLE
+#define UTIL_SYMBOL_HIDDEN
 #endif
 
-#elif defined _MSC_VER
+#elif defined(_MSC_VER)
 //  Microsoft Visual C++
 //
 //  Must remain the last #elif since some other vendors (Metrowerks, for
@@ -107,7 +89,7 @@
 //  If a compiler doesn't support __declspec(dllexport)/__declspec(dllimport),
 //  its boost/config/compiler/ file must define UTIL_SYMBOL_EXPORT and
 //  UTIL_SYMBOL_IMPORT
-#ifndef UTIL_SYMBOL_EXPORT
+#if !defined(UTIL_SYMBOL_EXPORT) && (defined(_WIN32) || defined(__WIN32__) || defined(WIN32) || defined(__CYGWIN__))
 #define UTIL_SYMBOL_EXPORT __declspec(dllexport)
 #define UTIL_SYMBOL_IMPORT __declspec(dllimport)
 #endif
@@ -121,6 +103,9 @@
 #endif
 #ifndef UTIL_SYMBOL_VISIBLE
 #define UTIL_SYMBOL_VISIBLE
+#endif
+#ifndef UTIL_SYMBOL_HIDDEN
+#define UTIL_SYMBOL_HIDDEN
 #endif
 
 // ---------------- import/export ----------------
