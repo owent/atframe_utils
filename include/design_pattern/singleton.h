@@ -19,11 +19,29 @@
  * 
  * @note 如果在Windows下dll请使用宏来生成函数
  *          UTIL_DESIGN_PATTERN_SINGLETON_VISIBLE_DECL(类名): visiable 标记(.lib)
- *          UTIL_DESIGN_PATTERN_SINGLETON_IMPORT_DEF(类名): visiable 标记(从其他dll中导入)
- *          UTIL_DESIGN_PATTERN_SINGLETON_EXPORT_DECL(类名): visiable 标记(从其他dll中导入)
+ *          UTIL_DESIGN_PATTERN_SINGLETON_IMPORT_DECL(类名): __attribute__((__dllimport__))/__declspec(dllimport) 标记(从其他dll中导入)
+ *          UTIL_DESIGN_PATTERN_SINGLETON_EXPORT_DECL(类名): __attribute__((__dllexport__))/__declspec(dllexport) 标记(从其他dll中导入)
  *       然后需要在源文件中使用UTIL_DESIGN_PATTERN_SINGLETON_EXPORT_DECL(类名)的模块中导出实例符号
  *          UTIL_SYMBOL_EXPORT 类名::singleton_data_t 类名::singleton_wrapper_t::data;
  *       如果单例对象不需要导出则也可以直接util::design_pattern::singleton<类名>
+ * @example 
+ *      // singleton_class.h
+ *      class singleton_class : public util::design_pattern::singleton<singleton_class> {};
+ * @example 
+ *      // singleton_class.h
+ *      class singleton_class {
+ *      #if defined(DLL_EXPORT) && DLL_EXPORT
+ *         UTIL_DESIGN_PATTERN_SINGLETON_EXPORT_DECL(singleton_class)
+ *      #else
+ *         UTIL_DESIGN_PATTERN_SINGLETON_IMPORT_DECL(singleton_class)
+ *      #endif
+ *      };
+ *      // singleton_class.cpp
+ *      #if defined(DLL_EXPORT) && DLL_EXPORT
+ *          UTIL_SYMBOL_EXPORT singleton_class::singleton_data_t singleton_class::singleton_wrapper_t::data;
+ *      #else
+ *          UTIL_SYMBOL_IMPORT singleton_class::singleton_data_t singleton_class::singleton_wrapper_t::data;
+ *      #endif
  */
 
 #ifndef UTILS_DESIGNPATTERN_SINGLETON_H
@@ -111,7 +129,8 @@ public:                                                                         
     static LABEL const T &get_const_instance() { return get_instance(); }                       \
     static LABEL self_type *instance() { return singleton_wrapper_t::me().get(); }              \
     static LABEL std::shared_ptr<CLAZZ> &me() { return singleton_wrapper_t::me(); }             \
-    static LABEL bool is_instance_destroyed() { return singleton_wrapper_t::data.destroyed; }
+    static LABEL bool is_instance_destroyed() { return singleton_wrapper_t::data.destroyed; }   \
+private:
 
 
 #define UTIL_DESIGN_PATTERN_SINGLETON_VISIBLE_DECL(CLAZZ)                                       \
