@@ -101,7 +101,8 @@ private:                                                                        
             return data.instance;                                                               \
         }                                                                                       \
     };                                                                                          \
-protected:                                                                                      \
+private:                                                                                        \
+    friend class singleton_wrapper_t;                                                           \
     BASE_CLAZZ(const BASE_CLAZZ &) UTIL_CONFIG_DELETED_FUNCTION;                                \
     BASE_CLAZZ &operator=(const BASE_CLAZZ &) UTIL_CONFIG_DELETED_FUNCTION;                     \
     UTIL_DESIGN_PATTERN_SINGLETON_NOMAVLBLE(BASE_CLAZZ)                                         \
