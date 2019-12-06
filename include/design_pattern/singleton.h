@@ -99,6 +99,8 @@ private:                                                                        
         util::lock::spin_lock lock;                                                             \
         singleton_data_t(): destroyed(false) {}                                                 \
     };                                                                                          \
+    template<class TCLASS>                                                                      \
+    class singleton_wrapper_permission_t : public TCLASS { };                                   \
     class LABEL singleton_wrapper_t {                                                           \
     public:                                                                                     \
         typedef std::shared_ptr<CLAZZ> ptr_t;                                                   \
@@ -118,7 +120,7 @@ private:                                                                        
                     if (data.instance) {                                                        \
                         break;                                                                  \
                     }                                                                           \
-                    ptr_t new_data = ptr_t(new CLAZZ(), deleter());                             \
+                    ptr_t new_data = ptr_t(new singleton_wrapper_permission_t<CLAZZ>(), deleter()); \
                     data.instance    = new_data;                                                \
                 } while (false);                                                                \
                 UTIL_LOCK_ATOMIC_THREAD_FENCE(::util::lock::memory_order_release);              \

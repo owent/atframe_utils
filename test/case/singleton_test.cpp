@@ -7,6 +7,9 @@ class singleton_unit_test : public util::design_pattern::singleton<singleton_uni
 public:
     bool b;
     int i;
+
+protected:
+    singleton_unit_test(): b(false), i(-1) {}
 };
 
 CASE_TEST(singleton_test, instance) {
