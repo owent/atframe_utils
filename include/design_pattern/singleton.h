@@ -92,6 +92,8 @@
 
 #define UTIL_DESIGN_PATTERN_SINGLETON_DEF_FUNCS(LABEL, CLAZZ, BASE_CLAZZ)                       \
 private:                                                                                        \
+    template<class TCLASS>                                                                      \
+    class singleton_wrapper_permission_t : public TCLASS { };                                   \
     class LABEL singleton_data_t {                                                              \
     public:                                                                                     \
         bool destroyed;                                                                         \
@@ -99,14 +101,13 @@ private:                                                                        
         util::lock::spin_lock lock;                                                             \
         singleton_data_t(): destroyed(false) {}                                                 \
     };                                                                                          \
-    template<class TCLASS>                                                                      \
-    class singleton_wrapper_permission_t : public TCLASS { };                                   \
     class LABEL singleton_wrapper_t {                                                           \
     public:                                                                                     \
+        typedef std::shared_ptr<singleton_wrapper_permission_t<CLAZZ> > ptr_permission_t;       \
         typedef std::shared_ptr<CLAZZ> ptr_t;                                                   \
         static LABEL singleton_data_t data;                                                     \
         struct deleter {                                                                        \
-            void operator()(CLAZZ* p) const {                                                   \
+            void operator()(singleton_wrapper_permission_t<CLAZZ>* p) const {                   \
                 data.destroyed = true;                                                          \
                 delete p;                                                                       \
             }                                                                                   \
@@ -120,7 +121,7 @@ private:                                                                        
                     if (data.instance) {                                                        \
                         break;                                                                  \
                     }                                                                           \
-                    ptr_t new_data = ptr_t(new singleton_wrapper_permission_t<CLAZZ>(), deleter()); \
+                    ptr_t new_data = std::static_pointer_cast<CLAZZ>(ptr_permission_t(new singleton_wrapper_permission_t<CLAZZ>(), deleter())); \
                     data.instance    = new_data;                                                \
                 } while (false);                                                                \
                 UTIL_LOCK_ATOMIC_THREAD_FENCE(::util::lock::memory_order_release);              \

@@ -10,6 +10,7 @@ public:
 
 protected:
     singleton_unit_test(): b(false), i(-1) {}
+    ~singleton_unit_test() {}
 };
 
 CASE_TEST(singleton_test, instance) {
