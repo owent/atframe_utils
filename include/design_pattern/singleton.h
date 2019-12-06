@@ -16,6 +16,14 @@
  *   2015.11.02 增加内存屏障，保证极端情况下多线程+编译优化导致的指令乱序问题
  *   2019-12-05 移除对noncopyable的继承链，以适应用于dllexport时自带的 util::design_pattern::noncopyable 未导出的问题
  *              增加nomovable实现
+ * 
+ * @note 如果在Windows下dll请使用宏来生成函数
+ *          UTIL_DESIGN_PATTERN_SINGLETON_VISIBLE_DECL(类名): visiable 标记(.lib)
+ *          UTIL_DESIGN_PATTERN_SINGLETON_IMPORT_DEF(类名): visiable 标记(从其他dll中导入)
+ *          UTIL_DESIGN_PATTERN_SINGLETON_EXPORT_DECL(类名): visiable 标记(从其他dll中导入)
+ *       然后需要在源文件中使用UTIL_DESIGN_PATTERN_SINGLETON_EXPORT_DECL(类名)的模块中导出实例符号
+ *          UTIL_SYMBOL_EXPORT 类名::singleton_data_t 类名::singleton_wrapper_t::data;
+ *       如果单例对象不需要导出则也可以直接util::design_pattern::singleton<类名>
  */
 
 #ifndef UTILS_DESIGNPATTERN_SINGLETON_H
@@ -39,12 +47,12 @@
  *        UTIL_DESIGN_PATTERN_SINGLETON_EXPORT(Your Class Name)
  */
 #if defined(_WIN32) || defined(__WIN32__) || defined(WIN32) || defined(__CYGWIN__)
-    #define UTIL_DESIGN_PATTERN_SINGLETON_IMPORT(T)                                                 \
-        template class UTIL_SYMBOL_IMPORT ::util::design_pattern::wrapper::singleton_wrapper<T>;    \
+    #define UTIL_DESIGN_PATTERN_SINGLETON_IMPORT(T)                                                         \
+        UTIL_SYMBOL_IMPORT bool ::util::design_pattern::wrapper::singleton_wrapper<T>::destroyed_ = false;  \
         template class UTIL_SYMBOL_IMPORT ::util::design_pattern::singleton<T>;
         
-    #define UTIL_DESIGN_PATTERN_SINGLETON_EXPORT(T)                                                 \
-        template class UTIL_SYMBOL_EXPORT ::util::design_pattern::wrapper::singleton_wrapper<T>;    \
+    #define UTIL_DESIGN_PATTERN_SINGLETON_EXPORT(T)                                                         \
+        UTIL_SYMBOL_EXPORT bool ::util::design_pattern::wrapper::singleton_wrapper<T>::destroyed_ = false;  \
         template class UTIL_SYMBOL_EXPORT ::util::design_pattern::singleton<T>;
 
 #else
@@ -52,22 +60,72 @@
     #define UTIL_DESIGN_PATTERN_SINGLETON_EXPORT(T)
 #endif
 
+#if defined(UTIL_CONFIG_COMPILER_CXX_RVALUE_REFERENCES) && UTIL_CONFIG_COMPILER_CXX_RVALUE_REFERENCES
+#define UTIL_DESIGN_PATTERN_SINGLETON_NOMAVLBLE(CLAZZ)              \
+            CLAZZ(CLAZZ &&) UTIL_CONFIG_DELETED_FUNCTION;           \
+            CLAZZ &operator=(CLAZZ &&) UTIL_CONFIG_DELETED_FUNCTION;
+#else
+#define UTIL_DESIGN_PATTERN_SINGLETON_NOMAVLBLE(CLAZZ)
+#endif
+
+#define UTIL_DESIGN_PATTERN_SINGLETON_DEF_FUNCS(LABEL, CLAZZ, BASE_CLAZZ)                       \
+private:                                                                                        \
+    class LABEL singleton_data_t {                                                              \
+    public:                                                                                     \
+        bool destroyed;                                                                         \
+        std::shared_ptr<CLAZZ> instance;                                                        \
+        util::lock::spin_lock lock;                                                             \
+        singleton_data_t(): destroyed(false) {}                                                 \
+    };                                                                                          \
+    class singleton_wrapper_t : public CLAZZ {                                                  \
+    public:                                                                                     \
+        typedef std::shared_ptr<CLAZZ> ptr_t;                                                   \
+        static LABEL singleton_data_t data;                                                     \
+        singleton_wrapper_t() {}                                                                \
+        ~singleton_wrapper_t() { data.destroyed = true; }                                       \
+        static LABEL void use(CLAZZ const &) {}                                                 \
+        static LABEL ptr_t &me() {                                                              \
+            if (!data.instance) {                                                               \
+                util::lock::lock_holder<util::lock::spin_lock> lock_opr(data.lock);             \
+                UTIL_LOCK_ATOMIC_THREAD_FENCE(::util::lock::memory_order_acquire);              \
+                do {                                                                            \
+                    if (data.instance) {                                                        \
+                        break;                                                                  \
+                    }                                                                           \
+                    ptr_t new_data = std::make_shared<singleton_wrapper_t>();                   \
+                    data.instance      = new_data;                                              \
+                } while (false);                                                                \
+                UTIL_LOCK_ATOMIC_THREAD_FENCE(::util::lock::memory_order_release);              \
+                use(*data.instance);                                                            \
+            }                                                                                   \
+            return data.instance;                                                               \
+        }                                                                                       \
+    };                                                                                          \
+protected:                                                                                      \
+    BASE_CLAZZ(const BASE_CLAZZ &) UTIL_CONFIG_DELETED_FUNCTION;                                \
+    BASE_CLAZZ &operator=(const BASE_CLAZZ &) UTIL_CONFIG_DELETED_FUNCTION;                     \
+    UTIL_DESIGN_PATTERN_SINGLETON_NOMAVLBLE(BASE_CLAZZ)                                         \
+public:                                                                                         \
+    static LABEL T &get_instance() { return *singleton_wrapper_t::me(); }                       \
+    static LABEL const T &get_const_instance() { return get_instance(); }                       \
+    static LABEL self_type *instance() { return singleton_wrapper_t::me().get(); }              \
+    static LABEL std::shared_ptr<CLAZZ> &me() { return singleton_wrapper_t::me(); }             \
+    static LABEL bool is_instance_destroyed() { return singleton_wrapper_t::data.destroyed; }
+
+
+#define UTIL_DESIGN_PATTERN_SINGLETON_VISIBLE_DECL(CLAZZ)                                       \
+    UTIL_DESIGN_PATTERN_SINGLETON_DEF_FUNCS(UTIL_SYMBOL_VISIBLE, CLAZZ, CLAZZ)
+
+#define UTIL_DESIGN_PATTERN_SINGLETON_IMPORT_DECL(CLAZZ)                                        \
+    UTIL_DESIGN_PATTERN_SINGLETON_DEF_FUNCS(UTIL_SYMBOL_IMPORT, CLAZZ, CLAZZ)
+
+#define UTIL_DESIGN_PATTERN_SINGLETON_EXPORT_DECL(CLAZZ)                                        \
+    UTIL_DESIGN_PATTERN_SINGLETON_DEF_FUNCS(UTIL_SYMBOL_EXPORT, CLAZZ, CLAZZ)
+
+
 namespace util {
     namespace design_pattern {
-
-        namespace wrapper {
-            template <class T>
-            class UTIL_SYMBOL_VISIBLE singleton_wrapper : public T {
-            public:
-                static bool destroyed_;
-                ~singleton_wrapper() { destroyed_ = true; }
-            };
-
-            template <class T>
-            bool singleton_wrapper<T>::destroyed_ = false;
-        } // namespace wrapper
-
-        template <typename T>
+        template <class T>
         class UTIL_SYMBOL_VISIBLE singleton {
         public:
             /**
@@ -76,76 +134,14 @@ namespace util {
             typedef T                          self_type;
             typedef std::shared_ptr<self_type> ptr_t;
 
-        private:
-            singleton(const singleton &) UTIL_CONFIG_DELETED_FUNCTION;
-            singleton &operator=(const singleton &) UTIL_CONFIG_DELETED_FUNCTION;
-#if defined(UTIL_CONFIG_COMPILER_CXX_RVALUE_REFERENCES) && UTIL_CONFIG_COMPILER_CXX_RVALUE_REFERENCES
-            singleton(singleton &&) UTIL_CONFIG_DELETED_FUNCTION;
-            singleton &operator=(singleton &&) UTIL_CONFIG_DELETED_FUNCTION;
-#endif
-        protected:
-            /**
-             * @brief 虚类，禁止直接构造
-             */
             singleton() {}
 
-            /**
-             * @brief 用于在初始化阶段强制构造单件实例
-             */
-            static void use(self_type const &) {}
-
-        public:
-            /**
-             * @brief 获取单件对象引用
-             * @return T& instance
-             */
-            static T &get_instance() { return *me(); }
-
-            /**
-             * @brief 获取单件对象常量引用
-             * @return const T& instance
-             */
-            static const T &get_const_instance() { return get_instance(); }
-
-            /**
-             * @brief 获取实例指针
-             * @return T* instance
-             */
-            static self_type *instance() { return me().get(); }
-
-            /**
-             * @brief 获取原始指针
-             * @return T* instance
-             */
-            static ptr_t &me() {
-                static ptr_t inst;
-                if (!inst) {
-                    static util::lock::spin_lock                   lock;
-                    util::lock::lock_holder<util::lock::spin_lock> lock_opr(lock);
-
-                    UTIL_LOCK_ATOMIC_THREAD_FENCE(::util::lock::memory_order_acquire);
-                    do {
-                        if (inst) {
-                            break;
-                        }
-
-                        ptr_t new_data = std::make_shared<wrapper::singleton_wrapper<self_type> >();
-                        inst           = new_data;
-                    } while (false);
-
-                    UTIL_LOCK_ATOMIC_THREAD_FENCE(::util::lock::memory_order_release);
-                    use(*inst);
-                }
-
-                return inst;
-            }
-
-            /**
-             * @brief 判断是否已被析构
-             * @return bool
-             */
-            static bool is_instance_destroyed() { return wrapper::singleton_wrapper<T>::destroyed_; }
+            UTIL_DESIGN_PATTERN_SINGLETON_DEF_FUNCS(UTIL_SYMBOL_VISIBLE, self_type, singleton)
         };
+
+        template <class T>
+        UTIL_SYMBOL_VISIBLE typename singleton<T>::singleton_data_t singleton<T>::singleton_wrapper_t::data;
+
     } // namespace design_pattern
 } // namespace util
 #endif
