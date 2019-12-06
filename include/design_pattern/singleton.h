@@ -39,12 +39,12 @@
  *        UTIL_DESIGN_PATTERN_SINGLETON_EXPORT(Your Class Name)
  */
 #if defined(_WIN32) || defined(__WIN32__) || defined(WIN32) || defined(__CYGWIN__)
-    #define UTIL_DESIGN_PATTERN_SINGLETON_IMPORT(T)                                             \
-        template class UTIL_SYMBOL_IMPORT ::util::design_pattern::wrapper::singleton_wrapper<T> \
+    #define UTIL_DESIGN_PATTERN_SINGLETON_IMPORT(T)                                                 \
+        template class UTIL_SYMBOL_IMPORT ::util::design_pattern::wrapper::singleton_wrapper<T>;    \
         template class UTIL_SYMBOL_IMPORT ::util::design_pattern::singleton<T>;
         
-    #define UTIL_DESIGN_PATTERN_SINGLETON_EXPORT(T)                                             \
-        template class UTIL_SYMBOL_EXPORT ::util::design_pattern::wrapper::singleton_wrapper<T> \
+    #define UTIL_DESIGN_PATTERN_SINGLETON_EXPORT(T)                                                 \
+        template class UTIL_SYMBOL_EXPORT ::util::design_pattern::wrapper::singleton_wrapper<T>;    \
         template class UTIL_SYMBOL_EXPORT ::util::design_pattern::singleton<T>;
 
 #else
