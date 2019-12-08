@@ -4,7 +4,7 @@
 
 namespace util {
     namespace string {
-        LIBATFRAME_UTILS_API const char * version_tok(const char *v, int64_t &out) {
+        LIBATFRAME_UTILS_API const char *version_tok(const char *v, int64_t &out) {
             if (NULL == v) {
                 out = 0;
                 return v;
@@ -85,14 +85,8 @@ namespace util {
     } // namespace string
 } // namespace util
 
-extern "C" LIBATFRAME_UTILS_API const char * __cdecl util_string_version_tok(const char *v, int64_t &out) {
-    return util::string::version_tok(v, out);
-}
+LIBATFRAME_UTILS_API_C(const char *) util_string_version_tok(const char *v, int64_t &out) { return util::string::version_tok(v, out); }
 
-extern "C" LIBATFRAME_UTILS_API int __cdecl util_string_version_compare(const char *l, const char *r) {
-    return util::string::version_compare(l, r);
-}
+LIBATFRAME_UTILS_API_C(int) util_string_version_compare(const char *l, const char *r) { return util::string::version_compare(l, r); }
 
-UTIL_SYMBOL_EXPORT std::string util_string_version_normalize(const char *v) {
-    return util::string::version_normalize(v);
-}
+UTIL_SYMBOL_EXPORT std::string util_string_version_normalize(const char *v) { return util::string::version_normalize(v); }

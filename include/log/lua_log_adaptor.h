@@ -26,8 +26,7 @@ extern "C" {
 #include "lua.h"
 
 
-
-int lua_log_adaptor_openLib(lua_State *L);
+LIBATFRAME_UTILS_API int lua_log_adaptor_openLib(lua_State *L);
 
 #ifdef __cplusplus
 }

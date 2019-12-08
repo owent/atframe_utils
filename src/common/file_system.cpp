@@ -47,7 +47,7 @@
 #endif
 
 namespace util {
-    bool file_system::get_file_content(std::string &out, const char *file_path, bool is_binary) {
+    LIBATFRAME_UTILS_API bool file_system::get_file_content(std::string &out, const char *file_path, bool is_binary) {
         FILE *f = NULL;
         if (is_binary) {
             UTIL_FS_OPEN(error_code, f, file_path, "rb");
@@ -107,7 +107,7 @@ namespace util {
         return ret;
     }
 
-    bool file_system::split_path(std::vector<std::string> &out, const char *path, bool compact) {
+    LIBATFRAME_UTILS_API bool file_system::split_path(std::vector<std::string> &out, const char *path, bool compact) {
         if (NULL == path) {
             return false;
         }
@@ -146,9 +146,9 @@ namespace util {
         return !out.empty();
     }
 
-    bool file_system::is_exist(const char *file_path) { return 0 == FUNC_ACCESS(file_path); }
+    LIBATFRAME_UTILS_API bool file_system::is_exist(const char *file_path) { return 0 == FUNC_ACCESS(file_path); }
 
-    bool file_system::file_size(const char *file_path, size_t &sz) {
+    LIBATFRAME_UTILS_API bool file_system::file_size(const char *file_path, size_t &sz) {
         FILE *f = NULL;
         UTIL_FS_OPEN(error_code, f, file_path, "rb");
         COMPILER_UNUSED(error_code);
@@ -165,7 +165,7 @@ namespace util {
         return true;
     }
 
-    bool file_system::mkdir(const char *dir_path, bool recursion, EXPLICIT_UNUSED_ATTR int mode) {
+    LIBATFRAME_UTILS_API bool file_system::mkdir(const char *dir_path, bool recursion, EXPLICIT_UNUSED_ATTR int mode) {
 #ifndef UTIL_FS_WINDOWS_API
         if (0 == mode) {
             mode = S_IRWXU | S_IRWXG | S_IRWXO;
@@ -187,7 +187,7 @@ namespace util {
         if (NULL != dir_path && ('/' == *dir_path || '\\' == *dir_path)) {
             // 留一个\0和一个分隔符位
             now_path.reserve(strlen(dir_path) + 4);
-            
+
             now_path = *dir_path;
 
             // NFS 支持
@@ -212,7 +212,7 @@ namespace util {
         return true;
     }
 
-    bool file_system::dirname(const char *file_path, size_t sz, std::string &dir, int depth) {
+    LIBATFRAME_UTILS_API bool file_system::dirname(const char *file_path, size_t sz, std::string &dir, int depth) {
         if (NULL == file_path || 0 == file_path[0]) {
             return false;
         }
@@ -242,7 +242,7 @@ namespace util {
         return true;
     }
 
-    std::string file_system::get_cwd() {
+    LIBATFRAME_UTILS_API std::string file_system::get_cwd() {
         std::string ret;
         char *      res = NULL;
 #ifdef UTIL_FS_WINDOWS_API
@@ -258,7 +258,7 @@ namespace util {
         return ret;
     }
 
-    std::string file_system::get_abs_path(const char *dir_path) {
+    LIBATFRAME_UTILS_API std::string file_system::get_abs_path(const char *dir_path) {
         if (is_abs_path(dir_path)) {
             return dir_path;
         }
@@ -287,11 +287,11 @@ namespace util {
         return ret;
     }
 
-    bool file_system::rename(const char *from, const char *to) { return 0 == ::rename(from, to); }
+    LIBATFRAME_UTILS_API bool file_system::rename(const char *from, const char *to) { return 0 == ::rename(from, to); }
 
-    bool file_system::remove(const char *path) { return 0 == ::remove(path); }
+    LIBATFRAME_UTILS_API bool file_system::remove(const char *path) { return 0 == ::remove(path); }
 
-    FILE *file_system::open_tmp_file() {
+    LIBATFRAME_UTILS_API FILE *file_system::open_tmp_file() {
 #if defined(UTIL_FS_C11_API)
         FILE *ret = NULL;
         if (0 == tmpfile_s(&ret)) {
@@ -304,7 +304,7 @@ namespace util {
 #endif
     }
 
-    int file_system::scan_dir(const char *dir_path, std::list<std::string> &out, int options) {
+    LIBATFRAME_UTILS_API int file_system::scan_dir(const char *dir_path, std::list<std::string> &out, int options) {
         int         ret      = 0;
         std::string base_dir = dir_path ? dir_path : "";
 
@@ -504,7 +504,7 @@ namespace util {
     }
 
 
-    bool file_system::is_abs_path(const char *dir_path) {
+    LIBATFRAME_UTILS_API bool file_system::is_abs_path(const char *dir_path) {
         if (NULL == dir_path) {
             return false;
         }
@@ -524,7 +524,7 @@ namespace util {
     }
 
 #if !defined(UTIL_FS_DISABLE_LINK)
-    int file_system::link(const char *oldpath, const char *newpath, int options) {
+    LIBATFRAME_UTILS_API int file_system::link(const char *oldpath, const char *newpath, int options) {
         if ((options & link_opt_t::EN_LOT_FORCE_REWRITE) && is_exist(newpath)) {
             remove(newpath);
         }

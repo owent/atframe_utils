@@ -100,7 +100,7 @@ namespace util {
          * @return 如果是空白字符，返回true，否则返回false
          */
         template <typename TCH>
-        LIBATFRAME_UTILS_API_HEAD_ONLY  inline bool is_space(const TCH &c) {
+        LIBATFRAME_UTILS_API_HEAD_ONLY inline bool is_space(const TCH &c) {
             return ' ' == c || '\t' == c || '\r' == c || '\n' == c;
         }
 
@@ -114,7 +114,8 @@ namespace util {
          * @note 注意，返回的字符串是源的子串，共享地址。并且不保证以0结尾，需要用返回的长度来判定子串长度
          */
         template <typename TCH>
-        LIBATFRAME_UTILS_API_HEAD_ONLY std::pair<const TCH *, size_t> trim(const TCH *str_begin, size_t sz, bool trim_left = true, bool trim_right = true) {
+        LIBATFRAME_UTILS_API_HEAD_ONLY std::pair<const TCH *, size_t> trim(const TCH *str_begin, size_t sz, bool trim_left = true,
+                                                                           bool trim_right = true) {
             if (0 == sz) {
                 const TCH *str_end = str_begin;
                 while (str_end && *str_end) {
@@ -432,7 +433,8 @@ namespace util {
          * @param upper_case 是否大写
          */
         template <typename Elem, typename Traits>
-        LIBATFRAME_UTILS_API_HEAD_ONLY void dumphex(const void *src, size_t ss, std::basic_ostream<Elem, Traits> &out, bool upper_case = false) {
+        LIBATFRAME_UTILS_API_HEAD_ONLY void dumphex(const void *src, size_t ss, std::basic_ostream<Elem, Traits> &out,
+                                                    bool upper_case = false) {
             const unsigned char *cs = reinterpret_cast<const unsigned char *>(src);
             size_t               i;
             Elem                 tmp[2];
@@ -448,7 +450,7 @@ namespace util {
          * @note 版本号字符串可以是十进制数字或0x开头的十六进制或\开头的八进制,且每个数字必须在int64_t以内
          * @return 返回剩余字符串地址
          */
-        LIBATFRAME_UTILS_API const char * version_tok(const char *v, int64_t &out);
+        LIBATFRAME_UTILS_API const char *version_tok(const char *v, int64_t &out);
 
         /**
          * @brief 版本比较函数
@@ -471,8 +473,8 @@ namespace util {
     } // namespace string
 } // namespace util
 
-extern "C" LIBATFRAME_UTILS_API const char * __cdecl util_string_version_tok(const char *v, int64_t &out);
-extern "C" LIBATFRAME_UTILS_API int __cdecl util_string_version_compare(const char *l, const char *r);
+LIBATFRAME_UTILS_API_C(const char *) util_string_version_tok(const char *v, int64_t &out);
+LIBATFRAME_UTILS_API_C(int) util_string_version_compare(const char *l, const char *r);
 LIBATFRAME_UTILS_API std::string util_string_version_normalize(const char *v);
 
 #endif /* _UTIL_COMMON_COMPILER_MESSAGE_H_ */

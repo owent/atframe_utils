@@ -33,14 +33,14 @@ namespace util {
         public:
             typedef std::shared_ptr<log_wrapper> ptr_t;
 
-            struct categorize_t {
+            struct LIBATFRAME_UTILS_API categorize_t {
                 enum type {
                     DEFAULT = 0, // 服务框架
                     MAX     = LOG_WRAPPER_CATEGORIZE_SIZE
                 };
             };
 
-            struct options_t {
+            struct LIBATFRAME_UTILS_API options_t {
                 enum type {
                     OPT_AUTO_UPDATE_TIME = 0, // 是否自动更新时间（会降低性能）
                     OPT_USER_MAX,             // 允许外部接口修改的flag范围
@@ -61,46 +61,46 @@ namespace util {
             } log_router_t;
 
         private:
-            struct construct_helper_t {};
-            log_wrapper();
+            struct LIBATFRAME_UTILS_API construct_helper_t {};
+            LIBATFRAME_UTILS_API        log_wrapper();
 
         public:
-            log_wrapper(construct_helper_t &h);
-            virtual ~log_wrapper();
+            LIBATFRAME_UTILS_API log_wrapper(construct_helper_t &h);
+            LIBATFRAME_UTILS_API virtual ~log_wrapper();
 
         public:
             // 初始化
-            int32_t init(level_t::type level = level_t::LOG_LW_DEBUG);
+            LIBATFRAME_UTILS_API int32_t init(level_t::type level = level_t::LOG_LW_DEBUG);
 
-            static void update();
+            static LIBATFRAME_UTILS_API void update();
 
-            void log(const caller_info_t &caller,
+            LIBATFRAME_UTILS_API void log(const caller_info_t &caller,
 #ifdef _MSC_VER
-                     _In_z_ _Printf_format_string_ const char *fmt, ...);
+                                          _In_z_ _Printf_format_string_ const char *fmt, ...);
 #elif (defined(__clang__) && __clang_major__ >= 3)
-                     const char *fmt, ...) __attribute__((__format__(__printf__, 3, 4)));
+                                          const char *fmt, ...) __attribute__((__format__(__printf__, 3, 4)));
 #elif (defined(__GNUC__) && __GNUC__ >= 4)
 // 格式检查(成员函数有个隐含的this参数)
 #if defined(__MINGW32__) || defined(__MINGW64__)
-                     const char *fmt, ...) __attribute__((format(__MINGW_PRINTF_FORMAT, 3, 4)));
+                                          const char *fmt, ...) __attribute__((format(__MINGW_PRINTF_FORMAT, 3, 4)));
 #else
-                     const char *fmt, ...) __attribute__((format(printf, 3, 4)));
+                                          const char *fmt, ...) __attribute__((format(printf, 3, 4)));
 #endif
 #else
-                     const char *fmt, ...);
+                                          const char *fmt, ...);
 #endif
 
             // 一般日志级别检查
-            inline bool check_level(level_t::type level) const { return log_level_ >= level; }
+            UTIL_FORCEINLINE bool check_level(level_t::type level) const { return log_level_ >= level; }
 
-            static inline bool check_level(const log_wrapper *logger, level_t::type level) {
+            static UTIL_FORCEINLINE bool check_level(const log_wrapper *logger, level_t::type level) {
                 if (NULL == logger) {
                     return false;
                 }
                 return logger->log_level_ >= level;
             }
 
-            size_t sink_size() const;
+            LIBATFRAME_UTILS_API size_t sink_size() const;
 
             /**
              * @brief 添加后端接口
@@ -108,13 +108,13 @@ namespace util {
              * @param level_min 最低日志级别
              * @param level_min 最高日志级别
              */
-            void add_sink(log_handler_t h, level_t::type level_min = level_t::LOG_LW_FATAL,
-                          level_t::type level_max = level_t::LOG_LW_DEBUG);
+            LIBATFRAME_UTILS_API void add_sink(log_handler_t h, level_t::type level_min = level_t::LOG_LW_FATAL,
+                                               level_t::type level_max = level_t::LOG_LW_DEBUG);
 
             /**
              * @brief 移除最后一个后端接口
              */
-            void pop_sink();
+            LIBATFRAME_UTILS_API void pop_sink();
 
             /**
              * @brief 设置后端接口的日志级别
@@ -123,22 +123,23 @@ namespace util {
              * @param level_min 最高日志级别
              * @return 如果没找到则返回false，成功返回true
              */
-            bool set_sink(size_t idx, level_t::type level_min = level_t::LOG_LW_FATAL, level_t::type level_max = level_t::LOG_LW_DEBUG);
+            LIBATFRAME_UTILS_API bool set_sink(size_t idx, level_t::type level_min = level_t::LOG_LW_FATAL,
+                                               level_t::type level_max = level_t::LOG_LW_DEBUG);
 
             /**
              * @brief 移除所有后端, std::function无法比较，所以只能全清
              */
-            void clear_sinks();
+            LIBATFRAME_UTILS_API void clear_sinks();
 
-            inline void set_level(level_t::type l) { log_level_ = l; }
+            UTIL_FORCEINLINE void set_level(level_t::type l) { log_level_ = l; }
 
-            inline level_t::type get_level() const { return log_level_; }
+            UTIL_FORCEINLINE level_t::type get_level() const { return log_level_; }
 
-            inline const std::string &set_prefix_format() const { return prefix_format_; }
+            UTIL_FORCEINLINE const std::string &set_prefix_format() const { return prefix_format_; }
 
-            inline void set_prefix_format(const std::string &prefix) { prefix_format_ = prefix; }
+            UTIL_FORCEINLINE void set_prefix_format(const std::string &prefix) { prefix_format_ = prefix; }
 
-            inline bool get_option(options_t::type t) const {
+            UTIL_FORCEINLINE bool get_option(options_t::type t) const {
                 if (t < options_t::OPT_MAX) {
                     return false;
                 }
@@ -146,7 +147,7 @@ namespace util {
                 return options_.test(t);
             };
 
-            inline void set_option(options_t::type t, bool v) {
+            UTIL_FORCEINLINE void set_option(options_t::type t, bool v) {
                 if (t >= options_t::OPT_USER_MAX) {
                     return;
                 }
@@ -154,19 +155,19 @@ namespace util {
                 options_.set(t, v);
             };
 
-            void                                                  set_stacktrace_level(level_t::type level_max = level_t::LOG_LW_DISABLED,
-                                                                                       level_t::type level_min = level_t::LOG_LW_DISABLED);
-            inline const std::pair<level_t::type, level_t::type> &get_stacktrace_level() const { return stacktrace_level_; }
+            LIBATFRAME_UTILS_API void set_stacktrace_level(level_t::type level_max = level_t::LOG_LW_DISABLED,
+                                                           level_t::type level_min = level_t::LOG_LW_DISABLED);
+            UTIL_FORCEINLINE const std::pair<level_t::type, level_t::type> &get_stacktrace_level() const { return stacktrace_level_; }
 
             /**
              * @brief 实际写出到落地接口
              */
-            void write_log(const caller_info_t &caller, const char *content, size_t content_size);
+            LIBATFRAME_UTILS_API void write_log(const caller_info_t &caller, const char *content, size_t content_size);
 
             // 白名单及用户指定日志输出可以针对哪个用户创建log_wrapper实例
 
-            static log_wrapper *mutable_log_cat(uint32_t cats = categorize_t::DEFAULT);
-            static ptr_t        create_user_logger();
+            static LIBATFRAME_UTILS_API log_wrapper *mutable_log_cat(uint32_t cats = categorize_t::DEFAULT);
+            static LIBATFRAME_UTILS_API ptr_t create_user_logger();
 
         private:
             level_t::type                           log_level_;

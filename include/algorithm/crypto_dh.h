@@ -57,50 +57,50 @@ namespace util {
     namespace crypto {
         class dh {
         public:
-            struct method_t {
+            struct LIBATFRAME_UTILS_API method_t {
                 enum type {
                     EN_CDT_INVALID = 0, // inner
-                    EN_CDT_DH = 1,      // dh algorithm
+                    EN_CDT_DH      = 1, // dh algorithm
                     EN_CDT_ECDH         // ecdh algorithm
                 };
             };
 
 #if defined(CRYPTO_USE_OPENSSL) || defined(CRYPTO_USE_LIBRESSL) || defined(CRYPTO_USE_BORINGSSL)
-            struct dh_context_t {
+            struct LIBATFRAME_UTILS_API dh_context_t {
                 union {
-                    DH *openssl_dh_ptr_;
+                    DH *    openssl_dh_ptr_;
                     EC_KEY *openssl_ecdh_ptr_;
                 };
                 union {
-                    BIGNUM *peer_pubkey_;
+                    BIGNUM *  peer_pubkey_;
                     EC_POINT *peer_ecpoint_;
                 };
             };
 #elif defined(CRYPTO_USE_MBEDTLS)
-            struct dh_context_t {
+            struct LIBATFRAME_UTILS_API dh_context_t {
                 union {
-                    mbedtls_dhm_context mbedtls_dh_ctx_;
+                    mbedtls_dhm_context  mbedtls_dh_ctx_;
                     mbedtls_ecdh_context mbedtls_ecdh_ctx_;
                 };
             };
 #endif
 
-            struct error_code_t {
+            struct LIBATFRAME_UTILS_API error_code_t {
                 enum type {
-                    OK = 0,
-                    INVALID_PARAM = -1,
-                    NOT_INITED = -2,
-                    ALREADY_INITED = -3,
-                    MALLOC = -4,
-                    DISABLED = -11,
-                    NOT_SUPPORT = -12,
-                    OPERATION = -13,
-                    INIT_RANDOM_ENGINE = -14,
-                    READ_DHPARAM_FILE = -21,
-                    INIT_DHPARAM = -22,
-                    INIT_DH_READ_PARAM = -23,
-                    INIT_DH_GENERATE_KEY = -24,
-                    INIT_DH_READ_KEY = -25,
+                    OK                      = 0,
+                    INVALID_PARAM           = -1,
+                    NOT_INITED              = -2,
+                    ALREADY_INITED          = -3,
+                    MALLOC                  = -4,
+                    DISABLED                = -11,
+                    NOT_SUPPORT             = -12,
+                    OPERATION               = -13,
+                    INIT_RANDOM_ENGINE      = -14,
+                    READ_DHPARAM_FILE       = -21,
+                    INIT_DHPARAM            = -22,
+                    INIT_DH_READ_PARAM      = -23,
+                    INIT_DH_GENERATE_KEY    = -24,
+                    INIT_DH_READ_KEY        = -25,
                     INIT_DH_GENERATE_SECRET = -26,
                 };
             };
@@ -109,9 +109,9 @@ namespace util {
             public:
 #if defined(CRYPTO_USE_OPENSSL) || defined(CRYPTO_USE_LIBRESSL) || defined(CRYPTO_USE_BORINGSSL)
                 typedef struct {
-                    BIO *param;
+                    BIO *                      param;
                     std::vector<unsigned char> param_buffer;
-                    int ecp_id;
+                    int                        ecp_id;
                 } dh_param_t;
 
                 typedef struct {
@@ -119,28 +119,28 @@ namespace util {
 
 #elif defined(CRYPTO_USE_MBEDTLS)
                 typedef struct {
-                    std::string param;
+                    std::string          param;
                     mbedtls_ecp_group_id ecp_id;
                 } dh_param_t;
 
                 // move mbedtls_ctr_drbg_context and mbedtls_entropy_context here
                 typedef struct {
                     mbedtls_ctr_drbg_context ctr_drbg;
-                    mbedtls_entropy_context entropy;
+                    mbedtls_entropy_context  entropy;
                 } random_engine_t;
 #endif
 
                 typedef std::shared_ptr<shared_context> ptr_t;
 
             private:
-                struct creator_helper {};
+                struct LIBATFRAME_UTILS_API creator_helper {};
 
-                shared_context();
+                LIBATFRAME_UTILS_API shared_context();
 
             public:
-                shared_context(creator_helper &helper);
-                ~shared_context();
-                static ptr_t create();
+                LIBATFRAME_UTILS_API shared_context(creator_helper &helper);
+                LIBATFRAME_UTILS_API ~shared_context();
+                LIBATFRAME_UTILS_API static ptr_t create();
 
                 /**
                  * @brief initialize a shared context for server mode
@@ -148,68 +148,68 @@ namespace util {
                  * @note using RFC 4492 for ECDH algorithm
                  * @return 0 or error code
                  */
-                int init(const char *name);
+                LIBATFRAME_UTILS_API int init(const char *name);
 
                 /**
                  * @brief initialize a shared context for client mode
                  * @param method algorithm method
                  * @return 0 or error code
                  */
-                int init(method_t::type method);
+                LIBATFRAME_UTILS_API int init(method_t::type method);
 
                 /**
                  * @brief reset shared resource
                  */
-                void reset();
+                LIBATFRAME_UTILS_API void reset();
 
                 /**
                  * @brief random buffer
                  * @return 0 or error code
                  */
-                int random(void *output, size_t output_sz);
+                LIBATFRAME_UTILS_API int random(void *output, size_t output_sz);
 
-                bool is_client_mode() const;
+                LIBATFRAME_UTILS_API bool is_client_mode() const;
 
-                inline method_t::type get_method() const { return method_; }
+                LIBATFRAME_UTILS_API method_t::type get_method() const;
 
-                inline const dh_param_t &get_dh_parameter() const { return dh_param_; }
-                inline const random_engine_t &get_random_engine() const { return random_engine_; }
-                inline random_engine_t &get_random_engine() { return random_engine_; }
+                LIBATFRAME_UTILS_API const dh_param_t &get_dh_parameter() const;
+                LIBATFRAME_UTILS_API const random_engine_t &get_random_engine() const;
+                LIBATFRAME_UTILS_API random_engine_t &get_random_engine();
 
             private:
-                method_t::type method_;
-                dh_param_t dh_param_;
+                method_t::type  method_;
+                dh_param_t      dh_param_;
                 random_engine_t random_engine_;
             };
 
         public:
-            dh();
-            ~dh();
+            LIBATFRAME_UTILS_API dh();
+            LIBATFRAME_UTILS_API ~dh();
 
             /**
              * @brief initialize
              * @param shared_context shared context
              * @return 0 or error code
              */
-            int init(shared_context::ptr_t shared_context);
+            LIBATFRAME_UTILS_API int init(shared_context::ptr_t shared_context);
 
             /**
              * @brief release all resources
              * @return 0 or error code
              */
-            int close();
+            LIBATFRAME_UTILS_API int close();
 
             /**
              * @brief set last error returned by crypto library
              * @param err error code returned by crypto library
              */
-            inline void set_last_errno(int e) { last_errorno_ = e; }
+            LIBATFRAME_UTILS_API void set_last_errno(int e);
 
             /**
              * @brief get last error returned by crypto library
              * @return last error code returned by crypto library
              */
-            inline int get_last_errno() const { return last_errorno_; }
+            LIBATFRAME_UTILS_API int get_last_errno() const;
 
             /**
              * @brief          Setup and write the ServerKeyExchange parameters
@@ -222,7 +222,7 @@ namespace util {
              * @note           server process: make_params->read_public->calc_secret
              * @return         0 if successful, or error code
              */
-            int make_params(std::vector<unsigned char> &param);
+            LIBATFRAME_UTILS_API int make_params(std::vector<unsigned char> &param);
 
             /**
              * @brief          Parse the ServerKeyExchange parameters
@@ -233,7 +233,7 @@ namespace util {
              * @note           client process: read_params->make_public->calc_secret
              * @return         0 if successful, or error code
              */
-            int read_params(const unsigned char *input, size_t ilen);
+            LIBATFRAME_UTILS_API int read_params(const unsigned char *input, size_t ilen);
 
             /**
              * @brief          Create own private value X and export G^X
@@ -243,7 +243,7 @@ namespace util {
              * @note           client process: read_params->make_public->calc_secret
              * @return         0 if successful, or error code
              */
-            int make_public(std::vector<unsigned char> &param);
+            LIBATFRAME_UTILS_API int make_public(std::vector<unsigned char> &param);
 
             /**
              * @brief          Import the peer's public value G^Y
@@ -254,7 +254,7 @@ namespace util {
              * @note           server process: make_params->read_public->calc_secret
              * @return         0 if successful, or error code
              */
-            int read_public(const unsigned char *input, size_t ilen);
+            LIBATFRAME_UTILS_API int read_public(const unsigned char *input, size_t ilen);
 
             /**
              * @brief          Derive and export the shared secret (G^Y)^X mod P
@@ -264,15 +264,15 @@ namespace util {
              * @return         0 if successful, or error code
              *
              */
-            int calc_secret(std::vector<unsigned char> &output);
+            LIBATFRAME_UTILS_API int calc_secret(std::vector<unsigned char> &output);
 
         public:
-            static const std::vector<std::string> &get_all_curve_names();
+            static LIBATFRAME_UTILS_API const std::vector<std::string> &get_all_curve_names();
 
         private:
-            int last_errorno_;
+            int                   last_errorno_;
             shared_context::ptr_t shared_context_;
-            dh_context_t dh_context_;
+            dh_context_t          dh_context_;
         };
     } // namespace crypto
 } // namespace util

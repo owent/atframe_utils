@@ -22,8 +22,8 @@
 #include <stdint.h>
 #include <type_traits>
 
-#include "../common/compiler_message.h"
-#include "../config/atframe_utils_build_feature.h"
+#include <common/compiler_message.h>
+#include <config/atframe_utils_build_feature.h>
 
 // 定义ENABLE_MIXEDINT_MAGIC_MASK=[数字]以设置整数混淆功能
 // 如果ENABLE_MIXEDINT_MAGIC_MASK=1，则刚好是ZigZag编码规则
@@ -43,35 +43,34 @@ namespace util {
 #if defined(ENABLE_MIXEDINT_MAGIC_MASK)
         namespace detail {
             template <typename TSINT>
-            class mixed_signed_int {
+            class LIBATFRAME_UTILS_API_HEAD_ONLY mixed_signed_int {
             public:
                 typedef TSINT value_type;
 
-                static const size_t TYPE_BIT = 8 * sizeof(value_type);
-                static const size_t TYPE_LEFT_BIT = ENABLE_MIXEDINT_MAGIC_MASK % TYPE_BIT;
-                static const size_t TYPE_RIGHT_BIT = TYPE_BIT - TYPE_LEFT_BIT;
-                static const value_type RIGHT_MASK = (((value_type)1) << TYPE_RIGHT_BIT) - 1;
-                static const value_type SYMBOL_MASK = ((value_type)1) << (TYPE_LEFT_BIT - 1);
+                static const size_t     TYPE_BIT       = 8 * sizeof(value_type);
+                static const size_t     TYPE_LEFT_BIT  = ENABLE_MIXEDINT_MAGIC_MASK % TYPE_BIT;
+                static const size_t     TYPE_RIGHT_BIT = TYPE_BIT - TYPE_LEFT_BIT;
+                static const value_type RIGHT_MASK     = (((value_type)1) << TYPE_RIGHT_BIT) - 1;
+                static const value_type SYMBOL_MASK    = ((value_type)1) << (TYPE_LEFT_BIT - 1);
 
             public:
                 static value_type encode(value_type d) { return (d << TYPE_LEFT_BIT) ^ (d >> TYPE_RIGHT_BIT); }
 
                 static value_type decode(value_type d) {
-                    return (d << TYPE_RIGHT_BIT) |
-                           (RIGHT_MASK & (d & SYMBOL_MASK) ? ~(d >> TYPE_LEFT_BIT) : (d >> TYPE_LEFT_BIT));
+                    return (d << TYPE_RIGHT_BIT) | (RIGHT_MASK & (d & SYMBOL_MASK) ? ~(d >> TYPE_LEFT_BIT) : (d >> TYPE_LEFT_BIT));
                 }
             };
 
             template <typename TUSINT>
-            class mixed_unsigned_int {
+            class LIBATFRAME_UTILS_API_HEAD_ONLY mixed_unsigned_int {
             public:
                 typedef TUSINT value_type;
 
-                static const size_t TYPE_BIT = 8 * sizeof(value_type);
-                static const size_t TYPE_LEFT_BIT = ENABLE_MIXEDINT_MAGIC_MASK % TYPE_BIT;
-                static const size_t TYPE_RIGHT_BIT = TYPE_BIT - TYPE_LEFT_BIT;
-                static const value_type RIGHT_MASK = (((value_type)1) << TYPE_RIGHT_BIT) - 1;
-                static const value_type SYMBOL_MASK = ((value_type)1) << (TYPE_LEFT_BIT - 1);
+                static const size_t     TYPE_BIT       = 8 * sizeof(value_type);
+                static const size_t     TYPE_LEFT_BIT  = ENABLE_MIXEDINT_MAGIC_MASK % TYPE_BIT;
+                static const size_t     TYPE_RIGHT_BIT = TYPE_BIT - TYPE_LEFT_BIT;
+                static const value_type RIGHT_MASK     = (((value_type)1) << TYPE_RIGHT_BIT) - 1;
+                static const value_type SYMBOL_MASK    = ((value_type)1) << (TYPE_LEFT_BIT - 1);
 
             public:
                 static value_type encode(value_type d) { return (d << TYPE_LEFT_BIT) ^ (d >> TYPE_RIGHT_BIT); }
@@ -80,18 +79,16 @@ namespace util {
             };
 
             template <typename TINT>
-            class mixed_int : public std::conditional<std::is_unsigned<TINT>::value,
-                                                      mixed_unsigned_int<TINT>,
-                                                      mixed_signed_int<TINT> >::type {
+            class LIBATFRAME_UTILS_API_HEAD_ONLY mixed_int
+                : public std::conditional<std::is_unsigned<TINT>::value, mixed_unsigned_int<TINT>, mixed_signed_int<TINT> >::type {
             public:
-                typedef TINT value_type;
+                typedef TINT                  value_type;
                 typedef mixed_int<value_type> self_type;
-                typedef typename std::conditional<std::is_unsigned<TINT>::value,
-                                                  mixed_unsigned_int<TINT>,
-                                                  mixed_signed_int<TINT> >::type base_type;
+                typedef typename std::conditional<std::is_unsigned<TINT>::value, mixed_unsigned_int<TINT>, mixed_signed_int<TINT> >::type
+                    base_type;
 
-                using base_type::encode;
                 using base_type::decode;
+                using base_type::encode;
 
             public:
                 // constructure & destructure
@@ -136,9 +133,7 @@ namespace util {
                     return !(l == r);
                 }
 
-                friend bool operator<(const self_type &l, const self_type &r) {
-                    return decode(l.data_) < decode(r.data_);
-                }
+                friend bool operator<(const self_type &l, const self_type &r) { return decode(l.data_) < decode(r.data_); }
                 template <typename TL>
                 friend bool operator<(const TL &l, const self_type &r) {
                     return unwrapper(l) < decode(r.data_);
@@ -148,9 +143,7 @@ namespace util {
                     return decode(l.data_) < unwrapper(r);
                 }
 
-                friend bool operator<=(const self_type &l, const self_type &r) {
-                    return decode(l.data_) <= decode(r.data_);
-                }
+                friend bool operator<=(const self_type &l, const self_type &r) { return decode(l.data_) <= decode(r.data_); }
                 template <typename TL>
                 friend bool operator<=(const TL &l, const self_type &r) {
                     return unwrapper(l) <= decode(r.data_);
@@ -203,21 +196,19 @@ namespace util {
                 }
 
                 self_type &operator++() { return (*this) = (value_type)(*this) + 1; }
-                self_type operator++(int) {
+                self_type  operator++(int) {
                     self_type ret = (*this);
                     ++(*this);
                     return ret;
                 }
                 self_type &operator--() { return (*this) = (value_type)(*this) - 1; }
-                self_type operator--(int) {
+                self_type  operator--(int) {
                     self_type ret = (*this);
                     --(*this);
                     return ret;
                 }
 
-                friend value_type operator+(const self_type &l, const self_type &r) {
-                    return (value_type)l + (value_type)r;
-                }
+                friend value_type operator+(const self_type &l, const self_type &r) { return (value_type)l + (value_type)r; }
                 template <typename TL>
                 friend value_type operator+(const TL &l, const self_type &r) {
                     return unwrapper(l) + (value_type)r;
@@ -227,9 +218,7 @@ namespace util {
                     return (value_type)l + unwrapper(r);
                 }
 
-                friend value_type operator-(const self_type &l, const self_type &r) {
-                    return (value_type)l - (value_type)r;
-                }
+                friend value_type operator-(const self_type &l, const self_type &r) { return (value_type)l - (value_type)r; }
                 template <typename TL>
                 friend value_type operator-(const TL &l, const self_type &r) {
                     return unwrapper(l) - (value_type)r;
@@ -239,9 +228,7 @@ namespace util {
                     return (value_type)l - unwrapper(r);
                 }
 
-                friend value_type operator*(const self_type &l, const self_type &r) {
-                    return (value_type)l * (value_type)r;
-                }
+                friend value_type operator*(const self_type &l, const self_type &r) { return (value_type)l * (value_type)r; }
                 template <typename TL>
                 friend value_type operator*(const TL &l, const self_type &r) {
                     return unwrapper(l) * (value_type)r;
@@ -251,9 +238,7 @@ namespace util {
                     return (value_type)l * unwrapper(r);
                 }
 
-                friend value_type operator/(const self_type &l, const self_type &r) {
-                    return (value_type)l / (value_type)r;
-                }
+                friend value_type operator/(const self_type &l, const self_type &r) { return (value_type)l / (value_type)r; }
                 template <typename TL>
                 friend value_type operator/(const TL &l, const self_type &r) {
                     return unwrapper(l) / (value_type)r;
@@ -263,9 +248,7 @@ namespace util {
                     return (value_type)l / unwrapper(r);
                 }
 
-                friend value_type operator%(const self_type &l, const self_type &r) {
-                    return (value_type)l % (value_type)r;
-                }
+                friend value_type operator%(const self_type &l, const self_type &r) { return (value_type)l % (value_type)r; }
                 template <typename TL>
                 friend value_type operator%(const TL &l, const self_type &r) {
                     return unwrapper(l) % (value_type)r;
@@ -297,9 +280,7 @@ namespace util {
                     return (*this) = (value_type)(*this) << unwrapper(other);
                 }
 
-                friend value_type operator&(const self_type &l, const self_type &r) {
-                    return (value_type)l & (value_type)r;
-                }
+                friend value_type operator&(const self_type &l, const self_type &r) { return (value_type)l & (value_type)r; }
                 template <typename TL>
                 friend value_type operator&(const TL &l, const self_type &r) {
                     return unwrapper(l) & (value_type)r;
@@ -309,9 +290,7 @@ namespace util {
                     return (value_type)l & unwrapper(r);
                 }
 
-                friend value_type operator|(const self_type &l, const self_type &r) {
-                    return (value_type)l | (value_type)r;
-                }
+                friend value_type operator|(const self_type &l, const self_type &r) { return (value_type)l | (value_type)r; }
                 template <typename TL>
                 friend value_type operator|(const TL &l, const self_type &r) {
                     return unwrapper(l) | (value_type)r;
@@ -321,18 +300,17 @@ namespace util {
                     return (value_type)l | unwrapper(r);
                 }
 
-                friend value_type operator^(const self_type &l, const self_type &r) {
-                    return (value_type)l ^ (value_type)r;
-                } template <typename TL>
+                friend value_type operator^(const self_type &l, const self_type &r) { return (value_type)l ^ (value_type)r; }
+                template <typename TL>
                 friend value_type operator^(const TL &l, const self_type &r) {
                     return unwrapper(l) ^ (value_type)r;
-                } template <typename TR>
-                friend value_type operator^(const self_type &l, const TR &r) { return (value_type)l ^ unwrapper(r); }
-
-                friend value_type
-                operator>>(const self_type &l, const self_type &r) {
-                    return (value_type)l >> (value_type)r;
                 }
+                template <typename TR>
+                friend value_type operator^(const self_type &l, const TR &r) {
+                    return (value_type)l ^ unwrapper(r);
+                }
+
+                friend value_type operator>>(const self_type &l, const self_type &r) { return (value_type)l >> (value_type)r; }
                 template <typename TL>
                 friend value_type operator>>(const TL &l, const self_type &r) {
                     return unwrapper(l) >> (value_type)r;
@@ -342,9 +320,7 @@ namespace util {
                     return (value_type)l >> unwrapper(r);
                 }
 
-                friend value_type operator<<(const self_type &l, const self_type &r) {
-                    return (value_type)l << (value_type)r;
-                }
+                friend value_type operator<<(const self_type &l, const self_type &r) { return (value_type)l << (value_type)r; }
                 template <typename TL>
                 friend value_type operator<<(const TL &l, const self_type &r) {
                     return unwrapper(l) << (value_type)r;
@@ -367,36 +343,36 @@ namespace util {
 
                 value_type data_;
             };
-        }
+        } // namespace detail
 
-        typedef util::mixed_int::detail::mixed_int<int8_t> mixed_int8_t;
-        typedef util::mixed_int::detail::mixed_int<int16_t> mixed_int16_t;
-        typedef util::mixed_int::detail::mixed_int<int32_t> mixed_int32_t;
-        typedef util::mixed_int::detail::mixed_int<int64_t> mixed_int64_t;
-        typedef util::mixed_int::detail::mixed_int<uint8_t> mixed_uint8_t;
+        typedef util::mixed_int::detail::mixed_int<int8_t>   mixed_int8_t;
+        typedef util::mixed_int::detail::mixed_int<int16_t>  mixed_int16_t;
+        typedef util::mixed_int::detail::mixed_int<int32_t>  mixed_int32_t;
+        typedef util::mixed_int::detail::mixed_int<int64_t>  mixed_int64_t;
+        typedef util::mixed_int::detail::mixed_int<uint8_t>  mixed_uint8_t;
         typedef util::mixed_int::detail::mixed_int<uint16_t> mixed_uint16_t;
         typedef util::mixed_int::detail::mixed_int<uint32_t> mixed_uint32_t;
         typedef util::mixed_int::detail::mixed_int<uint64_t> mixed_uint64_t;
 
 #else
-        typedef int8_t mixed_int8_t;
-        typedef int16_t mixed_int16_t;
-        typedef int32_t mixed_int32_t;
-        typedef int64_t mixed_int64_t;
-        typedef uint8_t mixed_uint8_t;
+        typedef int8_t   mixed_int8_t;
+        typedef int16_t  mixed_int16_t;
+        typedef int32_t  mixed_int32_t;
+        typedef int64_t  mixed_int64_t;
+        typedef uint8_t  mixed_uint8_t;
         typedef uint16_t mixed_uint16_t;
         typedef uint32_t mixed_uint32_t;
         typedef uint64_t mixed_uint64_t;
 #endif
-    }
-}
+    } // namespace mixed_int
+} // namespace util
 
 
-typedef util::mixed_int::mixed_int8_t mixed_int8_t;
-typedef util::mixed_int::mixed_int16_t mixed_int16_t;
-typedef util::mixed_int::mixed_int32_t mixed_int32_t;
-typedef util::mixed_int::mixed_int64_t mixed_int64_t;
-typedef util::mixed_int::mixed_uint8_t mixed_uint8_t;
+typedef util::mixed_int::mixed_int8_t   mixed_int8_t;
+typedef util::mixed_int::mixed_int16_t  mixed_int16_t;
+typedef util::mixed_int::mixed_int32_t  mixed_int32_t;
+typedef util::mixed_int::mixed_int64_t  mixed_int64_t;
+typedef util::mixed_int::mixed_uint8_t  mixed_uint8_t;
 typedef util::mixed_int::mixed_uint16_t mixed_uint16_t;
 typedef util::mixed_int::mixed_uint32_t mixed_uint32_t;
 typedef util::mixed_int::mixed_uint64_t mixed_uint64_t;

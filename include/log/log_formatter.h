@@ -22,6 +22,7 @@
 #include <stdint.h>
 #include <string>
 
+#include <config/atframe_utils_build_feature.h>
 
 namespace util {
     namespace log {
@@ -30,7 +31,7 @@ namespace util {
          */
         class log_formatter {
         public:
-            struct flag_t {
+            struct LIBATFRAME_UTILS_API flag_t {
                 enum type {
                     INDEX = 0x01, // 日志rotation序号
                     DATE  = 0x02, // 日期
@@ -38,7 +39,7 @@ namespace util {
                 };
             };
 
-            struct level_t {
+            struct LIBATFRAME_UTILS_API level_t {
                 enum type {
                     LOG_LW_DISABLED = 0, // 关闭日志
                     LOG_LW_FATAL,        // 强制输出
@@ -51,7 +52,7 @@ namespace util {
                 };
             };
 
-            struct caller_info_t {
+            struct LIBATFRAME_UTILS_API caller_info_t {
                 level_t::type level_id;
                 const char *  level_name;
                 const char *  file_path;
@@ -65,7 +66,7 @@ namespace util {
             };
 
         public:
-            static bool check_flag(int32_t flags, int32_t checked);
+            LIBATFRAME_UTILS_API static bool check_flag(int32_t flags, int32_t checked);
 
             /**
              * @brief 格式化到缓冲区，如果缓冲区不足忽略后面的数据
@@ -95,27 +96,27 @@ namespace util {
              *            %C:  	调用处函数名称
              *            %N:   轮询序号(仅在内部接口有效)
              */
-            static size_t format(char *buff, size_t bufz, const char *fmt, size_t fmtz, const caller_info_t &caller);
+            LIBATFRAME_UTILS_API static size_t format(char *buff, size_t bufz, const char *fmt, size_t fmtz, const caller_info_t &caller);
 
-            static bool check_rotation_var(const char *fmt, size_t fmtz);
+            LIBATFRAME_UTILS_API static bool check_rotation_var(const char *fmt, size_t fmtz);
 
-            static bool has_format(const char *fmt, size_t fmtz);
+            LIBATFRAME_UTILS_API static bool has_format(const char *fmt, size_t fmtz);
 
             /**
              * @brief 设置工程目录，会影响format时的%s参数，如果文件路径以工程目录开头，则会用~替换
              */
-            static void set_project_directory(const char *dirbuf, size_t dirsz);
+            LIBATFRAME_UTILS_API static void set_project_directory(const char *dirbuf, size_t dirsz);
 
             /**
              * @brief 设置工程目录，会影响format时的%s参数，如果文件路径以工程目录开头，则会用~替换
              * @param name 日志等级的名称（disable/disabled, fatal, error, warn/warning, info, notice, debug）
              * @return 读取到的等级id,默认会返回debug
              */
-            static level_t::type get_level_by_name(const char *name);
+            LIBATFRAME_UTILS_API static level_t::type get_level_by_name(const char *name);
 
         private:
-            static struct tm * get_iso_tm();
-            static std::string project_dir_;
+            LIBATFRAME_UTILS_API static struct tm *get_iso_tm();
+            static std::string                     project_dir_;
         };
     } // namespace log
 } // namespace util

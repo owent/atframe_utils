@@ -29,6 +29,8 @@
 
 #include <string>
 
+#include <config/atframe_utils_build_feature.h>
+
 namespace util {
 
 
@@ -70,8 +72,8 @@ namespace util {
      * @note           Call this function with dlen = 0 to obtain the
      *                 required buffer size in *olen
      */
-    int base64_encode(unsigned char *dst, size_t dlen, size_t *olen, const unsigned char *src, size_t slen,
-                      base64_mode_t::type mode = base64_mode_t::EN_BMT_STANDARD);
+    LIBATFRAME_UTILS_API int base64_encode(unsigned char *dst, size_t dlen, size_t *olen, const unsigned char *src, size_t slen,
+                                           base64_mode_t::type mode = base64_mode_t::EN_BMT_STANDARD);
 
     /**
      * @brief          Encode a buffer into base64 format
@@ -83,7 +85,8 @@ namespace util {
      *
      * @return         0 if successful
      */
-    int base64_encode(std::string &dst, const unsigned char *src, size_t slen, base64_mode_t::type mode = base64_mode_t::EN_BMT_STANDARD);
+    LIBATFRAME_UTILS_API int base64_encode(std::string &dst, const unsigned char *src, size_t slen,
+                                           base64_mode_t::type mode = base64_mode_t::EN_BMT_STANDARD);
 
     /**
      * @brief          Encode a buffer into base64 format
@@ -94,7 +97,8 @@ namespace util {
      *
      * @return         0 if successful
      */
-    int base64_encode(std::string &dst, const std::string &in, base64_mode_t::type mode = base64_mode_t::EN_BMT_STANDARD);
+    LIBATFRAME_UTILS_API int base64_encode(std::string &dst, const std::string &in,
+                                           base64_mode_t::type mode = base64_mode_t::EN_BMT_STANDARD);
 
     /**
      * @brief          Decode a base64-formatted buffer, support no padding
@@ -113,8 +117,8 @@ namespace util {
      * @note           Call this function with *dst = NULL or dlen = 0 to obtain
      *                 the required buffer size in *olen
      */
-    int base64_decode(unsigned char *dst, size_t dlen, size_t *olen, const unsigned char *src, size_t slen,
-                      base64_mode_t::type mode = base64_mode_t::EN_BMT_STANDARD);
+    LIBATFRAME_UTILS_API int base64_decode(unsigned char *dst, size_t dlen, size_t *olen, const unsigned char *src, size_t slen,
+                                           base64_mode_t::type mode = base64_mode_t::EN_BMT_STANDARD);
 
     /**
      * @brief          Decode a base64-formatted buffer, support no padding
@@ -126,7 +130,8 @@ namespace util {
      *
      * @return         0 if successful
      */
-    int base64_decode(std::string &dst, const unsigned char *src, size_t slen, base64_mode_t::type mode = base64_mode_t::EN_BMT_STANDARD);
+    LIBATFRAME_UTILS_API int base64_decode(std::string &dst, const unsigned char *src, size_t slen,
+                                           base64_mode_t::type mode = base64_mode_t::EN_BMT_STANDARD);
 
     /**
      * @brief          Decode a base64-formatted buffer, support no padding
@@ -137,7 +142,8 @@ namespace util {
      *
      * @return         0 if successful
      */
-    int base64_decode(std::string &dst, const std::string &in, base64_mode_t::type mode = base64_mode_t::EN_BMT_STANDARD);
+    LIBATFRAME_UTILS_API int base64_decode(std::string &dst, const std::string &in,
+                                           base64_mode_t::type mode = base64_mode_t::EN_BMT_STANDARD);
 } // namespace util
 
 #endif

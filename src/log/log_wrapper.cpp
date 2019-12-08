@@ -65,7 +65,7 @@ namespace util {
             static bool log_wrapper_global_destroyed_ = false;
         }
 
-        log_wrapper::log_wrapper()
+        LIBATFRAME_UTILS_API log_wrapper::log_wrapper()
             : log_level_(level_t::LOG_LW_DISABLED), stacktrace_level_(level_t::LOG_LW_DISABLED, level_t::LOG_LW_DISABLED) {
             // 默认设为全局logger，如果是用户logger，则create_user_logger里重新设为false
             options_.set(options_t::OPT_IS_GLOBAL, true);
@@ -74,13 +74,13 @@ namespace util {
             prefix_format_ = "[Log %L][%F %T.%f][%s:%n(%C)]: ";
         }
 
-        log_wrapper::log_wrapper(construct_helper_t &)
+        LIBATFRAME_UTILS_API log_wrapper::log_wrapper(construct_helper_t &)
             : log_level_(level_t::LOG_LW_DISABLED), stacktrace_level_(level_t::LOG_LW_DISABLED, level_t::LOG_LW_DISABLED) {
             // 这个接口由create_user_logger调用，不设置OPT_IS_GLOBAL
             prefix_format_ = "[Log %L][%F %T.%f][%s:%n(%C)]: ";
         }
 
-        log_wrapper::~log_wrapper() {
+        LIBATFRAME_UTILS_API log_wrapper::~log_wrapper() {
             if (get_option(options_t::OPT_IS_GLOBAL)) {
                 detail::log_wrapper_global_destroyed_ = true;
             }
@@ -89,19 +89,19 @@ namespace util {
             log_level_ = level_t::LOG_LW_DISABLED;
         }
 
-        int32_t log_wrapper::init(level_t::type level) {
+        LIBATFRAME_UTILS_API int32_t log_wrapper::init(level_t::type level) {
             log_level_ = level;
 
             return 0;
         }
 
-        size_t log_wrapper::sink_size() const {
+        LIBATFRAME_UTILS_API size_t log_wrapper::sink_size() const {
             util::lock::read_lock_holder<util::lock::spin_rw_lock> holder(log_sinks_lock_);
 
             return log_sinks_.size();
         }
 
-        void log_wrapper::add_sink(log_handler_t h, level_t::type level_min, level_t::type level_max) {
+        LIBATFRAME_UTILS_API void log_wrapper::add_sink(log_handler_t h, level_t::type level_min, level_t::type level_max) {
             if (h) {
                 log_router_t router;
                 router.handle    = h;
@@ -113,7 +113,7 @@ namespace util {
             };
         }
 
-        void log_wrapper::pop_sink() {
+        LIBATFRAME_UTILS_API void log_wrapper::pop_sink() {
             util::lock::write_lock_holder<util::lock::spin_rw_lock> holder(log_sinks_lock_);
 
             if (log_sinks_.empty()) {
@@ -123,7 +123,7 @@ namespace util {
             log_sinks_.pop_front();
         }
 
-        bool log_wrapper::set_sink(size_t idx, level_t::type level_min, level_t::type level_max) {
+        LIBATFRAME_UTILS_API bool log_wrapper::set_sink(size_t idx, level_t::type level_min, level_t::type level_max) {
             util::lock::write_lock_holder<util::lock::spin_rw_lock> holder(log_sinks_lock_);
 
             if (log_sinks_.size() <= idx) {
@@ -141,12 +141,12 @@ namespace util {
         }
 
 
-        void log_wrapper::clear_sinks() {
+        LIBATFRAME_UTILS_API void log_wrapper::clear_sinks() {
             util::lock::write_lock_holder<util::lock::spin_rw_lock> holder(log_sinks_lock_);
             log_sinks_.clear();
         }
 
-        void log_wrapper::set_stacktrace_level(level_t::type level_max, level_t::type level_min) {
+        LIBATFRAME_UTILS_API void log_wrapper::set_stacktrace_level(level_t::type level_max, level_t::type level_min) {
             stacktrace_level_.first  = level_min;
             stacktrace_level_.second = level_max;
 
@@ -158,13 +158,13 @@ namespace util {
             }
         }
 
-        void log_wrapper::update() { util::time::time_utility::update(); }
+        LIBATFRAME_UTILS_API void log_wrapper::update() { util::time::time_utility::update(); }
 
-        void log_wrapper::log(const caller_info_t &caller,
+        LIBATFRAME_UTILS_API void log_wrapper::log(const caller_info_t &caller,
 #ifdef _MSC_VER
-                              _In_z_ _Printf_format_string_ const char *fmt, ...
+                                                   _In_z_ _Printf_format_string_ const char *fmt, ...
 #else
-                              const char *fmt, ...
+                                                   const char *fmt, ...
 #endif
         ) {
             if (get_option(options_t::OPT_AUTO_UPDATE_TIME) && !prefix_format_.empty()) {
@@ -217,7 +217,7 @@ namespace util {
             write_log(caller, log_buffer, log_size);
         }
 
-        void log_wrapper::write_log(const caller_info_t &caller, const char *content, size_t content_size) {
+        LIBATFRAME_UTILS_API void log_wrapper::write_log(const caller_info_t &caller, const char *content, size_t content_size) {
             util::lock::read_lock_holder<util::lock::spin_rw_lock> holder(log_sinks_lock_);
 
             for (std::list<log_router_t>::iterator iter = log_sinks_.begin(); iter != log_sinks_.end(); ++iter) {
@@ -227,7 +227,7 @@ namespace util {
             }
         }
 
-        log_wrapper *log_wrapper::mutable_log_cat(uint32_t cats) {
+        LIBATFRAME_UTILS_API log_wrapper *log_wrapper::mutable_log_cat(uint32_t cats) {
             if (detail::log_wrapper_global_destroyed_) {
                 return NULL;
             }
@@ -241,7 +241,7 @@ namespace util {
             return &all_logger[cats];
         }
 
-        log_wrapper::ptr_t log_wrapper::create_user_logger() {
+        LIBATFRAME_UTILS_API log_wrapper::ptr_t log_wrapper::create_user_logger() {
             construct_helper_t h;
             ptr_t              ret = std::make_shared<log_wrapper>(h);
             if (ret) {

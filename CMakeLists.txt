@@ -73,6 +73,14 @@ else ()
     target_compile_definitions(${PROJECT_LIB_NAME}
         PRIVATE LIBATFRAME_UTILS_API_NATIVE=1
     )
+    # add_library("${PROJECT_LIB_NAME}-test-dyn" SHARED ${HEADER_LIST} ${SRC_LIST})
+    # set_target_properties("${PROJECT_LIB_NAME}-test-dyn" PROPERTIES 
+    #     C_VISIBILITY_PRESET "hidden"
+    #     CXX_VISIBILITY_PRESET "hidden"
+    # )
+    # target_compile_definitions("${PROJECT_LIB_NAME}-test-dyn"
+    #     PRIVATE LIBATFRAME_UTILS_API_NATIVE=1 LIBATFRAME_UTILS_API_DLL=1
+    # )
 endif()
 
 if (MSVC)
@@ -101,12 +109,12 @@ if (LOG_STACKTRACE_USING_LIBUNWIND)
 endif()
 
 target_link_libraries(${PROJECT_LIB_NAME} ${PROJECT_DEP_LINK_NAMES})
-target_link_libraries(${PROJECT_LIB_DYNAMIC_NAME} ${PROJECT_LIB_NAME}
-    ${ATFRAME_UTILS_NETWORK_LINK_NAME}
-    ${ATFRAME_UTILS_BIN_CRYPT_LINK_NAME}
-    ${PROJECT_DEP_LINK_NAMES}
-    ${COMPILER_OPTION_EXTERN_CXX_LIBS}
-)
+# target_link_libraries("${PROJECT_LIB_NAME}-test-dyn"
+#     ${ATFRAME_UTILS_NETWORK_LINK_NAME}
+#     ${ATFRAME_UTILS_BIN_CRYPT_LINK_NAME}
+#     ${PROJECT_DEP_LINK_NAMES}
+#     ${COMPILER_OPTION_EXTERN_CXX_LIBS}
+# )
 
 configure_file(
     "${PROJECT_ALL_INCLUDE_DIR}/config/atframe_utils_build_feature.h.in"

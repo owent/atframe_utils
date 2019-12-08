@@ -306,29 +306,31 @@ namespace util {
         }
     } // namespace detail
 
-    int base64_encode(unsigned char *dst, size_t dlen, size_t *olen, const unsigned char *src, size_t slen, base64_mode_t::type mode) {
+    LIBATFRAME_UTILS_API int base64_encode(unsigned char *dst, size_t dlen, size_t *olen, const unsigned char *src, size_t slen,
+                                           base64_mode_t::type mode) {
         return detail::base64_encode_inner(dst, dlen, olen, src, slen, detail::base64_get_enc_map(mode),
                                            detail::base64_get_padding_char(mode));
     }
 
-    int base64_encode(std::string &dst, const unsigned char *src, size_t slen, base64_mode_t::type mode) {
+    LIBATFRAME_UTILS_API int base64_encode(std::string &dst, const unsigned char *src, size_t slen, base64_mode_t::type mode) {
         return detail::base64_encode_inner(dst, src, slen, detail::base64_get_enc_map(mode), detail::base64_get_padding_char(mode));
     }
 
-    int base64_encode(std::string &dst, const std::string &in, base64_mode_t::type mode) {
+    LIBATFRAME_UTILS_API int base64_encode(std::string &dst, const std::string &in, base64_mode_t::type mode) {
         return detail::base64_encode_inner(dst, in, detail::base64_get_enc_map(mode), detail::base64_get_padding_char(mode));
     }
 
-    int base64_decode(unsigned char *dst, size_t dlen, size_t *olen, const unsigned char *src, size_t slen, base64_mode_t::type mode) {
+    LIBATFRAME_UTILS_API int base64_decode(unsigned char *dst, size_t dlen, size_t *olen, const unsigned char *src, size_t slen,
+                                           base64_mode_t::type mode) {
         return detail::base64_decode_inner(dst, dlen, olen, src, slen, detail::base64_get_dec_map(mode),
                                            detail::base64_get_padding_char(mode));
     }
 
-    int base64_decode(std::string &dst, const unsigned char *src, size_t slen, base64_mode_t::type mode) {
+    LIBATFRAME_UTILS_API int base64_decode(std::string &dst, const unsigned char *src, size_t slen, base64_mode_t::type mode) {
         return detail::base64_decode_inner(dst, src, slen, detail::base64_get_dec_map(mode), detail::base64_get_padding_char(mode));
     }
 
-    int base64_decode(std::string &dst, const std::string &in, base64_mode_t::type mode) {
+    LIBATFRAME_UTILS_API int base64_decode(std::string &dst, const std::string &in, base64_mode_t::type mode) {
         return detail::base64_decode_inner(dst, in, detail::base64_get_dec_map(mode), detail::base64_get_padding_char(mode));
     }
 } // namespace util

@@ -19,7 +19,7 @@
 namespace util {
     namespace log {
 
-        log_sink_file_backend::log_sink_file_backend()
+        LIBATFRAME_UTILS_API log_sink_file_backend::log_sink_file_backend()
             : rotation_size_(10),                // 默认10个文件
               max_file_size_(DEFAULT_FILE_SIZE), // 默认文件大小
               check_interval_(0),                // 默认文件切换检查周期
@@ -35,7 +35,7 @@ namespace util {
             set_file_pattern("%Y-%m-%d.%N.log"); // 默认文件名规则
         }
 
-        log_sink_file_backend::log_sink_file_backend(const std::string &file_name_pattern)
+        LIBATFRAME_UTILS_API log_sink_file_backend::log_sink_file_backend(const std::string &file_name_pattern)
             : rotation_size_(10),                // 默认10个文件
               max_file_size_(DEFAULT_FILE_SIZE), // 默认文件大小
               check_interval_(0),                // 默认文件切换检查周期
@@ -51,7 +51,7 @@ namespace util {
             set_file_pattern(file_name_pattern);
         }
 
-        log_sink_file_backend::log_sink_file_backend(const log_sink_file_backend &other)
+        LIBATFRAME_UTILS_API log_sink_file_backend::log_sink_file_backend(const log_sink_file_backend &other)
             : rotation_size_(other.rotation_size_),   // 默认文件数量
               max_file_size_(other.max_file_size_),   // 默认文件大小
               check_interval_(other.check_interval_), // 默认文件切换检查周期
@@ -68,13 +68,13 @@ namespace util {
             // 其他的部分都要重新初始化，不能复制
         }
 
-        log_sink_file_backend::~log_sink_file_backend() {
+        LIBATFRAME_UTILS_API log_sink_file_backend::~log_sink_file_backend() {
             if (log_file_.opened_file && log_file_.opened_file->is_open() && !log_file_.opened_file->bad()) {
                 log_file_.opened_file->flush();
             }
         }
 
-        void log_sink_file_backend::set_file_pattern(const std::string &file_name_pattern) {
+        LIBATFRAME_UTILS_API void log_sink_file_backend::set_file_pattern(const std::string &file_name_pattern) {
             // 计算按时间切换的检测间隔
             static time_t check_interval[128] = {0};
             // @see log_formatter::format
@@ -123,7 +123,16 @@ namespace util {
             }
         }
 
-        void log_sink_file_backend::operator()(const log_formatter::caller_info_t &caller, const char *content, size_t content_size) {
+        LIBATFRAME_UTILS_API void log_sink_file_backend::set_writing_alias_pattern(const std::string &file_name_pattern) {
+            alias_writing_pattern_ = file_name_pattern;
+        }
+
+        LIBATFRAME_UTILS_API const std::string &log_sink_file_backend::get_writing_alias_pattern(const std::string &file_name_pattern) {
+            return file_name_pattern;
+        }
+
+        LIBATFRAME_UTILS_API void log_sink_file_backend::operator()(const log_formatter::caller_info_t &caller, const char *content,
+                                                                    size_t content_size) {
             if (!inited_) {
                 init();
             }
@@ -159,7 +168,47 @@ namespace util {
             log_file_.written_size += content_size + 1;
         }
 
-        void log_sink_file_backend::init() {
+
+        LIBATFRAME_UTILS_API time_t log_sink_file_backend::get_check_interval() const { return check_interval_; }
+
+        LIBATFRAME_UTILS_API log_sink_file_backend &log_sink_file_backend::set_check_interval(time_t check_interval) {
+            check_interval_ = check_interval;
+            return *this;
+        }
+
+        LIBATFRAME_UTILS_API time_t log_sink_file_backend::get_flush_interval() const { return flush_interval_; }
+
+        LIBATFRAME_UTILS_API log_sink_file_backend &log_sink_file_backend::set_flush_interval(time_t v) {
+            flush_interval_ = v;
+            return *this;
+        }
+
+        LIBATFRAME_UTILS_API uint32_t log_sink_file_backend::get_auto_flush() const { return log_file_.auto_flush; }
+
+        LIBATFRAME_UTILS_API log_sink_file_backend &log_sink_file_backend::set_auto_flush(uint32_t flush_level) {
+            log_file_.auto_flush = flush_level;
+            return *this;
+        }
+
+        LIBATFRAME_UTILS_API size_t log_sink_file_backend::get_max_file_size() const { return max_file_size_; }
+
+        LIBATFRAME_UTILS_API log_sink_file_backend &log_sink_file_backend::set_max_file_size(size_t max_file_size) {
+            max_file_size_ = max_file_size;
+            return *this;
+        }
+
+        LIBATFRAME_UTILS_API uint32_t log_sink_file_backend::get_rotate_size() const { return rotation_size_; }
+
+        LIBATFRAME_UTILS_API log_sink_file_backend &log_sink_file_backend::set_rotate_size(uint32_t sz) {
+            // 轮训sz不能为0
+            if (sz <= 1) {
+                sz = 1;
+            }
+            rotation_size_ = sz;
+            return *this;
+        }
+
+        LIBATFRAME_UTILS_API void log_sink_file_backend::init() {
             if (inited_) {
                 return;
             }
@@ -193,7 +242,7 @@ namespace util {
             open_log_file(false);
         }
 
-        std::shared_ptr<std::ofstream> log_sink_file_backend::open_log_file(bool destroy_content) {
+        LIBATFRAME_UTILS_API std::shared_ptr<std::ofstream> log_sink_file_backend::open_log_file(bool destroy_content) {
             if (log_file_.opened_file && log_file_.opened_file->good()) {
                 return log_file_.opened_file;
             }
@@ -292,7 +341,7 @@ namespace util {
             return log_file_.opened_file;
         }
 
-        void log_sink_file_backend::rotate_log() {
+        LIBATFRAME_UTILS_API void log_sink_file_backend::rotate_log() {
             if (rotation_size_ > 0) {
                 log_file_.rotation_index = (log_file_.rotation_index + 1) % rotation_size_;
             } else {
@@ -301,7 +350,7 @@ namespace util {
             reset_log_file();
         }
 
-        void log_sink_file_backend::check_update() {
+        LIBATFRAME_UTILS_API void log_sink_file_backend::check_update() {
             if (0 != log_file_.opened_file_point_) {
                 if (0 == check_interval_ ||
                     util::time::time_utility::get_now() / check_interval_ == log_file_.opened_file_point_ / check_interval_) {
@@ -347,7 +396,7 @@ namespace util {
             reset_log_file();
         }
 
-        void log_sink_file_backend::reset_log_file() {
+        LIBATFRAME_UTILS_API void log_sink_file_backend::reset_log_file() {
             // 更换日志文件需要加锁
             lock::lock_holder<lock::spin_lock> lkholder(fs_lock_);
 

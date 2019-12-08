@@ -16,8 +16,10 @@
 
 #pragma once
 
-#include <stdint.h>
 #include <cstddef>
+#include <stdint.h>
+
+#include <config/atframe_utils_build_feature.h>
 
 namespace util {
     namespace network {
@@ -76,39 +78,39 @@ namespace util {
                 EN_HCP_ET_MAX
             };
 
-            const char *get_type(main_type mt);
+            LIBATFRAME_UTILS_API const char *get_type(main_type mt);
 
-            const char *get_subtype(sub_type st);
+            LIBATFRAME_UTILS_API const char *get_subtype(sub_type st);
 
-            int make_content_type(char *dst, size_t dst_sz, const char *type, const char *subtype, const char *parameter_key[],
-                                  const char *parameter_value[], size_t parameter_sz);
+            LIBATFRAME_UTILS_API int make_content_type(char *dst, size_t dst_sz, const char *type, const char *subtype,
+                                                       const char *parameter_key[], const char *parameter_value[], size_t parameter_sz);
 
-            int make_content_type(char *dst, size_t dst_sz, main_type mt, const char *subtype, const char *parameter_key[],
-                                  const char *parameter_value[], size_t parameter_sz);
+            LIBATFRAME_UTILS_API int make_content_type(char *dst, size_t dst_sz, main_type mt, const char *subtype,
+                                                       const char *parameter_key[], const char *parameter_value[], size_t parameter_sz);
 
-            int make_content_type(char *dst, size_t dst_sz, const char *type, sub_type st, const char *parameter_key[],
-                                  const char *parameter_value[], size_t parameter_sz);
+            LIBATFRAME_UTILS_API int make_content_type(char *dst, size_t dst_sz, const char *type, sub_type st, const char *parameter_key[],
+                                                       const char *parameter_value[], size_t parameter_sz);
 
-            int make_content_type(char *dst, size_t dst_sz, main_type mt, sub_type st, const char *parameter_key[],
-                                  const char *parameter_value[], size_t parameter_sz);
+            LIBATFRAME_UTILS_API int make_content_type(char *dst, size_t dst_sz, main_type mt, sub_type st, const char *parameter_key[],
+                                                       const char *parameter_value[], size_t parameter_sz);
 
-            int make_content_type(char *dst, size_t dst_sz, easy_type et, const char *parameter_key[], const char *parameter_value[],
-                                  size_t parameter_sz);
-        };
-        struct http_request_content_type_t {
+            LIBATFRAME_UTILS_API int make_content_type(char *dst, size_t dst_sz, easy_type et, const char *parameter_key[],
+                                                       const char *parameter_value[], size_t parameter_sz);
+        }; // namespace http_content_type
+        struct LIBATFRAME_UTILS_API http_request_content_type_t {
             enum type {
-                EN_HRCT_DEFAULT = 0,                             // auto content type
-                EN_HRCT_CUSTOM = 1,                              // custom content type
+                EN_HRCT_DEFAULT                           = 0,   // auto content type
+                EN_HRCT_CUSTOM                            = 1,   // custom content type
                 EN_HRCT_APPLICATION_X_WWW_FORM_URLENCODED = 100, // application/x-www-form-urlencoded
-                EN_HRCT_MULTIPART_FORM_DATA = 200,               // multipart/form-data
+                EN_HRCT_MULTIPART_FORM_DATA               = 200, // multipart/form-data
 
                 EN_HRCT_MAX
             };
         };
 
-        struct http_response_content_type_t {
+        struct LIBATFRAME_UTILS_API http_response_content_type_t {
             enum type {};
         };
-    }
-}
+    } // namespace network
+} // namespace util
 #endif

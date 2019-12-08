@@ -19,6 +19,8 @@
 
 #pragma once
 
+#include <config/atframe_utils_build_feature.h>
+
 namespace util {
     namespace random {
         namespace core {
@@ -43,12 +45,12 @@ namespace util {
             template <typename UIntType, std::size_t MAX_STATUS_N_SIZE, std::size_t RD_M, std::size_t SPB_IDX, UIntType RD_A,
                       std::size_t RD_U, UIntType RD_D, std::size_t RD_S, UIntType RD_B, std::size_t RD_T, UIntType RD_C, std::size_t RD_L,
                       UIntType INIT_SEED_F>
-            class mersenne_twister {
+            class LIBATFRAME_UTILS_API_HEAD_ONLY mersenne_twister {
             public:
                 typedef UIntType result_type;
 
             private:
-                UIntType mt_status[MAX_STATUS_N_SIZE];
+                UIntType    mt_status[MAX_STATUS_N_SIZE];
                 std::size_t mt_index;
 
                 void twist() {
@@ -61,25 +63,25 @@ namespace util {
 
                     // 这里为了减少取模操作把一个循环拆成了四个
                     for (std::size_t i = 0; i < MAX_STATUS_N_SIZE - RD_M - mt_unroll_extra1; ++i) {
-                        UIntType y = (mt_status[i] & mt_upper_mask) | (mt_status[i + 1] & mt_lower_mask);
+                        UIntType y   = (mt_status[i] & mt_upper_mask) | (mt_status[i + 1] & mt_lower_mask);
                         mt_status[i] = mt_status[i + RD_M] ^ (y >> 1) ^ ((mt_status[i + 1] & 1) * RD_A);
                     }
                     for (std::size_t i = MAX_STATUS_N_SIZE - RD_M - mt_unroll_extra1; i < MAX_STATUS_N_SIZE - RD_M; ++i) {
-                        UIntType y = (mt_status[i] & mt_upper_mask) | (mt_status[i + 1] & mt_lower_mask);
+                        UIntType y   = (mt_status[i] & mt_upper_mask) | (mt_status[i + 1] & mt_lower_mask);
                         mt_status[i] = mt_status[i + RD_M] ^ (y >> 1) ^ ((mt_status[i + 1] & 1) * RD_A);
                     }
                     for (std::size_t i = MAX_STATUS_N_SIZE - RD_M; i < MAX_STATUS_N_SIZE - 1 - mt_unroll_extra2; ++i) {
-                        UIntType y = (mt_status[i] & mt_upper_mask) | (mt_status[i + 1] & mt_lower_mask);
+                        UIntType y   = (mt_status[i] & mt_upper_mask) | (mt_status[i + 1] & mt_lower_mask);
                         mt_status[i] = mt_status[i - (MAX_STATUS_N_SIZE - RD_M)] ^ (y >> 1) ^ ((mt_status[i + 1] & 1) * RD_A);
                     }
                     for (std::size_t i = MAX_STATUS_N_SIZE - 1 - mt_unroll_extra2; i < MAX_STATUS_N_SIZE - 1; ++i) {
-                        UIntType y = (mt_status[i] & mt_upper_mask) | (mt_status[i + 1] & mt_lower_mask);
+                        UIntType y   = (mt_status[i] & mt_upper_mask) | (mt_status[i + 1] & mt_lower_mask);
                         mt_status[i] = mt_status[i - (MAX_STATUS_N_SIZE - RD_M)] ^ (y >> 1) ^ ((mt_status[i + 1] & 1) * RD_A);
                     }
                     // last iteration
-                    UIntType y = (mt_status[MAX_STATUS_N_SIZE - 1] & mt_upper_mask) | (mt_status[0] & mt_lower_mask);
+                    UIntType y                       = (mt_status[MAX_STATUS_N_SIZE - 1] & mt_upper_mask) | (mt_status[0] & mt_lower_mask);
                     mt_status[MAX_STATUS_N_SIZE - 1] = mt_status[RD_M - 1] ^ (y >> 1) ^ ((mt_status[0] & 1) * RD_A);
-                    mt_index = 0;
+                    mt_index                         = 0;
                 }
 
             public:
@@ -120,7 +122,7 @@ namespace util {
                  * @param [in] last 随机数种子散列值结束位置
                  */
                 template <class It>
-                void init_seed(It &first, It last) {
+                LIBATFRAME_UTILS_API_HEAD_ONLY void init_seed(It &first, It last) {
                     It begin = first;
                     for (mt_index = 0; mt_index < MAX_STATUS_N_SIZE && begin != last; ++mt_index, ++begin) {
                         mt_status[mt_index] = static_cast<UIntType>(*begin);
@@ -165,9 +167,9 @@ namespace util {
                  */
                 result_type operator()() { return random(); }
             };
-        }
-    }
-}
+        } // namespace core
+    }     // namespace random
+} // namespace util
 
 
 #endif /* RANDOMMTCORE_H_ */

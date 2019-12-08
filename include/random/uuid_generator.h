@@ -24,7 +24,7 @@
 #include <stdint.h>
 #include <string>
 
-#include "../common/string_oprs.h"
+#include <common/string_oprs.h>
 
 #if defined(WIN32)
 #include <rpc.h>
@@ -39,10 +39,10 @@ namespace util {
             uint32_t data1;
             uint16_t data2;
             uint16_t data3;
-            uint8_t data4[8];
+            uint8_t  data4[8];
         } uuid;
 
-        class uuid_generator {
+        class UTIL_SYMBOL_HIDDEN uuid_generator {
         public:
             static std::string uuid_to_string(const uuid &id) {
                 char str_buff[64] = {0};

@@ -48,7 +48,7 @@
 namespace util {
     namespace mempool {
         template <class TKEY, class TVALUE>
-        struct lru_map_type_traits {
+        struct LIBATFRAME_UTILS_API_HEAD_ONLY lru_map_type_traits {
             typedef TKEY                              key_type;
             typedef TVALUE                            mapped_type;
             typedef std::shared_ptr<TVALUE>           store_type;
@@ -67,7 +67,7 @@ namespace util {
         template <typename TKEY, typename TVALUE, class TLESSCMP = std::less<TKEY>,
                   class TAlloc = std::allocator<std::pair<const TKEY, typename lru_map_type_traits<TKEY, TVALUE>::iterator> > >
 #endif
-        class lru_map {
+        class LIBATFRAME_UTILS_API_HEAD_ONLY lru_map {
         public:
             typedef typename lru_map_type_traits<TKEY, TVALUE>::key_type    key_type;
             typedef typename lru_map_type_traits<TKEY, TVALUE>::mapped_type mapped_type;
@@ -95,7 +95,7 @@ namespace util {
             lru_map() {}
 
             template <class TCONTAINER>
-            lru_map(const TCONTAINER &other) {
+            LIBATFRAME_UTILS_API_HEAD_ONLY lru_map(const TCONTAINER &other) {
                 reserve(static_cast<size_type>(other.size()));
                 insert(other.begin(), other.end());
             }
@@ -150,12 +150,13 @@ namespace util {
             }
 
             template <class TPARAMKEY, class TPARAMVALUE>
-            std::pair<iterator, bool> insert_key_value(const TPARAMKEY &key, const TPARAMVALUE &copy_value) {
+            LIBATFRAME_UTILS_API_HEAD_ONLY std::pair<iterator, bool> insert_key_value(const TPARAMKEY &key, const TPARAMVALUE &copy_value) {
                 return insert_key_value(key, std::make_shared<mapped_type>(copy_value));
             }
 
             template <class TPARAMKEY, class TPARAMVALUE>
-            std::pair<iterator, bool> insert_key_value(const TPARAMKEY &key, const std::shared_ptr<TPARAMVALUE> &value) {
+            LIBATFRAME_UTILS_API_HEAD_ONLY std::pair<iterator, bool> insert_key_value(const TPARAMKEY &                   key,
+                                                                                      const std::shared_ptr<TPARAMVALUE> &value) {
                 typename lru_key_value_map_type::iterator it = kv_data_.find(key);
                 if (it != kv_data_.end()) {
                     return std::pair<iterator, bool>(visit_history_.end(), false);
@@ -170,7 +171,7 @@ namespace util {
             }
 
             template <class TCKEY, class TCVALUE>
-            std::pair<iterator, bool> insert(const std::pair<TCKEY, TCVALUE> &value) {
+            LIBATFRAME_UTILS_API_HEAD_ONLY std::pair<iterator, bool> insert(const std::pair<TCKEY, TCVALUE> &value) {
                 return insert_key_value(value.first, value.second);
             }
 
@@ -191,24 +192,26 @@ namespace util {
             }
 
             template <class TPARAMKEY, class TPARAMVALUE>
-            std::pair<iterator, bool> insert_key_value(TPARAMKEY &&key, std::shared_ptr<TPARAMVALUE> &&value) {
+            LIBATFRAME_UTILS_API_HEAD_ONLY std::pair<iterator, bool> insert_key_value(TPARAMKEY &&                   key,
+                                                                                      std::shared_ptr<TPARAMVALUE> &&value) {
                 return insert(value_type(std::forward<TPARAMKEY>(key), value));
             }
 
             template <class TPARAMKEY, class TPARAMVALUE>
-            std::pair<iterator, bool> insert_key_value(TPARAMKEY &&key, std::shared_ptr<TPARAMVALUE> &value) {
+            LIBATFRAME_UTILS_API_HEAD_ONLY std::pair<iterator, bool> insert_key_value(TPARAMKEY &&                  key,
+                                                                                      std::shared_ptr<TPARAMVALUE> &value) {
                 return insert(value_type(std::forward<TPARAMKEY>(key), value));
             }
 
             template <class TPARAMKEY, class TPARAMVALUE>
-            std::pair<iterator, bool> insert_key_value(TPARAMKEY &&key, TPARAMVALUE &&copy_value) {
+            LIBATFRAME_UTILS_API_HEAD_ONLY std::pair<iterator, bool> insert_key_value(TPARAMKEY &&key, TPARAMVALUE &&copy_value) {
                 return insert(
                     value_type(std::forward<TPARAMKEY>(key), std::make_shared<mapped_type>(std::forward<TPARAMVALUE>(copy_value))));
             }
 #endif
 
             template <class InputIt>
-            void insert(InputIt first, InputIt last) {
+            LIBATFRAME_UTILS_API_HEAD_ONLY void insert(InputIt first, InputIt last) {
                 while (first != last) {
                     insert(*(first++));
                 }

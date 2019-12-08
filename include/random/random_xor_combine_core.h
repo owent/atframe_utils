@@ -18,11 +18,13 @@
 
 #pragma once
 
+#include <config/atframe_utils_build_feature.h>
+
 namespace util {
     namespace random {
         namespace core {
             template <class UIntType, int w, int k, int q, int s>
-            class linear_feedback_shift_engine {
+            class LIBATFRAME_UTILS_API_HEAD_ONLY linear_feedback_shift_engine {
             public:
                 typedef UIntType result_type;
 
@@ -45,9 +47,9 @@ namespace util {
                 }
 
                 result_type random() {
-                    const result_type b = (((xor_c_seed_ << q) ^ xor_c_seed_) & wordmask()) >> (k - s);
+                    const result_type b    = (((xor_c_seed_ << q) ^ xor_c_seed_) & wordmask()) >> (k - s);
                     const result_type mask = (wordmask() << (w - k)) & wordmask();
-                    xor_c_seed_ = ((xor_c_seed_ & mask) << s) ^ b;
+                    xor_c_seed_            = ((xor_c_seed_ & mask) << s) ^ b;
                     return xor_c_seed_;
                 }
 
@@ -55,14 +57,14 @@ namespace util {
             };
 
             template <class URNG1, int s1, class URNG2, int s2>
-            class xor_combine_engine {
+            class LIBATFRAME_UTILS_API_HEAD_ONLY xor_combine_engine {
             public:
-                typedef URNG1 base_left_type;
-                typedef URNG2 base_right_type;
+                typedef URNG1                                base_left_type;
+                typedef URNG2                                base_right_type;
                 typedef typename base_left_type::result_type result_type;
 
             private:
-                base_left_type xor_c_rng_left_;
+                base_left_type  xor_c_rng_left_;
                 base_right_type xor_c_rng_right_;
 
             public:
@@ -75,7 +77,7 @@ namespace util {
                 }
 
                 template <class It>
-                void init_seed(It &first, It last) {
+                LIBATFRAME_UTILS_API_HEAD_ONLY void init_seed(It &first, It last) {
                     It begin = first;
                     if (begin != last) {
                         xor_c_rng_left_.init_seed(*begin);
@@ -98,9 +100,9 @@ namespace util {
 
                 result_type operator()() { return random(); }
             };
-        }
-    }
-}
+        } // namespace core
+    }     // namespace random
+} // namespace util
 
 
 #endif /* _UTIL_RANDOM_RANDOMXORCOMBINECORE_H_ */

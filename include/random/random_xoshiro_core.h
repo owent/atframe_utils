@@ -19,6 +19,8 @@
 
 #pragma once
 
+#include <config/atframe_utils_build_feature.h>
+
 namespace util {
     namespace random {
         namespace core {
@@ -31,7 +33,7 @@ namespace util {
              * @note not support for xoroshiro64** 、xoroshiro64*、xoroshiro512** 、xoroshiro512*、xoroshiro1024** 、xoroshiro1024*
              */
             template <class UIntType, bool is_plus, int iidx, int n1, int n2>
-            class xoshinro_engine {
+            class LIBATFRAME_UTILS_API_HEAD_ONLY xoshinro_engine {
             public:
                 typedef UIntType    result_type;
                 typedef result_type seed_type[4];
@@ -45,15 +47,15 @@ namespace util {
                 }
 
                 template <class, bool>
-                struct next_init;
+                struct LIBATFRAME_UTILS_API_HEAD_ONLY next_init;
 
                 template <class T>
-                struct next_init<T, true> {
+                struct LIBATFRAME_UTILS_API_HEAD_ONLY next_init<T, true> {
                     static inline result_type call(seed_type &s) { return s[0] + s[3]; }
                 };
 
                 template <class T>
-                struct next_init<T, false> {
+                struct LIBATFRAME_UTILS_API_HEAD_ONLY next_init<T, false> {
                     static inline result_type call(seed_type &s) { return rotl(s[iidx] * 5, 7) * 9; }
                 };
 
@@ -124,7 +126,7 @@ namespace util {
                 }
 
                 template <class It>
-                void init_seed(It &first, It last) {
+                LIBATFRAME_UTILS_API_HEAD_ONLY void init_seed(It &first, It last) {
                     It begin = first;
                     for (int i = 0; i < 4; ++i) {
                         if (begin != last) {
@@ -149,7 +151,7 @@ namespace util {
             };
 
             template <bool is_plus>
-            class xoshinro_engine_128 : public xoshinro_engine<uint32_t, is_plus, 0, 9, 11> {
+            class LIBATFRAME_UTILS_API_HEAD_ONLY xoshinro_engine_128 : public xoshinro_engine<uint32_t, is_plus, 0, 9, 11> {
             public:
                 typedef xoshinro_engine<uint32_t, is_plus, 0, 9, 11> base_type;
                 typedef typename base_type::result_type              result_type;
@@ -171,7 +173,7 @@ namespace util {
             };
 
             template <bool is_plus>
-            class xoshinro_engine_256 : public xoshinro_engine<uint64_t, is_plus, 1, 17, 45> {
+            class LIBATFRAME_UTILS_API_HEAD_ONLY xoshinro_engine_256 : public xoshinro_engine<uint64_t, is_plus, 1, 17, 45> {
             public:
                 typedef xoshinro_engine<uint64_t, is_plus, 1, 17, 45> base_type;
                 typedef typename base_type::result_type               result_type;

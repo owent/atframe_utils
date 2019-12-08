@@ -25,6 +25,7 @@
 #include <limits>
 #include <numeric>
 
+#include <config/atframe_utils_build_feature.h>
 #include <config/compiler_features.h>
 
 #include "random_mt_core.h"
@@ -50,7 +51,7 @@ namespace util {
          * @see https://en.cppreference.com/w/cpp/algorithm/random_shuffle
          */
         template <typename CoreType>
-        class random_manager_wrapper {
+        class LIBATFRAME_UTILS_API_HEAD_ONLY random_manager_wrapper {
         public:
             typedef CoreType                        core_type;
             typedef typename core_type::result_type result_type;
@@ -78,7 +79,7 @@ namespace util {
              * @param [in] last 随机数种子散列值结束位置
              */
             template <class It>
-            void init_seed(It &first, It last) {
+            LIBATFRAME_UTILS_API_HEAD_ONLY void init_seed(It &first, It last) {
                 core_.init_seed(first, last);
             }
 
@@ -102,7 +103,7 @@ namespace util {
              * @return 产生的随机数
              */
             template <typename ResaultType>
-            ResaultType random_between(ResaultType lowest, ResaultType highest) {
+            LIBATFRAME_UTILS_API_HEAD_ONLY ResaultType random_between(ResaultType lowest, ResaultType highest) {
                 if (highest <= lowest) {
                     return lowest;
                 }
@@ -130,7 +131,7 @@ namespace util {
             }
 
             template <typename RandomIt>
-            void shuffle(RandomIt first, RandomIt last) {
+            LIBATFRAME_UTILS_API_HEAD_ONLY void shuffle(RandomIt first, RandomIt last) {
 #if defined(__cplusplus) && __cplusplus >= 201103L
                 std::shuffle(first, last, std::move(*this));
 #elif defined(_MSVC_LANG) && _MSVC_LANG >= 201402L

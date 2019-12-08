@@ -23,8 +23,9 @@
 #include <string>
 #include <vector>
 
-#include <std/explicit_declare.h>
+#include <config/atframe_utils_build_feature.h>
 #include <config/compile_optimize.h>
+#include <std/explicit_declare.h>
 
 #if defined(__CYGWIN__) // Windows Cygwin
 #define UTIL_FS_POSIX_API
@@ -67,7 +68,7 @@
 
 
 namespace util {
-    class UTIL_SYMBOL_VISIBLE file_system {
+    class file_system {
     public:
         static const char DIRECTORY_SEPARATOR =
 #ifdef _WIN32
@@ -121,7 +122,7 @@ namespace util {
          * @param is_binary [IN] 是否是二进制
          * @return 成功返回true
          */
-        static bool get_file_content(std::string &out, const char *file_path, bool is_binary = false);
+        static LIBATFRAME_UTILS_API bool get_file_content(std::string &out, const char *file_path, bool is_binary = false);
 
         /**
          * @brief 获取文件内容
@@ -130,14 +131,14 @@ namespace util {
          * @param compact [IN] 是否精简路径（这个功能会尽量移除路径中的.和..）
          * @return 成功返回true
          */
-        static bool split_path(std::vector<std::string> &out, const char *path, bool compact = false);
+        static LIBATFRAME_UTILS_API bool split_path(std::vector<std::string> &out, const char *path, bool compact = false);
 
         /**
          * @brief 检查文件是否存在
          * @param file_path [IN] 文件路径
          * @return 存在且有权限返回true
          */
-        static bool is_exist(const char *file_path);
+        static LIBATFRAME_UTILS_API bool is_exist(const char *file_path);
 
         /**
          * @brief 返回文件的大小
@@ -145,7 +146,7 @@ namespace util {
          * @param sz [OUT] 文件大小
          * @return 无法打开(不存在，权限不足)返回false, 其他情况返回true
          */
-        static bool file_size(const char *file_path, size_t &sz);
+        static LIBATFRAME_UTILS_API bool file_size(const char *file_path, size_t &sz);
 
         /**
          * @brief 创建目录
@@ -154,7 +155,7 @@ namespace util {
          * @param mode [IN] 目录权限（Windows下会被忽略）
          * @return 创建成功返回true
          */
-        static bool mkdir(const char *dir_path, bool recursion = false, int mode = 0);
+        static LIBATFRAME_UTILS_API bool mkdir(const char *dir_path, bool recursion = false, int mode = 0);
 
         /**
          * @brief 获取目录路径
@@ -164,20 +165,20 @@ namespace util {
          * @param depth [IN] 深度，默认1，表示1级父级目录
          * @return 成功返回true
          */
-        static bool dirname(const char *file_path, size_t sz, std::string &dir, int depth = 1);
+        static LIBATFRAME_UTILS_API bool dirname(const char *file_path, size_t sz, std::string &dir, int depth = 1);
 
         /**
          * @brief 获取当前运行目录
          * @return 当前运行目录
          */
-        static std::string get_cwd();
+        static LIBATFRAME_UTILS_API std::string get_cwd();
 
         /**
          * @brief 获取绝对路径
          * @param dir_path 相对路径
          * @return 当前运行目录
          */
-        static std::string get_abs_path(const char *dir_path);
+        static LIBATFRAME_UTILS_API std::string get_abs_path(const char *dir_path);
 
         /**
          * @brief 移动或重命名文件/目录
@@ -185,20 +186,20 @@ namespace util {
          * @param to 目标路径
          * @return 成功返回true
          */
-        static bool rename(const char *from, const char *to);
+        static LIBATFRAME_UTILS_API bool rename(const char *from, const char *to);
 
         /**
          * @brief 移除文件/目录
          * @param path 路径
          * @return 成功返回true
          */
-        static bool remove(const char *path);
+        static LIBATFRAME_UTILS_API bool remove(const char *path);
 
         /**
          * @brief 打开一个临时文件
          * @return 临时文件
          */
-        static FILE *open_tmp_file();
+        static LIBATFRAME_UTILS_API FILE *open_tmp_file();
 
         /**
          * @brief 列举目录下所有文件
@@ -206,14 +207,15 @@ namespace util {
          * @param out 录下所有文件路径
          * @return 成功返回0，错误返回错误码(不同平台错误码不同)
          */
-        static int scan_dir(const char *dir_path, std::list<std::string> &out, int options = dir_opt_t::EN_DOT_DAFAULT);
+        static LIBATFRAME_UTILS_API int scan_dir(const char *dir_path, std::list<std::string> &out,
+                                                 int options = dir_opt_t::EN_DOT_DAFAULT);
 
         /**
          * @brief 判断是否是绝对路径
          * @param dir_path 目录路径
          * @return 是绝对路径返回true
          */
-        static bool is_abs_path(const char *dir_path);
+        static LIBATFRAME_UTILS_API bool is_abs_path(const char *dir_path);
 
 #if !defined(UTIL_FS_DISABLE_LINK)
         /**
@@ -223,7 +225,7 @@ namespace util {
          * @param options 链接选项
          * @return 成功返回0，错误返回错误码(不同平台错误码不同)
          */
-        static int link(const char *oldpath, const char *newpath, int options = link_opt_t::EN_LOT_DEFAULT);
+        static LIBATFRAME_UTILS_API int link(const char *oldpath, const char *newpath, int options = link_opt_t::EN_LOT_DEFAULT);
 #endif
     };
 } // namespace util

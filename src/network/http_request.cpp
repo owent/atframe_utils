@@ -33,7 +33,7 @@ namespace util {
             // static const char content_type_multipart_form_data[] = "Content-Type: multipart/form-data";
         } // namespace detail
 
-        http_request::ptr_t http_request::create(curl_m_bind_t *curl_multi, const std::string &url) {
+        LIBATFRAME_UTILS_API http_request::ptr_t http_request::create(curl_m_bind_t *curl_multi, const std::string &url) {
             ptr_t ret = create(curl_multi);
             if (ret) {
                 ret->set_url(url);
@@ -42,7 +42,7 @@ namespace util {
             return ret;
         }
 
-        http_request::ptr_t http_request::create(curl_m_bind_t *curl_multi) {
+        LIBATFRAME_UTILS_API http_request::ptr_t http_request::create(curl_m_bind_t *curl_multi) {
             ptr_t ret = std::make_shared<http_request>(curl_multi);
             if (ret->mutable_request()) {
                 return ret;
@@ -51,9 +51,9 @@ namespace util {
             return ptr_t();
         }
 
-        int http_request::get_status_code_group(int code) { return code / 100; }
+        LIBATFRAME_UTILS_API int http_request::get_status_code_group(int code) { return code / 100; }
 
-        http_request::http_request(curl_m_bind_t *curl_multi)
+        LIBATFRAME_UTILS_API http_request::http_request(curl_m_bind_t *curl_multi)
             : timeout_ms_(0), bind_m_(curl_multi), request_(NULL), flags_(0), response_code_(0), last_error_code_(0), priv_data_(NULL) {
             http_form_.begin         = NULL;
             http_form_.end           = NULL;
@@ -64,9 +64,9 @@ namespace util {
             set_user_agent("libcurl");
         }
 
-        http_request::~http_request() { cleanup(); }
+        LIBATFRAME_UTILS_API http_request::~http_request() { cleanup(); }
 
-        int http_request::start(method_t::type method, bool wait) {
+        LIBATFRAME_UTILS_API int http_request::start(method_t::type method, bool wait) {
             CURL *req = mutable_request();
             if (NULL == req) {
                 return -1;
@@ -158,7 +158,7 @@ namespace util {
             return last_error_code_;
         }
 
-        int http_request::stop() {
+        LIBATFRAME_UTILS_API int http_request::stop() {
             if (NULL == request_) {
                 return -1;
             }
@@ -181,7 +181,329 @@ namespace util {
             return 0;
         }
 
-        void http_request::remove_curl_request() {
+        LIBATFRAME_UTILS_API void http_request::set_url(const std::string &v) {
+            if (NULL == mutable_request()) {
+                return;
+            }
+
+            url_ = v;
+            curl_easy_setopt(mutable_request(), CURLOPT_URL, url_.c_str());
+        }
+
+        LIBATFRAME_UTILS_API const std::string &http_request::get_url() const { return url_; }
+
+        LIBATFRAME_UTILS_API void http_request::set_user_agent(const std::string &v) {
+            if (NULL == mutable_request()) {
+                return;
+            }
+
+            useragent_ = v;
+            curl_easy_setopt(mutable_request(), CURLOPT_USERAGENT, url_.c_str());
+        }
+
+        LIBATFRAME_UTILS_API const std::string &http_request::get_user_agent() const { return useragent_; }
+
+        LIBATFRAME_UTILS_API std::string &http_request::post_data() { return post_data_; }
+        LIBATFRAME_UTILS_API const std::string &http_request::post_data() const { return post_data_; }
+
+        LIBATFRAME_UTILS_API int http_request::get_response_code() const {
+            if (0 != response_code_) {
+                return response_code_;
+            }
+
+            if (NULL != request_) {
+                long rsp_code = 0;
+                curl_easy_getinfo(request_, CURLINFO_RESPONSE_CODE, &rsp_code);
+                response_code_ = static_cast<int>(rsp_code);
+            }
+
+            return response_code_;
+        }
+
+        LIBATFRAME_UTILS_API int http_request::get_error_code() const { return last_error_code_; }
+
+        LIBATFRAME_UTILS_API const char *http_request::get_error_msg() const { return error_buffer_; }
+
+        LIBATFRAME_UTILS_API std::stringstream &http_request::get_response_stream() { return response_; }
+        LIBATFRAME_UTILS_API const std::stringstream &http_request::get_response_stream() const { return response_; }
+
+        LIBATFRAME_UTILS_API int http_request::add_form_file(const std::string &fieldname, const char *filename) {
+            if (CHECK_FLAG(flags_, flag_t::EN_FT_CLEANING)) {
+                return -1;
+            }
+
+            if (NULL != http_form_.uploaded_file) {
+                fclose(http_form_.uploaded_file);
+                http_form_.uploaded_file = NULL;
+            }
+
+            UTIL_FS_OPEN(res, http_form_.uploaded_file, filename, "rb");
+            if (0 != res || NULL == http_form_.uploaded_file) {
+                if (NULL != http_form_.uploaded_file) {
+                    fclose(http_form_.uploaded_file);
+                }
+                return res;
+            }
+
+            int ret = curl_formadd(&http_form_.begin, &http_form_.end, CURLFORM_COPYNAME, fieldname.c_str(), CURLFORM_NAMELENGTH,
+                                   static_cast<long>(fieldname.size()), CURLFORM_FILE, filename, CURLFORM_END);
+            if (0 == ret) {
+                http_form_.flags |= form_list_t::EN_FLFT_HAS_FORM_FILE;
+            } else {
+                fclose(http_form_.uploaded_file);
+                http_form_.uploaded_file = NULL;
+            }
+            return ret;
+        }
+
+        LIBATFRAME_UTILS_API int http_request::add_form_file(const std::string &fieldname, const char *filename, const char *content_type,
+                                                             const char *new_filename) {
+            if (CHECK_FLAG(flags_, flag_t::EN_FT_CLEANING)) {
+                return -1;
+            }
+
+            if (NULL != http_form_.uploaded_file) {
+                fclose(http_form_.uploaded_file);
+                http_form_.uploaded_file = NULL;
+            }
+
+            UTIL_FS_OPEN(res, http_form_.uploaded_file, filename, "rb");
+            if (0 != res || NULL == http_form_.uploaded_file) {
+                if (NULL != http_form_.uploaded_file) {
+                    fclose(http_form_.uploaded_file);
+                }
+                return res;
+            }
+
+            int ret = curl_formadd(&http_form_.begin, &http_form_.end, CURLFORM_COPYNAME, fieldname.c_str(), CURLFORM_NAMELENGTH,
+                                   static_cast<long>(fieldname.size()), CURLFORM_FILE, filename, CURLFORM_CONTENTTYPE, content_type,
+                                   CURLFORM_FILENAME, new_filename, CURLFORM_END);
+            if (0 == ret) {
+                http_form_.flags |= form_list_t::EN_FLFT_HAS_FORM_FILE;
+            } else {
+                fclose(http_form_.uploaded_file);
+                http_form_.uploaded_file = NULL;
+            }
+            return ret;
+        }
+
+        LIBATFRAME_UTILS_API int http_request::add_form_file(const std::string &fieldname, const char *filename, const char *content_type) {
+            if (CHECK_FLAG(flags_, flag_t::EN_FT_CLEANING)) {
+                return -1;
+            }
+
+            if (NULL != http_form_.uploaded_file) {
+                fclose(http_form_.uploaded_file);
+                http_form_.uploaded_file = NULL;
+            }
+
+            UTIL_FS_OPEN(res, http_form_.uploaded_file, filename, "rb");
+            if (0 != res || NULL == http_form_.uploaded_file) {
+                if (NULL != http_form_.uploaded_file) {
+                    fclose(http_form_.uploaded_file);
+                }
+                return res;
+            }
+
+            int ret = curl_formadd(&http_form_.begin, &http_form_.end, CURLFORM_COPYNAME, fieldname.c_str(), CURLFORM_NAMELENGTH,
+                                   static_cast<long>(fieldname.size()), CURLFORM_FILE, filename, CURLFORM_CONTENTTYPE, content_type,
+                                   CURLFORM_END);
+            if (0 == ret) {
+                http_form_.flags |= form_list_t::EN_FLFT_HAS_FORM_FILE;
+            } else {
+                fclose(http_form_.uploaded_file);
+                http_form_.uploaded_file = NULL;
+            }
+            return ret;
+        }
+
+        LIBATFRAME_UTILS_API int http_request::add_form_field(const std::string &fieldname, const std::string &fieldvalue) {
+            if (CHECK_FLAG(flags_, flag_t::EN_FT_CLEANING)) {
+                return -1;
+            }
+
+            http_form_.qs_fields.set(fieldname, fieldvalue);
+            http_form_.flags |= form_list_t::EN_FLFT_HAS_FORM_FIELD;
+            // int ret = add_form_field(fieldname, fieldvalue.c_str(), fieldvalue.size());
+            return 0;
+        }
+
+        LIBATFRAME_UTILS_API void  http_request::set_priv_data(void *v) { priv_data_ = v; }
+        LIBATFRAME_UTILS_API void *http_request::get_priv_data() const { return priv_data_; }
+
+        LIBATFRAME_UTILS_API void http_request::set_opt_bool(CURLoption k, bool v) {
+            if (NULL == mutable_request()) {
+                return;
+            }
+
+            long val = v ? 1L : 0L;
+            curl_easy_setopt(mutable_request(), k, val);
+        }
+
+        LIBATFRAME_UTILS_API void http_request::set_opt_string(CURLoption k, const char *v) {
+            if (NULL == mutable_request()) {
+                return;
+            }
+
+            curl_easy_setopt(mutable_request(), k, v);
+        }
+
+        LIBATFRAME_UTILS_API void http_request::set_opt_ssl_verify_peer(bool v) { set_opt_bool(CURLOPT_SSL_VERIFYPEER, v); }
+
+        LIBATFRAME_UTILS_API void http_request::set_opt_no_signal(bool v) { set_opt_bool(CURLOPT_NOSIGNAL, v); }
+
+        LIBATFRAME_UTILS_API void http_request::set_opt_follow_location(bool v) { set_opt_bool(CURLOPT_FOLLOWLOCATION, v); }
+
+        LIBATFRAME_UTILS_API void http_request::set_opt_verbose(bool v) { set_opt_bool(CURLOPT_VERBOSE, v); }
+
+        LIBATFRAME_UTILS_API void http_request::set_opt_accept_encoding(const char *enc) {
+#if LIBCURL_VERSION_NUM >= 0x071506
+            set_opt_string(CURLOPT_ACCEPT_ENCODING, enc);
+#else
+            set_opt_string(CURLOPT_ENCODING, enc);
+#endif
+        }
+
+        LIBATFRAME_UTILS_API void http_request::set_opt_http_content_decoding(bool v) { set_opt_bool(CURLOPT_HTTP_CONTENT_DECODING, v); }
+
+        LIBATFRAME_UTILS_API bool http_request::set_opt_keepalive(EXPLICIT_UNUSED_ATTR time_t idle, EXPLICIT_UNUSED_ATTR time_t interval) {
+#if LIBCURL_VERSION_NUM >= 0x071900
+            if (0 == idle && 0 == interval) {
+                set_opt_bool(CURLOPT_TCP_KEEPALIVE, false);
+            } else {
+                set_opt_bool(CURLOPT_TCP_KEEPALIVE, true);
+            }
+
+            set_opt_long(CURLOPT_TCP_KEEPIDLE, idle);
+            set_opt_long(CURLOPT_TCP_KEEPINTVL, interval);
+
+            return true;
+#else
+            return false;
+#endif
+        }
+
+        LIBATFRAME_UTILS_API void http_request::set_opt_reuse_connection(bool v) {
+            if (v) {
+                set_opt_long(CURLOPT_FRESH_CONNECT, 0);
+                set_opt_long(CURLOPT_FORBID_REUSE, 0);
+            } else {
+                set_opt_long(CURLOPT_FRESH_CONNECT, 1);
+                set_opt_long(CURLOPT_FORBID_REUSE, 1);
+            }
+        }
+
+        // void http_request::set_opt_connect_timeout(time_t timeout_ms) {
+        //    set_opt_long(CURLOPT_CONNECTTIMEOUT_MS, timeout_ms);
+        //}
+
+        // void http_request::set_opt_request_timeout(time_t timeout_ms) {
+        //    set_opt_long(CURLOPT_TIMEOUT_MS, timeout_ms);
+        //}
+
+        LIBATFRAME_UTILS_API void http_request::set_opt_timeout(time_t timeout_ms) {
+            timeout_ms_ = timeout_ms;
+            // set_opt_connect_timeout(timeout_ms);
+            // set_opt_request_timeout(timeout_ms);
+        }
+
+        LIBATFRAME_UTILS_API void http_request::set_libcurl_no_expect() {
+            if (http_form_.flags & form_list_t::EN_FLFT_LIBCURL_NO_EXPECT) {
+                return;
+            }
+            http_form_.flags |= form_list_t::EN_FLFT_LIBCURL_NO_EXPECT;
+
+            append_http_header(::util::network::detail::custom_no_expect_header);
+        }
+
+        LIBATFRAME_UTILS_API void http_request::append_http_header(const char *http_header) {
+            http_form_.headerlist = curl_slist_append(http_form_.headerlist, http_header);
+        }
+
+        LIBATFRAME_UTILS_API const http_request::on_progress_fn_t &http_request::get_on_progress() const { return on_progress_fn_; }
+        LIBATFRAME_UTILS_API void                                  http_request::set_on_progress(on_progress_fn_t fn) {
+            on_progress_fn_ = fn;
+
+            CURL *req = mutable_request();
+            if (NULL == req) {
+                return;
+            }
+
+            if (on_progress_fn_) {
+                set_opt_bool(CURLOPT_NOPROGRESS, false);
+#if LIBCURL_VERSION_NUM >= 0x072000
+                curl_easy_setopt(req, CURLOPT_XFERINFOFUNCTION, curl_callback_on_progress);
+                curl_easy_setopt(req, CURLOPT_XFERINFODATA, this);
+#else
+                curl_easy_setopt(req, CURLOPT_PROGRESSFUNCTION, curl_callback_on_progress);
+                curl_easy_setopt(req, CURLOPT_PROGRESSDATA, this);
+#endif
+            } else if (false == CHECK_FLAG(flags_, flag_t::EN_FT_STOPING)) {
+                set_opt_bool(CURLOPT_NOPROGRESS, true);
+#if LIBCURL_VERSION_NUM >= 0x072000
+                curl_easy_setopt(req, CURLOPT_XFERINFOFUNCTION, NULL);
+                curl_easy_setopt(req, CURLOPT_XFERINFODATA, NULL);
+#else
+                curl_easy_setopt(req, CURLOPT_PROGRESSFUNCTION, NULL);
+                curl_easy_setopt(req, CURLOPT_PROGRESSDATA, NULL);
+#endif
+            }
+        }
+
+        LIBATFRAME_UTILS_API const http_request::on_header_fn_t &http_request::get_on_header() const { return on_header_fn_; }
+        LIBATFRAME_UTILS_API void                                http_request::set_on_header(on_header_fn_t fn) {
+            on_header_fn_ = fn;
+
+            CURL *req = mutable_request();
+            if (NULL == req) {
+                return;
+            }
+
+            if (on_header_fn_) {
+                curl_easy_setopt(req, CURLOPT_HEADERFUNCTION, curl_callback_on_header);
+                curl_easy_setopt(req, CURLOPT_HEADERDATA, this);
+            } else {
+                curl_easy_setopt(req, CURLOPT_HEADERFUNCTION, NULL);
+                curl_easy_setopt(req, CURLOPT_HEADERDATA, NULL);
+            }
+        }
+
+        LIBATFRAME_UTILS_API const http_request::on_success_fn_t &http_request::get_on_success() const { return on_success_fn_; }
+        LIBATFRAME_UTILS_API void                                 http_request::set_on_success(on_success_fn_t fn) { on_success_fn_ = fn; }
+
+        LIBATFRAME_UTILS_API const http_request::on_error_fn_t &http_request::get_on_error() const { return on_error_fn_; }
+        LIBATFRAME_UTILS_API void                               http_request::set_on_error(on_error_fn_t fn) { on_error_fn_ = fn; }
+
+        LIBATFRAME_UTILS_API const http_request::on_complete_fn_t &http_request::get_on_complete() const { return on_complete_fn_; }
+        LIBATFRAME_UTILS_API void http_request::set_on_complete(on_complete_fn_t fn) { on_complete_fn_ = fn; }
+
+        LIBATFRAME_UTILS_API const http_request::on_write_fn_t &http_request::get_on_write() const { return on_write_fn_; }
+        LIBATFRAME_UTILS_API void                               http_request::set_on_write(on_write_fn_t fn) { on_write_fn_ = fn; }
+
+        LIBATFRAME_UTILS_API const http_request::on_verbose_fn_t &http_request::get_on_verbose() const { return on_verbose_fn_; }
+
+        LIBATFRAME_UTILS_API void http_request::set_on_verbose(on_verbose_fn_t fn) {
+            on_verbose_fn_ = fn;
+
+            CURL *req = mutable_request();
+            if (NULL == req) {
+                return;
+            }
+
+            if (on_verbose_fn_) {
+                curl_easy_setopt(req, CURLOPT_DEBUGFUNCTION, curl_callback_on_verbose);
+                curl_easy_setopt(req, CURLOPT_DEBUGDATA, this);
+                set_opt_verbose(true);
+            } else {
+                curl_easy_setopt(req, CURLOPT_DEBUGFUNCTION, NULL);
+                curl_easy_setopt(req, CURLOPT_DEBUGDATA, NULL);
+                set_opt_verbose(false);
+            }
+        }
+
+        LIBATFRAME_UTILS_API bool http_request::is_running() const { return CHECK_FLAG(flags_, flag_t::EN_FT_RUNNING); }
+
+        LIBATFRAME_UTILS_API void http_request::remove_curl_request() {
             CURL *req = request_;
             request_  = NULL;
             if (NULL != req) {
@@ -218,7 +540,7 @@ namespace util {
             post_data_.clear();
         }
 
-        void http_request::cleanup() {
+        LIBATFRAME_UTILS_API void http_request::cleanup() {
             if (CHECK_FLAG(flags_, flag_t::EN_FT_CLEANING)) {
                 return;
             }
@@ -229,304 +551,7 @@ namespace util {
             UNSET_FLAG(flags_, flag_t::EN_FT_CLEANING);
         }
 
-        void http_request::set_url(const std::string &v) {
-            if (NULL == mutable_request()) {
-                return;
-            }
-
-            url_ = v;
-            curl_easy_setopt(mutable_request(), CURLOPT_URL, url_.c_str());
-        }
-
-        const std::string &http_request::get_url() const { return url_; }
-
-        void http_request::set_user_agent(const std::string &v) {
-            if (NULL == mutable_request()) {
-                return;
-            }
-
-            useragent_ = v;
-            curl_easy_setopt(mutable_request(), CURLOPT_USERAGENT, url_.c_str());
-        }
-
-        const std::string &http_request::get_user_agent() const { return useragent_; }
-
-        std::string &      http_request::post_data() { return post_data_; }
-        const std::string &http_request::post_data() const { return post_data_; }
-
-        int http_request::get_response_code() const {
-            if (0 != response_code_) {
-                return response_code_;
-            }
-
-            if (NULL != request_) {
-                long rsp_code = 0;
-                curl_easy_getinfo(request_, CURLINFO_RESPONSE_CODE, &rsp_code);
-                response_code_ = static_cast<int>(rsp_code);
-            }
-
-            return response_code_;
-        }
-
-        int http_request::get_error_code() const { return last_error_code_; }
-
-        int http_request::add_form_file(const std::string &fieldname, const char *filename) {
-            if (CHECK_FLAG(flags_, flag_t::EN_FT_CLEANING)) {
-                return -1;
-            }
-
-            if (NULL != http_form_.uploaded_file) {
-                fclose(http_form_.uploaded_file);
-                http_form_.uploaded_file = NULL;
-            }
-
-            UTIL_FS_OPEN(res, http_form_.uploaded_file, filename, "rb");
-            if (0 != res || NULL == http_form_.uploaded_file) {
-                if (NULL != http_form_.uploaded_file) {
-                    fclose(http_form_.uploaded_file);
-                }
-                return res;
-            }
-
-            int ret = curl_formadd(&http_form_.begin, &http_form_.end, CURLFORM_COPYNAME, fieldname.c_str(), CURLFORM_NAMELENGTH,
-                                   static_cast<long>(fieldname.size()), CURLFORM_FILE, filename, CURLFORM_END);
-            if (0 == ret) {
-                http_form_.flags |= form_list_t::EN_FLFT_HAS_FORM_FILE;
-            } else {
-                fclose(http_form_.uploaded_file);
-                http_form_.uploaded_file = NULL;
-            }
-            return ret;
-        }
-
-        int http_request::add_form_file(const std::string &fieldname, const char *filename, const char *content_type,
-                                        const char *new_filename) {
-            if (CHECK_FLAG(flags_, flag_t::EN_FT_CLEANING)) {
-                return -1;
-            }
-
-            if (NULL != http_form_.uploaded_file) {
-                fclose(http_form_.uploaded_file);
-                http_form_.uploaded_file = NULL;
-            }
-
-            UTIL_FS_OPEN(res, http_form_.uploaded_file, filename, "rb");
-            if (0 != res || NULL == http_form_.uploaded_file) {
-                if (NULL != http_form_.uploaded_file) {
-                    fclose(http_form_.uploaded_file);
-                }
-                return res;
-            }
-
-            int ret = curl_formadd(&http_form_.begin, &http_form_.end, CURLFORM_COPYNAME, fieldname.c_str(), CURLFORM_NAMELENGTH,
-                                   static_cast<long>(fieldname.size()), CURLFORM_FILE, filename, CURLFORM_CONTENTTYPE, content_type,
-                                   CURLFORM_FILENAME, new_filename, CURLFORM_END);
-            if (0 == ret) {
-                http_form_.flags |= form_list_t::EN_FLFT_HAS_FORM_FILE;
-            } else {
-                fclose(http_form_.uploaded_file);
-                http_form_.uploaded_file = NULL;
-            }
-            return ret;
-        }
-
-        int http_request::add_form_file(const std::string &fieldname, const char *filename, const char *content_type) {
-            if (CHECK_FLAG(flags_, flag_t::EN_FT_CLEANING)) {
-                return -1;
-            }
-
-            if (NULL != http_form_.uploaded_file) {
-                fclose(http_form_.uploaded_file);
-                http_form_.uploaded_file = NULL;
-            }
-
-            UTIL_FS_OPEN(res, http_form_.uploaded_file, filename, "rb");
-            if (0 != res || NULL == http_form_.uploaded_file) {
-                if (NULL != http_form_.uploaded_file) {
-                    fclose(http_form_.uploaded_file);
-                }
-                return res;
-            }
-
-            int ret = curl_formadd(&http_form_.begin, &http_form_.end, CURLFORM_COPYNAME, fieldname.c_str(), CURLFORM_NAMELENGTH,
-                                   static_cast<long>(fieldname.size()), CURLFORM_FILE, filename, CURLFORM_CONTENTTYPE, content_type,
-                                   CURLFORM_END);
-            if (0 == ret) {
-                http_form_.flags |= form_list_t::EN_FLFT_HAS_FORM_FILE;
-            } else {
-                fclose(http_form_.uploaded_file);
-                http_form_.uploaded_file = NULL;
-            }
-            return ret;
-        }
-
-        int http_request::add_form_field(const std::string &fieldname, const std::string &fieldvalue) {
-            if (CHECK_FLAG(flags_, flag_t::EN_FT_CLEANING)) {
-                return -1;
-            }
-
-            http_form_.qs_fields.set(fieldname, fieldvalue);
-            http_form_.flags |= form_list_t::EN_FLFT_HAS_FORM_FIELD;
-            // int ret = add_form_field(fieldname, fieldvalue.c_str(), fieldvalue.size());
-            return 0;
-        }
-
-        void http_request::set_opt_ssl_verify_peer(bool v) { set_opt_bool(CURLOPT_SSL_VERIFYPEER, v); }
-
-        void http_request::set_opt_no_signal(bool v) { set_opt_bool(CURLOPT_NOSIGNAL, v); }
-
-        void http_request::set_opt_follow_location(bool v) { set_opt_bool(CURLOPT_FOLLOWLOCATION, v); }
-
-        void http_request::set_opt_verbose(bool v) { set_opt_bool(CURLOPT_VERBOSE, v); }
-
-        void http_request::set_opt_accept_encoding(const char *enc) {
-#if LIBCURL_VERSION_NUM >= 0x071506
-            set_opt_string(CURLOPT_ACCEPT_ENCODING, enc);
-#else
-            set_opt_string(CURLOPT_ENCODING, enc);
-#endif
-        }
-
-        void http_request::set_opt_http_content_decoding(bool v) { set_opt_bool(CURLOPT_HTTP_CONTENT_DECODING, v); }
-
-        bool http_request::set_opt_keepalive(EXPLICIT_UNUSED_ATTR time_t idle, EXPLICIT_UNUSED_ATTR time_t interval) {
-#if LIBCURL_VERSION_NUM >= 0x071900
-            if (0 == idle && 0 == interval) {
-                set_opt_bool(CURLOPT_TCP_KEEPALIVE, false);
-            } else {
-                set_opt_bool(CURLOPT_TCP_KEEPALIVE, true);
-            }
-
-            set_opt_long(CURLOPT_TCP_KEEPIDLE, idle);
-            set_opt_long(CURLOPT_TCP_KEEPINTVL, interval);
-
-            return true;
-#else
-            return false;
-#endif
-        }
-
-        void http_request::set_opt_reuse_connection(bool v) {
-            if (v) {
-                set_opt_long(CURLOPT_FRESH_CONNECT, 0);
-                set_opt_long(CURLOPT_FORBID_REUSE, 0);
-            } else {
-                set_opt_long(CURLOPT_FRESH_CONNECT, 1);
-                set_opt_long(CURLOPT_FORBID_REUSE, 1);
-            }
-        }
-
-        // void http_request::set_opt_connect_timeout(time_t timeout_ms) {
-        //    set_opt_long(CURLOPT_CONNECTTIMEOUT_MS, timeout_ms);
-        //}
-
-        // void http_request::set_opt_request_timeout(time_t timeout_ms) {
-        //    set_opt_long(CURLOPT_TIMEOUT_MS, timeout_ms);
-        //}
-
-        void http_request::set_opt_timeout(time_t timeout_ms) {
-            timeout_ms_ = timeout_ms;
-            // set_opt_connect_timeout(timeout_ms);
-            // set_opt_request_timeout(timeout_ms);
-        }
-
-        void http_request::set_libcurl_no_expect() {
-            if (http_form_.flags & form_list_t::EN_FLFT_LIBCURL_NO_EXPECT) {
-                return;
-            }
-            http_form_.flags |= form_list_t::EN_FLFT_LIBCURL_NO_EXPECT;
-
-            append_http_header(::util::network::detail::custom_no_expect_header);
-        }
-
-        void http_request::append_http_header(const char *http_header) {
-            http_form_.headerlist = curl_slist_append(http_form_.headerlist, http_header);
-        }
-
-        const http_request::on_progress_fn_t &http_request::get_on_progress() const { return on_progress_fn_; }
-        void                                  http_request::set_on_progress(on_progress_fn_t fn) {
-            on_progress_fn_ = fn;
-
-            CURL *req = mutable_request();
-            if (NULL == req) {
-                return;
-            }
-
-            if (on_progress_fn_) {
-                set_opt_bool(CURLOPT_NOPROGRESS, false);
-#if LIBCURL_VERSION_NUM >= 0x072000
-                curl_easy_setopt(req, CURLOPT_XFERINFOFUNCTION, curl_callback_on_progress);
-                curl_easy_setopt(req, CURLOPT_XFERINFODATA, this);
-#else
-                curl_easy_setopt(req, CURLOPT_PROGRESSFUNCTION, curl_callback_on_progress);
-                curl_easy_setopt(req, CURLOPT_PROGRESSDATA, this);
-#endif
-            } else if (false == CHECK_FLAG(flags_, flag_t::EN_FT_STOPING)) {
-                set_opt_bool(CURLOPT_NOPROGRESS, true);
-#if LIBCURL_VERSION_NUM >= 0x072000
-                curl_easy_setopt(req, CURLOPT_XFERINFOFUNCTION, NULL);
-                curl_easy_setopt(req, CURLOPT_XFERINFODATA, NULL);
-#else
-                curl_easy_setopt(req, CURLOPT_PROGRESSFUNCTION, NULL);
-                curl_easy_setopt(req, CURLOPT_PROGRESSDATA, NULL);
-#endif
-            }
-        }
-
-        const http_request::on_header_fn_t &http_request::get_on_header() const { return on_header_fn_; }
-        void                                http_request::set_on_header(on_header_fn_t fn) {
-            on_header_fn_ = fn;
-
-            CURL *req = mutable_request();
-            if (NULL == req) {
-                return;
-            }
-
-            if (on_header_fn_) {
-                curl_easy_setopt(req, CURLOPT_HEADERFUNCTION, curl_callback_on_header);
-                curl_easy_setopt(req, CURLOPT_HEADERDATA, this);
-            } else {
-                curl_easy_setopt(req, CURLOPT_HEADERFUNCTION, NULL);
-                curl_easy_setopt(req, CURLOPT_HEADERDATA, NULL);
-            }
-        }
-
-        const http_request::on_success_fn_t &http_request::get_on_success() const { return on_success_fn_; }
-        void                                 http_request::set_on_success(on_success_fn_t fn) { on_success_fn_ = fn; }
-
-        const http_request::on_error_fn_t &http_request::get_on_error() const { return on_error_fn_; }
-        void                               http_request::set_on_error(on_error_fn_t fn) { on_error_fn_ = fn; }
-
-        const http_request::on_complete_fn_t &http_request::get_on_complete() const { return on_complete_fn_; }
-        void                                  http_request::set_on_complete(on_complete_fn_t fn) { on_complete_fn_ = fn; }
-
-        const http_request::on_write_fn_t &http_request::get_on_write() const { return on_write_fn_; }
-        void                               http_request::set_on_write(on_write_fn_t fn) { on_write_fn_ = fn; }
-
-        const http_request::on_verbose_fn_t &http_request::get_on_verbose() const { return on_verbose_fn_; }
-
-        void http_request::set_on_verbose(on_verbose_fn_t fn) {
-            on_verbose_fn_ = fn;
-
-            CURL *req = mutable_request();
-            if (NULL == req) {
-                return;
-            }
-
-            if (on_verbose_fn_) {
-                curl_easy_setopt(req, CURLOPT_DEBUGFUNCTION, curl_callback_on_verbose);
-                curl_easy_setopt(req, CURLOPT_DEBUGDATA, this);
-                set_opt_verbose(true);
-            } else {
-                curl_easy_setopt(req, CURLOPT_DEBUGFUNCTION, NULL);
-                curl_easy_setopt(req, CURLOPT_DEBUGDATA, NULL);
-                set_opt_verbose(false);
-            }
-        }
-
-        bool http_request::is_running() const { return CHECK_FLAG(flags_, flag_t::EN_FT_RUNNING); }
-
-        void http_request::finish_req_rsp() {
+        LIBATFRAME_UTILS_API void http_request::finish_req_rsp() {
             UNSET_FLAG(flags_, flag_t::EN_FT_RUNNING);
 
             {
@@ -551,7 +576,7 @@ namespace util {
             }
         }
 
-        CURL *http_request::mutable_request() {
+        LIBATFRAME_UTILS_API CURL *http_request::mutable_request() {
             if (NULL != request_) {
                 return request_;
             }
@@ -569,7 +594,7 @@ namespace util {
             return request_;
         }
 
-        void http_request::build_http_form(method_t::type method) {
+        LIBATFRAME_UTILS_API void http_request::build_http_form(method_t::type method) {
             if (method_t::EN_MT_PUT == method) {
                 http_form_.posted_size = 0;
 
@@ -632,7 +657,7 @@ namespace util {
             }
         }
 
-        http_request::curl_poll_context_t *http_request::malloc_poll(http_request *req, curl_socket_t sockfd) {
+        LIBATFRAME_UTILS_API http_request::curl_poll_context_t *http_request::malloc_poll(http_request *req, curl_socket_t sockfd) {
             if (NULL == req) {
                 abort();
             }
@@ -654,9 +679,9 @@ namespace util {
             return ret;
         }
 
-        void http_request::free_poll(curl_poll_context_t *p) { free(p); }
+        LIBATFRAME_UTILS_API void http_request::free_poll(curl_poll_context_t *p) { free(p); }
 
-        void http_request::check_multi_info(CURLM *curl_handle) {
+        LIBATFRAME_UTILS_API void http_request::check_multi_info(CURLM *curl_handle) {
             CURLMsg *message;
             int      pending;
 
@@ -686,9 +711,9 @@ namespace util {
             }
         }
 
-        http_request::curl_m_bind_t::curl_m_bind_t() : ev_loop(NULL), curl_multi(NULL) {}
+        LIBATFRAME_UTILS_API http_request::curl_m_bind_t::curl_m_bind_t() : ev_loop(NULL), curl_multi(NULL) {}
 
-        int http_request::create_curl_multi(uv_loop_t *evloop, std::shared_ptr<curl_m_bind_t> &manager) {
+        LIBATFRAME_UTILS_API int http_request::create_curl_multi(uv_loop_t *evloop, std::shared_ptr<curl_m_bind_t> &manager) {
             assert(evloop);
             if (manager) {
                 destroy_curl_multi(manager);
@@ -721,7 +746,7 @@ namespace util {
             return ret;
         }
 
-        int http_request::destroy_curl_multi(std::shared_ptr<curl_m_bind_t> &manager) {
+        LIBATFRAME_UTILS_API int http_request::destroy_curl_multi(std::shared_ptr<curl_m_bind_t> &manager) {
             if (!manager) {
                 return 0;
             }
@@ -741,7 +766,7 @@ namespace util {
             return ret;
         }
 
-        void http_request::ev_callback_on_timer_closed(uv_handle_t *handle) {
+        LIBATFRAME_UTILS_API void http_request::ev_callback_on_timer_closed(uv_handle_t *handle) {
             curl_m_bind_t *bind = reinterpret_cast<curl_m_bind_t *>(handle->data);
             assert(bind);
 
@@ -751,14 +776,14 @@ namespace util {
             }
         }
 
-        void http_request::ev_callback_on_poll_closed(uv_handle_t *handle) {
+        LIBATFRAME_UTILS_API void http_request::ev_callback_on_poll_closed(uv_handle_t *handle) {
             curl_poll_context_t *context = reinterpret_cast<curl_poll_context_t *>(handle->data);
             assert(context);
 
             free_poll(context);
         }
 
-        void http_request::ev_callback_on_timeout(uv_timer_t *handle) {
+        LIBATFRAME_UTILS_API void http_request::ev_callback_on_timeout(uv_timer_t *handle) {
             curl_m_bind_t *bind = reinterpret_cast<curl_m_bind_t *>(handle->data);
             assert(bind);
             if (NULL == bind) {
@@ -770,7 +795,7 @@ namespace util {
             check_multi_info(bind->curl_multi);
         }
 
-        void http_request::ev_callback_curl_perform(uv_poll_t *req, int, int events) {
+        LIBATFRAME_UTILS_API void http_request::ev_callback_curl_perform(uv_poll_t *req, int, int events) {
             assert(req && req->data);
             if (NULL == req || NULL == req->data) {
                 return;
@@ -797,7 +822,7 @@ namespace util {
             // WLOGWARNING(" ====== [HTTP] ====== sock %d evpoll %d for %p done", context->sockfd, events, context);
         }
 
-        int http_request::curl_callback_start_timer(CURLM *, long timeout_ms, void *userp) {
+        LIBATFRAME_UTILS_API int http_request::curl_callback_start_timer(CURLM *, long timeout_ms, void *userp) {
             curl_m_bind_t *bind = reinterpret_cast<curl_m_bind_t *>(userp);
             assert(bind);
 
@@ -817,7 +842,7 @@ namespace util {
             return 0;
         }
 
-        int http_request::curl_callback_handle_socket(CURL *easy, curl_socket_t s, int action, void *, void *socketp) {
+        LIBATFRAME_UTILS_API int http_request::curl_callback_handle_socket(CURL *easy, curl_socket_t s, int action, void *, void *socketp) {
             curl_poll_context_t *context = reinterpret_cast<curl_poll_context_t *>(socketp);
             if (action == CURL_POLL_IN || action == CURL_POLL_OUT || action == CURL_POLL_INOUT) {
                 if (NULL == context) {
@@ -875,7 +900,7 @@ namespace util {
             return res;
         }
 
-        size_t http_request::curl_callback_on_write(char *ptr, size_t size, size_t nmemb, void *userdata) {
+        LIBATFRAME_UTILS_API size_t http_request::curl_callback_on_write(char *ptr, size_t size, size_t nmemb, void *userdata) {
             http_request *self = reinterpret_cast<http_request *>(userdata);
             assert(self);
             if (NULL == self) {
@@ -896,10 +921,11 @@ namespace util {
         }
 
 #if LIBCURL_VERSION_NUM >= 0x072000
-        int http_request::curl_callback_on_progress(void *clientp, curl_off_t dltotal, curl_off_t dlnow, curl_off_t ultotal,
-                                                    curl_off_t ulnow) {
+        LIBATFRAME_UTILS_API int http_request::curl_callback_on_progress(void *clientp, curl_off_t dltotal, curl_off_t dlnow,
+                                                                         curl_off_t ultotal, curl_off_t ulnow) {
 #else
-        int http_request::curl_callback_on_progress(void *clientp, double dltotal, double dlnow, double ultotal, double ulnow) {
+        LIBATFRAME_UTILS_API int http_request::curl_callback_on_progress(void *clientp, double dltotal, double dlnow, double ultotal,
+                                                                         double ulnow) {
 #endif
             http_request *self = reinterpret_cast<http_request *>(clientp);
             int           ret  = 0;
@@ -924,7 +950,7 @@ namespace util {
             return ret;
         } // namespace network
 
-        size_t http_request::curl_callback_on_read(char *buffer, size_t size, size_t nitems, void *instream) {
+        LIBATFRAME_UTILS_API size_t http_request::curl_callback_on_read(char *buffer, size_t size, size_t nitems, void *instream) {
             http_request *self = reinterpret_cast<http_request *>(instream);
             assert(self);
             if (NULL == self) {
@@ -949,7 +975,7 @@ namespace util {
             return nwrite;
         }
 
-        size_t http_request::curl_callback_on_header(char *buffer, size_t size, size_t nitems, void *userdata) {
+        LIBATFRAME_UTILS_API size_t http_request::curl_callback_on_header(char *buffer, size_t size, size_t nitems, void *userdata) {
             http_request *self = reinterpret_cast<http_request *>(userdata);
             assert(self);
 
@@ -993,7 +1019,8 @@ namespace util {
             return size * nitems;
         }
 
-        int http_request::curl_callback_on_verbose(CURL *, curl_infotype type, char *data, size_t size, void *userptr) {
+        LIBATFRAME_UTILS_API int http_request::curl_callback_on_verbose(CURL *, curl_infotype type, char *data, size_t size,
+                                                                        void *userptr) {
             http_request *self = reinterpret_cast<http_request *>(userptr);
             assert(self);
 

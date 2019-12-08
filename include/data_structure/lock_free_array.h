@@ -17,23 +17,25 @@
 #include "config/compiler_features.h"
 #include "std/explicit_declare.h"
 
+#include <config/atframe_utils_build_feature.h>
+
 namespace util {
     namespace ds {
 
         template <typename T, size_t SIZE, typename TContainer = std::array<T, SIZE + 1> >
-        class lock_free_array {
+        class LIBATFRAME_UTILS_API_HEAD_ONLY lock_free_array {
         public:
-            typedef T value_type;
+            typedef T           value_type;
             typedef value_type *pointer_type;
             typedef value_type &reference_type;
-            typedef TContainer container_type;
+            typedef TContainer  container_type;
 
         private:
             lock_free_array(const lock_free_array &) UTIL_CONFIG_DELETED_FUNCTION;
             lock_free_array &operator=(const lock_free_array &) UTIL_CONFIG_DELETED_FUNCTION;
 
         public:
-            typedef pointer_type iterator;
+            typedef pointer_type   iterator;
             typedef const iterator const_iterator;
 
         public:
@@ -62,7 +64,7 @@ namespace util {
 
             iterator push_back() {
                 while (true) {
-                    size_t end_pos = end_.load();
+                    size_t end_pos   = end_.load();
                     size_t start_pos = start_.load();
 
                     if ((end_pos + 1) % data_.size() == start_pos) {
@@ -80,7 +82,7 @@ namespace util {
 
             iterator pop_back() {
                 while (true) {
-                    size_t end_pos = end_.load();
+                    size_t end_pos   = end_.load();
                     size_t start_pos = start_.load();
 
                     if (end_pos == start_pos) {
@@ -98,7 +100,7 @@ namespace util {
 
             iterator push_front() {
                 while (true) {
-                    size_t end_pos = end_.load();
+                    size_t end_pos   = end_.load();
                     size_t start_pos = start_.load();
 
                     if ((end_pos + 1) % data_.size() == start_pos) {
@@ -116,7 +118,7 @@ namespace util {
 
             iterator pop_front() {
                 while (true) {
-                    size_t end_pos = end_.load();
+                    size_t end_pos   = end_.load();
                     size_t start_pos = start_.load();
 
                     if (end_pos == start_pos) {
@@ -142,7 +144,7 @@ namespace util {
         private:
             std::atomic<size_t> start_;
             std::atomic<size_t> end_;
-            container_type data_;
+            container_type      data_;
         };
     } // namespace ds
 } // namespace util

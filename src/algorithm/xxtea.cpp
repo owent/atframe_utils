@@ -44,7 +44,7 @@ namespace util {
         };
     } // namespace detail
 
-    void xxtea_setup(xxtea_key *k, const unsigned char filled[4 * sizeof(uint32_t)]) {
+    LIBATFRAME_UTILS_API void xxtea_setup(xxtea_key *k, const unsigned char filled[4 * sizeof(uint32_t)]) {
         int i;
 
         memset(k->data, 0, sizeof(k->data));
@@ -54,7 +54,7 @@ namespace util {
         }
     }
 
-    void xxtea_encrypt(const xxtea_key *key, void *buffer, size_t len) {
+    LIBATFRAME_UTILS_API void xxtea_encrypt(const xxtea_key *key, void *buffer, size_t len) {
         if (len & 0x03) {
             abort();
         }
@@ -88,7 +88,7 @@ namespace util {
         } while (--rounds);
     }
 
-    void xxtea_encrypt(const xxtea_key *key, const void *input, size_t ilen, void *output, size_t *olen) {
+    LIBATFRAME_UTILS_API void xxtea_encrypt(const xxtea_key *key, const void *input, size_t ilen, void *output, size_t *olen) {
         bool is_success = false;
         do {
             if (NULL == key || input == NULL || ilen <= 0 || output == NULL || NULL == olen) {
@@ -119,7 +119,7 @@ namespace util {
         }
     }
 
-    void xxtea_decrypt(const xxtea_key *key, void *buffer, size_t len) {
+    LIBATFRAME_UTILS_API void xxtea_decrypt(const xxtea_key *key, void *buffer, size_t len) {
         if (len & 0x03) {
             abort();
         }
@@ -153,7 +153,7 @@ namespace util {
         } while (--rounds);
     }
 
-    void xxtea_decrypt(const xxtea_key *key, const void *input, size_t ilen, void *output, size_t *olen) {
+    LIBATFRAME_UTILS_API void xxtea_decrypt(const xxtea_key *key, const void *input, size_t ilen, void *output, size_t *olen) {
         bool is_success = false;
         do {
             if (NULL == key || input == NULL || ilen <= 0 || output == NULL || NULL == olen) {

@@ -461,7 +461,7 @@ namespace util {
         } // namespace details
 
         // =============== shared context ===============
-        dh::shared_context::shared_context() : method_(method_t::EN_CDT_INVALID) {
+        LIBATFRAME_UTILS_API dh::shared_context::shared_context() : method_(method_t::EN_CDT_INVALID) {
 #if defined(CRYPTO_USE_OPENSSL) || defined(CRYPTO_USE_LIBRESSL) || defined(CRYPTO_USE_BORINGSSL)
             dh_param_.param  = NULL;
             dh_param_.ecp_id = 0;
@@ -475,7 +475,7 @@ namespace util {
 
             memset(&random_engine_, 0, sizeof(random_engine_));
         }
-        dh::shared_context::shared_context(creator_helper &) : method_(method_t::EN_CDT_INVALID) {
+        LIBATFRAME_UTILS_API dh::shared_context::shared_context(creator_helper &) : method_(method_t::EN_CDT_INVALID) {
 #if defined(CRYPTO_USE_OPENSSL) || defined(CRYPTO_USE_LIBRESSL) || defined(CRYPTO_USE_BORINGSSL)
             dh_param_.param  = NULL;
             dh_param_.ecp_id = 0;
@@ -488,14 +488,14 @@ namespace util {
 #endif
             memset(&random_engine_, 0, sizeof(random_engine_));
         }
-        dh::shared_context::~shared_context() { reset(); }
+        LIBATFRAME_UTILS_API dh::shared_context::~shared_context() { reset(); }
 
-        dh::shared_context::ptr_t dh::shared_context::create() {
+        LIBATFRAME_UTILS_API dh::shared_context::ptr_t dh::shared_context::create() {
             creator_helper h;
             return std::make_shared<dh::shared_context>(h);
         }
 
-        int dh::shared_context::init(const char *name) {
+        LIBATFRAME_UTILS_API int dh::shared_context::init(const char *name) {
             if (NULL == name) {
                 return error_code_t::INVALID_PARAM;
             }
@@ -640,7 +640,7 @@ namespace util {
             return ret;
         }
 
-        int dh::shared_context::init(method_t::type method) {
+        LIBATFRAME_UTILS_API int dh::shared_context::init(method_t::type method) {
             if (method_t::EN_CDT_INVALID != method_) {
                 return error_code_t::ALREADY_INITED;
             }
@@ -667,7 +667,7 @@ namespace util {
             return error_code_t::OK;
         }
 
-        void dh::shared_context::reset() {
+        LIBATFRAME_UTILS_API void dh::shared_context::reset() {
             if (method_t::EN_CDT_INVALID == method_) {
                 return;
             }
@@ -708,7 +708,7 @@ namespace util {
 #endif
         }
 
-        int dh::shared_context::random(void *output, size_t output_sz) {
+        LIBATFRAME_UTILS_API int dh::shared_context::random(void *output, size_t output_sz) {
             if (method_t::EN_CDT_INVALID == method_) {
                 return error_code_t::NOT_INITED;
             }
@@ -729,7 +729,7 @@ namespace util {
             return ret;
         }
 
-        bool dh::shared_context::is_client_mode() const {
+        LIBATFRAME_UTILS_API bool dh::shared_context::is_client_mode() const {
             if (method_t::EN_CDT_DH == method_) {
 #if defined(CRYPTO_USE_OPENSSL) || defined(CRYPTO_USE_LIBRESSL) || defined(CRYPTO_USE_BORINGSSL)
                 return NULL == dh_param_.param;
@@ -749,17 +749,24 @@ namespace util {
             return false;
         }
 
+        LIBATFRAME_UTILS_API dh::method_t::type dh::shared_context::get_method() const { return method_; }
+        LIBATFRAME_UTILS_API const dh::shared_context::dh_param_t &dh::shared_context::get_dh_parameter() const { return dh_param_; }
+        LIBATFRAME_UTILS_API const dh::shared_context::random_engine_t &dh::shared_context::get_random_engine() const {
+            return random_engine_;
+        }
+        LIBATFRAME_UTILS_API dh::shared_context::random_engine_t &dh::shared_context::get_random_engine() { return random_engine_; }
+
         // --------------- shared context ---------------
 
-        dh::dh() : last_errorno_(0) {
+        LIBATFRAME_UTILS_API dh::dh() : last_errorno_(0) {
             memset(&dh_context_, 0, sizeof(dh_context_));
 #if defined(UTIL_CONFIG_COMPILER_CXX_STATIC_ASSERT) && UTIL_CONFIG_COMPILER_CXX_STATIC_ASSERT
             UTIL_CONFIG_STATIC_ASSERT(std::is_pod<dh_context_t>::value);
 #endif
         }
-        dh::~dh() { close(); }
+        LIBATFRAME_UTILS_API dh::~dh() { close(); }
 
-        int dh::init(shared_context::ptr_t shared_context) {
+        LIBATFRAME_UTILS_API int dh::init(shared_context::ptr_t shared_context) {
             if (!shared_context) {
                 return details::setup_errorno(*this, 0, error_code_t::INVALID_PARAM);
             }
@@ -889,7 +896,7 @@ namespace util {
             return details::setup_errorno(*this, 0, error_code_t::OK);
         }
 
-        int dh::close() {
+        LIBATFRAME_UTILS_API int dh::close() {
             if (!shared_context_) {
                 return details::setup_errorno(*this, 0, error_code_t::NOT_INITED);
             }
@@ -939,7 +946,11 @@ namespace util {
             return details::setup_errorno(*this, 0, error_code_t::OK);
         }
 
-        int dh::make_params(std::vector<unsigned char> &param) {
+        LIBATFRAME_UTILS_API void dh::set_last_errno(int e) { last_errorno_ = e; }
+
+        LIBATFRAME_UTILS_API int dh::get_last_errno() const { return last_errorno_; }
+
+        LIBATFRAME_UTILS_API int dh::make_params(std::vector<unsigned char> &param) {
             if (!shared_context_) {
                 return details::setup_errorno(*this, 0, error_code_t::NOT_INITED);
             }
@@ -1107,7 +1118,7 @@ namespace util {
             return ret;
         }
 
-        int dh::read_params(const unsigned char *input, size_t ilen) {
+        LIBATFRAME_UTILS_API int dh::read_params(const unsigned char *input, size_t ilen) {
             if (!shared_context_) {
                 return details::setup_errorno(*this, 0, error_code_t::NOT_INITED);
             }
@@ -1323,7 +1334,7 @@ namespace util {
             return ret;
         }
 
-        int dh::make_public(std::vector<unsigned char> &param) {
+        LIBATFRAME_UTILS_API int dh::make_public(std::vector<unsigned char> &param) {
             if (!shared_context_) {
                 return details::setup_errorno(*this, 0, error_code_t::NOT_INITED);
             }
@@ -1434,7 +1445,7 @@ namespace util {
             return ret;
         }
 
-        int dh::read_public(const unsigned char *input, size_t ilen) {
+        LIBATFRAME_UTILS_API int dh::read_public(const unsigned char *input, size_t ilen) {
             if (!shared_context_) {
                 return details::setup_errorno(*this, 0, error_code_t::NOT_INITED);
             }
@@ -1533,7 +1544,7 @@ namespace util {
             return ret;
         }
 
-        int dh::calc_secret(std::vector<unsigned char> &output) {
+        LIBATFRAME_UTILS_API int dh::calc_secret(std::vector<unsigned char> &output) {
             if (!shared_context_) {
                 return details::setup_errorno(*this, 0, error_code_t::NOT_INITED);
             }
@@ -1632,7 +1643,7 @@ namespace util {
             return ret;
         }
 
-        const std::vector<std::string> &dh::get_all_curve_names() {
+        LIBATFRAME_UTILS_API const std::vector<std::string> &dh::get_all_curve_names() {
             static std::vector<std::string> ret;
             if (ret.empty()) {
                 for (int i = 1; details::supported_dh_curves[i] != NULL; ++i) {

@@ -26,10 +26,11 @@
 #include "common/string_oprs.h"
 #include "std/smart_ptr.h"
 
+#include <config/atframe_utils_build_feature.h>
 
 namespace util {
     namespace string {
-        struct utf8_char_t {
+        struct LIBATFRAME_UTILS_API_HEAD_ONLY utf8_char_t {
             utf8_char_t(const char *str) {
                 size_t len = length(str);
                 for (size_t i = 0; i < len; ++i) {
@@ -134,13 +135,15 @@ namespace util {
             friend bool operator>=(const utf8_char_t &l, const utf8_char_t &r) { return !(l < r); }
 
             template <typename CH, typename CHT>
-            friend std::basic_ostream<CH, CHT> &operator<<(std::basic_ostream<CH, CHT> &os, const utf8_char_t &self) {
+            LIBATFRAME_UTILS_API_HEAD_ONLY friend std::basic_ostream<CH, CHT> &operator<<(std::basic_ostream<CH, CHT> &os,
+                                                                                          const utf8_char_t &          self) {
                 os.write((CH *)self.data, self.length());
                 return os;
             }
 
             template <typename CH, typename CHT>
-            friend std::basic_istream<CH, CHT> &operator>>(std::basic_istream<CH, CHT> &is, utf8_char_t &self) {
+            LIBATFRAME_UTILS_API_HEAD_ONLY friend std::basic_istream<CH, CHT> &operator>>(std::basic_istream<CH, CHT> &is,
+                                                                                          utf8_char_t &                self) {
                 self.data[0] = 0;
                 is.read((CH *)&self.data[0], 1);
                 size_t len = self.length();

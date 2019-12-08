@@ -8,10 +8,12 @@
  */
 #pragma once
 
-#include <map>
-#include <list>
-#include <functional>
 #include "std/smart_ptr.h"
+#include <functional>
+#include <list>
+#include <map>
+
+#include <config/atframe_utils_build_feature.h>
 
 namespace util {
     namespace ds {
@@ -21,17 +23,17 @@ namespace util {
          * @brief 必须有0状态
          */
         template <typename T, typename... TParams>
-        class finite_state_machine {
+        class LIBATFRAME_UTILS_API_HEAD_ONLY finite_state_machine {
         public:
-            typedef T key_type;
+            typedef T                                                   key_type;
             typedef std::function<void(key_type, key_type, TParams...)> value_type;
-            typedef std::list<value_type> listener_list_type;
-            typedef std::map<key_type, listener_list_type> listener_set_type;
+            typedef std::list<value_type>                               listener_list_type;
+            typedef std::map<key_type, listener_list_type>              listener_set_type;
 
             typedef struct {
                 std::list<key_type> from;
-                key_type to;
-                value_type fn;
+                key_type            to;
+                value_type          fn;
             } init_ele_type;
 
         public:
@@ -108,8 +110,7 @@ namespace util {
 
             void add_listener(key_type from, key_type to, value_type fn) {
                 if (!pairs_listener_) {
-                    pairs_listener_ = std::shared_ptr<std::map<key_type, listener_set_type> >(
-                        new std::map<key_type, listener_set_type>());
+                    pairs_listener_ = std::shared_ptr<std::map<key_type, listener_set_type> >(new std::map<key_type, listener_set_type>());
                 }
 
                 listener_list_type &ls = (*pairs_listener_)[from][to];
@@ -137,9 +138,9 @@ namespace util {
             }
 
             void register_listener(finite_state_machine &other) {
-                pairs_listener_ = other.pairs_listener_;
+                pairs_listener_      = other.pairs_listener_;
                 leave_from_listener_ = other.leave_from_listener_;
-                enter_to_listener_ = other.enter_to_listener_;
+                enter_to_listener_   = other.enter_to_listener_;
             }
 
         private:
@@ -211,10 +212,10 @@ namespace util {
             }
 
         private:
-            key_type state_;
+            key_type                                                state_;
             std::shared_ptr<std::map<key_type, listener_set_type> > pairs_listener_;
-            std::shared_ptr<listener_set_type> leave_from_listener_;
-            std::shared_ptr<listener_set_type> enter_to_listener_;
+            std::shared_ptr<listener_set_type>                      leave_from_listener_;
+            std::shared_ptr<listener_set_type>                      enter_to_listener_;
         };
-    }
-}
+    } // namespace ds
+} // namespace util

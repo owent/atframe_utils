@@ -23,19 +23,20 @@
 #include <stdint.h>
 
 
-#include "config/compiler_features.h"
+#include <config/atframe_utils_build_feature.h>
+#include <config/compiler_features.h>
 
 namespace util {
     namespace log {
-        struct stacktrace_options {
+        struct LIBATFRAME_UTILS_API stacktrace_options {
             uint16_t skip_start_frames;
             uint16_t skip_end_frames;
             uint16_t max_frames;
         };
 
-        bool is_stacktrace_enabled() UTIL_CONFIG_NOEXCEPT;
+        LIBATFRAME_UTILS_API bool is_stacktrace_enabled() UTIL_CONFIG_NOEXCEPT;
 
-        size_t stacktrace_write(char *buf, size_t bufsz, const stacktrace_options *options = NULL);
+        LIBATFRAME_UTILS_API size_t stacktrace_write(char *buf, size_t bufsz, const stacktrace_options *options = NULL);
     } // namespace log
 } // namespace util
 

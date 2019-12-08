@@ -216,10 +216,10 @@ namespace util {
             }
         } // namespace details
 
-        cipher::cipher() : interface_(NULL), last_errorno_(0), cipher_kt_(NULL) {}
-        cipher::~cipher() { close(); }
+        LIBATFRAME_UTILS_API cipher::cipher() : interface_(NULL), last_errorno_(0), cipher_kt_(NULL) {}
+        LIBATFRAME_UTILS_API cipher::~cipher() { close(); }
 
-        int cipher::init(const char *name, int mode) {
+        LIBATFRAME_UTILS_API int cipher::init(const char *name, int mode) {
             if (NULL != interface_ && interface_->method != EN_CIMT_INVALID) {
                 return details::setup_errorno(*this, -1, error_code_t::ALREADY_INITED);
             }
@@ -264,7 +264,7 @@ namespace util {
             return ret;
         }
 
-        int cipher::init_with_cipher(const cipher_interface_info_t *interface, int mode) {
+        UTIL_SYMBOL_HIDDEN int cipher::init_with_cipher(const cipher_interface_info_t *interface, int mode) {
             if (NULL == interface) {
                 return details::setup_errorno(*this, -1, error_code_t::INVALID_PARAM);
             }
@@ -387,7 +387,7 @@ namespace util {
             return ret;
         }
 
-        int cipher::close() {
+        LIBATFRAME_UTILS_API int cipher::close() {
             if (NULL == interface_ || interface_->method == EN_CIMT_INVALID) {
                 return details::setup_errorno(*this, 0, error_code_t::NOT_INITED);
             }
@@ -423,7 +423,11 @@ namespace util {
             return ret;
         }
 
-        int cipher::close_with_cipher() {
+        LIBATFRAME_UTILS_API void cipher::set_last_errno(int64_t e) { last_errorno_ = e; }
+
+        LIBATFRAME_UTILS_API int64_t cipher::get_last_errno() const { return last_errorno_; }
+
+        UTIL_SYMBOL_HIDDEN int cipher::close_with_cipher() {
             if (NULL == interface_) {
                 return details::setup_errorno(*this, 0, error_code_t::NOT_INITED);
             }
@@ -461,7 +465,7 @@ namespace util {
             return details::setup_errorno(*this, 0, error_code_t::OK);
         }
 
-        bool cipher::is_aead() const {
+        LIBATFRAME_UTILS_API bool cipher::is_aead() const {
             if (NULL == interface_) {
                 return false;
             }
@@ -469,7 +473,7 @@ namespace util {
             return 0 != (interface_->flags & EN_CIFT_AEAD);
         }
 
-        uint32_t cipher::get_iv_size() const {
+        LIBATFRAME_UTILS_API uint32_t cipher::get_iv_size() const {
             if (NULL == interface_) {
                 return 0;
             }
@@ -527,7 +531,7 @@ namespace util {
             }
         }
 
-        uint32_t cipher::get_key_bits() const {
+        LIBATFRAME_UTILS_API uint32_t cipher::get_key_bits() const {
             if (NULL == interface_) {
                 return 0;
             }
@@ -594,7 +598,7 @@ namespace util {
             }
         }
 
-        uint32_t cipher::get_block_size() const {
+        LIBATFRAME_UTILS_API uint32_t cipher::get_block_size() const {
             if (NULL == interface_) {
                 return 0;
             }
@@ -636,7 +640,7 @@ namespace util {
             }
         }
 
-        int cipher::set_key(const unsigned char *key, uint32_t key_bitlen) {
+        LIBATFRAME_UTILS_API int cipher::set_key(const unsigned char *key, uint32_t key_bitlen) {
             if (NULL == interface_) {
                 return details::setup_errorno(*this, 0, error_code_t::NOT_INITED);
             }
@@ -708,7 +712,7 @@ namespace util {
             }
         }
 
-        int cipher::set_iv(const unsigned char *iv, size_t iv_len) {
+        LIBATFRAME_UTILS_API int cipher::set_iv(const unsigned char *iv, size_t iv_len) {
             if (NULL == interface_ || interface_->method == EN_CIMT_INVALID) {
                 return details::setup_errorno(*this, 0, error_code_t::NOT_INITED);
             }
@@ -756,9 +760,9 @@ namespace util {
             }
         }
 
-        void cipher::clear_iv() { iv_.clear(); }
+        LIBATFRAME_UTILS_API void cipher::clear_iv() { iv_.clear(); }
 
-        int cipher::encrypt(const unsigned char *input, size_t ilen, unsigned char *output, size_t *olen) {
+        LIBATFRAME_UTILS_API int cipher::encrypt(const unsigned char *input, size_t ilen, unsigned char *output, size_t *olen) {
             if (NULL == interface_ || interface_->method == EN_CIMT_INVALID) {
                 return details::setup_errorno(*this, 0, error_code_t::NOT_INITED);
             }
@@ -874,7 +878,7 @@ namespace util {
             }
         }
 
-        int cipher::decrypt(const unsigned char *input, size_t ilen, unsigned char *output, size_t *olen) {
+        LIBATFRAME_UTILS_API int cipher::decrypt(const unsigned char *input, size_t ilen, unsigned char *output, size_t *olen) {
             if (NULL == interface_ || interface_->method == EN_CIMT_INVALID) {
                 return details::setup_errorno(*this, 0, error_code_t::NOT_INITED);
             }
@@ -991,8 +995,8 @@ namespace util {
             }
         }
 
-        int cipher::encrypt_aead(const unsigned char *input, size_t ilen, unsigned char *output, size_t *olen, const unsigned char *ad,
-                                 size_t ad_len, unsigned char *tag, size_t tag_len) {
+        LIBATFRAME_UTILS_API int cipher::encrypt_aead(const unsigned char *input, size_t ilen, unsigned char *output, size_t *olen,
+                                                      const unsigned char *ad, size_t ad_len, unsigned char *tag, size_t tag_len) {
             if (NULL == interface_ || interface_->method == EN_CIMT_INVALID) {
                 return details::setup_errorno(*this, 0, error_code_t::NOT_INITED);
             }
@@ -1138,8 +1142,8 @@ namespace util {
             }
         }
 
-        int cipher::decrypt_aead(const unsigned char *input, size_t ilen, unsigned char *output, size_t *olen, const unsigned char *ad,
-                                 size_t ad_len, const unsigned char *tag, size_t tag_len) {
+        LIBATFRAME_UTILS_API int cipher::decrypt_aead(const unsigned char *input, size_t ilen, unsigned char *output, size_t *olen,
+                                                      const unsigned char *ad, size_t ad_len, const unsigned char *tag, size_t tag_len) {
             if (NULL == interface_ || interface_->method == EN_CIMT_INVALID) {
                 return details::setup_errorno(*this, 0, error_code_t::NOT_INITED);
             }
@@ -1289,7 +1293,7 @@ namespace util {
             }
         }
 
-        const cipher::cipher_kt_t *cipher::get_cipher_by_name(const char *name) {
+        LIBATFRAME_UTILS_API const cipher::cipher_kt_t *cipher::get_cipher_by_name(const char *name) {
             const cipher_interface_info_t *interface = details::get_cipher_interface_by_name(name);
 
             if (NULL == interface) {
@@ -1307,7 +1311,7 @@ namespace util {
 #endif
         }
 
-        std::pair<const char *, const char *> cipher::ciphertok(const char *in) {
+        LIBATFRAME_UTILS_API std::pair<const char *, const char *> cipher::ciphertok(const char *in) {
             std::pair<const char *, const char *> ret;
             ret.first  = NULL;
             ret.second = NULL;
@@ -1337,7 +1341,7 @@ namespace util {
             return ret;
         }
 
-        const std::vector<std::string> &cipher::get_all_cipher_names() {
+        LIBATFRAME_UTILS_API const std::vector<std::string> &cipher::get_all_cipher_names() {
             static std::vector<std::string> ret;
             if (ret.empty()) {
                 for (size_t i = 0; NULL != details::supported_ciphers[i].name; ++i) {
@@ -1362,7 +1366,7 @@ namespace util {
             return ret;
         }
 
-        int cipher::init_global_algorithm() {
+        LIBATFRAME_UTILS_API int cipher::init_global_algorithm() {
 #if defined(CRYPTO_USE_OPENSSL) || defined(CRYPTO_USE_LIBRESSL) || defined(CRYPTO_USE_BORINGSSL)
 
 #if (defined(OPENSSL_API_COMPAT) && OPENSSL_API_COMPAT < 0x10100000L) || \
@@ -1382,7 +1386,7 @@ namespace util {
             return 0;
         }
 
-        int cipher::cleanup_global_algorithm() {
+        LIBATFRAME_UTILS_API int cipher::cleanup_global_algorithm() {
 #if defined(CRYPTO_USE_OPENSSL) || defined(CRYPTO_USE_LIBRESSL) || defined(CRYPTO_USE_BORINGSSL)
 #if (defined(OPENSSL_API_COMPAT) && OPENSSL_API_COMPAT < 0x10100000L) || \
     (defined(OPENSSL_VERSION_NUMBER) && OPENSSL_VERSION_NUMBER < 0x10100000L)

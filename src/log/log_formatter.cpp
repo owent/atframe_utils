@@ -31,22 +31,22 @@ namespace util {
             }
         } // namespace detail
 
-        log_formatter::caller_info_t::caller_info_t()
+        LIBATFRAME_UTILS_API log_formatter::caller_info_t::caller_info_t()
             : level_id(level_t::LOG_LW_DISABLED), level_name(NULL), file_path(NULL), line_number(0), func_name(NULL), rotate_index(0) {
             if (NULL == level_name) {
                 level_name = detail::log_formatter_get_level_name(level_id);
             }
         }
-        log_formatter::caller_info_t::caller_info_t(level_t::type lid, const char *lname, const char *fpath, uint32_t lnum,
-                                                    const char *fnname)
+        LIBATFRAME_UTILS_API log_formatter::caller_info_t::caller_info_t(level_t::type lid, const char *lname, const char *fpath,
+                                                                         uint32_t lnum, const char *fnname)
             : level_id(lid), level_name(lname), file_path(fpath), line_number(lnum), func_name(fnname), rotate_index(0) {
             if (NULL == level_name) {
                 level_name = detail::log_formatter_get_level_name(level_id);
             }
         }
 
-        log_formatter::caller_info_t::caller_info_t(level_t::type lid, const char *lname, const char *fpath, uint32_t lnum,
-                                                    const char *fnname, uint32_t ridx)
+        LIBATFRAME_UTILS_API log_formatter::caller_info_t::caller_info_t(level_t::type lid, const char *lname, const char *fpath,
+                                                                         uint32_t lnum, const char *fnname, uint32_t ridx)
             : level_id(lid), level_name(lname), file_path(fpath), line_number(lnum), func_name(fnname), rotate_index(ridx) {
             if (NULL == level_name) {
                 level_name = detail::log_formatter_get_level_name(level_id);
@@ -55,9 +55,9 @@ namespace util {
 
         std::string log_formatter::project_dir_;
 
-        bool log_formatter::check_flag(int32_t flags, int32_t checked) { return (flags & checked) == checked; }
+        LIBATFRAME_UTILS_API bool log_formatter::check_flag(int32_t flags, int32_t checked) { return (flags & checked) == checked; }
 
-        struct tm *log_formatter::get_iso_tm() {
+        LIBATFRAME_UTILS_API struct tm *log_formatter::get_iso_tm() {
             static time_t    tm_tp = 0;
             static struct tm tm_obj;
             if (tm_tp != util::time::time_utility::get_now()) {
@@ -68,7 +68,8 @@ namespace util {
             return &tm_obj;
         }
 
-        size_t log_formatter::format(char *buff, size_t bufz, const char *fmt, size_t fmtz, const caller_info_t &caller) {
+        LIBATFRAME_UTILS_API size_t log_formatter::format(char *buff, size_t bufz, const char *fmt, size_t fmtz,
+                                                          const caller_info_t &caller) {
             if (NULL == buff || 0 == bufz) {
                 return 0;
             }
@@ -394,7 +395,7 @@ namespace util {
             return ret;
         }
 
-        bool log_formatter::check_rotation_var(const char *fmt, size_t fmtz) {
+        LIBATFRAME_UTILS_API bool log_formatter::check_rotation_var(const char *fmt, size_t fmtz) {
             for (size_t i = 0; fmt && i < fmtz - 1; ++i) {
                 if ('%' == fmt[i] && 'N' == fmt[i + 1]) {
                     return true;
@@ -404,7 +405,7 @@ namespace util {
             return false;
         }
 
-        bool log_formatter::has_format(const char *fmt, size_t fmtz) {
+        LIBATFRAME_UTILS_API bool log_formatter::has_format(const char *fmt, size_t fmtz) {
             for (size_t i = 0; fmt && i < fmtz - 1; ++i) {
                 if ('%' == fmt[i]) {
                     return true;
@@ -414,7 +415,7 @@ namespace util {
             return false;
         }
 
-        void log_formatter::set_project_directory(const char *dirbuf, size_t dirsz) {
+        LIBATFRAME_UTILS_API void log_formatter::set_project_directory(const char *dirbuf, size_t dirsz) {
             if (NULL == dirbuf) {
                 project_dir_.clear();
             } else if (dirsz <= 0) {
@@ -424,7 +425,7 @@ namespace util {
             }
         }
 
-        log_formatter::level_t::type log_formatter::get_level_by_name(const char *name) {
+        LIBATFRAME_UTILS_API log_formatter::level_t::type log_formatter::get_level_by_name(const char *name) {
             if (NULL == name) {
                 return level_t::LOG_LW_DEBUG;
             }

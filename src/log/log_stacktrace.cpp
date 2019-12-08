@@ -144,7 +144,7 @@ namespace util {
             }
         } // namespace details
 
-        bool is_stacktrace_enabled() UTIL_CONFIG_NOEXCEPT {
+        LIBATFRAME_UTILS_API bool is_stacktrace_enabled() UTIL_CONFIG_NOEXCEPT {
 #if defined(LOG_STACKTRACE_USING_LIBUNWIND) && LOG_STACKTRACE_USING_LIBUNWIND
             return true;
 #elif defined(LOG_STACKTRACE_USING_EXECINFO) && LOG_STACKTRACE_USING_EXECINFO
@@ -161,7 +161,7 @@ namespace util {
         }
 
 #if defined(LOG_STACKTRACE_USING_LIBUNWIND) && LOG_STACKTRACE_USING_LIBUNWIND
-        size_t stacktrace_write(char *buf, size_t bufsz, const stacktrace_options *options) {
+        LIBATFRAME_UTILS_API size_t stacktrace_write(char *buf, size_t bufsz, const stacktrace_options *options) {
             if (NULL == buf || bufsz <= 0) {
                 return 0;
             }
@@ -392,7 +392,7 @@ namespace util {
             }
         }
 
-        size_t stacktrace_write(char *buf, size_t bufsz, const stacktrace_options *options) {
+        LIBATFRAME_UTILS_API size_t stacktrace_write(char *buf, size_t bufsz, const stacktrace_options *options) {
             if (NULL == buf || bufsz <= 0) {
                 return 0;
             }
@@ -483,7 +483,7 @@ namespace util {
             return ::_URC_NO_REASON;
         }
 
-        size_t stacktrace_write(char *buf, size_t bufsz, const stacktrace_options *options) {
+        LIBATFRAME_UTILS_API size_t stacktrace_write(char *buf, size_t bufsz, const stacktrace_options *options) {
             if (NULL == buf || bufsz <= 0) {
                 return 0;
             }
@@ -538,7 +538,7 @@ namespace util {
 
 #elif (defined(LOG_STACKTRACE_USING_DBGHELP) && LOG_STACKTRACE_USING_DBGHELP) || \
     (defined(LOG_STACKTRACE_USING_DBGENG) && LOG_STACKTRACE_USING_DBGENG)
-        size_t stacktrace_write(char *buf, size_t bufsz, const stacktrace_options *options) {
+        LIBATFRAME_UTILS_API size_t stacktrace_write(char *buf, size_t bufsz, const stacktrace_options *options) {
             if (NULL == buf || bufsz <= 0) {
                 return 0;
             }
@@ -730,7 +730,7 @@ namespace util {
             return ret;
         }
 #else
-        size_t stacktrace_write(char *buf, size_t bufsz, const stacktrace_options *) {
+        LIBATFRAME_UTILS_API size_t stacktrace_write(char *buf, size_t bufsz, const stacktrace_options *) {
             const char *msg = "stacktrace disabled.";
             if (NULL == buf || bufsz <= strlen(msg)) {
                 return 0;

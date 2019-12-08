@@ -111,7 +111,7 @@
 // ---------------- import/export ----------------
 
 // ================ __cdecl ================
-#if defined(__GNUC__)
+#if defined(__GNUC__) || defined(__GNUG__)
 #ifndef __cdecl
 // see https://gcc.gnu.org/onlinedocs/gcc-4.0.0/gcc/Function-Attributes.html
 // Intel x86 architecture specific calling conventions
@@ -123,5 +123,41 @@
 #endif
 #endif
 // ---------------- __cdecl ----------------
+
+// ================ always inline ================
+
+#ifndef UTIL_FORCEINLINE
+#if defined(__clang__)
+#if __has_attribute(always_inline)
+#define UTIL_FORCEINLINE __attribute__((always_inline))
+#else
+#define UTIL_FORCEINLINE inline
+#endif
+
+#elif defined(__GNUC__) && __GNUC__ > 3
+#define UTIL_FORCEINLINE __attribute__((always_inline))
+#elif defined(_MSC_VER)
+#define UTIL_FORCEINLINE __forceinline
+#else
+#define UTIL_FORCEINLINE inline
+#endif
+#endif
+
+#ifndef UTIL_NOINLINE
+#if defined(_MSC_VER)
+#define UTIL_NOINLINE __declspec(noinline)
+#elif defined(__GNUC__) && __GNUC__ > 3
+// Clang also defines __GNUC__ (as 4)
+#if defined(__CUDACC__)
+// nvcc doesn't always parse __noinline__,
+// see: https://svn.boost.org/trac/boost/ticket/9392
+#define UTIL_NOINLINE __attribute__((noinline))
+#else
+#define UTIL_NOINLINE __attribute__((__noinline__))
+#endif
+#else
+#define UTIL_NOINLINE
+#endif
+#endif
 
 #endif

@@ -36,7 +36,7 @@ static int lua_log_adaptor_fn_lua_log(lua_State *L) {
 extern "C" {
 #endif
 
-int lua_log_adaptor_openLib(lua_State *L) {
+LIBATFRAME_UTILS_API int lua_log_adaptor_openLib(lua_State *L) {
     lua_newtable(L);
 
     lua_pushinteger(L, static_cast<lua_Integer>(util::log::log_wrapper::level_t::LOG_LW_DISABLED));

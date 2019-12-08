@@ -51,7 +51,7 @@ namespace util {
 
         class cipher {
         public:
-            struct mode_t {
+            struct LIBATFRAME_UTILS_API mode_t {
                 enum type { EN_CMODE_ENCRYPT = 0x01, EN_CMODE_DECRYPT = 0x02 };
             };
 
@@ -76,7 +76,7 @@ namespace util {
             };
 #endif
 
-            struct error_code_t {
+            struct LIBATFRAME_UTILS_API error_code_t {
                 enum type {
                     OK                          = 0,
                     INVALID_PARAM               = -1,
@@ -95,47 +95,47 @@ namespace util {
             };
 
         public:
-            cipher();
-            ~cipher();
+            LIBATFRAME_UTILS_API cipher();
+            LIBATFRAME_UTILS_API ~cipher();
 
-            int init(const char *name, int mode = mode_t::EN_CMODE_ENCRYPT | mode_t::EN_CMODE_DECRYPT);
-            int close();
+            LIBATFRAME_UTILS_API int init(const char *name, int mode = mode_t::EN_CMODE_ENCRYPT | mode_t::EN_CMODE_DECRYPT);
+            LIBATFRAME_UTILS_API int close();
 
             /**
              * @brief set last error returned by crypto library
              * @param err error code returned by crypto library
              */
-            inline void set_last_errno(int64_t e) { last_errorno_ = e; }
+            LIBATFRAME_UTILS_API void set_last_errno(int64_t e);
             /**
              * @brief get last error returned by crypto library
              * @return last error code returned by crypto library
              */
-            inline int64_t get_last_errno() const { return last_errorno_; }
+            LIBATFRAME_UTILS_API int64_t get_last_errno() const;
 
             /**
              * @brief if it's a AEAD cipher
              * @see https://en.wikipedia.org/wiki/Authenticated_encryption
              * @return if it's AEAD cipher, return true
              */
-            bool is_aead() const;
+            LIBATFRAME_UTILS_API bool is_aead() const;
 
             /**
              * @brief               get iv size in crypt library
              * @return              iv length in bytes
              */
-            uint32_t get_iv_size() const;
+            LIBATFRAME_UTILS_API uint32_t get_iv_size() const;
 
             /**libsodium_context_
              * @brief               get key length in bits
              * @return              key length in bits
              */
-            uint32_t get_key_bits() const;
+            LIBATFRAME_UTILS_API uint32_t get_key_bits() const;
 
             /**
              * @brief               get block size in crypt library
              * @return              block length in bytes
              */
-            uint32_t get_block_size() const;
+            LIBATFRAME_UTILS_API uint32_t get_block_size() const;
 
             /**
              * @brief               set key
@@ -143,23 +143,23 @@ namespace util {
              * @param key_bitlen    key length to use, in bits. must equal or greater to get_key_bits()
              * @return              0 or error code less than 0
              */
-            int set_key(const unsigned char *key, uint32_t key_bitlen);
+            LIBATFRAME_UTILS_API int set_key(const unsigned char *key, uint32_t key_bitlen);
 
             /**
              * @brief               selibsodium_context_t initialization vector
              * @param iv            iv value
              * @param iv_len        length of iv, in bytes, can not be greater than 16 when using mbedtls
-             * @note                if using chacha20,chacha20-ietf,xchacha20,salsa20 or xsalsa20, the first 
+             * @note                if using chacha20,chacha20-ietf,xchacha20,salsa20 or xsalsa20, the first
              *                      8 bytes is the counter, and the rest is the nonce.
              * @return              0 or error code less than 0
              */
-            int set_iv(const unsigned char *iv, size_t iv_len);
+            LIBATFRAME_UTILS_API int set_iv(const unsigned char *iv, size_t iv_len);
 
             /**
              * @brief               clear initialization vector
              * @return              0 or error code less than 0
              */
-            void clear_iv();
+            LIBATFRAME_UTILS_API void clear_iv();
 
             /**
              * @biref               encrypt data
@@ -172,7 +172,7 @@ namespace util {
              *                      actual number of bytes written.
              * @return              0 or error code
              */
-            int encrypt(const unsigned char *input, size_t ilen, unsigned char *output, size_t *olen);
+            LIBATFRAME_UTILS_API int encrypt(const unsigned char *input, size_t ilen, unsigned char *output, size_t *olen);
 
             /**
              * @biref               decrypt data
@@ -185,7 +185,7 @@ namespace util {
              *                      actual number of bytes written.
              * @return              0 or error code
              */
-            int decrypt(const unsigned char *input, size_t ilen, unsigned char *output, size_t *olen);
+            LIBATFRAME_UTILS_API int decrypt(const unsigned char *input, size_t ilen, unsigned char *output, size_t *olen);
 
 
             /**
@@ -203,8 +203,8 @@ namespace util {
              * @param tag_len       desired tag length, tag_len must between [4, 16] and tag_len % 2 == 0
              * @return              0 or error code
              */
-            int encrypt_aead(const unsigned char *input, size_t ilen, unsigned char *output, size_t *olen, const unsigned char *ad,
-                             size_t ad_len, unsigned char *tag, size_t tag_len);
+            LIBATFRAME_UTILS_API int encrypt_aead(const unsigned char *input, size_t ilen, unsigned char *output, size_t *olen,
+                                                  const unsigned char *ad, size_t ad_len, unsigned char *tag, size_t tag_len);
 
             /**
              * @biref               decrypt data
@@ -221,27 +221,27 @@ namespace util {
              * @param tag_len       length of the authentication tag
              * @return              0 or error code
              */
-            int decrypt_aead(const unsigned char *input, size_t ilen, unsigned char *output, size_t *olen, const unsigned char *ad,
-                             size_t ad_len, const unsigned char *tag, size_t tag_len);
+            LIBATFRAME_UTILS_API int decrypt_aead(const unsigned char *input, size_t ilen, unsigned char *output, size_t *olen,
+                                                  const unsigned char *ad, size_t ad_len, const unsigned char *tag, size_t tag_len);
 
         public:
-            static const cipher_kt_t *get_cipher_by_name(const char *name);
+            static LIBATFRAME_UTILS_API const cipher_kt_t *get_cipher_by_name(const char *name);
             /**
              * @biref               split cipher names by space, comma, semicolon or colon
              * @param in            string contain some cipher names
              * @return              begin(first) and end(second) address of a cipher name, both NULL if not found.
              *                      you can use second pointer as the paramter of next call, just like strtok
              */
-            static std::pair<const char *, const char *> ciphertok(const char *in);
-            static const std::vector<std::string> &      get_all_cipher_names();
+            static LIBATFRAME_UTILS_API std::pair<const char *, const char *> ciphertok(const char *in);
+            static LIBATFRAME_UTILS_API const std::vector<std::string> &get_all_cipher_names();
 
-            static int init_global_algorithm();
-            static int cleanup_global_algorithm();
+            static LIBATFRAME_UTILS_API int init_global_algorithm();
+            static LIBATFRAME_UTILS_API int cleanup_global_algorithm();
 
 
         private:
-            int init_with_cipher(const cipher_interface_info_t *interface, int mode);
-            int close_with_cipher();
+            UTIL_SYMBOL_HIDDEN int init_with_cipher(const cipher_interface_info_t *interface, int mode);
+            UTIL_SYMBOL_HIDDEN int close_with_cipher();
 
         private:
             const cipher_interface_info_t *interface_;

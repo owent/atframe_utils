@@ -51,7 +51,7 @@ namespace util {
             typedef http_request               self_type;
             typedef std::shared_ptr<self_type> ptr_t;
 
-            struct method_t {
+            struct LIBATFRAME_UTILS_API method_t {
                 enum type { EN_MT_GET = 0, EN_MT_POST, EN_MT_PUT, EN_MT_DELETE, EN_MT_TRACE };
             };
 
@@ -59,7 +59,7 @@ namespace util {
              * @brief common http status code
              * @see https://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html
              */
-            struct status_code_t {
+            struct LIBATFRAME_UTILS_API status_code_t {
                 enum group {
                     EN_ECG_INFOMATION   = 1,
                     EN_ECG_SUCCESS      = 2,
@@ -112,7 +112,7 @@ namespace util {
                 };
             };
 
-            struct flag_t {
+            struct LIBATFRAME_UTILS_API flag_t {
                 enum type {
                     EN_FT_CURL_MULTI_HANDLE = 0x01,
                     EN_FT_RUNNING           = 0x02,
@@ -126,12 +126,12 @@ namespace util {
                 CURLM *    curl_multi;
                 uv_timer_t ev_timeout;
 
-                curl_m_bind_t();
+                LIBATFRAME_UTILS_API           curl_m_bind_t();
                 std::shared_ptr<curl_m_bind_t> self_holder;
             };
             typedef std::shared_ptr<curl_m_bind_t> curl_m_bind_ptr_t;
 
-            struct curl_poll_context_t {
+            struct LIBATFRAME_UTILS_API curl_poll_context_t {
                 curl_m_bind_t *bind_multi;
                 uv_poll_t      poll_object;
                 curl_socket_t  sockfd;
@@ -142,7 +142,7 @@ namespace util {
             typedef std::function<int(http_request &)> on_success_fn_t;
             typedef std::function<int(http_request &)> on_complete_fn_t;
 
-            struct progress_t {
+            struct LIBATFRAME_UTILS_API progress_t {
                 size_t dltotal; /** total download size **/
                 size_t dlnow;   /** already downloaded size **/
                 size_t ultotal; /** total upload size **/
@@ -162,55 +162,56 @@ namespace util {
                 on_verbose_fn_t; // it's useful if we want to debug and show verbose info
 
         public:
-            static ptr_t create(curl_m_bind_t *, const std::string &url);
+            LIBATFRAME_UTILS_API static ptr_t create(curl_m_bind_t *, const std::string &url);
 
-            static ptr_t create(curl_m_bind_t *);
+            LIBATFRAME_UTILS_API static ptr_t create(curl_m_bind_t *);
 
-            static int get_status_code_group(int code);
+            LIBATFRAME_UTILS_API static int get_status_code_group(int code);
 
-            http_request(curl_m_bind_t *curl_multi);
-            ~http_request();
+            LIBATFRAME_UTILS_API http_request(curl_m_bind_t *curl_multi);
+            LIBATFRAME_UTILS_API ~http_request();
 
-            static int create_curl_multi(uv_loop_t *evloop, std::shared_ptr<curl_m_bind_t> &manager);
-            static int destroy_curl_multi(std::shared_ptr<curl_m_bind_t> &manager);
+            static LIBATFRAME_UTILS_API int create_curl_multi(uv_loop_t *evloop, std::shared_ptr<curl_m_bind_t> &manager);
+            static LIBATFRAME_UTILS_API int destroy_curl_multi(std::shared_ptr<curl_m_bind_t> &manager);
 
             /**
              * @brief start a http request
              * @param wait if true, waiting for request finished
              * @return 0 or error code, curl's error code is greater than 0, and this system's error code will be less than 0
              */
-            int start(method_t::type method = method_t::EN_MT_GET, bool wait = false);
+            LIBATFRAME_UTILS_API int start(method_t::type method = method_t::EN_MT_GET, bool wait = false);
 
-            int stop();
+            LIBATFRAME_UTILS_API int stop();
 
-            void               set_url(const std::string &v);
-            const std::string &get_url() const;
+            LIBATFRAME_UTILS_API void  set_url(const std::string &v);
+            LIBATFRAME_UTILS_API const std::string &get_url() const;
 
-            void               set_user_agent(const std::string &v);
-            const std::string &get_user_agent() const;
+            LIBATFRAME_UTILS_API void  set_user_agent(const std::string &v);
+            LIBATFRAME_UTILS_API const std::string &get_user_agent() const;
 
-            std::string &      post_data();
-            const std::string &post_data() const;
+            LIBATFRAME_UTILS_API std::string &post_data();
+            LIBATFRAME_UTILS_API const std::string &post_data() const;
 
-            int get_response_code() const;
+            LIBATFRAME_UTILS_API int get_response_code() const;
 
-            int get_error_code() const;
+            LIBATFRAME_UTILS_API int get_error_code() const;
 
-            inline const char *get_error_msg() const { return error_buffer_; }
+            LIBATFRAME_UTILS_API const char *get_error_msg() const;
 
-            inline std::stringstream &      get_response_stream() { return response_; }
-            inline const std::stringstream &get_response_stream() const { return response_; }
+            LIBATFRAME_UTILS_API std::stringstream &get_response_stream();
+            LIBATFRAME_UTILS_API const std::stringstream &get_response_stream() const;
 
-            int add_form_file(const std::string &fieldname, const char *filename);
+            LIBATFRAME_UTILS_API int add_form_file(const std::string &fieldname, const char *filename);
 
-            int add_form_file(const std::string &fieldname, const char *filename, const char *content_type, const char *new_filename);
+            LIBATFRAME_UTILS_API int add_form_file(const std::string &fieldname, const char *filename, const char *content_type,
+                                                   const char *new_filename);
 
-            int add_form_file(const std::string &fieldname, const char *filename, const char *content_type);
+            LIBATFRAME_UTILS_API int add_form_file(const std::string &fieldname, const char *filename, const char *content_type);
 
-            int add_form_field(const std::string &fieldname, const std::string &fieldvalue);
+            LIBATFRAME_UTILS_API int add_form_field(const std::string &fieldname, const std::string &fieldvalue);
 
             template <typename T>
-            int add_form_field(const std::string &fieldname, const T &fieldvalue) {
+            LIBATFRAME_UTILS_API_HEAD_ONLY int add_form_field(const std::string &fieldname, const T &fieldvalue) {
                 std::stringstream ss;
                 ss << fieldvalue;
 
@@ -219,29 +220,16 @@ namespace util {
                 return add_form_field(fieldname, val);
             }
 
-            inline void  set_priv_data(void *v) { priv_data_ = v; }
-            inline void *get_priv_data() const { return priv_data_; }
+            LIBATFRAME_UTILS_API void  set_priv_data(void *v);
+            LIBATFRAME_UTILS_API void *get_priv_data() const;
 
             // ======== set options of libcurl @see https://curl.haxx.se/libcurl/c/curl_easy_setopt.html for detail ========
-            inline void set_opt_bool(CURLoption k, bool v) {
-                if (NULL == mutable_request()) {
-                    return;
-                }
+            LIBATFRAME_UTILS_API void set_opt_bool(CURLoption k, bool v);
 
-                long val = v ? 1L : 0L;
-                curl_easy_setopt(mutable_request(), k, val);
-            }
-
-            inline void set_opt_string(CURLoption k, const char *v) {
-                if (NULL == mutable_request()) {
-                    return;
-                }
-
-                curl_easy_setopt(mutable_request(), k, v);
-            }
+            LIBATFRAME_UTILS_API void set_opt_string(CURLoption k, const char *v);
 
             template <typename T>
-            void set_opt_long(CURLoption k, T v) {
+            LIBATFRAME_UTILS_API_HEAD_ONLY void set_opt_long(CURLoption k, T v) {
                 if (NULL == mutable_request()) {
                     return;
                 }
@@ -250,24 +238,24 @@ namespace util {
                 curl_easy_setopt(mutable_request(), k, val);
             }
 
-            void set_opt_ssl_verify_peer(bool v);
+            LIBATFRAME_UTILS_API void set_opt_ssl_verify_peer(bool v);
 
-            void set_opt_no_signal(bool v);
+            LIBATFRAME_UTILS_API void set_opt_no_signal(bool v);
 
-            void set_opt_follow_location(bool v);
+            LIBATFRAME_UTILS_API void set_opt_follow_location(bool v);
 
             /**
              * @brief use set_on_verbose instead
              */
-            void set_opt_verbose(bool v);
+            LIBATFRAME_UTILS_API void set_opt_verbose(bool v);
 
             /**
              * @brief set accept encoding for this request
              * @param enc pass empty string("") to use all built-in supported encodings, and NULL to disable it
              */
-            void set_opt_accept_encoding(const char *enc);
+            LIBATFRAME_UTILS_API void set_opt_accept_encoding(const char *enc);
 
-            void set_opt_http_content_decoding(bool v);
+            LIBATFRAME_UTILS_API void set_opt_http_content_decoding(bool v);
 
             /**
              * @brief set keepalive option for libcurl
@@ -276,72 +264,76 @@ namespace util {
              * @note set idle and interval into 0 to disable keepalive
              * @return true if it's supported
              */
-            bool set_opt_keepalive(time_t idle, time_t interval);
+            LIBATFRAME_UTILS_API bool set_opt_keepalive(time_t idle, time_t interval);
 
-            void set_opt_timeout(time_t timeout_ms);
+            LIBATFRAME_UTILS_API void set_opt_timeout(time_t timeout_ms);
 
-            void set_opt_reuse_connection(bool v);
+            LIBATFRAME_UTILS_API void set_opt_reuse_connection(bool v);
 
-            void set_libcurl_no_expect();
+            LIBATFRAME_UTILS_API void set_libcurl_no_expect();
 
-            void append_http_header(const char *http_header);
+            LIBATFRAME_UTILS_API void append_http_header(const char *http_header);
             // -------- set options of libcurl @see https://curl.haxx.se/libcurl/c/curl_easy_setopt.html for detail --------
 
-            const on_progress_fn_t &get_on_progress() const;
-            void                    set_on_progress(on_progress_fn_t fn);
+            LIBATFRAME_UTILS_API const on_progress_fn_t &get_on_progress() const;
+            LIBATFRAME_UTILS_API void                    set_on_progress(on_progress_fn_t fn);
 
-            const on_header_fn_t &get_on_header() const;
-            void                  set_on_header(on_header_fn_t fn);
+            LIBATFRAME_UTILS_API const on_header_fn_t &get_on_header() const;
+            LIBATFRAME_UTILS_API void                  set_on_header(on_header_fn_t fn);
 
-            const on_success_fn_t &get_on_success() const;
-            void                   set_on_success(on_success_fn_t fn);
+            LIBATFRAME_UTILS_API const on_success_fn_t &get_on_success() const;
+            LIBATFRAME_UTILS_API void                   set_on_success(on_success_fn_t fn);
 
-            const on_error_fn_t &get_on_error() const;
-            void                 set_on_error(on_error_fn_t fn);
+            LIBATFRAME_UTILS_API const on_error_fn_t &get_on_error() const;
+            LIBATFRAME_UTILS_API void                 set_on_error(on_error_fn_t fn);
 
-            const on_complete_fn_t &get_on_complete() const;
-            void                    set_on_complete(on_complete_fn_t fn);
+            LIBATFRAME_UTILS_API const on_complete_fn_t &get_on_complete() const;
+            LIBATFRAME_UTILS_API void                    set_on_complete(on_complete_fn_t fn);
 
-            const on_write_fn_t &get_on_write() const;
-            void                 set_on_write(on_write_fn_t fn);
+            LIBATFRAME_UTILS_API const on_write_fn_t &get_on_write() const;
+            LIBATFRAME_UTILS_API void                 set_on_write(on_write_fn_t fn);
 
-            const on_verbose_fn_t &get_on_verbose() const;
-            void                   set_on_verbose(on_verbose_fn_t fn);
+            LIBATFRAME_UTILS_API const on_verbose_fn_t &get_on_verbose() const;
+            LIBATFRAME_UTILS_API void                   set_on_verbose(on_verbose_fn_t fn);
 
-            bool is_running() const;
+            LIBATFRAME_UTILS_API bool is_running() const;
 
         private:
-            void remove_curl_request();
+            LIBATFRAME_UTILS_API void remove_curl_request();
 
-            void cleanup();
+            LIBATFRAME_UTILS_API void cleanup();
 
-            void finish_req_rsp();
+            LIBATFRAME_UTILS_API void finish_req_rsp();
 
-            CURL *mutable_request();
+            LIBATFRAME_UTILS_API CURL *mutable_request();
 
-            void build_http_form(method_t::type method);
+            LIBATFRAME_UTILS_API void build_http_form(method_t::type method);
 
-            static curl_poll_context_t *malloc_poll(http_request *req, curl_socket_t sockfd);
-            static void                 free_poll(curl_poll_context_t *);
+            static LIBATFRAME_UTILS_API curl_poll_context_t *malloc_poll(http_request *req, curl_socket_t sockfd);
+            static LIBATFRAME_UTILS_API void                 free_poll(curl_poll_context_t *);
 
-            static void check_multi_info(CURLM *curl_handle);
+            static LIBATFRAME_UTILS_API void check_multi_info(CURLM *curl_handle);
 
-            static void ev_callback_on_timer_closed(uv_handle_t *handle);
-            static void ev_callback_on_poll_closed(uv_handle_t *handle);
-            static void ev_callback_on_timeout(uv_timer_t *handle);
-            static void ev_callback_curl_perform(uv_poll_t *req, int status, int events);
+            static LIBATFRAME_UTILS_API void ev_callback_on_timer_closed(uv_handle_t *handle);
+            static LIBATFRAME_UTILS_API void ev_callback_on_poll_closed(uv_handle_t *handle);
+            static LIBATFRAME_UTILS_API void ev_callback_on_timeout(uv_timer_t *handle);
+            static LIBATFRAME_UTILS_API void ev_callback_curl_perform(uv_poll_t *req, int status, int events);
 
-            static int    curl_callback_start_timer(CURLM *multi, long timeout_ms, void *userp);
-            static int    curl_callback_handle_socket(CURL *easy, curl_socket_t s, int action, void *userp, void *socketp);
-            static size_t curl_callback_on_write(char *ptr, size_t size, size_t nmemb, void *userdata);
+            static LIBATFRAME_UTILS_API int curl_callback_start_timer(CURLM *multi, long timeout_ms, void *userp);
+            static LIBATFRAME_UTILS_API int curl_callback_handle_socket(CURL *easy, curl_socket_t s, int action, void *userp,
+                                                                        void *socketp);
+            static LIBATFRAME_UTILS_API size_t curl_callback_on_write(char *ptr, size_t size, size_t nmemb, void *userdata);
 #if LIBCURL_VERSION_NUM >= 0x072000
-            static int curl_callback_on_progress(void *clientp, curl_off_t dltotal, curl_off_t dlnow, curl_off_t ultotal, curl_off_t ulnow);
+            static LIBATFRAME_UTILS_API int curl_callback_on_progress(void *clientp, curl_off_t dltotal, curl_off_t dlnow,
+                                                                      curl_off_t ultotal, curl_off_t ulnow);
 #else
-            static int curl_callback_on_progress(void *clientp, double dltotal, double dlnow, double ultotal, double ulnow);
+            static LIBATFRAME_UTILS_API int curl_callback_on_progress(void *clientp, double dltotal, double dlnow, double ultotal,
+                                                                      double ulnow);
 #endif
-            static size_t curl_callback_on_read(char *buffer, size_t size, size_t nitems, void *instream);
-            static size_t curl_callback_on_header(char *buffer, size_t size, size_t nitems, void *userdata);
-            static int    curl_callback_on_verbose(CURL *handle, curl_infotype type, char *data, size_t size, void *userptr);
+            static LIBATFRAME_UTILS_API size_t curl_callback_on_read(char *buffer, size_t size, size_t nitems, void *instream);
+            static LIBATFRAME_UTILS_API size_t curl_callback_on_header(char *buffer, size_t size, size_t nitems, void *userdata);
+            static LIBATFRAME_UTILS_API int    curl_callback_on_verbose(CURL *handle, curl_infotype type, char *data, size_t size,
+                                                                        void *userptr);
 
         private:
             // event dispatcher
