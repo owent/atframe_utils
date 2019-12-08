@@ -189,8 +189,14 @@ namespace util {
         LIBATFRAME_UTILS_API lru_pool_manager::check_list_t::iterator lru_pool_manager::end_check_list() { return checked_list_.end(); }
 
         LIBATFRAME_UTILS_API lru_pool_manager::lru_pool_manager()
-            : item_min_bound_(0), item_max_bound_(1024), proc_item_count_(std::numeric_limits<size_t>::max()), gc_item_(0),
-              item_adjust_min_(256), item_adjust_max_(std::numeric_limits<size_t>::max()), last_proc_tick_(0), list_tick_timeout_(0) {
+            : item_min_bound_(0), item_max_bound_(1024),
+#if defined(_MSC_VER) && _MSC_VER < 1900
+              proc_item_count_(ULONG_MAX), gc_item_(0), item_adjust_min_(256), item_adjust_max_(ULONG_MAX),
+#else
+              proc_item_count_(std::numeric_limits<size_t>::max()), gc_item_(0), item_adjust_min_(256),
+              item_adjust_max_(std::numeric_limits<size_t>::max()),
+#endif
+              last_proc_tick_(0), list_tick_timeout_(0) {
             item_count_.set(0);
         }
 
