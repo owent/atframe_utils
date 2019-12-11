@@ -103,7 +103,7 @@ namespace util {
         };
 
 
-        class shell_font {
+        class LIBATFRAME_UTILS_API shell_font {
         private:
             int m_iFlag;
 
@@ -112,15 +112,15 @@ namespace util {
              * 字体信息
              * @param iFlag
              */
-            LIBATFRAME_UTILS_API shell_font(int iFlag = 0);
-            LIBATFRAME_UTILS_API virtual ~shell_font();
+            shell_font(int iFlag = 0);
+            virtual ~shell_font();
 
             /**
              * 生成带样式的文本
              * @param [in] strInput 原始文本
              * @return 生成带样式的文本
              */
-            LIBATFRAME_UTILS_API std::string GenerateString(const std::string &strInput);
+            std::string GenerateString(const std::string &strInput);
 
             /**
              * 生成带样式的文本
@@ -128,26 +128,26 @@ namespace util {
              * @param [in] iFlag 样式
              * @return 生成带样式的文本
              */
-            static LIBATFRAME_UTILS_API std::string GenerateString(const std::string &strInput, int iFlag);
+            static std::string GenerateString(const std::string &strInput, int iFlag);
 
             /**
              * 获取样式的生成命令
              * @param [in] iFlag 样式
              * @return 样式的生成命令
              */
-            static LIBATFRAME_UTILS_API std::string GetStyleCode(int iFlag);
+            static std::string GetStyleCode(int iFlag);
 
             /**
              * 获取样式的生成命令
              * @return 样式的生成命令
              */
-            LIBATFRAME_UTILS_API std::string GetStyleCode();
+            std::string GetStyleCode();
 
             /**
              * 获取样式的关闭命令
              * @return 样式的关闭命令
              */
-            static LIBATFRAME_UTILS_API std::string GetStyleCloseCode();
+            static std::string GetStyleCloseCode();
         };
 
 

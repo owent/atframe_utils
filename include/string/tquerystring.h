@@ -135,9 +135,9 @@ namespace util {
         /**
          * @brief 数据类型抽象接口
          */
-        class item_impl {
+        class LIBATFRAME_UTILS_API item_impl {
         protected:
-            LIBATFRAME_UTILS_API item_impl() {}
+            item_impl() {}
 
             /**
              * @brief 添加到字符串
@@ -145,7 +145,7 @@ namespace util {
              * @param [in] key      key值
              * @param [in] value    value值
              */
-            LIBATFRAME_UTILS_API void append_to(std::string &target, const std::string &key, const std::string &value) const;
+            void append_to(std::string &target, const std::string &key, const std::string &value) const;
 
         public:
             /**
@@ -153,32 +153,32 @@ namespace util {
              */
             typedef std::shared_ptr<item_impl> ptr_type;
 
-            LIBATFRAME_UTILS_API virtual ~item_impl();
+            virtual ~item_impl();
 
             /**
              * @brief 获取是否为空内容
              * @return 是否为空
              */
-            LIBATFRAME_UTILS_API virtual bool empty() const = 0;
+            virtual bool empty() const = 0;
 
             /**
              * @brief 获取数据数量
              * @return 数据长度
              */
-            LIBATFRAME_UTILS_API virtual std::size_t size() const = 0;
+            virtual std::size_t size() const = 0;
 
             /**
              * @brief 获取数据类型
              * @return 表示类型的枚举类型
              */
-            LIBATFRAME_UTILS_API virtual ITEM_TYPE type() const = 0;
+            virtual ITEM_TYPE type() const = 0;
 
             /**
              * @brief 把数据转为字符串
              * @param [in] prefix 数据项前缀
              * @return 字符串表示
              */
-            LIBATFRAME_UTILS_API virtual std::string to_string(const char *prefix = "") const = 0;
+            virtual std::string to_string(const char *prefix = "") const = 0;
 
             /**
              * @brief 编码并追加目标字符串尾部
@@ -186,7 +186,7 @@ namespace util {
              * @param [in] prefix 编码内容前缀
              * @return 如果成功，返回true，否则返回false
              */
-            LIBATFRAME_UTILS_API virtual bool encode(std::string &output, const char *prefix = "") const = 0;
+            virtual bool encode(std::string &output, const char *prefix = "") const = 0;
 
             /**
              * @brief 数据解码
@@ -195,7 +195,7 @@ namespace util {
              * @param [in] value 目标值
              * @return 如果成功，返回true，否则返回false
              */
-            LIBATFRAME_UTILS_API virtual bool parse(const std::vector<std::string> &keys, std::size_t index, const std::string &value) = 0;
+            virtual bool parse(const std::vector<std::string> &keys, std::size_t index, const std::string &value) = 0;
         };
 
         /**

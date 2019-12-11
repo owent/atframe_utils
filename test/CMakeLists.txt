@@ -18,7 +18,10 @@ source_group_by_dir(PROJECT_TEST_SRC_LIST)
 
 # ============ test - coroutine test frame ============
 
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/test")
+set(CMAKE_BUILD_RPATH "$ORIGIN/../lib" "$ORIGIN/../lib64")
+if (NOT (WIN32 AND BUILD_SHARED_LIBS))
+    set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/test")
+endif ()
 
 add_executable(atframe_utils_unit_test ${PROJECT_TEST_SRC_LIST})
 

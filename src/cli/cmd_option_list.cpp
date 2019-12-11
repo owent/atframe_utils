@@ -15,6 +15,8 @@ namespace util {
     namespace cli {
         LIBATFRAME_UTILS_API const char *binder::cmd_option_bind_base::ROOT_NODE_CMD = "@Root";
 
+        LIBATFRAME_UTILS_API binder::cmd_option_bind_base::cmd_option_bind_base() {}
+
         LIBATFRAME_UTILS_API binder::cmd_option_bind_base::~cmd_option_bind_base() {}
 
         LIBATFRAME_UTILS_API bool binder::cmd_option_bind_base::sort_by_all_cmds(const help_msg_t &l, const help_msg_t &r) { return l.all_cmds < r.all_cmds; }

@@ -41,9 +41,14 @@ namespace util {
                 typedef std::vector<help_msg_t> help_list_t;
 
                 std::string help_msg_;
+                LIBATFRAME_UTILS_API cmd_option_bind_base();
                 LIBATFRAME_UTILS_API virtual ~cmd_option_bind_base();
 
                 static LIBATFRAME_UTILS_API bool sort_by_all_cmds(const help_msg_t &l, const help_msg_t &r);
+
+            private:
+                LIBATFRAME_UTILS_API cmd_option_bind_base(const cmd_option_bind_base& other);
+                LIBATFRAME_UTILS_API cmd_option_bind_base& operator=(const cmd_option_bind_base& other);
 
             public:
                 // 定义参数类型

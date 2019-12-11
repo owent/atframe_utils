@@ -1,12 +1,15 @@
 
 aux_source_directory(. SRC_LIST_SAMPLE)
 
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/sample")
-
 set(BIN_NAME "${PROJECT_LIB_NAME}_sample")
 
 if (CMAKE_USE_PTHREADS_INIT)
     add_definitions(-D_POSIX_MT_)
+endif ()
+
+set(CMAKE_BUILD_RPATH "$ORIGIN/../lib" "$ORIGIN/../lib64")
+if (NOT (WIN32 AND BUILD_SHARED_LIBS))
+    set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/sample")
 endif ()
 
 add_executable(${BIN_NAME} ${SRC_LIST_SAMPLE})

@@ -59,22 +59,22 @@
 namespace util {
     namespace mempool {
 
-        class lru_pool_base {
+        class LIBATFRAME_UTILS_API lru_pool_base {
         public:
-            class list_type_base {
+            class LIBATFRAME_UTILS_API list_type_base {
             public:
                 virtual size_t size() const  = 0;
                 virtual bool   gc()          = 0;
                 virtual bool   empty() const = 0;
 
             protected:
-                LIBATFRAME_UTILS_API list_type_base();
-                LIBATFRAME_UTILS_API virtual ~list_type_base();
+                list_type_base();
+                virtual ~list_type_base();
             };
 
         protected:
-            LIBATFRAME_UTILS_API lru_pool_base();
-            LIBATFRAME_UTILS_API virtual ~lru_pool_base();
+            lru_pool_base();
+            virtual ~lru_pool_base();
         };
 
         /**
