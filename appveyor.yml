@@ -35,6 +35,9 @@ environment:
           CMAKE_GEN: MinGW32
         - os: MinGW
           CMAKE_GEN: MinGW64
+        - os: MinGW
+          CMAKE_GEN: MinGW64
+          BUILD_SHARED_LIBS: ON
 
 configuration: RelWithDebInfo
 
