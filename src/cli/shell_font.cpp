@@ -28,11 +28,11 @@ namespace util {
             }
         } // namespace detail
 
-        shell_font::shell_font(int iFlag) : m_iFlag(iFlag) {}
+        LIBATFRAME_UTILS_API shell_font::shell_font(int iFlag) : m_iFlag(iFlag) {}
 
-        shell_font::~shell_font() {}
+        LIBATFRAME_UTILS_API shell_font::~shell_font() {}
 
-        std::string shell_font::GetStyleCode(int iFlag) {
+        LIBATFRAME_UTILS_API std::string shell_font::GetStyleCode(int iFlag) {
             std::string ret;
             ret.reserve(32);
             ret         = "\033[";
@@ -85,9 +85,9 @@ namespace util {
             return ret;
         }
 
-        std::string shell_font::GetStyleCode() { return GetStyleCode(m_iFlag); }
+        LIBATFRAME_UTILS_API std::string shell_font::GetStyleCode() { return GetStyleCode(m_iFlag); }
 
-        std::string shell_font::GetStyleCloseCode() { return SHELL_FONT_SET_OPT_END; }
+        LIBATFRAME_UTILS_API std::string shell_font::GetStyleCloseCode() { return SHELL_FONT_SET_OPT_END; }
 
         static int _check_term_color_status() {
             std::set<std::string> color_term;
@@ -165,7 +165,7 @@ namespace util {
             return 1;
         }
 
-        std::string shell_font::GenerateString(const std::string &strInput, int iFlag) {
+        LIBATFRAME_UTILS_API std::string shell_font::GenerateString(const std::string &strInput, int iFlag) {
             static int status_ = 0;
 
             if (0 == status_) {
@@ -176,7 +176,7 @@ namespace util {
             return GetStyleCode(iFlag) + strInput + GetStyleCloseCode();
         }
 
-        std::string shell_font::GenerateString(const std::string &strInput) { return GenerateString(strInput, m_iFlag); }
+        LIBATFRAME_UTILS_API std::string shell_font::GenerateString(const std::string &strInput) { return GenerateString(strInput, m_iFlag); }
 
 
 #ifdef SHELL_FONT_USING_WIN32_CONSOLE
@@ -217,10 +217,7 @@ namespace util {
 #endif
 
 
-        shell_stream::shell_stream(stream_t &stream) : m_pOs(&stream) {}
-
-
-        shell_stream::shell_stream_opr::shell_stream_opr(stream_t *os) : pOs(os), flag(shell_font_style::SHELL_FONT_SPEC_NULL) {
+        LIBATFRAME_UTILS_API shell_stream::shell_stream_opr::shell_stream_opr(stream_t *os) : pOs(os), flag(shell_font_style::SHELL_FONT_SPEC_NULL) {
 #ifdef SHELL_FONT_USING_WIN32_CONSOLE
             if (os == &std::cout) {
                 hOsHandle = GetStdHandle(STD_OUTPUT_HANDLE);
@@ -232,7 +229,7 @@ namespace util {
 #endif
         }
 
-        shell_stream::shell_stream_opr::~shell_stream_opr() {
+        LIBATFRAME_UTILS_API shell_stream::shell_stream_opr::~shell_stream_opr() {
             if (NULL == pOs) {
                 return;
             }
@@ -240,9 +237,9 @@ namespace util {
             reset();
         }
 
-        shell_stream::shell_stream_opr::shell_stream_opr(const shell_stream_opr &other) { (*this) = other; }
+        LIBATFRAME_UTILS_API shell_stream::shell_stream_opr::shell_stream_opr(const shell_stream_opr &other) { (*this) = other; }
 
-        shell_stream::shell_stream_opr &shell_stream::shell_stream_opr::operator=(const shell_stream::shell_stream_opr &other) {
+        LIBATFRAME_UTILS_API shell_stream::shell_stream_opr &shell_stream::shell_stream_opr::operator=(const shell_stream::shell_stream_opr &other) {
             pOs = other.pOs;
 
 #ifdef SHELL_FONT_USING_WIN32_CONSOLE
@@ -253,7 +250,37 @@ namespace util {
             return (*this);
         }
 
-        const shell_stream::shell_stream_opr &shell_stream::shell_stream_opr::open(int f) const {
+#if defined(UTIL_CONFIG_COMPILER_CXX_NULLPTR) && UTIL_CONFIG_COMPILER_CXX_NULLPTR
+        LIBATFRAME_UTILS_API const shell_stream::shell_stream_opr &shell_stream::shell_stream_opr::operator<<(std::nullptr_t) const {
+            close();
+            (*pOs) << "nullptr";
+            return (*this);
+        }
+#endif
+
+        LIBATFRAME_UTILS_API const shell_stream::shell_stream_opr &shell_stream::shell_stream_opr::operator<<(shell_font_style::shell_font_spec style) const {
+            open(style);
+            return (*this);
+        }
+
+        LIBATFRAME_UTILS_API const shell_stream::shell_stream_opr &shell_stream::shell_stream_opr::operator<<(shell_font_style::shell_font_color style) const {
+            open(style);
+            return (*this);
+        }
+
+        LIBATFRAME_UTILS_API const shell_stream::shell_stream_opr &shell_stream::shell_stream_opr::operator<<(shell_font_style::shell_font_background_color style) const {
+            open(style);
+            return (*this);
+        }
+
+        LIBATFRAME_UTILS_API const shell_stream::shell_stream_opr &shell_stream::shell_stream_opr::operator<<(stream_t &(*fn)(stream_t &)) const {
+            close();
+            (*pOs) << fn;
+            return (*this);
+        }
+
+
+        LIBATFRAME_UTILS_API const shell_stream::shell_stream_opr &shell_stream::shell_stream_opr::open(int f) const {
             if (f == shell_font_style::SHELL_FONT_SPEC_NULL) {
                 reset();
                 return (*this);
@@ -263,7 +290,7 @@ namespace util {
             return (*this);
         }
 
-        void shell_stream::shell_stream_opr::close() const {
+        LIBATFRAME_UTILS_API void shell_stream::shell_stream_opr::close() const {
             if (NULL == pOs) {
                 return;
             }
@@ -298,7 +325,7 @@ namespace util {
             flag = shell_font_style::SHELL_FONT_SPEC_NULL;
         }
 
-        void shell_stream::shell_stream_opr::reset() const {
+        LIBATFRAME_UTILS_API void shell_stream::shell_stream_opr::reset() const {
             if (NULL == pOs) {
                 return;
             }
@@ -315,6 +342,10 @@ namespace util {
 
 #endif
         }
+
+        LIBATFRAME_UTILS_API shell_stream::shell_stream(stream_t &stream) : m_pOs(&stream) {}
+
+        LIBATFRAME_UTILS_API shell_stream::shell_stream_opr shell_stream::operator()() const { return shell_stream_opr(m_pOs); }
 
     } // namespace cli
 } // namespace util

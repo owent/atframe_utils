@@ -3,7 +3,8 @@
 
 #pragma once
 
-#include "config/compiler_features.h"
+#include <config/compiler_features.h>
+#include <config/atframe_utils_build_feature.h>
 
 /*
  * cmd_option_bindt_mf_cc.h
@@ -23,7 +24,7 @@ namespace util {
             // ============================
 
             template <typename _T, typename _F>
-            class cmd_option_bindt_mf_cc_caller {
+            class LIBATFRAME_UTILS_API_HEAD_ONLY cmd_option_bindt_mf_cc_caller {
             private:
                 _F mem_func_;
 

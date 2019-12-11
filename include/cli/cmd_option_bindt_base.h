@@ -27,7 +27,7 @@ namespace util {
         namespace binder {
             // 函数、函数结构绑定器
             template <class _F, class _PL>
-            class cmd_option_bindt : public cmd_option_bind_base {
+            class LIBATFRAME_UTILS_API_HEAD_ONLY cmd_option_bindt : public cmd_option_bind_base {
             protected:
                 _F func_obj_;    // 函数结构
                 _PL param_list_; // 参数列表结构

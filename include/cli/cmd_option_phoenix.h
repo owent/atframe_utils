@@ -25,7 +25,7 @@ namespace util {
              * @brief 通用赋值动作 - 设置一个变量值
              */
             template <typename T>
-            struct assign_t {
+            struct LIBATFRAME_UTILS_API_HEAD_ONLY assign_t {
                 T &var;
                 assign_t(T &t) : var(t) {}
 
@@ -37,7 +37,7 @@ namespace util {
             };
 
             template <typename T>
-            assign_t<T> assign(T &t) {
+            LIBATFRAME_UTILS_API_HEAD_ONLY assign_t<T> assign(T &t) {
                 return assign_t<T>(std::ref(t));
             }
 
@@ -45,7 +45,7 @@ namespace util {
              * @brief 通用赋值动作 - 容器push_back操作
              */
             template <typename T>
-            struct push_back_t {
+            struct LIBATFRAME_UTILS_API_HEAD_ONLY push_back_t {
                 T &var;
                 push_back_t(T &t) : var(t) {}
 
@@ -57,7 +57,7 @@ namespace util {
             };
 
             template <typename T>
-            push_back_t<T> push_back(T &t) {
+            LIBATFRAME_UTILS_API_HEAD_ONLY push_back_t<T> push_back(T &t) {
                 return push_back_t<T>(std::ref(t));
             }
 
@@ -65,7 +65,7 @@ namespace util {
              * @brief 通用赋值动作 - 容器push_front操作
              */
             template <typename T>
-            struct push_front_t {
+            struct LIBATFRAME_UTILS_API_HEAD_ONLY push_front_t {
                 T &var;
                 push_front_t(T &t) : var(t) {}
 
@@ -77,7 +77,7 @@ namespace util {
             };
 
             template <typename T>
-            push_front_t<T> push_front(T &t) {
+            LIBATFRAME_UTILS_API_HEAD_ONLY push_front_t<T> push_front(T &t) {
                 return push_front_t<T>(std::ref(t));
             }
 
@@ -85,7 +85,7 @@ namespace util {
              * @brief 通用赋值动作 - 容器insert操作
              */
             template <typename T>
-            struct insert_t {
+            struct LIBATFRAME_UTILS_API_HEAD_ONLY insert_t {
                 T &var;
                 insert_t(T &t) : var(t) {}
 
@@ -97,7 +97,7 @@ namespace util {
             };
 
             template <typename T>
-            insert_t<T> insert(T &t) {
+            LIBATFRAME_UTILS_API_HEAD_ONLY insert_t<T> insert(T &t) {
                 return insert_t<T>(std::ref(t));
             }
 
@@ -105,7 +105,7 @@ namespace util {
              * @brief 通用赋值动作 - 设置变量值为某个固定值
              */
             template <typename T>
-            struct set_const_t {
+            struct LIBATFRAME_UTILS_API_HEAD_ONLY set_const_t {
                 T &var;
                 T  val;
                 set_const_t(T &t, const T &v) : var(t), val(v) {}
@@ -114,7 +114,7 @@ namespace util {
             };
 
             template <typename T>
-            set_const_t<T> set_const(T &t, const T &v) {
+            LIBATFRAME_UTILS_API_HEAD_ONLY set_const_t<T> set_const(T &t, const T &v) {
                 return set_const_t<T>(std::ref(t), std::cref(v));
             }
 
@@ -123,7 +123,7 @@ namespace util {
              * @note no, false, disabled, disable, 0 都会被判定为false，其他为true
              */
             template <typename T>
-            struct assign_logic_bool_t {
+            struct LIBATFRAME_UTILS_API_HEAD_ONLY assign_logic_bool_t {
                 T &var;
                 assign_logic_bool_t(T &t) : var(t) {}
 
@@ -137,7 +137,7 @@ namespace util {
             };
 
             template <typename T>
-            assign_logic_bool_t<T> assign_logic_bool(T &t) {
+            LIBATFRAME_UTILS_API_HEAD_ONLY assign_logic_bool_t<T> assign_logic_bool(T &t) {
                 return assign_logic_bool_t<T>(std::ref(t));
             }
         } // namespace phoenix

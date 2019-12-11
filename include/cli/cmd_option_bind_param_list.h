@@ -29,7 +29,7 @@ namespace util {
              *  primary template handles the non--member-pointer case.
              */
             template <typename _Tp>
-            struct maybe_wrap_member_pointer {
+            struct LIBATFRAME_UTILS_API_HEAD_ONLY maybe_wrap_member_pointer {
                 typedef _Tp type;
                 typedef cmd_option_bindt_cc_caller<_Tp> caller_type;
 
@@ -44,7 +44,7 @@ namespace util {
              *  partial specialization handles the member pointer case.
              */
             template <typename _Tp, typename _Class>
-            struct maybe_wrap_member_pointer<_Tp _Class::*> {
+            struct LIBATFRAME_UTILS_API_HEAD_ONLY maybe_wrap_member_pointer<_Tp _Class::*> {
                 typedef _Tp _Class::*type;
                 typedef cmd_option_bindt_mf_cc_caller<_Class, type> caller_type;
 
@@ -56,7 +56,7 @@ namespace util {
 // ============================
 #if defined(UTIL_CONFIG_COMPILER_CXX_VARIADIC_TEMPLATES) && UTIL_CONFIG_COMPILER_CXX_VARIADIC_TEMPLATES
             template <typename... _Args>
-            class cmd_option_bind_param_list {
+            class LIBATFRAME_UTILS_API_HEAD_ONLY cmd_option_bind_param_list {
             private:
                 /**
                  * 用于创建存储对象索引和解包索引[0, 1, 2, ..., sizeof...(_Args) - 1]
@@ -93,7 +93,7 @@ namespace util {
 
 #else
 
-            class cmd_option_bind_param_list0 {
+            class LIBATFRAME_UTILS_API_HEAD_ONLY cmd_option_bind_param_list0 {
             public:
                 template <class _F>
                 void operator()(_F &f, callback_param args, int) {
@@ -102,7 +102,7 @@ namespace util {
             };
 
             template <typename _Arg0>
-            class cmd_option_bind_param_list1 {
+            class LIBATFRAME_UTILS_API_HEAD_ONLY cmd_option_bind_param_list1 {
             private:
                 _Arg0 arg0_;
 
@@ -116,7 +116,7 @@ namespace util {
             };
 
             template <typename _Arg0, typename _Arg1>
-            class cmd_option_bind_param_list2 {
+            class LIBATFRAME_UTILS_API_HEAD_ONLY cmd_option_bind_param_list2 {
             private:
                 _Arg0 arg0_;
                 _Arg1 arg1_;
@@ -131,7 +131,7 @@ namespace util {
             };
 
             template <typename _Arg0, typename _Arg1, typename _Arg2>
-            class cmd_option_bind_param_list3 {
+            class LIBATFRAME_UTILS_API_HEAD_ONLY cmd_option_bind_param_list3 {
             private:
                 _Arg0 arg0_;
                 _Arg1 arg1_;
@@ -147,7 +147,7 @@ namespace util {
             };
 
             template <typename _Arg0, typename _Arg1, typename _Arg2, typename _Arg3>
-            class cmd_option_bind_param_list4 {
+            class LIBATFRAME_UTILS_API_HEAD_ONLY cmd_option_bind_param_list4 {
             private:
                 _Arg0 arg0_;
                 _Arg1 arg1_;

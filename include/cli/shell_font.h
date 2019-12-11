@@ -19,6 +19,7 @@
 #include <string>
 
 #include <config/compiler_features.h>
+#include <config/atframe_utils_build_feature.h>
 
 /**
  * Window 控制台相关
@@ -69,7 +70,7 @@ namespace util {
         // 47  设置白色背景
         // 49  设置缺省黑色背景
 
-        struct shell_font_style {
+        struct LIBATFRAME_UTILS_API shell_font_style {
             enum shell_font_spec {
                 SHELL_FONT_SPEC_NULL      = 0x00,
                 SHELL_FONT_SPEC_BOLD      = 0x01,
@@ -111,15 +112,15 @@ namespace util {
              * 字体信息
              * @param iFlag
              */
-            shell_font(int iFlag = 0);
-            virtual ~shell_font();
+            LIBATFRAME_UTILS_API shell_font(int iFlag = 0);
+            LIBATFRAME_UTILS_API virtual ~shell_font();
 
             /**
              * 生成带样式的文本
              * @param [in] strInput 原始文本
              * @return 生成带样式的文本
              */
-            std::string GenerateString(const std::string &strInput);
+            LIBATFRAME_UTILS_API std::string GenerateString(const std::string &strInput);
 
             /**
              * 生成带样式的文本
@@ -127,33 +128,33 @@ namespace util {
              * @param [in] iFlag 样式
              * @return 生成带样式的文本
              */
-            static std::string GenerateString(const std::string &strInput, int iFlag);
+            static LIBATFRAME_UTILS_API std::string GenerateString(const std::string &strInput, int iFlag);
 
             /**
              * 获取样式的生成命令
              * @param [in] iFlag 样式
              * @return 样式的生成命令
              */
-            static std::string GetStyleCode(int iFlag);
+            static LIBATFRAME_UTILS_API std::string GetStyleCode(int iFlag);
 
             /**
              * 获取样式的生成命令
              * @return 样式的生成命令
              */
-            std::string GetStyleCode();
+            LIBATFRAME_UTILS_API std::string GetStyleCode();
 
             /**
              * 获取样式的关闭命令
              * @return 样式的关闭命令
              */
-            static std::string GetStyleCloseCode();
+            static LIBATFRAME_UTILS_API std::string GetStyleCloseCode();
         };
 
 
-        class shell_stream {
+        class UTIL_SYMBOL_VISIBLE shell_stream {
         public:
             typedef std::ostream stream_t;
-            class shell_stream_opr {
+            class UTIL_SYMBOL_VISIBLE shell_stream_opr {
             public:
                 typedef shell_stream_opr self_t;
 
@@ -165,68 +166,46 @@ namespace util {
                 mutable int flag;
 
                 // 进允许内部复制构造
-                shell_stream_opr(const shell_stream_opr &);
-                shell_stream_opr &operator=(const shell_stream_opr &);
+                LIBATFRAME_UTILS_API shell_stream_opr(const shell_stream_opr &);
+                LIBATFRAME_UTILS_API shell_stream_opr &operator=(const shell_stream_opr &);
 
                 friend class shell_stream;
 
             public:
-                shell_stream_opr(stream_t *os);
-                ~shell_stream_opr();
+                LIBATFRAME_UTILS_API shell_stream_opr(stream_t *os);
+                LIBATFRAME_UTILS_API ~shell_stream_opr();
 
 
                 template <typename Ty>
-                const shell_stream_opr &operator<<(const Ty &v) const {
+                LIBATFRAME_UTILS_API_HEAD_ONLY const shell_stream_opr &operator<<(const Ty &v) const {
                     close();
                     (*pOs) << v;
                     return (*this);
                 }
 
 #if defined(UTIL_CONFIG_COMPILER_CXX_NULLPTR) && UTIL_CONFIG_COMPILER_CXX_NULLPTR
-                const shell_stream_opr &operator<<(std::nullptr_t) const {
-                    close();
-                    (*pOs) << "nullptr";
-                    return (*this);
-                }
+                LIBATFRAME_UTILS_API const shell_stream_opr &operator<<(std::nullptr_t) const;
 #endif
+                LIBATFRAME_UTILS_API const shell_stream_opr &operator<<(shell_font_style::shell_font_spec style) const;
+                LIBATFRAME_UTILS_API const shell_stream_opr &operator<<(shell_font_style::shell_font_color style) const;
+                LIBATFRAME_UTILS_API const shell_stream_opr &operator<<(shell_font_style::shell_font_background_color style) const;
+                LIBATFRAME_UTILS_API const shell_stream_opr &operator<<(stream_t &(*fn)(stream_t &)) const;
 
-                const shell_stream_opr &operator<<(shell_font_style::shell_font_spec style) const {
-                    open(style);
-                    return (*this);
-                }
+                LIBATFRAME_UTILS_API const shell_stream_opr &open(int flag) const;
 
-                const shell_stream_opr &operator<<(shell_font_style::shell_font_color style) const {
-                    open(style);
-                    return (*this);
-                }
+                LIBATFRAME_UTILS_API void close() const;
 
-                const shell_stream_opr &operator<<(shell_font_style::shell_font_background_color style) const {
-                    open(style);
-                    return (*this);
-                }
+                LIBATFRAME_UTILS_API void reset() const;
 
-                const shell_stream_opr &operator<<(stream_t &(*fn)(stream_t &)) const {
-                    close();
-                    (*pOs) << fn;
-                    return (*this);
-                }
+                UTIL_FORCEINLINE operator stream_t &() const { return *pOs; }
 
-                const shell_stream_opr &open(int flag) const;
-
-                void close() const;
-
-                void reset() const;
-
-                operator stream_t &() const { return *pOs; }
-
-                operator const stream_t &() const { return *pOs; }
+                UTIL_FORCEINLINE operator const stream_t &() const { return *pOs; }
             };
 
 
         public:
-            shell_stream(stream_t &stream = std::cout);
-
-            shell_stream_opr operator()() const { return shell_stream_opr(m_pOs); }
+            LIBATFRAME_UTILS_API shell_stream(stream_t &stream = std::cout);
+            LIBATFRAME_UTILS_API shell_stream_opr operator()() const;
 
         private:
             stream_t *m_pOs;

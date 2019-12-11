@@ -10,6 +10,8 @@
 #include <algorithm>
 #include <string>
 
+#include <config/atframe_utils_build_feature.h>
+
 namespace util {
     namespace cli {
         /**
@@ -17,10 +19,10 @@ namespace util {
          */
         template <typename Tc>
         struct ci_char_traits : public std::char_traits<Tc> {
-            static bool eq(Tc left, Tc right) { return toupper(left) == toupper(right); }
-            static bool lt(Tc left, Tc right) { return toupper(left) < toupper(right); }
+            static LIBATFRAME_UTILS_API_HEAD_ONLY bool eq(Tc left, Tc right) { return toupper(left) == toupper(right); }
+            static LIBATFRAME_UTILS_API_HEAD_ONLY bool lt(Tc left, Tc right) { return toupper(left) < toupper(right); }
 
-            static int compare(const Tc *left, const Tc *right, size_t n) {
+            static LIBATFRAME_UTILS_API_HEAD_ONLY int compare(const Tc *left, const Tc *right, size_t n) {
                 while (n-- > 0) {
                     char cl = (Tc)toupper(*left), cr = (Tc)toupper(*right);
                     if (cl < cr)
@@ -33,7 +35,7 @@ namespace util {
                 return 0;
             }
 
-            static const Tc *find(const char *s, int n, Tc a) {
+            static LIBATFRAME_UTILS_API_HEAD_ONLY const Tc *find(const char *s, int n, Tc a) {
                 while (n-- > 0 && toupper(*s) != toupper(a))
                     ++s;
                 return n >= 0 ? s : 0;

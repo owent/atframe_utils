@@ -3,7 +3,8 @@
 
 #pragma once
 
-#include "config/compiler_features.h"
+#include <config/compiler_features.h>
+#include <config/atframe_utils_build_feature.h>
 
 /*
  * cmd_option_bindt_cc.h
@@ -22,7 +23,7 @@ namespace util {
             // ===       函数绑定       ===
             // ============================
             template <typename _TF>
-            class cmd_option_bindt_cc_caller {
+            class LIBATFRAME_UTILS_API_HEAD_ONLY cmd_option_bindt_cc_caller {
             private:
                 _TF func_;
 
