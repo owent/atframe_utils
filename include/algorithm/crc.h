@@ -38,7 +38,7 @@ namespace util {
      *
      * @return         crc32 result
      */
-    LIBATFRAME_UTILS_API_C(uint16_t) crc16(const unsigned char *s, size_t l, uint16_t init_val = 0);
+    LIBATFRAME_UTILS_API uint16_t crc16(const unsigned char *s, size_t l, uint16_t init_val = 0);
 
     /**
      * @brief          Calculate crc32
@@ -49,7 +49,7 @@ namespace util {
      *
      * @return         crc32 result
      */
-    LIBATFRAME_UTILS_API_C(uint32_t) crc32(const unsigned char *s, size_t l, uint32_t init_val = 0);
+    LIBATFRAME_UTILS_API uint32_t crc32(const unsigned char *s, size_t l, uint32_t init_val = 0);
 
     /**
      * @brief          Calculate crc32
@@ -60,7 +60,7 @@ namespace util {
      *
      * @return         crc32 result
      */
-    LIBATFRAME_UTILS_API_C(uint64_t) crc64(const unsigned char *s, size_t l, uint64_t init_val = 0);
+    LIBATFRAME_UTILS_API uint64_t crc64(const unsigned char *s, size_t l, uint64_t init_val = 0);
 } // namespace util
 
 #endif

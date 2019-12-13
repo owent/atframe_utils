@@ -145,7 +145,10 @@ namespace util {
 
     } // namespace detail
 
-    LIBATFRAME_UTILS_API_C(uint16_t) crc16(const unsigned char *s, size_t l, uint16_t init_val) {
+    LIBATFRAME_UTILS_API uint16_t crc16(const unsigned char *s, size_t l, uint16_t init_val) {
+        if (!s) {
+            return init_val;
+        }
         size_t j;
         for (j = 0; j < l; ++j) {
             unsigned char byte = s[j];
@@ -154,7 +157,7 @@ namespace util {
         return init_val;
     }
 
-    LIBATFRAME_UTILS_API_C(uint32_t) crc32(const unsigned char *s, size_t l, uint32_t init_val) {
+    LIBATFRAME_UTILS_API uint32_t crc32(const unsigned char *s, size_t l, uint32_t init_val) {
         size_t j;
         for (j = 0; j < l; ++j) {
             unsigned char byte = s[j];
@@ -164,7 +167,7 @@ namespace util {
         return init_val;
     }
 
-    LIBATFRAME_UTILS_API_C(uint64_t) crc64(const unsigned char *s, size_t l, uint64_t init_val) {
+    LIBATFRAME_UTILS_API uint64_t crc64(const unsigned char *s, size_t l, uint64_t init_val) {
         size_t j;
         for (j = 0; j < l; ++j) {
             unsigned char byte = s[j];
