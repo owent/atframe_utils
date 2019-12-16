@@ -89,4 +89,4 @@ LIBATFRAME_UTILS_API_C(const char *) util_string_version_tok(const char *v, int6
 
 LIBATFRAME_UTILS_API_C(int) util_string_version_compare(const char *l, const char *r) { return util::string::version_compare(l, r); }
 
-UTIL_SYMBOL_EXPORT std::string util_string_version_normalize(const char *v) { return util::string::version_normalize(v); }
+LIBATFRAME_UTILS_API std::string util_string_version_normalize(const char *v) { return util::string::version_normalize(v); }
