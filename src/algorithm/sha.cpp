@@ -1178,7 +1178,7 @@ namespace util {
                 return 0;
             }
 #else
-            switch (hash_type_) {
+            switch (bt) {
             case EN_ALGORITHM_SHA1:
                 return 20;
             case EN_ALGORITHM_SHA224:
