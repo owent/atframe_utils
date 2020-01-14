@@ -102,13 +102,13 @@ namespace util {
              * @note 取值范围 [lowest, highest)
              * @return 产生的随机数
              */
-            template <typename ResaultType>
-            LIBATFRAME_UTILS_API_HEAD_ONLY ResaultType random_between(ResaultType lowest, ResaultType highest) {
+            template <typename ResultType>
+            LIBATFRAME_UTILS_API_HEAD_ONLY ResultType random_between(ResultType lowest, ResultType highest) {
                 if (highest <= lowest) {
                     return lowest;
                 }
                 result_type res = (*this)();
-                return static_cast<ResaultType>(res % static_cast<result_type>(highest - lowest)) + lowest;
+                return static_cast<ResultType>(res % static_cast<result_type>(highest - lowest)) + lowest;
             }
 
         public:
