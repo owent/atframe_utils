@@ -4,8 +4,6 @@ include("test.macro.cmake")
 
 include("${CMAKE_CURRENT_LIST_DIR}/test.build_bin.cmake")
 
-include_directories(${PROJECT_ALL_INCLUDE_DIR})
-
 file(GLOB_RECURSE PROJECT_TEST_SRC_LIST
     ${PROJECT_TEST_SRC_DIR}/*.h
     ${PROJECT_TEST_SRC_DIR}/*.hpp
@@ -30,12 +28,12 @@ if (MSVC)
 endif (MSVC)
 
 target_link_libraries(atframe_utils_unit_test
-    ${PROJECT_LIB_NAME}
     ${PROJECT_TEST_LIB_LINK}
-    ${ATFRAME_UTILS_NETWORK_LINK_NAME}
-    ${ATFRAME_UTILS_BIN_CRYPT_LINK_NAME}
-    ${PROJECT_DEP_LINK_NAMES}
-    ${COMPILER_OPTION_EXTERN_CXX_LIBS}
+    ${PROJECT_ATFRAME_UTILS_LIB_NAME}
+)
+
+target_compile_options(atframe_utils_unit_test
+    PRIVATE ${COMPILER_STRICT_EXTRA_CFLAGS} ${COMPILER_STRICT_CFLAGS}
 )
 
 if (MSVC)
