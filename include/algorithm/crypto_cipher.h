@@ -248,16 +248,16 @@ namespace util {
             int64_t                        last_errorno_;
             const cipher_kt_t *            cipher_kt_;
             std::vector<unsigned char>     iv_;
-            typedef struct {
+            struct xxtea_context_t {
                 ::util::xxtea_key key;
-            } xxtea_context_t;
-            typedef struct {
+            };
+            struct libsodium_context_t {
                 unsigned char key[32];
-            } libsodium_context_t;
-            typedef struct {
+            };
+            struct cipher_context_t {
                 cipher_evp_t *enc; // used for encrypt
                 cipher_evp_t *dec; // used for decrypt
-            } cipher_context_t;
+            };
             union {
                 cipher_context_t    cipher_context_;
                 xxtea_context_t     xxtea_context_;

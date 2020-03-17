@@ -35,7 +35,7 @@
 
 namespace util {
     namespace random {
-        typedef struct {
+        struct uuid {
             uint32_t data1;
             uint16_t data2;
             uint16_t data3;

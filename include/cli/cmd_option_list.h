@@ -32,12 +32,12 @@ namespace util {
             class UTIL_SYMBOL_VISIBLE cmd_option_bind_base : public std::enable_shared_from_this<cmd_option_bind_base> {
             protected:
                 static LIBATFRAME_UTILS_API const char *ROOT_NODE_CMD;
-                typedef struct {
+                struct help_msg_t {
                     std::vector<std::string> cmd_paths;
                     std::string all_cmds;
                     std::string description;
                     std::shared_ptr<cmd_option_bind_base> binded_obj;
-                } help_msg_t;
+                };
                 typedef std::vector<help_msg_t> help_list_t;
 
                 std::string help_msg_;

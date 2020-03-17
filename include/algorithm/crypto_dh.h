@@ -108,26 +108,26 @@ namespace util {
             class shared_context {
             public:
 #if defined(CRYPTO_USE_OPENSSL) || defined(CRYPTO_USE_LIBRESSL) || defined(CRYPTO_USE_BORINGSSL)
-                typedef struct {
+                struct dh_param_t {
                     BIO *                      param;
                     std::vector<unsigned char> param_buffer;
                     int                        ecp_id;
-                } dh_param_t;
+                };
 
-                typedef struct {
-                } random_engine_t;
+                struct random_engine_t {
+                };
 
 #elif defined(CRYPTO_USE_MBEDTLS)
-                typedef struct {
+                struct dh_param_t {
                     std::string          param;
                     mbedtls_ecp_group_id ecp_id;
-                } dh_param_t;
+                };
 
                 // move mbedtls_ctr_drbg_context and mbedtls_entropy_context here
-                typedef struct {
+                struct random_engine_t {
                     mbedtls_ctr_drbg_context ctr_drbg;
                     mbedtls_entropy_context  entropy;
-                } random_engine_t;
+                };
 #endif
 
                 typedef std::shared_ptr<shared_context> ptr_t;

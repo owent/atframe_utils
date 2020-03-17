@@ -43,11 +43,11 @@
 #endif
 
 // copy from t1_lib.c of openssl 1.1.0
-typedef struct {
+struct tls_curve_info {
     int          nid;     /* Curve NID */
     int          secbits; /* Bits of security (from SP800-57) */
     unsigned int flags;   /* Flags: currently just field type */
-} tls_curve_info;
+};
 
 #ifndef TLS_CURVE_CHAR2
 #define TLS_CURVE_CHAR2 0x1

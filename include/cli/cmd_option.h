@@ -35,6 +35,8 @@
 #include "std/ref.h"
 #include "std/smart_ptr.h"
 
+#include <config/compiler/template_prefix.h>
+
 // 载入绑定器
 #include "cli/cmd_option_bind.h"
 #include "cli/cmd_option_bindt_base.h"
@@ -307,7 +309,7 @@ namespace util {
                 // 转义标记符
                 map_value_[(uc_t)'\\'] = TRANSLATE;
                 // 指令分隔符
-                map_value_[(uc_t)' '] |= CMDSPLIT;
+                map_value_[(uc_t)' '] |= static_cast<short>(CMDSPLIT);
                 map_value_[(uc_t)','] = map_value_[(uc_t)';'] = CMDSPLIT;
 
                 // 转义字符设置
@@ -331,7 +333,7 @@ namespace util {
              * 构造函数
              */
             cmd_option_bind()
-                : help_cmd_style_(shell_font_style::SHELL_FONT_COLOR_YELLOW | shell_font_style::SHELL_FONT_SPEC_BOLD),
+                : help_cmd_style_(shell_font_style::SHELL_FONT_COLOR_YELLOW | static_cast<int>(shell_font_style::SHELL_FONT_SPEC_BOLD)),
                   help_description_style_(0) {
                 init_char_set();
             }
@@ -759,4 +761,7 @@ namespace util {
         typedef cmd_option_bind<cmd_option_ci_string> cmd_option_ci;
     } // namespace cli
 } // namespace util
+
+#include <config/compiler/template_suffix.h>
+
 #endif /* CMDOPTION_H_ */
