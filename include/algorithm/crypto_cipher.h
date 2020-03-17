@@ -240,8 +240,8 @@ namespace util {
 
 
         private:
-            UTIL_SYMBOL_HIDDEN int init_with_cipher(const cipher_interface_info_t *interface, int mode);
-            UTIL_SYMBOL_HIDDEN int close_with_cipher();
+            int init_with_cipher(const cipher_interface_info_t *interface, int mode);
+            int close_with_cipher();
 
         private:
             const cipher_interface_info_t *interface_;
