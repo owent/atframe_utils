@@ -5,6 +5,10 @@
 # build tools
 #
 
+if (CMAKE_VERSION VERSION_GREATER_EQUAL "3.10")
+    include_guard(GLOBAL)
+endif()
+
 set (PROJECT_BUILD_TOOLS_CMAKE_INHERIT_VARS 
     CMAKE_C_FLAGS CMAKE_C_FLAGS_DEBUG CMAKE_C_FLAGS_RELEASE CMAKE_C_FLAGS_RELWITHDEBINFO CMAKE_C_FLAGS_MINSIZEREL
     CMAKE_CXX_FLAGS CMAKE_CXX_FLAGS_DEBUG CMAKE_CXX_FLAGS_RELEASE CMAKE_CXX_FLAGS_RELWITHDEBINFO CMAKE_CXX_FLAGS_MINSIZEREL
@@ -70,3 +74,68 @@ macro(project_build_tools_append_cmake_options_for_lib OUTVAR)
         "-DCMAKE_POSITION_INDEPENDENT_CODE=ON"
     )
 endmacro ()
+
+function(project_make_executable)
+    if (UNIX OR MINGW OR CYGWIN OR APPLE OR CMAKE_HOST_APPLE OR CMAKE_HOST_UNIX)
+        foreach(ARG IN LISTS ARGN)
+            execute_process(COMMAND chmod -R +x ${ARG})
+        endforeach()
+    endif()
+endfunction()
+
+function (project_make_writable)
+    if (CMAKE_HOST_APPLE OR APPLE OR UNIX OR MINGW OR MSYS OR CYGWIN)
+        execute_process(COMMAND chmod -R +w ${ARGN})
+    else ()
+        foreach(arg IN LISTS ARGN)
+            execute_process(COMMAND attrib -R "${arg}" /S /D /L)
+        endforeach()
+    endif ()
+endfunction()
+
+
+# 如果仅仅是设置环境变量的话可以用 ${CMAKE_COMMAND} -E env M4=/foo/bar 代替
+macro (project_expand_list_for_command_line OUTPUT INPUT)
+    foreach(ARG IN LISTS ${INPUT})
+        string(REPLACE "\\" "\\\\" project_expand_list_for_command_line_OUT_VAR ${ARG})
+        string(REPLACE "\"" "\\\"" project_expand_list_for_command_line_OUT_VAR ${project_expand_list_for_command_line_OUT_VAR})
+        set (${OUTPUT} "${${OUTPUT}} \"${project_expand_list_for_command_line_OUT_VAR}\"")
+        unset (project_expand_list_for_command_line_OUT_VAR)
+    endforeach()
+endmacro()
+
+function (project_expand_list_for_command_line_to_file)
+    unset (project_expand_list_for_command_line_to_file_OUTPUT)
+    unset (project_expand_list_for_command_line_to_file_LINE)
+    foreach(ARG IN LISTS ARGN)
+        if (NOT project_expand_list_for_command_line_to_file_OUTPUT)
+            set (project_expand_list_for_command_line_to_file_OUTPUT "${ARG}")
+        else ()
+            string(REPLACE "\\" "\\\\" project_expand_list_for_command_line_OUT_VAR ${ARG})
+            string(REPLACE "\"" "\\\"" project_expand_list_for_command_line_OUT_VAR ${project_expand_list_for_command_line_OUT_VAR})
+            if (project_expand_list_for_command_line_to_file_LINE)
+                set (project_expand_list_for_command_line_to_file_LINE "${project_expand_list_for_command_line_to_file_LINE} \"${project_expand_list_for_command_line_OUT_VAR}\"")
+            else ()
+                set (project_expand_list_for_command_line_to_file_LINE "\"${project_expand_list_for_command_line_OUT_VAR}\"")
+            endif ()
+            unset (project_expand_list_for_command_line_OUT_VAR)
+        endif ()
+    endforeach()
+
+    if (project_expand_list_for_command_line_to_file_OUTPUT)
+        file(APPEND "${project_expand_list_for_command_line_to_file_OUTPUT}" "${project_expand_list_for_command_line_to_file_LINE}${PROJECT_THIRD_PARTY_BUILDTOOLS_BASH_EOL}")
+    endif ()
+    unset (project_expand_list_for_command_line_to_file_OUTPUT)
+    unset (project_expand_list_for_command_line_to_file_LINE)
+endfunction()
+
+if (CMAKE_HOST_WIN32)
+    set (PROJECT_THIRD_PARTY_BUILDTOOLS_EOL "\r\n")
+    set (PROJECT_THIRD_PARTY_BUILDTOOLS_BASH_EOL "\r\n")
+elseif (CMAKE_HOST_APPLE OR APPLE)
+    set (PROJECT_THIRD_PARTY_BUILDTOOLS_EOL "\r")
+    set (PROJECT_THIRD_PARTY_BUILDTOOLS_BASH_EOL "\n")
+else ()
+    set (PROJECT_THIRD_PARTY_BUILDTOOLS_EOL "\n")
+    set (PROJECT_THIRD_PARTY_BUILDTOOLS_BASH_EOL "\n")
+endif ()
