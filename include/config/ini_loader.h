@@ -111,62 +111,62 @@ namespace util {
             struct as_helper;
 
             template <typename _TVOID>
-            LIBATFRAME_UTILS_API_HEAD_ONLY struct as_helper< ::util::config::duration_value, _TVOID> {
+            struct LIBATFRAME_UTILS_API_HEAD_ONLY as_helper< ::util::config::duration_value, _TVOID> {
                 UTIL_FORCEINLINE static ::util::config::duration_value convert(const ini_value &val, size_t index) { return val.as_duration(index); }
             };
 
             template <typename _TVOID>
-            LIBATFRAME_UTILS_API_HEAD_ONLY struct as_helper<int8_t, _TVOID> {
+            struct LIBATFRAME_UTILS_API_HEAD_ONLY as_helper<int8_t, _TVOID> {
                 UTIL_FORCEINLINE static int8_t convert(const ini_value &val, size_t index) { return val.as_int8(index); }
             };
 
             template <typename _TVOID>
-            LIBATFRAME_UTILS_API_HEAD_ONLY struct as_helper<uint8_t, _TVOID> {
+            struct LIBATFRAME_UTILS_API_HEAD_ONLY as_helper<uint8_t, _TVOID> {
                 UTIL_FORCEINLINE static uint8_t convert(const ini_value &val, size_t index) { return val.as_uint8(index); }
             };
 
             template <typename _TVOID>
-            LIBATFRAME_UTILS_API_HEAD_ONLY struct as_helper<int16_t, _TVOID> {
+            struct LIBATFRAME_UTILS_API_HEAD_ONLY as_helper<int16_t, _TVOID> {
                 UTIL_FORCEINLINE static int16_t convert(const ini_value &val, size_t index) { return val.as_int16(index); }
             };
 
             template <typename _TVOID>
-            LIBATFRAME_UTILS_API_HEAD_ONLY struct as_helper<uint16_t, _TVOID> {
+            struct LIBATFRAME_UTILS_API_HEAD_ONLY as_helper<uint16_t, _TVOID> {
                 UTIL_FORCEINLINE static uint16_t convert(const ini_value &val, size_t index) { return val.as_uint16(index); }
             };
 
             template <typename _TVOID>
-            LIBATFRAME_UTILS_API_HEAD_ONLY struct as_helper<int32_t, _TVOID> {
+            struct LIBATFRAME_UTILS_API_HEAD_ONLY as_helper<int32_t, _TVOID> {
                 UTIL_FORCEINLINE static int32_t convert(const ini_value &val, size_t index) { return val.as_int32(index); }
             };
 
             template <typename _TVOID>
-            LIBATFRAME_UTILS_API_HEAD_ONLY struct as_helper<uint32_t, _TVOID> {
+            struct LIBATFRAME_UTILS_API_HEAD_ONLY as_helper<uint32_t, _TVOID> {
                 UTIL_FORCEINLINE static uint32_t convert(const ini_value &val, size_t index) { return val.as_uint32(index); }
             };
 
             template <typename _TVOID>
-            LIBATFRAME_UTILS_API_HEAD_ONLY struct as_helper<int64_t, _TVOID> {
+            struct LIBATFRAME_UTILS_API_HEAD_ONLY as_helper<int64_t, _TVOID> {
                 UTIL_FORCEINLINE static int64_t convert(const ini_value &val, size_t index) { return val.as_int64(index); }
             };
 
             template <typename _TVOID>
-            LIBATFRAME_UTILS_API_HEAD_ONLY struct as_helper<uint64_t, _TVOID> {
+            struct LIBATFRAME_UTILS_API_HEAD_ONLY as_helper<uint64_t, _TVOID> {
                 UTIL_FORCEINLINE static uint64_t convert(const ini_value &val, size_t index) { return val.as_uint64(index); }
             };
 
             template <typename _TVOID>
-            LIBATFRAME_UTILS_API_HEAD_ONLY struct as_helper<const char *, _TVOID> {
+            struct LIBATFRAME_UTILS_API_HEAD_ONLY as_helper<const char *, _TVOID> {
                 UTIL_FORCEINLINE static const char *convert(const ini_value &val, size_t index) { return val.as_string(index); }
             };
 
             template <typename _TVOID>
-            LIBATFRAME_UTILS_API_HEAD_ONLY struct as_helper<std::string, _TVOID> {
+            struct LIBATFRAME_UTILS_API_HEAD_ONLY as_helper<std::string, _TVOID> {
                 UTIL_FORCEINLINE static std::string convert(const ini_value &val, size_t index) { return val.as_cpp_string(index); }
             };
 
             template <typename _Tt, typename _TVOID>
-            LIBATFRAME_UTILS_API_HEAD_ONLY struct as_helper {
+            struct LIBATFRAME_UTILS_API_HEAD_ONLY as_helper {
                 UTIL_FORCEINLINE static _Tt string2any(const std::string &data) {
                     _Tt ret;
                     ini_value::clear_data(ret);
