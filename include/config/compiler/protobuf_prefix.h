@@ -7,9 +7,6 @@
 #pragma warning(push)
 #pragma warning(disable : 4996)
 #pragma warning(disable : 4309)
-#if _MSC_VER >= 1922 && ((defined(__cplusplus) && __cplusplus >= 201704L) || (defined(_MSVC_LANG) && _MSVC_LANG >= 201704L))
-#pragma warning(disable : 5054)
-#endif
 #endif
 
 #if defined(__GNUC__) && !defined(__clang__) && !defined(__apple_build_version__)  // && (__GNUC__ * 100 + __GNUC_MINOR__ * 10) >= 460
