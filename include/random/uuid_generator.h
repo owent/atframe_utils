@@ -40,7 +40,7 @@ namespace util {
             uint16_t data2;
             uint16_t data3;
             uint8_t  data4[8];
-        } uuid;
+        };
 
         class uuid_generator {
         public:

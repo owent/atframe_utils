@@ -139,3 +139,69 @@ else ()
     set (PROJECT_THIRD_PARTY_BUILDTOOLS_EOL "\n")
     set (PROJECT_THIRD_PARTY_BUILDTOOLS_BASH_EOL "\n")
 endif ()
+
+
+function (project_git_clone_3rd_party)
+    if (CMAKE_VERSION VERSION_LESS_EQUAL "3.4")
+        include(CMakeParseArguments)
+    endif ()
+    set(oneValueArgs URL WORKING_DIRECTORY REPO_DIRECTORY DEPTH BRANCH TAG)
+    cmake_parse_arguments(project_git_clone_3rd_party "" "${oneValueArgs}" "" ${ARGN} )
+
+    if (NOT project_git_clone_3rd_party_URL)
+        message(FATAL_ERROR "URL is required")
+    endif ()
+    if (NOT project_git_clone_3rd_party_REPO_DIRECTORY)
+        message(FATAL_ERROR "REPO_DIRECTORY is required")
+    endif ()
+    if (NOT project_git_clone_3rd_party_WORKING_DIRECTORY)
+        get_filename_component(project_git_clone_3rd_party_WORKING_DIRECTORY ${project_git_clone_3rd_party_REPO_DIRECTORY} DIRECTORY)
+    endif ()
+    unset (CLONE_OPTIONS)
+    unset (UPDATE_OPTIONS)
+    unset (FETCH_OPTIONS)
+    if (project_git_clone_3rd_party_DEPTH)
+        list (APPEND CLONE_OPTIONS --depth ${project_git_clone_3rd_party_DEPTH})
+        list (APPEND FETCH_OPTIONS --depth ${project_git_clone_3rd_party_DEPTH})
+    endif ()
+    if (project_git_clone_3rd_party_TAG)
+        list (APPEND CLONE_OPTIONS -b "${project_git_clone_3rd_party_TAG}")
+        list (APPEND UPDATE_OPTIONS "tags/${project_git_clone_3rd_party_TAG}")
+        list (APPEND FETCH_OPTIONS --tags)
+    elseif (project_git_clone_3rd_party_BRANCH)
+        list (APPEND CLONE_OPTIONS -b "${project_git_clone_3rd_party_BRANCH}")
+        list (APPEND UPDATE_OPTIONS "origin/${project_git_clone_3rd_party_BRANCH}")
+    else ()
+        list (APPEND CLONE_OPTIONS -b master)
+        list (APPEND UPDATE_OPTIONS "origin/master")
+    endif ()
+    find_package(Git)
+    if (NOT GIT_FOUND AND NOT Git_FOUND)
+        message(FATAL_ERROR "git not found")
+    endif ()
+    if(NOT EXISTS "${project_git_clone_3rd_party_REPO_DIRECTORY}/.git")
+        if (EXISTS ${project_git_clone_3rd_party_REPO_DIRECTORY})
+            file(REMOVE_RECURSE ${project_git_clone_3rd_party_REPO_DIRECTORY})
+        endif ()
+        execute_process(COMMAND ${GIT_EXECUTABLE} clone ${CLONE_OPTIONS} ${project_git_clone_3rd_party_URL} ${project_git_clone_3rd_party_REPO_DIRECTORY}
+            WORKING_DIRECTORY ${project_git_clone_3rd_party_WORKING_DIRECTORY}
+        )
+    elseif(PROJECT_RESET_DENPEND_REPOSITORIES)
+        execute_process(
+            COMMAND ${GIT_EXECUTABLE} fetch -f ${FETCH_OPTIONS} origin
+            COMMAND ${GIT_EXECUTABLE} clean -dfx
+            COMMAND ${GIT_EXECUTABLE} reset --hard ${UPDATE_OPTIONS}
+            WORKING_DIRECTORY ${project_git_clone_3rd_party_REPO_DIRECTORY}
+            RESULT_VARIABLE LAST_GIT_RESET_RESULT
+        )
+
+        if (LAST_GIT_RESET_RESULT AND NOT LAST_GIT_RESET_RESULT EQUAL 0)
+            if (EXISTS ${project_git_clone_3rd_party_REPO_DIRECTORY})
+                file(REMOVE_RECURSE ${project_git_clone_3rd_party_REPO_DIRECTORY})
+            endif ()
+            execute_process(COMMAND ${GIT_EXECUTABLE} clone ${CLONE_OPTIONS} ${project_git_clone_3rd_party_URL} ${project_git_clone_3rd_party_REPO_DIRECTORY}
+                WORKING_DIRECTORY ${project_git_clone_3rd_party_WORKING_DIRECTORY}
+            )
+        endif ()
+    endif()
+endfunction()
