@@ -238,9 +238,8 @@ namespace util {
             static LIBATFRAME_UTILS_API int init_global_algorithm();
             static LIBATFRAME_UTILS_API int cleanup_global_algorithm();
 
-
         private:
-            int init_with_cipher(const cipher_interface_info_t *interface, int mode);
+            int init_with_cipher(const cipher_interface_info_t *, int mode);
             int close_with_cipher();
 
         private:
