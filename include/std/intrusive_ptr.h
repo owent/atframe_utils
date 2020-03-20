@@ -215,8 +215,8 @@ namespace std {
     }
 
     template <typename T, typename U>
-    inline bool operator<=(T *a, intrusive_ptr<U> const &b) UTIL_CONFIG_NOEXCEPT {
-        return a <= b.get();
+    inline bool operator<(T *a, intrusive_ptr<U> const &b) UTIL_CONFIG_NOEXCEPT {
+        return a < b.get();
     }
 
     template <typename T, typename U>
