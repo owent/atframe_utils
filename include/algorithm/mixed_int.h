@@ -148,7 +148,7 @@ namespace util {
                     return !(l == r);
                 }
 
-                friend bool operator<(const self_type &l, const self_type &r) { return de../code(l.data_) < decode(r.data_); }
+                friend bool operator<(const self_type &l, const self_type &r) { return decode(l.data_) < decode(r.data_); }
                 template <typename TL>
                 friend bool operator<(const TL &l, const self_type &r) {
                     return unwrapper(l) < decode(r.data_);
@@ -168,24 +168,24 @@ namespace util {
                     return decode(l.data_) <= unwrapper(r);
                 }
 
-                friend bool operator>(const self_type &l, const self_type &r) { return r < l; }
+                friend bool operator>(const self_type &l, const self_type &r) { return decode(l.data_) > decode(r.data_); }
                 template <typename TL>
                 friend bool operator>(const TL &l, const self_type &r) {
-                    return r < l;
+                    return unwrapper(l) > decode(r.data_);
                 }
                 template <typename TR>
                 friend bool operator>(const self_type &l, const TR &r) {
-                    return r < l;
+                    return decode(l.data_) > unwrapper(r);
                 }
 
-                friend bool operator>=(const self_type &l, const self_type &r) { return r <= l; }
+                friend bool operator>=(const self_type &l, const self_type &r) { return decode(l.data_) >= decode(r.data_); }
                 template <typename TL>
                 friend bool operator>=(const TL &l, const self_type &r) {
-                    return r <= l;
+                    return unwrapper(l) >= decode(r.data_);
                 }
                 template <typename TR>
                 friend bool operator>=(const self_type &l, const TR &r) {
-                    return r <= l;
+                    return decode(l.data_) >= unwrapper(r);
                 }
 #endif
 
