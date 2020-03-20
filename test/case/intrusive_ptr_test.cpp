@@ -41,6 +41,12 @@ CASE_TEST(smart_ptr, intrusive_ptr_int) {
         ptr_t p = ptr_t(new intrusive_ptr_test_clazz(&delete_count));
 
         CASE_EXPECT_EQ(p->ref_count, 1);
+        CASE_EXPECT_LE(p, p.get());
+        CASE_EXPECT_LE(p, p);
+        CASE_EXPECT_LE(p.get(), p);
+        CASE_EXPECT_GE(p, p.get());
+        CASE_EXPECT_GE(p, p);
+        CASE_EXPECT_GE(p.get(), p);
 
         {
             ptr_t p2(p);
