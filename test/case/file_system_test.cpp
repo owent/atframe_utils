@@ -90,7 +90,8 @@ CASE_TEST(file_system, open_tmp_file) {
         fclose(f);
     }
 
-    std::string fname = util::file_system::generate_tmp_file_name();
+    std::string fname;
+    util::file_system::generate_tmp_file_name(fname);
     CASE_MSG_INFO() << "Tmp file path: " << fname << std::endl;
     CASE_EXPECT_FALSE(fname.empty());
 

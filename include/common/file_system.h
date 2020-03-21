@@ -203,12 +203,41 @@ namespace util {
 
         /**
          * @brief 生成一个临时文件名
+         * @param out 输出生成的文件名
          * @note 文件名的数量受 TMP_MAX/TMP_MAX_S 影响
          * @note 文件名的长度受 L_tmpnam/L_tmpnam_s 影响
+         * @note 不建议使用，会有link warning
          * @see https://en.cppreference.com/w/c/io/tmpnam
-         * @return 临时文件的文件名，如果失败返回空字符串
+         * @return 成功返回true，失败返回false
          */
-        static LIBATFRAME_UTILS_API std::string generate_tmp_file_name();
+        template<typename TC>
+        static LIBATFRAME_UTILS_API_HEAD_ONLY bool generate_tmp_file_name(std::basic_string<TC>& out) {
+#if defined(UTIL_FS_C11_API)
+    #if defined(L_tmpnam_s)
+            char path_buffer[L_tmpnam_s + 1] = {0};
+    #else
+            char path_buffer[util::file_system::MAX_PATH_LEN + 1] = {0};
+    #endif
+            if (0 == tmpnam_s(path_buffer, sizeof (path_buffer) - 1)) {
+                out = &path_buffer[0];
+                return true;
+            } else {
+                return false;
+            }
+#else
+    #if defined(L_tmpnam)
+            char path_buffer[L_tmpnam + 1] = {0};
+    #else
+            char path_buffer[util::file_system::MAX_PATH_LEN + 1] = {0};
+    #endif
+            if (NULL != tmpnam(path_buffer)) {
+                out = &path_buffer[0];
+                return true;
+            } else {
+                return false;
+            }
+#endif
+        }
 
         /**
          * @brief 列举目录下所有文件
