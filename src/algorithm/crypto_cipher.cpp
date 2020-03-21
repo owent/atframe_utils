@@ -264,7 +264,7 @@ namespace util {
             return ret;
         }
 
-        UTIL_SYMBOL_HIDDEN int cipher::init_with_cipher(const cipher_interface_info_t *interface, int mode) {
+        int cipher::init_with_cipher(const cipher_interface_info_t *interface, int mode) {
             if (NULL == interface) {
                 return details::setup_errorno(*this, -1, error_code_t::INVALID_PARAM);
             }
@@ -427,7 +427,7 @@ namespace util {
 
         LIBATFRAME_UTILS_API int64_t cipher::get_last_errno() const { return last_errorno_; }
 
-        UTIL_SYMBOL_HIDDEN int cipher::close_with_cipher() {
+        int cipher::close_with_cipher() {
             if (NULL == interface_) {
                 return details::setup_errorno(*this, 0, error_code_t::NOT_INITED);
             }

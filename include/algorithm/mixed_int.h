@@ -22,6 +22,10 @@
 #include <stdint.h>
 #include <type_traits>
 
+#ifdef __cpp_impl_three_way_comparison
+#include <compare>
+#endif
+
 #include <common/compiler_message.h>
 #include <config/atframe_utils_build_feature.h>
 
@@ -123,6 +127,17 @@ namespace util {
                     return decode(l.data_) == unwrapper(r);
                 }
 
+#if defined(__cpp_impl_three_way_comparison) && !defined(_MSC_VER)
+                friend std::strong_ordering operator<=>(const self_type &l, const self_type &r) { return decode(l.data_) <=> decode(r.data_); }
+                template <typename TL>
+                friend std::strong_ordering operator<=>(const TL &l, const self_type &r) {
+                    return unwrapper(l) <=> decode(r.data_);
+                }
+                template <typename TR>
+                friend std::strong_ordering operator<=>(const self_type &l, const TR &r) {
+                    return decode(l.data_) <=> unwrapper(r);
+                }
+#else
                 friend bool operator!=(const self_type &l, const self_type &r) { return !(l == r); }
                 template <typename TL>
                 friend bool operator!=(const TL &l, const self_type &r) {
@@ -153,25 +168,26 @@ namespace util {
                     return decode(l.data_) <= unwrapper(r);
                 }
 
-                friend bool operator>(const self_type &l, const self_type &r) { return r < l; }
+                friend bool operator>(const self_type &l, const self_type &r) { return decode(l.data_) > decode(r.data_); }
                 template <typename TL>
                 friend bool operator>(const TL &l, const self_type &r) {
-                    return r < l;
+                    return unwrapper(l) > decode(r.data_);
                 }
                 template <typename TR>
                 friend bool operator>(const self_type &l, const TR &r) {
-                    return r < l;
+                    return decode(l.data_) > unwrapper(r);
                 }
 
-                friend bool operator>=(const self_type &l, const self_type &r) { return r <= l; }
+                friend bool operator>=(const self_type &l, const self_type &r) { return decode(l.data_) >= decode(r.data_); }
                 template <typename TL>
                 friend bool operator>=(const TL &l, const self_type &r) {
-                    return r <= l;
+                    return unwrapper(l) >= decode(r.data_);
                 }
                 template <typename TR>
                 friend bool operator>=(const self_type &l, const TR &r) {
-                    return r <= l;
+                    return decode(l.data_) >= unwrapper(r);
                 }
+#endif
 
                 // calc
                 template <typename TR>

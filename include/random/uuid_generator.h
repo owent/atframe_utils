@@ -35,14 +35,14 @@
 
 namespace util {
     namespace random {
-        typedef struct {
+        struct uuid {
             uint32_t data1;
             uint16_t data2;
             uint16_t data3;
             uint8_t  data4[8];
-        } uuid;
+        };
 
-        class UTIL_SYMBOL_HIDDEN uuid_generator {
+        class uuid_generator {
         public:
             static std::string uuid_to_string(const uuid &id) {
                 char str_buff[64] = {0};

@@ -9,21 +9,21 @@
 #include "common/file_system.h"
 
 #if defined(_MSC_VER) && _MSC_VER >= 1900
-#define U8_LITERALS(x) (u8 ## x)
+#define U8_LITERALS(x) (const char*)(u8 ## x)
 #elif defined(__clang__)
 // apple clang
 #if defined(__apple_build_version__)
 #if ((__clang_major__ * 100) + __clang_minor__) >= 600
-#define U8_LITERALS(x) (u8 ## x)
+#define U8_LITERALS(x) (const char*)(u8 ## x)
 #endif
 #else
 // clang
 #if ((__clang_major__ * 100) + __clang_minor__) >= 306
-#define U8_LITERALS(x) (u8 ## x)
+#define U8_LITERALS(x) (const char*)(u8 ## x)
 #endif
 #endif
 #elif defined(__GNUC__) && (__GNUC__ * 100 + __GNUC_MINOR__) >= 600
-#define U8_LITERALS(x) (u8 ## x)
+#define U8_LITERALS(x) (const char*)(u8 ## x)
 #endif
 
 #ifndef U8_LITERALS

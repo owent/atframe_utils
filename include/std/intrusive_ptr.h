@@ -23,6 +23,10 @@
 
 #include <type_traits>
 
+#ifdef __cpp_impl_three_way_comparison
+#include <compare>
+#endif
+
 #include <config/compiler_features.h>
 
 #include <config/atframe_utils_build_feature.h>
@@ -155,34 +159,112 @@ namespace std {
     };
 
     template <typename T, typename U>
-    inline bool operator==(intrusive_ptr<T> const &a, intrusive_ptr<U> const &b) {
+    inline bool operator==(intrusive_ptr<T> const &a, intrusive_ptr<U> const &b) UTIL_CONFIG_NOEXCEPT {
         return a.get() == b.get();
     }
 
     template <typename T, typename U>
-    inline bool operator!=(intrusive_ptr<T> const &a, intrusive_ptr<U> const &b) {
-        return a.get() != b.get();
-    }
-
-    template <typename T, typename U>
-    inline bool operator==(intrusive_ptr<T> const &a, U *b) {
+    inline bool operator==(intrusive_ptr<T> const &a, U *b) UTIL_CONFIG_NOEXCEPT {
         return a.get() == b;
     }
 
     template <typename T, typename U>
-    inline bool operator!=(intrusive_ptr<T> const &a, U *b) {
+    inline bool operator==(T *a, intrusive_ptr<U> const &b) UTIL_CONFIG_NOEXCEPT {
+        return a == b.get();
+    }
+
+#ifdef __cpp_impl_three_way_comparison
+    template <typename T, typename U>
+    inline std::strong_ordering operator<=>(intrusive_ptr<T> const &a, intrusive_ptr<U> const &b) UTIL_CONFIG_NOEXCEPT {
+        return a.get() <=> b.get();
+    }
+
+    template <typename T, typename U>
+    inline std::strong_ordering operator<=>(intrusive_ptr<T> const &a, U *b) UTIL_CONFIG_NOEXCEPT {
+        return a.get() <=> b;
+    }
+
+    template <typename T, typename U>
+    inline std::strong_ordering operator<=>(T *a, intrusive_ptr<U> const &b) UTIL_CONFIG_NOEXCEPT {
+        return a <=> b.get();
+    }
+#else
+    template <typename T, typename U>
+    inline bool operator!=(intrusive_ptr<T> const &a, intrusive_ptr<U> const &b) UTIL_CONFIG_NOEXCEPT {
+        return a.get() != b.get();
+    }
+
+    template <typename T, typename U>
+    inline bool operator!=(intrusive_ptr<T> const &a, U *b) UTIL_CONFIG_NOEXCEPT {
         return a.get() != b;
     }
 
     template <typename T, typename U>
-    inline bool operator==(T *a, intrusive_ptr<U> const &b) {
-        return a == b.get();
+    inline bool operator!=(T *a, intrusive_ptr<U> const &b) UTIL_CONFIG_NOEXCEPT {
+        return a != b.get();
     }
 
     template <typename T, typename U>
-    inline bool operator!=(T *a, intrusive_ptr<U> const &b) {
-        return a != b.get();
+    inline bool operator<(intrusive_ptr<T> const &a, intrusive_ptr<U> const &b) UTIL_CONFIG_NOEXCEPT {
+        return a.get() < b.get();
     }
+
+    template <typename T, typename U>
+    inline bool operator<(intrusive_ptr<T> const &a, U *b) UTIL_CONFIG_NOEXCEPT {
+        return a.get() < b;
+    }
+
+    template <typename T, typename U>
+    inline bool operator<(T *a, intrusive_ptr<U> const &b) UTIL_CONFIG_NOEXCEPT {
+        return a < b.get();
+    }
+
+    template <typename T, typename U>
+    inline bool operator<=(intrusive_ptr<T> const &a, intrusive_ptr<U> const &b) UTIL_CONFIG_NOEXCEPT {
+        return a.get() <= b.get();
+    }
+
+    template <typename T, typename U>
+    inline bool operator<=(intrusive_ptr<T> const &a, U *b) UTIL_CONFIG_NOEXCEPT {
+        return a.get() <= b;
+    }
+
+    template <typename T, typename U>
+    inline bool operator<=(T *a, intrusive_ptr<U> const &b) UTIL_CONFIG_NOEXCEPT {
+        return a <= b.get();
+    }
+
+    template <typename T, typename U>
+    inline bool operator>(intrusive_ptr<T> const &a, intrusive_ptr<U> const &b) UTIL_CONFIG_NOEXCEPT {
+        return a.get() > b.get();
+    }
+
+    template <typename T, typename U>
+    inline bool operator>(intrusive_ptr<T> const &a, U *b) UTIL_CONFIG_NOEXCEPT {
+        return a.get() > b;
+    }
+
+    template <typename T, typename U>
+    inline bool operator>(T *a, intrusive_ptr<U> const &b) UTIL_CONFIG_NOEXCEPT {
+        return a > b.get();
+    }
+
+    template <typename T, typename U>
+    inline bool operator>=(intrusive_ptr<T> const &a, intrusive_ptr<U> const &b) UTIL_CONFIG_NOEXCEPT {
+        return a.get() >= b.get();
+    }
+
+    template <typename T, typename U>
+    inline bool operator>=(intrusive_ptr<T> const &a, U *b) UTIL_CONFIG_NOEXCEPT {
+        return a.get() >= b;
+    }
+
+    template <typename T, typename U>
+    inline bool operator>=(T *a, intrusive_ptr<U> const &b) UTIL_CONFIG_NOEXCEPT {
+        return a >= b.get();
+    }
+
+#endif
 
 #if defined(UTIL_CONFIG_COMPILER_CXX_NULLPTR) && UTIL_CONFIG_COMPILER_CXX_NULLPTR
 
@@ -196,6 +278,17 @@ namespace std {
         return p.get() == nullptr;
     }
 
+#ifdef __cpp_impl_three_way_comparison
+    template <typename T>
+    inline std::strong_ordering operator<=>(intrusive_ptr<T> const &p, std::nullptr_t) UTIL_CONFIG_NOEXCEPT {
+        return p.get() <=> nullptr;
+    }
+
+    template <typename T>
+    inline std::strong_ordering operator<=>(std::nullptr_t, intrusive_ptr<T> const &p) UTIL_CONFIG_NOEXCEPT {
+        return p.get() <=> nullptr;
+    }
+#else
     template <typename T>
     inline bool operator!=(intrusive_ptr<T> const &p, std::nullptr_t) UTIL_CONFIG_NOEXCEPT {
         return p.get() != nullptr;
@@ -206,12 +299,48 @@ namespace std {
         return p.get() != nullptr;
     }
 
-#endif
+    template <typename T>
+    inline bool operator<(intrusive_ptr<T> const &p, std::nullptr_t) UTIL_CONFIG_NOEXCEPT {
+        return p.get() < nullptr;
+    }
 
     template <typename T>
-    inline bool operator<(intrusive_ptr<T> const &a, intrusive_ptr<T> const &b) {
-        return std::less<T *>()(a.get(), b.get());
+    inline bool operator<(std::nullptr_t, intrusive_ptr<T> const &p) UTIL_CONFIG_NOEXCEPT {
+        return p.get() < nullptr;
     }
+
+    template <typename T>
+    inline bool operator<=(intrusive_ptr<T> const &p, std::nullptr_t) UTIL_CONFIG_NOEXCEPT {
+        return p.get() <= nullptr;
+    }
+
+    template <typename T>
+    inline bool operator<=(std::nullptr_t, intrusive_ptr<T> const &p) UTIL_CONFIG_NOEXCEPT {
+        return p.get() <= nullptr;
+    }
+
+    template <typename T>
+    inline bool operator>(intrusive_ptr<T> const &p, std::nullptr_t) UTIL_CONFIG_NOEXCEPT {
+        return p.get() > nullptr;
+    }
+
+    template <typename T>
+    inline bool operator>(std::nullptr_t, intrusive_ptr<T> const &p) UTIL_CONFIG_NOEXCEPT {
+        return p.get() > nullptr;
+    }
+
+    template <typename T>
+    inline bool operator>=(intrusive_ptr<T> const &p, std::nullptr_t) UTIL_CONFIG_NOEXCEPT {
+        return p.get() >= nullptr;
+    }
+
+    template <typename T>
+    inline bool operator>=(std::nullptr_t, intrusive_ptr<T> const &p) UTIL_CONFIG_NOEXCEPT {
+        return p.get() >= nullptr;
+    }
+#endif
+
+#endif
 
     template <typename T>
     void swap(intrusive_ptr<T> &lhs, intrusive_ptr<T> &rhs) {

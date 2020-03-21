@@ -1,4 +1,3 @@
-
 #[=======================================================================[
 
 Copyright (c) 2019 John Norrbin <jlnorrbin@johnex.se>
@@ -66,6 +65,8 @@ Hints
 Set LIBRESSL_ROOT_DIR to the root directory of an LibreSSL installation.
 
 ]=======================================================================]
+
+INCLUDE(FindPackageHandleStandardArgs)
 
 # Set Hints
 set(_LIBRESSL_ROOT_HINTS

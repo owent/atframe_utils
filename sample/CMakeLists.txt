@@ -1,11 +1,7 @@
 
 aux_source_directory(. SRC_LIST_SAMPLE)
 
-set(BIN_NAME "${PROJECT_LIB_NAME}_sample")
-
-if (CMAKE_USE_PTHREADS_INIT)
-    add_definitions(-D_POSIX_MT_)
-endif ()
+set(BIN_NAME "${PROJECT_ATFRAME_UTILS_LIB_NAME}_sample")
 
 set(CMAKE_BUILD_RPATH "$ORIGIN/../lib" "$ORIGIN/../lib64")
 if (NOT (WIN32 AND BUILD_SHARED_LIBS))
@@ -14,12 +10,26 @@ endif ()
 
 add_executable(${BIN_NAME} ${SRC_LIST_SAMPLE})
 
-target_link_libraries(${BIN_NAME} ${PROJECT_LIB_NAME} 
-    ${ATFRAME_UTILS_NETWORK_LINK_NAME} ${ATFRAME_UTILS_BIN_CRYPT_LINK_NAME} 
-    ${PROJECT_DEP_LINK_NAMES} ${COMPILER_OPTION_EXTERN_CXX_LIBS})
+target_link_libraries(${BIN_NAME} 
+    ${PROJECT_ATFRAME_UTILS_LIB_NAME} 
+)
+
+target_compile_options(${BIN_NAME}
+    PRIVATE ${COMPILER_STRICT_EXTRA_CFLAGS} ${COMPILER_STRICT_CFLAGS}
+)
 
 if (MSVC)
     set_property(TARGET ${BIN_NAME} PROPERTY FOLDER "atframework/sample")
 endif (MSVC)
 
 add_test(NAME test COMMAND ${BIN_NAME})
+
+if (NOT EXISTS ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})
+    file(MAKE_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})
+endif ()
+execute_process(
+    COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_CURRENT_LIST_DIR}/config.ini" ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}
+)
+execute_process(
+    COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_CURRENT_LIST_DIR}/test.ini" ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}
+)

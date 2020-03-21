@@ -270,7 +270,7 @@ namespace util {
             /*
              * SHA-1 context setup
              */
-            static UTIL_SYMBOL_HIDDEN void inner_sha1_start(sha1_context_t &ctx) {
+            static void inner_sha1_start(sha1_context_t &ctx) {
                 ctx.total[0] = 0;
                 ctx.total[1] = 0;
 
@@ -281,7 +281,7 @@ namespace util {
                 ctx.state[4] = 0xC3D2E1F0;
             }
 
-            static UTIL_SYMBOL_HIDDEN void inner_sha256_start(sha256_context_t &ctx, bool is224) {
+            static void inner_sha256_start(sha256_context_t &ctx, bool is224) {
                 ctx.total[0] = 0;
                 ctx.total[1] = 0;
 
@@ -313,7 +313,7 @@ namespace util {
             /*
              * SHA-512 context setup
              */
-            static UTIL_SYMBOL_HIDDEN void inner_sha512_starts_ret(sha512_context_t &ctx, bool is384) {
+            static void inner_sha512_starts_ret(sha512_context_t &ctx, bool is384) {
                 ctx.total[0] = 0;
                 ctx.total[1] = 0;
 
@@ -342,7 +342,7 @@ namespace util {
                 }
             }
 
-            static UTIL_SYMBOL_HIDDEN sha_inner_data *malloc_inner_type(util::hash::sha::type t) {
+            static sha_inner_data *malloc_inner_type(util::hash::sha::type t) {
                 sha_inner_data *ret = reinterpret_cast<sha_inner_data *>(malloc(sizeof(sha_inner_data)));
                 if (ret == UTIL_CONFIG_NULLPTR) {
                     return UTIL_CONFIG_NULLPTR;
@@ -385,7 +385,7 @@ namespace util {
             }
 
 
-            static UTIL_SYMBOL_HIDDEN void inner_internal_sha1_process(sha1_context_t &ctx, const unsigned char data[64]) {
+            static void inner_internal_sha1_process(sha1_context_t &ctx, const unsigned char data[64]) {
                 uint32_t temp, W[16], A, B, C, D, E;
 
                 GET_UINT32_BE(W[0], data, 0);
@@ -543,7 +543,7 @@ namespace util {
             /*
              * SHA-1 process buffer
              */
-            static UTIL_SYMBOL_HIDDEN void inner_sha1_update(sha1_context_t &ctx, const unsigned char *input, size_t ilen) {
+            static void inner_sha1_update(sha1_context_t &ctx, const unsigned char *input, size_t ilen) {
                 size_t   fill;
                 uint32_t left;
 
@@ -584,7 +584,7 @@ namespace util {
             /*
              * SHA-1 final digest
              */
-            static UTIL_SYMBOL_HIDDEN void inner_sha1_finish(sha1_context_t &ctx, unsigned char output[20]) {
+            static void inner_sha1_finish(sha1_context_t &ctx, unsigned char output[20]) {
                 uint32_t used;
                 uint32_t high, low;
 
@@ -629,7 +629,7 @@ namespace util {
             }
 
 
-            static UTIL_SYMBOL_HIDDEN void inner_internal_sha256_process(sha256_context_t &ctx, const unsigned char data[64]) {
+            static void inner_internal_sha256_process(sha256_context_t &ctx, const unsigned char data[64]) {
                 uint32_t     temp1, temp2, W[64];
                 uint32_t     A[8];
                 unsigned int i;
@@ -713,7 +713,7 @@ namespace util {
             /*
              * SHA-256 process buffer
              */
-            static UTIL_SYMBOL_HIDDEN void inner_sha256_update(sha256_context_t &ctx, const unsigned char *input, size_t ilen) {
+            static void inner_sha256_update(sha256_context_t &ctx, const unsigned char *input, size_t ilen) {
                 size_t   fill;
                 uint32_t left;
 
@@ -750,7 +750,7 @@ namespace util {
             /*
              * SHA-256 final digest
              */
-            static UTIL_SYMBOL_HIDDEN void inner_sha256_finish(sha256_context_t &ctx, unsigned char output[32]) {
+            static void inner_sha256_finish(sha256_context_t &ctx, unsigned char output[32]) {
                 uint32_t used;
                 uint32_t high, low;
 
@@ -798,7 +798,7 @@ namespace util {
                 if (ctx.is224 == 0) PUT_UINT32_BE(ctx.state[7], output, 28);
             }
 
-            static UTIL_SYMBOL_HIDDEN void inner_internal_sha512_process(sha512_context_t &ctx, const unsigned char data[128]) {
+            static void inner_internal_sha512_process(sha512_context_t &ctx, const unsigned char data[128]) {
                 int      i;
                 uint64_t temp1, temp2, W[80];
                 uint64_t A, B, C, D, E, F, G, H;
@@ -907,7 +907,7 @@ namespace util {
             /*
              * SHA-512 process buffer
              */
-            static UTIL_SYMBOL_HIDDEN void inner_sha512_update(sha512_context_t &ctx, const unsigned char *input, size_t ilen) {
+            static void inner_sha512_update(sha512_context_t &ctx, const unsigned char *input, size_t ilen) {
                 size_t       fill;
                 unsigned int left;
 
@@ -947,7 +947,7 @@ namespace util {
             /*
              * SHA-512 final digest
              */
-            static UTIL_SYMBOL_HIDDEN void inner_sha512_finish(sha512_context_t &ctx, unsigned char output[64]) {
+            static void inner_sha512_finish(sha512_context_t &ctx, unsigned char output[64]) {
                 unsigned used;
                 uint64_t high, low;
 

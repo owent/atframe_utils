@@ -62,6 +62,8 @@
 # (To distribute this file outside of CMake, substitute the full
 #  License text for the above reference.)
 
+include("${CMAKE_CURRENT_LIST_DIR}/ProjectBuildTools.cmake")
+
 function(FindConfigurePackageDownloadFile from to)
     find_program (WGET_FULL_PATH wget)
     if(WGET_FULL_PATH)
@@ -119,9 +121,7 @@ function(FindConfigurePackageRemoveEmptyDir DIR)
 endfunction()
 
 if (CMAKE_VERSION VERSION_GREATER_EQUAL "3.12")
-    include(ProcessorCount)
-    ProcessorCount(CPU_CORE_NUM)
-    set(FindConfigurePackageCMakeBuildMultiJobs "--parallel" ${CPU_CORE_NUM} CACHE INTERNAL "Build options for multi-jobs")
+    set(FindConfigurePackageCMakeBuildMultiJobs "--parallel" CACHE INTERNAL "Build options for multi-jobs")
     unset(CPU_CORE_NUM)
 elseif ( (CMAKE_MAKE_PROGRAM STREQUAL "make") OR (CMAKE_MAKE_PROGRAM STREQUAL "gmake") OR (CMAKE_MAKE_PROGRAM STREQUAL "ninja") )
     include(ProcessorCount)
@@ -142,7 +142,9 @@ if (NOT FindConfigurePackageGitFetchDepth)
 endif ()
 
 macro (FindConfigurePackage)
-    include(CMakeParseArguments)
+    if (CMAKE_VERSION VERSION_LESS_EQUAL "3.4")
+        include(CMakeParseArguments)
+    endif ()
     set(optionArgs BUILD_WITH_CONFIGURE BUILD_WITH_CMAKE BUILD_WITH_SCONS BUILD_WITH_CUSTOM_COMMAND CMAKE_INHIRT_BUILD_ENV)
     set(oneValueArgs PACKAGE WORKING_DIRECTORY BUILD_DIRECTORY PREFIX_DIRECTORY SRC_DIRECTORY_NAME PROJECT_DIRECTORY MSVC_CONFIGURE ZIP_URL TAR_URL SVN_URL GIT_URL GIT_BRANCH INSTALL_TARGET)
     set(multiValueArgs CONFIGURE_CMD CONFIGURE_FLAGS CMAKE_FLAGS RESET_FIND_VARS SCONS_FLAGS MAKE_FLAGS CUSTOM_BUILD_COMMAND PREBUILD_COMMAND AFTERBUILD_COMMAND)
@@ -330,33 +332,7 @@ macro (FindConfigurePackage)
 
                 if (FindConfigurePackage_CMAKE_INHIRT_BUILD_ENV)
                     set (FindConfigurePackage_CMAKE_INHIRT_BUILD_ENV OFF)
-                    set (INHERIT_VARS 
-                        CMAKE_C_FLAGS CMAKE_C_FLAGS_DEBUG CMAKE_C_FLAGS_RELEASE CMAKE_C_FLAGS_RELWITHDEBINFO CMAKE_C_FLAGS_MINSIZEREL
-                        CMAKE_CXX_FLAGS CMAKE_CXX_FLAGS_DEBUG CMAKE_CXX_FLAGS_RELEASE CMAKE_CXX_FLAGS_RELWITHDEBINFO CMAKE_CXX_FLAGS_MINSIZEREL
-                        CMAKE_ASM_FLAGS CMAKE_EXE_LINKER_FLAGS CMAKE_MODULE_LINKER_FLAGS CMAKE_SHARED_LINKER_FLAGS CMAKE_STATIC_LINKER_FLAGS
-                        CMAKE_TOOLCHAIN_FILE CMAKE_C_COMPILER CMAKE_CXX_COMPILER CMAKE_AR
-                        CMAKE_C_COMPILER_LAUNCHER CMAKE_CXX_COMPILER_LAUNCHER CMAKE_RANLIB CMAKE_SYSTEM_NAME 
-                        CMAKE_SYSROOT CMAKE_SYSROOT_COMPILE # CMAKE_SYSTEM_LIBRARY_PATH # CMAKE_SYSTEM_LIBRARY_PATH ninja里解出的参数不对，原因未知
-                        CMAKE_OSX_SYSROOT CMAKE_OSX_ARCHITECTURES 
-                        ANDROID_TOOLCHAIN ANDROID_ABI ANDROID_STL ANDROID_PIE ANDROID_PLATFORM ANDROID_CPP_FEATURES
-                        ANDROID_ALLOW_UNDEFINED_SYMBOLS ANDROID_ARM_MODE ANDROID_ARM_NEON ANDROID_DISABLE_NO_EXECUTE ANDROID_DISABLE_RELRO
-                        ANDROID_DISABLE_FORMAT_STRING_CHECKS ANDROID_CCACHE
-                    )
-                
-                    foreach (VAR_NAME IN LISTS INHERIT_VARS)
-                        # message(STATUS "${VAR_NAME}=${${VAR_NAME}}")
-                        if (DEFINED ${VAR_NAME})
-                            # message(STATUS "DEFINED ${VAR_NAME}")
-                            set(VAR_VALUE "${${VAR_NAME}}")
-                            if (VAR_VALUE)
-                                # message(STATUS "SET ${VAR_NAME}")
-                                list (APPEND FindConfigurePackage_BUILD_WITH_CMAKE_GENERATOR "-D${VAR_NAME}=${VAR_VALUE}")
-                            endif ()
-                            unset(VAR_VALUE)
-                        endif ()
-                    endforeach ()
-
-                    unset (INHERIT_VARS)
+                    project_build_tools_append_cmake_inherit_options(FindConfigurePackage_BUILD_WITH_CMAKE_GENERATOR)
                 endif ()
 
                 execute_process(

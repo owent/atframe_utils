@@ -30,9 +30,9 @@
 #include <config/atframe_utils_build_feature.h>
 
 namespace util {
-    typedef struct {
+    struct xxtea_key {
         uint32_t data[4];
-    } xxtea_key;
+    };
 
     LIBATFRAME_UTILS_API void xxtea_setup(xxtea_key *k, const unsigned char filled[4 * sizeof(uint32_t)]);
 

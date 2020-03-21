@@ -291,10 +291,10 @@ namespace util {
                     char c = tolower(str[i]);
                     if (c >= '0' && c <= '9') {
                         out <<= 4;
-                        out += c - '0';
+                        out += static_cast<T>(c - static_cast<char>('0'));
                     } else if (c >= 'a' && c <= 'f') {
                         out <<= 4;
-                        out += c - 'a' + 10;
+                        out += static_cast<T>(c - static_cast<char>('a') + 10);
                     } else {
                         break;
                     }
@@ -302,12 +302,12 @@ namespace util {
             } else if ('\\' == str[0]) { // oct
                 for (size_t i = 1; str[i] >= '0' && str[i] < '8'; ++i) {
                     out <<= 3;
-                    out += str[i] - '0';
+                    out += static_cast<T>(str[i] - static_cast<char>('0'));
                 }
             } else { // dec
                 for (size_t i = 0; str[i] >= '0' && str[i] <= '9'; ++i) {
                     out *= 10;
-                    out += str[i] - '0';
+                    out += static_cast<T>(str[i] - static_cast<char>('0'));
                 }
             }
 

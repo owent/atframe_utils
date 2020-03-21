@@ -18,7 +18,7 @@ environment:
     - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
       platform: x64
       CMAKE_GEN: Visual Studio 16 2019
-      BUILD_SHARED_LIBS: ON
+      BUILD_SHARED_LIBS: "ON"
     - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
       platform: x64
       CMAKE_GEN: Visual Studio 16 2019
@@ -37,7 +37,7 @@ environment:
       CMAKE_GEN: MinGW64
     - os: MinGW
       CMAKE_GEN: MinGW64
-      BUILD_SHARED_LIBS: ON
+      BUILD_SHARED_LIBS: "ON"
 
 configuration: RelWithDebInfo
 

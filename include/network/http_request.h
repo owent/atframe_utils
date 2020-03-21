@@ -353,7 +353,7 @@ namespace util {
             void *            priv_data_;
             std::string       useragent_;
 
-            typedef struct {
+            struct form_list_t {
                 curl_httppost *    begin;
                 curl_httppost *    end;
                 curl_slist *       headerlist;
@@ -369,7 +369,7 @@ namespace util {
                     EN_FLFT_WRITE_FORM_USE_FUNC = 0x04,
                     EN_FLFT_LIBCURL_NO_EXPECT   = 0x08,
                 };
-            } form_list_t;
+            };
             form_list_t http_form_;
 
             char error_buffer_[CURL_ERROR_SIZE];

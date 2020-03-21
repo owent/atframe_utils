@@ -30,11 +30,11 @@ namespace util {
             typedef std::list<value_type>                               listener_list_type;
             typedef std::map<key_type, listener_list_type>              listener_set_type;
 
-            typedef struct {
+            struct init_ele_type {
                 std::list<key_type> from;
                 key_type            to;
                 value_type          fn;
-            } init_ele_type;
+            };
 
         public:
             finite_state_machine() : state_(static_cast<key_type>(0)) {}

@@ -95,7 +95,7 @@ namespace util {
             static LIBATFRAME_UTILS_API ptr_t create();
 
 #define _UTIL_MEMPOOL_LRUOBJECTPOOL_SETTER_GETTER(x) \
-    LIBATFRAME_UTILS_API void set_##x(size_t v);     \
+    LIBATFRAME_UTILS_API void   set_##x(size_t v);   \
     LIBATFRAME_UTILS_API size_t get_##x() const;
 
             _UTIL_MEMPOOL_LRUOBJECTPOOL_SETTER_GETTER(item_min_bound);  // 主动GC的保留对象数量
@@ -150,8 +150,8 @@ namespace util {
         private:
             LIBATFRAME_UTILS_API lru_pool_manager();
 
-            UTIL_SYMBOL_HIDDEN lru_pool_manager(const lru_pool_manager &);
-            UTIL_SYMBOL_HIDDEN lru_pool_manager &operator=(const lru_pool_manager &);
+            lru_pool_manager(const lru_pool_manager &);
+            lru_pool_manager &operator=(const lru_pool_manager &);
 
             LIBATFRAME_UTILS_API size_t inner_gc();
 

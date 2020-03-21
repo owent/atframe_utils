@@ -4,8 +4,12 @@ find_package(GTest)
 if (GTEST_FOUND)
     EchoWithColor(COLOR GREEN "-- GTest Found: ${GTEST_LIBRARIES}")
     add_compiler_define(PROJECT_TEST_MACRO_ENABLE_GTEST=1)
-	list(APPEND PROJECT_TEST_LIB_LINK ${GTEST_LIBRARIES})
-    include_directories(${GTEST_INCLUDE_DIRS})
+    if (TARGET GTest::GTest)
+        list(APPEND PROJECT_TEST_LIB_LINK GTest::GTest)
+    else ()
+	    list(APPEND PROJECT_TEST_LIB_LINK ${GTEST_LIBRARIES})
+        include_directories(${GTEST_INCLUDE_DIRS})
+    endif ()
 
 # =========== enable find boost.test ===========
 elseif(PROJECT_TEST_ENABLE_BOOST_UNIT_TEST)
@@ -39,8 +43,3 @@ elseif(PROJECT_TEST_ENABLE_BOOST_UNIT_TEST)
 endif()
 
 include_directories(${PROJECT_TEST_INC_DIR})
-
-# ================ multi thread ================
-if (CMAKE_USE_PTHREADS_INIT)
-    add_definitions(-D_POSIX_MT_)
-endif ()

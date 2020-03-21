@@ -21,6 +21,8 @@
 
 #include <config/atframe_utils_build_feature.h>
 
+#include <config/compiler/template_prefix.h>
+
 #include "cli/shell_font.h"
 
 #include "lock/spin_rw_lock.h"
@@ -54,11 +56,11 @@ namespace util {
             typedef log_formatter::caller_info_t caller_info_t;
 
             typedef std::function<void(const caller_info_t &caller, const char *content, size_t content_size)> log_handler_t;
-            typedef struct {
+            struct log_router_t {
                 level_t::type level_min;
                 level_t::type level_max;
                 log_handler_t handle;
-            } log_router_t;
+            };
 
         private:
             struct LIBATFRAME_UTILS_API construct_helper_t {};
@@ -280,19 +282,21 @@ namespace util {
 
 #define PSTDINFO(...) printf(__VA_ARGS__)
 #define PSTDNOTICE(...) PSTDTERMCOLOR(cout, util::cli::shell_font_style::SHELL_FONT_COLOR_YELLOW, __VA_ARGS__)
-#define PSTDWARNING(...)                                                                                                          \
-    PSTDTERMCOLOR(cerr, util::cli::shell_font_style::SHELL_FONT_SPEC_BOLD | util::cli::shell_font_style::SHELL_FONT_COLOR_YELLOW, \
-                  __VA_ARGS__)
-#define PSTDERROR(...) \
-    PSTDTERMCOLOR(cerr, util::cli::shell_font_style::SHELL_FONT_SPEC_BOLD | util::cli::shell_font_style::SHELL_FONT_COLOR_RED, __VA_ARGS__)
+#define PSTDWARNING(...)                                                                                                            \
+    PSTDTERMCOLOR(cerr, util::cli::shell_font_style::SHELL_FONT_SPEC_BOLD |                                                         \
+    static_cast<int>(util::cli::shell_font_style::SHELL_FONT_COLOR_YELLOW), __VA_ARGS__)
+#define PSTDERROR(...)                                                                                                              \
+    PSTDTERMCOLOR(cerr, util::cli::shell_font_style::SHELL_FONT_SPEC_BOLD |                                                         \
+    static_cast<int>(util::cli::shell_font_style::SHELL_FONT_COLOR_RED), __VA_ARGS__)
 #define PSTDFATAL(...) PSTDTERMCOLOR(cerr, util::cli::shell_font_style::SHELL_FONT_COLOR_MAGENTA, __VA_ARGS__)
 #define PSTDOK(...) PSTDTERMCOLOR(cout, util::cli::shell_font_style::SHELL_FONT_COLOR_GREEN, __VA_ARGS__)
 //
 #ifndef NDEBUG
 #define PSTDTRACE(...) PSTDTERMCOLOR(cout, util::cli::shell_font_style::SHELL_FONT_COLOR_CYAN, __VA_ARGS__)
 #define PSTDDEBUG(...) PSTDTERMCOLOR(cout, util::cli::shell_font_style::SHELL_FONT_COLOR_CYAN, __VA_ARGS__)
-#define PSTDMARK                                                                                                               \
-    PSTDTERMCOLOR(cout, util::cli::shell_font_style::SHELL_FONT_SPEC_BOLD | util::cli::shell_font_style::SHELL_FONT_COLOR_RED, \
+#define PSTDMARK                                                                                                                \
+    PSTDTERMCOLOR(cout, util::cli::shell_font_style::SHELL_FONT_SPEC_BOLD |                                                     \
+    static_cast<int>(util::cli::shell_font_style::SHELL_FONT_COLOR_RED),                                                        \
                   "Mark: %s:%s (function %s)\n", __FILE__, __LINE__, __FUNCTION__)
 #else
 #define PSTDTRACE(...)
@@ -300,5 +304,7 @@ namespace util {
 #define PSTDMARK
 
 #endif
+
+#include <config/compiler/template_suffix.h>
 
 #endif // _UTIL_LOG_LOG_WRAPPER_H_

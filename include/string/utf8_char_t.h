@@ -23,6 +23,10 @@
 #include <stdint.h>
 #include <string>
 
+#ifdef __cpp_impl_three_way_comparison
+#include <compare>
+#endif
+
 #include "common/string_oprs.h"
 #include "std/smart_ptr.h"
 
@@ -96,6 +100,31 @@ namespace util {
                 return true;
             }
 
+#ifdef __cpp_impl_three_way_comparison
+            friend std::strong_ordering operator<=>(const utf8_char_t &l, const utf8_char_t &r) {
+                size_t len = l.length();
+
+                if (l.length() != r.length()) {
+                    if(l.length() < r.length()) {
+                        return std::strong_ordering::less;
+                    } else {
+                        return std::strong_ordering::greater;
+                    }
+                }
+
+                for (size_t i = 0; i < len; ++i) {
+                    if (l.data[i] != r.data[i]) {
+                        if(l.data[i] < r.data[i]) {
+                            return std::strong_ordering::less;
+                        } else {
+                            return std::strong_ordering::greater;
+                        }
+                    }
+                }
+
+                return std::strong_ordering::equal;
+            }
+#else
             friend bool operator!=(const utf8_char_t &l, const utf8_char_t &r) { return !(l == r); }
 
             friend bool operator<(const utf8_char_t &l, const utf8_char_t &r) {
@@ -133,6 +162,7 @@ namespace util {
             friend bool operator>(const utf8_char_t &l, const utf8_char_t &r) { return !(l <= r); }
 
             friend bool operator>=(const utf8_char_t &l, const utf8_char_t &r) { return !(l < r); }
+#endif
 
             template <typename CH, typename CHT>
             LIBATFRAME_UTILS_API_HEAD_ONLY friend std::basic_ostream<CH, CHT> &operator<<(std::basic_ostream<CH, CHT> &os,
