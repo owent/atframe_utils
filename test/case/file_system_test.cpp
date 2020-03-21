@@ -3,6 +3,10 @@
 #include "common/file_system.h"
 #include "frame/test_macros.h"
 
+#ifndef UNUSED
+#define UNUSED(x) ((void)x)
+#endif
+
 CASE_TEST(file_system, dirname) {
     std::string dir;
 
@@ -97,6 +101,7 @@ CASE_TEST(file_system, open_tmp_file) {
 
     if (fname.empty()) {
         UTIL_FS_OPEN(open_res, f, fname.c_str(), "w");
+        UNUSED(open_res); // For old compiler
         CASE_EXPECT_NE(f, NULL);
         if (NULL != f) {
             UTIL_FS_CLOSE(f);
