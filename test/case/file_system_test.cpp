@@ -87,7 +87,7 @@ CASE_TEST(file_system, open_tmp_file) {
     CASE_EXPECT_NE(f, NULL);
 
     if (NULL != f) {
-        fclose(f);
+        UTIL_FS_CLOSE(f);
     }
 
     std::string fname;
@@ -96,10 +96,10 @@ CASE_TEST(file_system, open_tmp_file) {
     CASE_EXPECT_FALSE(fname.empty());
 
     if (fname.empty()) {
-        f= fopen(fname.c_str(), "w");
+        UTIL_FS_OPEN(open_res, f, fname.c_str(), "w");
         CASE_EXPECT_NE(f, NULL);
         if (NULL != f) {
-            fclose(f);
+            UTIL_FS_CLOSE(f);
         }
     }
 }
