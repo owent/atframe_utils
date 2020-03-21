@@ -202,6 +202,15 @@ namespace util {
         static LIBATFRAME_UTILS_API FILE *open_tmp_file();
 
         /**
+         * @brief 生成一个临时文件名
+         * @note 文件名的数量受 TMP_MAX/TMP_MAX_S 影响
+         * @note 文件名的长度受 L_tmpnam/L_tmpnam_s 影响
+         * @see https://en.cppreference.com/w/c/io/tmpnam
+         * @return 临时文件的文件名，如果失败返回空字符串
+         */
+        static LIBATFRAME_UTILS_API std::string generate_tmp_file_name();
+
+        /**
          * @brief 列举目录下所有文件
          * @param dir_path 目录路径
          * @param out 录下所有文件路径

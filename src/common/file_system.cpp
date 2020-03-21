@@ -304,6 +304,32 @@ namespace util {
 #endif
     }
 
+    LIBATFRAME_UTILS_API std::string file_system::generate_tmp_file_name() {
+#if defined(UTIL_FS_C11_API)
+    #if defined(L_tmpnam_s)
+        char path_buffer[L_tmpnam_s + 1] = {0};
+    #else
+        char path_buffer[util::file_system::MAX_PATH_LEN + 1] = {0};
+    #endif
+        if (0 == tmpnam_s(path_buffer, sizeof (path_buffer) - 1)) {
+            return &path_buffer[0];
+        } else {
+            return std::string();
+        }
+#else
+    #if defined(L_tmpnam)
+        char path_buffer[L_tmpnam + 1] = {0};
+    #else
+        char path_buffer[util::file_system::MAX_PATH_LEN + 1] = {0};
+    #endif
+        if (NULL != tmpnam(path_buffer)) {
+            return &path_buffer[0];
+        } else {
+            return std::string();
+        }
+#endif
+    }
+
     LIBATFRAME_UTILS_API int file_system::scan_dir(const char *dir_path, std::list<std::string> &out, int options) {
         int         ret      = 0;
         std::string base_dir = dir_path ? dir_path : "";

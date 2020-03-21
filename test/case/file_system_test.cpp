@@ -1,4 +1,6 @@
-﻿#include "common/file_system.h"
+﻿#include <stdio.h>
+
+#include "common/file_system.h"
 #include "frame/test_macros.h"
 
 CASE_TEST(file_system, dirname) {
@@ -79,3 +81,25 @@ CASE_TEST(file_system, file_size) {
     CASE_EXPECT_TRUE(util::file_system::file_size(__FILE__, sz));
     CASE_EXPECT_GT(sz, 0);
 }
+
+CASE_TEST(file_system, open_tmp_file) {
+    FILE* f = util::file_system::open_tmp_file();
+    CASE_EXPECT_NE(f, NULL);
+
+    if (NULL != f) {
+        fclose(f);
+    }
+
+    std::string fname = util::file_system::generate_tmp_file_name();
+    CASE_MSG_INFO() << "Tmp file path: " << fname << std::endl;
+    CASE_EXPECT_FALSE(fname.empty());
+
+    if (fname.empty()) {
+        f= fopen(fname.c_str(), "w");
+        CASE_EXPECT_NE(f, NULL);
+        if (NULL != f) {
+            fclose(f);
+        }
+    }
+}
+
