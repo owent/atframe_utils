@@ -13,11 +13,15 @@
 #if defined(NETWORK_EVPOLL_ENABLE_LIBUV) && defined(NETWORK_ENABLE_CURL)
 #if NETWORK_ENABLE_CURL && NETWORK_EVPOLL_ENABLE_LIBUV
 
-#if __cplusplus >= 201103L || (defined(_MSC_VER) && _MSC_VER >= 1800)
+#if defined(UTIL_CONFIG_COMPILER_CXX_STATIC_ASSERT) && UTIL_CONFIG_COMPILER_CXX_STATIC_ASSERT
 #include <type_traits>
-
-static_assert(std::is_pod<util::network::http_request::curl_poll_context_t>::value, "curl_poll_context_t must be a POD type");
-
+#if (defined(__cplusplus) && __cplusplus >= 201402L) || ((defined(_MSVC_LANG) && _MSVC_LANG >= 201402L))
+    UTIL_CONFIG_STATIC_ASSERT(std::is_trivially_copyable<util::network::http_request::curl_poll_context_t>::value);
+#elif (defined(__cplusplus) && __cplusplus >= 201103L) || ((defined(_MSVC_LANG) && _MSVC_LANG >= 201103L))
+    UTIL_CONFIG_STATIC_ASSERT(std::is_trivial<util::network::http_request::curl_poll_context_t>::value);
+#else
+    UTIL_CONFIG_STATIC_ASSERT(std::is_pod<util::network::http_request::curl_poll_context_t>::value);
+#endif
 #endif
 
 #define CHECK_FLAG(f, v) !!((f) & (v))

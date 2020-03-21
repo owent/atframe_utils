@@ -470,7 +470,13 @@ namespace util {
 #endif
 
 #if defined(UTIL_CONFIG_COMPILER_CXX_STATIC_ASSERT) && UTIL_CONFIG_COMPILER_CXX_STATIC_ASSERT
-            UTIL_CONFIG_STATIC_ASSERT(std::is_pod<random_engine_t>::value);
+    #if (defined(__cplusplus) && __cplusplus >= 201402L) || ((defined(_MSVC_LANG) && _MSVC_LANG >= 201402L))
+        UTIL_CONFIG_STATIC_ASSERT(std::is_trivially_copyable<random_engine_t>::value);
+    #elif (defined(__cplusplus) && __cplusplus >= 201103L) || ((defined(_MSVC_LANG) && _MSVC_LANG >= 201103L))
+        UTIL_CONFIG_STATIC_ASSERT(std::is_trivial<random_engine_t>::value);
+    #else
+        UTIL_CONFIG_STATIC_ASSERT(std::is_pod<random_engine_t>::value);
+    #endif
 #endif
 
             memset(&random_engine_, 0, sizeof(random_engine_));
@@ -484,7 +490,13 @@ namespace util {
 #endif
 
 #if defined(UTIL_CONFIG_COMPILER_CXX_STATIC_ASSERT) && UTIL_CONFIG_COMPILER_CXX_STATIC_ASSERT
-            UTIL_CONFIG_STATIC_ASSERT(std::is_pod<random_engine_t>::value);
+    #if (defined(__cplusplus) && __cplusplus >= 201402L) || ((defined(_MSVC_LANG) && _MSVC_LANG >= 201402L))
+        UTIL_CONFIG_STATIC_ASSERT(std::is_trivially_copyable<random_engine_t>::value);
+    #elif (defined(__cplusplus) && __cplusplus >= 201103L) || ((defined(_MSVC_LANG) && _MSVC_LANG >= 201103L))
+        UTIL_CONFIG_STATIC_ASSERT(std::is_trivial<random_engine_t>::value);
+    #else
+        UTIL_CONFIG_STATIC_ASSERT(std::is_pod<random_engine_t>::value);
+    #endif
 #endif
             memset(&random_engine_, 0, sizeof(random_engine_));
         }
@@ -761,7 +773,13 @@ namespace util {
         LIBATFRAME_UTILS_API dh::dh() : last_errorno_(0) {
             memset(&dh_context_, 0, sizeof(dh_context_));
 #if defined(UTIL_CONFIG_COMPILER_CXX_STATIC_ASSERT) && UTIL_CONFIG_COMPILER_CXX_STATIC_ASSERT
+    #if (defined(__cplusplus) && __cplusplus >= 201402L) || ((defined(_MSVC_LANG) && _MSVC_LANG >= 201402L))
+            UTIL_CONFIG_STATIC_ASSERT(std::is_trivially_copyable<dh_context_t>::value);
+    #elif (defined(__cplusplus) && __cplusplus >= 201103L) || ((defined(_MSVC_LANG) && _MSVC_LANG >= 201103L))
+            UTIL_CONFIG_STATIC_ASSERT(std::is_trivial<dh_context_t>::value);
+    #else
             UTIL_CONFIG_STATIC_ASSERT(std::is_pod<dh_context_t>::value);
+    #endif
 #endif
         }
         LIBATFRAME_UTILS_API dh::~dh() { close(); }
