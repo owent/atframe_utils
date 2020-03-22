@@ -201,6 +201,14 @@ namespace util {
          */
         static LIBATFRAME_UTILS_API FILE *open_tmp_file();
 
+#if defined(__GNUC__) && !defined(__clang__) && !defined(__apple_build_version__)  // && (__GNUC__ * 100 + __GNUC_MINOR__ * 10) >= 460
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+#elif defined(__clang__) || defined(__apple_build_version__)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
+#endif
+
         /**
          * @brief 生成一个临时文件名
          * @param out 输出生成的文件名
@@ -238,6 +246,12 @@ namespace util {
             }
 #endif
         }
+
+#if defined(__GNUC__) && !defined(__clang__) && !defined(__apple_build_version__)  // && (__GNUC__ * 100 + __GNUC_MINOR__ * 10) >= 460
+#pragma GCC diagnostic pop
+#elif defined(__clang__) || defined(__apple_build_version__)
+#pragma clang diagnostic pop
+#endif
 
         /**
          * @brief 列举目录下所有文件
