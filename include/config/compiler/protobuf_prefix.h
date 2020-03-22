@@ -3,10 +3,18 @@
 
 // https://docs.microsoft.com/en-us/cpp/error-messages/compiler-warnings/compiler-warnings-by-compiler-version
 
-#if defined(_MSC_VER) && ((defined(__cplusplus) && __cplusplus >= 201703L) || (defined(_MSVC_LANG) && _MSVC_LANG >= 201703L))
+#if defined(_MSC_VER)
 #pragma warning(push)
+
+#if ((defined(__cplusplus) && __cplusplus >= 201703L) || (defined(_MSVC_LANG) && _MSVC_LANG >= 201703L))
 #pragma warning(disable : 4996)
 #pragma warning(disable : 4309)
+#endif
+
+#if _MSC_VER < 1910
+#pragma warning(disable : 4800)
+#endif
+
 #endif
 
 #if defined(__GNUC__) && !defined(__clang__) && !defined(__apple_build_version__)

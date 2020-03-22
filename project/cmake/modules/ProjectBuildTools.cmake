@@ -221,6 +221,10 @@ function (project_build_tools_patch_protobuf_sources)
                 list(APPEND PROTO_SRC_OPTIONS /wd4996)
             endif ()
 
+            if (MSVC_VERSION LESS 1910)
+                list(APPEND PROTO_SRC_OPTIONS /wd4800)
+            endif ()
+
             set_source_files_properties(${PROTO_SRC} PROPERTIES COMPILE_OPTIONS "${PROTO_SRC_OPTIONS}")
         endforeach()
         unset(PROTO_SRC)

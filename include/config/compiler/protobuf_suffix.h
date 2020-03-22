@@ -8,7 +8,7 @@
 #pragma clang diagnostic pop
 #endif
 
-#if defined(_MSC_VER) && ((defined(__cplusplus) && __cplusplus >= 201703L) || (defined(_MSVC_LANG) && _MSVC_LANG >= 201703L))
+#if defined(_MSC_VER)
 #pragma warning(pop)
 #endif
 
