@@ -6,7 +6,11 @@
 #
 # IMPORTED Targets
 # ^^^^^^^^^^^^^^^^
+# ::
 #
+#   libuuid               
+#
+# ::
 #
 # Result Variables
 # ^^^^^^^^^^^^^^^^
@@ -29,7 +33,7 @@
 # module where to look.
 
 #=============================================================================
-# Copyright 2014-2015 OWenT.
+# Copyright 2014-2020 OWenT.
 #
 # Distributed under the OSI-approved BSD License (the "License");
 # see accompanying file Copyright.txt for details.
@@ -58,7 +62,7 @@ endif()
 set(Libuuid_NAMES uuid libuuid)
 
 # Try each search configuration.
-find_path(Libuuid_INCLUDE_DIRS    NAMES uuid/uuid.h           ${_LIBUUID_SEARCH_ROOT_INC})
+find_path(Libuuid_INCLUDE_DIRS    NAMES uuid/uuid.h         ${_LIBUUID_SEARCH_ROOT_INC})
 find_library(Libuuid_LIBRARIES    NAMES ${Libuuid_NAMES}    ${_LIBUUID_SEARCH_ROOT_LIB})
 
 mark_as_advanced(Libuuid_INCLUDE_DIRS Libuuid_LIBRARIES)
@@ -72,5 +76,25 @@ FIND_PACKAGE_HANDLE_STANDARD_ARGS(Libuuid
 )
 
 if(Libuuid_FOUND)
-    set(LIBUUID_FOUND ${Libuuid_FOUND})
+  set(LIBUUID_FOUND ${Libuuid_FOUND})
+
+  if (NOT TARGET libuuid)
+    add_library(libuuid STATIC IMPORTED)
+    set_target_properties(libuuid PROPERTIES
+      INTERFACE_INCLUDE_DIRECTORIES ${Libuuid_INCLUDE_DIRS}
+    )
+    set_target_properties(libuuid PROPERTIES
+      IMPORTED_LINK_INTERFACE_LANGUAGES "C;CXX;RC"
+      IMPORTED_LOCATION ${Libuuid_LIBRARIES}
+    )
+
+    if (WIN32)
+      set_target_properties(libuuid PROPERTIES
+        INTERFACE_LINK_LIBRARIES "psapi;iphlpapi;userenv;ws2_32"
+      )
+    endif ()
+  endif ()
+else ()
+  unset(Libuuid_INCLUDE_DIRS CACHE)
+  unset(Libuuid_LIBRARIES CACHE)
 endif()

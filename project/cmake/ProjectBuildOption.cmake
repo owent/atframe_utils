@@ -52,6 +52,43 @@ if (NOT ENABLE_MIXEDINT_MAGIC_MASK)
     set(ENABLE_MIXEDINT_MAGIC_MASK 0)
 endif()
 
+if(WIN32)
+    include(CheckCXXSourceCompiles)
+    set(LIBATFRAME_UTILS_TEST_UUID_BACKUP_CMAKE_REQUIRED_LIBRARIES ${CMAKE_REQUIRED_LIBRARIES})
+    set(CMAKE_REQUIRED_LIBRARIES Rpcrt4)
+    check_cxx_source_compiles("
+    #include <rpc.h>
+    int main() {
+        UUID Uuid;
+        UuidCreate(&Uuid);
+        return 0;
+    }
+    "
+    LIBATFRAME_UTILS_TEST_UUID)
+
+    set(CMAKE_REQUIRED_LIBRARIES ${LIBATFRAME_UTILS_TEST_UUID_BACKUP_CMAKE_REQUIRED_LIBRARIES})
+    unset(LIBATFRAME_UTILS_TEST_UUID_BACKUP_CMAKE_REQUIRED_LIBRARIES)
+    if (LIBATFRAME_UTILS_TEST_UUID)
+        set (LIBATFRAME_UTILS_ENABLE_UUID TRUE)
+    else()
+        set (LIBATFRAME_UTILS_ENABLE_UUID FALSE)
+    endif()
+else()
+    find_package(Libuuid)
+    if (TARGET libuuid)
+        EchoWithColor(COLOR YELLOW "-- Dependency: libuuid found.(Target: libuuid)")
+        list(APPEND PROJECT_ATFRAME_UTILS_PUBLIC_LINK_NAMES libuuid)
+        set (LIBATFRAME_UTILS_ENABLE_UUID TRUE)
+    elseif(Libuuid_FOUND)
+        EchoWithColor(COLOR YELLOW "-- Dependency: libuuid found.(${Libuuid_INCLUDE_DIRS}:${Libuuid_LIBRARIES})")
+        list(APPEND PROJECT_ATFRAME_UTILS_PUBLIC_INCLUDE_DIRS ${Libuuid_INCLUDE_DIRS})
+        list(APPEND PROJECT_ATFRAME_UTILS_PUBLIC_LINK_NAMES ${Libuuid_LIBRARIES})
+        set (LIBATFRAME_UTILS_ENABLE_UUID TRUE)
+    else()
+        set (LIBATFRAME_UTILS_ENABLE_UUID FALSE)
+    endif()
+endif()
+
 # libuv
 option(ENABLE_NETWORK "Enable network support." ON)
 if (ENABLE_NETWORK)
