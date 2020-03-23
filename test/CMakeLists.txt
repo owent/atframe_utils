@@ -17,6 +17,9 @@ source_group_by_dir(PROJECT_TEST_SRC_LIST)
 # ============ test - coroutine test frame ============
 
 set(CMAKE_BUILD_RPATH "$ORIGIN/../lib" "$ORIGIN/../lib64")
+if (CMAKE_BUILD_TYPE AND(MSVC OR XCODE))
+    list(APPEND CMAKE_BUILD_RPATH "$ORIGIN/../lib/${CMAKE_BUILD_TYPE}" "$ORIGIN/../lib64/${CMAKE_BUILD_TYPE}")
+endif ()
 if (NOT (WIN32 AND BUILD_SHARED_LIBS))
     set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/test")
 endif ()

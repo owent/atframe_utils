@@ -24,17 +24,17 @@
 #include <stdint.h>
 #include <string>
 
+#include <common/string_oprs.h>
+#include <config/atframe_utils_build_feature.h>
+
+#if defined(LIBATFRAME_UTILS_ENABLE_UUID) && LIBATFRAME_UTILS_ENABLE_UUID
+
 #if defined(WIN32)
 #include <rpc.h>
 #include <rpcdce.h>
 #else
 #include <uuid/uuid.h>
 #endif
-
-#include <common/string_oprs.h>
-#include <config/atframe_utils_build_feature.h>
-
-#if defined(LIBATFRAME_UTILS_ENABLE_UUID) && LIBATFRAME_UTILS_ENABLE_UUID
 
 namespace util {
     namespace random {

@@ -23,6 +23,7 @@ option(LOG_WRAPPER_CHECK_LUA "Check lua support." ON)
 set(LOG_WRAPPER_MAX_SIZE_PER_LINE "2097152" CACHE STRING "Max size in one log line.")
 set(LOG_WRAPPER_CATEGORIZE_SIZE "16" CACHE STRING "Default log categorize number.")
 
+# Check pthread
 find_package(Threads)
 if (CMAKE_USE_PTHREADS_INIT)
     set(THREAD_TLS_USE_PTHREAD 1)
@@ -32,6 +33,42 @@ if (CMAKE_USE_PTHREADS_INIT)
     if (THREADS_PREFER_PTHREAD_FLAG)
         list(APPEND PROJECT_ATFRAME_UTILS_PUBLIC_DEFINITIONS ${THREADS_PREFER_PTHREAD_FLAG})
     endif ()
+endif ()
+
+# Check mkstemp/_mktemp/_mktemp_s for file system
+if (WIN32)
+    include(CheckCXXSourceCompiles)
+    check_cxx_source_compiles("
+    #include <io.h>
+    #include <stdio.h>
+    int main() {
+        char buffer[32] = \"abcdefgXXXXXX\";
+        const char* f = _mktemp(buffer);
+        puts(f);
+        return 0;
+    }
+    "
+    LIBATFRAME_UTILS_TEST_WINDOWS_MKTEMP)
+    if (LIBATFRAME_UTILS_TEST_WINDOWS_MKTEMP)
+        set (LIBATFRAME_UTILS_ENABLE_WINDOWS_MKTEMP TRUE)
+    endif()
+else ()
+    include(CheckCSourceCompiles)
+    check_c_source_compiles("
+    #include <stdlib.h>
+    #include <stdio.h>
+    #include <unistd.h>
+    int main() {
+        char buffer[32] = \"/tmp/abcdefgXXXXXX\";
+        int f = mkstemp(buffer);
+        close(f);
+        return 0;
+    }
+    "
+    LIBATFRAME_UTILS_TEST_POSIX_MKSTEMP)
+    if (LIBATFRAME_UTILS_TEST_POSIX_MKSTEMP)
+        set (LIBATFRAME_UTILS_ENABLE_POSIX_MKSTEMP TRUE)
+    endif()
 endif ()
 
 if (ANDROID)

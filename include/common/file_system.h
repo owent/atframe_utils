@@ -199,63 +199,20 @@ namespace util {
          * @brief 打开一个临时文件
          * @return 临时文件
          */
-        static LIBATFRAME_UTILS_API FILE *open_tmp_file();
+        static LIBATFRAME_UTILS_API std::string getenv(const char* name);
 
-#if defined(__GNUC__) && !defined(__clang__) && !defined(__apple_build_version__)
-#if (__GNUC__ * 100 + __GNUC_MINOR__ * 10) >= 460
-#pragma GCC diagnostic push
-#endif
-#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
-#elif defined(__clang__) || defined(__apple_build_version__)
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wdeprecated-declarations"
-#endif
+        /**
+         * @brief 打开一个临时文件
+         * @return 临时文件
+         */
+        static LIBATFRAME_UTILS_API FILE *open_tmp_file();
 
         /**
          * @brief 生成一个临时文件名
-         * @param out 输出生成的文件名
-         * @note 文件名的数量受 TMP_MAX/TMP_MAX_S 影响
-         * @note 文件名的长度受 L_tmpnam/L_tmpnam_s 影响
-         * @note 不建议使用，会有link warning
-         * @see https://en.cppreference.com/w/c/io/tmpnam
+         * @param inout 输入前缀(如果支持)，输出生成的文件名
          * @return 成功返回true，失败返回false
          */
-        template<typename TC>
-        static LIBATFRAME_UTILS_API_HEAD_ONLY bool generate_tmp_file_name(std::basic_string<TC>& out) {
-#if defined(UTIL_FS_C11_API)
-    #if defined(L_tmpnam_s)
-            char path_buffer[L_tmpnam_s + 1] = {0};
-    #else
-            char path_buffer[util::file_system::MAX_PATH_LEN + 1] = {0};
-    #endif
-            if (0 == tmpnam_s(path_buffer, sizeof (path_buffer) - 1)) {
-                out = &path_buffer[0];
-                return true;
-            } else {
-                return false;
-            }
-#else
-    #if defined(L_tmpnam)
-            char path_buffer[L_tmpnam + 1] = {0};
-    #else
-            char path_buffer[util::file_system::MAX_PATH_LEN + 1] = {0};
-    #endif
-            if (NULL != tmpnam(path_buffer)) {
-                out = &path_buffer[0];
-                return true;
-            } else {
-                return false;
-            }
-#endif
-        }
-
-#if defined(__GNUC__) && !defined(__clang__) && !defined(__apple_build_version__)
-#if (__GNUC__ * 100 + __GNUC_MINOR__ * 10) >= 460
-#pragma GCC diagnostic pop
-#endif
-#elif defined(__clang__) || defined(__apple_build_version__)
-#pragma clang diagnostic pop
-#endif
+        static LIBATFRAME_UTILS_API bool generate_tmp_file_name(std::string& inout);
 
         /**
          * @brief 列举目录下所有文件

@@ -291,6 +291,41 @@ namespace util {
 
     LIBATFRAME_UTILS_API bool file_system::remove(const char *path) { return 0 == ::remove(path); }
 
+    LIBATFRAME_UTILS_API std::string file_system::getenv(const char* name) {
+        std::string ret;
+#if defined(UTIL_FS_C11_API)
+        size_t len = 0;
+        if(0 != getenv_s(&len, NULL, 0, name)) {
+            return ret;
+        }
+        if (len == 0) {
+            return ret;
+        }
+
+        ret.resize(len, 0);
+        if(0 != getenv_s(&len, &ret[0], ret.size(), name)) {
+            ret.clear();
+            return ret;
+        }
+
+        while (!ret.empty() && ret[ret.size() - 1] == '\0') {
+            ret.pop_back();
+        }
+
+        return ret;
+#else
+        char * val = ::getenv(name);
+        if (NULL != val) {
+            ret = val;
+        }
+
+        while (!ret.empty() && ret[ret.size() - 1] == '\0') {
+            ret.pop_back();
+        }
+        return ret;
+#endif
+    }
+
     LIBATFRAME_UTILS_API FILE *file_system::open_tmp_file() {
 #if defined(UTIL_FS_C11_API)
         FILE *ret = NULL;
@@ -301,6 +336,119 @@ namespace util {
         return NULL;
 #else
         return tmpfile();
+#endif
+    }
+
+    LIBATFRAME_UTILS_API bool file_system::generate_tmp_file_name(std::string& inout) {
+
+#if (defined(LIBATFRAME_UTILS_ENABLE_WINDOWS_MKTEMP) && LIBATFRAME_UTILS_ENABLE_WINDOWS_MKTEMP) || (defined(LIBATFRAME_UTILS_ENABLE_POSIX_MKSTEMP) && LIBATFRAME_UTILS_ENABLE_POSIX_MKSTEMP)
+        if (inout.empty()) {
+#if WIN32
+            inout = file_system::getenv("TMP");
+            if (inout.empty()) {
+                inout = file_system::getenv("TEMP");
+            }
+            if (inout.empty()) {
+                inout = file_system::getenv("tmp");
+            }
+            if (inout.empty()) {
+                inout = file_system::getenv("temp");
+            }
+
+            if (inout.empty()) {
+                inout = "temp";
+            } else {
+                inout += DIRECTORY_SEPARATOR;
+            }
+#else
+            inout = "/tmp/";
+#endif
+        }
+
+        inout.reserve(inout.size() + 8);
+        inout += "XXXXXX";
+        inout.resize(inout.size() + 1, 0);
+
+#if (defined(LIBATFRAME_UTILS_ENABLE_WINDOWS_MKTEMP) && LIBATFRAME_UTILS_ENABLE_WINDOWS_MKTEMP)
+    #if defined(UTIL_FS_C11_API)
+        if (0 == _mktemp_s(&inout[0], inout.size())) {
+            inout.pop_back();
+            return true;
+        } else {
+            inout.clear();
+            return false;
+        }
+    #else
+        if (NULL != _mktemp(&inout[0])) {
+            inout.pop_back();
+            return true;
+        } else {
+            inout.clear();
+            return false;
+        }
+    #endif
+#else
+    int tmp_fd = mkstemp(&inout[0]);
+    if (-1 == tmp_fd) {
+        inout.clear();
+        return false;
+    }
+
+    inout.pop_back();
+    close(tmp_fd);
+    if (is_exist(inout.c_str())) {
+        remove(inout.c_str());
+    }
+    return true;
+#endif
+
+#else
+
+#if defined(__GNUC__) && !defined(__clang__) && !defined(__apple_build_version__)
+#if (__GNUC__ * 100 + __GNUC_MINOR__ * 10) >= 460
+#pragma GCC diagnostic push
+#endif
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+#elif defined(__clang__) || defined(__apple_build_version__)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
+#endif
+
+
+    #if defined(UTIL_FS_C11_API)
+        #if defined(L_tmpnam_s)
+            char path_buffer[L_tmpnam_s + 1] = {0};
+        #else
+            char path_buffer[util::file_system::MAX_PATH_LEN + 1] = {0};
+        #endif
+            if (0 == tmpnam_s(path_buffer, sizeof (path_buffer) - 1)) {
+                inout = &path_buffer[0];
+                return true;
+            } else {
+                return false;
+            }
+    #else
+        #if defined(L_tmpnam)
+            char path_buffer[L_tmpnam + 1] = {0};
+        #else
+            char path_buffer[util::file_system::MAX_PATH_LEN + 1] = {0};
+        #endif
+            if (NULL != tmpnam(path_buffer)) {
+                inout = &path_buffer[0];
+                return true;
+            } else {
+                return false;
+            }
+    #endif
+
+#if defined(__GNUC__) && !defined(__clang__) && !defined(__apple_build_version__)
+#if (__GNUC__ * 100 + __GNUC_MINOR__ * 10) >= 460
+#pragma GCC diagnostic pop
+#endif
+#elif defined(__clang__) || defined(__apple_build_version__)
+#pragma clang diagnostic pop
+#endif
+
 #endif
     }
 

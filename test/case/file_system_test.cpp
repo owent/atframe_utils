@@ -41,6 +41,15 @@ CASE_TEST(file_system, get_cwd) {
     CASE_MSG_INFO() << "Working dir: " << util::file_system::get_cwd() << std::endl;
 }
 
+CASE_TEST(file_system, getenv) {
+    CASE_MSG_INFO() << "Env OS: " << util::file_system::getenv("OS") << std::endl;
+    CASE_MSG_INFO() << "Env USER: " << util::file_system::getenv("USER") << std::endl;
+    CASE_MSG_INFO() << "Env HOME: " << util::file_system::getenv("HOME") << std::endl;
+    CASE_MSG_INFO() << "Env USERNAME: " << util::file_system::getenv("USERNAME") << std::endl;
+    CASE_MSG_INFO() << "Env HOMEPATH: " << util::file_system::getenv("HOMEPATH") << std::endl;
+    CASE_MSG_INFO() << "Env PATH: " << util::file_system::getenv("PATH") << std::endl;
+}
+
 
 CASE_TEST(file_system, get_file_content) {
     std::string content;
