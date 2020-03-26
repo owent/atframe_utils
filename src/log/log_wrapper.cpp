@@ -53,6 +53,19 @@ namespace util {
                 }
                 return buffer_block;
             }
+
+            struct gt_get_log_tls_buffer_main_thread_dtor_t {
+                char* buffer_ptr;
+                gt_get_log_tls_buffer_main_thread_dtor_t(){
+                    buffer_ptr = get_log_tls_buffer();
+                }
+
+                ~gt_get_log_tls_buffer_main_thread_dtor_t() {
+                    pthread_setspecific(gt_get_log_tls_key, NULL);
+                    dtor_pthread_get_log_tls(buffer_ptr);
+                }
+            };
+            static gt_get_log_tls_buffer_main_thread_dtor_t gt_get_log_tls_buffer_main_thread_dtor;
         } // namespace detail
     }     // namespace log
 } // namespace util
