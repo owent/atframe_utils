@@ -150,7 +150,7 @@ namespace util {
 
             f->write(content, content_size);
             f->put('\n');
-            time_t now = util::time::time_utility::get_now();
+            time_t now = util::time::time_utility::get_sys_now();
 
             // 日志级别高于指定级别，需要刷入
             if (static_cast<uint32_t>(caller.level_id) <= log_file_.auto_flush) {
@@ -296,7 +296,7 @@ namespace util {
             log_file_.written_size = static_cast<size_t>(of->tellp());
 
             log_file_.opened_file        = of;
-            log_file_.opened_file_point_ = util::time::time_utility::get_now();
+            log_file_.opened_file_point_ = util::time::time_utility::get_sys_now();
             log_file_.file_path.assign(log_file, file_path_len);
 
             // 硬链接别名
@@ -353,7 +353,7 @@ namespace util {
         LIBATFRAME_UTILS_API void log_sink_file_backend::check_update() {
             if (0 != log_file_.opened_file_point_) {
                 if (0 == check_interval_ ||
-                    util::time::time_utility::get_now() / check_interval_ == log_file_.opened_file_point_ / check_interval_) {
+                    util::time::time_utility::get_sys_now() / check_interval_ == log_file_.opened_file_point_ / check_interval_) {
                     return;
                 }
             }
@@ -379,7 +379,7 @@ namespace util {
             if (new_file_path == old_file_path) {
                 // 本次刷新周期内的文件名未变化，说明检测周期小于实际周期，所以这个周期内不需要再检测了
                 // 因为考虑到夏时令，只要大于小时的配置检测周期都设置为小时，必然会小于实际周期然后走到这里
-                log_file_.opened_file_point_ = util::time::time_utility::get_now();
+                log_file_.opened_file_point_ = util::time::time_utility::get_sys_now();
                 return;
             }
 

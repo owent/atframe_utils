@@ -60,8 +60,8 @@ namespace util {
         LIBATFRAME_UTILS_API struct tm *log_formatter::get_iso_tm() {
             static time_t    tm_tp = 0;
             static struct tm tm_obj;
-            if (tm_tp != util::time::time_utility::get_now()) {
-                tm_tp = util::time::time_utility::get_now();
+            if (tm_tp != util::time::time_utility::get_sys_now()) {
+                tm_tp = util::time::time_utility::get_sys_now();
                 UTIL_STRFUNC_LOCALTIME_S(&tm_tp, &tm_obj);
             }
 
