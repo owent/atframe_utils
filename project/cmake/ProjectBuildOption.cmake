@@ -10,7 +10,7 @@ write_compiler_detection_header(
     FILE "${PROJECT_ATFRAME_UTILS_INCLUDE_DIR}/config/compiler_features.h"
     PREFIX UTIL_CONFIG
     COMPILERS GNU Clang AppleClang MSVC
-    FEATURES cxx_auto_type cxx_constexpr cxx_decltype cxx_decltype_auto cxx_defaulted_functions cxx_deleted_functions cxx_final cxx_override cxx_range_for cxx_noexcept cxx_nullptr cxx_rvalue_references cxx_static_assert cxx_thread_local cxx_variadic_templates cxx_lambdas
+    FEATURES cxx_std_98 cxx_std_11 cxx_std_14 cxx_std_17 cxx_std_20 cxx_alias_templates cxx_attributes cxx_auto_type cxx_constexpr cxx_decltype cxx_decltype_auto cxx_defaulted_functions cxx_deleted_functions cxx_final cxx_override cxx_range_for cxx_noexcept cxx_nullptr cxx_rvalue_references cxx_static_assert cxx_thread_local cxx_variadic_templates cxx_lambdas
 )
 #file(MAKE_DIRECTORY "${PROJECT_ATFRAME_UTILS_INCLUDE_DIR}/config")
 #file(RENAME "${CMAKE_BINARY_DIR}/compiler_features.h" "${PROJECT_ATFRAME_UTILS_INCLUDE_DIR}/config/compiler_features.h")
