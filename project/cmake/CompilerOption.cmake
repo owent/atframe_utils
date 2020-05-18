@@ -117,38 +117,25 @@ if(NOT DEFINED __COMPILER_OPTION_LOADED)
             set(CMAKE_CXX_STANDARD 11)
         endif()
         message(STATUS "Clang Version ${CMAKE_CXX_COMPILER_VERSION} , using -std=c${CMAKE_C_STANDARD}/c++${CMAKE_CXX_STANDARD}.")
-        # 优先使用libc++和libc++abi
-        find_library (COMPILER_CLANG_HAS_LIBCXX NAMES c++ libc++)
-        find_library (COMPILER_CLANG_HAS_LIBCXXABI NAMES c++abi libc++abi)
-        if(COMPILER_OPTION_CLANG_ENABLE_LIBCXX AND COMPILER_CLANG_HAS_LIBCXX AND COMPILER_CLANG_HAS_LIBCXXABI)
-            set(COMPILER_CLANG_BACKUP_CMAKE_REQUIRED_LIBRARIES ${CMAKE_REQUIRED_LIBRARIES})
-            set(COMPILER_CLANG_BACKUP_CMAKE_REQUIRED_FLAGS ${CMAKE_REQUIRED_FLAGS})
-
-            set(CMAKE_REQUIRED_LIBRARIES c++ c++abi)
-            set(CMAKE_REQUIRED_FLAGS -stdlib=libc++)
-
-            include(CheckCXXSourceCompiles)
-            check_cxx_source_compiles("
-            #include <iostream>
-            #include <algorithm>
-            #include <limits>
-            int main() {
-                std::cout<< __cplusplus<< std::endl;
-                return 0;
-            }
-            "
-            COMPILER_CLANG_TEST_LIBCXX)
-
-            set(CMAKE_REQUIRED_LIBRARIES ${COMPILER_CLANG_BACKUP_CMAKE_REQUIRED_LIBRARIES})
-            set(CMAKE_REQUIRED_FLAGS ${COMPILER_CLANG_BACKUP_CMAKE_REQUIRED_FLAGS})
-            unset(COMPILER_CLANG_BACKUP_CMAKE_REQUIRED_LIBRARIES)
-            unset(COMPILER_CLANG_BACKUP_CMAKE_REQUIRED_FLAGS)
-        else()
-            set(COMPILER_CLANG_TEST_LIBCXX FALSE)
-        endif ()
-        if(COMPILER_CLANG_TEST_LIBCXX)
-            list(APPEND CMAKE_CXX_FLAGS -stdlib=libc++ -Wno-unused-command-line-argument)
-            list(APPEND CMAKE_C_FLAGS -Wno-unused-command-line-argument)
+        # Test libc++ and libc++abi
+        include(CheckCXXSourceCompiles)
+        set(COMPILER_CLANG_TEST_BAKCUP_CMAKE_REQUIRED_FLAGS ${CMAKE_REQUIRED_FLAGS})
+        set(COMPILER_CLANG_TEST_BAKCUP_CMAKE_REQUIRED_LIBRARIES ${CMAKE_REQUIRED_LIBRARIES})
+        set(CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS} -stdlib=libc++")
+        list(APPEND CMAKE_REQUIRED_LIBRARIES c++ c++abi)
+        check_cxx_source_compiles("
+        #include <iostream>
+        int main() {
+            std::cout<< __cplusplus<< std::endl;
+            return 0;
+        }
+        " COMPILER_CLANG_TEST_LIBCXX)
+        set(CMAKE_REQUIRED_FLAGS ${COMPILER_CLANG_TEST_BAKCUP_CMAKE_REQUIRED_FLAGS})
+        set(CMAKE_REQUIRED_LIBRARIES ${COMPILER_CLANG_TEST_BAKCUP_CMAKE_REQUIRED_LIBRARIES})
+        unset(COMPILER_CLANG_TEST_BAKCUP_CMAKE_REQUIRED_FLAGS)
+        unset(COMPILER_CLANG_TEST_BAKCUP_CMAKE_REQUIRED_LIBRARIES)
+        if(COMPILER_OPTION_CLANG_ENABLE_LIBCXX AND COMPILER_CLANG_TEST_LIBCXX)
+            list(APPEND CMAKE_CXX_FLAGS -stdlib=libc++)
             message(STATUS "Clang use stdlib=libc++")
             list(APPEND COMPILER_OPTION_EXTERN_CXX_LIBS c++ c++abi)
         else()
@@ -183,12 +170,25 @@ if(NOT DEFINED __COMPILER_OPTION_LOADED)
             set(CMAKE_CXX_STANDARD 11)
         endif()
         message(STATUS "AppleClang Version ${CMAKE_CXX_COMPILER_VERSION} , using -std=c${CMAKE_C_STANDARD}/c++${CMAKE_CXX_STANDARD}.")
-        # 优先使用libc++和libc++abi
-        find_library (COMPILER_CLANG_HAS_LIBCXX NAMES c++ libc++)
-        find_library (COMPILER_CLANG_HAS_LIBCXXABI NAMES c++abi libc++abi)
-        if(COMPILER_OPTION_CLANG_ENABLE_LIBCXX AND COMPILER_CLANG_HAS_LIBCXX AND COMPILER_CLANG_HAS_LIBCXXABI)
-            list(APPEND CMAKE_CXX_FLAGS -stdlib=libc++ -Wno-unused-command-line-argument)
-            list(APPEND CMAKE_C_FLAGS -Wno-unused-command-line-argument)
+        # Test libc++ and libc++abi
+        include(CheckCXXSourceCompiles)
+        set(COMPILER_CLANG_TEST_BAKCUP_CMAKE_REQUIRED_FLAGS ${CMAKE_REQUIRED_FLAGS})
+        set(COMPILER_CLANG_TEST_BAKCUP_CMAKE_REQUIRED_LIBRARIES ${CMAKE_REQUIRED_LIBRARIES})
+        set(CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS} -stdlib=libc++")
+        list(APPEND CMAKE_REQUIRED_LIBRARIES c++ c++abi)
+        check_cxx_source_compiles("
+        #include <iostream>
+        int main() {
+            std::cout<< __cplusplus<< std::endl;
+            return 0;
+        }
+        " COMPILER_CLANG_TEST_LIBCXX)
+        set(CMAKE_REQUIRED_FLAGS ${COMPILER_CLANG_TEST_BAKCUP_CMAKE_REQUIRED_FLAGS})
+        set(CMAKE_REQUIRED_LIBRARIES ${COMPILER_CLANG_TEST_BAKCUP_CMAKE_REQUIRED_LIBRARIES})
+        unset(COMPILER_CLANG_TEST_BAKCUP_CMAKE_REQUIRED_FLAGS)
+        unset(COMPILER_CLANG_TEST_BAKCUP_CMAKE_REQUIRED_LIBRARIES)
+        if(COMPILER_OPTION_CLANG_ENABLE_LIBCXX AND COMPILER_CLANG_TEST_LIBCXX)
+            list(APPEND CMAKE_CXX_FLAGS -stdlib=libc++)
             message(STATUS "AppleClang use stdlib=libc++")
             list(APPEND COMPILER_OPTION_EXTERN_CXX_LIBS c++ c++abi)
         else()
