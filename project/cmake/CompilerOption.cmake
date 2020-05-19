@@ -5,6 +5,7 @@ endif()
 # 默认配置选项
 #####################################################################
 if(NOT DEFINED __COMPILER_OPTION_LOADED)
+    include(CheckCXXSourceCompiles)
     set(__COMPILER_OPTION_LOADED 1)
     option(COMPILER_OPTION_MSVC_ZC_CPP "Add /Zc:__cplusplus for MSVC (let __cplusplus be equal to _MSVC_LANG) when it support." ON)
     option(COMPILER_OPTION_CLANG_ENABLE_LIBCXX "Try to use libc++ when using clang." ON)
@@ -118,7 +119,6 @@ if(NOT DEFINED __COMPILER_OPTION_LOADED)
         endif()
         message(STATUS "Clang Version ${CMAKE_CXX_COMPILER_VERSION} , using -std=c${CMAKE_C_STANDARD}/c++${CMAKE_CXX_STANDARD}.")
         # Test libc++ and libc++abi
-        include(CheckCXXSourceCompiles)
         set(COMPILER_CLANG_TEST_BAKCUP_CMAKE_REQUIRED_FLAGS ${CMAKE_REQUIRED_FLAGS})
         set(COMPILER_CLANG_TEST_BAKCUP_CMAKE_REQUIRED_LIBRARIES ${CMAKE_REQUIRED_LIBRARIES})
         set(CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS} -stdlib=libc++")
@@ -171,7 +171,6 @@ if(NOT DEFINED __COMPILER_OPTION_LOADED)
         endif()
         message(STATUS "AppleClang Version ${CMAKE_CXX_COMPILER_VERSION} , using -std=c${CMAKE_C_STANDARD}/c++${CMAKE_CXX_STANDARD}.")
         # Test libc++ and libc++abi
-        include(CheckCXXSourceCompiles)
         set(COMPILER_CLANG_TEST_BAKCUP_CMAKE_REQUIRED_FLAGS ${CMAKE_REQUIRED_FLAGS})
         set(COMPILER_CLANG_TEST_BAKCUP_CMAKE_REQUIRED_LIBRARIES ${CMAKE_REQUIRED_LIBRARIES})
         set(CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS} -stdlib=libc++")
@@ -221,6 +220,7 @@ if(NOT DEFINED __COMPILER_OPTION_LOADED)
     endif()
 
     # 配置公共编译选项
+    set(COMPILER_OPTIONS_BAKCUP_CMAKE_REQUIRED_FLAGS ${CMAKE_REQUIRED_FLAGS})
     if ( NOT MSVC )
         if (NOT EMSCRIPTEN)
             list(APPEND CMAKE_CXX_FLAGS_DEBUG -ggdb)
@@ -230,6 +230,29 @@ if(NOT DEFINED __COMPILER_OPTION_LOADED)
         # list(APPEND CMAKE_CXX_FLAGS_RELEASE)
         # list(APPEND CMAKE_CXX_FLAGS_RELWITHDEBINFO -ggdb)
         # list(APPEND CMAKE_CXX_FLAGS_MINSIZEREL)
+
+        # Try add coroutine
+        set(CMAKE_REQUIRED_FLAGS "${COMPILER_OPTIONS_BAKCUP_CMAKE_REQUIRED_FLAGS} -fcoroutines")
+        check_cxx_source_compiles("
+        #include <coroutine>
+        int main() {
+            return std::suspend_always().await_ready()? 0: 1;
+        }
+        " COMPILER_OPTIONS_TEST_STD_COROUTINE)
+        if (COMPILER_OPTIONS_TEST_STD_COROUTINE)
+            list(APPEND CMAKE_CXX_FLAGS -fcoroutines)
+        else()
+            set(CMAKE_REQUIRED_FLAGS "${COMPILER_OPTIONS_BAKCUP_CMAKE_REQUIRED_FLAGS} -fcoroutines-ts")
+            check_cxx_source_compiles("
+            #include <experimental/coroutine>
+            int main() {
+                return std::experimental::suspend_always().await_ready()? 0: 1;
+            }
+            " COMPILER_OPTIONS_TEST_STD_COROUTINE_TS)
+            if (COMPILER_OPTIONS_TEST_STD_COROUTINE_TS)
+                list(APPEND CMAKE_CXX_FLAGS -fcoroutines-ts)
+            endif()
+        endif()
     else()
         if(NOT CMAKE_MSVC_RUNTIME)
             set(CMAKE_MSVC_RUNTIME "MD")
@@ -238,7 +261,47 @@ if(NOT DEFINED __COMPILER_OPTION_LOADED)
         list(APPEND CMAKE_CXX_FLAGS_RELEASE /O2 /${CMAKE_MSVC_RUNTIME} /D NDEBUG)
         list(APPEND CMAKE_CXX_FLAGS_RELWITHDEBINFO /O2 /${CMAKE_MSVC_RUNTIME} /D NDEBUG)
         list(APPEND CMAKE_CXX_FLAGS_MINSIZEREL /Ox /${CMAKE_MSVC_RUNTIME} /D NDEBUG)
+
+        # Try add coroutine
+        set(CMAKE_REQUIRED_FLAGS "${COMPILER_OPTIONS_BAKCUP_CMAKE_REQUIRED_FLAGS} /await")
+        check_cxx_source_compiles("#include <coroutine>
+        int main() {
+            return std::suspend_always().await_ready()? 0: 1;
+        }" COMPILER_OPTIONS_TEST_STD_COROUTINE)
+        if (NOT COMPILER_OPTIONS_TEST_STD_COROUTINE)
+            check_cxx_source_compiles("
+            #include <experimental/coroutine>
+            int main() {
+                return std::experimental::suspend_always().await_ready()? 0: 1;
+            }
+            " COMPILER_OPTIONS_TEST_STD_COROUTINE_TS)
+        endif()
+        if (COMPILER_OPTIONS_TEST_STD_COROUTINE OR COMPILER_OPTIONS_TEST_STD_COROUTINE_TS)
+            list(APPEND CMAKE_CXX_FLAGS /await)
+        endif()
     endif()
+    set(CMAKE_REQUIRED_FLAGS ${COMPILER_OPTIONS_BAKCUP_CMAKE_REQUIRED_FLAGS})
+    unset(COMPILER_OPTIONS_BAKCUP_CMAKE_REQUIRED_FLAGS)
+    check_cxx_source_compiles("
+    #include <exception>
+    void handle_eptr(std::exception_ptr eptr) {
+        try {
+            if (eptr) {
+                std::rethrow_exception(eptr);
+            }
+        } catch(...) {}
+    }
+ 
+    int main() {
+        std::exception_ptr eptr;
+        try {
+            throw 1;
+        } catch(...) {
+            eptr = std::current_exception(); // capture
+        }
+        handle_eptr(eptr);
+    }
+    " COMPILER_OPTIONS_TEST_STD_EXCEPTION_PTR)
 
     # list => string
     string(REPLACE ";" " " CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG}")

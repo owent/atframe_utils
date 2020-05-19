@@ -137,7 +137,7 @@ public:
                    std::is_integral<TL>::value || std::is_integral<TR>::value, std::is_integral<TL>::value && std::is_integral<TR>::value>
             pp;
         if (pp(l) == pp(r)) {
-            iinc_success_counter();
+            inc_success_counter();
             return true;
         } else {
             inc_failed_counter();
@@ -158,7 +158,7 @@ public:
             pp;
 
         if (pp(l) != pp(r)) {
-            iinc_success_counter();
+            inc_success_counter();
             return true;
         } else {
             inc_failed_counter();
@@ -179,7 +179,7 @@ public:
             pp;
 
         if (pp(l) < pp(r)) {
-            iinc_success_counter();
+            inc_success_counter();
             return true;
         } else {
             inc_failed_counter();
@@ -200,7 +200,7 @@ public:
             pp;
 
         if (pp(l) <= pp(r)) {
-            iinc_success_counter();
+            inc_success_counter();
             return true;
         } else {
             inc_failed_counter();
@@ -221,7 +221,7 @@ public:
             pp;
 
         if (pp(l) > pp(r)) {
-            iinc_success_counter();
+            inc_success_counter();
             return true;
         } else {
             inc_failed_counter();
@@ -242,7 +242,7 @@ public:
             pp;
 
         if (pp(l) >= pp(r)) {
-            iinc_success_counter();
+            inc_success_counter();
             return true;
         } else {
             inc_failed_counter();
@@ -259,7 +259,7 @@ public:
     template <typename TL>
     bool expect_true(const TL &l, const char *expr, const char *file, size_t line) {
         if (!!(l)) {
-            iinc_success_counter();
+            inc_success_counter();
             return true;
         } else {
             inc_failed_counter();
@@ -275,7 +275,7 @@ public:
     template <typename TL>
     bool expect_false(const TL &l, const char *expr, const char *file, size_t line) {
         if (!(l)) {
-            iinc_success_counter();
+            inc_success_counter();
             return true;
         } else {
             inc_failed_counter();
@@ -289,7 +289,7 @@ public:
     }
 
     static void set_counter_ptr(int* success_counter_ptr, int* failed_counter_ptr);
-    static void iinc_success_counter();
+    static void inc_success_counter();
     static void inc_failed_counter();
 private:
     test_data_type tests_;
