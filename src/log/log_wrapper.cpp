@@ -180,54 +180,27 @@ namespace util {
                                                    const char *fmt, ...
 #endif
         ) {
-            if (get_option(options_t::OPT_AUTO_UPDATE_TIME) && !prefix_format_.empty()) {
-                update();
-            }
+            log_operation_t writer;
+            start_log(caller, writer);
 
-            char * log_buffer = detail::get_log_tls_buffer();
-            size_t log_size   = 0;
-            {
-                if (!log_sinks_.empty()) {
-                    // format => "[Log    DEBUG][2015-01-12 10:09:08.]
-                    size_t start_index = log_formatter::format(log_buffer, LOG_WRAPPER_MAX_SIZE_PER_LINE, prefix_format_.c_str(),
-                                                               prefix_format_.size(), caller);
-
-                    va_list va_args;
-                    va_start(va_args, fmt);
-                    int prt_res =
-                        UTIL_STRFUNC_VSNPRINTF(&log_buffer[start_index], LOG_WRAPPER_MAX_SIZE_PER_LINE - start_index, fmt, va_args);
-                    va_end(va_args);
-                    if (prt_res >= 0) {
-                        start_index += static_cast<size_t>(prt_res);
-                    }
-
-                    if (start_index < LOG_WRAPPER_MAX_SIZE_PER_LINE) {
-                        log_buffer[start_index] = 0;
-                        log_size                = start_index;
-                    } else {
-                        log_size                                      = LOG_WRAPPER_MAX_SIZE_PER_LINE;
-                        log_buffer[LOG_WRAPPER_MAX_SIZE_PER_LINE - 1] = 0;
-                    }
-                }
-            }
-
-            if (is_stacktrace_enabled() && caller.level_id >= stacktrace_level_.first && caller.level_id <= stacktrace_level_.second) {
+            if (!log_sinks_.empty()) {
+                va_list va_args;
+                va_start(va_args, fmt);
                 int prt_res =
-                    UTIL_STRFUNC_SNPRINTF(&log_buffer[log_size], LOG_WRAPPER_MAX_SIZE_PER_LINE - log_size, "\r\nCall stacks:\r\n");
-
-                if (prt_res > 0) {
-                    log_size += static_cast<size_t>(prt_res);
+                    UTIL_STRFUNC_VSNPRINTF(writer.buffer + writer.writen_size, writer.total_size - writer.writen_size - 1, fmt, va_args);
+                va_end(va_args);
+                if (prt_res >= 0) {
+                    writer.writen_size += static_cast<size_t>(prt_res);
                 }
 
-                stacktrace_options options;
-                options.skip_start_frames = 1;
-                options.skip_end_frames   = 0;
-                options.max_frames        = 0;
-                size_t stacktrace_len     = stacktrace_write(log_buffer + log_size, LOG_WRAPPER_MAX_SIZE_PER_LINE - log_size - 1, &options);
-                log_size += stacktrace_len;
+                if (writer.writen_size < writer.total_size) {
+                    *(writer.buffer + writer.writen_size) = 0;
+                } else {
+                    writer.writen_size = writer.total_size - 1;
+                    *(writer.buffer + writer.total_size - 1) = 0;
+                }
             }
-
-            write_log(caller, log_buffer, log_size);
+            finish_log(caller, writer);
         }
 
         LIBATFRAME_UTILS_API void log_wrapper::write_log(const caller_info_t &caller, const char *content, size_t content_size) {
@@ -262,6 +235,76 @@ namespace util {
             }
 
             return ret;
+        }
+
+        LIBATFRAME_UTILS_API void log_wrapper::start_log(const caller_info_t &caller, log_operation_t& writer) {
+            if (get_option(options_t::OPT_AUTO_UPDATE_TIME) && !prefix_format_.empty()) {
+                update();
+            }
+            if (log_sinks_.empty()) {
+                return;
+            }
+
+            writer.buffer = detail::get_log_tls_buffer();
+            writer.total_size = LOG_WRAPPER_MAX_SIZE_PER_LINE;
+            writer.writen_size = 0;
+
+            // format => "[Log    DEBUG][2015-01-12 10:09:08.]
+            writer.writen_size = log_formatter::format(writer.buffer, writer.total_size, prefix_format_.c_str(),
+                                                        prefix_format_.size(), caller);
+        }
+
+        LIBATFRAME_UTILS_API void log_wrapper::finish_log(const caller_info_t &caller, log_operation_t& writer) {
+            if (log_sinks_.empty()) {
+                return;
+            }
+            
+            if (is_stacktrace_enabled() && caller.level_id >= stacktrace_level_.first && caller.level_id <= stacktrace_level_.second) {
+                append_log(writer, "\r\nCall stacks:\r\n", 0);
+                if (writer.writen_size + 1 < writer.total_size) {
+                    stacktrace_options options;
+                    options.skip_start_frames = 1;
+                    options.skip_end_frames   = 0;
+                    options.max_frames        = 0;
+                    size_t stacktrace_len     = stacktrace_write(writer.buffer + writer.writen_size, writer.total_size - writer.writen_size - 1, &options);
+                    if (stacktrace_len > 0) {
+                        writer.writen_size += stacktrace_len;
+                    }
+                }
+
+                if (writer.writen_size < writer.total_size) {
+                    *(writer.buffer + writer.writen_size) = 0;
+                } else {
+                    writer.writen_size = writer.total_size - 1;
+                    *(writer.buffer + writer.total_size - 1) = 0;
+                }
+            }
+
+            write_log(caller, writer.buffer, writer.writen_size);
+        }
+
+        LIBATFRAME_UTILS_API void log_wrapper::append_log(log_operation_t& writer, const char* str, size_t strsz) {
+            if (!writer.buffer || writer.writen_size + 1 >= writer.total_size) {
+                return;
+            }
+
+            if (!str) {
+                return;
+            }
+
+            if (0 == strsz) {
+                strsz = strlen(str);
+            }
+
+            if (strsz + writer.writen_size + 1 >= writer.total_size) {
+                memcpy(writer.buffer + writer.writen_size, str, writer.total_size - writer.writen_size - 1);
+                writer.writen_size = writer.total_size - 1;
+                *(writer.buffer + writer.writen_size) = 0;
+            } else {
+                memcpy(writer.buffer + writer.writen_size, str, strsz);
+                writer.writen_size += strsz;
+                *(writer.buffer + writer.writen_size) = 0;
+            }
         }
 
     } // namespace log

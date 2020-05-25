@@ -133,7 +133,31 @@ static void log_sample_func5(int times) {
     }
 }
 
-void log_sample() { log_sample_func5(9); }
+#if defined(LOG_WRAPPER_ENABLE_FWAPI) && LOG_WRAPPER_ENABLE_FWAPI
+void log_sample_func6_stdout(const util::log::log_wrapper::caller_info_t &, const char *content, size_t content_size) {
+    std::cout.write(content, content_size);
+    std::cout<< std::endl;
+}
+
+void log_sample_func6() {
+    WLOG_INIT(util::log::log_wrapper::categorize_t::DEFAULT, util::log::log_wrapper::level_t::LOG_LW_DEBUG);
+    WLOG_GETCAT(util::log::log_wrapper::categorize_t::DEFAULT)->clear_sinks();
+    WLOG_GETCAT(util::log::log_wrapper::categorize_t::DEFAULT)->add_sink(log_sample_func6_stdout);
+    std::cout << "----------------setup log sink for std::format done--------------" << std::endl;
+#if defined(LOG_WRAPPER_ENABLE_FWAPI) && LOG_WRAPPER_ENABLE_FWAPI
+    FWLOGINFO("{} {}: {}", "Hello", std::string("World"), 42);
+    // FWLOGINFO("{:d}", "foo"); // This will cause compile error when using fmtlib
+#endif
+    WLOG_GETCAT(util::log::log_wrapper::categorize_t::DEFAULT)->pop_sink();
+    FWLOGERROR("No log sink now");
+}
+#endif
+void log_sample() { 
+    log_sample_func5(9); 
+#if defined(LOG_WRAPPER_ENABLE_FWAPI) && LOG_WRAPPER_ENABLE_FWAPI
+    log_sample_func6();
+#endif
+}
 
 //=======================================================================================================
 

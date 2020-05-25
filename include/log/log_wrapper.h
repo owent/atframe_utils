@@ -21,6 +21,20 @@
 
 #include <config/atframe_utils_build_feature.h>
 
+#if defined(UTIL_CONFIG_COMPILER_CXX_RVALUE_REFERENCES) && UTIL_CONFIG_COMPILER_CXX_RVALUE_REFERENCES
+    #if defined(LIBATFRAME_UTILS_ENABLE_STD_FORMAT) && LIBATFRAME_UTILS_ENABLE_STD_FORMAT
+        #include <format>
+        #ifndef LOG_WRAPPER_FWAPI_FMT_STRING
+            #define LOG_WRAPPER_FWAPI_FMT_STRING(S) (S)
+        #endif
+    #elif defined(LIBATFRAME_UTILS_ENABLE_FMTLIB) && LIBATFRAME_UTILS_ENABLE_FMTLIB
+        #include <fmt/format.h>
+        #ifndef LOG_WRAPPER_FWAPI_FMT_STRING
+            #define LOG_WRAPPER_FWAPI_FMT_STRING(S) FMT_STRING(S)
+        #endif
+    #endif
+#endif
+
 #include <config/compiler/template_prefix.h>
 
 #include "cli/shell_font.h"
@@ -64,6 +78,11 @@ namespace util {
 
         private:
             struct LIBATFRAME_UTILS_API construct_helper_t {};
+            struct LIBATFRAME_UTILS_API log_operation_t {
+                char* buffer;
+                size_t total_size;
+                size_t writen_size;
+            };
             LIBATFRAME_UTILS_API        log_wrapper();
 
         public:
@@ -90,6 +109,46 @@ namespace util {
 #endif
 #else
                                           const char *fmt, ...);
+#endif
+
+#if defined(LOG_WRAPPER_ENABLE_FWAPI) && LOG_WRAPPER_ENABLE_FWAPI
+            template<class... TARGS>
+            LIBATFRAME_UTILS_API_HEAD_ONLY void format_log(const caller_info_t &caller, TARGS&&... args) {
+                log_operation_t writer;
+                start_log(caller, writer);
+                if (!log_sinks_.empty()) {
+#if defined(LIBATFRAME_UTILS_ENABLE_EXCEPTION) && LIBATFRAME_UTILS_ENABLE_EXCEPTION
+                    try {
+#endif
+                        LOG_WRAPPER_FWAPI_NAMESPACE format_to_n_result<char*> result = 
+                            LOG_WRAPPER_FWAPI_NAMESPACE format_to_n(
+                                writer.buffer + writer.writen_size,
+                                writer.total_size - writer.writen_size - 1,
+                                std::forward<TARGS>(args)...
+                            );
+                        if (result.size >= 0) {
+                            writer.writen_size += result.size;
+                        }
+                        if (writer.writen_size < writer.total_size) {
+                            *(writer.buffer + writer.writen_size) = 0;
+                        } else {
+                            writer.writen_size = writer.total_size - 1;
+                            *(writer.buffer + writer.total_size - 1) = 0;
+                        }
+#if defined(LIBATFRAME_UTILS_ENABLE_EXCEPTION) && LIBATFRAME_UTILS_ENABLE_EXCEPTION
+                    } catch (const LOG_WRAPPER_FWAPI_NAMESPACE format_error& e) {
+                        append_log(writer, "\r\nGot format error:\r\n", 0);
+                        append_log(writer, e.what(), 0);
+                    } catch (const std::runtime_error& e) {
+                        append_log(writer, "\r\nGot runtime error:\r\n", 0);
+                        append_log(writer, e.what(), 0);
+                    } catch (...) {
+                        append_log(writer, "\r\nGot unknown exception", 0);
+                    }
+#endif
+                }
+                finish_log(caller, writer);
+            }
 #endif
 
             // 一般日志级别检查
@@ -172,6 +231,11 @@ namespace util {
             static LIBATFRAME_UTILS_API ptr_t create_user_logger();
 
         private:
+            void start_log(const caller_info_t &caller, log_operation_t&);
+            void finish_log(const caller_info_t &caller, log_operation_t&);
+            void append_log(log_operation_t&, const char* str, size_t strsz);
+
+        private:
             level_t::type                           log_level_;
             std::pair<level_t::type, level_t::type> stacktrace_level_;
             std::string                             prefix_format_;
@@ -194,7 +258,7 @@ namespace util {
 // 按分类日志输出工具
 #ifdef _MSC_VER
 
-/** 全局日志输出工具 **/
+/** 全局日志输出工具 - snprintf **/
 #define WCLOGDEFLV(lv, lv_name, cat, ...) \
     if (util::log::log_wrapper::check_level(WDTLOGGETCAT(cat), lv)) WDTLOGGETCAT(cat)->log(WDTLOGFILENF(lv, lv_name), __VA_ARGS__);
 
@@ -206,7 +270,7 @@ namespace util {
 #define WCLOGERROR(cat, ...) WCLOGDEFLV(util::log::log_wrapper::level_t::LOG_LW_ERROR, NULL, cat, __VA_ARGS__)
 #define WCLOGFATAL(cat, ...) WCLOGDEFLV(util::log::log_wrapper::level_t::LOG_LW_FATAL, NULL, cat, __VA_ARGS__)
 
-/** 对指定log_wrapper的日志输出工具 **/
+/** 对指定log_wrapper的日志输出工具 - snprintf **/
 
 #define WINSTLOGDEFLV(lv, lv_name, inst, ...) \
     if ((inst).check_level(lv)) (inst).log(WDTLOGFILENF(lv, lv_name), __VA_ARGS__);
@@ -219,9 +283,36 @@ namespace util {
 #define WINSTLOGERROR(inst, ...) WINSTLOGDEFLV(util::log::log_wrapper::level_t::LOG_LW_ERROR, NULL, inst, __VA_ARGS__)
 #define WINSTLOGFATAL(inst, ...) WINSTLOGDEFLV(util::log::log_wrapper::level_t::LOG_LW_FATAL, NULL, inst, __VA_ARGS__)
 
+#if defined(LOG_WRAPPER_ENABLE_FWAPI) && LOG_WRAPPER_ENABLE_FWAPI
+/** 全局日志输出工具 - std::format **/
+#define FWCLOGDEFLV(lv, lv_name, cat, FMT, ...) \
+    if (util::log::log_wrapper::check_level(WDTLOGGETCAT(cat), lv)) WDTLOGGETCAT(cat)->format_log(WDTLOGFILENF(lv, lv_name), LOG_WRAPPER_FWAPI_FMT_STRING(FMT), __VA_ARGS__);
+
+#define FWCLOGTRACE(cat, ...) FWCLOGDEFLV(util::log::log_wrapper::level_t::LOG_LW_TRACE, NULL, cat, __VA_ARGS__)
+#define FWCLOGDEBUG(cat, ...) FWCLOGDEFLV(util::log::log_wrapper::level_t::LOG_LW_DEBUG, NULL, cat, __VA_ARGS__)
+#define FWCLOGNOTICE(cat, ...) FWCLOGDEFLV(util::log::log_wrapper::level_t::LOG_LW_NOTICE, NULL, cat, __VA_ARGS__)
+#define FWCLOGINFO(cat, ...) FWCLOGDEFLV(util::log::log_wrapper::level_t::LOG_LW_INFO, NULL, cat, __VA_ARGS__)
+#define FWCLOGWARNING(cat, ...) FWCLOGDEFLV(util::log::log_wrapper::level_t::LOG_LW_WARNING, NULL, cat, __VA_ARGS__)
+#define FWCLOGERROR(cat, ...) FWCLOGDEFLV(util::log::log_wrapper::level_t::LOG_LW_ERROR, NULL, cat, __VA_ARGS__)
+#define FWCLOGFATAL(cat, ...) FWCLOGDEFLV(util::log::log_wrapper::level_t::LOG_LW_FATAL, NULL, cat, __VA_ARGS__)
+
+
+/** 对指定log_wrapper的日志输出工具 - std::format **/
+#define FWINSTLOGDEFLV(lv, lv_name, inst, FMT, ...) \
+    if ((inst).check_level(lv)) (inst).format_log(WDTLOGFILENF(lv, lv_name), LOG_WRAPPER_FWAPI_FMT_STRING(FMT), __VA_ARGS__);
+
+#define FWINSTLOGTRACE(inst, ...) FWINSTLOGDEFLV(util::log::log_wrapper::level_t::LOG_LW_TRACE, NULL, inst, __VA_ARGS__)
+#define FWINSTLOGDEBUG(inst, ...) FWINSTLOGDEFLV(util::log::log_wrapper::level_t::LOG_LW_DEBUG, NULL, inst, __VA_ARGS__)
+#define FWINSTLOGNOTICE(inst, ...) FWINSTLOGDEFLV(util::log::log_wrapper::level_t::LOG_LW_NOTICE, NULL, inst, __VA_ARGS__)
+#define FWINSTLOGINFO(inst, ...) FWINSTLOGDEFLV(util::log::log_wrapper::level_t::LOG_LW_INFO, NULL, inst, __VA_ARGS__)
+#define FWINSTLOGWARNING(inst, ...) FWINSTLOGDEFLV(util::log::log_wrapper::level_t::LOG_LW_WARNING, NULL, inst, __VA_ARGS__)
+#define FWINSTLOGERROR(inst, ...) FWINSTLOGDEFLV(util::log::log_wrapper::level_t::LOG_LW_ERROR, NULL, inst, __VA_ARGS__)
+#define FWINSTLOGFATAL(inst, ...) FWINSTLOGDEFLV(util::log::log_wrapper::level_t::LOG_LW_FATAL, NULL, inst, __VA_ARGS__)
+#endif
+
 #else
 
-/** 全局日志输出工具 **/
+/** 全局日志输出工具 - snprintf **/
 #define WCLOGDEFLV(lv, lv_name, cat, args...) \
     if (util::log::log_wrapper::check_level(WDTLOGGETCAT(cat), lv)) WDTLOGGETCAT(cat)->log(WDTLOGFILENF(lv, lv_name), ##args);
 
@@ -233,7 +324,7 @@ namespace util {
 #define WCLOGERROR(...) WCLOGDEFLV(util::log::log_wrapper::level_t::LOG_LW_ERROR, NULL, __VA_ARGS__)
 #define WCLOGFATAL(...) WCLOGDEFLV(util::log::log_wrapper::level_t::LOG_LW_FATAL, NULL, __VA_ARGS__)
 
-/** 对指定log_wrapper的日志输出工具 **/
+/** 对指定log_wrapper的日志输出工具 - snprintf **/
 #define WINSTLOGDEFLV(lv, lv_name, inst, args...) \
     if ((inst).check_level(lv)) (inst).log(WDTLOGFILENF(lv, lv_name), ##args);
 
@@ -244,6 +335,32 @@ namespace util {
 #define WINSTLOGWARNING(...) WINSTLOGDEFLV(util::log::log_wrapper::level_t::LOG_LW_WARNING, NULL, __VA_ARGS__)
 #define WINSTLOGERROR(...) WINSTLOGDEFLV(util::log::log_wrapper::level_t::LOG_LW_ERROR, NULL, __VA_ARGS__)
 #define WINSTLOGFATAL(...) WINSTLOGDEFLV(util::log::log_wrapper::level_t::LOG_LW_FATAL, NULL, __VA_ARGS__)
+
+#if defined(LOG_WRAPPER_ENABLE_FWAPI) && LOG_WRAPPER_ENABLE_FWAPI
+/** 全局日志输出工具 - std::format **/
+#define FWCLOGDEFLV(lv, lv_name, cat, FMT, args...) \
+    if (util::log::log_wrapper::check_level(WDTLOGGETCAT(cat), lv)) WDTLOGGETCAT(cat)->format_log(WDTLOGFILENF(lv, lv_name), LOG_WRAPPER_FWAPI_FMT_STRING(FMT), ##args);
+
+#define FWCLOGTRACE(...) FWCLOGDEFLV(util::log::log_wrapper::level_t::LOG_LW_TRACE, NULL, __VA_ARGS__)
+#define FWCLOGDEBUG(...) FWCLOGDEFLV(util::log::log_wrapper::level_t::LOG_LW_DEBUG, NULL, __VA_ARGS__)
+#define FWCLOGNOTICE(...) FWCLOGDEFLV(util::log::log_wrapper::level_t::LOG_LW_NOTICE, NULL, __VA_ARGS__)
+#define FWCLOGINFO(...) FWCLOGDEFLV(util::log::log_wrapper::level_t::LOG_LW_INFO, NULL, __VA_ARGS__)
+#define FWCLOGWARNING(...) FWCLOGDEFLV(util::log::log_wrapper::level_t::LOG_LW_WARNING, NULL, __VA_ARGS__)
+#define FWCLOGERROR(...) FWCLOGDEFLV(util::log::log_wrapper::level_t::LOG_LW_ERROR, NULL, __VA_ARGS__)
+#define FWCLOGFATAL(...) FWCLOGDEFLV(util::log::log_wrapper::level_t::LOG_LW_FATAL, NULL, __VA_ARGS__)
+
+/** 对指定log_wrapper的日志输出工具 - std::format **/
+#define FWINSTLOGDEFLV(lv, lv_name, inst, FMT, args...) \
+    if ((inst).check_level(lv)) (inst).format_log(WDTLOGFILENF(lv, lv_name), LOG_WRAPPER_FWAPI_FMT_STRING(FMT), ##args);
+
+#define FWINSTLOGTRACE(...) FWINSTLOGDEFLV(util::log::log_wrapper::level_t::LOG_LW_TRACE, NULL, __VA_ARGS__)
+#define FWINSTLOGDEBUG(...) FWINSTLOGDEFLV(util::log::log_wrapper::level_t::LOG_LW_DEBUG, NULL, __VA_ARGS__)
+#define FWINSTLOGNOTICE(...) FWINSTLOGDEFLV(util::log::log_wrapper::level_t::LOG_LW_NOTICE, NULL, __VA_ARGS__)
+#define FWINSTLOGINFO(...) FWINSTLOGDEFLV(util::log::log_wrapper::level_t::LOG_LW_INFO, NULL, __VA_ARGS__)
+#define FWINSTLOGWARNING(...) FWINSTLOGDEFLV(util::log::log_wrapper::level_t::LOG_LW_WARNING, NULL, __VA_ARGS__)
+#define FWINSTLOGERROR(...) FWINSTLOGDEFLV(util::log::log_wrapper::level_t::LOG_LW_ERROR, NULL, __VA_ARGS__)
+#define FWINSTLOGFATAL(...) FWINSTLOGDEFLV(util::log::log_wrapper::level_t::LOG_LW_FATAL, NULL, __VA_ARGS__)
+#endif
 
 #endif
 
@@ -256,6 +373,15 @@ namespace util {
 #define WLOGERROR(...) WCLOGERROR(util::log::log_wrapper::categorize_t::DEFAULT, __VA_ARGS__)
 #define WLOGFATAL(...) WCLOGFATAL(util::log::log_wrapper::categorize_t::DEFAULT, __VA_ARGS__)
 
+#if defined(LOG_WRAPPER_ENABLE_FWAPI) && LOG_WRAPPER_ENABLE_FWAPI
+#define FWLOGTRACE(...) FWCLOGTRACE(util::log::log_wrapper::categorize_t::DEFAULT, __VA_ARGS__)
+#define FWLOGDEBUG(...) FWCLOGDEBUG(util::log::log_wrapper::categorize_t::DEFAULT, __VA_ARGS__)
+#define FWLOGNOTICE(...) FWCLOGNOTICE(util::log::log_wrapper::categorize_t::DEFAULT, __VA_ARGS__)
+#define FWLOGINFO(...) FWCLOGINFO(util::log::log_wrapper::categorize_t::DEFAULT, __VA_ARGS__)
+#define FWLOGWARNING(...) FWCLOGWARNING(util::log::log_wrapper::categorize_t::DEFAULT, __VA_ARGS__)
+#define FWLOGERROR(...) FWCLOGERROR(util::log::log_wrapper::categorize_t::DEFAULT, __VA_ARGS__)
+#define FWLOGFATAL(...) FWCLOGFATAL(util::log::log_wrapper::categorize_t::DEFAULT, __VA_ARGS__)
+#endif
 
 // 控制台输出工具
 #ifdef _MSC_VER
