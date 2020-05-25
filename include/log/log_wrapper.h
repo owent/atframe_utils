@@ -231,9 +231,9 @@ namespace util {
             static LIBATFRAME_UTILS_API ptr_t create_user_logger();
 
         private:
-            void start_log(const caller_info_t &caller, log_operation_t&);
-            void finish_log(const caller_info_t &caller, log_operation_t&);
-            void append_log(log_operation_t&, const char* str, size_t strsz);
+            LIBATFRAME_UTILS_API void start_log(const caller_info_t &caller, log_operation_t&);
+            LIBATFRAME_UTILS_API void finish_log(const caller_info_t &caller, log_operation_t&);
+            LIBATFRAME_UTILS_API void append_log(log_operation_t&, const char* str, size_t strsz);
 
         private:
             level_t::type                           log_level_;
