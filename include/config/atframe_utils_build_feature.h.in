@@ -72,6 +72,20 @@
 #cmakedefine01 LIBATFRAME_UTILS_ENABLE_EXCEPTION
 #cmakedefine01 LIBATFRAME_UTILS_ENABLE_STD_EXCEPTION_PTR
 
+
+// Patch for disable RTTI on later options
+#if defined(LIBATFRAME_UTILS_ENABLE_RTTI) && LIBATFRAME_UTILS_ENABLE_RTTI
+    #if defined(_MSC_VER)
+        #if !defined(_CPPRTTI)
+            #undef LIBATFRAME_UTILS_ENABLE_RTTI
+        #endif
+    #elif defined(__GNUC__) && __GNUC__ >= 4
+        #if !defined(__GXX_RTTI)
+            #undef LIBATFRAME_UTILS_ENABLE_RTTI
+        #endif
+    #endif
+#endif
+
 #if defined(UTIL_CONFIG_COMPILER_CXX_RVALUE_REFERENCES) && UTIL_CONFIG_COMPILER_CXX_RVALUE_REFERENCES
     #if defined(LIBATFRAME_UTILS_ENABLE_STD_FORMAT) && LIBATFRAME_UTILS_ENABLE_STD_FORMAT
         #define LOG_WRAPPER_ENABLE_FWAPI 1

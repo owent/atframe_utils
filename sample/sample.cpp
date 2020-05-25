@@ -146,7 +146,9 @@ void log_sample_func6() {
     std::cout << "----------------setup log sink for std::format done--------------" << std::endl;
 #if defined(LOG_WRAPPER_ENABLE_FWAPI) && LOG_WRAPPER_ENABLE_FWAPI
     FWLOGINFO("{} {}: {}", "Hello", std::string("World"), 42);
-    // FWLOGINFO("{:d}", "foo"); // This will cause compile error when using fmtlib
+#if defined(_MSC_VER)
+    FWLOGINFO("{:d}", "foo"); // This will cause compile error when using fmtlib and gcc/clang
+#endif
 #endif
     WLOG_GETCAT(util::log::log_wrapper::categorize_t::DEFAULT)->pop_sink();
     FWLOGERROR("No log sink now");

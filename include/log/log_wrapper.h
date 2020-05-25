@@ -121,7 +121,7 @@ namespace util {
                     try {
 #endif
                         LOG_WRAPPER_FWAPI_NAMESPACE format_to_n_result<char*> result = 
-                            LOG_WRAPPER_FWAPI_NAMESPACE format_to_n(
+                            LOG_WRAPPER_FWAPI_NAMESPACE template format_to_n<char *>(
                                 writer.buffer + writer.writen_size,
                                 writer.total_size - writer.writen_size - 1,
                                 std::forward<TARGS>(args)...
@@ -285,8 +285,8 @@ namespace util {
 
 #if defined(LOG_WRAPPER_ENABLE_FWAPI) && LOG_WRAPPER_ENABLE_FWAPI
 /** 全局日志输出工具 - std::format **/
-#define FWCLOGDEFLV(lv, lv_name, cat, FMT, ...) \
-    if (util::log::log_wrapper::check_level(WDTLOGGETCAT(cat), lv)) WDTLOGGETCAT(cat)->format_log(WDTLOGFILENF(lv, lv_name), LOG_WRAPPER_FWAPI_FMT_STRING(FMT), __VA_ARGS__);
+#define FWCLOGDEFLV(lv, lv_name, cat, ...) \
+    if (util::log::log_wrapper::check_level(WDTLOGGETCAT(cat), lv)) WDTLOGGETCAT(cat)->format_log(WDTLOGFILENF(lv, lv_name), __VA_ARGS__);
 
 #define FWCLOGTRACE(cat, ...) FWCLOGDEFLV(util::log::log_wrapper::level_t::LOG_LW_TRACE, NULL, cat, __VA_ARGS__)
 #define FWCLOGDEBUG(cat, ...) FWCLOGDEFLV(util::log::log_wrapper::level_t::LOG_LW_DEBUG, NULL, cat, __VA_ARGS__)
@@ -298,8 +298,8 @@ namespace util {
 
 
 /** 对指定log_wrapper的日志输出工具 - std::format **/
-#define FWINSTLOGDEFLV(lv, lv_name, inst, FMT, ...) \
-    if ((inst).check_level(lv)) (inst).format_log(WDTLOGFILENF(lv, lv_name), LOG_WRAPPER_FWAPI_FMT_STRING(FMT), __VA_ARGS__);
+#define FWINSTLOGDEFLV(lv, lv_name, inst, ...) \
+    if ((inst).check_level(lv)) (inst).format_log(WDTLOGFILENF(lv, lv_name), __VA_ARGS__);
 
 #define FWINSTLOGTRACE(inst, ...) FWINSTLOGDEFLV(util::log::log_wrapper::level_t::LOG_LW_TRACE, NULL, inst, __VA_ARGS__)
 #define FWINSTLOGDEBUG(inst, ...) FWINSTLOGDEFLV(util::log::log_wrapper::level_t::LOG_LW_DEBUG, NULL, inst, __VA_ARGS__)
