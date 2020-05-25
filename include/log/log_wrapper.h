@@ -126,7 +126,7 @@ namespace util {
                                 writer.total_size - writer.writen_size - 1,
                                 std::forward<TARGS>(args)...
                             );
-                        if (result.size >= 0) {
+                        if (result.size > 0) {
                             writer.writen_size += result.size;
                         }
                         if (writer.writen_size < writer.total_size) {
