@@ -2,7 +2,6 @@
     include_guard(GLOBAL)
 endif()
 
-# 功能检测选项
 include(WriteCompilerDetectionHeader)
 
 # generate check header
@@ -10,7 +9,13 @@ write_compiler_detection_header(
     FILE "${PROJECT_ATFRAME_UTILS_INCLUDE_DIR}/config/compiler_features.h"
     PREFIX UTIL_CONFIG
     COMPILERS GNU Clang AppleClang MSVC
-    FEATURES cxx_std_98 cxx_std_11 cxx_std_14 cxx_std_17 cxx_std_20 cxx_alias_templates cxx_attributes cxx_auto_type cxx_constexpr cxx_decltype cxx_decltype_auto cxx_defaulted_functions cxx_deleted_functions cxx_final cxx_override cxx_range_for cxx_noexcept cxx_nullptr cxx_rvalue_references cxx_static_assert cxx_thread_local cxx_variadic_templates cxx_lambdas
+    FEATURES
+        c_std_90 c_std_99 c_std_11 c_restrict c_static_assert c_variadic_macros
+        cxx_std_98 cxx_std_11 cxx_std_14 cxx_std_17 cxx_std_20 cxx_alias_templates cxx_attributes cxx_attribute_deprecated cxx_auto_type 
+        cxx_constexpr cxx_decltype cxx_decltype_auto cxx_default_function_template_args cxx_defaulted_functions cxx_delegating_constructors 
+        cxx_deleted_functions cxx_final cxx_generic_lambdas cxx_inheriting_constructors cxx_lambdas cxx_long_long_type cxx_noexcept
+        cxx_nonstatic_member_init cxx_nullptr cxx_override cxx_range_for cxx_raw_string_literals cxx_relaxed_constexpr cxx_return_type_deduction
+        cxx_rvalue_references cxx_sizeof_member cxx_static_assert cxx_thread_local cxx_variadic_templates 
 )
 #file(MAKE_DIRECTORY "${PROJECT_ATFRAME_UTILS_INCLUDE_DIR}/config")
 #file(RENAME "${CMAKE_BINARY_DIR}/compiler_features.h" "${PROJECT_ATFRAME_UTILS_INCLUDE_DIR}/config/compiler_features.h")
@@ -36,8 +41,9 @@ if (CMAKE_USE_PTHREADS_INIT)
 endif ()
 
 # Check mkstemp/_mktemp/_mktemp_s for file system
+include(CheckCXXSourceCompiles)
+include(CheckCSourceCompiles)
 if (WIN32)
-    include(CheckCXXSourceCompiles)
     check_cxx_source_compiles("
     #include <io.h>
     #include <stdio.h>
@@ -53,7 +59,6 @@ if (WIN32)
         set (LIBATFRAME_UTILS_ENABLE_WINDOWS_MKTEMP TRUE)
     endif()
 else ()
-    include(CheckCSourceCompiles)
     check_c_source_compiles("
     #include <stdlib.h>
     #include <stdio.h>
@@ -292,7 +297,32 @@ if (NOT CRYPTO_DISABLED)
     endif()
 endif()
 
-# 测试配置选项
+# Check fmtlib(https://fmt.dev/)/std::format
+check_cxx_source_compiles("
+#include <format>
+#include <iostream>
+#include <string>
+int main() {
+    std::cout<< std::format(\"The answer is {}.\", 42)<< std::endl;
+    char buffer[64] = {0};
+    const auto result = std::format_to_n(buffer, std::size(buffer), \"{} {}: {}\", \"Hello\", \"World!\", 42);
+    std::cout << \"Buffer: \" << buffer << \",Untruncated output size = \" << result.size << std::endl;
+    return 0;
+}" LIBATFRAME_UTILS_ENABLE_STD_FORMAT)
+if (NOT LIBATFRAME_UTILS_ENABLE_STD_FORMAT)
+    find_package(fmt)
+    if (TARGET fmt::fmt-header-only)
+        set(LIBATFRAME_UTILS_ENABLE_FMTLIB TRUE)
+        list(APPEND PROJECT_ATFRAME_UTILS_DEP_SYS_LINK_NAMES fmt::fmt-header-only)
+    elseif (TARGET fmt::fmt)
+        set(LIBATFRAME_UTILS_ENABLE_FMTLIB TRUE)
+        list(APPEND PROJECT_ATFRAME_UTILS_DEP_SYS_LINK_NAMES fmt::fmt)
+    else()
+        set(LIBATFRAME_UTILS_ENABLE_FMTLIB FALSE)
+    endif ()
+endif ()
+
+# Test Configure
 set(GTEST_ROOT "" CACHE STRING "GTest root directory")
 set(BOOST_ROOT "" CACHE STRING "Boost root directory")
 option(PROJECT_TEST_ENABLE_BOOST_UNIT_TEST "Enable boost unit test." OFF)
