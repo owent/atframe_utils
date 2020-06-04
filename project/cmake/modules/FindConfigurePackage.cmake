@@ -323,7 +323,7 @@ macro (FindConfigurePackage)
                 if ( NOT BUILD_WITH_CMAKE_PROJECT_DIR)
                     set(BUILD_WITH_CMAKE_PROJECT_DIR ".")
                 endif()
-                message(STATUS "@${FindConfigurePackage_BUILD_DIRECTORY} Run: ${CMAKE_COMMAND} ${BUILD_WITH_CMAKE_PROJECT_DIR} -G '${CMAKE_GENERATOR}' -DCMAKE_INSTALL_PREFIX=${FindConfigurePackage_PREFIX_DIRECTORY} ${FindConfigurePackage_CMAKE_FLAGS}")
+                
                 set (FindConfigurePackage_BUILD_WITH_CMAKE_GENERATOR -G ${CMAKE_GENERATOR})
                 if (CMAKE_GENERATOR_PLATFORM)
                     list (APPEND FindConfigurePackage_BUILD_WITH_CMAKE_GENERATOR -A ${CMAKE_GENERATOR_PLATFORM})
@@ -335,6 +335,8 @@ macro (FindConfigurePackage)
                     project_build_tools_append_cmake_inherit_options(FindConfigurePackage_BUILD_WITH_CMAKE_GENERATOR)
                 endif ()
 
+                message(STATUS "@${FindConfigurePackage_BUILD_DIRECTORY} Run: ${CMAKE_COMMAND} ${BUILD_WITH_CMAKE_PROJECT_DIR} -G '${CMAKE_GENERATOR}' -DCMAKE_INSTALL_PREFIX=${FindConfigurePackage_PREFIX_DIRECTORY} ${FindConfigurePackage_CMAKE_FLAGS}")
+                
                 execute_process(
                     COMMAND 
                         ${CMAKE_COMMAND} ${BUILD_WITH_CMAKE_PROJECT_DIR} 
