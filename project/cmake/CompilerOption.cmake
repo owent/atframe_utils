@@ -68,7 +68,7 @@ if(NOT DEFINED __COMPILER_OPTION_LOADED)
         if (NOT ${VARNAME})
             set(${VARNAME} ${STDVERSION})
         endif ()
-    endif()
+    endmacro(try_set_compiler_lang_standard)
 
     # Auto compiler options, support gcc,MSVC,Clang,AppleClang
     if( ${CMAKE_CXX_COMPILER_ID} STREQUAL "GNU")
