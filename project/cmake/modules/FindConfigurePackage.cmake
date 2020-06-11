@@ -324,10 +324,6 @@ macro (FindConfigurePackage)
                     set(BUILD_WITH_CMAKE_PROJECT_DIR ".")
                 endif()
                 
-                set (FindConfigurePackage_BUILD_WITH_CMAKE_GENERATOR -G ${CMAKE_GENERATOR})
-                if (CMAKE_GENERATOR_PLATFORM)
-                    list (APPEND FindConfigurePackage_BUILD_WITH_CMAKE_GENERATOR -A ${CMAKE_GENERATOR_PLATFORM})
-                endif ()
                 list (APPEND FindConfigurePackage_BUILD_WITH_CMAKE_GENERATOR "-DCMAKE_INSTALL_PREFIX=${FindConfigurePackage_PREFIX_DIRECTORY}")
 
                 if (FindConfigurePackage_CMAKE_INHIRT_BUILD_ENV)
