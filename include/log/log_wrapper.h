@@ -308,6 +308,10 @@ namespace util {
 #define FWINSTLOGWARNING(inst, ...) FWINSTLOGDEFLV(util::log::log_wrapper::level_t::LOG_LW_WARNING, NULL, inst, __VA_ARGS__)
 #define FWINSTLOGERROR(inst, ...) FWINSTLOGDEFLV(util::log::log_wrapper::level_t::LOG_LW_ERROR, NULL, inst, __VA_ARGS__)
 #define FWINSTLOGFATAL(inst, ...) FWINSTLOGDEFLV(util::log::log_wrapper::level_t::LOG_LW_FATAL, NULL, inst, __VA_ARGS__)
+
+#define LOG_WRAPPER_FWAPI_FORMAT(...) LOG_WRAPPER_FWAPI_NAMESPACE format(__VA_ARGS__)
+#define LOG_WRAPPER_FWAPI_FORMAT_TO(...) LOG_WRAPPER_FWAPI_NAMESPACE format_to(__VA_ARGS__)
+#define LOG_WRAPPER_FWAPI_FORMAT_TO_N(...) LOG_WRAPPER_FWAPI_NAMESPACE format_to_n(__VA_ARGS__)
 #endif
 
 #else
@@ -360,6 +364,10 @@ namespace util {
 #define FWINSTLOGWARNING(...) FWINSTLOGDEFLV(util::log::log_wrapper::level_t::LOG_LW_WARNING, NULL, __VA_ARGS__)
 #define FWINSTLOGERROR(...) FWINSTLOGDEFLV(util::log::log_wrapper::level_t::LOG_LW_ERROR, NULL, __VA_ARGS__)
 #define FWINSTLOGFATAL(...) FWINSTLOGDEFLV(util::log::log_wrapper::level_t::LOG_LW_FATAL, NULL, __VA_ARGS__)
+
+#define LOG_WRAPPER_FWAPI_FORMAT(FMT, args...) LOG_WRAPPER_FWAPI_NAMESPACE format(LOG_WRAPPER_FWAPI_FMT_STRING(FMT), ##args)
+#define LOG_WRAPPER_FWAPI_FORMAT_TO(OUT, FMT, args...) LOG_WRAPPER_FWAPI_NAMESPACE format_to(OUT, LOG_WRAPPER_FWAPI_FMT_STRING(FMT), ##args)
+#define LOG_WRAPPER_FWAPI_FORMAT_TO_N(OUT, N, FMT, args...) LOG_WRAPPER_FWAPI_NAMESPACE format_to_n(OUT, N, LOG_WRAPPER_FWAPI_FMT_STRING(FMT), ##args)
 #endif
 
 #endif
