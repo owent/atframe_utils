@@ -124,18 +124,18 @@ namespace util {
 
         private:
             struct timer_type {
-                mutable uint32_t                  flags;        // 定时器标记位
-                uint32_t                          sequence;     // 定时器序号
-                time_t                            timeout;      // 原始的超时时间
-                void *                            private_data; // 私有数据指针
-                timer_callback_fn_t               fn;           // 回掉函数
-                jiffies_timer*                    owner;        // 所属的定时器管理器
-                std::list<timer_ptr_t>*           owner_round;  // 所属的时间轮
-                std::list<timer_ptr_t>::iterator  owner_iter;   // 所属的时间轮迭代器
-            };                                    // 外部请勿直接访问内部成员，只允许通过API访问
+                mutable uint32_t                          flags;        // 定时器标记位
+                uint32_t                                  sequence;     // 定时器序号
+                time_t                                    timeout;      // 原始的超时时间
+                void *                                    private_data; // 私有数据指针
+                timer_callback_fn_t                       fn;           // 回掉函数
+                jiffies_timer *                           owner;        // 所属的定时器管理器
+                std::list<timer_ptr_t> *                  owner_round;  // 所属的时间轮
+                typename std::list<timer_ptr_t>::iterator owner_iter;   // 所属的时间轮迭代器
+            };                                                          // 外部请勿直接访问内部成员，只允许通过API访问
 
         public:
-            typedef timer_type               timer_t;      // 外部请勿直接访问内部成员，只允许通过API访问
+            typedef timer_type timer_t; // 外部请勿直接访问内部成员，只允许通过API访问
 
             struct flag_t {
                 enum type {
@@ -242,7 +242,7 @@ namespace util {
                 if (watcher != NULL) {
                     *watcher = timer_inst;
                 }
-                timer_inst->owner_iter = timer_base_[idx].insert(timer_base_[idx].end(), timer_inst);
+                timer_inst->owner_iter  = timer_base_[idx].insert(timer_base_[idx].end(), timer_inst);
                 timer_inst->owner_round = &timer_base_[idx];
                 ++size_;
 
@@ -290,12 +290,12 @@ namespace util {
                                 }
 
                                 if (NULL != (*iter)->owner_round) {
-                                    (*iter)->owner_iter = (*iter)->owner_round->end();
+                                    (*iter)->owner_iter  = (*iter)->owner_round->end();
                                     (*iter)->owner_round = NULL;
                                 }
 
                                 if (NULL != (*iter)->owner) {
-                                    -- (*iter)->owner->size_;
+                                    --(*iter)->owner->size_;
                                     (*iter)->owner = NULL;
                                 }
                             }
@@ -363,12 +363,12 @@ namespace util {
                         timer.owner_round->erase(timer.owner_iter);
                     }
 
-                    timer.owner_iter = timer.owner_round->end();
+                    timer.owner_iter  = timer.owner_round->end();
                     timer.owner_round = NULL;
                 }
 
                 if (NULL != timer.owner) {
-                    -- timer.owner->size_;
+                    --timer.owner->size_;
                     timer.owner = NULL;
                 }
             }
