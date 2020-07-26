@@ -119,20 +119,23 @@ namespace util {
 
         public:
             typedef std::function<void(time_t tick_time, const timer_type &timer)> timer_callback_fn_t;
+            typedef std::shared_ptr<timer_type> timer_ptr_t;  // 外部请勿直接访问内部成员，只允许通过API访问
+            typedef std::weak_ptr<timer_type>   timer_wptr_t; // 外部请勿直接访问内部成员，只允许通过API访问
 
         private:
             struct timer_type {
-                mutable int         flags;        // 定时器标记位
-                uint32_t            sequence;     // 定时器序号
-                time_t              timeout;      // 原始的超时时间
-                void *              private_data; // 私有数据指针
-                timer_callback_fn_t fn;           // 回掉函数
+                mutable uint32_t                  flags;        // 定时器标记位
+                uint32_t                          sequence;     // 定时器序号
+                time_t                            timeout;      // 原始的超时时间
+                void *                            private_data; // 私有数据指针
+                timer_callback_fn_t               fn;           // 回掉函数
+                jiffies_timer*                    owner;        // 所属的定时器管理器
+                std::list<timer_ptr_t>*           owner_round;  // 所属的时间轮
+                std::list<timer_ptr_t>::iterator  owner_iter;   // 所属的时间轮迭代器
             };                                    // 外部请勿直接访问内部成员，只允许通过API访问
 
         public:
             typedef timer_type               timer_t;      // 外部请勿直接访问内部成员，只允许通过API访问
-            typedef std::shared_ptr<timer_t> timer_ptr_t;  // 外部请勿直接访问内部成员，只允许通过API访问
-            typedef std::weak_ptr<timer_t>   timer_wptr_t; // 外部请勿直接访问内部成员，只允许通过API访问
 
             struct flag_t {
                 enum type {
@@ -218,6 +221,9 @@ namespace util {
                 timer_inst->flags        = 0;
                 timer_inst->timeout      = last_tick_ + delta;
                 timer_inst->private_data = priv_data;
+                timer_inst->owner_round  = NULL;
+                timer_inst->owner        = this;
+                // timer_inst->owner_iter = ...
                 while (0 == ++seq_alloc_)
                     ;
                 timer_inst->sequence = seq_alloc_;
@@ -236,7 +242,8 @@ namespace util {
                 if (watcher != NULL) {
                     *watcher = timer_inst;
                 }
-                timer_base_[idx].push_back(std::move(timer_inst));
+                timer_inst->owner_iter = timer_base_[idx].insert(timer_base_[idx].end(), timer_inst);
+                timer_inst->owner_round = &timer_base_[idx];
                 ++size_;
 
                 return error_type_t::EN_JTET_SUCCESS;
@@ -273,15 +280,25 @@ namespace util {
                     while (list_sz > 0) {
                         --list_sz;
 
-                        // 从高层级往地层级走，这样能保证定时器时序
+                        // 从高层级往低层级走，这样能保证定时器时序
                         for (typename std::list<timer_ptr_t>::iterator iter = timer_list[list_sz]->begin();
                              iter != timer_list[list_sz]->end(); ++iter) {
-                            if (*iter && (*iter)->fn && !((*iter)->flags & timer_flag_t::EN_JTTF_DISABLED)) {
-                                (*iter)->fn(last_tick_, **iter);
-                                ++ret;
-                            }
+                            if (*iter) {
+                                if ((*iter)->fn && !((*iter)->flags & timer_flag_t::EN_JTTF_DISABLED)) {
+                                    (*iter)->fn(last_tick_, **iter);
+                                    ++ret;
+                                }
 
-                            --size_;
+                                if (NULL != (*iter)->owner_round) {
+                                    (*iter)->owner_iter = (*iter)->owner_round->end();
+                                    (*iter)->owner_round = NULL;
+                                }
+
+                                if (NULL != (*iter)->owner) {
+                                    -- (*iter)->owner->size_;
+                                    (*iter)->owner = NULL;
+                                }
+                            }
                         }
 
                         timer_list[list_sz]->clear();
@@ -335,11 +352,26 @@ namespace util {
             }
 
         public:
-            static inline void *   get_timer_private_data(const timer_t &timer) { return timer.private_data; }
-            static inline uint32_t get_timer_sequence(const timer_t &timer) { return timer.sequence; }
-            static inline bool     check_timer_flags(const timer_t &timer, typename timer_flag_t::type f) { return !!(timer.flags & f); }
-            static inline bool     set_timer_flags(const timer_t &timer, typename timer_flag_t::type f) { return timer.flags |= f; }
-            static inline bool     unset_timer_flags(const timer_t &timer, typename timer_flag_t::type f) { return timer.flags &= ~f; }
+            static inline void *   get_timer_private_data(const timer_type &timer) { return timer.private_data; }
+            static inline uint32_t get_timer_sequence(const timer_type &timer) { return timer.sequence; }
+            static inline bool     check_timer_flags(const timer_type &timer, typename timer_flag_t::type f) { return !!(timer.flags & f); }
+            static inline bool     set_timer_flags(const timer_type &timer, typename timer_flag_t::type f) { return timer.flags |= f; }
+            static inline bool     unset_timer_flags(const timer_type &timer, typename timer_flag_t::type f) { return timer.flags &= ~f; }
+            static inline void     remove_timer(timer_type &timer) {
+                if (NULL != timer.owner_round) {
+                    if (timer.owner_iter != timer.owner_round->end()) {
+                        timer.owner_round->erase(timer.owner_iter);
+                    }
+
+                    timer.owner_iter = timer.owner_round->end();
+                    timer.owner_round = NULL;
+                }
+
+                if (NULL != timer.owner) {
+                    -- timer.owner->size_;
+                    timer.owner = NULL;
+                }
+            }
 
         private:
             size_t collect_expired_timers(time_t tick_time, std::list<timer_ptr_t> *timer_list[LVL_DEPTH]) {

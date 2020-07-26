@@ -470,3 +470,56 @@ CASE_TEST(time_test, jiffies_timer_slot) {
         CASE_EXPECT_EQ(blank_area[i], short_timer_t::LVL_START(i) / short_timer_t::LVL_GRAN(i));
     }
 }
+
+CASE_TEST(time_test, jiffies_timer_remove) {
+    short_timer_t short_timer;
+    int           count    = 0;
+    time_t        max_tick = short_timer.get_max_tick_distance() + 1;
+
+    short_timer_t::timer_wptr_t timers[5];
+
+    CASE_EXPECT_EQ(short_timer_t::error_type_t::EN_JTET_NOT_INITED, short_timer.add_timer(123, jiffies_timer_fn(NULL), NULL));
+    CASE_EXPECT_EQ(short_timer_t::error_type_t::EN_JTET_NOT_INITED, short_timer.tick(456));
+
+    CASE_EXPECT_EQ(short_timer_t::error_type_t::EN_JTET_SUCCESS, short_timer.init(max_tick));
+    CASE_EXPECT_EQ(short_timer_t::error_type_t::EN_JTET_ALREADY_INITED, short_timer.init(max_tick));
+
+    CASE_EXPECT_EQ(32767, short_timer.get_max_tick_distance());
+    CASE_EXPECT_EQ(short_timer_t::error_type_t::EN_JTET_TIMEOUT_EXTENDED,
+                   short_timer.add_timer(short_timer.get_max_tick_distance() + 1, jiffies_timer_fn(NULL), NULL));
+
+    // 理论上会被放在（数组下标: 2^6*3=192）
+    CASE_EXPECT_EQ(short_timer_t::error_type_t::EN_JTET_SUCCESS,
+                   short_timer.add_timer(short_timer.get_max_tick_distance(), jiffies_timer_fn(&short_timer), &short_timer, &timers[0]));
+    // 理论上会被放在（数组下标: 2^6*4-1=255）
+    CASE_EXPECT_EQ(short_timer_t::error_type_t::EN_JTET_SUCCESS,
+                   short_timer.add_timer(short_timer.get_max_tick_distance() - short_timer_t::LVL_GRAN(3), jiffies_timer_fn(&short_timer),
+                                         &short_timer, &timers[1]));
+
+    CASE_EXPECT_EQ(short_timer_t::error_type_t::EN_JTET_SUCCESS, short_timer.add_timer(-123, jiffies_timer_fn(NULL), &count, &timers[2]));
+    CASE_EXPECT_EQ(short_timer_t::error_type_t::EN_JTET_SUCCESS, short_timer.add_timer(30, jiffies_timer_fn(NULL), &count, &timers[3]));
+    CASE_EXPECT_EQ(short_timer_t::error_type_t::EN_JTET_SUCCESS, short_timer.add_timer(40, jiffies_timer_fn(NULL), &count, &timers[4]));
+    CASE_EXPECT_EQ(5, static_cast<int>(short_timer.size()));
+
+    short_timer_t::set_timer_flags(*timers[4].lock(), short_timer_t::timer_flag_t::EN_JTTF_DISABLED);
+    short_timer_t::remove_timer(*timers[2].lock());
+    short_timer_t::remove_timer(*timers[3].lock());
+
+    short_timer.tick(max_tick + 1);
+    CASE_EXPECT_EQ(0, count);
+    CASE_EXPECT_EQ(3, static_cast<int>(short_timer.size()));
+
+    short_timer.tick(max_tick + 31);
+    // 跨tick
+    short_timer.tick(max_tick + 64);
+    CASE_EXPECT_EQ(0, count);
+    CASE_EXPECT_EQ(2, static_cast<int>(short_timer.size()));
+
+    short_timer_t::remove_timer(*timers[0].lock());
+    CASE_EXPECT_EQ(1, static_cast<int>(short_timer.size()));
+
+    // 全部执行掉
+    short_timer.tick(32767 + max_tick);
+    CASE_EXPECT_EQ(0, count);
+    CASE_EXPECT_EQ(0, static_cast<int>(short_timer.size()));
+}
