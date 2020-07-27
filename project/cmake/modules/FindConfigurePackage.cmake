@@ -13,6 +13,9 @@
 #     CONFIGURE_FLAGS [configure options...]
 #     CMAKE_FLAGS [cmake options...]
 #     CMAKE_INHIRT_BUILD_ENV
+#     CMAKE_INHIRT_BUILD_ENV_DISABLE_C_FLAGS
+#     CMAKE_INHIRT_BUILD_ENV_DISABLE_CXX_FLAGS
+#     CMAKE_INHIRT_BUILD_ENV_DISABLE_ASM_FLAGS
 #     SCONS_FLAGS [scons options...]
 #     CUSTOM_BUILD_COMMAND [custom build cmd...]
 #     MAKE_FLAGS [make options...]
@@ -145,7 +148,8 @@ macro (FindConfigurePackage)
     if (CMAKE_VERSION VERSION_LESS_EQUAL "3.4")
         include(CMakeParseArguments)
     endif ()
-    set(optionArgs BUILD_WITH_CONFIGURE BUILD_WITH_CMAKE BUILD_WITH_SCONS BUILD_WITH_CUSTOM_COMMAND CMAKE_INHIRT_BUILD_ENV)
+    set(optionArgs BUILD_WITH_CONFIGURE BUILD_WITH_CMAKE BUILD_WITH_SCONS BUILD_WITH_CUSTOM_COMMAND 
+        CMAKE_INHIRT_BUILD_ENV CMAKE_INHIRT_BUILD_ENV_DISABLE_C_FLAGS CMAKE_INHIRT_BUILD_ENV_DISABLE_CXX_FLAGS CMAKE_INHIRT_BUILD_ENV_DISABLE_ASM_FLAGS)
     set(oneValueArgs PACKAGE WORKING_DIRECTORY BUILD_DIRECTORY PREFIX_DIRECTORY SRC_DIRECTORY_NAME PROJECT_DIRECTORY MSVC_CONFIGURE ZIP_URL TAR_URL SVN_URL GIT_URL GIT_BRANCH INSTALL_TARGET)
     set(multiValueArgs CONFIGURE_CMD CONFIGURE_FLAGS CMAKE_FLAGS RESET_FIND_VARS SCONS_FLAGS MAKE_FLAGS CUSTOM_BUILD_COMMAND PREBUILD_COMMAND AFTERBUILD_COMMAND)
     cmake_parse_arguments(FindConfigurePackage "${optionArgs}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN} )
@@ -328,7 +332,18 @@ macro (FindConfigurePackage)
 
                 if (FindConfigurePackage_CMAKE_INHIRT_BUILD_ENV)
                     set (FindConfigurePackage_CMAKE_INHIRT_BUILD_ENV OFF)
-                    project_build_tools_append_cmake_inherit_options(FindConfigurePackage_BUILD_WITH_CMAKE_GENERATOR)
+                    set (project_build_tools_append_cmake_inherit_options_CALL_VARS FindConfigurePackage_BUILD_WITH_CMAKE_GENERATOR)
+                    if (FindConfigurePackage_CMAKE_INHIRT_BUILD_ENV_DISABLE_C_FLAGS)
+                        list(APPEND project_build_tools_append_cmake_inherit_options_CALL_VARS DISABLE_C_FLAGS)
+                    endif ()
+                    if (FindConfigurePackage_CMAKE_INHIRT_BUILD_ENV_DISABLE_CXX_FLAGS)
+                        list(APPEND project_build_tools_append_cmake_inherit_options_CALL_VARS DISABLE_CXX_FLAGS)
+                    endif ()
+                    if (FindConfigurePackage_CMAKE_INHIRT_BUILD_ENV_DISABLE_ASM_FLAGS)
+                        list(APPEND project_build_tools_append_cmake_inherit_options_CALL_VARS DISABLE_ASM_FLAGS)
+                    endif ()
+                    project_build_tools_append_cmake_inherit_options(${project_build_tools_append_cmake_inherit_options_CALL_VARS})
+                    unset(project_build_tools_append_cmake_inherit_options_CALL_VARS)
                 endif ()
 
                 message(STATUS "@${FindConfigurePackage_BUILD_DIRECTORY} Run: ${CMAKE_COMMAND} ${BUILD_WITH_CMAKE_PROJECT_DIR} -G '${CMAKE_GENERATOR}' -DCMAKE_INSTALL_PREFIX=${FindConfigurePackage_PREFIX_DIRECTORY} ${FindConfigurePackage_CMAKE_FLAGS}")

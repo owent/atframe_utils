@@ -9,39 +9,93 @@ if (CMAKE_VERSION VERSION_GREATER_EQUAL "3.10")
     include_guard(GLOBAL)
 endif()
 
-set (PROJECT_BUILD_TOOLS_CMAKE_INHERIT_VARS 
+set (PROJECT_BUILD_TOOLS_CMAKE_INHERIT_VARS_C
     CMAKE_C_FLAGS CMAKE_C_FLAGS_DEBUG CMAKE_C_FLAGS_RELEASE CMAKE_C_FLAGS_RELWITHDEBINFO CMAKE_C_FLAGS_MINSIZEREL
-    CMAKE_CXX_FLAGS CMAKE_CXX_FLAGS_DEBUG CMAKE_CXX_FLAGS_RELEASE CMAKE_CXX_FLAGS_RELWITHDEBINFO CMAKE_CXX_FLAGS_MINSIZEREL
-    CMAKE_ASM_FLAGS CMAKE_EXE_LINKER_FLAGS CMAKE_MODULE_LINKER_FLAGS CMAKE_SHARED_LINKER_FLAGS CMAKE_STATIC_LINKER_FLAGS
-    CMAKE_TOOLCHAIN_FILE CMAKE_AR CMAKE_RANLIB
     CMAKE_C_COMPILER CMAKE_C_COMPILER_LAUNCHER CMAKE_C_COMPILER_AR CMAKE_C_COMPILER_RANLIB CMAKE_C_LINK_LIBRARY_SUFFIX
+)
+
+set (PROJECT_BUILD_TOOLS_CMAKE_INHERIT_VARS_CXX
+    CMAKE_CXX_FLAGS CMAKE_CXX_FLAGS_DEBUG CMAKE_CXX_FLAGS_RELEASE CMAKE_CXX_FLAGS_RELWITHDEBINFO CMAKE_CXX_FLAGS_MINSIZEREL
     CMAKE_CXX_COMPILER CMAKE_CXX_COMPILER_LAUNCHER CMAKE_CXX_COMPILER_AR CMAKE_CXX_COMPILER_RANLIB CMAKE_CXX_LINK_LIBRARY_SUFFIX
-    CMAKE_ASM_COMPILER CMAKE_ASM_COMPILER_LAUNCHER CMAKE_ASM_COMPILER_AR CMAKE_ASM_COMPILER_RANLIB CMAKE_ASM_LINK_LIBRARY_SUFFIX
+    ANDROID_CPP_FEATURES ANDROID_STL
+)
+
+set (PROJECT_BUILD_TOOLS_CMAKE_INHERIT_VARS_ASM
+    CMAKE_ASM_FLAGS CMAKE_ASM_COMPILER CMAKE_ASM_COMPILER_LAUNCHER CMAKE_ASM_COMPILER_AR CMAKE_ASM_COMPILER_RANLIB CMAKE_ASM_LINK_LIBRARY_SUFFIX
+)
+
+set (PROJECT_BUILD_TOOLS_CMAKE_INHERIT_VARS_COMMON
+    CMAKE_EXE_LINKER_FLAGS CMAKE_MODULE_LINKER_FLAGS CMAKE_SHARED_LINKER_FLAGS CMAKE_STATIC_LINKER_FLAGS
+    CMAKE_TOOLCHAIN_FILE CMAKE_AR CMAKE_RANLIB
     CMAKE_SYSTEM_NAME PROJECT_ATFRAME_TARGET_CPU_ABI 
     CMAKE_SYSROOT CMAKE_SYSROOT_COMPILE # CMAKE_SYSTEM_LIBRARY_PATH # CMAKE_SYSTEM_LIBRARY_PATH ninja里解出的参数不对，原因未知
     CMAKE_OSX_SYSROOT CMAKE_OSX_ARCHITECTURES CMAKE_OSX_DEPLOYMENT_TARGET CMAKE_MACOSX_RPATH
-    ANDROID_TOOLCHAIN ANDROID_ABI ANDROID_STL ANDROID_PIE ANDROID_PLATFORM ANDROID_CPP_FEATURES
+    ANDROID_TOOLCHAIN ANDROID_ABI ANDROID_PIE ANDROID_PLATFORM
     ANDROID_ALLOW_UNDEFINED_SYMBOLS ANDROID_ARM_MODE ANDROID_ARM_NEON ANDROID_DISABLE_NO_EXECUTE ANDROID_DISABLE_RELRO
     ANDROID_DISABLE_FORMAT_STRING_CHECKS ANDROID_CCACHE
 )
 
-macro(project_build_tools_append_cmake_inherit_options OUTVAR)
+set (PROJECT_BUILD_TOOLS_CMAKE_INHERIT_VARS 
+    ${PROJECT_BUILD_TOOLS_CMAKE_INHERIT_VARS_COMMON}
+    ${PROJECT_BUILD_TOOLS_CMAKE_INHERIT_VARS_C}
+    ${PROJECT_BUILD_TOOLS_CMAKE_INHERIT_VARS_CXX}
+    ${PROJECT_BUILD_TOOLS_CMAKE_INHERIT_VARS_ASM}
+)
+
+macro(project_build_tools_append_cmake_inherit_options)
     list (APPEND ${OUTVAR} "-G" "${CMAKE_GENERATOR}")
 
-    foreach (VAR_NAME IN LISTS PROJECT_BUILD_TOOLS_CMAKE_INHERIT_VARS)
+    unset(project_build_tools_append_cmake_inherit_options_OUTVAR)
+    set(project_build_tools_append_cmake_inherit_options_DISABLE_C_FLAGS FALSE)
+    set(project_build_tools_append_cmake_inherit_options_DISABLE_CXX_FLAGS FALSE)
+    set(project_build_tools_append_cmake_inherit_options_DISABLE_ASM_FLAGS FALSE)
+    set(project_build_tools_append_cmake_inherit_options_VARS PROJECT_BUILD_TOOLS_CMAKE_INHERIT_VARS_COMMON)
+    foreach(ARG IN LISTS ARGN)
+        if(NOT project_build_tools_append_cmake_inherit_options_OUTVAR)
+            set(project_build_tools_append_cmake_inherit_options_OUTVAR ${ARG})
+        endif ()
+        if ("${ARG}" STREQUAL "DISABLE_C_FLAGS")
+            set(project_build_tools_append_cmake_inherit_options_DISABLE_C_FLAGS TRUE)
+        endif ()
+        if ("${ARG}" STREQUAL "DISABLE_CXX_FLAGS")
+            set(project_build_tools_append_cmake_inherit_options_DISABLE_CXX_FLAGS TRUE)
+        endif ()
+        if ("${ARG}" STREQUAL "DISABLE_ASM_FLAGS")
+            set(project_build_tools_append_cmake_inherit_options_DISABLE_ASM_FLAGS TRUE)
+        endif ()
+    endforeach()
+
+    if (NOT project_build_tools_append_cmake_inherit_options_DISABLE_C_FLAGS)
+        list (APPEND ${project_build_tools_append_cmake_inherit_options_VARS} PROJECT_BUILD_TOOLS_CMAKE_INHERIT_VARS_C)
+    endif ()
+    if (NOT project_build_tools_append_cmake_inherit_options_DISABLE_CXX_FLAGS)
+        list (APPEND ${project_build_tools_append_cmake_inherit_options_VARS} PROJECT_BUILD_TOOLS_CMAKE_INHERIT_VARS_CXX)
+    endif ()
+    if (NOT project_build_tools_append_cmake_inherit_options_DISABLE_ASM_FLAGS)
+        list (APPEND ${project_build_tools_append_cmake_inherit_options_VARS} PROJECT_BUILD_TOOLS_CMAKE_INHERIT_VARS_ASM)
+    endif ()
+
+
+    foreach (VAR_NAME IN LISTS ${project_build_tools_append_cmake_inherit_options_VARS})
         if (DEFINED ${VAR_NAME})
             set(VAR_VALUE "${${VAR_NAME}}")
             # message("DEBUG============ ${VAR_NAME}=${VAR_VALUE}")
             if (VAR_VALUE)
-                list (APPEND ${OUTVAR} "-D${VAR_NAME}=${VAR_VALUE}")
+                list (APPEND ${project_build_tools_append_cmake_inherit_options_OUTVAR} "-D${VAR_NAME}=${VAR_VALUE}")
             endif ()
             unset(VAR_VALUE)
         endif ()
     endforeach ()
 
     if (CMAKE_GENERATOR_PLATFORM)
-        list (APPEND ${OUTVAR} "-A" "${CMAKE_GENERATOR_PLATFORM}")
+        list (APPEND ${project_build_tools_append_cmake_inherit_options_OUTVAR} "-A" "${CMAKE_GENERATOR_PLATFORM}")
     endif ()
+
+    unset(project_build_tools_append_cmake_inherit_options_OUTVAR)
+    unset(project_build_tools_append_cmake_inherit_options_DISABLE_C_FLAGS)
+    unset(project_build_tools_append_cmake_inherit_options_DISABLE_CXX_FLAGS)
+    unset(project_build_tools_append_cmake_inherit_options_DISABLE_ASM_FLAGS)
+    unset(project_build_tools_append_cmake_inherit_options_VARS)
 endmacro ()
 
 macro(project_build_tools_append_cmake_build_type_for_lib OUTVAR)
@@ -56,20 +110,38 @@ macro(project_build_tools_append_cmake_build_type_for_lib OUTVAR)
     endif ()
 endmacro ()
 
-macro(project_build_tools_append_cmake_cxx_standard_options OUTVAR)
-    if (CMAKE_C_STANDARD)
-        list (APPEND ${OUTVAR} "-DCMAKE_C_STANDARD=${CMAKE_C_STANDARD}")
+macro(project_build_tools_append_cmake_cxx_standard_options)
+    unset(project_build_tools_append_cmake_cxx_standard_options_OUTVAR)
+    set(project_build_tools_append_cmake_cxx_standard_options_DISABLE_C_FLAGS FALSE)
+    set(project_build_tools_append_cmake_cxx_standard_options_DISABLE_CXX_FLAGS FALSE)
+    foreach(ARG IN LISTS ARGN)
+        if(NOT project_build_tools_append_cmake_cxx_standard_options_OUTVAR)
+            set(project_build_tools_append_cmake_cxx_standard_options_OUTVAR ${ARG})
+        endif ()
+        if ("${ARG}" STREQUAL "DISABLE_C_FLAGS")
+            set(project_build_tools_append_cmake_cxx_standard_options_DISABLE_C_FLAGS TRUE)
+        endif ()
+        if ("${ARG}" STREQUAL "DISABLE_CXX_FLAGS")
+            set(project_build_tools_append_cmake_cxx_standard_options_DISABLE_CXX_FLAGS TRUE)
+        endif ()
+    endforeach()
+    if (CMAKE_C_STANDARD AND NOT project_build_tools_append_cmake_cxx_standard_options_DISABLE_C_FLAGS)
+        list (APPEND ${project_build_tools_append_cmake_cxx_standard_options_OUTVAR} "-DCMAKE_C_STANDARD=${CMAKE_C_STANDARD}")
     endif ()
-    if (CMAKE_CXX_STANDARD)
-        list (APPEND ${OUTVAR} "-DCMAKE_CXX_STANDARD=${CMAKE_CXX_STANDARD}")
+    if (CMAKE_CXX_STANDARD AND NOT project_build_tools_append_cmake_cxx_standard_options_DISABLE_CXX_FLAGS)
+        list (APPEND ${project_build_tools_append_cmake_cxx_standard_options_OUTVAR} "-DCMAKE_CXX_STANDARD=${CMAKE_CXX_STANDARD}")
     endif ()
+
+    unset(project_build_tools_append_cmake_cxx_standard_options_OUTVAR)
+    unset(project_build_tools_append_cmake_cxx_standard_options_DISABLE_C_FLAGS)
+    unset(project_build_tools_append_cmake_cxx_standard_options_DISABLE_CXX_FLAGS)
 endmacro()
 
 macro(project_build_tools_append_cmake_options_for_lib OUTVAR)
-    project_build_tools_append_cmake_inherit_options(${OUTVAR})
-    project_build_tools_append_cmake_build_type_for_lib(${OUTVAR})
-    project_build_tools_append_cmake_cxx_standard_options(${OUTVAR})
-    list (APPEND ${OUTVAR}
+    project_build_tools_append_cmake_inherit_options(${ARGN})
+    project_build_tools_append_cmake_build_type_for_lib(${ARGV0})
+    project_build_tools_append_cmake_cxx_standard_options(${ARGN})
+    list (APPEND ${ARGV0}
         "-DCMAKE_POLICY_DEFAULT_CMP0075=NEW" 
         "-DCMAKE_POSITION_INDEPENDENT_CODE=ON"
     )
