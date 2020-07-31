@@ -355,8 +355,8 @@ namespace util {
             static inline void *   get_timer_private_data(const timer_type &timer) { return timer.private_data; }
             static inline uint32_t get_timer_sequence(const timer_type &timer) { return timer.sequence; }
             static inline bool     check_timer_flags(const timer_type &timer, typename timer_flag_t::type f) { return !!(timer.flags & static_cast<uint32_t>(f)); }
-            static inline bool     set_timer_flags(const timer_type &timer, typename timer_flag_t::type f) { return timer.flags |= static_cast<uint32_t>(f); }
-            static inline bool     unset_timer_flags(const timer_type &timer, typename timer_flag_t::type f) { return timer.flags &= ~static_cast<uint32_t>(f); }
+            static inline void     set_timer_flags(const timer_type &timer, typename timer_flag_t::type f) { timer.flags |= static_cast<uint32_t>(f); }
+            static inline void     unset_timer_flags(const timer_type &timer, typename timer_flag_t::type f) { timer.flags &= ~static_cast<uint32_t>(f); }
             static inline void     remove_timer(timer_type &timer) {
                 if (NULL != timer.owner_round) {
                     if (timer.owner_iter != timer.owner_round->end()) {
