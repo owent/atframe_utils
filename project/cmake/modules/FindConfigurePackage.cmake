@@ -312,10 +312,16 @@ macro (FindConfigurePackage)
                     WORKING_DIRECTORY "${FindConfigurePackage_BUILD_DIRECTORY}"
                 )
 
+                if (PROJECT_FIND_CONFIGURE_PACKAGE_PARALLEL_BUILD)
+                    set(FindConfigurePackageCMakeBuildParallelFlags "-j")
+                else ()
+                    unset(FindConfigurePackageCMakeBuildParallelFlags)
+                endif ()
                 execute_process(
-                    COMMAND "make" ${FindConfigurePackage_MAKE_FLAGS} ${FindConfigurePackage_INSTALL_TARGET}
+                    COMMAND "make" ${FindConfigurePackage_MAKE_FLAGS} ${FindConfigurePackage_INSTALL_TARGET} ${FindConfigurePackageCMakeBuildParallelFlags}
                     WORKING_DIRECTORY ${FindConfigurePackage_BUILD_DIRECTORY}
                 )
+                unset(FindConfigurePackageCMakeBuildParallelFlags)
 
             # build using cmake and make
             elseif(FindConfigurePackage_BUILD_WITH_CMAKE)
@@ -357,22 +363,28 @@ macro (FindConfigurePackage)
                 )
 
                 # cmake --build and install
+                if (PROJECT_FIND_CONFIGURE_PACKAGE_PARALLEL_BUILD)
+                    set(FindConfigurePackageCMakeBuildParallelFlags "-j")
+                else ()
+                    unset(FindConfigurePackageCMakeBuildParallelFlags)
+                endif ()
                 if(MSVC)
                     if (NOT FindConfigurePackage_MSVC_CONFIGURE)
                         set(FindConfigurePackage_MSVC_CONFIGURE RelWithDebInfo)
                     endif()
                     execute_process(
                         COMMAND ${CMAKE_COMMAND} --build . --target ${FindConfigurePackage_INSTALL_TARGET} --config ${FindConfigurePackage_MSVC_CONFIGURE}
-                            ${FindConfigurePackageCMakeBuildMultiJobs}
+                            ${FindConfigurePackageCMakeBuildParallelFlags}
                         WORKING_DIRECTORY ${FindConfigurePackage_BUILD_DIRECTORY}
                     )
                 else()
                     execute_process(
                         COMMAND ${CMAKE_COMMAND} --build . --target ${FindConfigurePackage_INSTALL_TARGET}
-                            ${FindConfigurePackageCMakeBuildMultiJobs}
+                            ${FindConfigurePackageCMakeBuildParallelFlags}
                         WORKING_DIRECTORY ${FindConfigurePackage_BUILD_DIRECTORY}
                     )
                 endif()
+                unset(FindConfigurePackageCMakeBuildParallelFlags)
 
                 # adaptor for new cmake module
                 set ("${FindConfigurePackage_PACKAGE}_ROOT" ${FindConfigurePackage_PREFIX_DIRECTORY})

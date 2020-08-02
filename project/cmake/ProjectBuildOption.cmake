@@ -331,6 +331,7 @@ set(LIBATFRAME_UTILS_ENABLE_STD_EXCEPTION_PTR ${COMPILER_OPTIONS_TEST_STD_EXCEPT
 set(GTEST_ROOT "" CACHE STRING "GTest root directory")
 set(BOOST_ROOT "" CACHE STRING "Boost root directory")
 option(PROJECT_TEST_ENABLE_BOOST_UNIT_TEST "Enable boost unit test." OFF)
+option(PROJECT_FIND_CONFIGURE_PACKAGE_PARALLEL_BUILD "Parallel building for FindConfigurePackage. It's usually useful for some CI with low memory." ON)
 
 option(PROJECT_ENABLE_UNITTEST "Enable unit test" OFF)
 option(PROJECT_ENABLE_SAMPLE "Enable sample" OFF)
