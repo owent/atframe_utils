@@ -370,14 +370,29 @@ macro (FindConfigurePackage)
                 endif ()
                 if(MSVC)
                     if (NOT FindConfigurePackage_MSVC_CONFIGURE)
-                        set(FindConfigurePackage_MSVC_CONFIGURE RelWithDebInfo)
+                        message(STATUS "@${FindConfigurePackage_BUILD_DIRECTORY} Run: ${CMAKE_COMMAND} --build . --target ${FindConfigurePackage_INSTALL_TARGET} --config ${FindConfigurePackage_MSVC_CONFIGURE} ${FindConfigurePackageCMakeBuildParallelFlags}")
+                        execute_process(
+                            COMMAND ${CMAKE_COMMAND} --build . --target ${FindConfigurePackage_INSTALL_TARGET} --config ${FindConfigurePackage_MSVC_CONFIGURE}
+                                ${FindConfigurePackageCMakeBuildParallelFlags}
+                            WORKING_DIRECTORY ${FindConfigurePackage_BUILD_DIRECTORY}
+                        )
+                    else()
+                        message(STATUS "@${FindConfigurePackage_BUILD_DIRECTORY} Run: ${CMAKE_COMMAND} --build . --target ${FindConfigurePackage_INSTALL_TARGET} --config Debug ${FindConfigurePackageCMakeBuildParallelFlags}")
+                        execute_process(
+                            COMMAND ${CMAKE_COMMAND} --build . --target ${FindConfigurePackage_INSTALL_TARGET} --config Debug
+                                ${FindConfigurePackageCMakeBuildParallelFlags}
+                            WORKING_DIRECTORY ${FindConfigurePackage_BUILD_DIRECTORY}
+                        )
+                        message(STATUS "@${FindConfigurePackage_BUILD_DIRECTORY} Run: ${CMAKE_COMMAND} --build . --target ${FindConfigurePackage_INSTALL_TARGET} --config Release ${FindConfigurePackageCMakeBuildParallelFlags}")
+                        execute_process(
+                            COMMAND ${CMAKE_COMMAND} --build . --target ${FindConfigurePackage_INSTALL_TARGET} --config Release
+                                ${FindConfigurePackageCMakeBuildParallelFlags}
+                            WORKING_DIRECTORY ${FindConfigurePackage_BUILD_DIRECTORY}
+                        )
                     endif()
-                    execute_process(
-                        COMMAND ${CMAKE_COMMAND} --build . --target ${FindConfigurePackage_INSTALL_TARGET} --config ${FindConfigurePackage_MSVC_CONFIGURE}
-                            ${FindConfigurePackageCMakeBuildParallelFlags}
-                        WORKING_DIRECTORY ${FindConfigurePackage_BUILD_DIRECTORY}
-                    )
+                    
                 else()
+                    message(STATUS "@${FindConfigurePackage_BUILD_DIRECTORY} Run: ${CMAKE_COMMAND} --build . --target ${FindConfigurePackage_INSTALL_TARGET} ${FindConfigurePackageCMakeBuildParallelFlags}")
                     execute_process(
                         COMMAND ${CMAKE_COMMAND} --build . --target ${FindConfigurePackage_INSTALL_TARGET}
                             ${FindConfigurePackageCMakeBuildParallelFlags}
