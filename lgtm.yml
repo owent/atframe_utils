@@ -13,6 +13,8 @@ extraction:
       - export LANG=zh_CN.utf-8
       - export LC_ALL=zh_CN.utf-8
       - export LC_CTYPE=zh_CN.utf-8
+      - export CXXFLAGS="-D__STDC_WANT_LIB_EXT1__=1"
+      - export CFLAGS="-D__STDC_WANT_LIB_EXT1__=1"
     index: # Customizable step used by all languages.
       build_command:
         - if [[ -e build_jobs_dir ]]; then cd build_jobs_dir; fi ; cmake --build . -j
