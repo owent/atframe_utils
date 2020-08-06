@@ -312,14 +312,34 @@ int main() {
 if (NOT LIBATFRAME_UTILS_ENABLE_STD_FORMAT)
     find_package(fmt QUIET)
     if (TARGET fmt::fmt-header-only)
-        set(LIBATFRAME_UTILS_ENABLE_FMTLIB TRUE)
-        list(APPEND PROJECT_ATFRAME_UTILS_PUBLIC_LINK_NAMES fmt::fmt-header-only)
+        set(LIBATFRAME_UTILS_FMT_TARGET fmt::fmt-header-only)
     elseif (TARGET fmt::fmt)
-        set(LIBATFRAME_UTILS_ENABLE_FMTLIB TRUE)
-        list(APPEND PROJECT_ATFRAME_UTILS_PUBLIC_LINK_NAMES fmt::fmt)
-    else()
-        set(LIBATFRAME_UTILS_ENABLE_FMTLIB FALSE)
+        set(LIBATFRAME_UTILS_FMT_TARGET fmt::fmt)
+    else ()
+        unset(LIBATFRAME_UTILS_FMT_TARGET)
     endif ()
+
+    if (LIBATFRAME_UTILS_FMT_TARGET)
+        set(LIBATFRAME_UTILS_TEST_FMT_BACKUP_CMAKE_REQUIRED_LIBRARIES ${CMAKE_REQUIRED_LIBRARIES})
+        set(CMAKE_REQUIRED_LIBRARIES ${LIBATFRAME_UTILS_FMT_TARGET})
+        check_cxx_source_compiles("
+        #include <fmt/format>
+        #include <iostream>
+        #include <string>
+        int main() {
+            std::cout<< fmt::format(\"The answer is {}.\", 42)<< std::endl;
+            char buffer[64] = {0};
+            const auto result = fmt::format_to_n(buffer, std::size(buffer), \"{} {}: {}\", \"Hello\", \"World!\", 42);
+            std::cout << \"Buffer: \" << buffer << \",Untruncated output size = \" << result.size << std::endl;
+            return 0;
+        }" LIBATFRAME_UTILS_ENABLE_FMTLIB)
+        set(CMAKE_REQUIRED_LIBRARIES ${LIBATFRAME_UTILS_TEST_FMT_BACKUP_CMAKE_REQUIRED_LIBRARIES})
+        unset(LIBATFRAME_UTILS_TEST_FMT_BACKUP_CMAKE_REQUIRED_LIBRARIES)
+    endif ()
+
+    if (LIBATFRAME_UTILS_ENABLE_FMTLIB)
+        list(APPEND PROJECT_ATFRAME_UTILS_PUBLIC_LINK_NAMES ${LIBATFRAME_UTILS_FMT_TARGET})
+    endif()
 endif ()
 
 

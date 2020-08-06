@@ -14,8 +14,8 @@ Compilers | linux-gcc-4.8 <br /> linux-gcc-7 <br /> linux-gcc-9 <br /> osx-apple
 [windows-link]:  https://ci.appveyor.com/project/owt5008137/atframe-utils/branch/master "AppVeyor build status"
 [coverage-badge]: https://coveralls.io/repos/github/atframework/atframe_utils/badge.svg?branch=master "Coveralls coverage"
 [coverage-link]:  https://coveralls.io/github/atframework/atframe_utils?branch=master "Coveralls coverage"
-[lgtm-badge]: https://img.shields.io/lgtm/alerts/g/atframework/atframe_utils.svg?logo=lgtm&logoWidth=18 "LGTM"
-[lgtm-link]:  https://lgtm.com/projects/g/atframework/atframe_utils/alerts/ "LGTM"
+[lgtm-badge]: https://img.shields.io/lgtm/grade/cpp/g/atframework/atframe_utils.svg?logo=lgtm&logoWidth=18 "LGTM"
+[lgtm-link]:  https://lgtm.com/projects/g/atframework/atframe_utils/context:cpp "LGTM"
 
 # Usage:
 
