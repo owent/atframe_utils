@@ -1,0 +1,14 @@
+path_classifiers:
+  test:
+    - "test/*/*"
+extraction:
+  cpp:
+    prepare: # Customizable step used by all languages.
+      packages:
+        - g++
+    configure: # Customizable step used only by C/C++ extraction.
+      command:
+        - mkdir build_jobs_dir; cd build_jobs_dir; cmake ..
+    index: # Customizable step used by all languages.
+      build_command:
+        - if [[ -e build_jobs_dir ]]; then cd build_jobs_dir; fi ; cmake --build . -j
