@@ -6,7 +6,7 @@ cxx utils code
 | Build & Unit Test         | ![linux-badge]                     | ![windows-badge]                      | ![coverage-badge]         |
 Compilers | linux-gcc-4.8 <br /> linux-gcc-7 <br /> linux-gcc-9 <br /> osx-apple-clang-9.0 <br /> | MSVC 14(Visual Studio 2015) <br /> MSVC 15(Visual Studio 2017) <br /> MSVC 16(Visual Studio 2019) <br /> Mingw32-gcc <br /> Mingw64-gcc |  
 
-[![gitter-badge]][gitter-link]
+[![lgtm-badge]][lgtm-link]
 
 [linux-badge]: https://travis-ci.org/atframework/atframe_utils.svg?branch=master "Travis build status"
 [linux-link]:  https://travis-ci.org/atframework/atframe_utils "Travis build status"
@@ -14,8 +14,8 @@ Compilers | linux-gcc-4.8 <br /> linux-gcc-7 <br /> linux-gcc-9 <br /> osx-apple
 [windows-link]:  https://ci.appveyor.com/project/owt5008137/atframe-utils/branch/master "AppVeyor build status"
 [coverage-badge]: https://coveralls.io/repos/github/atframework/atframe_utils/badge.svg?branch=master "Coveralls coverage"
 [coverage-link]:  https://coveralls.io/github/atframework/atframe_utils?branch=master "Coveralls coverage"
-[gitter-badge]: https://badges.gitter.im/atframework/common.svg "Gitter"
-[gitter-link]:  https://gitter.im/atframework/common?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge "Gitter"
+[lgtm-badge]: https://img.shields.io/lgtm/alerts/g/atframework/atframe_utils.svg?logo=lgtm&logoWidth=18 "LGTM"
+[lgtm-link]:  https://lgtm.com/projects/g/atframework/atframe_utils/alerts/ "LGTM"
 
 # Usage:
 
