@@ -323,7 +323,7 @@ if (NOT LIBATFRAME_UTILS_ENABLE_STD_FORMAT)
         set(LIBATFRAME_UTILS_TEST_FMT_BACKUP_CMAKE_REQUIRED_LIBRARIES ${CMAKE_REQUIRED_LIBRARIES})
         set(CMAKE_REQUIRED_LIBRARIES ${LIBATFRAME_UTILS_FMT_TARGET})
         check_cxx_source_compiles("
-        #include <fmt/format>
+        #include <fmt/format.h>
         #include <iostream>
         #include <string>
         int main() {
