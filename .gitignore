@@ -31,6 +31,9 @@
 .vscode
 .clion
 
+__pycache__
+.pyc
+
 /build
 /build_*
 
