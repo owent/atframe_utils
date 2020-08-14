@@ -41,14 +41,10 @@
 
 #include "lock/seq_alloc.h"
 
-#if defined(__cplusplus) &&                                                                                         \
-    (__cplusplus >= 201103L || (defined(_MSC_VER) && (_MSC_VER == 1500 && defined(_HAS_TR1)) || _MSC_VER > 1500) || \
-     (defined(__GNUC__) && defined(__GXX_EXPERIMENTAL_CXX0X__)))
+#if defined(LIBATFRAME_UTILS_ENABLE_UNORDERED_MAP_SET) && LIBATFRAME_UTILS_ENABLE_UNORDERED_MAP_SET
 #include <unordered_map>
-#define UTIL_MEMPOOL_LRUOBJECTPOOL_MAP(...) std::unordered_map<__VA_ARGS__>
 #else
 #include <map>
-#define UTIL_MEMPOOL_LRUOBJECTPOOL_MAP(...) std::map<__VA_ARGS__>
 #endif
 
 // 开启这个宏在包含此文件会开启对象重复push进同一个池的检测，同时也会导致push、pull和gc的复杂度由O(1)变为O(log(n))
@@ -191,7 +187,7 @@ namespace util {
 
             class list_type;
             typedef std::shared_ptr<list_type> list_ptr_type;
-            typedef UTIL_MEMPOOL_LRUOBJECTPOOL_MAP(key_t, list_ptr_type) cat_map_type;
+            typedef LIBATFRAME_UTILS_AUTO_SELETC_MAP(key_t, list_ptr_type) cat_map_type;
 
             class list_type : public lru_pool_base::list_type_base {
             public:

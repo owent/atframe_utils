@@ -11,8 +11,8 @@
  * @date 2012.08.01
  *
  * @history
- *     2014.05.20 增加类似php的rawurlencode和urlencode函数
- *
+ *      2014.05.20 增加类似php的rawurlencode和urlencode函数
+ *      2020.08.14 增加优先使用unordered_map
  */
 
 #ifndef UTIL_URI_TQUERYSTRING_H
@@ -21,7 +21,6 @@
 #pragma once
 
 #include <cstddef>
-#include <map>
 #include <sstream>
 #include <string>
 #include <vector>
@@ -29,6 +28,12 @@
 #include "std/smart_ptr.h"
 
 #include <config/atframe_utils_build_feature.h>
+
+#if defined(LIBATFRAME_UTILS_ENABLE_UNORDERED_MAP_SET) && LIBATFRAME_UTILS_ENABLE_UNORDERED_MAP_SET
+#include <unordered_map>
+#else
+#include <map>
+#endif
 
 namespace util {
     namespace uri {
@@ -363,7 +368,7 @@ namespace util {
          */
         class item_object : public item_impl {
         public:
-            typedef std::map<std::string, std::shared_ptr<item_impl> > data_map_t;
+            typedef LIBATFRAME_UTILS_AUTO_SELETC_MAP(std::string, std::shared_ptr<item_impl>) data_map_t;
             data_map_t                                                 data_;
             typedef data_map_t::iterator                               data_iterator;
             typedef data_map_t::const_iterator                         data_const_iterator;
@@ -399,7 +404,7 @@ namespace util {
 
             LIBATFRAME_UTILS_API std::vector<std::string> keys() const;
 
-            LIBATFRAME_UTILS_API const std::map<std::string, std::shared_ptr<item_impl> > &data() const;
+            LIBATFRAME_UTILS_API const LIBATFRAME_UTILS_AUTO_SELETC_MAP(std::string, std::shared_ptr<item_impl>) &data() const;
             /**
              * @breif 依据Key获取数据
              * @param [in] key Key

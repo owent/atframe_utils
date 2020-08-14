@@ -305,7 +305,7 @@ check_cxx_source_compiles("
 int main() {
     std::cout<< std::format(\"The answer is {}.\", 42)<< std::endl;
     char buffer[64] = {0};
-    const auto result = std::format_to_n(buffer, std::size(buffer), \"{} {}: {}\", \"Hello\", \"World!\", 42);
+    const auto result = std::format_to_n(buffer, sizeof(buffer), \"{} {}: {}\", \"Hello\", \"World!\", 42);
     std::cout << \"Buffer: \" << buffer << \",Untruncated output size = \" << result.size << std::endl;
     return 0;
 }" LIBATFRAME_UTILS_ENABLE_STD_FORMAT)
@@ -329,7 +329,7 @@ if (NOT LIBATFRAME_UTILS_ENABLE_STD_FORMAT)
         int main() {
             std::cout<< fmt::format(\"The answer is {}.\", 42)<< std::endl;
             char buffer[64] = {0};
-            const auto result = fmt::format_to_n(buffer, std::size(buffer), \"{} {}: {}\", \"Hello\", \"World!\", 42);
+            const auto result = fmt::format_to_n(buffer, sizeof(buffer), \"{} {}: {}\", \"Hello\", \"World!\", 42);
             std::cout << \"Buffer: \" << buffer << \",Untruncated output size = \" << result.size << std::endl;
             return 0;
         }" LIBATFRAME_UTILS_ENABLE_FMTLIB)
@@ -342,6 +342,32 @@ if (NOT LIBATFRAME_UTILS_ENABLE_STD_FORMAT)
     endif()
 endif ()
 
+check_cxx_source_compiles("
+#include <unordered_map>
+#include <unordered_set>
+#include <string>
+
+int main() {
+    std::unordered_set<std::string> k1;
+    k1.insert(std::string());
+    std::unordered_map<std::string, int> k2;
+    k2[std::string()] = 123;
+    return 0;
+}" LIBATFRAME_UTILS_ENABLE_UNORDERED_MAP_SET)
+if (LIBATFRAME_UTILS_ENABLE_UNORDERED_MAP_SET)
+    check_cxx_source_compiles("
+        #include <unordered_map>
+        #include <unordered_set>
+        #include <string>
+
+        int main() {
+            std::unordered_set<std::string> k1;
+            k1.reserve(8);
+            std::unordered_map<std::string, int> k2;
+            k2.reserve(8);
+            return 0;
+        }" LIBATFRAME_UTILS_UNORDERED_MAP_SET_HAS_RESERVE)
+endif ()
 
 set(LIBATFRAME_UTILS_ENABLE_RTTI ${COMPILER_OPTIONS_TEST_RTTI})
 set(LIBATFRAME_UTILS_ENABLE_EXCEPTION ${COMPILER_OPTIONS_TEST_EXCEPTION})

@@ -27,22 +27,10 @@
 
 #include <std/smart_ptr.h>
 
-#if defined(__cplusplus) &&                                                                                         \
-    (__cplusplus >= 201103L || (defined(_MSC_VER) && (_MSC_VER == 1500 && defined(_HAS_TR1)) || _MSC_VER > 1500) || \
-     (defined(__GNUC__) && defined(__GXX_EXPERIMENTAL_CXX0X__)))
+#if defined(LIBATFRAME_UTILS_ENABLE_UNORDERED_MAP_SET) && LIBATFRAME_UTILS_ENABLE_UNORDERED_MAP_SET
 #include <unordered_map>
-#define UTIL_MEMPOOL_LRU_MAP_IS_HASHMAP 1
-
-#if UTIL_CONFIG_COMPILER_IS_GNU && (__GNUC__ * 100 + __GNUC_MINOR__) <= 407
-#define UTIL_MEMPOOL_LRU_MAP_DISABLE_RESERVE 1
-#else
-#define UTIL_MEMPOOL_LRU_MAP_DISABLE_RESERVE 0
-#endif
-
 #else
 #include <map>
-#define UTIL_MEMPOOL_LRU_MAP_IS_HASHMAP 0
-#define UTIL_MEMPOOL_LRU_MAP_DISABLE_RESERVE 0
 #endif
 
 namespace util {
@@ -60,7 +48,7 @@ namespace util {
             typedef typename list_type::const_iterator const_iterator;
         };
 
-#if UTIL_MEMPOOL_LRU_MAP_IS_HASHMAP
+#if defined(LIBATFRAME_UTILS_ENABLE_UNORDERED_MAP_SET) && LIBATFRAME_UTILS_ENABLE_UNORDERED_MAP_SET
         template <class TKEY, class TVALUE, class THasher = std::hash<TKEY>, class TKeyEQ = std::equal_to<TKEY>,
                   class TAlloc = std::allocator<std::pair<const TKEY, typename lru_map_type_traits<TKEY, TVALUE>::iterator> > >
 #else
@@ -84,7 +72,7 @@ namespace util {
             typedef typename lru_map_type_traits<TKEY, TVALUE>::iterator       iterator;
             typedef typename lru_map_type_traits<TKEY, TVALUE>::const_iterator const_iterator;
 
-#if UTIL_MEMPOOL_LRU_MAP_IS_HASHMAP
+#if defined(LIBATFRAME_UTILS_ENABLE_UNORDERED_MAP_SET) && LIBATFRAME_UTILS_ENABLE_UNORDERED_MAP_SET
             typedef std::unordered_map<TKEY, iterator, THasher, TKeyEQ, TAlloc> lru_key_value_map_type;
             typedef lru_map<TKEY, TVALUE, THasher, TKeyEQ, TAlloc>              self_type;
 #else
@@ -131,12 +119,11 @@ namespace util {
             inline bool      empty() const { return kv_data_.empty(); }
             inline size_type size() const { return kv_data_.size(); }
 
-#if UTIL_MEMPOOL_LRU_MAP_DISABLE_RESERVE
-            inline void reserve(size_type) { /* do nothing, some old compiler don't support this. */
-            }
-#else
-
+#if defined(LIBATFRAME_UTILS_UNORDERED_MAP_SET_HAS_RESERVE) && LIBATFRAME_UTILS_UNORDERED_MAP_SET_HAS_RESERVE
             inline void reserve(size_type s) { kv_data_.reserve(s); }
+            
+#else
+            inline void reserve(size_type) { /* do nothing, some old compiler don't support this. */ }
 #endif
 
             void swap(self_type &other) {

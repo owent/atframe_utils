@@ -389,7 +389,7 @@ namespace util {
             return ret;
         }
 
-        LIBATFRAME_UTILS_API const std::map<std::string, std::shared_ptr<item_impl> > &item_object::data() const { return data_; }
+        LIBATFRAME_UTILS_API const LIBATFRAME_UTILS_AUTO_SELETC_MAP(std::string, std::shared_ptr<item_impl>) &item_object::data() const { return data_; }
 
         LIBATFRAME_UTILS_API std::shared_ptr<item_impl> item_object::get(const std::string &key) {
             data_iterator iter = data_.find(key);
