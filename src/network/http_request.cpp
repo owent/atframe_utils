@@ -16,11 +16,11 @@
 #if defined(UTIL_CONFIG_COMPILER_CXX_STATIC_ASSERT) && UTIL_CONFIG_COMPILER_CXX_STATIC_ASSERT
 #include <type_traits>
 #if (defined(__cplusplus) && __cplusplus >= 201402L) || ((defined(_MSVC_LANG) && _MSVC_LANG >= 201402L))
-    UTIL_CONFIG_STATIC_ASSERT(std::is_trivially_copyable<util::network::http_request::curl_poll_context_t>::value);
+UTIL_CONFIG_STATIC_ASSERT(std::is_trivially_copyable<util::network::http_request::curl_poll_context_t>::value);
 #elif (defined(__cplusplus) && __cplusplus >= 201103L) || ((defined(_MSVC_LANG) && _MSVC_LANG >= 201103L))
-    UTIL_CONFIG_STATIC_ASSERT(std::is_trivial<util::network::http_request::curl_poll_context_t>::value);
+UTIL_CONFIG_STATIC_ASSERT(std::is_trivial<util::network::http_request::curl_poll_context_t>::value);
 #else
-    UTIL_CONFIG_STATIC_ASSERT(std::is_pod<util::network::http_request::curl_poll_context_t>::value);
+UTIL_CONFIG_STATIC_ASSERT(std::is_pod<util::network::http_request::curl_poll_context_t>::value);
 #endif
 #endif
 
@@ -520,6 +520,7 @@ namespace util {
                 curl_easy_cleanup(req);
             }
             UNSET_FLAG(flags_, flag_t::EN_FT_STOPING);
+            UNSET_FLAG(flags_, flag_t::EN_FT_RUNNING);
 
             if (NULL != http_form_.begin) {
                 curl_formfree(http_form_.begin);
@@ -898,7 +899,9 @@ namespace util {
                 }
                 break;
             }
-            default: { break; }
+            default: {
+                break;
+            }
             }
 
             return res;
