@@ -119,7 +119,7 @@ script:
   - REPO_DIR=$PWD;
   - if [ ! -z "$MBEDTLS_VERSION" ]; then
 
-    MBEDTLS_URL="https://tls.mbed.org/download/mbedtls-$MBEDTLS_VERSION-apache.tgz";
+    MBEDTLS_URL="https://github.com/ARMmbed/mbedtls/archive/v$MBEDTLS_VERSION.tar.gz";
 
     if [ ! -e "$HOME/prebuilt/mbedtls-$MBEDTLS_VERSION/include/mbedtls/config.h" ]; then
 
@@ -127,9 +127,9 @@ script:
 
     cd "$HOME/prebuilt";
 
-    curl -L -k -o "mbedtls-$MBEDTLS_VERSION-apache.tgz" "$MBEDTLS_URL";
+    curl -L -k -o "mbedtls-$MBEDTLS_VERSION.tar.gz" "$MBEDTLS_URL";
 
-    tar -axvf "mbedtls-$MBEDTLS_VERSION-apache.tgz";
+    tar -axvf "mbedtls-$MBEDTLS_VERSION.tar.gz";
 
     mkdir -p "mbedtls-$MBEDTLS_VERSION/build_dir" && cd "mbedtls-$MBEDTLS_VERSION/build_dir";
 
