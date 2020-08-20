@@ -421,6 +421,8 @@ namespace util {
 
             static const char *supported_dh_curves[] = {
                 "",
+                "x25519",          // see ecp_supported_curves in ecp.c of mbedtls
+                "x448",            // mbedtls don't support right now but maybe support it in the future
                 "secp521r1",       // see ecp_supported_curves in ecp.c of mbedtls
                 "secp384r1",       // see ecp_supported_curves in ecp.c of mbedtls
                 "secp256r1",       // see ecp_supported_curves in ecp.c of mbedtls
@@ -432,7 +434,6 @@ namespace util {
                 "brainpoolP512r1", // see ecp_supported_curves in ecp.c of mbedtls
                 "brainpoolP384r1", // see ecp_supported_curves in ecp.c of mbedtls
                 "brainpoolP256r1", // see ecp_supported_curves in ecp.c of mbedtls
-                "x25519",          // see ecp_supported_curves in ecp.c of mbedtls
                 NULL,              // end
             };
 
@@ -440,6 +441,16 @@ namespace util {
             // see ec_list_element in ec_curve.c of openssl
             static const int supported_dh_curves_openssl[] = {
                 0,
+#ifdef NID_X25519
+                NID_X25519,
+#else
+                0,
+#endif
+#ifdef NID_X448
+                NID_X448,
+#else
+                0,
+#endif
 #ifdef NID_secp521r1
                 NID_secp521r1,        // see nist_curves in ec_curve.c
                 NID_secp384r1,        // see nist_curves in ec_curve.c
@@ -462,11 +473,6 @@ namespace util {
                 NID_brainpoolP256r1, // see curve_list in ec_curve.c
 #else
                 0,  0, 0,
-#endif
-#ifdef NID_X25519
-                NID_X25519,
-#else
-                0,
 #endif
                 -1, // end
             };
