@@ -8,8 +8,8 @@ Compilers | linux-gcc-4.8 <br /> linux-gcc-7 <br /> linux-gcc-9 <br /> osx-apple
 
 [![lgtm-badge]][lgtm-link]
 
-[linux-badge]: https://travis-ci.org/atframework/atframe_utils.svg?branch=master "Travis build status"
-[linux-link]:  https://travis-ci.org/atframework/atframe_utils "Travis build status"
+[linux-badge]: https://api.travis-ci.com/atframework/atframe_utils.svg?branch=master "Travis build status"
+[linux-link]:  https://travis-ci.com/github/atframework/atframe_utils "Travis build status"
 [windows-badge]: https://ci.appveyor.com/api/projects/status/7e6q54xxdga6ov00?svg=true "AppVeyor build status"
 [windows-link]:  https://ci.appveyor.com/project/owt5008137/atframe-utils/branch/master "AppVeyor build status"
 [coverage-badge]: https://coveralls.io/repos/github/atframework/atframe_utils/badge.svg?branch=master "Coveralls coverage"

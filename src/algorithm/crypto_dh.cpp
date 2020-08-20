@@ -61,10 +61,11 @@ struct tls_curve_info {
 #define TLS_CURVE_CUSTOM 0x2
 #endif
 
-/*
+/**
  * Table of curve information.
  * Do not delete entries or reorder this array! It is used as a lookup
  * table: the index of each entry is one less than the TLS curve id.
+ * @see t1_lib.c in openssl source tree for more details
  */
 static const tls_curve_info nid_list[] = {
     {
@@ -299,6 +300,14 @@ static const tls_curve_info nid_list[] = {
 #endif
         ,
         128, TLS_CURVE_CUSTOM}, /* X25519 (29) */
+    {
+#ifdef NID_X448
+        NID_X448
+#else
+        0
+#endif
+        ,
+        224, TLS_CURVE_CUSTOM}, /* X448 (30) */
 };
 
 #define OSSL_NELEM(x) (sizeof(x) / sizeof(x[0]))
@@ -423,6 +432,7 @@ namespace util {
                 "brainpoolP512r1", // see ecp_supported_curves in ecp.c of mbedtls
                 "brainpoolP384r1", // see ecp_supported_curves in ecp.c of mbedtls
                 "brainpoolP256r1", // see ecp_supported_curves in ecp.c of mbedtls
+                "x25519",          // see ecp_supported_curves in ecp.c of mbedtls
                 NULL,              // end
             };
 
@@ -452,6 +462,11 @@ namespace util {
                 NID_brainpoolP256r1, // see curve_list in ec_curve.c
 #else
                 0,  0, 0,
+#endif
+#ifdef NID_X25519
+                NID_X25519,
+#else
+                0,
 #endif
                 -1, // end
             };
