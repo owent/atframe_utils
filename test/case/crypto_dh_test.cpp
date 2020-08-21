@@ -1,11 +1,28 @@
 ﻿#include "algorithm/crypto_dh.h"
+#include "algorithm/crypto_cipher.h"
 #include "common/file_system.h"
 #include "frame/test_macros.h"
 #include <cstring>
 
 #ifdef CRYPTO_DH_ENABLED
 
+#if defined(CRYPTO_USE_OPENSSL) || defined(CRYPTO_USE_LIBRESSL) || defined(CRYPTO_USE_BORINGSSL)
+struct openssl_test_init_wrapper_for_dh {
+    openssl_test_init_wrapper_for_dh() { util::crypto::cipher::init_global_algorithm(); }
+
+    ~openssl_test_init_wrapper_for_dh() { util::crypto::cipher::cleanup_global_algorithm(); }
+};
+
+static std::shared_ptr<openssl_test_init_wrapper_for_dh> openssl_test_inited_for_dh;
+
+#endif
+
 CASE_TEST(crypto_dh, get_all_curve_names) {
+#if defined(CRYPTO_USE_OPENSSL) || defined(CRYPTO_USE_LIBRESSL) || defined(CRYPTO_USE_BORINGSSL)
+    if (!openssl_test_inited_for_dh) {
+        openssl_test_inited_for_dh = std::make_shared<openssl_test_init_wrapper_for_dh>();
+    }
+#endif
     const std::vector<std::string> &all_curves = util::crypto::dh::get_all_curve_names();
     std::stringstream ss;
     for (size_t i = 0; i < all_curves.size(); ++i) {
@@ -21,6 +38,12 @@ CASE_TEST(crypto_dh, get_all_curve_names) {
 }
 
 CASE_TEST(crypto_dh, dh) {
+#if defined(CRYPTO_USE_OPENSSL) || defined(CRYPTO_USE_LIBRESSL) || defined(CRYPTO_USE_BORINGSSL)
+    if (!openssl_test_inited_for_dh) {
+        openssl_test_inited_for_dh = std::make_shared<openssl_test_init_wrapper_for_dh>();
+    }
+#endif
+
     int test_times = 32;
     int left_times = test_times;
     size_t key_bits = 0;
@@ -91,6 +114,12 @@ CASE_TEST(crypto_dh, dh) {
 }
 
 CASE_TEST(crypto_dh, ecdh) {
+#if defined(CRYPTO_USE_OPENSSL) || defined(CRYPTO_USE_LIBRESSL) || defined(CRYPTO_USE_BORINGSSL)
+    if (!openssl_test_inited_for_dh) {
+        openssl_test_inited_for_dh = std::make_shared<openssl_test_init_wrapper_for_dh>();
+    }
+#endif
+
     int test_times = 16;
     // 单元测试多次以定位openssl是否内存泄漏的问题
     const std::vector<std::string> &all_curves = util::crypto::dh::get_all_curve_names();
@@ -102,7 +131,7 @@ CASE_TEST(crypto_dh, ecdh) {
     size_t max_cost_idx = 0;
     size_t max_cost_bits = 0;
     for (size_t curve_idx = 0; curve_idx < all_curves.size(); ++curve_idx) {
-
+        CASE_MSG_INFO() << "Test ECDH algorithm " << all_curves[curve_idx]<< std::endl;
         clock_t beg_time_clk = clock();
         int left_times = test_times;
         size_t secret_bits = 0;

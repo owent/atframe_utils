@@ -268,27 +268,33 @@ namespace util {
          * @param str 被转换的字符串
          * @note 性能肯定比sscanf系，和iostream系高。strtol系就不知道了
          */
-        template <typename T>
-        LIBATFRAME_UTILS_API_HEAD_ONLY void str2int(T &out, const char *str) {
+        template <typename T, typename TCHAR>
+        LIBATFRAME_UTILS_API_HEAD_ONLY const TCHAR* str2int(T &out, const TCHAR *str, size_t strsz = 0) {
             out = static_cast<T>(0);
             if (NULL == str || !(*str)) {
-                return;
+                return str;
             }
+
+            size_t cur = 0;
 
             // negative
             bool is_negative = false;
-            while (*str && *str == '-') {
+            while ((0 == strsz || cur < strsz) && (str[cur] && str[cur] == '-')) {
                 is_negative = !is_negative;
-                ++str;
+                ++cur;
             }
 
-            if (!(*str)) {
-                return;
+            while ((0 == strsz || cur < strsz) && (str[cur] && is_space(str[cur]))) {
+                ++cur;
             }
 
-            if ('0' == str[0] && 'x' == tolower(str[1])) { // hex
-                for (size_t i = 2; str[i]; ++i) {
-                    char c = tolower(str[i]);
+            if (!str[cur]) {
+                return str + cur;
+            }
+
+            if ((0 == strsz || cur + 1 < strsz) && '0' == str[cur] && 'x' == tolower(str[cur + 1])) { // hex
+                for (cur += 2; (0 == strsz || cur < strsz) && str[cur]; ++ cur) {
+                    char c = tolower(str[cur]);
                     if (c >= '0' && c <= '9') {
                         out <<= 4;
                         out += static_cast<T>(c - static_cast<char>('0'));
@@ -299,21 +305,23 @@ namespace util {
                         break;
                     }
                 }
-            } else if ('\\' == str[0]) { // oct
-                for (size_t i = 1; str[i] >= '0' && str[i] < '8'; ++i) {
+            } else if ((0 == strsz || cur < strsz) && '\\' == str[cur]) { // oct
+                for (++ cur; (0 == strsz || cur < strsz) && (str[cur] >= '0' && str[cur] < '8'); ++ cur) {
                     out <<= 3;
-                    out += static_cast<T>(str[i] - static_cast<char>('0'));
+                    out += static_cast<T>(str[cur] - static_cast<char>('0'));
                 }
             } else { // dec
-                for (size_t i = 0; str[i] >= '0' && str[i] <= '9'; ++i) {
+                for (; (0 == strsz || cur < strsz) && (str[cur] >= '0' && str[cur] <= '9'); ++cur) {
                     out *= 10;
-                    out += static_cast<T>(str[i] - static_cast<char>('0'));
+                    out += static_cast<T>(str[cur] - static_cast<char>('0'));
                 }
             }
 
             if (is_negative) {
                 out = (~out) + 1;
             }
+
+            return str + cur;
         }
 
         /**
@@ -326,6 +334,16 @@ namespace util {
             T ret = 0;
             str2int(ret, str);
             return ret;
+        }
+
+        /**
+         * @brief 字符串转整数
+         * @param str 被转换的字符串
+         * @return 输出的整数
+         */
+        template <typename T>
+        UTIL_FORCEINLINE T to_int(const std::string& str) {
+            return to_int<T>(str.c_str());
         }
 
         /**

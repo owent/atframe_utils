@@ -67,13 +67,14 @@ namespace util {
 
 #if defined(CRYPTO_USE_OPENSSL) || defined(CRYPTO_USE_LIBRESSL) || defined(CRYPTO_USE_BORINGSSL)
             struct LIBATFRAME_UTILS_API dh_context_t {
+                EVP_PKEY_CTX *openssl_pkey_ctx_;
                 union {
-                    DH *    openssl_dh_ptr_;
-                    EC_KEY *openssl_ecdh_ptr_;
+                    DH *      openssl_dh_ptr_;
+                    EVP_PKEY *openssl_ecdh_pkey_;
                 };
                 union {
                     BIGNUM *  peer_pubkey_;
-                    EC_POINT *peer_ecpoint_;
+                    EVP_PKEY *openssl_ecdh_peer_key_;
                 };
             };
 #elif defined(CRYPTO_USE_MBEDTLS)
@@ -96,6 +97,9 @@ namespace util {
                     NOT_SUPPORT             = -12,
                     OPERATION               = -13,
                     INIT_RANDOM_ENGINE      = -14,
+                    NOT_CLIENT_MODE         = -15,
+                    NOT_SERVER_MODE         = -16,
+                    ALGORITHM_MISMATCH      = -17,
                     READ_DHPARAM_FILE       = -21,
                     INIT_DHPARAM            = -22,
                     INIT_DH_READ_PARAM      = -23,
@@ -112,10 +116,12 @@ namespace util {
                     BIO *                      param;
                     std::vector<unsigned char> param_buffer;
                     int                        ecp_id;
+                    EVP_PKEY_CTX *             paramgen_ctx;
+                    EVP_PKEY_CTX *             keygen_ctx;
+                    EVP_PKEY *                 params_key;
                 };
 
-                struct random_engine_t {
-                };
+                struct random_engine_t {};
 
 #elif defined(CRYPTO_USE_MBEDTLS)
                 struct dh_param_t {
@@ -175,6 +181,8 @@ namespace util {
                 LIBATFRAME_UTILS_API const dh_param_t &get_dh_parameter() const;
                 LIBATFRAME_UTILS_API const random_engine_t &get_random_engine() const;
                 LIBATFRAME_UTILS_API random_engine_t &get_random_engine();
+
+                LIBATFRAME_UTILS_API bool check_or_setup_ecp_id(int ecp_id);
 
             private:
                 method_t::type  method_;

@@ -7,6 +7,8 @@
 #include <algorithm/crypto_cipher.h>
 #include <std/static_assert.h>
 
+#include <lock/atomic_int_type.h>
+
 #ifdef CRYPTO_CIPHER_ENABLED
 
 #ifdef CRYPTO_USE_LIBSODIUM
@@ -122,6 +124,9 @@ namespace util {
         };
 
         namespace details {
+#if defined(CRYPTO_USE_OPENSSL) || defined(CRYPTO_USE_LIBRESSL) || defined(CRYPTO_USE_BORINGSSL)
+            util::lock::atomic_int_type<size_t> g_global_init_counter_(0);
+#endif
             static inline cipher::error_code_t::type setup_errorno(cipher &ci, int64_t err, cipher::error_code_t::type ret) {
                 ci.set_last_errno(err);
                 return ret;
@@ -1368,19 +1373,23 @@ namespace util {
 
         LIBATFRAME_UTILS_API int cipher::init_global_algorithm() {
 #if defined(CRYPTO_USE_OPENSSL) || defined(CRYPTO_USE_LIBRESSL) || defined(CRYPTO_USE_BORINGSSL)
-
+            size_t counter = details::g_global_init_counter_++;
+            if (0 == counter) {
+                ERR_load_ERR_strings();
+                ERR_load_crypto_strings();
 #if (defined(OPENSSL_API_COMPAT) && OPENSSL_API_COMPAT < 0x10100000L) || \
     (defined(OPENSSL_VERSION_NUMBER) && OPENSSL_VERSION_NUMBER < 0x10100000L)
-            OpenSSL_add_all_algorithms();
+                OpenSSL_add_all_algorithms();
 #else
 
-#ifdef OPENSSL_LOAD_CONF
-            OPENSSL_init_crypto(OPENSSL_INIT_ADD_ALL_CIPHERS | OPENSSL_INIT_ADD_ALL_DIGESTS | OPENSSL_INIT_LOAD_CONFIG, NULL);
+#ifdef OPENSSL_INIT_LOAD_CONFIG
+                OPENSSL_init_crypto(OPENSSL_INIT_ADD_ALL_CIPHERS | OPENSSL_INIT_ADD_ALL_DIGESTS | OPENSSL_INIT_LOAD_CONFIG, NULL);
 #else
-            OPENSSL_init_crypto(OPENSSL_INIT_ADD_ALL_CIPHERS | OPENSSL_INIT_ADD_ALL_DIGESTS, NULL);
+                OPENSSL_init_crypto(OPENSSL_INIT_ADD_ALL_CIPHERS | OPENSSL_INIT_ADD_ALL_DIGESTS, NULL);
 #endif
 
 #endif
+            }
 
 #endif
             return 0;
@@ -1388,11 +1397,22 @@ namespace util {
 
         LIBATFRAME_UTILS_API int cipher::cleanup_global_algorithm() {
 #if defined(CRYPTO_USE_OPENSSL) || defined(CRYPTO_USE_LIBRESSL) || defined(CRYPTO_USE_BORINGSSL)
+            size_t counter = details::g_global_init_counter_.load();
+            while (true) {
+                if (0 == counter) {
+                    return 0;
+                }
+
+                if (details::g_global_init_counter_.compare_exchange_strong(counter, counter - 1)) {
+                    break;
+                }
+            }
 #if (defined(OPENSSL_API_COMPAT) && OPENSSL_API_COMPAT < 0x10100000L) || \
     (defined(OPENSSL_VERSION_NUMBER) && OPENSSL_VERSION_NUMBER < 0x10100000L)
             EVP_cleanup();
             CRYPTO_cleanup_all_ex_data();
 #endif
+            ERR_free_strings();
 #endif
             return 0;
         }
