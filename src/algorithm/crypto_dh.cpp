@@ -28,6 +28,7 @@
 
 #if defined(CRYPTO_USE_OPENSSL) || defined(CRYPTO_USE_LIBRESSL) || defined(CRYPTO_USE_BORINGSSL)
 
+#include <openssl/ec.h>
 #include <openssl/rand.h>
 
 // copy from ssl_locl.h
@@ -418,20 +419,20 @@ EXPLICIT_UNUSED_ATTR static inline int DH_set0_key(DH *dh, BIGNUM *pub_key, BIGN
 
 
 static int EC_KEY_oct2key(EC_KEY *key, const unsigned char *buf, size_t len, BN_CTX *ctx) {
-    if (key == NULL || key->group == NULL) return 0;
-    if (key->pub_key == NULL) key->pub_key = EC_POINT_new(key->group);
-    if (key->pub_key == NULL) return 0;
-    if (EC_POINT_oct2point(key->group, key->pub_key, buf, len, ctx) == 0) return 0;
-    /*
-     * Save the point conversion form.
-     * For non-custom curves the first octet of the buffer (excluding
-     * the last significant bit) contains the point conversion form.
-     * EC_POINT_oct2point() has already performed sanity checking of
-     * the buffer so we know it is valid.
-     */
-    // openssl < 1.1.0 do not support EC_FLAGS_CUSTOM_CURVE
-    // if ((key->group->meth->flags & EC_FLAGS_CUSTOM_CURVE) == 0)
-    key->conv_form = (point_conversion_form_t)(buf[0] & ~0x01);
+    if (key == NULL) return 0;
+    const EC_GROUP *group = EC_KEY_get0_group(key);
+    if (group == NULL) return 0;
+    EC_POINT *point = EC_POINT_new(group);
+    if (NULL == point) {
+        return 0;
+    }
+    if (EC_POINT_oct2point(group, point, buf, len, ctx) <= 0) {
+        EC_POINT_free(point);
+        return 0;
+    }
+
+    EC_KEY_set_public_key(key, point);
+    EC_POINT_free(point);
     return 1;
 }
 
@@ -456,13 +457,13 @@ static size_t EC_POINT_point2buf(const EC_GROUP *group, const EC_POINT *point, p
 }
 
 static size_t EC_KEY_key2buf(const EC_KEY *key, point_conversion_form_t form, unsigned char **pbuf, BN_CTX *ctx) {
-    if (key == NULL || key->pub_key == NULL || key->group == NULL) return 0;
-    return EC_POINT_point2buf(key->group, key->pub_key, form, pbuf, ctx);
+    if (key == NULL || EC_KEY_get0_public_key(key) == NULL || EC_KEY_get0_group(key) == NULL) return 0;
+    return EC_POINT_point2buf(EC_KEY_get0_group(key), EC_KEY_get0_public_key(key), form, pbuf, ctx);
 }
 
 // Just like crypto/ec/ec_ameth.c, openssl < 1.1.0 do not support x25519/x448 and ECX_KEY, just skip it
 static int evp_pkey_asn1_ctrl(EVP_PKEY *pkey, int op, int arg1, void *arg2) {
-    if (pkey->ameth == NULL || pkey->ameth->pkey_ctrl == NULL) return -2;
+    if (EVP_PKEY_get0_asn1(pkey) == NULL) return -2;
 
     switch (op) {
     case ASN1_PKEY_CTRL_SET1_TLS_ENCPT:
