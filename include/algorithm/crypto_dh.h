@@ -111,11 +111,18 @@ namespace util {
 
             class shared_context {
             public:
+                struct flags_t {
+                    enum {
+                        NONE        = 0,
+                        SERVER_MODE = 0x01,
+                        CLIENT_MODE = 0x02,
+                    };
+                };
 #if defined(CRYPTO_USE_OPENSSL) || defined(CRYPTO_USE_LIBRESSL) || defined(CRYPTO_USE_BORINGSSL)
                 struct dh_param_t {
                     BIO *                      param;
                     std::vector<unsigned char> param_buffer;
-                    int                        ecp_id;
+                    int                        group_id;
                     EVP_PKEY_CTX *             paramgen_ctx;
                     EVP_PKEY_CTX *             keygen_ctx;
                     EVP_PKEY *                 params_key;
@@ -126,7 +133,7 @@ namespace util {
 #elif defined(CRYPTO_USE_MBEDTLS)
                 struct dh_param_t {
                     std::string          param;
-                    mbedtls_ecp_group_id ecp_id;
+                    mbedtls_ecp_group_id group_id;
                 };
 
                 // move mbedtls_ctr_drbg_context and mbedtls_entropy_context here
@@ -182,9 +189,10 @@ namespace util {
                 LIBATFRAME_UTILS_API const random_engine_t &get_random_engine() const;
                 LIBATFRAME_UTILS_API random_engine_t &get_random_engine();
 
-                LIBATFRAME_UTILS_API bool check_or_setup_ecp_id(int ecp_id);
+                LIBATFRAME_UTILS_API bool check_or_setup_ecp_id(int group_id);
 
             private:
+                uint32_t        flags_;
                 method_t::type  method_;
                 dh_param_t      dh_param_;
                 random_engine_t random_engine_;

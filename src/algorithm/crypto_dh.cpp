@@ -10,6 +10,9 @@
 #include <config/compiler_features.h>
 #include <std/explicit_declare.h>
 
+#include <design_pattern/nomovable.h>
+#include <design_pattern/noncopyable.h>
+
 #if defined(UTIL_CONFIG_COMPILER_CXX_STATIC_ASSERT) && UTIL_CONFIG_COMPILER_CXX_STATIC_ASSERT
 #include <type_traits>
 #endif
@@ -402,6 +405,89 @@ EXPLICIT_UNUSED_ATTR static inline int DH_set0_key(DH *dh, BIGNUM *pub_key, BIGN
     return 1;
 }
 
+// static EC_KEY *EVP_PKEY_get0_EC_KEY(EVP_PKEY *pkey) { return pkey->pkey.ec; }
+// EVP_PKEY_get0_*/EVP_PKEY_GET0_*
+
+#ifndef ASN1_PKEY_CTRL_SET1_TLS_ENCPT
+#define ASN1_PKEY_CTRL_SET1_TLS_ENCPT 0x9
+#endif
+
+#ifndef ASN1_PKEY_CTRL_GET1_TLS_ENCPT
+#define ASN1_PKEY_CTRL_GET1_TLS_ENCPT 0xa
+#endif
+
+
+static int EC_KEY_oct2key(EC_KEY *key, const unsigned char *buf, size_t len, BN_CTX *ctx) {
+    if (key == NULL || key->group == NULL) return 0;
+    if (key->pub_key == NULL) key->pub_key = EC_POINT_new(key->group);
+    if (key->pub_key == NULL) return 0;
+    if (EC_POINT_oct2point(key->group, key->pub_key, buf, len, ctx) == 0) return 0;
+    /*
+     * Save the point conversion form.
+     * For non-custom curves the first octet of the buffer (excluding
+     * the last significant bit) contains the point conversion form.
+     * EC_POINT_oct2point() has already performed sanity checking of
+     * the buffer so we know it is valid.
+     */
+    // openssl < 1.1.0 do not support EC_FLAGS_CUSTOM_CURVE
+    // if ((key->group->meth->flags & EC_FLAGS_CUSTOM_CURVE) == 0)
+    key->conv_form = (point_conversion_form_t)(buf[0] & ~0x01);
+    return 1;
+}
+
+static size_t EC_POINT_point2buf(const EC_GROUP *group, const EC_POINT *point, point_conversion_form_t form, unsigned char **pbuf,
+                                 BN_CTX *ctx) {
+    size_t         len;
+    unsigned char *buf;
+
+    len = EC_POINT_point2oct(group, point, form, NULL, 0, NULL);
+    if (len == 0) return 0;
+    if ((buf = (unsigned char *)OPENSSL_malloc(len)) == NULL) {
+        ECerr(281 /*EC_F_EC_POINT_POINT2BUF*/, ERR_R_MALLOC_FAILURE);
+        return 0;
+    }
+    len = EC_POINT_point2oct(group, point, form, buf, len, ctx);
+    if (len == 0) {
+        OPENSSL_free(buf);
+        return 0;
+    }
+    *pbuf = buf;
+    return len;
+}
+
+static size_t EC_KEY_key2buf(const EC_KEY *key, point_conversion_form_t form, unsigned char **pbuf, BN_CTX *ctx) {
+    if (key == NULL || key->pub_key == NULL || key->group == NULL) return 0;
+    return EC_POINT_point2buf(key->group, key->pub_key, form, pbuf, ctx);
+}
+
+// Just like crypto/ec/ec_ameth.c, openssl < 1.1.0 do not support x25519/x448 and ECX_KEY, just skip it
+static int evp_pkey_asn1_ctrl(EVP_PKEY *pkey, int op, int arg1, void *arg2) {
+    if (pkey->ameth == NULL || pkey->ameth->pkey_ctrl == NULL) return -2;
+
+    switch (op) {
+    case ASN1_PKEY_CTRL_SET1_TLS_ENCPT:
+        return EC_KEY_oct2key(EVP_PKEY_get0_EC_KEY(pkey), arg2, arg1, NULL);
+
+    case ASN1_PKEY_CTRL_GET1_TLS_ENCPT:
+        return EC_KEY_key2buf(EVP_PKEY_get0_EC_KEY(pkey), POINT_CONVERSION_UNCOMPRESSED, arg2, NULL);
+
+    default:
+        return -2;
+    }
+}
+
+static size_t EVP_PKEY_get1_tls_encodedpoint(EVP_PKEY *pkey, unsigned char **ppt) {
+    int rv;
+    rv = evp_pkey_asn1_ctrl(pkey, ASN1_PKEY_CTRL_GET1_TLS_ENCPT, 0, (void *)ppt);
+    if (rv <= 0) return 0;
+    return rv;
+}
+
+static int EVP_PKEY_set1_tls_encodedpoint(EVP_PKEY *pkey, const unsigned char *pt, size_t ptlen) {
+    if (ptlen > INT_MAX) return 0;
+    if (evp_pkey_asn1_ctrl(pkey, ASN1_PKEY_CTRL_SET1_TLS_ENCPT, (int)ptlen, (void *)pt) <= 0) return 0;
+    return 1;
+}
 #endif
 
 #endif
@@ -477,13 +563,101 @@ namespace util {
                 -1, // end
             };
 
-            STD_STATIC_ASSERT(sizeof(supported_dh_curves) / sizeof(supported_dh_curves[0]) == sizeof(supported_dh_curves_openssl) / sizeof(supported_dh_curves_openssl[0]));
+            STD_STATIC_ASSERT(sizeof(supported_dh_curves) / sizeof(supported_dh_curves[0]) ==
+                              sizeof(supported_dh_curves_openssl) / sizeof(supported_dh_curves_openssl[0]));
 
+            static inline void reset(EVP_PKEY *&pkey) {
+                if (NULL == pkey) {
+                    return;
+                }
 
-            static EVP_PKEY_CTX* initialize_pkey_ctx_by_group_id(int group_id, bool init_keygen, bool init_paramgen) {
-                EVP_PKEY_CTX* ret = NULL;
-                unsigned int gtype = 0;
-                int curve_nid = tls1_ec_group_id2nid(group_id, &gtype);
+                EVP_PKEY_free(pkey);
+                pkey = NULL;
+            }
+
+            static inline void reset(EVP_PKEY_CTX *&ctx) {
+                if (NULL == ctx) {
+                    return;
+                }
+
+                EVP_PKEY_CTX_free(ctx);
+                ctx = NULL;
+            }
+
+            static inline void reset(DH *&dh) {
+                if (NULL == dh) {
+                    return;
+                }
+
+                DH_free(dh);
+                dh = NULL;
+            }
+
+            /*
+            static inline void reset(EC_KEY *&ec_key) {
+                if (NULL == ec_key) {
+                    return;
+                }
+
+                EC_KEY_free(ec_key);
+                ec_key = NULL;
+            }
+
+            static inline void reset(EC_POINT *&point) {
+                if (NULL == point) {
+                    return;
+                }
+
+                EC_POINT_free(point);
+                point = NULL;
+            }
+            */
+
+            static inline void reset(BN_CTX *&bn) {
+                if (NULL == bn) {
+                    return;
+                }
+
+                BN_CTX_free(bn);
+                bn = NULL;
+            }
+
+            static inline void reset(BIO *&bio) {
+                if (NULL == bio) {
+                    return;
+                }
+
+                BIO_free(bio);
+                bio = NULL;
+            }
+
+            template <class TPTR>
+            class openssl_raii {
+                UTIL_DESIGN_PATTERN_NOMOVABLE(openssl_raii)
+                UTIL_DESIGN_PATTERN_NOCOPYABLE(openssl_raii)
+
+            public:
+                inline openssl_raii(TPTR *in) : data_(in) {}
+                inline ~openssl_raii() { reset(); }
+
+                inline void reset() { ::util::crypto::details::reset(data_); }
+
+                inline operator bool() const { return !!data_; }
+
+                inline const TPTR *operator->() const { return data_; }
+                inline TPTR *      operator->() { return data_; }
+
+                inline const TPTR *get() const { return data_; }
+                inline TPTR *      get() { return data_; }
+
+            private:
+                TPTR *data_;
+            };
+
+            static EVP_PKEY_CTX *initialize_pkey_ctx_by_group_id(int group_id, bool init_keygen, bool init_paramgen) {
+                EVP_PKEY_CTX *ret       = NULL;
+                unsigned int  gtype     = 0;
+                int           curve_nid = tls1_ec_group_id2nid(group_id, &gtype);
                 if (TLS_CURVE_CUSTOM == gtype) {
                     ret = EVP_PKEY_CTX_new_id(curve_nid, NULL);
                 } else {
@@ -495,18 +669,17 @@ namespace util {
                 }
 
                 if (init_keygen && EVP_PKEY_keygen_init(ret) <= 0) {
-                    EVP_PKEY_CTX_free(ret);
-                    return NULL;
+                    reset(ret);
+                    return ret;
                 }
 
                 if (init_paramgen && EVP_PKEY_paramgen_init(ret) <= 0) {
-                    EVP_PKEY_CTX_free(ret);
-                    return NULL;
+                    reset(ret);
+                    return ret;
                 }
 
                 if (TLS_CURVE_CUSTOM != gtype && EVP_PKEY_CTX_set_ec_paramgen_curve_nid(ret, curve_nid) <= 0) {
-                    EVP_PKEY_CTX_free(ret);
-                    ret = NULL;
+                    reset(ret);
                 }
 
                 return ret;
@@ -515,48 +688,49 @@ namespace util {
         } // namespace details
 
         // =============== shared context ===============
-        LIBATFRAME_UTILS_API dh::shared_context::shared_context() : method_(method_t::EN_CDT_INVALID) {
+        LIBATFRAME_UTILS_API dh::shared_context::shared_context() : flags_(flags_t::NONE), method_(method_t::EN_CDT_INVALID) {
 #if defined(CRYPTO_USE_OPENSSL) || defined(CRYPTO_USE_LIBRESSL) || defined(CRYPTO_USE_BORINGSSL)
             dh_param_.param        = NULL;
-            dh_param_.ecp_id       = 0;
+            dh_param_.group_id     = 0;
             dh_param_.paramgen_ctx = NULL;
             dh_param_.keygen_ctx   = NULL;
             dh_param_.params_key   = NULL;
 #elif defined(CRYPTO_USE_MBEDTLS)
-            dh_param_.ecp_id = MBEDTLS_ECP_DP_NONE;
+            dh_param_.group_id = MBEDTLS_ECP_DP_NONE;
 #endif
 
 #if defined(UTIL_CONFIG_COMPILER_CXX_STATIC_ASSERT) && UTIL_CONFIG_COMPILER_CXX_STATIC_ASSERT
-    #if (defined(__cplusplus) && __cplusplus >= 201402L) || ((defined(_MSVC_LANG) && _MSVC_LANG >= 201402L))
-        UTIL_CONFIG_STATIC_ASSERT(std::is_trivially_copyable<random_engine_t>::value);
-    #elif (defined(__cplusplus) && __cplusplus >= 201103L) || ((defined(_MSVC_LANG) && _MSVC_LANG >= 201103L))
-        UTIL_CONFIG_STATIC_ASSERT(std::is_trivial<random_engine_t>::value);
-    #else
-        UTIL_CONFIG_STATIC_ASSERT(std::is_pod<random_engine_t>::value);
-    #endif
+#if (defined(__cplusplus) && __cplusplus >= 201402L) || ((defined(_MSVC_LANG) && _MSVC_LANG >= 201402L))
+            UTIL_CONFIG_STATIC_ASSERT(std::is_trivially_copyable<random_engine_t>::value);
+#elif (defined(__cplusplus) && __cplusplus >= 201103L) || ((defined(_MSVC_LANG) && _MSVC_LANG >= 201103L))
+            UTIL_CONFIG_STATIC_ASSERT(std::is_trivial<random_engine_t>::value);
+#else
+            UTIL_CONFIG_STATIC_ASSERT(std::is_pod<random_engine_t>::value);
+#endif
 #endif
 
             memset(&random_engine_, 0, sizeof(random_engine_));
         }
-        LIBATFRAME_UTILS_API dh::shared_context::shared_context(creator_helper &) : method_(method_t::EN_CDT_INVALID) {
+        LIBATFRAME_UTILS_API dh::shared_context::shared_context(creator_helper &)
+            : flags_(flags_t::NONE), method_(method_t::EN_CDT_INVALID) {
 #if defined(CRYPTO_USE_OPENSSL) || defined(CRYPTO_USE_LIBRESSL) || defined(CRYPTO_USE_BORINGSSL)
             dh_param_.param        = NULL;
-            dh_param_.ecp_id       = 0;
+            dh_param_.group_id     = 0;
             dh_param_.paramgen_ctx = NULL;
             dh_param_.keygen_ctx   = NULL;
             dh_param_.params_key   = NULL;
 #elif defined(CRYPTO_USE_MBEDTLS)
-            dh_param_.ecp_id = MBEDTLS_ECP_DP_NONE;
+            dh_param_.group_id = MBEDTLS_ECP_DP_NONE;
 #endif
 
 #if defined(UTIL_CONFIG_COMPILER_CXX_STATIC_ASSERT) && UTIL_CONFIG_COMPILER_CXX_STATIC_ASSERT
-    #if (defined(__cplusplus) && __cplusplus >= 201402L) || ((defined(_MSVC_LANG) && _MSVC_LANG >= 201402L))
-        UTIL_CONFIG_STATIC_ASSERT(std::is_trivially_copyable<random_engine_t>::value);
-    #elif (defined(__cplusplus) && __cplusplus >= 201103L) || ((defined(_MSVC_LANG) && _MSVC_LANG >= 201103L))
-        UTIL_CONFIG_STATIC_ASSERT(std::is_trivial<random_engine_t>::value);
-    #else
-        UTIL_CONFIG_STATIC_ASSERT(std::is_pod<random_engine_t>::value);
-    #endif
+#if (defined(__cplusplus) && __cplusplus >= 201402L) || ((defined(_MSVC_LANG) && _MSVC_LANG >= 201402L))
+            UTIL_CONFIG_STATIC_ASSERT(std::is_trivially_copyable<random_engine_t>::value);
+#elif (defined(__cplusplus) && __cplusplus >= 201103L) || ((defined(_MSVC_LANG) && _MSVC_LANG >= 201103L))
+            UTIL_CONFIG_STATIC_ASSERT(std::is_trivial<random_engine_t>::value);
+#else
+            UTIL_CONFIG_STATIC_ASSERT(std::is_pod<random_engine_t>::value);
+#endif
 #endif
             memset(&random_engine_, 0, sizeof(random_engine_));
         }
@@ -633,25 +807,21 @@ namespace util {
                     dh_param_.param = BIO_new_mem_buf(&dh_param_.param_buffer[0], static_cast<int>(pem_sz));
 
                     // check
-                    DH *test_dh_ctx = PEM_read_bio_DHparams(dh_param_.param, NULL, NULL, NULL);
-                    if (NULL == test_dh_ctx) {
+                    details::openssl_raii<DH> test_dh_ctx(PEM_read_bio_DHparams(dh_param_.param, NULL, NULL, NULL));
+                    if (!test_dh_ctx) {
                         ret = error_code_t::READ_DHPARAM_FILE;
                     } else {
                         int errcode = 0;
-                        DH_check(test_dh_ctx, &errcode);
+                        DH_check(test_dh_ctx.get(), &errcode);
                         if (((DH_CHECK_P_NOT_SAFE_PRIME | DH_NOT_SUITABLE_GENERATOR | DH_UNABLE_TO_CHECK_GENERATOR) & errcode)) {
                             ret = error_code_t::READ_DHPARAM_FILE;
                         }
-                        DH_free(test_dh_ctx);
                     }
                 } while (false);
 
                 if (error_code_t::OK != ret) {
-                    if (NULL != dh_param_.param) {
-                        BIO_free(dh_param_.param);
-                        dh_param_.param = NULL;
-                        dh_param_.param_buffer.clear();
-                    }
+                    details::reset(dh_param_.param);
+                    dh_param_.param_buffer.clear();
                 }
 
 #elif defined(CRYPTO_USE_MBEDTLS)
@@ -686,54 +856,63 @@ namespace util {
 // check if it's available
 #if defined(CRYPTO_USE_OPENSSL) || defined(CRYPTO_USE_LIBRESSL) || defined(CRYPTO_USE_BORINGSSL)
                 // https://github.com/prithuadhikary/OPENSSL_EVP_ECDH_EXAMPLE/blob/master/main.c
-                dh_param_.ecp_id = tls1_nid2group_id(details::supported_dh_curves_openssl[ecp_idx]);
-                dh_param_.paramgen_ctx = details::initialize_pkey_ctx_by_group_id(dh_param_.ecp_id, false, true);
-                if (NULL == dh_param_.paramgen_ctx) {
-                    dh_param_.ecp_id = 0;
-                    ret = error_code_t::NOT_SUPPORT;
-                    break;
+                dh_param_.group_id = tls1_nid2group_id(details::supported_dh_curves_openssl[ecp_idx]);
+                unsigned int gtype = 0;
+
+                tls1_ec_group_id2nid(dh_param_.group_id, &gtype);
+                if (TLS_CURVE_CUSTOM == gtype) {
+                    dh_param_.keygen_ctx = details::initialize_pkey_ctx_by_group_id(dh_param_.group_id, true, false);
+                    if (NULL == dh_param_.keygen_ctx) {
+                        ret = error_code_t::NOT_SUPPORT;
+                    }
+                } else {
+                    details::reset(dh_param_.paramgen_ctx);
+                    dh_param_.paramgen_ctx = details::initialize_pkey_ctx_by_group_id(dh_param_.group_id, false, true);
+                    if (NULL == dh_param_.paramgen_ctx) {
+                        dh_param_.group_id = 0;
+                        ret                = error_code_t::NOT_SUPPORT;
+                        break;
+                    }
+
+                    do {
+                        details::reset(dh_param_.params_key);
+                        EVP_PKEY_paramgen(dh_param_.paramgen_ctx, &dh_param_.params_key);
+                        if (NULL == dh_param_.params_key) {
+                            break;
+                        }
+                        details::reset(dh_param_.keygen_ctx);
+                        dh_param_.keygen_ctx = EVP_PKEY_CTX_new(dh_param_.params_key, NULL);
+                        if (NULL == dh_param_.keygen_ctx) {
+                            break;
+                        }
+
+                        if (EVP_PKEY_keygen_init(dh_param_.keygen_ctx) <= 0) {
+                            details::reset(dh_param_.keygen_ctx);
+                        }
+                    } while (false);
                 }
 
-                do {
-                    if (NULL != dh_param_.params_key) {
-                        EVP_PKEY_free(dh_param_.params_key);
-                        dh_param_.params_key = NULL;
-                    }
-                    EVP_PKEY_paramgen(dh_param_.paramgen_ctx, &dh_param_.params_key);
-                    if (NULL == dh_param_.params_key) {
-                        break;
-                    }
-                    if (NULL != dh_param_.keygen_ctx) {
-                        EVP_PKEY_CTX_free(dh_param_.keygen_ctx);
-                    }
-                    dh_param_.keygen_ctx = EVP_PKEY_CTX_new(dh_param_.params_key, NULL);
-                    if (NULL == dh_param_.keygen_ctx) {
-                        break;
-                    }
-
-                    if(EVP_PKEY_keygen_init(dh_param_.keygen_ctx) <= 0) {
-                        EVP_PKEY_CTX_free(dh_param_.keygen_ctx);
-                        dh_param_.keygen_ctx = NULL;
-                    }
-                } while (false);
-                
 #elif defined(CRYPTO_USE_MBEDTLS)
                 const mbedtls_ecp_curve_info *curve = mbedtls_ecp_curve_info_from_name(details::supported_dh_curves[ecp_idx]);
                 if (NULL == curve) {
                     ret = error_code_t::NOT_SUPPORT;
                     break;
                 }
-                dh_param_.ecp_id = curve->grp_id;
+                dh_param_.group_id = curve->grp_id;
 #endif
                 break;
             }
-            default: { return error_code_t::NOT_SUPPORT; }
+            default: {
+                return error_code_t::NOT_SUPPORT;
+            }
             }
 
             if (ret < 0) {
                 reset();
             }
 
+            flags_ |= flags_t::SERVER_MODE;
+            flags_ &= ~static_cast<uint32_t>(flags_t::CLIENT_MODE);
             return ret;
         }
 
@@ -761,10 +940,12 @@ namespace util {
 #endif
             method_ = method;
 
+            flags_ |= flags_t::CLIENT_MODE;
             return error_code_t::OK;
         }
 
         LIBATFRAME_UTILS_API void dh::shared_context::reset() {
+            flags_ = flags_t::NONE;
             if (method_t::EN_CDT_INVALID == method_) {
                 return;
             }
@@ -776,17 +957,16 @@ namespace util {
 #if defined(CRYPTO_USE_OPENSSL) || defined(CRYPTO_USE_LIBRESSL) || defined(CRYPTO_USE_BORINGSSL)
                 // clear dh pem buffer
                 if (NULL != dh_param_.param) {
-                    BIO_free(dh_param_.param);
-                    dh_param_.param = NULL;
+                    details::reset(dh_param_.param);
                     dh_param_.param_buffer.clear();
                 }
                 // clear ecp
-                dh_param_.ecp_id = 0;
+                dh_param_.group_id = 0;
 #elif defined(CRYPTO_USE_MBEDTLS)
                 // clear dh pem buffer
                 dh_param_.param.clear();
                 // clear ecp
-                dh_param_.ecp_id = MBEDTLS_ECP_DP_NONE;
+                dh_param_.group_id = MBEDTLS_ECP_DP_NONE;
 #endif
                 break;
             }
@@ -799,19 +979,9 @@ namespace util {
             method_ = method_t::EN_CDT_INVALID;
 // random engine
 #if defined(CRYPTO_USE_OPENSSL) || defined(CRYPTO_USE_LIBRESSL) || defined(CRYPTO_USE_BORINGSSL)
-            if (NULL != dh_param_.params_key) {
-                EVP_PKEY_free(dh_param_.params_key);
-                dh_param_.params_key = NULL;
-            }
-
-            if (NULL != dh_param_.paramgen_ctx) {
-                EVP_PKEY_CTX_free(dh_param_.paramgen_ctx);
-                dh_param_.paramgen_ctx = NULL;
-            }
-            if (NULL != dh_param_.keygen_ctx) {
-                EVP_PKEY_CTX_free(dh_param_.keygen_ctx);
-                dh_param_.keygen_ctx = NULL;
-            }
+            details::reset(dh_param_.params_key);
+            details::reset(dh_param_.paramgen_ctx);
+            details::reset(dh_param_.keygen_ctx);
 #elif defined(CRYPTO_USE_MBEDTLS)
             mbedtls_ctr_drbg_free(&random_engine_.ctr_drbg);
             mbedtls_entropy_free(&random_engine_.entropy);
@@ -839,25 +1009,7 @@ namespace util {
             return ret;
         }
 
-        LIBATFRAME_UTILS_API bool dh::shared_context::is_client_mode() const {
-            if (method_t::EN_CDT_DH == method_) {
-#if defined(CRYPTO_USE_OPENSSL) || defined(CRYPTO_USE_LIBRESSL) || defined(CRYPTO_USE_BORINGSSL)
-                return NULL == dh_param_.param;
-#elif defined(CRYPTO_USE_MBEDTLS)
-                return dh_param_.param.empty();
-#endif
-            }
-
-            if (method_t::EN_CDT_ECDH == method_) {
-#if defined(CRYPTO_USE_OPENSSL) || defined(CRYPTO_USE_LIBRESSL) || defined(CRYPTO_USE_BORINGSSL)
-                return NULL == dh_param_.paramgen_ctx;
-#elif defined(CRYPTO_USE_MBEDTLS)
-                return dh_param_.ecp_id == MBEDTLS_ECP_DP_NONE;
-#endif
-            }
-
-            return false;
-        }
+        LIBATFRAME_UTILS_API bool dh::shared_context::is_client_mode() const { return 0 != (flags_ & flags_t::CLIENT_MODE); }
 
         LIBATFRAME_UTILS_API dh::method_t::type dh::shared_context::get_method() const { return method_; }
         LIBATFRAME_UTILS_API const dh::shared_context::dh_param_t &dh::shared_context::get_dh_parameter() const { return dh_param_; }
@@ -866,25 +1018,25 @@ namespace util {
         }
         LIBATFRAME_UTILS_API dh::shared_context::random_engine_t &dh::shared_context::get_random_engine() { return random_engine_; }
 
-        LIBATFRAME_UTILS_API bool dh::shared_context::check_or_setup_ecp_id(int ecp_id) {
+        LIBATFRAME_UTILS_API bool dh::shared_context::check_or_setup_ecp_id(int group_id) {
 #if defined(CRYPTO_USE_OPENSSL) || defined(CRYPTO_USE_LIBRESSL) || defined(CRYPTO_USE_BORINGSSL)
-            if (0 != dh_param_.ecp_id && dh_param_.ecp_id != ecp_id) {
+            if (0 != dh_param_.group_id && dh_param_.group_id != group_id) {
                 return false;
             }
 
             if (NULL == dh_param_.keygen_ctx) {
-                dh_param_.keygen_ctx = details::initialize_pkey_ctx_by_group_id(ecp_id, true, false);
+                dh_param_.keygen_ctx = details::initialize_pkey_ctx_by_group_id(group_id, true, false);
                 if (NULL == dh_param_.keygen_ctx) {
                     return false;
                 }
 
-                dh_param_.ecp_id = ecp_id;
+                dh_param_.group_id = group_id;
             }
             return true;
 
 #elif defined(CRYPTO_USE_MBEDTLS)
-            if (MBEDTLS_ECP_DP_NONE != dh_param_.ecp_id) {
-                return dh_param_.ecp_id == ecp_id;
+            if (MBEDTLS_ECP_DP_NONE != dh_param_.group_id) {
+                return dh_param_.group_id == group_id;
             }
             return true;
 #endif
@@ -895,13 +1047,13 @@ namespace util {
         LIBATFRAME_UTILS_API dh::dh() : last_errorno_(0) {
             memset(&dh_context_, 0, sizeof(dh_context_));
 #if defined(UTIL_CONFIG_COMPILER_CXX_STATIC_ASSERT) && UTIL_CONFIG_COMPILER_CXX_STATIC_ASSERT
-    #if (defined(__cplusplus) && __cplusplus >= 201402L) || ((defined(_MSVC_LANG) && _MSVC_LANG >= 201402L))
+#if (defined(__cplusplus) && __cplusplus >= 201402L) || ((defined(_MSVC_LANG) && _MSVC_LANG >= 201402L))
             UTIL_CONFIG_STATIC_ASSERT(std::is_trivially_copyable<dh_context_t>::value);
-    #elif (defined(__cplusplus) && __cplusplus >= 201103L) || ((defined(_MSVC_LANG) && _MSVC_LANG >= 201103L))
+#elif (defined(__cplusplus) && __cplusplus >= 201103L) || ((defined(_MSVC_LANG) && _MSVC_LANG >= 201103L))
             UTIL_CONFIG_STATIC_ASSERT(std::is_trivial<dh_context_t>::value);
-    #else
+#else
             UTIL_CONFIG_STATIC_ASSERT(std::is_pod<dh_context_t>::value);
-    #endif
+#endif
 #endif
         }
         LIBATFRAME_UTILS_API dh::~dh() { close(); }
@@ -937,10 +1089,6 @@ namespace util {
                         break;
                     }
 
-                    // if (!shared_context->is_client_mode() && !DH_generate_key(dh_context_.openssl_dh_ptr_)) {
-                    //     ret = error_code_t::INIT_DH_GENERATE_KEY;
-                    //     break;
-                    // }
                 } while (false);
 
                 if (0 != ret) {
@@ -949,10 +1097,7 @@ namespace util {
                         dh_context_.peer_pubkey_ = NULL;
                     }
 
-                    if (NULL != dh_context_.openssl_dh_ptr_) {
-                        DH_free(dh_context_.openssl_dh_ptr_);
-                        dh_context_.openssl_dh_ptr_ = NULL;
-                    }
+                    details::reset(dh_context_.openssl_dh_ptr_);
                 }
 #elif defined(CRYPTO_USE_MBEDTLS)
                 // mbedtls_dhm_read_params
@@ -982,7 +1127,7 @@ namespace util {
 // init DH param file
 #if defined(CRYPTO_USE_OPENSSL) || defined(CRYPTO_USE_LIBRESSL) || defined(CRYPTO_USE_BORINGSSL)
                 if (false == shared_context->is_client_mode()) {
-                    if (NULL == shared_context->get_dh_parameter().paramgen_ctx) {
+                    if (NULL == shared_context->get_dh_parameter().keygen_ctx) {
                         ret = error_code_t::NOT_SERVER_MODE;
                     }
                 }
@@ -992,7 +1137,7 @@ namespace util {
                     mbedtls_ecdh_init(&dh_context_.mbedtls_ecdh_ctx_);
 
                     if (false == shared_context->is_client_mode()) {
-                        int res = mbedtls_ecp_group_load(&dh_context_.mbedtls_ecdh_ctx_.grp, shared_context->get_dh_parameter().ecp_id);
+                        int res = mbedtls_ecp_group_load(&dh_context_.mbedtls_ecdh_ctx_.grp, shared_context->get_dh_parameter().group_id);
                         if (0 != res) {
                             ret = details::setup_errorno(*this, res, error_code_t::INIT_DHPARAM);
                             break;
@@ -1006,7 +1151,9 @@ namespace util {
 #endif
                 break;
             }
-            default: { details::setup_errorno(*this, 0, error_code_t::NOT_SUPPORT); }
+            default: {
+                details::setup_errorno(*this, 0, error_code_t::NOT_SUPPORT);
+            }
             }
 
             if (0 != ret) {
@@ -1026,10 +1173,7 @@ namespace util {
             shared_context.swap(shared_context_);
 
 #if defined(CRYPTO_USE_OPENSSL) || defined(CRYPTO_USE_LIBRESSL) || defined(CRYPTO_USE_BORINGSSL)
-            if (NULL != dh_context_.openssl_pkey_ctx_) {
-                EVP_PKEY_CTX_free(dh_context_.openssl_pkey_ctx_);
-                dh_context_.openssl_pkey_ctx_ = NULL;
-            }
+            details::reset(dh_context_.openssl_pkey_ctx_);
 #endif
 
             switch (shared_context->get_method()) {
@@ -1041,11 +1185,7 @@ namespace util {
                     dh_context_.peer_pubkey_ = NULL;
                 }
 
-                if (NULL != dh_context_.openssl_dh_ptr_) {
-                    DH_free(dh_context_.openssl_dh_ptr_);
-                    dh_context_.openssl_dh_ptr_ = NULL;
-                }
-
+                details::reset(dh_context_.openssl_dh_ptr_);
 #elif defined(CRYPTO_USE_MBEDTLS)
                 mbedtls_dhm_free(&dh_context_.mbedtls_dh_ctx_);
 #endif
@@ -1054,21 +1194,16 @@ namespace util {
             case method_t::EN_CDT_ECDH: {
 // clear ecdh key and cache
 #if defined(CRYPTO_USE_OPENSSL) || defined(CRYPTO_USE_LIBRESSL) || defined(CRYPTO_USE_BORINGSSL)
-                if (NULL != dh_context_.openssl_ecdh_peer_key_) {
-                    EVP_PKEY_free(dh_context_.openssl_ecdh_peer_key_);
-                    dh_context_.openssl_ecdh_peer_key_ = NULL;
-                }
-
-                if (NULL != dh_context_.openssl_ecdh_pkey_) {
-                    EVP_PKEY_free(dh_context_.openssl_ecdh_pkey_);
-                    dh_context_.openssl_ecdh_pkey_ = NULL;
-                }
+                details::reset(dh_context_.openssl_ecdh_peer_key_);
+                details::reset(dh_context_.openssl_ecdh_pkey_);
 #elif defined(CRYPTO_USE_MBEDTLS)
                 mbedtls_ecdh_free(&dh_context_.mbedtls_ecdh_ctx_);
 #endif
                 break;
             }
-            default: { details::setup_errorno(*this, 0, error_code_t::NOT_SUPPORT); }
+            default: {
+                details::setup_errorno(*this, 0, error_code_t::NOT_SUPPORT);
+            }
             }
 
             return details::setup_errorno(*this, 0, error_code_t::OK);
@@ -1167,11 +1302,7 @@ namespace util {
                         break;
                     }
 
-                    if (NULL != dh_context_.openssl_ecdh_pkey_) {
-                        EVP_PKEY_free(dh_context_.openssl_ecdh_pkey_);
-                        dh_context_.openssl_ecdh_pkey_ = NULL;
-                    }
-
+                    details::reset(dh_context_.openssl_ecdh_pkey_);
                     if (EVP_PKEY_keygen(shared_context_->get_dh_parameter().keygen_ctx, &dh_context_.openssl_ecdh_pkey_) <= 0) {
                         ret = details::setup_errorno(*this, static_cast<int>(ERR_get_error()), error_code_t::INIT_DHPARAM);
                     }
@@ -1183,10 +1314,7 @@ namespace util {
                 } while (false);
 
                 if (0 != ret) {
-                    if (NULL != dh_context_.openssl_ecdh_pkey_) {
-                        EVP_PKEY_free(dh_context_.openssl_ecdh_pkey_);
-                        dh_context_.openssl_ecdh_pkey_ = NULL;
-                    }
+                    details::reset(dh_context_.openssl_ecdh_pkey_);
                     break;
                 }
 
@@ -1195,56 +1323,32 @@ namespace util {
                     break;
                 }
 
-                EC_KEY* ec_key = EVP_PKEY_get0_EC_KEY(dh_context_.openssl_ecdh_pkey_);
-                if (NULL == ec_key) {
+                // pub key:
+                //   EVP_PKEY_get1_tls_encodedpoint()
+                //   EVP_PKEY_set1_tls_encodedpoint()
+                // param:
+                //   EVP_PKEY_id()
+                //   pkey_set_type()
+                //   EVP_PKEY_print_params()
+                //   EVP_PKEY_print_params()
+                unsigned char *point_data = NULL;
+                size_t         encode_len = EVP_PKEY_get1_tls_encodedpoint(dh_context_.openssl_ecdh_pkey_, &point_data);
+                if (NULL == point_data) {
                     ret = details::setup_errorno(*this, static_cast<int>(ERR_get_error()), error_code_t::INIT_DH_GENERATE_KEY);
                     break;
                 }
-
-                // ===============================================
-                const EC_GROUP *group;
-                if ((group = EC_KEY_get0_group(ec_key)) == NULL || EC_KEY_get0_public_key(ec_key) == NULL) {
-                    ret = details::setup_errorno(*this, static_cast<int>(ERR_get_error()), error_code_t::INIT_DH_GENERATE_KEY);
-                    break;
-                }
-
-                int group_id;
-                if ((group_id = tls1_nid2group_id(EC_GROUP_get_curve_name(group))) == 0) {
-                    ret = details::setup_errorno(*this, static_cast<int>(ERR_get_error()), error_code_t::INIT_DH_GENERATE_KEY);
-                    break;
-                }
-
-                /**
-                 * Encode the public key, first check the size of encoding
-                 */
-                size_t encode_len = EC_POINT_point2oct(group, EC_KEY_get0_public_key(ec_key),
-                                                       POINT_CONVERSION_UNCOMPRESSED, NULL, 0, NULL);
-
-                { // with bn_ctx
-                    BN_CTX *bn_ctx = BN_CTX_new();
-                    if (NULL == bn_ctx) {
-                        ret = details::setup_errorno(*this, static_cast<int>(ERR_get_error()), error_code_t::INIT_DH_GENERATE_KEY);
-                        break;
-                    }
-
-                    /*
-                     * XXX: For now, we only support named (not generic) curves. In
-                     * this situation, the serverKeyExchange message has: [1 byte
-                     * CurveType], [2 byte CurveName] [1 byte length of encoded
-                     * point], followed by the actual encoded point itself
-                     */
-                    size_t curve_grp_len = 4;
-                    param.resize(encode_len + curve_grp_len, 0);
-
-                    encode_len = EC_POINT_point2oct(group, EC_KEY_get0_public_key(ec_key),
-                                                    POINT_CONVERSION_UNCOMPRESSED, &param[curve_grp_len], encode_len, bn_ctx);
-                    BN_CTX_free(bn_ctx);
-                }
-
-                if (0 == encode_len) {
-                    ret = details::setup_errorno(*this, static_cast<int>(ERR_get_error()), error_code_t::INIT_DH_GENERATE_KEY);
-                    break;
-                }
+                int group_id = shared_context_->get_dh_parameter().group_id;
+                // {
+                //     int type_id = EVP_PKEY_id(dh_context_.openssl_ecdh_pkey_);
+                //     if (EVP_PKEY_EC == type_id) {
+                //         group_id = tls1_nid2group_id(...);
+                //     } else {
+                //         group_id = tls1_nid2group_id(type_id);
+                //     }
+                // }
+                param.resize(encode_len + 4, 0);
+                memcpy(&param[4], point_data, encode_len);
+                OPENSSL_free(point_data);
 
                 // Write data
                 param[0] = NAMED_CURVE_TYPE;
@@ -1267,7 +1371,9 @@ namespace util {
 #endif
                 break;
             }
-            default: { details::setup_errorno(*this, 0, error_code_t::NOT_SUPPORT); }
+            default: {
+                details::setup_errorno(*this, 0, error_code_t::NOT_SUPPORT);
+            }
             }
 
             return ret;
@@ -1437,82 +1543,38 @@ namespace util {
                     break;
                 }
 
-                if (NULL != dh_context_.openssl_ecdh_pkey_) {
-                    EVP_PKEY_free(dh_context_.openssl_ecdh_pkey_);
-                    dh_context_.openssl_ecdh_pkey_ = NULL;
-                }
-
+                details::reset(dh_context_.openssl_ecdh_pkey_);
                 if (EVP_PKEY_keygen(shared_context_->get_dh_parameter().keygen_ctx, &dh_context_.openssl_ecdh_pkey_) <= 0) {
-                    if (NULL != dh_context_.openssl_ecdh_pkey_) {
-                        EVP_PKEY_free(dh_context_.openssl_ecdh_pkey_);
-                        dh_context_.openssl_ecdh_pkey_ = NULL;
-                    }
+                    details::reset(dh_context_.openssl_ecdh_pkey_);
                     ret = details::setup_errorno(*this, static_cast<int>(ERR_get_error()), error_code_t::INIT_DH_GENERATE_KEY);
                     break;
                 }
-
                 if (NULL == dh_context_.openssl_ecdh_pkey_) {
                     ret = details::setup_errorno(*this, static_cast<int>(ERR_get_error()), error_code_t::INIT_DH_GENERATE_KEY);
                     break;
                 }
 
-                EC_KEY* ec_key = EVP_PKEY_get0_EC_KEY(dh_context_.openssl_ecdh_pkey_);
-                if (NULL == ec_key) {
-                    ret = details::setup_errorno(*this, 0, error_code_t::INIT_DH_READ_PARAM);
-                    break;
-                }
-
-                const EC_GROUP *group = EC_KEY_get0_group(ec_key);
-                if (NULL == group) {
-                    ret = details::setup_errorno(*this, static_cast<int>(ERR_get_error()), error_code_t::INIT_DH_READ_PARAM);
-                    break;
-                }
-
                 if (NULL == dh_context_.openssl_ecdh_peer_key_) {
-                    dh_context_.openssl_ecdh_peer_key_ = EVP_PKEY_new();
+                    EVP_PKEY_keygen(shared_context_->get_dh_parameter().keygen_ctx, &dh_context_.openssl_ecdh_peer_key_);
                 }
                 if (NULL == dh_context_.openssl_ecdh_peer_key_) {
                     ret = details::setup_errorno(*this, 0, error_code_t::MALLOC);
                     break;
                 }
 
-                ec_key = EC_KEY_new();
-                if (NULL == ec_key) {
-                    ret = details::setup_errorno(*this, static_cast<int>(ERR_get_error()), error_code_t::MALLOC);
+                // int type_id = EVP_PKEY_id(dh_context_.openssl_ecdh_pkey_);
+                //     Still missing nid information if type_id == EVP_PKEY_EC
+                // if (EVP_PKEY_set_type(dh_context_.openssl_ecdh_peer_key_, type_id) <= 0) {
+                //     ret = details::setup_errorno(*this, static_cast<int>(ERR_get_error()), error_code_t::NOT_SUPPORT);
+                //     details::reset(dh_context_.openssl_ecdh_peer_key_);
+                //     break;
+                // }
+
+                if (EVP_PKEY_set1_tls_encodedpoint(dh_context_.openssl_ecdh_peer_key_, &input[curve_grp_len], encoded_pt_len) <= 0) {
+                    ret = details::setup_errorno(*this, static_cast<int>(ERR_get_error()), error_code_t::NOT_SUPPORT);
+                    details::reset(dh_context_.openssl_ecdh_peer_key_);
                     break;
                 }
-                EC_KEY_set_group(ec_key, group);
-
-                EC_POINT* peer_point = EC_POINT_new(group);
-                if (NULL == peer_point) {
-                    ret = details::setup_errorno(*this, static_cast<int>(ERR_get_error()), error_code_t::MALLOC);
-                    EC_KEY_free(ec_key);
-                    break;
-                }
-
-                { // with bn_ctx
-                    BN_CTX *bn_ctx = BN_CTX_new();
-                    if (NULL == bn_ctx) {
-                        ret = details::setup_errorno(*this, static_cast<int>(ERR_get_error()), error_code_t::INIT_DH_READ_PARAM);
-                        EC_KEY_free(ec_key);
-                        EC_POINT_free(peer_point);
-                        break;
-                    }
-
-                    if ((EC_POINT_oct2point(group, peer_point, input + curve_grp_len, encoded_pt_len, bn_ctx)) == 0) {
-                        ret = details::setup_errorno(*this, static_cast<int>(ERR_get_error()), error_code_t::INIT_DH_READ_PARAM);
-                    }
-                    BN_CTX_free(bn_ctx);
-                }
-
-                if (EC_KEY_set_public_key(ec_key, peer_point) <= 0) {
-                    ret = details::setup_errorno(*this, static_cast<int>(ERR_get_error()), error_code_t::INIT_DH_READ_PARAM);
-                }
-                if (EVP_PKEY_set1_EC_KEY(dh_context_.openssl_ecdh_peer_key_, ec_key) <= 0) {
-                    ret = details::setup_errorno(*this, static_cast<int>(ERR_get_error()), error_code_t::INIT_DH_READ_PARAM);
-                }
-                EC_KEY_free(ec_key);
-                EC_POINT_free(peer_point);
 
 #elif defined(CRYPTO_USE_MBEDTLS)
                 const unsigned char *dh_params_beg = input;
@@ -1524,7 +1586,9 @@ namespace util {
 #endif
                 break;
             }
-            default: { details::setup_errorno(*this, 0, error_code_t::NOT_SUPPORT); }
+            default: {
+                details::setup_errorno(*this, 0, error_code_t::NOT_SUPPORT);
+            }
             }
 
             return ret;
@@ -1585,38 +1649,17 @@ namespace util {
                     break;
                 }
 
-                EC_KEY* ec_key = EVP_PKEY_get0_EC_KEY(dh_context_.openssl_ecdh_pkey_);
-                if (NULL == ec_key) {
+                unsigned char *point_data = NULL;
+                size_t         encode_len = EVP_PKEY_get1_tls_encodedpoint(dh_context_.openssl_ecdh_pkey_, &point_data);
+                if (NULL == point_data) {
                     ret = details::setup_errorno(*this, static_cast<int>(ERR_get_error()), error_code_t::INIT_DH_GENERATE_KEY);
                     break;
                 }
 
-                const EC_GROUP *group = EC_KEY_get0_group(ec_key);
-                if (NULL == group) {
-                    ret = details::setup_errorno(*this, static_cast<int>(ERR_get_error()), error_code_t::INIT_DH_GENERATE_KEY);
-                    break;
-                }
-
-                /**
-                 * First check the size of encoding
-                 */
-                size_t encoded_pt_len = EC_POINT_point2oct(group, EC_KEY_get0_public_key(ec_key),
-                                                           POINT_CONVERSION_UNCOMPRESSED, NULL, 0, NULL);
-
-                param.resize(encoded_pt_len + 1, 0);
-                { // with bn_ctx
-                    BN_CTX *bn_ctx = BN_CTX_new();
-                    if (NULL == bn_ctx) {
-                        ret = details::setup_errorno(*this, static_cast<int>(ERR_get_error()), error_code_t::INIT_DH_GENERATE_KEY);
-                        break;
-                    }
-
-                    size_t n = EC_POINT_point2oct(group, EC_KEY_get0_public_key(ec_key),
-                                                  POINT_CONVERSION_UNCOMPRESSED, &param[1], encoded_pt_len, bn_ctx);
-
-                    param[0] = static_cast<unsigned char>(n);
-                    BN_CTX_free(bn_ctx);
-                }
+                param.resize(encode_len + 1, 0);
+                memcpy(&param[1], point_data, encode_len);
+                OPENSSL_free(point_data);
+                param[0] = static_cast<unsigned char>(encode_len);
 
 #elif defined(CRYPTO_USE_MBEDTLS)
                 unsigned char buf[CRYPTO_DH_MAX_KEY_LEN];
@@ -1635,7 +1678,9 @@ namespace util {
 #endif
                 break;
             }
-            default: { details::setup_errorno(*this, 0, error_code_t::NOT_SUPPORT); }
+            default: {
+                details::setup_errorno(*this, 0, error_code_t::NOT_SUPPORT);
+            }
             }
 
             return ret;
@@ -1684,79 +1729,34 @@ namespace util {
                     break;
                 }
 
-                EC_KEY* ec_key = EVP_PKEY_get0_EC_KEY(dh_context_.openssl_ecdh_pkey_);
-                if (NULL == ec_key) {
-                    ret = details::setup_errorno(*this, static_cast<int>(ERR_get_error()), error_code_t::INIT_DH_GENERATE_KEY);
+                /* Get encoded point length */
+                size_t point_len = input[0];
+                if (point_len + 1 != ilen) {
+                    ret = details::setup_errorno(*this, 0, error_code_t::INVALID_PARAM);
                     break;
                 }
 
-                const EC_GROUP *group = EC_KEY_get0_group(ec_key);
-                if (NULL == group) {
-                    ret = details::setup_errorno(*this, static_cast<int>(ERR_get_error()), error_code_t::INIT_DH_GENERATE_KEY);
-                    break;
-                }
-                
                 if (NULL == dh_context_.openssl_ecdh_peer_key_) {
-                    dh_context_.openssl_ecdh_peer_key_ = EVP_PKEY_new();
+                    EVP_PKEY_keygen(shared_context_->get_dh_parameter().keygen_ctx, &dh_context_.openssl_ecdh_peer_key_);
                 }
                 if (NULL == dh_context_.openssl_ecdh_peer_key_) {
                     ret = details::setup_errorno(*this, 0, error_code_t::MALLOC);
                     break;
                 }
 
-                ec_key = EC_KEY_new();
-                if (NULL == ec_key) {
-                    ret = details::setup_errorno(*this, static_cast<int>(ERR_get_error()), error_code_t::MALLOC);
+                // int type_id = EVP_PKEY_id(dh_context_.openssl_ecdh_pkey_);
+                //     Still missing nid information if type_id == EVP_PKEY_EC
+                // if (EVP_PKEY_set_type(dh_context_.openssl_ecdh_peer_key_, type_id) <= 0) {
+                //     ret = details::setup_errorno(*this, static_cast<int>(ERR_get_error()), error_code_t::NOT_SUPPORT);
+                //     details::reset(dh_context_.openssl_ecdh_peer_key_);
+                //     break;
+                // }
+
+                if (EVP_PKEY_set1_tls_encodedpoint(dh_context_.openssl_ecdh_peer_key_, &input[1], point_len) <= 0) {
+                    ret = details::setup_errorno(*this, static_cast<int>(ERR_get_error()), error_code_t::NOT_SUPPORT);
+                    details::reset(dh_context_.openssl_ecdh_peer_key_);
                     break;
                 }
-                EC_KEY_set_group(ec_key, group);
-
-                EC_POINT* peer_point = EC_POINT_new(group);
-                if (NULL == peer_point) {
-                    ret = details::setup_errorno(*this, static_cast<int>(ERR_get_error()), error_code_t::MALLOC);
-                    EC_KEY_free(ec_key);
-                    break;
-                }
-
-                { // with bn_ctx
-
-                    /*
-                     * Get client's public key from encoded point in the
-                     * ClientKeyExchange message.
-                     */
-                    BN_CTX *bn_ctx = BN_CTX_new();
-                    if (NULL == bn_ctx) {
-                        ret = details::setup_errorno(*this, static_cast<int>(ERR_get_error()), error_code_t::INIT_DH_READ_KEY);
-                        EC_KEY_free(ec_key);
-                        EC_POINT_free(peer_point);
-                        break;
-                    }
-
-                    /* Get encoded point length */
-                    size_t point_len = input[0];
-                    if (point_len + 1 != ilen) {
-                        ret = details::setup_errorno(*this, static_cast<int>(ERR_get_error()), error_code_t::INIT_DH_READ_KEY);
-                        EC_KEY_free(ec_key);
-                        EC_POINT_free(peer_point);
-                        BN_CTX_free(bn_ctx);
-                        break;
-                    }
-
-                    if (EC_POINT_oct2point(group, peer_point, input + 1, point_len, bn_ctx) == 0) {
-                        ret = details::setup_errorno(*this, static_cast<int>(ERR_get_error()), error_code_t::INIT_DH_READ_KEY);
-                    }
-
-                    if (EC_KEY_set_public_key(ec_key, peer_point) <= 0) {
-                        ret = details::setup_errorno(*this, static_cast<int>(ERR_get_error()), error_code_t::INIT_DH_READ_PARAM);
-                    }
-                    if (EVP_PKEY_set1_EC_KEY(dh_context_.openssl_ecdh_peer_key_, ec_key) <= 0) {
-                        ret = details::setup_errorno(*this, static_cast<int>(ERR_get_error()), error_code_t::INIT_DH_READ_PARAM);
-                    }
-                    BN_CTX_free(bn_ctx);
-                }
-
-                EC_KEY_free(ec_key);
-                EC_POINT_free(peer_point);
 
 #elif defined(CRYPTO_USE_MBEDTLS)
                 int res = mbedtls_ecdh_read_public(&dh_context_.mbedtls_ecdh_ctx_, input, ilen);
@@ -1767,7 +1767,9 @@ namespace util {
 #endif
                 break;
             }
-            default: { details::setup_errorno(*this, 0, error_code_t::NOT_SUPPORT); }
+            default: {
+                details::setup_errorno(*this, 0, error_code_t::NOT_SUPPORT);
+            }
             }
 
             return ret;
@@ -1804,12 +1806,8 @@ namespace util {
                 // generate next_secret
                 output.resize(psz, 0);
                 int res;
-                //  if (shared_context_->is_client_mode()) {
                 res = mbedtls_dhm_calc_secret(&dh_context_.mbedtls_dh_ctx_, &output[0], psz, &psz, mbedtls_ctr_drbg_random,
                                               &shared_context_->get_random_engine().ctr_drbg);
-                // } else {
-                // mbedtls_dhm_calc_secret(&dh_context_.mbedtls_dh_ctx_, &output[0], psz, &psz, NULL, NULL);
-                // }
                 if (0 != res) {
                     ret = details::setup_errorno(*this, res, error_code_t::INIT_DH_GENERATE_SECRET);
                     break;
@@ -1832,18 +1830,16 @@ namespace util {
 
                 if (NULL != dh_context_.openssl_pkey_ctx_) {
                     if (dh_context_.openssl_ecdh_pkey_ != EVP_PKEY_CTX_get0_pkey(dh_context_.openssl_pkey_ctx_)) {
-                        EVP_PKEY_CTX_free(dh_context_.openssl_pkey_ctx_);
-                        dh_context_.openssl_pkey_ctx_ = NULL;
+                        details::reset(dh_context_.openssl_pkey_ctx_);
                     }
                 }
 
                 if (NULL == dh_context_.openssl_pkey_ctx_) {
                     dh_context_.openssl_pkey_ctx_ = EVP_PKEY_CTX_new(dh_context_.openssl_ecdh_pkey_, NULL);
                     if (NULL != dh_context_.openssl_pkey_ctx_) {
-                        if(EVP_PKEY_derive_init(dh_context_.openssl_pkey_ctx_) <= 0) {
+                        if (EVP_PKEY_derive_init(dh_context_.openssl_pkey_ctx_) <= 0) {
                             ret = details::setup_errorno(*this, static_cast<int>(ERR_get_error()), error_code_t::INIT_DH_GENERATE_SECRET);
-                            EVP_PKEY_CTX_free(dh_context_.openssl_pkey_ctx_);
-                            dh_context_.openssl_pkey_ctx_ = NULL;
+                            details::reset(dh_context_.openssl_pkey_ctx_);
                         }
                     }
                 }
@@ -1853,23 +1849,24 @@ namespace util {
                 }
 
                 if (dh_context_.openssl_ecdh_peer_key_ != EVP_PKEY_CTX_get0_peerkey(dh_context_.openssl_pkey_ctx_)) {
-                    if(EVP_PKEY_derive_set_peer(dh_context_.openssl_pkey_ctx_, dh_context_.openssl_ecdh_peer_key_) <= 0) {
+                    if (EVP_PKEY_derive_set_peer(dh_context_.openssl_pkey_ctx_, dh_context_.openssl_ecdh_peer_key_) <= 0) {
                         ret = details::setup_errorno(*this, static_cast<int>(ERR_get_error()), error_code_t::INIT_DH_GENERATE_SECRET);
                         break;
                     }
                 }
 
                 size_t secret_len = 0;
-                if(EVP_PKEY_derive(dh_context_.openssl_pkey_ctx_, NULL, &secret_len) <= 0) {
+                if (EVP_PKEY_derive(dh_context_.openssl_pkey_ctx_, NULL, &secret_len) <= 0) {
                     ret = details::setup_errorno(*this, static_cast<int>(ERR_get_error()), error_code_t::INIT_DH_GENERATE_SECRET);
                     break;
                 }
 
                 output.resize(static_cast<size_t>((secret_len + 7) / 8) * 8, 0);
-                if((EVP_PKEY_derive(dh_context_.openssl_pkey_ctx_, &output[0], &secret_len)) <= 0) {
+                if ((EVP_PKEY_derive(dh_context_.openssl_pkey_ctx_, &output[0], &secret_len)) <= 0) {
                     ret = details::setup_errorno(*this, static_cast<int>(ERR_get_error()), error_code_t::INIT_DH_GENERATE_SECRET);
                     break;
                 }
+                output.resize(static_cast<size_t>(secret_len));
 
 #elif defined(CRYPTO_USE_MBEDTLS)
                 unsigned char buf[CRYPTO_DH_MAX_KEY_LEN];
@@ -1887,7 +1884,9 @@ namespace util {
 #endif
                 break;
             }
-            default: { details::setup_errorno(*this, 0, error_code_t::NOT_SUPPORT); }
+            default: {
+                details::setup_errorno(*this, 0, error_code_t::NOT_SUPPORT);
+            }
             }
 
             return ret;
@@ -1902,44 +1901,35 @@ namespace util {
                     }
 #if defined(CRYPTO_USE_OPENSSL) || defined(CRYPTO_USE_LIBRESSL) || defined(CRYPTO_USE_BORINGSSL)
                     if (0 != details::supported_dh_curves_openssl[i]) {
-                        unsigned int gtype = 0;
-                        int ecp_id = tls1_nid2group_id(details::supported_dh_curves_openssl[i]);
-                        if (0 == ecp_id) {
+                        unsigned int gtype    = 0;
+                        int          group_id = tls1_nid2group_id(details::supported_dh_curves_openssl[i]);
+                        if (0 == group_id) {
                             continue;
                         }
-                        int nid = tls1_ec_group_id2nid(ecp_id, &gtype);
+                        int nid = tls1_ec_group_id2nid(group_id, &gtype);
 
-                        EVP_PKEY_CTX *pctx;
                         if (gtype == TLS_CURVE_CUSTOM) {
-                            pctx = EVP_PKEY_CTX_new_id(nid, NULL);
-                            if (NULL == pctx) {
+                            details::openssl_raii<EVP_PKEY_CTX> pctx(EVP_PKEY_CTX_new_id(nid, NULL));
+                            if (!pctx) {
                                 continue;
                             }
-                            if (NULL != pctx) {
-                                if(EVP_PKEY_keygen_init(pctx) <= 0) {
-                                    EVP_PKEY_CTX_free(pctx);
-                                    pctx = NULL;
-                                }
+
+                            if (EVP_PKEY_keygen_init(pctx.get()) <= 0) {
+                                continue;
                             }
                         } else {
-                            pctx = EVP_PKEY_CTX_new_id(EVP_PKEY_EC, NULL);
-                            if (NULL != pctx) {
-                                if(EVP_PKEY_keygen_init(pctx) <= 0) {
-                                    EVP_PKEY_CTX_free(pctx);
-                                    pctx = NULL;
-                                }
+                            details::openssl_raii<EVP_PKEY_CTX> pctx(EVP_PKEY_CTX_new_id(EVP_PKEY_EC, NULL));
+                            if (!pctx) {
+                                continue;
                             }
-                            if (NULL != pctx) {
-                                if(EVP_PKEY_CTX_set_ec_paramgen_curve_nid(pctx, nid) <= 0) {
-                                    EVP_PKEY_CTX_free(pctx);
-                                    pctx = NULL;
-                                }
+                            if (EVP_PKEY_keygen_init(pctx.get()) <= 0) {
+                                continue;
+                            }
+
+                            if (EVP_PKEY_CTX_set_ec_paramgen_curve_nid(pctx.get(), nid) <= 0) {
+                                continue;
                             }
                         }
-                        if (NULL == pctx) {
-                            continue;
-                        }
-                        EVP_PKEY_CTX_free(pctx);
 
                         ret.push_back(std::string("ecdh:") + details::supported_dh_curves[i]);
                     }
