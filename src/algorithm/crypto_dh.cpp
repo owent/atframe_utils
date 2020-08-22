@@ -406,9 +406,6 @@ EXPLICIT_UNUSED_ATTR static inline int DH_set0_key(DH *dh, BIGNUM *pub_key, BIGN
     return 1;
 }
 
-// static EC_KEY *EVP_PKEY_get0_EC_KEY(EVP_PKEY *pkey) { return pkey->pkey.ec; }
-// EVP_PKEY_get0_*/EVP_PKEY_GET0_*
-
 #ifndef ASN1_PKEY_CTRL_SET1_TLS_ENCPT
 #define ASN1_PKEY_CTRL_SET1_TLS_ENCPT 0x9
 #endif
@@ -457,30 +454,32 @@ static size_t EC_POINT_point2buf(const EC_GROUP *group, const EC_POINT *point, p
 }
 
 static size_t EC_KEY_key2buf(const EC_KEY *key, point_conversion_form_t form, unsigned char **pbuf, BN_CTX *ctx) {
-    if (key == NULL || EC_KEY_get0_group(key) == NULL) return 0;
-    // openssl < 1.1.0 do not has API of EVP_PKEY_get0_EC_KEY(key)
-    // So we can only use EVP_PKEY_get1_EC_KEY and free it later
-    EC_KEY *ec_key = EVP_PKEY_get1_EC_KEY(key);
-    if (ec_key == NULL) return 0;
-    size_t ret = EC_POINT_point2buf(EC_KEY_get0_group(key), EC_KEY_get0_public_key(key), form, pbuf, ctx);
-    EC_KEY_free(ec_key);
-    return ret;
+    if (key == NULL || EC_KEY_get0_public_key(key) == NULL || EC_KEY_get0_group(key) == NULL) return 0;
+    return EC_POINT_point2buf(EC_KEY_get0_group(key), EC_KEY_get0_public_key(key), form, pbuf, ctx);
 }
 
 // Just like crypto/ec/ec_ameth.c, openssl < 1.1.0 do not support x25519/x448 and ECX_KEY, just skip it
 static int evp_pkey_asn1_ctrl(EVP_PKEY *pkey, int op, int arg1, void *arg2) {
     if (EVP_PKEY_get0_asn1(pkey) == NULL) return -2;
-
+    // openssl < 1.1.0 do not has API of EVP_PKEY_get0_EC_KEY(key)
+    // So we can only use EVP_PKEY_get1_EC_KEY and free it later
+    EC_KEY *ec_key = EVP_PKEY_get1_EC_KEY(pkey);
+    int     ret;
     switch (op) {
     case ASN1_PKEY_CTRL_SET1_TLS_ENCPT:
-        return EC_KEY_oct2key(EVP_PKEY_get0_EC_KEY(pkey), arg2, arg1, NULL);
-
+        ret = EC_KEY_oct2key(ec_key, arg2, arg1, NULL);
+        break;
     case ASN1_PKEY_CTRL_GET1_TLS_ENCPT:
-        return EC_KEY_key2buf(EVP_PKEY_get0_EC_KEY(pkey), POINT_CONVERSION_UNCOMPRESSED, arg2, NULL);
-
+        ret = EC_KEY_key2buf(ec_key, POINT_CONVERSION_UNCOMPRESSED, arg2, NULL);
+        break;
     default:
-        return -2;
+        ret = -2;
+        break;
     }
+    if (NULL != ec_key) {
+        EC_KEY_free(ec_key);
+    }
+    return ret;
 }
 
 static size_t EVP_PKEY_get1_tls_encodedpoint(EVP_PKEY *pkey, unsigned char **ppt) {
