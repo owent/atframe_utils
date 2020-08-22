@@ -457,8 +457,14 @@ static size_t EC_POINT_point2buf(const EC_GROUP *group, const EC_POINT *point, p
 }
 
 static size_t EC_KEY_key2buf(const EC_KEY *key, point_conversion_form_t form, unsigned char **pbuf, BN_CTX *ctx) {
-    if (key == NULL || EC_KEY_get0_public_key(key) == NULL || EC_KEY_get0_group(key) == NULL) return 0;
-    return EC_POINT_point2buf(EC_KEY_get0_group(key), EC_KEY_get0_public_key(key), form, pbuf, ctx);
+    if (key == NULL || EC_KEY_get0_group(key) == NULL) return 0;
+    // openssl < 1.1.0 do not has API of EVP_PKEY_get0_EC_KEY(key)
+    // So we can only use EVP_PKEY_get1_EC_KEY and free it later
+    EC_KEY *ec_key = EVP_PKEY_get1_EC_KEY(key);
+    if (ec_key == NULL) return 0;
+    size_t ret = EC_POINT_point2buf(EC_KEY_get0_group(key), EC_KEY_get0_public_key(key), form, pbuf, ctx);
+    EC_KEY_free(ec_key);
+    return ret;
 }
 
 // Just like crypto/ec/ec_ameth.c, openssl < 1.1.0 do not support x25519/x448 and ECX_KEY, just skip it
