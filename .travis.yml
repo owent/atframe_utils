@@ -133,6 +133,8 @@ script:
 
     mkdir -p "mbedtls-$MBEDTLS_VERSION/build_dir" && cd "mbedtls-$MBEDTLS_VERSION/build_dir";
 
+    python3 ../scripts/config.py -f ../include/mbedtls/config.h set MBEDTLS_ECDH_VARIANT_EVEREST_ENABLED
+
     cmake .. -DCMAKE_C_COMPILER=$USE_CC -DCMAKE_CXX_COMPILER=$USE_CXX -DCMAKE_INSTALL_PREFIX=$HOME/prebuilt/mbedtls-$MBEDTLS_VERSION -DENABLE_PROGRAMS=OFF -DENABLE_TESTING=OFF -DUSE_STATIC_MBEDTLS_LIBRARY=ON -DUSE_SHARED_MBEDTLS_LIBRARY=OFF ;
 
     cmake --build . --target install;
