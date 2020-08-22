@@ -467,10 +467,10 @@ static int evp_pkey_asn1_ctrl(EVP_PKEY *pkey, int op, int arg1, void *arg2) {
     int     ret;
     switch (op) {
     case ASN1_PKEY_CTRL_SET1_TLS_ENCPT:
-        ret = EC_KEY_oct2key(ec_key, arg2, arg1, NULL);
+        ret = EC_KEY_oct2key(ec_key, (const unsigned char *)arg2, (size_t)arg1, NULL);
         break;
     case ASN1_PKEY_CTRL_GET1_TLS_ENCPT:
-        ret = EC_KEY_key2buf(ec_key, POINT_CONVERSION_UNCOMPRESSED, arg2, NULL);
+        ret = (int)EC_KEY_key2buf(ec_key, POINT_CONVERSION_UNCOMPRESSED, (unsigned char **)arg2, NULL);
         break;
     default:
         ret = -2;
@@ -486,7 +486,7 @@ static size_t EVP_PKEY_get1_tls_encodedpoint(EVP_PKEY *pkey, unsigned char **ppt
     int rv;
     rv = evp_pkey_asn1_ctrl(pkey, ASN1_PKEY_CTRL_GET1_TLS_ENCPT, 0, (void *)ppt);
     if (rv <= 0) return 0;
-    return rv;
+    return (size_t)rv;
 }
 
 static int EVP_PKEY_set1_tls_encodedpoint(EVP_PKEY *pkey, const unsigned char *pt, size_t ptlen) {
