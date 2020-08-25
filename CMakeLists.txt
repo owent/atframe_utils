@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.12.0)
-
+cmake_policy(SET CMP0022 NEW)
 if (CMAKE_VERSION VERSION_GREATER_EQUAL "3.13")
     cmake_policy(SET CMP0074 NEW)
 endif()
@@ -50,7 +50,7 @@ source_group_by_dir(SRC_LIST)
 
 message (STATUS "Configure ${PROJECT_ATFRAME_UTILS_LIB_NAME}")
 
-if(BUILD_SHARED_LIBS)
+if(BUILD_SHARED_LIBS OR ATFRAMEWORK_USE_DYNAMIC_LIBRARY)
     add_library(${PROJECT_ATFRAME_UTILS_LIB_NAME} SHARED ${HEADER_LIST} ${SRC_LIST})
     set_target_properties(${PROJECT_ATFRAME_UTILS_LIB_NAME} PROPERTIES 
         C_VISIBILITY_PRESET "hidden"

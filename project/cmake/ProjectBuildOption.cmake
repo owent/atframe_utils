@@ -381,3 +381,5 @@ option(PROJECT_FIND_CONFIGURE_PACKAGE_PARALLEL_BUILD "Parallel building for Find
 
 option(PROJECT_ENABLE_UNITTEST "Enable unit test" OFF)
 option(PROJECT_ENABLE_SAMPLE "Enable sample" OFF)
+
+option(ATFRAMEWORK_USE_DYNAMIC_LIBRARY "Build and linking with dynamic libraries." OFF)

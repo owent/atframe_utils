@@ -103,9 +103,8 @@ FIND_PACKAGE_HANDLE_STANDARD_ARGS(Libuv
 
 if(Libuv_FOUND)
   set(LIBUV_FOUND ${Libuv_FOUND})
-
   if (NOT TARGET libuv)
-    add_library(libuv STATIC IMPORTED)
+    add_library(libuv UNKNOWN IMPORTED)
     set_target_properties(libuv PROPERTIES
       INTERFACE_INCLUDE_DIRECTORIES ${Libuv_INCLUDE_DIRS}
     )
@@ -116,8 +115,37 @@ if(Libuv_FOUND)
 
     if (WIN32)
       set_target_properties(libuv PROPERTIES
-        INTERFACE_LINK_LIBRARIES "psapi;iphlpapi;userenv;ws2_32"
+        INTERFACE_LINK_LIBRARIES "psapi;user32;advapi32;iphlpapi;userenv;ws2_32"
       )
+    else()
+      unset(uv_libraries)
+      if (NOT CMAKE_SYSTEM_NAME MATCHES "Android|OS390")
+        list(APPEND uv_libraries pthread)
+      endif()
+      if(CMAKE_SYSTEM_NAME STREQUAL "AIX")
+        list(APPEND uv_libraries perfstat)
+      endif ()
+      if(CMAKE_SYSTEM_NAME STREQUAL "Android")
+        list(APPEND uv_libraries dl)
+      endif()
+      if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+        list(APPEND uv_libraries dl rt)
+      endif()
+      if(CMAKE_SYSTEM_NAME STREQUAL "NetBSD")
+        list(APPEND uv_libraries kvm)
+      endif()
+      if(CMAKE_SYSTEM_NAME STREQUAL "OS390")
+        list(APPEND uv_libraries -Wl,xplink)
+      endif()
+      if(CMAKE_SYSTEM_NAME STREQUAL "SunOS")
+        list(APPEND uv_libraries kstat nsl sendfile socket)
+      endif()
+      if (uv_libraries)
+        set_target_properties(libuv PROPERTIES
+          INTERFACE_LINK_LIBRARIES "${uv_libraries}"
+        )
+        unset(uv_libraries)
+      endif ()
     endif ()
   endif ()
 else ()

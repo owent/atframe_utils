@@ -406,6 +406,10 @@ EXPLICIT_UNUSED_ATTR static inline int DH_set0_key(DH *dh, BIGNUM *pub_key, BIGN
     return 1;
 }
 
+#endif
+
+#if defined(LIBRESSL_VERSION_NUMBER) || OPENSSL_VERSION_NUMBER < 0x10100000L
+
 #ifndef ASN1_PKEY_CTRL_SET1_TLS_ENCPT
 #define ASN1_PKEY_CTRL_SET1_TLS_ENCPT 0x9
 #endif
