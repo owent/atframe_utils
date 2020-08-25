@@ -1376,9 +1376,9 @@ namespace util {
             size_t counter = details::g_global_init_counter_++;
             if (0 == counter) {
                 ERR_load_ERR_strings();
-                ERR_load_crypto_strings();
 #if (defined(OPENSSL_API_COMPAT) && OPENSSL_API_COMPAT < 0x10100000L) || \
     (defined(OPENSSL_VERSION_NUMBER) && OPENSSL_VERSION_NUMBER < 0x10100000L)
+                ERR_load_crypto_strings();
                 OpenSSL_add_all_algorithms();
 #else
 
@@ -1411,8 +1411,8 @@ namespace util {
     (defined(OPENSSL_VERSION_NUMBER) && OPENSSL_VERSION_NUMBER < 0x10100000L)
             EVP_cleanup();
             CRYPTO_cleanup_all_ex_data();
-#endif
             ERR_free_strings();
+#endif
 #endif
             return 0;
         }
