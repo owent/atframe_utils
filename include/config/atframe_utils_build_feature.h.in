@@ -103,8 +103,10 @@
 
 #if defined(LIBATFRAME_UTILS_ENABLE_UNORDERED_MAP_SET) && LIBATFRAME_UTILS_ENABLE_UNORDERED_MAP_SET
 #define LIBATFRAME_UTILS_AUTO_SELETC_MAP(...) std::unordered_map<__VA_ARGS__>
+#define LIBATFRAME_UTILS_AUTO_SELETC_SET(...) std::unordered_set<__VA_ARGS__>
 #else
 #define LIBATFRAME_UTILS_AUTO_SELETC_MAP(...) std::map<__VA_ARGS__>
+#define LIBATFRAME_UTILS_AUTO_SELETC_SET(...) std::set<__VA_ARGS__>
 #endif
 
 #endif
