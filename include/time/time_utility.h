@@ -54,6 +54,8 @@ namespace util {
             };
 
             typedef std::chrono::system_clock::time_point raw_time_t;
+            typedef std::chrono::system_clock::duration   raw_duration_t;
+            typedef std::chrono::system_clock::period     raw_period_t;
             typedef struct tm                             raw_time_desc_t;
 
         private:
