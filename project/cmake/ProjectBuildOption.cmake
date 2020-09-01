@@ -342,6 +342,9 @@ if (NOT LIBATFRAME_UTILS_ENABLE_STD_FORMAT)
     endif()
 endif ()
 
+cmake_policy(PUSH)
+cmake_policy(SET CMP0067 NEW)
+# Require CMP0067 to NEW to inherit CXX_STANDARD
 check_cxx_source_compiles("
 #include <unordered_map>
 #include <unordered_set>
@@ -368,6 +371,7 @@ if (LIBATFRAME_UTILS_ENABLE_UNORDERED_MAP_SET)
             return 0;
         }" LIBATFRAME_UTILS_UNORDERED_MAP_SET_HAS_RESERVE)
 endif ()
+cmake_policy(POP)
 
 set(LIBATFRAME_UTILS_ENABLE_RTTI ${COMPILER_OPTIONS_TEST_RTTI})
 set(LIBATFRAME_UTILS_ENABLE_EXCEPTION ${COMPILER_OPTIONS_TEST_EXCEPTION})

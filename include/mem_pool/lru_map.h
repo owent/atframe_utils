@@ -76,8 +76,8 @@ namespace util {
             typedef std::unordered_map<TKEY, iterator, THasher, TKeyEQ, TAlloc> lru_key_value_map_type;
             typedef lru_map<TKEY, TVALUE, THasher, TKeyEQ, TAlloc>              self_type;
 #else
-            typedef std::map<TKEY, iterator, TLESSCMP, TAlloc>       lru_key_value_map_type;
-            typedef lru_map<TKEY, TVALUE, THasher, TLESSCMP, TAlloc> self_type;
+            typedef std::map<TKEY, iterator, TLESSCMP, TAlloc>  lru_key_value_map_type;
+            typedef lru_map<TKEY, TVALUE, TLESSCMP, TAlloc>     self_type;
 #endif
 
             lru_map() {}
