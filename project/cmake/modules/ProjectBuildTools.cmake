@@ -12,12 +12,16 @@ endif()
 set (PROJECT_BUILD_TOOLS_CMAKE_INHERIT_VARS_C
     CMAKE_C_FLAGS CMAKE_C_FLAGS_DEBUG CMAKE_C_FLAGS_RELEASE CMAKE_C_FLAGS_RELWITHDEBINFO CMAKE_C_FLAGS_MINSIZEREL
     CMAKE_C_COMPILER CMAKE_C_COMPILER_LAUNCHER CMAKE_C_COMPILER_AR CMAKE_C_COMPILER_RANLIB CMAKE_C_LINK_LIBRARY_SUFFIX
+    CMAKE_C_STANDARD_INCLUDE_DIRECTORIES CMAKE_C_STANDARD_LIBRARIES
+    CMAKE_OBJC_EXTENSIONS
 )
 
 set (PROJECT_BUILD_TOOLS_CMAKE_INHERIT_VARS_CXX
     CMAKE_CXX_FLAGS CMAKE_CXX_FLAGS_DEBUG CMAKE_CXX_FLAGS_RELEASE CMAKE_CXX_FLAGS_RELWITHDEBINFO CMAKE_CXX_FLAGS_MINSIZEREL
     CMAKE_CXX_COMPILER CMAKE_CXX_COMPILER_LAUNCHER CMAKE_CXX_COMPILER_AR CMAKE_CXX_COMPILER_RANLIB CMAKE_CXX_LINK_LIBRARY_SUFFIX
     ANDROID_CPP_FEATURES ANDROID_STL
+    CMAKE_CXX_STANDARD_INCLUDE_DIRECTORIES CMAKE_CXX_STANDARD_LIBRARIES
+    CMAKE_OBJCXX_EXTENSIONS
 )
 
 set (PROJECT_BUILD_TOOLS_CMAKE_INHERIT_VARS_ASM
@@ -50,7 +54,7 @@ macro(project_build_tools_append_cmake_inherit_options)
     set(project_build_tools_append_cmake_inherit_options_DISABLE_CXX_FLAGS FALSE)
     set(project_build_tools_append_cmake_inherit_options_DISABLE_ASM_FLAGS FALSE)
     set(project_build_tools_append_cmake_inherit_options_VARS PROJECT_BUILD_TOOLS_CMAKE_INHERIT_VARS_COMMON)
-    foreach(ARG IN LISTS ARGN)
+    foreach(ARG ${ARGN})
         if(NOT project_build_tools_append_cmake_inherit_options_OUTVAR)
             set(project_build_tools_append_cmake_inherit_options_OUTVAR ${ARG})
         endif ()
@@ -118,7 +122,7 @@ macro(project_build_tools_append_cmake_cxx_standard_options)
     unset(project_build_tools_append_cmake_cxx_standard_options_OUTVAR)
     set(project_build_tools_append_cmake_cxx_standard_options_DISABLE_C_FLAGS FALSE)
     set(project_build_tools_append_cmake_cxx_standard_options_DISABLE_CXX_FLAGS FALSE)
-    foreach(ARG IN LISTS ARGN)
+    foreach(ARG ${ARGN})
         if(NOT project_build_tools_append_cmake_cxx_standard_options_OUTVAR)
             set(project_build_tools_append_cmake_cxx_standard_options_OUTVAR ${ARG})
         endif ()
@@ -132,8 +136,14 @@ macro(project_build_tools_append_cmake_cxx_standard_options)
     if (CMAKE_C_STANDARD AND NOT project_build_tools_append_cmake_cxx_standard_options_DISABLE_C_FLAGS)
         list (APPEND ${project_build_tools_append_cmake_cxx_standard_options_OUTVAR} "-DCMAKE_C_STANDARD=${CMAKE_C_STANDARD}")
     endif ()
+    if (CMAKE_OBJC_STANDARD AND NOT project_build_tools_append_cmake_cxx_standard_options_DISABLE_C_FLAGS)
+        list (APPEND ${project_build_tools_append_cmake_cxx_standard_options_OUTVAR} "-DCMAKE_OBJC_STANDARD=${CMAKE_OBJC_STANDARD}")
+    endif ()
     if (CMAKE_CXX_STANDARD AND NOT project_build_tools_append_cmake_cxx_standard_options_DISABLE_CXX_FLAGS)
         list (APPEND ${project_build_tools_append_cmake_cxx_standard_options_OUTVAR} "-DCMAKE_CXX_STANDARD=${CMAKE_CXX_STANDARD}")
+    endif ()
+    if (CMAKE_OBJCXX_STANDARD AND NOT project_build_tools_append_cmake_cxx_standard_options_DISABLE_CXX_FLAGS)
+        list (APPEND ${project_build_tools_append_cmake_cxx_standard_options_OUTVAR} "-DCMAKE_OBJCXX_STANDARD=${CMAKE_OBJCXX_STANDARD}")
     endif ()
 
     unset(project_build_tools_append_cmake_cxx_standard_options_OUTVAR)
@@ -153,7 +163,7 @@ endmacro ()
 
 function(project_make_executable)
     if (UNIX OR MINGW OR CYGWIN OR APPLE OR CMAKE_HOST_APPLE OR CMAKE_HOST_UNIX)
-        foreach(ARG IN LISTS ARGN)
+        foreach(ARG ${ARGN})
             execute_process(COMMAND chmod -R +x ${ARG})
         endforeach()
     endif()
@@ -163,7 +173,7 @@ function (project_make_writable)
     if (CMAKE_HOST_APPLE OR APPLE OR UNIX OR MINGW OR MSYS OR CYGWIN)
         execute_process(COMMAND chmod -R +w ${ARGN})
     else ()
-        foreach(arg IN LISTS ARGN)
+        foreach(arg ${ARGN})
             execute_process(COMMAND attrib -R "${arg}" /S /D /L)
         endforeach()
     endif ()
@@ -196,7 +206,7 @@ function (project_expand_list_for_command_line_to_file)
     unset (project_expand_list_for_command_line_to_file_OUTPUT)
     unset (project_expand_list_for_command_line_to_file_LINE)
     set(project_expand_list_for_command_line_to_file_ENABLE_CONVERT ON)
-    foreach(ARG IN LISTS ARGN)
+    foreach(ARG ${ARGN})
         if (ARG STREQUAL "DISABLE_CONVERT")
             set(project_expand_list_for_command_line_to_file_ENABLE_CONVERT OFF)
         elseif (ARG STREQUAL "ENABLE_CONVERT")
