@@ -72,7 +72,7 @@ namespace util {
 
         private:
             std::vector<std::string> data_;
-            node_type                chirldren_nodes_;
+            node_type                children_nodes_;
 
 
             template <typename _Tt>

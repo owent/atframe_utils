@@ -168,8 +168,8 @@ namespace util {
         LIBATFRAME_UTILS_API ini_value::ini_value(const ini_value &other) : std::enable_shared_from_this<ini_value>() { *this = other; }
 
         LIBATFRAME_UTILS_API ini_value &ini_value::operator=(const ini_value &other) {
-            data_            = other.data_;
-            chirldren_nodes_ = other.chirldren_nodes_;
+            data_           = other.data_;
+            children_nodes_ = other.children_nodes_;
             return (*this);
         }
 
@@ -177,7 +177,7 @@ namespace util {
 
         LIBATFRAME_UTILS_API void ini_value::add(const char *begin, const char *end) { data_.push_back(std::string(begin, end)); }
 
-        LIBATFRAME_UTILS_API bool ini_value::empty() const { return data_.empty() && chirldren_nodes_.empty(); }
+        LIBATFRAME_UTILS_API bool ini_value::empty() const { return data_.empty() && children_nodes_.empty(); }
 
         LIBATFRAME_UTILS_API bool ini_value::has_data() const { return false == data_.empty(); }
 
@@ -185,20 +185,20 @@ namespace util {
 
         LIBATFRAME_UTILS_API void ini_value::clear() {
             data_.clear();
-            chirldren_nodes_.clear();
+            children_nodes_.clear();
         }
 
         LIBATFRAME_UTILS_API ini_value &ini_value::operator[](const std::string key) {
-            ptr_t &ret = chirldren_nodes_[key];
+            ptr_t &ret = children_nodes_[key];
             if (!ret) {
                 ret = std::make_shared<ini_value>();
             }
             return *ret;
         }
 
-        LIBATFRAME_UTILS_API ini_value::node_type &ini_value::get_children() { return chirldren_nodes_; }
+        LIBATFRAME_UTILS_API ini_value::node_type &ini_value::get_children() { return children_nodes_; }
 
-        LIBATFRAME_UTILS_API const ini_value::node_type &ini_value::get_children() const { return chirldren_nodes_; }
+        LIBATFRAME_UTILS_API const ini_value::node_type &ini_value::get_children() const { return children_nodes_; }
 
         LIBATFRAME_UTILS_API ini_value::ptr_t ini_value::get_child_by_path(const std::string &path) const {
             const ini_value *ret = this;
@@ -220,8 +220,8 @@ namespace util {
                 std::string key;
                 key.assign(iter->first, iter->second);
 
-                node_type::const_iterator child_iter = chirldren_nodes_.find(key);
-                if (child_iter == chirldren_nodes_.end()) {
+                node_type::const_iterator child_iter = ret->children_nodes_.find(key);
+                if (child_iter == ret->children_nodes_.end()) {
                     ret = NULL;
                     break;
                 }
