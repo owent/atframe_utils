@@ -29,20 +29,27 @@
 
 #include <cstddef>
 #include <list>
-#include <map>
 #include <sstream>
 #include <stdint.h>
 #include <string>
 #include <vector>
 
+#include <std/smart_ptr.h>
+
 #include "atframe_utils_build_feature.h"
 #include "compile_optimize.h"
+
+#if defined(LIBATFRAME_UTILS_ENABLE_UNORDERED_MAP_SET) && LIBATFRAME_UTILS_ENABLE_UNORDERED_MAP_SET
+#include <unordered_map>
+#else
+#include <map>
+#endif
 
 namespace util {
     namespace config {
         // ================= 错误码 =================
         enum EN_INILOADER_ERROR_CODE {
-            EIEC_SUCCESS = 0,
+            EIEC_SUCCESS  = 0,
             EIEC_OPENFILE = -1,
         };
         // 时间区间
@@ -53,13 +60,19 @@ namespace util {
         // ----------------- 错误码 -----------------
 
         // ================= 存储层 =================
-        class ini_value {
+        class ini_value : public std::enable_shared_from_this<ini_value> {
         public:
-            typedef std::map<std::string, ini_value> node_type;
+#if defined(UTIL_CONFIG_COMPILER_CXX_ALIAS_TEMPLATES) && UTIL_CONFIG_COMPILER_CXX_ALIAS_TEMPLATES
+            using ptr_t     = std::shared_ptr<ini_value>;
+            using node_type = LIBATFRAME_UTILS_AUTO_SELETC_MAP(std::string, ptr_t);
+#else
+            typedef std::shared_ptr<ini_value> ptr_t;
+            typedef LIBATFRAME_UTILS_AUTO_SELETC_MAP(std::string, ptr_t) node_type;
+#endif
 
         private:
             std::vector<std::string> data_;
-            node_type chirldren_nodes_;
+            node_type                chirldren_nodes_;
 
 
             template <typename _Tt>
@@ -81,27 +94,29 @@ namespace util {
             UTIL_FORCEINLINE static void clear_data(unsigned long &data) { data = 0; }
             UTIL_FORCEINLINE static void clear_data(unsigned long long &data) { data = 0; }
             UTIL_FORCEINLINE static void clear_data(duration_value &data) {
-                data.sec = 0;
+                data.sec  = 0;
                 data.nsec = 0;
             }
 
         public:
             LIBATFRAME_UTILS_API ini_value();
             LIBATFRAME_UTILS_API ~ini_value();
-            LIBATFRAME_UTILS_API ini_value(const ini_value& other);
-            LIBATFRAME_UTILS_API ini_value& operator=(const ini_value& other);
+            LIBATFRAME_UTILS_API ini_value(const ini_value &other);
+            LIBATFRAME_UTILS_API ini_value &operator=(const ini_value &other);
 
             LIBATFRAME_UTILS_API void add(const std::string &val);
             LIBATFRAME_UTILS_API void add(const char *begin, const char *end);
 
             // 节点操作
-            LIBATFRAME_UTILS_API bool empty() const;    // like stl
-            LIBATFRAME_UTILS_API bool has_data() const; // like stl
-            LIBATFRAME_UTILS_API size_t size() const;   // like stl
-            LIBATFRAME_UTILS_API void clear();          // like stl
+            LIBATFRAME_UTILS_API bool   empty() const;    // like stl
+            LIBATFRAME_UTILS_API bool   has_data() const; // like stl
+            LIBATFRAME_UTILS_API size_t size() const;     // like stl
+            LIBATFRAME_UTILS_API void   clear();          // like stl
             LIBATFRAME_UTILS_API ini_value &operator[](const std::string key);
             LIBATFRAME_UTILS_API node_type &get_children();
             LIBATFRAME_UTILS_API const node_type &get_children() const;
+
+            LIBATFRAME_UTILS_API ptr_t get_child_by_path(const std::string &path) const;
 
             static LIBATFRAME_UTILS_API const std::string &get_empty_string();
 
@@ -112,7 +127,9 @@ namespace util {
 
             template <typename _TVOID>
             struct LIBATFRAME_UTILS_API_HEAD_ONLY as_helper< ::util::config::duration_value, _TVOID> {
-                UTIL_FORCEINLINE static ::util::config::duration_value convert(const ini_value &val, size_t index) { return val.as_duration(index); }
+                UTIL_FORCEINLINE static ::util::config::duration_value convert(const ini_value &val, size_t index) {
+                    return val.as_duration(index);
+                }
             };
 
             template <typename _TVOID>
@@ -239,13 +256,13 @@ namespace util {
 
         class ini_loader {
         private:
-            ini_value root_node_; // root node
-            ini_value *current_node_ptr_;
+            ini_value::ptr_t root_node_; // root node
+            ini_value *      current_node_ptr_;
 
         public:
             LIBATFRAME_UTILS_API ini_loader();
-            LIBATFRAME_UTILS_API ini_loader(const ini_loader& other);
-            LIBATFRAME_UTILS_API ini_loader& operator=(const ini_loader& other);
+            LIBATFRAME_UTILS_API ini_loader(const ini_loader &other);
+            LIBATFRAME_UTILS_API ini_loader &operator=(const ini_loader &other);
             LIBATFRAME_UTILS_API ~ini_loader();
 
             /**
@@ -381,7 +398,8 @@ namespace util {
              * @param index 转储索引，默认是第一个值
              */
             template <size_t MAX_COUNT>
-            LIBATFRAME_UTILS_API_HEAD_ONLY void dump_to(const std::string &path, char (&val)[MAX_COUNT], bool is_force = false, size_t index = 0) {
+            LIBATFRAME_UTILS_API_HEAD_ONLY void dump_to(const std::string &path, char (&val)[MAX_COUNT], bool is_force = false,
+                                                        size_t index = 0) {
                 dump_to(path, val, val + MAX_COUNT, is_force, index);
             }
 
@@ -453,7 +471,7 @@ namespace util {
              */
             template <typename TIter>
             LIBATFRAME_UTILS_API_HEAD_ONLY void dump_to(const std::string &path, TIter begin, TIter end, bool is_force = false) {
-                size_t index = 0;
+                size_t     index    = 0;
                 ini_value &cur_node = get_node(path);
                 for (TIter i = begin; i != end && index < cur_node.size(); ++index, ++i) {
                     dump_to(path, *i, is_force, index);

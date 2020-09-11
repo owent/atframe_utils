@@ -13,13 +13,13 @@ namespace util {
             // space
             struct spaces {
                 static bool test_char(char c);
-                bool test(const char *begin, const char *end);
+                bool        test(const char *begin, const char *end);
                 const char *parse(const char *begin, const char *end);
             };
 
             // comment
             struct comment {
-                bool test(const char *begin, const char *end);
+                bool        test(const char *begin, const char *end);
                 const char *parse(const char *begin, const char *end);
             };
 
@@ -28,36 +28,36 @@ namespace util {
                 const char *_begin_ptr;
                 const char *_end_ptr;
 
-                bool test(const char *begin, const char *end);
+                bool        test(const char *begin, const char *end);
                 const char *parse(const char *begin, const char *end);
             };
 
             // key
             struct key {
                 typedef std::list<std::pair<const char *, const char *> > list_type;
-                list_type _keys;
+                list_type                                                 _keys;
 
-                bool test(const char *begin, const char *end);
+                bool        test(const char *begin, const char *end);
                 const char *parse(const char *begin, const char *end);
             };
 
             // section
             struct section {
                 typedef std::list<std::pair<const char *, const char *> > list_type;
-                list_type _keys;
+                list_type                                                 _keys;
 
-                bool test(const char *begin, const char *end);
+                bool        test(const char *begin, const char *end);
                 const char *parse(const char *begin, const char *end);
             };
 
             // string
             struct string {
                 static char _convert_map[1 << (sizeof(char) * 8)];
-                void init_conver_map();
+                void        init_conver_map();
 
                 std::string _value;
 
-                bool test(const char *begin, const char *end);
+                bool        test(const char *begin, const char *end);
                 const char *parse(const char *begin, const char *end, bool enable_convert = false);
             };
 
@@ -65,25 +65,25 @@ namespace util {
             struct value {
                 std::string _value;
 
-                bool test(const char *begin, const char *end);
+                bool        test(const char *begin, const char *end);
                 const char *parse(const char *begin, const char *end);
             };
 
             // expression
             struct expression {
-                key _key;
+                key   _key;
                 value _value;
 
-                bool test(const char *begin, const char *end);
+                bool        test(const char *begin, const char *end);
                 const char *parse(const char *begin, const char *end);
             };
 
             // sentence
             struct sentence {
-                std::pair<bool, section> _sect;
+                std::pair<bool, section>    _sect;
                 std::pair<bool, expression> _exp;
 
-                bool test(const char *begin, const char *end);
+                bool        test(const char *begin, const char *end);
                 const char *parse(const char *begin, const char *end);
             };
         } // namespace analysis
@@ -165,12 +165,10 @@ namespace util {
 
         LIBATFRAME_UTILS_API ini_value::ini_value() {}
         LIBATFRAME_UTILS_API ini_value::~ini_value() {}
-        LIBATFRAME_UTILS_API ini_value::ini_value(const ini_value& other) {
-            *this = other;
-        }
+        LIBATFRAME_UTILS_API ini_value::ini_value(const ini_value &other) : std::enable_shared_from_this<ini_value>() { *this = other; }
 
-        LIBATFRAME_UTILS_API ini_value& ini_value::operator=(const ini_value& other) {
-            data_ = other.data_;
+        LIBATFRAME_UTILS_API ini_value &ini_value::operator=(const ini_value &other) {
+            data_            = other.data_;
             chirldren_nodes_ = other.chirldren_nodes_;
             return (*this);
         }
@@ -190,11 +188,52 @@ namespace util {
             chirldren_nodes_.clear();
         }
 
-        LIBATFRAME_UTILS_API ini_value &ini_value::operator[](const std::string key) { return chirldren_nodes_[key]; }
+        LIBATFRAME_UTILS_API ini_value &ini_value::operator[](const std::string key) {
+            ptr_t &ret = chirldren_nodes_[key];
+            if (!ret) {
+                ret = std::make_shared<ini_value>();
+            }
+            return *ret;
+        }
 
         LIBATFRAME_UTILS_API ini_value::node_type &ini_value::get_children() { return chirldren_nodes_; }
 
         LIBATFRAME_UTILS_API const ini_value::node_type &ini_value::get_children() const { return chirldren_nodes_; }
+
+        LIBATFRAME_UTILS_API ini_value::ptr_t ini_value::get_child_by_path(const std::string &path) const {
+            const ini_value *ret = this;
+
+            analysis::key _keys;
+            const char *  begin = path.c_str();
+            const char *  end   = begin + path.size();
+
+            analysis::spaces spliter;
+            begin = spliter.parse(begin, end);
+
+            _keys.parse(begin, end);
+            analysis::section::list_type::iterator iter = _keys._keys.begin();
+            for (; iter != _keys._keys.end(); ++iter) {
+                if (iter->first >= iter->second) {
+                    continue;
+                }
+
+                std::string key;
+                key.assign(iter->first, iter->second);
+
+                node_type::const_iterator child_iter = chirldren_nodes_.find(key);
+                if (child_iter == chirldren_nodes_.end()) {
+                    ret = NULL;
+                    break;
+                }
+                ret = child_iter->second.get();
+            }
+
+            if (ret) {
+                return const_cast<ini_value *>(ret)->shared_from_this();
+            }
+
+            return NULL;
+        }
 
         LIBATFRAME_UTILS_API const std::string &ini_value::get_empty_string() {
             static std::string empty_data;
@@ -217,7 +256,9 @@ namespace util {
 
         LIBATFRAME_UTILS_API long ini_value::as_long(size_t index) const { return detail::str2int<long>(as_cpp_string(index).c_str()); }
 
-        LIBATFRAME_UTILS_API long long ini_value::as_longlong(size_t index) const { return detail::str2int<long long>(as_cpp_string(index).c_str()); }
+        LIBATFRAME_UTILS_API long long ini_value::as_longlong(size_t index) const {
+            return detail::str2int<long long>(as_cpp_string(index).c_str());
+        }
 
         LIBATFRAME_UTILS_API double ini_value::as_double(size_t index) const { return as<double>(index); }
 
@@ -226,31 +267,55 @@ namespace util {
         LIBATFRAME_UTILS_API const char *ini_value::as_string(size_t index) const { return as_cpp_string(index).c_str(); }
 
         // ============ unsigned ============
-        LIBATFRAME_UTILS_API unsigned char ini_value::as_uchar(size_t index) const { return detail::str2int<unsigned char>(as_cpp_string(index).c_str()); }
+        LIBATFRAME_UTILS_API unsigned char ini_value::as_uchar(size_t index) const {
+            return detail::str2int<unsigned char>(as_cpp_string(index).c_str());
+        }
 
-        LIBATFRAME_UTILS_API unsigned short ini_value::as_ushort(size_t index) const { return detail::str2int<unsigned short>(as_cpp_string(index).c_str()); }
+        LIBATFRAME_UTILS_API unsigned short ini_value::as_ushort(size_t index) const {
+            return detail::str2int<unsigned short>(as_cpp_string(index).c_str());
+        }
 
-        LIBATFRAME_UTILS_API unsigned int ini_value::as_uint(size_t index) const { return detail::str2int<unsigned int>(as_cpp_string(index).c_str()); }
+        LIBATFRAME_UTILS_API unsigned int ini_value::as_uint(size_t index) const {
+            return detail::str2int<unsigned int>(as_cpp_string(index).c_str());
+        }
 
-        LIBATFRAME_UTILS_API unsigned long ini_value::as_ulong(size_t index) const { return detail::str2int<unsigned long>(as_cpp_string(index).c_str()); }
+        LIBATFRAME_UTILS_API unsigned long ini_value::as_ulong(size_t index) const {
+            return detail::str2int<unsigned long>(as_cpp_string(index).c_str());
+        }
 
-        LIBATFRAME_UTILS_API unsigned long long ini_value::as_ulonglong(size_t index) const { return detail::str2int<unsigned long long>(as_cpp_string(index).c_str()); }
+        LIBATFRAME_UTILS_API unsigned long long ini_value::as_ulonglong(size_t index) const {
+            return detail::str2int<unsigned long long>(as_cpp_string(index).c_str());
+        }
 
         LIBATFRAME_UTILS_API int8_t ini_value::as_int8(size_t index) const { return detail::str2int<int8_t>(as_cpp_string(index).c_str()); }
 
-        LIBATFRAME_UTILS_API uint8_t ini_value::as_uint8(size_t index) const { return detail::str2int<uint8_t>(as_cpp_string(index).c_str()); }
+        LIBATFRAME_UTILS_API uint8_t ini_value::as_uint8(size_t index) const {
+            return detail::str2int<uint8_t>(as_cpp_string(index).c_str());
+        }
 
-        LIBATFRAME_UTILS_API int16_t ini_value::as_int16(size_t index) const { return detail::str2int<int16_t>(as_cpp_string(index).c_str()); }
+        LIBATFRAME_UTILS_API int16_t ini_value::as_int16(size_t index) const {
+            return detail::str2int<int16_t>(as_cpp_string(index).c_str());
+        }
 
-        LIBATFRAME_UTILS_API uint16_t ini_value::as_uint16(size_t index) const { return detail::str2int<uint16_t>(as_cpp_string(index).c_str()); }
+        LIBATFRAME_UTILS_API uint16_t ini_value::as_uint16(size_t index) const {
+            return detail::str2int<uint16_t>(as_cpp_string(index).c_str());
+        }
 
-        LIBATFRAME_UTILS_API int32_t ini_value::as_int32(size_t index) const { return detail::str2int<int32_t>(as_cpp_string(index).c_str()); }
+        LIBATFRAME_UTILS_API int32_t ini_value::as_int32(size_t index) const {
+            return detail::str2int<int32_t>(as_cpp_string(index).c_str());
+        }
 
-        LIBATFRAME_UTILS_API uint32_t ini_value::as_uint32(size_t index) const { return detail::str2int<uint32_t>(as_cpp_string(index).c_str()); }
+        LIBATFRAME_UTILS_API uint32_t ini_value::as_uint32(size_t index) const {
+            return detail::str2int<uint32_t>(as_cpp_string(index).c_str());
+        }
 
-        LIBATFRAME_UTILS_API int64_t ini_value::as_int64(size_t index) const { return detail::str2int<int64_t>(as_cpp_string(index).c_str()); }
+        LIBATFRAME_UTILS_API int64_t ini_value::as_int64(size_t index) const {
+            return detail::str2int<int64_t>(as_cpp_string(index).c_str());
+        }
 
-        LIBATFRAME_UTILS_API uint64_t ini_value::as_uint64(size_t index) const { return detail::str2int<uint64_t>(as_cpp_string(index).c_str()); }
+        LIBATFRAME_UTILS_API uint64_t ini_value::as_uint64(size_t index) const {
+            return detail::str2int<uint64_t>(as_cpp_string(index).c_str());
+        }
 
         LIBATFRAME_UTILS_API duration_value ini_value::as_duration(size_t index) const {
             duration_value ret;
@@ -261,7 +326,7 @@ namespace util {
             }
 
             detail::const_cstring word_begin = NULL;
-            time_t tm_val = detail::str2int<time_t>(as_cpp_string(index).c_str(), &word_begin);
+            time_t                tm_val     = detail::str2int<time_t>(as_cpp_string(index).c_str(), &word_begin);
             while (word_begin && *word_begin) {
                 if (analysis::spaces::test_char(*word_begin)) {
                     ++word_begin;
@@ -289,46 +354,46 @@ namespace util {
 
                 if (unit == "ms" || unit == "millisecond" || unit == "milliseconds") {
                     fallback = false;
-                    ret.sec = tm_val / 1000;
+                    ret.sec  = tm_val / 1000;
                     ret.nsec = (tm_val % 1000) * 1000000;
                     break;
                 }
 
                 if (unit == "us" || unit == "microsecond" || unit == "microseconds") {
                     fallback = false;
-                    ret.sec = tm_val / 1000000;
+                    ret.sec  = tm_val / 1000000;
                     ret.nsec = (tm_val % 1000000) * 1000;
                     break;
                 }
 
                 if (unit == "ns" || unit == "nanosecond" || unit == "nanoseconds") {
                     fallback = false;
-                    ret.sec = tm_val / 1000000000;
+                    ret.sec  = tm_val / 1000000000;
                     ret.nsec = tm_val % 1000000000;
                     break;
                 }
 
                 if (unit == "m" || unit == "minute" || unit == "minutes") {
                     fallback = false;
-                    ret.sec = tm_val * 60;
+                    ret.sec  = tm_val * 60;
                     break;
                 }
 
                 if (unit == "h" || unit == "hour" || unit == "hours") {
                     fallback = false;
-                    ret.sec = tm_val * 3600;
+                    ret.sec  = tm_val * 3600;
                     break;
                 }
 
                 if (unit == "d" || unit == "day" || unit == "days") {
                     fallback = false;
-                    ret.sec = tm_val * 3600 * 24;
+                    ret.sec  = tm_val * 3600 * 24;
                     break;
                 }
 
                 if (unit == "w" || unit == "week" || unit == "weeks") {
                     fallback = false;
-                    ret.sec = tm_val * 3600 * 24 * 7;
+                    ret.sec  = tm_val * 3600 * 24 * 7;
                     break;
                 }
 
@@ -428,10 +493,10 @@ namespace util {
 
                 ++begin;
                 spaces spliter;
-                bool push_front = true;
+                bool   push_front = true;
                 while (begin < end) {
                     // trim left
-                    begin = spliter.parse(begin, end);
+                    begin             = spliter.parse(begin, end);
                     const char *start = begin;
                     while (begin < end && (*begin) != ':' && (*begin) != '.' && (*begin) != ']') {
                         ++begin;
@@ -487,14 +552,14 @@ namespace util {
                     return;
                 }
 
-                _convert_map[(int)'0'] = '\0';
-                _convert_map[(int)'a'] = '\a';
-                _convert_map[(int)'b'] = '\b';
-                _convert_map[(int)'f'] = '\f';
-                _convert_map[(int)'r'] = '\r';
-                _convert_map[(int)'n'] = '\n';
-                _convert_map[(int)'t'] = '\t';
-                _convert_map[(int)'v'] = '\v';
+                _convert_map[(int)'0']  = '\0';
+                _convert_map[(int)'a']  = '\a';
+                _convert_map[(int)'b']  = '\b';
+                _convert_map[(int)'f']  = '\f';
+                _convert_map[(int)'r']  = '\r';
+                _convert_map[(int)'n']  = '\n';
+                _convert_map[(int)'t']  = '\t';
+                _convert_map[(int)'v']  = '\v';
                 _convert_map[(int)'\\'] = '\\';
                 _convert_map[(int)'\''] = '\'';
                 _convert_map[(int)'\"'] = '\"';
@@ -556,7 +621,7 @@ namespace util {
                 spaces spliter;
                 begin = spliter.parse(begin, end);
 
-                string rule;
+                string  rule;
                 comment com_s;
                 while (begin < end) {
 
@@ -617,7 +682,7 @@ namespace util {
 
             const char *sentence::parse(const char *begin, const char *end) {
                 _sect.first = false;
-                _exp.first = false;
+                _exp.first  = false;
 
                 if (false == test(begin, end)) {
                     return begin;
@@ -653,17 +718,18 @@ namespace util {
             }
         } // namespace analysis
 
-        LIBATFRAME_UTILS_API ini_loader::ini_loader() { current_node_ptr_ = &root_node_; }
+        LIBATFRAME_UTILS_API ini_loader::ini_loader() {
+            root_node_        = std::make_shared<ini_value>();
+            current_node_ptr_ = root_node_.get();
+        }
 
         LIBATFRAME_UTILS_API ini_loader::~ini_loader() {}
 
-        LIBATFRAME_UTILS_API ini_loader::ini_loader(const ini_loader& other) {
-            *this = other;
-        }
+        LIBATFRAME_UTILS_API ini_loader::ini_loader(const ini_loader &other) { *this = other; }
 
-        LIBATFRAME_UTILS_API ini_loader& ini_loader::operator=(const ini_loader& other) {
-            root_node_ = other.root_node_;
-            current_node_ptr_ = &root_node_;
+        LIBATFRAME_UTILS_API ini_loader &ini_loader::operator=(const ini_loader &other) {
+            root_node_        = std::make_shared<ini_value>(*other.root_node_);
+            current_node_ptr_ = root_node_.get();
             return *this;
         }
 
@@ -675,9 +741,9 @@ namespace util {
 
             std::string test_bom;
             test_bom.resize(3, 0);
-            test_bom[0] = static_cast<char>(in.get());
-            test_bom[1] = static_cast<char>(in.get());
-            test_bom[2] = static_cast<char>(in.get());
+            test_bom[0]                     = static_cast<char>(in.get());
+            test_bom[1]                     = static_cast<char>(in.get());
+            test_bom[2]                     = static_cast<char>(in.get());
             const unsigned char utf8_bom[3] = {0xef, 0xbb, 0xbf};
 
             if (0 == memcmp(test_bom.c_str(), utf8_bom, 3)) {
@@ -695,7 +761,7 @@ namespace util {
 
                 // section 节点会改变当前配置区域
                 if (one_sentence._sect.first) {
-                    current_node_ptr_ = &get_root_node();
+                    current_node_ptr_                           = &get_root_node();
                     analysis::section::list_type::iterator iter = one_sentence._sect.second._keys.begin();
                     for (; iter != one_sentence._sect.second._keys.end(); ++iter) {
                         if (iter->first >= iter->second) {
@@ -710,8 +776,8 @@ namespace util {
 
                 // expression 节点为配置值
                 if (one_sentence._exp.first) {
-                    ini_value *opr_node = &get_section();
-                    analysis::key::list_type::iterator iter = one_sentence._exp.second._key._keys.begin();
+                    ini_value *                        opr_node = &get_section();
+                    analysis::key::list_type::iterator iter     = one_sentence._exp.second._key._keys.begin();
                     for (; iter != one_sentence._exp.second._key._keys.end(); ++iter) {
                         if (iter->first >= iter->second) {
                             continue;
@@ -749,31 +815,35 @@ namespace util {
             return load_stream(file_to_load, is_append);
         }
 
-        LIBATFRAME_UTILS_API int ini_loader::load_file(const std::string &file_path, bool is_append) { return load_file(file_path.c_str(), is_append); }
-
-        LIBATFRAME_UTILS_API void ini_loader::clear() {
-            current_node_ptr_ = &root_node_;
-            root_node_.clear();
+        LIBATFRAME_UTILS_API int ini_loader::load_file(const std::string &file_path, bool is_append) {
+            return load_file(file_path.c_str(), is_append);
         }
 
-        LIBATFRAME_UTILS_API void ini_loader::set_section(const std::string &path) { current_node_ptr_ = &get_node(path, &get_root_node()); }
+        LIBATFRAME_UTILS_API void ini_loader::clear() {
+            current_node_ptr_ = root_node_.get();
+            root_node_->clear();
+        }
+
+        LIBATFRAME_UTILS_API void ini_loader::set_section(const std::string &path) {
+            current_node_ptr_ = &get_node(path, &get_root_node());
+        }
 
         LIBATFRAME_UTILS_API ini_value &ini_loader::get_section() { return *current_node_ptr_; }
 
         LIBATFRAME_UTILS_API const ini_value &ini_loader::get_section() const { return *current_node_ptr_; }
 
-        LIBATFRAME_UTILS_API ini_value &ini_loader::get_root_node() { return root_node_; }
+        LIBATFRAME_UTILS_API ini_value &ini_loader::get_root_node() { return *root_node_; }
 
-        LIBATFRAME_UTILS_API const ini_value &ini_loader::get_root_node() const { return root_node_; }
+        LIBATFRAME_UTILS_API const ini_value &ini_loader::get_root_node() const { return *root_node_; }
 
         LIBATFRAME_UTILS_API ini_value &ini_loader::get_node(const std::string &path, ini_value *father_ptr) {
             if (NULL == father_ptr) {
-                father_ptr = &root_node_;
+                father_ptr = root_node_.get();
             }
 
             analysis::key _keys;
-            const char *begin = path.c_str();
-            const char *end = begin + path.size();
+            const char *  begin = path.c_str();
+            const char *  end   = begin + path.size();
 
             analysis::spaces spliter;
             begin = spliter.parse(begin, end);
@@ -795,7 +865,7 @@ namespace util {
 
         LIBATFRAME_UTILS_API ini_value &ini_loader::get_child_node(const std::string &path, ini_value *father_ptr) {
             if (NULL == father_ptr) {
-                father_ptr = &root_node_;
+                father_ptr = root_node_.get();
             }
 
             return (*father_ptr)[path];
