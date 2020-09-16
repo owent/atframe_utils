@@ -12,6 +12,7 @@
 #     BUILD_WITH_CUSTOM_COMMAND
 #     CONFIGURE_FLAGS [configure options...]
 #     CMAKE_FLAGS [cmake options...]
+#     FIND_PACKAGE_FLAGS [options will be passed into find_package(...)]
 #     CMAKE_INHIRT_BUILD_ENV
 #     CMAKE_INHIRT_BUILD_ENV_DISABLE_C_FLAGS
 #     CMAKE_INHIRT_BUILD_ENV_DISABLE_CXX_FLAGS
@@ -53,7 +54,7 @@
 #
 
 #=============================================================================
-# Copyright 2014-2015 OWenT.
+# Copyright 2014-2020 OWenT.
 #
 # Distributed under the OSI-approved BSD License (the "License");
 # see accompanying file Copyright.txt for details.
@@ -151,7 +152,7 @@ macro (FindConfigurePackage)
     set(optionArgs BUILD_WITH_CONFIGURE BUILD_WITH_CMAKE BUILD_WITH_SCONS BUILD_WITH_CUSTOM_COMMAND 
         CMAKE_INHIRT_BUILD_ENV CMAKE_INHIRT_BUILD_ENV_DISABLE_C_FLAGS CMAKE_INHIRT_BUILD_ENV_DISABLE_CXX_FLAGS CMAKE_INHIRT_BUILD_ENV_DISABLE_ASM_FLAGS)
     set(oneValueArgs PACKAGE WORKING_DIRECTORY BUILD_DIRECTORY PREFIX_DIRECTORY SRC_DIRECTORY_NAME PROJECT_DIRECTORY MSVC_CONFIGURE ZIP_URL TAR_URL SVN_URL GIT_URL GIT_BRANCH INSTALL_TARGET)
-    set(multiValueArgs CONFIGURE_CMD CONFIGURE_FLAGS CMAKE_FLAGS RESET_FIND_VARS SCONS_FLAGS MAKE_FLAGS CUSTOM_BUILD_COMMAND PREBUILD_COMMAND AFTERBUILD_COMMAND)
+    set(multiValueArgs CONFIGURE_CMD CONFIGURE_FLAGS CMAKE_FLAGS FIND_PACKAGE_FLAGS RESET_FIND_VARS SCONS_FLAGS MAKE_FLAGS CUSTOM_BUILD_COMMAND PREBUILD_COMMAND AFTERBUILD_COMMAND)
     cmake_parse_arguments(FindConfigurePackage "${optionArgs}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN} )
 
     if (NOT FindConfigurePackage_INSTALL_TARGET)
@@ -161,7 +162,7 @@ macro (FindConfigurePackage)
     string(TOUPPER "${FindConfigurePackage_PACKAGE}_FOUND" FIND_CONFIGURE_PACKAGE_UPPER_NAME)
 
     # step 1. find using standard method
-    find_package(${FindConfigurePackage_PACKAGE} QUIET)
+    find_package(${FindConfigurePackage_PACKAGE} QUIET ${FindConfigurePackage_FIND_PACKAGE_FLAGS})
     if(NOT ${FindConfigurePackage_PACKAGE}_FOUND AND NOT ${FIND_CONFIGURE_PACKAGE_UPPER_NAME})
         if(NOT FindConfigurePackage_PREFIX_DIRECTORY)
             # prefix
@@ -171,7 +172,7 @@ macro (FindConfigurePackage)
         list(APPEND CMAKE_FIND_ROOT_PATH ${FindConfigurePackage_PREFIX_DIRECTORY})
 
         # step 2. find in prefix
-        find_package(${FindConfigurePackage_PACKAGE} QUIET)
+        find_package(${FindConfigurePackage_PACKAGE} QUIET ${FindConfigurePackage_FIND_PACKAGE_FLAGS})
 
         # step 3. build
         if(NOT ${FindConfigurePackage_PACKAGE}_FOUND AND NOT ${FIND_CONFIGURE_PACKAGE_UPPER_NAME})
@@ -451,7 +452,7 @@ macro (FindConfigurePackage)
             foreach (RESET_VAR ${FindConfigurePackage_RESET_FIND_VARS})
                 unset (${RESET_VAR} CACHE)
             endforeach()
-            find_package(${FindConfigurePackage_PACKAGE})
+            find_package(${FindConfigurePackage_PACKAGE} ${FindConfigurePackage_FIND_PACKAGE_FLAGS})
         endif()
     endif()
     unset (FindConfigurePackage_INSTALL_TARGET)

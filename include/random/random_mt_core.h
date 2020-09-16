@@ -94,12 +94,11 @@ namespace util {
                  * @param [in] mt_seed 随机数种子
                  */
                 void init_seed(UIntType mt_seed) {
-// New seeding algorithm from
-// http://www.math.sci.hiroshima-u.ac.jp/~m-mat/MT/MT2002/emt19937ar.html
-// In the previous versions, MSBs of the seed affected only MSBs of the
-// state mt_status[].
+                    // New seeding algorithm from
+                    // http://www.math.sci.hiroshima-u.ac.jp/~m-mat/MT/MT2002/emt19937ar.html
+                    // In the previous versions, MSBs of the seed affected only MSBs of the
+                    // state mt_status[].
 
-// fuck vc
 #ifdef max
 #undef max
 #endif
