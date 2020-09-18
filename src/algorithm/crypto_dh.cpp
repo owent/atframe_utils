@@ -1147,7 +1147,7 @@ namespace util {
                     mbedtls_ecdh_init(&dh_context_.mbedtls_ecdh_ctx_);
 
                     if (false == shared_context->is_client_mode()) {
-                        int res = mbedtls_ecp_group_load(&dh_context_.mbedtls_ecdh_ctx_.grp, shared_context->get_dh_parameter().group_id);
+                        int res = mbedtls_ecdh_setup(&dh_context_.mbedtls_ecdh_ctx_, shared_context->get_dh_parameter().group_id);
                         if (0 != res) {
                             ret = details::setup_errorno(*this, res, error_code_t::INIT_DHPARAM);
                             break;
