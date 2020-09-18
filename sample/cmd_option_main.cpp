@@ -74,9 +74,21 @@ static int complex_bind_func(util::cli::callback_param, int i) {
     return 0;
 }
 
-static void on_error(util::cli::callback_param par) {
+static void on_error(util::cli::callback_param params) {
     puts("Error:");
-    printf("Error Command: %s, Error Message: %s\n", par.get("@Cmd")->to_string(), par.get("@ErrorMsg")->to_string());
+    std::stringstream args;
+    for (util::cli::cmd_option_list::cmd_array_type::const_iterator iter = params.get_cmd_array().begin();
+         iter != params.get_cmd_array().end(); ++iter) {
+        args << '"' << iter->first << '"';
+    }
+    for (size_t i = 0; i < params.get_params_number(); ++i) {
+        if (params[i]) {
+            args << '"' << params[i]->to_cpp_string() << '"';
+        }
+    }
+
+    util::cli::cmd_option_list::value_type err_msg = params.get("@ErrorMsg");
+    printf("Error Command: %s, Error Message: %s\n", args.str().c_str(), err_msg ? err_msg->to_string() : "");
 }
 
 int cmd_option_sample_main() {
