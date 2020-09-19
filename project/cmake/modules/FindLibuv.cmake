@@ -73,7 +73,6 @@ if(LIBUV_ROOT)
     if(MSVC AND CMAKE_BUILD_TYPE)
       set(_LIBUV_SEARCH_ROOT_LIB PATHS ${LIBUV_ROOT} 
         "${LIBUV_ROOT}/lib/${CMAKE_BUILD_TYPE}" 
-        "${LIBUV_ROOT}/lib64" 
         "${LIBUV_ROOT}/lib" NO_DEFAULT_PATH
       )
     else()

@@ -153,6 +153,10 @@ macro (FindConfigurePackage)
         CMAKE_INHIRT_BUILD_ENV CMAKE_INHIRT_BUILD_ENV_DISABLE_C_FLAGS CMAKE_INHIRT_BUILD_ENV_DISABLE_CXX_FLAGS CMAKE_INHIRT_BUILD_ENV_DISABLE_ASM_FLAGS)
     set(oneValueArgs PACKAGE WORKING_DIRECTORY BUILD_DIRECTORY PREFIX_DIRECTORY SRC_DIRECTORY_NAME PROJECT_DIRECTORY MSVC_CONFIGURE ZIP_URL TAR_URL SVN_URL GIT_URL GIT_BRANCH INSTALL_TARGET)
     set(multiValueArgs CONFIGURE_CMD CONFIGURE_FLAGS CMAKE_FLAGS FIND_PACKAGE_FLAGS RESET_FIND_VARS SCONS_FLAGS MAKE_FLAGS CUSTOM_BUILD_COMMAND PREBUILD_COMMAND AFTERBUILD_COMMAND)
+    foreach(RESTORE_VAR IN LISTS optionArgs oneValueArgs multiValueArgs)
+        unset(FindConfigurePackage_${RESTORE_VAR})
+    endforeach()
+    
     cmake_parse_arguments(FindConfigurePackage "${optionArgs}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN} )
 
     if (NOT FindConfigurePackage_INSTALL_TARGET)
@@ -335,7 +339,7 @@ macro (FindConfigurePackage)
                     set(BUILD_WITH_CMAKE_PROJECT_DIR ".")
                 endif()
                 
-                list (APPEND FindConfigurePackage_BUILD_WITH_CMAKE_GENERATOR "-DCMAKE_INSTALL_PREFIX=${FindConfigurePackage_PREFIX_DIRECTORY}")
+                set (FindConfigurePackage_BUILD_WITH_CMAKE_GENERATOR "-DCMAKE_INSTALL_PREFIX=${FindConfigurePackage_PREFIX_DIRECTORY}")
 
                 if (FindConfigurePackage_CMAKE_INHIRT_BUILD_ENV)
                     set (FindConfigurePackage_CMAKE_INHIRT_BUILD_ENV OFF)
@@ -370,7 +374,7 @@ macro (FindConfigurePackage)
                     unset(FindConfigurePackageCMakeBuildParallelFlags)
                 endif ()
                 if(MSVC)
-                    if (NOT FindConfigurePackage_MSVC_CONFIGURE)
+                    if (FindConfigurePackage_MSVC_CONFIGURE)
                         message(STATUS "@${FindConfigurePackage_BUILD_DIRECTORY} Run: ${CMAKE_COMMAND} --build . --target ${FindConfigurePackage_INSTALL_TARGET} --config ${FindConfigurePackage_MSVC_CONFIGURE} ${FindConfigurePackageCMakeBuildParallelFlags}")
                         execute_process(
                             COMMAND ${CMAKE_COMMAND} --build . --target ${FindConfigurePackage_INSTALL_TARGET} --config ${FindConfigurePackage_MSVC_CONFIGURE}
@@ -390,6 +394,14 @@ macro (FindConfigurePackage)
                                 ${FindConfigurePackageCMakeBuildParallelFlags}
                             WORKING_DIRECTORY ${FindConfigurePackage_BUILD_DIRECTORY}
                         )
+                        if (CMAKE_BUILD_TYPE)
+                            message(STATUS "@${FindConfigurePackage_BUILD_DIRECTORY} Run: ${CMAKE_COMMAND} --build . --target ${FindConfigurePackage_INSTALL_TARGET} --config ${CMAKE_BUILD_TYPE} ${FindConfigurePackageCMakeBuildParallelFlags}")
+                            execute_process(
+                                COMMAND ${CMAKE_COMMAND} --build . --target ${FindConfigurePackage_INSTALL_TARGET} --config ${CMAKE_BUILD_TYPE}
+                                    ${FindConfigurePackageCMakeBuildParallelFlags}
+                                WORKING_DIRECTORY ${FindConfigurePackage_BUILD_DIRECTORY}
+                            )
+                        endif ()
                     endif()
                     
                 else()
@@ -451,7 +463,10 @@ macro (FindConfigurePackage)
             # reset vars before retry to find package
             foreach (RESET_VAR ${FindConfigurePackage_RESET_FIND_VARS})
                 unset (${RESET_VAR} CACHE)
+                unset (${RESET_VAR})
             endforeach()
+            unset(${FindConfigurePackage_PACKAGE}_FOUND CACHE)
+            unset(${FindConfigurePackage_PACKAGE}_FOUND)
             find_package(${FindConfigurePackage_PACKAGE} ${FindConfigurePackage_FIND_PACKAGE_FLAGS})
         endif()
     endif()
