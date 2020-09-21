@@ -33,6 +33,8 @@
 #     TAR_URL <tar url>
 #     SVN_URL <svn url>
 #     GIT_URL <git url>
+#     GIT_BRANCH <git branch:HEAD>
+#     GIT_FETCH_DEPTH <fetch depth/deepen:100>
 # )
 #
 # ::
@@ -151,7 +153,7 @@ macro (FindConfigurePackage)
     endif ()
     set(optionArgs BUILD_WITH_CONFIGURE BUILD_WITH_CMAKE BUILD_WITH_SCONS BUILD_WITH_CUSTOM_COMMAND 
         CMAKE_INHIRT_BUILD_ENV CMAKE_INHIRT_BUILD_ENV_DISABLE_C_FLAGS CMAKE_INHIRT_BUILD_ENV_DISABLE_CXX_FLAGS CMAKE_INHIRT_BUILD_ENV_DISABLE_ASM_FLAGS)
-    set(oneValueArgs PACKAGE WORKING_DIRECTORY BUILD_DIRECTORY PREFIX_DIRECTORY SRC_DIRECTORY_NAME PROJECT_DIRECTORY MSVC_CONFIGURE ZIP_URL TAR_URL SVN_URL GIT_URL GIT_BRANCH INSTALL_TARGET)
+    set(oneValueArgs PACKAGE WORKING_DIRECTORY BUILD_DIRECTORY PREFIX_DIRECTORY SRC_DIRECTORY_NAME PROJECT_DIRECTORY MSVC_CONFIGURE ZIP_URL TAR_URL SVN_URL GIT_URL GIT_BRANCH GIT_FETCH_DEPTH INSTALL_TARGET)
     set(multiValueArgs CONFIGURE_CMD CONFIGURE_FLAGS CMAKE_FLAGS FIND_PACKAGE_FLAGS RESET_FIND_VARS SCONS_FLAGS MAKE_FLAGS CUSTOM_BUILD_COMMAND PREBUILD_COMMAND AFTERBUILD_COMMAND)
     foreach(RESTORE_VAR IN LISTS optionArgs oneValueArgs multiValueArgs)
         unset(FindConfigurePackage_${RESTORE_VAR})
@@ -236,14 +238,54 @@ macro (FindConfigurePackage)
                 set(FindConfigurePackage_DOWNLOAD_SOURCE_DIR "${FindConfigurePackage_WORKING_DIRECTORY}/${FindConfigurePackage_SRC_DIRECTORY_NAME}")
                 FindConfigurePackageRemoveEmptyDir(${FindConfigurePackage_DOWNLOAD_SOURCE_DIR})
 
-                if(NOT EXISTS ${FindConfigurePackage_DOWNLOAD_SOURCE_DIR})
+                if (EXISTS "${FindConfigurePackage_DOWNLOAD_SOURCE_DIR}/.git")
+                    execute_process(
+                        COMMAND ${GIT_EXECUTABLE} ls-files
+                        WORKING_DIRECTORY ${FindConfigurePackage_DOWNLOAD_SOURCE_DIR}
+                        OUTPUT_VARIABLE FindConfigurePackage_GIT_CHECK_REPO
+                    )
+                    string(STRIP "${FindConfigurePackage_GIT_CHECK_REPO}" FindConfigurePackage_GIT_CHECK_REPO)
+                    if (FindConfigurePackage_GIT_CHECK_REPO STREQUAL "")
+                        message(STATUS "${FindConfigurePackage_DOWNLOAD_SOURCE_DIR} is not a valid git reposutory, remove it...")
+                        file(REMOVE_RECURSE ${FindConfigurePackage_DOWNLOAD_SOURCE_DIR})
+                    endif ()
+                    unset(FindConfigurePackage_GIT_CHECK_REPO)
+                endif()
+                if(NOT EXISTS "${FindConfigurePackage_DOWNLOAD_SOURCE_DIR}/.git")
                     find_package(Git)
                     if(GIT_FOUND)
                         if (NOT FindConfigurePackage_GIT_BRANCH)
-                            set(FindConfigurePackage_GIT_BRANCH master)
+                            set(FindConfigurePackage_GIT_BRANCH HEAD)
                         endif()
-                        execute_process(COMMAND ${GIT_EXECUTABLE} clone "--depth=${FindConfigurePackageGitFetchDepth}" -b ${FindConfigurePackage_GIT_BRANCH} ${FindConfigurePackage_GIT_URL} ${FindConfigurePackage_SRC_DIRECTORY_NAME}
-                            WORKING_DIRECTORY ${FindConfigurePackage_WORKING_DIRECTORY}
+                        if(NOT EXISTS ${FindConfigurePackage_DOWNLOAD_SOURCE_DIR})
+                            file(MAKE_DIRECTORY ${FindConfigurePackage_DOWNLOAD_SOURCE_DIR})
+                        endif()
+                        execute_process(
+                            COMMAND ${GIT_EXECUTABLE} init
+                            WORKING_DIRECTORY ${FindConfigurePackage_DOWNLOAD_SOURCE_DIR}
+                        )
+                        execute_process(
+                            COMMAND ${GIT_EXECUTABLE} remote add origin "${FindConfigurePackage_GIT_URL}"
+                            WORKING_DIRECTORY ${FindConfigurePackage_DOWNLOAD_SOURCE_DIR}
+                        )
+                        if (NOT FindConfigurePackage_GIT_FETCH_DEPTH)
+                            set(FindConfigurePackage_GIT_FETCH_DEPTH ${FindConfigurePackageGitFetchDepth})
+                        endif ()
+                        if (GIT_VERSION_STRING VERSION_GREATER_EQUAL "2.11.0")
+                            execute_process(
+                                COMMAND ${GIT_EXECUTABLE} fetch "--deepen=${FindConfigurePackage_GIT_FETCH_DEPTH}" origin "${FindConfigurePackage_GIT_BRANCH}"
+                                WORKING_DIRECTORY ${FindConfigurePackage_DOWNLOAD_SOURCE_DIR}
+                            )
+                        else()
+                            message(WARNING "It's recommended to use git 2.11.0 or upper to only fetch partly of repository.")
+                            execute_process(
+                                COMMAND ${GIT_EXECUTABLE} fetch origin "${FindConfigurePackage_GIT_BRANCH}"
+                                WORKING_DIRECTORY ${FindConfigurePackage_DOWNLOAD_SOURCE_DIR}
+                            )
+                        endif()
+                        execute_process(
+                            COMMAND ${GIT_EXECUTABLE} reset --hard "${FindConfigurePackage_GIT_BRANCH}"
+                            WORKING_DIRECTORY ${FindConfigurePackage_DOWNLOAD_SOURCE_DIR}
                         )
                     else()
                        message(STATUS "git not found, skip ${FindConfigurePackage_GIT_URL}")
