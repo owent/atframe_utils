@@ -431,6 +431,6 @@ function(project_build_tools_patch_imported_link_interface_libraries TARGET_NAME
 
     if (NOT OLD_LINK_LIBRARIES STREQUAL PATCH_INNER_LIBS)
         set_target_properties(${TARGET_NAME} PROPERTIES ${PROPERTY_NAME} "${PATCH_INNER_LIBS}")
-        message(STATUS "Patch: ${PROPERTY_NAME} of ${TARGET_NAME} from ${OLD_LINK_LIBRARIES} to ${PATCH_INNER_LIBS}")
+        message(STATUS "Patch: ${PROPERTY_NAME} of ${TARGET_NAME} from \"${OLD_LINK_LIBRARIES}\" to \"${PATCH_INNER_LIBS}\"")
     endif ()
 endfunction()

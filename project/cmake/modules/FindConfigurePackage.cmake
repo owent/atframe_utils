@@ -33,7 +33,7 @@
 #     TAR_URL <tar url>
 #     SVN_URL <svn url>
 #     GIT_URL <git url>
-#     GIT_BRANCH <git branch:HEAD>
+#     GIT_BRANCH <git branch>
 #     GIT_FETCH_DEPTH <fetch depth/deepen:100>
 # )
 #
@@ -254,9 +254,6 @@ macro (FindConfigurePackage)
                 if(NOT EXISTS "${FindConfigurePackage_DOWNLOAD_SOURCE_DIR}/.git")
                     find_package(Git)
                     if(GIT_FOUND)
-                        if (NOT FindConfigurePackage_GIT_BRANCH)
-                            set(FindConfigurePackage_GIT_BRANCH HEAD)
-                        endif()
                         if(NOT EXISTS ${FindConfigurePackage_DOWNLOAD_SOURCE_DIR})
                             file(MAKE_DIRECTORY ${FindConfigurePackage_DOWNLOAD_SOURCE_DIR})
                         endif()
@@ -268,23 +265,38 @@ macro (FindConfigurePackage)
                             COMMAND ${GIT_EXECUTABLE} remote add origin "${FindConfigurePackage_GIT_URL}"
                             WORKING_DIRECTORY ${FindConfigurePackage_DOWNLOAD_SOURCE_DIR}
                         )
+                        if (NOT FindConfigurePackage_GIT_BRANCH)
+                            execute_process(
+                                COMMAND ${GIT_EXECUTABLE} ls-remote --symref origin HEAD
+                                WORKING_DIRECTORY ${FindConfigurePackage_DOWNLOAD_SOURCE_DIR}
+                                OUTPUT_VARIABLE FindConfigurePackage_GIT_CHECK_REPO
+                            )
+                            string(REGEX REPLACE ".*refs/heads/([^ \t]*)[ \t]*HEAD.*" "\\1" FindConfigurePackage_GIT_BRANCH ${FindConfigurePackage_GIT_CHECK_REPO})
+                            if(NOT FindConfigurePackage_GIT_BRANCH OR FindConfigurePackage_GIT_BRANCH STREQUAL FindConfigurePackage_GIT_CHECK_REPO)
+                                string(REGEX REPLACE "([^ \t]*)[ \t]*HEAD.*" "\\1" FindConfigurePackage_GIT_BRANCH ${FindConfigurePackage_GIT_CHECK_REPO})
+                                if(NOT FindConfigurePackage_GIT_BRANCH OR FindConfigurePackage_GIT_BRANCH STREQUAL FindConfigurePackage_GIT_CHECK_REPO)
+                                    set(FindConfigurePackage_GIT_BRANCH master)
+                                endif ()
+                            endif ()
+                            unset(FindConfigurePackage_GIT_CHECK_REPO)
+                        endif()
                         if (NOT FindConfigurePackage_GIT_FETCH_DEPTH)
                             set(FindConfigurePackage_GIT_FETCH_DEPTH ${FindConfigurePackageGitFetchDepth})
                         endif ()
                         if (GIT_VERSION_STRING VERSION_GREATER_EQUAL "2.11.0")
                             execute_process(
-                                COMMAND ${GIT_EXECUTABLE} fetch "--deepen=${FindConfigurePackage_GIT_FETCH_DEPTH}" origin "${FindConfigurePackage_GIT_BRANCH}"
+                                COMMAND ${GIT_EXECUTABLE} fetch "--deepen=${FindConfigurePackage_GIT_FETCH_DEPTH}" origin ${FindConfigurePackage_GIT_BRANCH}
                                 WORKING_DIRECTORY ${FindConfigurePackage_DOWNLOAD_SOURCE_DIR}
                             )
                         else()
                             message(WARNING "It's recommended to use git 2.11.0 or upper to only fetch partly of repository.")
                             execute_process(
-                                COMMAND ${GIT_EXECUTABLE} fetch origin "${FindConfigurePackage_GIT_BRANCH}"
+                                COMMAND ${GIT_EXECUTABLE} fetch origin ${FindConfigurePackage_GIT_BRANCH}
                                 WORKING_DIRECTORY ${FindConfigurePackage_DOWNLOAD_SOURCE_DIR}
                             )
                         endif()
                         execute_process(
-                            COMMAND ${GIT_EXECUTABLE} reset --hard "${FindConfigurePackage_GIT_BRANCH}"
+                            COMMAND ${GIT_EXECUTABLE} reset --hard "origin/${FindConfigurePackage_GIT_BRANCH}"
                             WORKING_DIRECTORY ${FindConfigurePackage_DOWNLOAD_SOURCE_DIR}
                         )
                     else()
