@@ -296,7 +296,7 @@ macro (FindConfigurePackage)
                             )
                         endif()
                         execute_process(
-                            COMMAND ${GIT_EXECUTABLE} reset --hard "origin/${FindConfigurePackage_GIT_BRANCH}"
+                            COMMAND ${GIT_EXECUTABLE} reset --hard FETCH_HEAD
                             WORKING_DIRECTORY ${FindConfigurePackage_DOWNLOAD_SOURCE_DIR}
                         )
                     else()
