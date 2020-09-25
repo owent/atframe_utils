@@ -151,7 +151,7 @@ macro (FindConfigurePackage)
     if (CMAKE_VERSION VERSION_LESS_EQUAL "3.4")
         include(CMakeParseArguments)
     endif ()
-    set(optionArgs BUILD_WITH_CONFIGURE BUILD_WITH_CMAKE BUILD_WITH_SCONS BUILD_WITH_CUSTOM_COMMAND 
+    set(optionArgs BUILD_WITH_CONFIGURE BUILD_WITH_CMAKE BUILD_WITH_SCONS BUILD_WITH_CUSTOM_COMMAND GIT_ENABLE_SUBMODULE
         CMAKE_INHIRT_BUILD_ENV CMAKE_INHIRT_BUILD_ENV_DISABLE_C_FLAGS CMAKE_INHIRT_BUILD_ENV_DISABLE_CXX_FLAGS CMAKE_INHIRT_BUILD_ENV_DISABLE_ASM_FLAGS)
     set(oneValueArgs PACKAGE WORKING_DIRECTORY BUILD_DIRECTORY PREFIX_DIRECTORY SRC_DIRECTORY_NAME PROJECT_DIRECTORY MSVC_CONFIGURE ZIP_URL TAR_URL SVN_URL GIT_URL GIT_BRANCH GIT_FETCH_DEPTH INSTALL_TARGET)
     set(multiValueArgs CONFIGURE_CMD CONFIGURE_FLAGS CMAKE_FLAGS FIND_PACKAGE_FLAGS RESET_FIND_VARS SCONS_FLAGS MAKE_FLAGS CUSTOM_BUILD_COMMAND PREBUILD_COMMAND AFTERBUILD_COMMAND)
@@ -299,6 +299,12 @@ macro (FindConfigurePackage)
                             COMMAND ${GIT_EXECUTABLE} reset --hard FETCH_HEAD
                             WORKING_DIRECTORY ${FindConfigurePackage_DOWNLOAD_SOURCE_DIR}
                         )
+                        if (FindConfigurePackage_GIT_ENABLE_SUBMODULE)
+                            execute_process(
+                                COMMAND ${GIT_EXECUTABLE} submodule update --init -f
+                                WORKING_DIRECTORY ${FindConfigurePackage_DOWNLOAD_SOURCE_DIR}
+                            )
+                        endif ()
                     else()
                        message(STATUS "git not found, skip ${FindConfigurePackage_GIT_URL}")
                     endif()

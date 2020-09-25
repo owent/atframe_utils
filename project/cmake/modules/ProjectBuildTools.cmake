@@ -33,10 +33,14 @@ set (PROJECT_BUILD_TOOLS_CMAKE_INHERIT_VARS_COMMON
     CMAKE_TOOLCHAIN_FILE CMAKE_AR CMAKE_RANLIB
     PROJECT_ATFRAME_TARGET_CPU_ABI 
     CMAKE_SYSROOT CMAKE_SYSROOT_COMPILE # CMAKE_SYSTEM_LIBRARY_PATH # CMAKE_SYSTEM_LIBRARY_PATH ninja里解出的参数不对，原因未知
+    # For OSX
     CMAKE_OSX_SYSROOT CMAKE_OSX_ARCHITECTURES CMAKE_OSX_DEPLOYMENT_TARGET CMAKE_MACOSX_RPATH
+    # For Android
     ANDROID_TOOLCHAIN ANDROID_ABI ANDROID_PIE ANDROID_PLATFORM
     ANDROID_ALLOW_UNDEFINED_SYMBOLS ANDROID_ARM_MODE ANDROID_ARM_NEON ANDROID_DISABLE_NO_EXECUTE ANDROID_DISABLE_RELRO
     ANDROID_DISABLE_FORMAT_STRING_CHECKS ANDROID_CCACHE
+    # For MSVC
+    CMAKE_MSVC_RUNTIME_LIBRARY
 )
 
 if (NOT CMAKE_SYSTEM_NAME STREQUAL CMAKE_HOST_SYSTEM_NAME)
@@ -253,8 +257,9 @@ function (project_git_clone_3rd_party)
     if (CMAKE_VERSION VERSION_LESS_EQUAL "3.4")
         include(CMakeParseArguments)
     endif ()
+    set(optionArgs GIT_ENABLE_SUBMODULE)
     set(oneValueArgs URL WORKING_DIRECTORY REPO_DIRECTORY DEPTH BRANCH TAG CHECK_PATH)
-    cmake_parse_arguments(project_git_clone_3rd_party "" "${oneValueArgs}" "" ${ARGN} )
+    cmake_parse_arguments(project_git_clone_3rd_party "${optionArgs}" "${oneValueArgs}" "" ${ARGN} )
 
     if (NOT project_git_clone_3rd_party_URL)
         message(FATAL_ERROR "URL is required")
@@ -268,28 +273,84 @@ function (project_git_clone_3rd_party)
     if (NOT project_git_clone_3rd_party_CHECK_PATH)
         set (project_git_clone_3rd_party_CHECK_PATH ".git")
     endif ()
-    unset (CLONE_OPTIONS)
-    unset (UPDATE_OPTIONS)
-    unset (FETCH_OPTIONS)
-    if (project_git_clone_3rd_party_DEPTH)
-        list (APPEND CLONE_OPTIONS --depth ${project_git_clone_3rd_party_DEPTH})
-        list (APPEND FETCH_OPTIONS --depth ${project_git_clone_3rd_party_DEPTH})
+
+    if (NOT project_git_clone_3rd_party_DEPTH)
+        set(project_git_clone_3rd_party_DEPTH 100)
     endif ()
+
+    unset (project_git_clone_3rd_party_GIT_BRANCH)
+
     if (project_git_clone_3rd_party_TAG)
-        list (APPEND CLONE_OPTIONS -b "${project_git_clone_3rd_party_TAG}")
-        list (APPEND UPDATE_OPTIONS "tags/${project_git_clone_3rd_party_TAG}")
-        list (APPEND FETCH_OPTIONS --tags)
+        set(project_git_clone_3rd_party_GIT_BRANCH ${project_git_clone_3rd_party_TAG})
     elseif (project_git_clone_3rd_party_BRANCH)
-        list (APPEND CLONE_OPTIONS -b "${project_git_clone_3rd_party_BRANCH}")
-        list (APPEND UPDATE_OPTIONS "origin/${project_git_clone_3rd_party_BRANCH}")
-    else ()
-        list (APPEND CLONE_OPTIONS -b master)
-        list (APPEND UPDATE_OPTIONS "origin/master")
+        set(project_git_clone_3rd_party_GIT_BRANCH ${project_git_clone_3rd_party_BRANCH})
     endif ()
+
     find_package(Git)
     if (NOT GIT_FOUND AND NOT Git_FOUND)
         message(FATAL_ERROR "git not found")
     endif ()
+
+    if(NOT EXISTS "${project_git_clone_3rd_party_REPO_DIRECTORY}/${project_git_clone_3rd_party_CHECK_PATH}")
+        if (EXISTS ${project_git_clone_3rd_party_REPO_DIRECTORY})
+            file(REMOVE_RECURSE ${project_git_clone_3rd_party_REPO_DIRECTORY})
+        endif ()
+    endif ()
+
+    if(PROJECT_RESET_DENPEND_REPOSITORIES OR NOT EXISTS "${project_git_clone_3rd_party_REPO_DIRECTORY}/${project_git_clone_3rd_party_CHECK_PATH}")
+        if (EXISTS ${project_git_clone_3rd_party_REPO_DIRECTORY})
+            file(MAKE_DIRECTORY ${project_git_clone_3rd_party_REPO_DIRECTORY})
+        endif ()
+
+        execute_process(
+            COMMAND ${GIT_EXECUTABLE} init
+            WORKING_DIRECTORY ${project_git_clone_3rd_party_REPO_DIRECTORY}
+        )
+        execute_process(
+            COMMAND ${GIT_EXECUTABLE} remote add origin "${project_git_clone_3rd_party_URL}"
+            WORKING_DIRECTORY ${project_git_clone_3rd_party_REPO_DIRECTORY}
+        )
+
+        if (NOT project_git_clone_3rd_party_GIT_BRANCH)
+            execute_process(
+                COMMAND ${GIT_EXECUTABLE} ls-remote --symref origin HEAD
+                WORKING_DIRECTORY ${project_git_clone_3rd_party_REPO_DIRECTORY}
+                OUTPUT_VARIABLE project_git_clone_3rd_party_GIT_CHECK_REPO
+            )
+            string(REGEX REPLACE ".*refs/heads/([^ \t]*)[ \t]*HEAD.*" "\\1" project_git_clone_3rd_party_GIT_BRANCH ${project_git_clone_3rd_party_GIT_CHECK_REPO})
+            if(NOT project_git_clone_3rd_party_GIT_BRANCH OR project_git_clone_3rd_party_GIT_BRANCH STREQUAL project_git_clone_3rd_party_GIT_CHECK_REPO)
+                string(REGEX REPLACE "([^ \t]*)[ \t]*HEAD.*" "\\1" project_git_clone_3rd_party_GIT_BRANCH ${project_git_clone_3rd_party_GIT_CHECK_REPO})
+                if(NOT project_git_clone_3rd_party_GIT_BRANCH OR project_git_clone_3rd_party_GIT_BRANCH STREQUAL project_git_clone_3rd_party_GIT_CHECK_REPO)
+                    set(project_git_clone_3rd_party_GIT_BRANCH master)
+                endif ()
+            endif ()
+            unset(project_git_clone_3rd_party_GIT_CHECK_REPO)
+        endif()
+
+        if (GIT_VERSION_STRING VERSION_GREATER_EQUAL "2.11.0")
+            execute_process(
+                COMMAND ${GIT_EXECUTABLE} fetch "--deepen=${project_git_clone_3rd_party_DEPTH}" origin ${project_git_clone_3rd_party_GIT_BRANCH}
+                WORKING_DIRECTORY ${project_git_clone_3rd_party_REPO_DIRECTORY}
+            )
+        else()
+            message(WARNING "It's recommended to use git 2.11.0 or upper to only fetch partly of repository.")
+            execute_process(
+                COMMAND ${GIT_EXECUTABLE} fetch origin ${project_git_clone_3rd_party_GIT_BRANCH}
+                WORKING_DIRECTORY ${project_git_clone_3rd_party_REPO_DIRECTORY}
+            )
+        endif()
+        execute_process(
+            COMMAND ${GIT_EXECUTABLE} reset --hard FETCH_HEAD
+            WORKING_DIRECTORY ${project_git_clone_3rd_party_REPO_DIRECTORY}
+        )
+        if (project_git_clone_3rd_party_GIT_ENABLE_SUBMODULE)
+            execute_process(
+                COMMAND ${GIT_EXECUTABLE} submodule update --init -f
+                WORKING_DIRECTORY ${project_git_clone_3rd_party_REPO_DIRECTORY}
+            )
+        endif ()
+    endif ()
+
     if(NOT EXISTS "${project_git_clone_3rd_party_REPO_DIRECTORY}/${project_git_clone_3rd_party_CHECK_PATH}")
         if (EXISTS ${project_git_clone_3rd_party_REPO_DIRECTORY})
             file(REMOVE_RECURSE ${project_git_clone_3rd_party_REPO_DIRECTORY})
