@@ -166,6 +166,9 @@ macro (FindConfigurePackage)
     endif ()
     # some module is not match standard, using upper case but package name
     string(TOUPPER "${FindConfigurePackage_PACKAGE}_FOUND" FIND_CONFIGURE_PACKAGE_UPPER_NAME)
+    
+    unset(FindConfigurePackage_BACKUP_CMAKE_FIND_ROOT_PATH)
+    unset(FindConfigurePackage_BACKUP_CMAKE_PREFIX_PATH)
 
     # step 1. find using standard method
     find_package(${FindConfigurePackage_PACKAGE} QUIET ${FindConfigurePackage_FIND_PACKAGE_FLAGS})
@@ -175,7 +178,10 @@ macro (FindConfigurePackage)
             set(FindConfigurePackage_PREFIX_DIRECTORY ${FindConfigurePackage_WORK_DIRECTORY})
         endif()
 
+        set(FindConfigurePackage_BACKUP_CMAKE_FIND_ROOT_PATH ${CMAKE_FIND_ROOT_PATH})
+        set(FindConfigurePackage_BACKUP_CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH})
         list(APPEND CMAKE_FIND_ROOT_PATH ${FindConfigurePackage_PREFIX_DIRECTORY})
+        list(APPEND CMAKE_PREFIX_PATH ${FindConfigurePackage_PREFIX_DIRECTORY})
 
         # step 2. find in prefix
         find_package(${FindConfigurePackage_PACKAGE} QUIET ${FindConfigurePackage_FIND_PACKAGE_FLAGS})
@@ -530,7 +536,17 @@ macro (FindConfigurePackage)
             find_package(${FindConfigurePackage_PACKAGE} ${FindConfigurePackage_FIND_PACKAGE_FLAGS})
         endif()
     endif()
+
+    # Cleanup vars
     unset (FindConfigurePackage_INSTALL_TARGET)
+    if (DEFINED FindConfigurePackage_BACKUP_CMAKE_FIND_ROOT_PATH)
+        set(CMAKE_FIND_ROOT_PATH ${FindConfigurePackage_BACKUP_CMAKE_FIND_ROOT_PATH})
+        unset (FindConfigurePackage_BACKUP_CMAKE_FIND_ROOT_PATH)
+    endif()
+    if (DEFINED FindConfigurePackage_BACKUP_CMAKE_PREFIX_PATH)
+        set(CMAKE_PREFIX_PATH ${FindConfigurePackage_BACKUP_CMAKE_PREFIX_PATH})
+        unset(FindConfigurePackage_BACKUP_CMAKE_PREFIX_PATH)
+    endif()
 endmacro(FindConfigurePackage)
 
 
