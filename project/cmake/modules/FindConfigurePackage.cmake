@@ -27,14 +27,15 @@
 #     BUILD_DIRECTORY <build directory>
 #     PREFIX_DIRECTORY <prefix directory>
 #     SRC_DIRECTORY_NAME <source directory name>
-#     MSVC_CONFIGURE [Debug/Release/RelWithDebInfo/MinSizeRel]
+#     MSVC_CONFIGURE <Debug/Release/RelWithDebInfo/MinSizeRel>
 #     INSTALL_TARGET <target name: install>
 #     ZIP_URL <zip url>
 #     TAR_URL <tar url>
 #     SVN_URL <svn url>
 #     GIT_URL <git url>
 #     GIT_BRANCH <git branch>
-#     GIT_FETCH_DEPTH <fetch depth/deepen:100>
+#     GIT_COMMIT <git commit sha>
+#     GIT_FETCH_DEPTH <fetch depth/deepen>
 # )
 #
 # ::
@@ -49,11 +50,14 @@
 #   <build directory>       - where to execute configure and make
 #   <prefix directory>      - prefix directory(default: <work directory>)
 #   <source directory name> - source directory name(default detected by download url)
+#   <target name: install>  - which target used to install package(default: install)
 #   <zip url>               - from where to download zip when find package failed
 #   <tar url>               - from where to download tar.* or tgz when find package failed
 #   <svn url>               - from where to svn co when find package failed
 #   <git url>               - from where to git clone when find package failed
-#
+#   <git branch>            - git branch or tag to fetch
+#   <git commit>            - git commit to fetch, server must support --deepen=<depth>. if both <git branch> and <git commit> is set, we will use <git branch>
+#   <fetch depth/deepen>    - --deepen or --depth for git fetch depend using <git branch> or <git commit>
 
 #=============================================================================
 # Copyright 2014-2020 OWenT.
@@ -153,7 +157,7 @@ macro (FindConfigurePackage)
     endif ()
     set(optionArgs BUILD_WITH_CONFIGURE BUILD_WITH_CMAKE BUILD_WITH_SCONS BUILD_WITH_CUSTOM_COMMAND GIT_ENABLE_SUBMODULE
         CMAKE_INHIRT_BUILD_ENV CMAKE_INHIRT_BUILD_ENV_DISABLE_C_FLAGS CMAKE_INHIRT_BUILD_ENV_DISABLE_CXX_FLAGS CMAKE_INHIRT_BUILD_ENV_DISABLE_ASM_FLAGS)
-    set(oneValueArgs PACKAGE WORKING_DIRECTORY BUILD_DIRECTORY PREFIX_DIRECTORY SRC_DIRECTORY_NAME PROJECT_DIRECTORY MSVC_CONFIGURE ZIP_URL TAR_URL SVN_URL GIT_URL GIT_BRANCH GIT_FETCH_DEPTH INSTALL_TARGET)
+    set(oneValueArgs PACKAGE WORKING_DIRECTORY BUILD_DIRECTORY PREFIX_DIRECTORY SRC_DIRECTORY_NAME PROJECT_DIRECTORY MSVC_CONFIGURE ZIP_URL TAR_URL SVN_URL GIT_URL GIT_BRANCH GIT_COMMIT GIT_FETCH_DEPTH INSTALL_TARGET)
     set(multiValueArgs CONFIGURE_CMD CONFIGURE_FLAGS CMAKE_FLAGS FIND_PACKAGE_FLAGS RESET_FIND_VARS SCONS_FLAGS MAKE_FLAGS CUSTOM_BUILD_COMMAND PREBUILD_COMMAND AFTERBUILD_COMMAND)
     foreach(RESTORE_VAR IN LISTS optionArgs oneValueArgs multiValueArgs)
         unset(FindConfigurePackage_${RESTORE_VAR})
@@ -271,7 +275,7 @@ macro (FindConfigurePackage)
                             COMMAND ${GIT_EXECUTABLE} remote add origin "${FindConfigurePackage_GIT_URL}"
                             WORKING_DIRECTORY ${FindConfigurePackage_DOWNLOAD_SOURCE_DIR}
                         )
-                        if (NOT FindConfigurePackage_GIT_BRANCH)
+                        if (NOT FindConfigurePackage_GIT_BRANCH AND NOT FindConfigurePackage_GIT_COMMIT)
                             execute_process(
                                 COMMAND ${GIT_EXECUTABLE} ls-remote --symref origin HEAD
                                 WORKING_DIRECTORY ${FindConfigurePackage_DOWNLOAD_SOURCE_DIR}
@@ -289,17 +293,24 @@ macro (FindConfigurePackage)
                         if (NOT FindConfigurePackage_GIT_FETCH_DEPTH)
                             set(FindConfigurePackage_GIT_FETCH_DEPTH ${FindConfigurePackageGitFetchDepth})
                         endif ()
-                        if (GIT_VERSION_STRING VERSION_GREATER_EQUAL "2.11.0")
+                        if (FindConfigurePackage_GIT_BRANCH)
                             execute_process(
-                                COMMAND ${GIT_EXECUTABLE} fetch "--deepen=${FindConfigurePackage_GIT_FETCH_DEPTH}" origin ${FindConfigurePackage_GIT_BRANCH}
+                                COMMAND ${GIT_EXECUTABLE} fetch "--depth=${FindConfigurePackage_GIT_FETCH_DEPTH}" "-n" origin ${FindConfigurePackage_GIT_BRANCH}
                                 WORKING_DIRECTORY ${FindConfigurePackage_DOWNLOAD_SOURCE_DIR}
                             )
                         else()
-                            message(WARNING "It's recommended to use git 2.11.0 or upper to only fetch partly of repository.")
-                            execute_process(
-                                COMMAND ${GIT_EXECUTABLE} fetch origin ${FindConfigurePackage_GIT_BRANCH}
-                                WORKING_DIRECTORY ${FindConfigurePackage_DOWNLOAD_SOURCE_DIR}
-                            )
+                            if (GIT_VERSION_STRING VERSION_GREATER_EQUAL "2.11.0")
+                                execute_process(
+                                    COMMAND ${GIT_EXECUTABLE} fetch "--deepen=${FindConfigurePackage_GIT_FETCH_DEPTH}" "-n" origin ${FindConfigurePackage_GIT_COMMIT}
+                                    WORKING_DIRECTORY ${FindConfigurePackage_DOWNLOAD_SOURCE_DIR}
+                                )
+                            else()
+                                message(WARNING "It's recommended to use git 2.11.0 or upper to only fetch partly of repository.")
+                                execute_process(
+                                    COMMAND ${GIT_EXECUTABLE} fetch "-n" origin ${FindConfigurePackage_GIT_COMMIT}
+                                    WORKING_DIRECTORY ${FindConfigurePackage_DOWNLOAD_SOURCE_DIR}
+                                )
+                            endif()
                         endif()
                         execute_process(
                             COMMAND ${GIT_EXECUTABLE} reset --hard FETCH_HEAD

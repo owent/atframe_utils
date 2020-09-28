@@ -258,7 +258,7 @@ function (project_git_clone_3rd_party)
         include(CMakeParseArguments)
     endif ()
     set(optionArgs GIT_ENABLE_SUBMODULE)
-    set(oneValueArgs URL WORKING_DIRECTORY REPO_DIRECTORY DEPTH BRANCH TAG CHECK_PATH)
+    set(oneValueArgs URL WORKING_DIRECTORY REPO_DIRECTORY DEPTH BRANCH COMMIT TAG CHECK_PATH)
     cmake_parse_arguments(project_git_clone_3rd_party "${optionArgs}" "${oneValueArgs}" "" ${ARGN} )
 
     if (NOT project_git_clone_3rd_party_URL)
@@ -311,7 +311,7 @@ function (project_git_clone_3rd_party)
             WORKING_DIRECTORY ${project_git_clone_3rd_party_REPO_DIRECTORY}
         )
 
-        if (NOT project_git_clone_3rd_party_GIT_BRANCH)
+        if (NOT project_git_clone_3rd_party_GIT_BRANCH AND NOT project_git_clone_3rd_party_COMMIT)
             execute_process(
                 COMMAND ${GIT_EXECUTABLE} ls-remote --symref origin HEAD
                 WORKING_DIRECTORY ${project_git_clone_3rd_party_REPO_DIRECTORY}
@@ -327,17 +327,24 @@ function (project_git_clone_3rd_party)
             unset(project_git_clone_3rd_party_GIT_CHECK_REPO)
         endif()
 
-        if (GIT_VERSION_STRING VERSION_GREATER_EQUAL "2.11.0")
+        if (project_git_clone_3rd_party_GIT_BRANCH)
             execute_process(
-                COMMAND ${GIT_EXECUTABLE} fetch "--deepen=${project_git_clone_3rd_party_DEPTH}" origin ${project_git_clone_3rd_party_GIT_BRANCH}
+                COMMAND ${GIT_EXECUTABLE} fetch "--depth=${project_git_clone_3rd_party_DEPTH}" "-n" origin ${project_git_clone_3rd_party_COMMIT}
                 WORKING_DIRECTORY ${project_git_clone_3rd_party_REPO_DIRECTORY}
             )
-        else()
-            message(WARNING "It's recommended to use git 2.11.0 or upper to only fetch partly of repository.")
-            execute_process(
-                COMMAND ${GIT_EXECUTABLE} fetch origin ${project_git_clone_3rd_party_GIT_BRANCH}
-                WORKING_DIRECTORY ${project_git_clone_3rd_party_REPO_DIRECTORY}
-            )
+        else ()
+            if (GIT_VERSION_STRING VERSION_GREATER_EQUAL "2.11.0")
+                execute_process(
+                    COMMAND ${GIT_EXECUTABLE} fetch "--deepen=${project_git_clone_3rd_party_DEPTH}" "-n" origin ${project_git_clone_3rd_party_GIT_BRANCH}
+                    WORKING_DIRECTORY ${project_git_clone_3rd_party_REPO_DIRECTORY}
+                )
+            else()
+                message(WARNING "It's recommended to use git 2.11.0 or upper to only fetch partly of repository.")
+                execute_process(
+                    COMMAND ${GIT_EXECUTABLE} fetch "-n" origin ${project_git_clone_3rd_party_GIT_BRANCH}
+                    WORKING_DIRECTORY ${project_git_clone_3rd_party_REPO_DIRECTORY}
+                )
+            endif()
         endif()
         execute_process(
             COMMAND ${GIT_EXECUTABLE} reset --hard FETCH_HEAD
