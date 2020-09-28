@@ -16,14 +16,8 @@ namespace util {
         namespace detail {
 #if defined(UTIL_HASH_IMPLEMENT_SHA_USING_OPENSSL) && UTIL_HASH_IMPLEMENT_SHA_USING_OPENSSL
             struct sha_inner_data {
-                unsigned char output[SHA512_DIGEST_LENGTH];
-                union {
-                    SHA_CTX    sha1_context;
-                    SHA256_CTX sha224_context;
-                    SHA256_CTX sha256_context;
-                    SHA512_CTX sha384_context;
-                    SHA512_CTX sha512_context;
-                };
+                unsigned char output[EVP_MAX_MD_SIZE];
+                EVP_MD_CTX* ctx;
             };
 
             static inline sha_inner_data *into_inner_type(void *in) { return reinterpret_cast<sha_inner_data *>(in); }
@@ -31,6 +25,11 @@ namespace util {
             static inline void free_inner_type(void *in, util::hash::sha::type) {
                 if (in == UTIL_CONFIG_NULLPTR) {
                     return;
+                }
+
+                if (into_inner_type(in)->ctx != UTIL_CONFIG_NULLPTR) {
+                    EVP_MD_CTX_free(into_inner_type(in)->ctx);
+                    into_inner_type(in)->ctx = UTIL_CONFIG_NULLPTR;
                 }
 
                 free(into_inner_type(in));
@@ -41,31 +40,41 @@ namespace util {
                 if (ret == UTIL_CONFIG_NULLPTR) {
                     return UTIL_CONFIG_NULLPTR;
                 }
+                ret->ctx = EVP_MD_CTX_new();
+                if (ret->ctx == UTIL_CONFIG_NULLPTR) {
+                    free_inner_type(ret, t);
+                    return UTIL_CONFIG_NULLPTR;
+                }
 
-                bool is_success = false;
+                const EVP_MD * md = UTIL_CONFIG_NULLPTR;
                 switch (t) {
                 case util::hash::sha::EN_ALGORITHM_SHA1:
-                    is_success = 1 == SHA1_Init(&ret->sha1_context);
+                    md = EVP_get_digestbynid(NID_sha1);
                     break;
                 case util::hash::sha::EN_ALGORITHM_SHA224:
-                    is_success = 1 == SHA224_Init(&ret->sha224_context);
+                    md = EVP_get_digestbynid(NID_sha224);
                     break;
                 case util::hash::sha::EN_ALGORITHM_SHA256:
-                    is_success = 1 == SHA256_Init(&ret->sha256_context);
+                    md = EVP_get_digestbynid(NID_sha256);
                     break;
                 case util::hash::sha::EN_ALGORITHM_SHA384:
-                    is_success = 1 == SHA384_Init(&ret->sha384_context);
+                    md = EVP_get_digestbynid(NID_sha384);
                     break;
                 case util::hash::sha::EN_ALGORITHM_SHA512:
-                    is_success = 1 == SHA512_Init(&ret->sha512_context);
+                    md = EVP_get_digestbynid(NID_sha512);
                     break;
                 default:
                     break;
                 }
 
-                if (false == is_success) {
+                if (md == UTIL_CONFIG_NULLPTR) {
                     free_inner_type(ret, t);
-                    ret = UTIL_CONFIG_NULLPTR;
+                    return UTIL_CONFIG_NULLPTR;
+                }
+
+                if (1 != EVP_DigestInit_ex(ret->ctx, md, UTIL_CONFIG_NULLPTR)) {
+                    free_inner_type(ret, t);
+                    return UTIL_CONFIG_NULLPTR;
                 }
 
                 return ret;
@@ -1047,20 +1056,7 @@ namespace util {
                 return false;
             }
 #if defined(UTIL_HASH_IMPLEMENT_SHA_USING_OPENSSL) && UTIL_HASH_IMPLEMENT_SHA_USING_OPENSSL
-            switch (hash_type_) {
-            case util::hash::sha::EN_ALGORITHM_SHA1:
-                return 1 == SHA1_Update(&inner_obj->sha1_context, in, inlen);
-            case util::hash::sha::EN_ALGORITHM_SHA224:
-                return 1 == SHA224_Update(&inner_obj->sha224_context, in, inlen);
-            case util::hash::sha::EN_ALGORITHM_SHA256:
-                return 1 == SHA256_Update(&inner_obj->sha256_context, in, inlen);
-            case util::hash::sha::EN_ALGORITHM_SHA384:
-                return 1 == SHA384_Update(&inner_obj->sha384_context, in, inlen);
-            case util::hash::sha::EN_ALGORITHM_SHA512:
-                return 1 == SHA512_Update(&inner_obj->sha512_context, in, inlen);
-            default:
-                break;
-            }
+            return 1 == EVP_DigestUpdate(inner_obj->ctx, reinterpret_cast<const void*>(in), inlen);
 #elif defined(UTIL_HASH_IMPLEMENT_SHA_USING_MBEDTLS) && UTIL_HASH_IMPLEMENT_SHA_USING_MBEDTLS
             switch (hash_type_) {
             case util::hash::sha::EN_ALGORITHM_SHA1:
@@ -1076,6 +1072,7 @@ namespace util {
             default:
                 break;
             }
+            return false;
 #else
             switch (hash_type_) {
             case util::hash::sha::EN_ALGORITHM_SHA1:
@@ -1096,8 +1093,8 @@ namespace util {
             default:
                 break;
             }
-#endif
             return false;
+#endif
         }
 
         LIBATFRAME_UTILS_API bool sha::final() {
@@ -1106,20 +1103,8 @@ namespace util {
                 return false;
             }
 #if defined(UTIL_HASH_IMPLEMENT_SHA_USING_OPENSSL) && UTIL_HASH_IMPLEMENT_SHA_USING_OPENSSL
-            switch (hash_type_) {
-            case util::hash::sha::EN_ALGORITHM_SHA1:
-                return 1 == SHA1_Final(inner_obj->output, &inner_obj->sha1_context);
-            case util::hash::sha::EN_ALGORITHM_SHA224:
-                return 1 == SHA224_Final(inner_obj->output, &inner_obj->sha224_context);
-            case util::hash::sha::EN_ALGORITHM_SHA256:
-                return 1 == SHA256_Final(inner_obj->output, &inner_obj->sha256_context);
-            case util::hash::sha::EN_ALGORITHM_SHA384:
-                return 1 == SHA384_Final(inner_obj->output, &inner_obj->sha384_context);
-            case util::hash::sha::EN_ALGORITHM_SHA512:
-                return 1 == SHA512_Final(inner_obj->output, &inner_obj->sha512_context);
-            default:
-                break;
-            }
+            unsigned int md_len = 0;
+            return 1 == EVP_DigestFinal_ex(inner_obj->ctx, inner_obj->output, &md_len);
 #elif defined(UTIL_HASH_IMPLEMENT_SHA_USING_MBEDTLS) && UTIL_HASH_IMPLEMENT_SHA_USING_MBEDTLS
             switch (hash_type_) {
             case util::hash::sha::EN_ALGORITHM_SHA1:
@@ -1135,6 +1120,7 @@ namespace util {
             default:
                 break;
             }
+            return false;
 #else
             switch (hash_type_) {
             case util::hash::sha::EN_ALGORITHM_SHA1:
@@ -1155,28 +1141,44 @@ namespace util {
             default:
                 break;
             }
-#endif
             return false;
+#endif
         }
 
         LIBATFRAME_UTILS_API size_t sha::get_output_length() const { return get_output_length(hash_type_); }
 
         LIBATFRAME_UTILS_API size_t sha::get_output_length(type bt) {
 #if defined(CRYPTO_USE_OPENSSL) || defined(CRYPTO_USE_LIBRESSL) || defined(CRYPTO_USE_BORINGSSL)
+            const EVP_MD * md = UTIL_CONFIG_NULLPTR;
             switch (bt) {
-            case EN_ALGORITHM_SHA1:
-                return SHA_DIGEST_LENGTH;
-            case EN_ALGORITHM_SHA224:
-                return SHA224_DIGEST_LENGTH;
-            case EN_ALGORITHM_SHA256:
-                return SHA256_DIGEST_LENGTH;
-            case EN_ALGORITHM_SHA384:
-                return SHA384_DIGEST_LENGTH;
-            case EN_ALGORITHM_SHA512:
-                return SHA512_DIGEST_LENGTH;
+            case util::hash::sha::EN_ALGORITHM_SHA1:
+                md = EVP_get_digestbynid(NID_sha1);
+                break;
+            case util::hash::sha::EN_ALGORITHM_SHA224:
+                md = EVP_get_digestbynid(NID_sha224);
+                break;
+            case util::hash::sha::EN_ALGORITHM_SHA256:
+                md = EVP_get_digestbynid(NID_sha256);
+                break;
+            case util::hash::sha::EN_ALGORITHM_SHA384:
+                md = EVP_get_digestbynid(NID_sha384);
+                break;
+            case util::hash::sha::EN_ALGORITHM_SHA512:
+                md = EVP_get_digestbynid(NID_sha512);
+                break;
             default:
+                break;
+            }
+
+            if (md == UTIL_CONFIG_NULLPTR) {
                 return 0;
             }
+
+            int ret = EVP_MD_size(md);
+            if (ret <= 0) {
+                return 0;
+            }
+            return static_cast<size_t>(ret);
 #else
             switch (bt) {
             case EN_ALGORITHM_SHA1:

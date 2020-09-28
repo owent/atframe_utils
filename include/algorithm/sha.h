@@ -23,7 +23,7 @@
 
 #if defined(CRYPTO_USE_OPENSSL) || defined(CRYPTO_USE_LIBRESSL) || defined(CRYPTO_USE_BORINGSSL)
 
-#include <openssl/sha.h>
+#include <openssl/evp.h>
 
 #elif defined(CRYPTO_USE_MBEDTLS)
 
