@@ -28,7 +28,11 @@ namespace util {
                 }
 
                 if (into_inner_type(in)->ctx != UTIL_CONFIG_NULLPTR) {
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
+                    EVP_MD_CTX_destroy(into_inner_type(in)->ctx);
+#else
                     EVP_MD_CTX_free(into_inner_type(in)->ctx);
+#endif
                     into_inner_type(in)->ctx = UTIL_CONFIG_NULLPTR;
                 }
 
@@ -40,7 +44,11 @@ namespace util {
                 if (ret == UTIL_CONFIG_NULLPTR) {
                     return UTIL_CONFIG_NULLPTR;
                 }
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
+                ret->ctx = EVP_MD_CTX_create();
+#else
                 ret->ctx = EVP_MD_CTX_new();
+#endif
                 if (ret->ctx == UTIL_CONFIG_NULLPTR) {
                     free_inner_type(ret, t);
                     return UTIL_CONFIG_NULLPTR;
