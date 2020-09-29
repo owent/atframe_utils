@@ -28,7 +28,7 @@
 #     PREFIX_DIRECTORY <prefix directory>
 #     SRC_DIRECTORY_NAME <source directory name>
 #     MSVC_CONFIGURE <Debug/Release/RelWithDebInfo/MinSizeRel>
-#     INSTALL_TARGET <target name: install>
+#     INSTALL_TARGET [install targets...]
 #     ZIP_URL <zip url>
 #     TAR_URL <tar url>
 #     SVN_URL <svn url>
@@ -50,7 +50,7 @@
 #   <build directory>       - where to execute configure and make
 #   <prefix directory>      - prefix directory(default: <work directory>)
 #   <source directory name> - source directory name(default detected by download url)
-#   <target name: install>  - which target used to install package(default: install)
+#   <install targets>       - which target(s) used to install package(default: install)
 #   <zip url>               - from where to download zip when find package failed
 #   <tar url>               - from where to download tar.* or tgz when find package failed
 #   <svn url>               - from where to svn co when find package failed
@@ -157,8 +157,8 @@ macro (FindConfigurePackage)
     endif ()
     set(optionArgs BUILD_WITH_CONFIGURE BUILD_WITH_CMAKE BUILD_WITH_SCONS BUILD_WITH_CUSTOM_COMMAND GIT_ENABLE_SUBMODULE
         CMAKE_INHIRT_BUILD_ENV CMAKE_INHIRT_BUILD_ENV_DISABLE_C_FLAGS CMAKE_INHIRT_BUILD_ENV_DISABLE_CXX_FLAGS CMAKE_INHIRT_BUILD_ENV_DISABLE_ASM_FLAGS)
-    set(oneValueArgs PACKAGE WORKING_DIRECTORY BUILD_DIRECTORY PREFIX_DIRECTORY SRC_DIRECTORY_NAME PROJECT_DIRECTORY MSVC_CONFIGURE ZIP_URL TAR_URL SVN_URL GIT_URL GIT_BRANCH GIT_COMMIT GIT_FETCH_DEPTH INSTALL_TARGET)
-    set(multiValueArgs CONFIGURE_CMD CONFIGURE_FLAGS CMAKE_FLAGS FIND_PACKAGE_FLAGS RESET_FIND_VARS SCONS_FLAGS MAKE_FLAGS CUSTOM_BUILD_COMMAND PREBUILD_COMMAND AFTERBUILD_COMMAND)
+    set(oneValueArgs PACKAGE WORKING_DIRECTORY BUILD_DIRECTORY PREFIX_DIRECTORY SRC_DIRECTORY_NAME PROJECT_DIRECTORY MSVC_CONFIGURE ZIP_URL TAR_URL SVN_URL GIT_URL GIT_BRANCH GIT_COMMIT GIT_FETCH_DEPTH)
+    set(multiValueArgs CONFIGURE_CMD CONFIGURE_FLAGS CMAKE_FLAGS FIND_PACKAGE_FLAGS RESET_FIND_VARS SCONS_FLAGS MAKE_FLAGS CUSTOM_BUILD_COMMAND PREBUILD_COMMAND AFTERBUILD_COMMAND INSTALL_TARGET)
     foreach(RESTORE_VAR IN LISTS optionArgs oneValueArgs multiValueArgs)
         unset(FindConfigurePackage_${RESTORE_VAR})
     endforeach()
