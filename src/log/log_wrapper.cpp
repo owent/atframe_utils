@@ -185,7 +185,7 @@ namespace util {
 
             start_log(caller, writer);
 
-            if (!log_sinks_.empty()) {
+            if (!log_sinks_.empty() && NULL != writer.buffer) {
                 va_list va_args;
                 va_start(va_args, fmt);
                 int prt_res =
