@@ -44,6 +44,8 @@ public:
     void print_t3(util::cli::callback_param par, int i, double d) {
         printf("Mem Fun B3 Params Num: %d, i => %d, d => %lf\n", static_cast<int>(par.get_params_number()), i, d);
     }
+
+    virtual ~foo() {}
 };
 
 class foo2 : public foo {

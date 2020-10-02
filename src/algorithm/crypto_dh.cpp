@@ -621,7 +621,6 @@ namespace util {
                 EC_POINT_free(point);
                 point = NULL;
             }
-            */
 
             static inline void reset(BN_CTX *&bn) {
                 if (NULL == bn) {
@@ -631,6 +630,7 @@ namespace util {
                 BN_CTX_free(bn);
                 bn = NULL;
             }
+            */
 
             static inline void reset(BIO *&bio) {
                 if (NULL == bio) {
