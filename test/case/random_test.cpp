@@ -5,6 +5,15 @@
 
 #include "frame/test_macros.h"
 #include "random/random_generator.h"
+#include "random/uuid_generator.h"
+
+
+#if defined(LIBATFRAME_UTILS_ENABLE_UNORDERED_MAP_SET) && LIBATFRAME_UTILS_ENABLE_UNORDERED_MAP_SET
+#include <unordered_set>
+#else
+#include <set>
+#endif
+
 
 template <typename TOS, typename TVEC>
 void print_vec(const TOS &os, const std::vector<TVEC> &vec) {
@@ -325,4 +334,32 @@ CASE_TEST(random_test, xoshiro256_plus) {
     }
     gen1.shuffle(shuffle_arr.begin(), shuffle_arr.end());
     print_vec(CASE_MSG_INFO() << "random_shuffle => ", shuffle_arr);
+}
+
+CASE_TEST(random_test, uuid_generator) {
+    CASE_MSG_INFO()<< "generate_string(true): "<< util::random::uuid_generator::generate_string(true) << std::endl;
+    CASE_MSG_INFO()<< "generate_string(false): "<< util::random::uuid_generator::generate_string(false) << std::endl;
+    CASE_MSG_INFO()<< "generate_string_random(true): "<< util::random::uuid_generator::generate_string_random(true) << std::endl;
+    CASE_MSG_INFO()<< "generate_string_random(false): "<< util::random::uuid_generator::generate_string_random(false) << std::endl;
+
+    LIBATFRAME_UTILS_AUTO_SELETC_SET(std::string) uuids;
+    for (int i = 0; i < 1000000; ++ i) {
+        std::string val = util::random::uuid_generator::generate_string();
+        CASE_EXPECT_TRUE(uuids.end() == uuids.find(val));
+        uuids.insert(val);
+    }
+    CASE_MSG_INFO()<< "allocate "<< uuids.size()<< " finished" << std::endl;
+}
+
+CASE_TEST(random_test, uuid_generator_time) {
+    CASE_MSG_INFO()<< "generate_string_time(true): "<< util::random::uuid_generator::generate_string_time(true) << std::endl;
+    CASE_MSG_INFO()<< "generate_string_time(false): "<< util::random::uuid_generator::generate_string_time(false) << std::endl;
+
+    LIBATFRAME_UTILS_AUTO_SELETC_SET(std::string) uuids;
+    for (int i = 0; i < 1000000; ++ i) {
+        std::string val = util::random::uuid_generator::generate_string_time();
+        CASE_EXPECT_TRUE(uuids.end() == uuids.find(val));
+        uuids.insert(val);
+    }
+    CASE_MSG_INFO()<< "allocate "<< uuids.size()<< " finished" << std::endl;
 }

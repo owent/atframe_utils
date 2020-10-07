@@ -14,6 +14,11 @@
 
 
 #ifdef UTIL_FS_WINDOWS_API
+
+#ifndef WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN
+#endif
+
 #include <Windows.h>
 #include <direct.h>
 #include <io.h>

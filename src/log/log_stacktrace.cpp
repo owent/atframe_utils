@@ -28,6 +28,10 @@
 #include <unwind.h>
 
 #elif defined(LOG_STACKTRACE_USING_DBGHELP) && LOG_STACKTRACE_USING_DBGHELP
+#ifndef WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN
+#endif
+
 #include <Windows.h>
 
 #include <DbgHelp.h>
@@ -66,6 +70,10 @@ struct SymInitializeHelper {
 #endif
 
 #elif defined(LOG_STACKTRACE_USING_DBGENG) && LOG_STACKTRACE_USING_DBGENG
+#ifndef WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN
+#endif
+
 #include <Windows.h>
 
 #include <DbgEng.h>

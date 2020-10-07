@@ -27,6 +27,7 @@
 #include <stdint.h>
 #endif
 
+#include <cstring>
 #include <string>
 
 #include <config/atframe_utils_build_feature.h>

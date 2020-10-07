@@ -90,6 +90,10 @@
 #define THREAD_YIELD() std::this_thread::yield()
 
 #elif defined(_MSC_VER)
+#ifndef WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN
+#endif
+
 #include <Windows.h>
 #define THREAD_SLEEP_MS(x) Sleep(x)
 #define THREAD_YIELD() YieldProcessor()

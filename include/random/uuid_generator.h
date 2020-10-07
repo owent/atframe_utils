@@ -27,27 +27,35 @@
 #include <common/string_oprs.h>
 #include <config/atframe_utils_build_feature.h>
 
-#if defined(LIBATFRAME_UTILS_ENABLE_UUID) && LIBATFRAME_UTILS_ENABLE_UUID
+#if defined(LIBATFRAME_UTILS_ENABLE_LIBUUID) && LIBATFRAME_UTILS_ENABLE_LIBUUID
+#include <uuid/uuid.h>
 
-#if defined(WIN32)
+#elif defined(LIBATFRAME_UTILS_ENABLE_UUID_WINRPC) && LIBATFRAME_UTILS_ENABLE_UUID_WINRPC
 #include <rpc.h>
 #include <rpcdce.h>
-#else
-#include <uuid/uuid.h>
+
 #endif
+
+#if (defined(LIBATFRAME_UTILS_ENABLE_LIBUUID) && LIBATFRAME_UTILS_ENABLE_LIBUUID) ||            \
+    (defined(LIBATFRAME_UTILS_ENABLE_UUID_WINRPC) && LIBATFRAME_UTILS_ENABLE_UUID_WINRPC) ||    \
+    (defined(LIBATFRAME_UTILS_ENABLE_UUID_INTERNAL_IMPLEMENT) && LIBATFRAME_UTILS_ENABLE_UUID_INTERNAL_IMPLEMENT)
 
 namespace util {
     namespace random {
-        struct uuid {
-            uint32_t data1;
-            uint16_t data2;
-            uint16_t data3;
-            uint8_t  data4[8];
+        /**
+         * @brief https://en.wikipedia.org/wiki/Universally_unique_identifier
+         */
+        struct LIBATFRAME_UTILS_API_HEAD_ONLY uuid {
+            uint32_t time_low;              /* time_low */
+            uint16_t time_mid;              /* time_mid */
+            uint16_t time_hi_and_version;   /* time_hi_and_version */
+            uint16_t clock_seq;             /* clock_seq_hi_and_res clock_seq_low */
+            uint8_t	 node[6];               /* node: the 48-bit node id */            
         };
 
         class uuid_generator {
         public:
-            static LIBATFRAME_UTILS_API std::string uuid_to_string(const uuid &id);
+            static LIBATFRAME_UTILS_API std::string uuid_to_string(const uuid &id, bool remove_minus = false);
 
             static LIBATFRAME_UTILS_API std::string uuid_to_binary(const uuid &id);
 
@@ -55,15 +63,40 @@ namespace util {
 
             static LIBATFRAME_UTILS_API uuid generate();
 
-            static LIBATFRAME_UTILS_API std::string generate_string();
+            /*
+             * @brief prefer to use generate_string_random(...) on linux and windows/generate_string_time(...) on macOS
+             */
+            static LIBATFRAME_UTILS_API std::string generate_string(bool remove_minus = false);
 
+            /**
+             * @brief generate a uuid of Version 4
+             */
             static LIBATFRAME_UTILS_API uuid generate_random();
 
-            static LIBATFRAME_UTILS_API std::string generate_string_random();
+            /**
+             * @brief generate a uuid of Version 4
+             * @note QPS:
+             *      150k => inner implement(-O2)
+             *      150k => libuuid on linux
+             *      600k => uuid/uuid.h on macOS
+             */
+            static LIBATFRAME_UTILS_API std::string generate_string_random(bool remove_minus = false);
 
+            /**
+             * @brief generate a uuid of Version 1
+             * @note This API will generate a uuid with MAC address, which is not suggested for security reasons
+             */
             static LIBATFRAME_UTILS_API uuid generate_time();
 
-            static LIBATFRAME_UTILS_API std::string generate_string_time();
+            /**
+             * @brief generate a uuid of Version 1
+             * @note This API will generate a uuid with MAC address, which is not suggested for security reasons
+             * @note QPS:
+             *      540k => inner implement(-O2)
+             *      245k => libuuid on linux
+             *      711k => uuid/uuid.h on macOS
+             */
+            static LIBATFRAME_UTILS_API std::string generate_string_time(bool remove_minus = false);
         };
     } // namespace random
 } // namespace util
