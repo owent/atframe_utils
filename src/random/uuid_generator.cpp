@@ -176,11 +176,11 @@ namespace util {
             }
             #endif
 
-            /*
-            * Generate a stream of random nbytes into buf.
-            * Use /dev/urandom if possible, and if not,
-            * use glibc pseudo-random functions.
-            */
+            /**
+             * Generate a stream of random nbytes into buf.
+             * Use /dev/urandom if possible, and if not,
+             * use glibc pseudo-random functions.
+             */
             static void random_get_bytes(unsigned char* buf, size_t nbytes) {
                 typedef util::random::mt19937_64 uuid_generator_rand_engine;
                 static util::lock::spin_lock random_generator_lock;
@@ -223,14 +223,14 @@ namespace util {
                 return;
             }
 
-            /*
-            * Get the ethernet hardware address, if we can find it...
-            *
-            * XXX for a windows version, probably should use GetAdaptersInfo:
-            * http://www.codeguru.com/cpp/i-n/network/networkinformation/article.php/c5451
-            * commenting out get_node_id just to get gen_uuid to compile under windows
-            * is not the right way to go!
-            */
+            /**
+             * Get the ethernet hardware address, if we can find it...
+             *
+             * XXX for a windows version, probably should use GetAdaptersInfo:
+             * http://www.codeguru.com/cpp/i-n/network/networkinformation/article.php/c5451
+             * commenting out get_node_id just to get gen_uuid to compile under windows
+             * is not the right way to go!
+             */
             static int get_node_id(unsigned char *node_id) {
             // #ifdef HAVE_NET_IF_H // this is required
                 int		sd;
@@ -243,12 +243,12 @@ namespace util {
                 struct sockaddr_dl *sdlp;
                 #endif
 
-            /*
-            * BSD 4.4 defines the size of an ifreq to be
-            * max(sizeof(ifreq), sizeof(ifreq.ifr_name)+ifreq.ifr_addr.sa_len
-            * However, under earlier systems, sa_len isn't present, so the size is
-            * just sizeof(struct ifreq)
-            */
+            /**
+             * BSD 4.4 defines the size of an ifreq to be
+             * max(sizeof(ifreq), sizeof(ifreq.ifr_name)+ifreq.ifr_addr.sa_len
+             * However, under earlier systems, sa_len isn't present, so the size is
+             * just sizeof(struct ifreq)
+             */
             #ifdef HAVE_SA_LEN
             #define ifreq_size(i) max(sizeof(struct ifreq),\
                 sizeof((i).ifr_name)+(i).ifr_addr.sa_len)
@@ -312,18 +312,41 @@ namespace util {
             /* Assume that the gettimeofday() has microsecond granularity */
             #define MAX_ADJUSTMENT 10
 
-            /*
-            * Get clock from global sequence clock counter.
-            *
-            * Return -1 if the clock counter could not be opened/locked (in this case
-            * pseudorandom value is returned in @ret_clock_seq), otherwise return 0.
-            */
+            /**
+             * Get clock from global sequence clock counter.
+             *
+             * Return -1 if the clock counter could not be opened/locked (in this case
+             * pseudorandom value is returned in @ret_clock_seq), otherwise return 0.
+             */
+            struct uuid_generator_clock_file_guard_t {
+                int state_fd;
+                FILE* state_f;
+                uuid_generator_clock_file_guard_t(): state_fd(-2), state_f(NULL) {};
+                ~uuid_generator_clock_file_guard_t() {
+                    close_file();
+                    close_fd();
+                };
+
+                void close_fd() {
+                    if (state_fd >= 0) {
+                        close(state_fd);
+                        state_fd = -1;
+                    }
+                }
+
+                void close_file() {
+                    if (state_f != NULL) {
+                        fclose(state_f);
+                        state_f = NULL;
+                    }
+                }
+            };
+            UTIL_CONFIG_UUID_INNER_THREAD_LOCAL uuid_generator_clock_file_guard_t uuid_generator_state_file;
+
             static int get_clock(uint32_t *clock_high, uint32_t *clock_low,
                         uint16_t *ret_clock_seq) {
                 UTIL_CONFIG_UUID_INNER_THREAD_LOCAL int		        adjustment = 0;
                 UTIL_CONFIG_UUID_INNER_THREAD_LOCAL struct timeval	last = {0, 0};
-                UTIL_CONFIG_UUID_INNER_THREAD_LOCAL int		        state_fd = -2;
-                UTIL_CONFIG_UUID_INNER_THREAD_LOCAL FILE		*   state_f;
                 UTIL_CONFIG_UUID_INNER_THREAD_LOCAL uint16_t	    clock_seq;
                 struct timeval			tv;
                 uint64_t			clock_reg;
@@ -331,39 +354,37 @@ namespace util {
                 int				len;
                 int				ret = 0;
 
-                if (state_fd == -2) {
+                if (uuid_generator_state_file.state_fd == -2) {
                     save_umask = umask(0);
-                    state_fd = open("/var/lib/libuuid/clock.txt", O_RDWR|O_CREAT|O_CLOEXEC, 0660);
+                    uuid_generator_state_file.state_fd = open("/var/lib/libuuid/clock.txt", O_RDWR|O_CREAT|O_CLOEXEC, 0660);
                     (void) umask(save_umask);
-                    if (state_fd != -1) {
-                        state_f = fdopen(state_fd, "r+" UL_CLOEXECSTR);
-                        if (!state_f) {
-                            close(state_fd);
-                            state_fd = -1;
+                    if (uuid_generator_state_file.state_fd != -1) {
+                        uuid_generator_state_file.state_f = fdopen(uuid_generator_state_file.state_fd, "r+" UL_CLOEXECSTR);
+                        if (!uuid_generator_state_file.state_f) {
+                            uuid_generator_state_file.close_fd();
                             ret = -1;
                         }
                     }
                     else
                         ret = -1;
                 }
-                if (state_fd >= 0) {
-                    rewind(state_f);
-                    while (flock(state_fd, LOCK_EX) < 0) {
+                if (uuid_generator_state_file.state_fd >= 0) {
+                    rewind(uuid_generator_state_file.state_f);
+                    while (flock(uuid_generator_state_file.state_fd, LOCK_EX) < 0) {
                         if ((errno == EAGAIN) || (errno == EINTR))
                             continue;
-                        fclose(state_f);
-                        close(state_fd);
-                        state_fd = -1;
+                        uuid_generator_state_file.close_file();
+                        uuid_generator_state_file.close_fd();
                         ret = -1;
                         break;
                     }
                 }
-                if (state_fd >= 0) {
+                if (uuid_generator_state_file.state_fd >= 0) {
                     unsigned int cl;
                     unsigned long tv1, tv2;
                     int a;
 
-                    if (fscanf(state_f, "clock: %04x tv: %lu %lu adj: %d\n",
+                    if (fscanf(uuid_generator_state_file.state_f, "clock: %04x tv: %lu %lu adj: %d\n",
                         &cl, &tv1, &tv2, &a) == 4) {
                         clock_seq = cl & 0x3FFF;
                         last.tv_sec = tv1;
@@ -401,18 +422,18 @@ namespace util {
                 clock_reg += ((uint64_t) tv.tv_sec)*10000000;
                 clock_reg += (((uint64_t) 0x01B21DD2) << 32) + 0x13814000;
 
-                if (state_fd >= 0) {
-                    rewind(state_f);
-                    len = fprintf(state_f,
+                if (uuid_generator_state_file.state_fd >= 0) {
+                    rewind(uuid_generator_state_file.state_f);
+                    len = fprintf(uuid_generator_state_file.state_f,
                             "clock: %04x tv: %016llu %08llu adj: %08d\n",
                             clock_seq, static_cast<unsigned long long>(last.tv_sec), static_cast<unsigned long long>(last.tv_usec), adjustment);
-                    fflush(state_f);
-                    if (ftruncate(state_fd, len) < 0) {
-                        fprintf(state_f, "                   \n");
-                        fflush(state_f);
+                    fflush(uuid_generator_state_file.state_f);
+                    if (ftruncate(uuid_generator_state_file.state_fd, len) < 0) {
+                        fprintf(uuid_generator_state_file.state_f, "                   \n");
+                        fflush(uuid_generator_state_file.state_f);
                     }
-                    rewind(state_f);
-                    flock(state_fd, LOCK_UN);
+                    rewind(uuid_generator_state_file.state_f);
+                    flock(uuid_generator_state_file.state_fd, LOCK_UN);
                 }
 
                 *clock_high = clock_reg >> 32;
