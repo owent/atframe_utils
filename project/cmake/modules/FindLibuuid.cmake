@@ -95,7 +95,11 @@ if(Libuuid_FOUND)
   set(LIBUUID_FOUND ${Libuuid_FOUND})
 
   if (NOT TARGET libuuid)
-    add_library(libuuid STATIC IMPORTED)
+    if (Libuuid_LIBRARIES)
+      add_library(libuuid UNKNOWN IMPORTED)
+    else()
+      add_library(libuuid INTERFACE IMPORTED)
+    endif()
     set_target_properties(libuuid PROPERTIES
       INTERFACE_INCLUDE_DIRECTORIES ${Libuuid_INCLUDE_DIRS}
     )

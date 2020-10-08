@@ -141,7 +141,7 @@ endif()
 
 if (NOT LIBATFRAME_UTILS_ENABLE_LIBUUID AND NOT LIBATFRAME_UTILS_ENABLE_UUID_WINRPC)
     set (LIBATFRAME_UTILS_ENABLE_UUID_INTERNAL_IMPLEMENT TRUE)
-    EchoWithColor(COLOR YELLOW "-- Dependency(${PROJECT_NAME}): uuid generator with internal implement, it's recommended to use libuuid instead.")
+    EchoWithColor(COLOR YELLOW "-- Dependency(${PROJECT_NAME}): uuid generator with internal implement.")
 else()
     set (LIBATFRAME_UTILS_ENABLE_UUID_INTERNAL_IMPLEMENT FALSE)
 endif ()
@@ -409,5 +409,6 @@ option(PROJECT_FIND_CONFIGURE_PACKAGE_PARALLEL_BUILD "Parallel building for Find
 
 option(PROJECT_ENABLE_UNITTEST "Enable unit test" OFF)
 option(PROJECT_ENABLE_SAMPLE "Enable sample" OFF)
+option(PROJECT_ENABLE_TOOLS "Enable sample" ON)
 
 option(ATFRAMEWORK_USE_DYNAMIC_LIBRARY "Build and linking with dynamic libraries." OFF)

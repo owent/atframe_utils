@@ -53,8 +53,13 @@ namespace util {
         template <typename CoreType>
         class LIBATFRAME_UTILS_API_HEAD_ONLY random_manager_wrapper {
         public:
+#if defined(UTIL_CONFIG_COMPILER_CXX_ALIAS_TEMPLATES) && UTIL_CONFIG_COMPILER_CXX_ALIAS_TEMPLATES
+            using core_type   = CoreType;
+            using result_type = typename core_type::result_type;
+#else
             typedef CoreType                        core_type;
             typedef typename core_type::result_type result_type;
+#endif
 
         private:
             core_type core_;
@@ -143,6 +148,7 @@ namespace util {
         };
 
         // ============== 随机数生成器 - 梅森旋转算法(STL 标准算法) ==============
+#if defined(UTIL_CONFIG_COMPILER_CXX_ALIAS_TEMPLATES) && UTIL_CONFIG_COMPILER_CXX_ALIAS_TEMPLATES
         typedef random_manager_wrapper<
             core::mersenne_twister<uint32_t, 351, 175, 19, 0xccab8ee7, 11, 0xffffffff, 7, 0x31b6ab00, 15, 0xffe50000, 17, 1812433253> >
             mt11213b;
@@ -155,16 +161,37 @@ namespace util {
             core::mersenne_twister<uint64_t, 312, 156, 31, 0xb5026f5aa96619e9ULL, 29, 0x5555555555555555ULL, 17, 0x71d67fffeda60000ULL, 37,
                                    0xfff7eee000000000ULL, 43, 6364136223846793005ULL> >
             mt19937_64;
-
+#else
+        using mt11213b = random_manager_wrapper<
+            core::mersenne_twister<uint32_t, 351, 175, 19, 0xccab8ee7, 11, 0xffffffff, 7, 0x31b6ab00, 15, 0xffe50000, 17, 1812433253> >;
+        using mt19937 = random_manager_wrapper<
+            core::mersenne_twister<uint32_t, 624, 397, 31, 0x9908b0df, 11, 0xffffffff, 7, 0x9d2c5680, 15, 0xefc60000, 18, 1812433253> >;
+        using mt19937_64 = random_manager_wrapper<
+            core::mersenne_twister<uint64_t, 312, 156, 31, 0xb5026f5aa96619e9ULL, 29, 0x5555555555555555ULL, 17, 0x71d67fffeda60000ULL, 37,
+                                   0xfff7eee000000000ULL, 43, 6364136223846793005ULL> >;
+#endif
         // ============== 随机数生成器 - taus 算法(比梅森旋转算法消耗更少的内存，但是循环节更小) ==============
+#if defined(UTIL_CONFIG_COMPILER_CXX_ALIAS_TEMPLATES) && UTIL_CONFIG_COMPILER_CXX_ALIAS_TEMPLATES
+        using taus88 = random_manager_wrapper<
+            core::xor_combine_engine<core::xor_combine_engine<core::linear_feedback_shift_engine<uint32_t, 32, 31, 13, 12>, 0,
+                                                              core::linear_feedback_shift_engine<uint32_t, 32, 29, 2, 4>, 0>,
+                                     0, core::linear_feedback_shift_engine<uint32_t, 32, 28, 3, 17>, 0> >;
+#else
         typedef random_manager_wrapper<
             core::xor_combine_engine<core::xor_combine_engine<core::linear_feedback_shift_engine<uint32_t, 32, 31, 13, 12>, 0,
                                                               core::linear_feedback_shift_engine<uint32_t, 32, 29, 2, 4>, 0>,
                                      0, core::linear_feedback_shift_engine<uint32_t, 32, 28, 3, 17>, 0> >
             taus88;
+#endif
 
         // ============== 随机数生成器 - xoshiro 算法(比梅森旋转算法消耗更少的内存，但是循环节更小，随机性比taus好) ==============
         // @see http://xoshiro.di.unimi.it
+#if defined(UTIL_CONFIG_COMPILER_CXX_ALIAS_TEMPLATES) && UTIL_CONFIG_COMPILER_CXX_ALIAS_TEMPLATES
+        using xoroshiro128_starstar = random_manager_wrapper<core::xoshinro_engine_128<false> >;
+        using xoroshiro128_plus     = random_manager_wrapper<core::xoshinro_engine_128<true> >;
+        using xoshiro256_starstar   = random_manager_wrapper<core::xoshinro_engine_256<false> >;
+        using xoshiro256_plus       = random_manager_wrapper<core::xoshinro_engine_256<true> >;
+#else
         // 循环节： 2^128 − 1
         typedef random_manager_wrapper<core::xoshinro_engine_128<false> > xoroshiro128_starstar;
         // 循环节： 2^128 − 1，少一次旋转，更快一点点
@@ -173,6 +200,7 @@ namespace util {
         typedef random_manager_wrapper<core::xoshinro_engine_256<false> > xoshiro256_starstar;
         // 循环节： 2^256 − 1，少一次旋转，更快一点点
         typedef random_manager_wrapper<core::xoshinro_engine_256<true> > xoshiro256_plus;
+#endif
     } // namespace random
 } // namespace util
 

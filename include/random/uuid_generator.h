@@ -43,7 +43,14 @@
 namespace util {
     namespace random {
         /**
-         * @brief https://en.wikipedia.org/wiki/Universally_unique_identifier
+         * @brief UUID generator
+         * @note 
+         *      Using libuuid if found on Linux.
+         *      Using system uuid/uuid.h on OSX/BSD
+         *      Using Rpcrt on Windows
+         *      Using internal implement which is just like libuuid when none of above found.
+         * @see https://en.wikipedia.org/wiki/Universally_unique_identifier
+         * @see https://tools.ietf.org/html/rfc4122
          */
         struct LIBATFRAME_UTILS_API_HEAD_ONLY uuid {
             uint32_t time_low;              /* time_low */
@@ -63,38 +70,64 @@ namespace util {
 
             static LIBATFRAME_UTILS_API uuid generate();
 
-            /*
+            /**
              * @brief prefer to use generate_string_random(...) on linux and windows/generate_string_time(...) on macOS
+             * @see https://tools.ietf.org/html/rfc4122
+             * @see https://en.wikipedia.org/wiki/Universally_unique_identifier
              */
             static LIBATFRAME_UTILS_API std::string generate_string(bool remove_minus = false);
 
             /**
              * @brief generate a uuid of Version 4
+             * @note QPS:
+             *      1851k => inner implement(-O2)
+             *      150k  => libuuid on linux
+             *      600k  => uuid/uuid.h on macOS
+             *      319k  => MSVC with Rpcrt on Windows
+             *      592k  => Mingw64-GCC with Rpcrt on Windows
+             * @see https://tools.ietf.org/html/rfc4122
+             * @see https://en.wikipedia.org/wiki/Universally_unique_identifier#Version_4_(random)
              */
             static LIBATFRAME_UTILS_API uuid generate_random();
 
             /**
              * @brief generate a uuid of Version 4
              * @note QPS:
-             *      150k => inner implement(-O2)
-             *      150k => libuuid on linux
-             *      600k => uuid/uuid.h on macOS
+             *      1851k => inner implement(-O2)
+             *      150k  => libuuid on linux
+             *      600k  => uuid/uuid.h on macOS
+             *      319k  => MSVC with Rpcrt on Windows
+             *      592k  => Mingw64-GCC with Rpcrt on Windows
+             * @see https://tools.ietf.org/html/rfc4122
+             * @see https://en.wikipedia.org/wiki/Universally_unique_identifier#Version_4_(random)
              */
             static LIBATFRAME_UTILS_API std::string generate_string_random(bool remove_minus = false);
 
             /**
              * @brief generate a uuid of Version 1
-             * @note This API will generate a uuid with MAC address, which is not suggested for security reasons
+             * @note This API will generate a uuid with MAC address and time, which is not suggested for security reasons
+             * @note QPS:
+             *      1580k => inner implement(-O2)
+             *      245k  => libuuid on linux
+             *      711k  => uuid/uuid.h on macOS
+             *      424k  => MSVC with Rpcrt on Windows
+             *      646k  => Mingw64-GCC with Rpcrt on Windows
+             * @see https://tools.ietf.org/html/rfc4122
+             * @see https://en.wikipedia.org/wiki/Universally_unique_identifier#Version_1_(date-time_and_MAC_address)
              */
             static LIBATFRAME_UTILS_API uuid generate_time();
 
             /**
              * @brief generate a uuid of Version 1
-             * @note This API will generate a uuid with MAC address, which is not suggested for security reasons
+             * @note This API will generate a uuid with MAC address and time, which is not suggested for security reasons
              * @note QPS:
-             *      540k => inner implement(-O2)
-             *      245k => libuuid on linux
-             *      711k => uuid/uuid.h on macOS
+             *      1580k => inner implement(-O2)
+             *      245k  => libuuid on linux
+             *      711k  => uuid/uuid.h on macOS
+             *      424k  => MSVC with Rpcrt on Windows
+             *      646k  => Mingw64-GCC with Rpcrt on Windows
+             * @see https://tools.ietf.org/html/rfc4122
+             * @see https://en.wikipedia.org/wiki/Universally_unique_identifier#Version_1_(date-time_and_MAC_address)
              */
             static LIBATFRAME_UTILS_API std::string generate_string_time(bool remove_minus = false);
         };

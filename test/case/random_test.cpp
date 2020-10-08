@@ -344,7 +344,7 @@ CASE_TEST(random_test, uuid_generator) {
 
     LIBATFRAME_UTILS_AUTO_SELETC_SET(std::string) uuids;
     for (int i = 0; i < 1000000; ++ i) {
-        std::string val = util::random::uuid_generator::generate_string();
+        std::string val = util::random::uuid_generator::generate_string_random();
         CASE_EXPECT_TRUE(uuids.end() == uuids.find(val));
         uuids.insert(val);
     }
@@ -362,4 +362,22 @@ CASE_TEST(random_test, uuid_generator_time) {
         uuids.insert(val);
     }
     CASE_MSG_INFO()<< "allocate "<< uuids.size()<< " finished" << std::endl;
+}
+
+
+CASE_TEST(random_test, uuid_generator_random_bechmark) {
+    LIBATFRAME_UTILS_AUTO_SELETC_SET(std::string) uuids;
+    for (int i = 0; i < 1000000; ++ i) {
+        std::string val = util::random::uuid_generator::generate_string_random();
+        CASE_EXPECT_TRUE(uuids.end() == uuids.find(val));
+        uuids.insert(val);
+    }
+    CASE_MSG_INFO()<< "allocate "<< 1000000<< " finished" << std::endl;
+}
+
+CASE_TEST(random_test, uuid_generator_time_bechmark) {
+    for (int i = 0; i < 1000000; ++ i) {
+        util::random::uuid_generator::generate_string_time();
+    }
+    CASE_MSG_INFO()<< "allocate "<< 1000000<< " finished" << std::endl;
 }

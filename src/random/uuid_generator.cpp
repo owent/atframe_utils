@@ -1,6 +1,10 @@
 ﻿#include <config/compiler_features.h>
+#include <config/compile_optimize.h>
 
 #include <random/uuid_generator.h>
+#include <random/random_generator.h>
+#include <lock/spin_lock.h>
+#include <lock/lock_holder.h>
 
 #if (defined(LIBATFRAME_UTILS_ENABLE_LIBUUID) && LIBATFRAME_UTILS_ENABLE_LIBUUID) ||            \
     (defined(LIBATFRAME_UTILS_ENABLE_UUID_WINRPC) && LIBATFRAME_UTILS_ENABLE_UUID_WINRPC) ||    \
@@ -79,11 +83,6 @@
 #include <Windows.h>
 #endif
 
-#if defined(__linux__) && defined(__NR_gettid) && defined(HAVE_JRAND48)
-#define DO_JRAND_MIX
-UTIL_CONFIG_UUID_INNER_THREAD_LOCAL unsigned short ul_jrand_seed[3];
-#endif
-
 #endif
 
 #if defined(UTIL_CONFIG_COMPILER_CXX_STATIC_ASSERT) && UTIL_CONFIG_COMPILER_CXX_STATIC_ASSERT
@@ -156,7 +155,7 @@ namespace util {
             #endif /* LOCK_EX */
 
             #ifdef _WIN32
-            static void gettimeofday (struct timeval *tv, void *dummy) {
+            static void gettimeofday (struct timeval *tv, void *) {
                 FILETIME	ftime;
                 uint64_t	n;
 
@@ -177,80 +176,49 @@ namespace util {
             }
             #endif
 
-            static int random_get_fd(void) {
-                int i, fd;
-                struct timeval tv;
-
-                gettimeofday(&tv, 0);
-                fd = open("/dev/urandom", O_RDONLY);
-                if (fd == -1)
-                    fd = open("/dev/random", O_RDONLY | O_NONBLOCK);
-                if (fd >= 0) {
-                    i = fcntl(fd, F_GETFD);
-                    if (i >= 0)
-                        fcntl(fd, F_SETFD, i | FD_CLOEXEC);
-                }
-                srand((getpid() << 16) ^ getuid() ^ tv.tv_sec ^ tv.tv_usec);
-
-            #ifdef DO_JRAND_MIX
-                ul_jrand_seed[0] = getpid() ^ (tv.tv_sec & 0xFFFF);
-                ul_jrand_seed[1] = getppid() ^ (tv.tv_usec & 0xFFFF);
-                ul_jrand_seed[2] = (tv.tv_sec ^ tv.tv_usec) >> 16;
-            #endif
-                /* Crank the random number generator a few times */
-                gettimeofday(&tv, 0);
-                for (i = (tv.tv_sec ^ tv.tv_usec) & 0x1F; i > 0; i--)
-                    rand();
-                return fd;
-            }
-
-
             /*
             * Generate a stream of random nbytes into buf.
             * Use /dev/urandom if possible, and if not,
             * use glibc pseudo-random functions.
             */
-            static void random_get_bytes(void *buf, size_t nbytes) {
-                size_t i, n = nbytes;
-                int fd = random_get_fd();
-                int lose_counter = 0;
-                unsigned char *cp = (unsigned char *) buf;
+            static void random_get_bytes(unsigned char* buf, size_t nbytes) {
+                typedef util::random::mt19937_64 uuid_generator_rand_engine;
+                static util::lock::spin_lock random_generator_lock;
+                static uuid_generator_rand_engine random_generator;
+                static bool uuid_generator_rand_engine_inited = false;
 
-                if (fd >= 0) {
-                    while (n > 0) {
-                        ssize_t x = read(fd, cp, n);
-                        if (x <= 0) {
-                            if (lose_counter++ > 16)
-                                break;
-                            continue;
-                        }
-                        n -= x;
-                        cp += x;
-                        lose_counter = 0;
+                util::lock::lock_holder<util::lock::spin_lock> lock_guard(random_generator_lock);
+
+                if (unlikely(!uuid_generator_rand_engine_inited)) {
+                                    struct timeval tv;
+                gettimeofday(&tv, 0);
+                uuid_generator_rand_engine::result_type seed = static_cast<uuid_generator_rand_engine::result_type>((
+#ifdef _MSC_VER
+                    _getpid()
+#else
+                    getpid()
+#endif
+                        << 16) ^ getuid() ^ tv.tv_sec ^ tv.tv_usec);
+                
+                    random_generator.init_seed(seed);
+                    uuid_generator_rand_engine_inited = true;
+                    for (int i = 0; i < 256; ++ i) {
+                        random_generator.random();
                     }
-
-                    close(fd);
                 }
 
-                /*
-                * We do this all the time, but this is the only source of
-                * randomness if /dev/random/urandom is out to lunch.
-                */
-                for (cp = reinterpret_cast<unsigned char *>(buf), i = 0; i < nbytes; i++)
-                    *cp++ ^= (rand() >> 7) & 0xFF;
+                while (nbytes >= sizeof(uuid_generator_rand_engine::result_type)) {
+                    uuid_generator_rand_engine::result_type r = random_generator.random();
+                    memcpy(buf, &r, sizeof(r));
 
-            #ifdef DO_JRAND_MIX
-                {
-                    unsigned short tmp_seed[3];
-
-                    memcpy(tmp_seed, ul_jrand_seed, sizeof(tmp_seed));
-                    ul_jrand_seed[2] = ul_jrand_seed[2] ^ syscall(__NR_gettid);
-                    for (cp = buf, i = 0; i < nbytes; i++)
-                        *cp++ ^= (jrand48(tmp_seed) >> 7) & 0xFF;
-                    memcpy(ul_jrand_seed, tmp_seed,
-                        sizeof(ul_jrand_seed)-sizeof(unsigned short));
+                    nbytes -= sizeof(r);
+                    buf += sizeof(r);
                 }
-            #endif
+
+                if (nbytes > 0) {
+                    uuid_generator_rand_engine::result_type r = random_generator.random();
+                    memcpy(buf, &r, nbytes);
+                }
 
                 return;
             }
@@ -352,11 +320,11 @@ namespace util {
             */
             static int get_clock(uint32_t *clock_high, uint32_t *clock_low,
                         uint16_t *ret_clock_seq) {
-                UTIL_CONFIG_UUID_INNER_THREAD_LOCAL int		adjustment = 0;
+                UTIL_CONFIG_UUID_INNER_THREAD_LOCAL int		        adjustment = 0;
                 UTIL_CONFIG_UUID_INNER_THREAD_LOCAL struct timeval	last = {0, 0};
-                UTIL_CONFIG_UUID_INNER_THREAD_LOCAL int		state_fd = -2;
-                UTIL_CONFIG_UUID_INNER_THREAD_LOCAL FILE		*state_f;
-                UTIL_CONFIG_UUID_INNER_THREAD_LOCAL uint16_t	clock_seq;
+                UTIL_CONFIG_UUID_INNER_THREAD_LOCAL int		        state_fd = -2;
+                UTIL_CONFIG_UUID_INNER_THREAD_LOCAL FILE		*   state_f;
+                UTIL_CONFIG_UUID_INNER_THREAD_LOCAL uint16_t	    clock_seq;
                 struct timeval			tv;
                 uint64_t			clock_reg;
                 mode_t				save_umask;
@@ -405,7 +373,7 @@ namespace util {
                 }
 
                 if ((last.tv_sec == 0) && (last.tv_usec == 0)) {
-                    random_get_bytes(&clock_seq, sizeof(clock_seq));
+                    random_get_bytes(reinterpret_cast<unsigned char*>(&clock_seq), sizeof(clock_seq));
                     clock_seq &= 0x3FFF;
                     gettimeofday(&last, 0);
                     last.tv_sec--;
@@ -453,7 +421,7 @@ namespace util {
                 return ret;
             }
 
-            int __uuid_generate_time(util::random::uuid& out) {
+            static int __uuid_generate_time(util::random::uuid& out) {
                 static unsigned char node_id[6];
                 static int has_init = 0;
                 uint32_t	clock_mid;
@@ -479,8 +447,8 @@ namespace util {
                 return ret;
             }
 
-            void __uuid_generate_random(util::random::uuid& out) {
-                random_get_bytes(reinterpret_cast<void*>(&out), sizeof(out));
+            static void __uuid_generate_random(util::random::uuid& out) {
+                random_get_bytes(reinterpret_cast<unsigned char*>(&out), sizeof(out));
                 // Set version
                 out.clock_seq = (out.clock_seq & 0x3FFF) | 0x8000;
                 out.time_hi_and_version = (out.time_hi_and_version & 0x0FFF) | 0x4000;
@@ -490,10 +458,10 @@ namespace util {
              * Check whether good random source (/dev/random or /dev/urandom)
              * is available.
              */
-            static int have_random_source(void) {
-                struct stat s;
-                return (!stat("/dev/random", &s) || !stat("/dev/urandom", &s));
-            }
+            // static int have_random_source(void) {
+            //     struct stat s;
+            //     return (!stat("/dev/random", &s) || !stat("/dev/urandom", &s));
+            // }
 
             /*
              * This is the generic front-end to uuid_generate_random and
@@ -501,13 +469,13 @@ namespace util {
              * /dev/urandom is available, since otherwise we won't have
              * high-quality randomness.
              */
-            static void uuid_generate(util::random::uuid& out) {
-                if (have_random_source()) {
-                    __uuid_generate_random(out);
-                } else {
-                    __uuid_generate_time(out);
-                }
-            }
+            // static void uuid_generate(util::random::uuid& out) {
+            //     if (have_random_source()) {
+            //         __uuid_generate_random(out);
+            //     } else {
+            //         __uuid_generate_time(out);
+            //     }
+            // }
         }
 #endif
         LIBATFRAME_UTILS_API std::string uuid_generator::uuid_to_string(const uuid &id, bool remove_minus) {
@@ -595,7 +563,7 @@ namespace util {
             memcpy(ret.node, &res.Data4[2], sizeof(ret.node));
             static_assert(sizeof(res.Data4) >= sizeof(ret.clock_seq) + sizeof(ret.node), "uuid size mismatch");
 #else
-            details::uuid_generate(ret);
+            details::__uuid_generate_random(ret);
 #endif
             return ret;
         }
