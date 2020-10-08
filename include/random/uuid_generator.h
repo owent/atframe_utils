@@ -81,10 +81,10 @@ namespace util {
              * @brief generate a uuid of Version 4
              * @note QPS:
              *      1851k => inner implement(-O2)
-             *      150k  => libuuid on linux
-             *      600k  => uuid/uuid.h on macOS
-             *      319k  => MSVC with Rpcrt on Windows
-             *      592k  => Mingw64-GCC with Rpcrt on Windows
+             *      210k  => libuuid on linux
+             *      570k  => uuid/uuid.h on macOS
+             *      370k  => MSVC with Rpcrt on Windows
+             *      650k  => Mingw64-GCC with Rpcrt on Windows
              * @see https://tools.ietf.org/html/rfc4122
              * @see https://en.wikipedia.org/wiki/Universally_unique_identifier#Version_4_(random)
              */
@@ -94,10 +94,10 @@ namespace util {
              * @brief generate a uuid of Version 4
              * @note QPS:
              *      1851k => inner implement(-O2)
-             *      150k  => libuuid on linux
-             *      600k  => uuid/uuid.h on macOS
-             *      319k  => MSVC with Rpcrt on Windows
-             *      592k  => Mingw64-GCC with Rpcrt on Windows
+             *      210k  => libuuid on linux
+             *      570k  => uuid/uuid.h on macOS
+             *      370k  => MSVC with Rpcrt on Windows
+             *      650k  => Mingw64-GCC with Rpcrt on Windows
              * @see https://tools.ietf.org/html/rfc4122
              * @see https://en.wikipedia.org/wiki/Universally_unique_identifier#Version_4_(random)
              */
@@ -108,10 +108,10 @@ namespace util {
              * @note This API will generate a uuid with MAC address and time, which is not suggested for security reasons
              * @note QPS:
              *      1580k => inner implement(-O2)
-             *      245k  => libuuid on linux
-             *      711k  => uuid/uuid.h on macOS
-             *      424k  => MSVC with Rpcrt on Windows
-             *      646k  => Mingw64-GCC with Rpcrt on Windows
+             *      1800k => libuuid on linux
+             *      5340k => uuid/uuid.h on macOS
+             *      720k  => MSVC with Rpcrt on Windows
+             *      2550k => Mingw64-GCC with Rpcrt on Windows
              * @see https://tools.ietf.org/html/rfc4122
              * @see https://en.wikipedia.org/wiki/Universally_unique_identifier#Version_1_(date-time_and_MAC_address)
              */
@@ -122,10 +122,10 @@ namespace util {
              * @note This API will generate a uuid with MAC address and time, which is not suggested for security reasons
              * @note QPS:
              *      1580k => inner implement(-O2)
-             *      245k  => libuuid on linux
-             *      711k  => uuid/uuid.h on macOS
-             *      424k  => MSVC with Rpcrt on Windows
-             *      646k  => Mingw64-GCC with Rpcrt on Windows
+             *      1800k => libuuid on linux
+             *      5340k => uuid/uuid.h on macOS
+             *      720k  => MSVC with Rpcrt on Windows
+             *      2550k => Mingw64-GCC with Rpcrt on Windows
              * @see https://tools.ietf.org/html/rfc4122
              * @see https://en.wikipedia.org/wiki/Universally_unique_identifier#Version_1_(date-time_and_MAC_address)
              */
