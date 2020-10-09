@@ -291,14 +291,27 @@ function (project_git_clone_3rd_party)
         message(FATAL_ERROR "git not found")
     endif ()
 
+    if (PROJECT_RESET_DENPEND_REPOSITORIES AND EXISTS ${project_git_clone_3rd_party_REPO_DIRECTORY})
+        execute_process(
+            COMMAND ${GIT_EXECUTABLE} clean -dfx
+            COMMAND ${GIT_EXECUTABLE} reset --hard
+            WORKING_DIRECTORY ${project_git_clone_3rd_party_REPO_DIRECTORY}
+            RESULT_VARIABLE LAST_GIT_RESET_RESULT
+        )
+
+        if (LAST_GIT_RESET_RESULT AND NOT LAST_GIT_RESET_RESULT EQUAL 0)
+            file(REMOVE_RECURSE ${project_git_clone_3rd_party_REPO_DIRECTORY})
+        endif ()
+    endif ()
+
     if(NOT EXISTS "${project_git_clone_3rd_party_REPO_DIRECTORY}/${project_git_clone_3rd_party_CHECK_PATH}")
         if (EXISTS ${project_git_clone_3rd_party_REPO_DIRECTORY})
             file(REMOVE_RECURSE ${project_git_clone_3rd_party_REPO_DIRECTORY})
         endif ()
     endif ()
 
-    if(PROJECT_RESET_DENPEND_REPOSITORIES OR NOT EXISTS "${project_git_clone_3rd_party_REPO_DIRECTORY}/${project_git_clone_3rd_party_CHECK_PATH}")
-        if (EXISTS ${project_git_clone_3rd_party_REPO_DIRECTORY})
+    if(NOT EXISTS "${project_git_clone_3rd_party_REPO_DIRECTORY}/${project_git_clone_3rd_party_CHECK_PATH}")
+        if (NOT EXISTS ${project_git_clone_3rd_party_REPO_DIRECTORY})
             file(MAKE_DIRECTORY ${project_git_clone_3rd_party_REPO_DIRECTORY})
         endif ()
 
@@ -329,19 +342,19 @@ function (project_git_clone_3rd_party)
 
         if (project_git_clone_3rd_party_GIT_BRANCH)
             execute_process(
-                COMMAND ${GIT_EXECUTABLE} fetch "--depth=${project_git_clone_3rd_party_DEPTH}" "-n" origin ${project_git_clone_3rd_party_COMMIT}
+                COMMAND ${GIT_EXECUTABLE} fetch "--depth=${project_git_clone_3rd_party_DEPTH}" "-n" origin ${project_git_clone_3rd_party_GIT_BRANCH}
                 WORKING_DIRECTORY ${project_git_clone_3rd_party_REPO_DIRECTORY}
             )
         else ()
             if (GIT_VERSION_STRING VERSION_GREATER_EQUAL "2.11.0")
                 execute_process(
-                    COMMAND ${GIT_EXECUTABLE} fetch "--deepen=${project_git_clone_3rd_party_DEPTH}" "-n" origin ${project_git_clone_3rd_party_GIT_BRANCH}
+                    COMMAND ${GIT_EXECUTABLE} fetch "--deepen=${project_git_clone_3rd_party_DEPTH}" "-n" origin ${project_git_clone_3rd_party_COMMIT}
                     WORKING_DIRECTORY ${project_git_clone_3rd_party_REPO_DIRECTORY}
                 )
             else()
                 message(WARNING "It's recommended to use git 2.11.0 or upper to only fetch partly of repository.")
                 execute_process(
-                    COMMAND ${GIT_EXECUTABLE} fetch "-n" origin ${project_git_clone_3rd_party_GIT_BRANCH}
+                    COMMAND ${GIT_EXECUTABLE} fetch "-n" origin ${project_git_clone_3rd_party_COMMIT}
                     WORKING_DIRECTORY ${project_git_clone_3rd_party_REPO_DIRECTORY}
                 )
             endif()
@@ -357,32 +370,6 @@ function (project_git_clone_3rd_party)
             )
         endif ()
     endif ()
-
-    if(NOT EXISTS "${project_git_clone_3rd_party_REPO_DIRECTORY}/${project_git_clone_3rd_party_CHECK_PATH}")
-        if (EXISTS ${project_git_clone_3rd_party_REPO_DIRECTORY})
-            file(REMOVE_RECURSE ${project_git_clone_3rd_party_REPO_DIRECTORY})
-        endif ()
-        execute_process(COMMAND ${GIT_EXECUTABLE} clone ${CLONE_OPTIONS} ${project_git_clone_3rd_party_URL} ${project_git_clone_3rd_party_REPO_DIRECTORY}
-            WORKING_DIRECTORY ${project_git_clone_3rd_party_WORKING_DIRECTORY}
-        )
-    elseif(PROJECT_RESET_DENPEND_REPOSITORIES)
-        execute_process(
-            COMMAND ${GIT_EXECUTABLE} fetch -f ${FETCH_OPTIONS} origin
-            COMMAND ${GIT_EXECUTABLE} clean -dfx
-            COMMAND ${GIT_EXECUTABLE} reset --hard ${UPDATE_OPTIONS}
-            WORKING_DIRECTORY ${project_git_clone_3rd_party_REPO_DIRECTORY}
-            RESULT_VARIABLE LAST_GIT_RESET_RESULT
-        )
-
-        if (LAST_GIT_RESET_RESULT AND NOT LAST_GIT_RESET_RESULT EQUAL 0)
-            if (EXISTS ${project_git_clone_3rd_party_REPO_DIRECTORY})
-                file(REMOVE_RECURSE ${project_git_clone_3rd_party_REPO_DIRECTORY})
-            endif ()
-            execute_process(COMMAND ${GIT_EXECUTABLE} clone ${CLONE_OPTIONS} ${project_git_clone_3rd_party_URL} ${project_git_clone_3rd_party_REPO_DIRECTORY}
-                WORKING_DIRECTORY ${project_git_clone_3rd_party_WORKING_DIRECTORY}
-            )
-        endif ()
-    endif()
 endfunction()
 
 if (NOT PROJECT_BUILD_TOOLS_PATCH_PROTOBUF_SOURCES_OPTIONS_SET)
