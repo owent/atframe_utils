@@ -67,26 +67,46 @@ if (APPLE OR IOS)
   set(CMAKE_FIND_FRAMEWORK NEVER)
 endif ()
 find_path(Libuuid_INCLUDE_DIRS    NAMES uuid/uuid.h         ${_LIBUUID_SEARCH_ROOT_INC})
-find_library(Libuuid_LIBRARIES    NAMES ${Libuuid_NAMES}    ${_LIBUUID_SEARCH_ROOT_LIB})
+
+if (Libuuid_INCLUDE_DIRS)
+  include(CheckCSourceCompiles)
+  set(Libuuid_BACKUP_CMAKE_REQUIRED_INCLUDES ${CMAKE_REQUIRED_INCLUDES})
+  list(APPEND CMAKE_REQUIRED_INCLUDES ${Libuuid_INCLUDE_DIRS})
+  check_c_source_compiles("#include <stdio.h>
+#include <uuid/uuid.h>
+
+int main () {
+  uuid_t uuid;
+  uuid_generate(uuid);
+  return 0;
+}" Libuuid_CHECK_NO_LIBRARY)
+  set(CMAKE_REQUIRED_INCLUDES ${Libuuid_BACKUP_CMAKE_REQUIRED_INCLUDES})
+  unset(Libuuid_BACKUP_CMAKE_REQUIRED_INCLUDES)
+endif ()
+
+if (Libuuid_CHECK_NO_LIBRARY)
+  mark_as_advanced(Libuuid_INCLUDE_DIRS)
+else ()
+  find_library(Libuuid_LIBRARIES    NAMES ${Libuuid_NAMES}    ${_LIBUUID_SEARCH_ROOT_LIB})
+  mark_as_advanced(Libuuid_INCLUDE_DIRS Libuuid_LIBRARIES)
+endif ()
 
 if (_LIBUUID_SEARCH_BACKUP_CMAKE_FIND_FRAMEWORK)
   set(CMAKE_FIND_FRAMEWORK ${_LIBUUID_SEARCH_BACKUP_CMAKE_FIND_FRAMEWORK})
   unset(_LIBUUID_SEARCH_BACKUP_CMAKE_FIND_FRAMEWORK)
 endif ()
 
-mark_as_advanced(Libuuid_INCLUDE_DIRS Libuuid_LIBRARIES)
-
 # handle the QUIETLY and REQUIRED arguments and set LIBUUID_FOUND to TRUE if
 # all listed variables are TRUE
 include("FindPackageHandleStandardArgs")
-if (WIN32 OR MINGW OR CMAKE_SYSTEM_NAME STREQUAL "Linux")
-  FIND_PACKAGE_HANDLE_STANDARD_ARGS(Libuuid
-    REQUIRED_VARS Libuuid_INCLUDE_DIRS Libuuid_LIBRARIES
-    FOUND_VAR Libuuid_FOUND
-  )
-else()
+if (Libuuid_CHECK_NO_LIBRARY)
   FIND_PACKAGE_HANDLE_STANDARD_ARGS(Libuuid
     REQUIRED_VARS Libuuid_INCLUDE_DIRS
+    FOUND_VAR Libuuid_FOUND
+  )
+else ()
+  FIND_PACKAGE_HANDLE_STANDARD_ARGS(Libuuid
+    REQUIRED_VARS Libuuid_INCLUDE_DIRS Libuuid_LIBRARIES
     FOUND_VAR Libuuid_FOUND
   )
 endif()
