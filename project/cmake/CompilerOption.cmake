@@ -103,6 +103,14 @@ if(NOT DEFINED __COMPILER_OPTION_LOADED)
         endif ()
     endfunction(remove_target_properties)
 
+    function(add_target_link_flags TARGET_NAME)
+        if (CMAKE_VERSION VERSION_GREATER_EQUAL "3.12.0")
+            add_target_properties(${TARGET_NAME} LINK_OPTIONS ${ARGN})
+        else ()
+            add_target_properties(${TARGET_NAME} LINK_FLAGS ${ARGN})
+        endif ()
+    endfunction(add_target_link_flags)
+
     # Auto compiler options, support gcc,MSVC,Clang,AppleClang
     if( ${CMAKE_CXX_COMPILER_ID} STREQUAL "GNU")
         # add_compile_options(-Wall -Werror)
