@@ -325,17 +325,27 @@ function (project_git_clone_3rd_party)
         )
 
         if (NOT project_git_clone_3rd_party_GIT_BRANCH AND NOT project_git_clone_3rd_party_COMMIT)
+            unset(project_git_clone_3rd_party_GIT_CHECK_REPO)
             execute_process(
                 COMMAND ${GIT_EXECUTABLE} ls-remote --symref origin HEAD
                 WORKING_DIRECTORY ${project_git_clone_3rd_party_REPO_DIRECTORY}
                 OUTPUT_VARIABLE project_git_clone_3rd_party_GIT_CHECK_REPO
             )
-            string(REGEX REPLACE ".*refs/heads/([^ \t]*)[ \t]*HEAD.*" "\\1" project_git_clone_3rd_party_GIT_BRANCH ${project_git_clone_3rd_party_GIT_CHECK_REPO})
-            if(NOT project_git_clone_3rd_party_GIT_BRANCH OR project_git_clone_3rd_party_GIT_BRANCH STREQUAL project_git_clone_3rd_party_GIT_CHECK_REPO)
-                string(REGEX REPLACE "([^ \t]*)[ \t]*HEAD.*" "\\1" project_git_clone_3rd_party_GIT_BRANCH ${project_git_clone_3rd_party_GIT_CHECK_REPO})
-                if(NOT project_git_clone_3rd_party_GIT_BRANCH OR project_git_clone_3rd_party_GIT_BRANCH STREQUAL project_git_clone_3rd_party_GIT_CHECK_REPO)
-                    set(project_git_clone_3rd_party_GIT_BRANCH master)
+            if (project_git_clone_3rd_party_GIT_CHECK_REPO AND project_git_clone_3rd_party_GIT_CHECK_REPO MATCHES "ref.*refs/heads/([^ \t]*)[ \t]*HEAD.*")
+                set(project_git_clone_3rd_party_GIT_BRANCH "${CMAKE_MATCH_1}")
+            else ()
+                execute_process(
+                    COMMAND ${GIT_EXECUTABLE} ls-remote origin HEAD
+                    WORKING_DIRECTORY ${project_git_clone_3rd_party_REPO_DIRECTORY}
+                    OUTPUT_VARIABLE project_git_clone_3rd_party_GIT_CHECK_REPO
+                )
+                if (project_git_clone_3rd_party_GIT_CHECK_REPO MATCHES "^([a-zA-Z0-9]*)[ \t]*HEAD.*")
+                    set(project_git_clone_3rd_party_COMMIT "${CMAKE_MATCH_1}")
                 endif ()
+            endif ()
+            if(NOT project_git_clone_3rd_party_GIT_BRANCH AND NOT project_git_clone_3rd_party_COMMIT)
+                # Fallback
+                set(project_git_clone_3rd_party_GIT_BRANCH master)
             endif ()
             unset(project_git_clone_3rd_party_GIT_CHECK_REPO)
         endif()
