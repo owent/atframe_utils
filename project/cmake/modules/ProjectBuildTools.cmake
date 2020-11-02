@@ -257,7 +257,7 @@ function (project_git_clone_3rd_party)
     if (CMAKE_VERSION VERSION_LESS_EQUAL "3.4")
         include(CMakeParseArguments)
     endif ()
-    set(optionArgs GIT_ENABLE_SUBMODULE)
+    set(optionArgs GIT_ENABLE_SUBMODULE REQUIRED)
     set(oneValueArgs URL WORKING_DIRECTORY REPO_DIRECTORY DEPTH BRANCH COMMIT TAG CHECK_PATH)
     cmake_parse_arguments(project_git_clone_3rd_party "${optionArgs}" "${oneValueArgs}" "" ${ARGN} )
 
@@ -291,12 +291,21 @@ function (project_git_clone_3rd_party)
         message(FATAL_ERROR "git not found")
     endif ()
 
+    unset(project_git_clone_3rd_party_EXECUTE_PROCESS_FLAGS)
+    if (CMAKE_VERSION VERSION_GREATER_EQUAL "3.15")
+        list(APPEND project_git_clone_3rd_party_EXECUTE_PROCESS_FLAGS COMMAND_ECHO STDOUT)
+    endif ()
+    if (CMAKE_VERSION VERSION_GREATER_EQUAL "3.18")
+        list(APPEND project_git_clone_3rd_party_EXECUTE_PROCESS_FLAGS ECHO_OUTPUT_VARIABLE ECHO_ERROR_VARIABLE)
+    endif ()
+
     if (PROJECT_RESET_DENPEND_REPOSITORIES AND EXISTS ${project_git_clone_3rd_party_REPO_DIRECTORY})
         execute_process(
             COMMAND ${GIT_EXECUTABLE} clean -dfx
             COMMAND ${GIT_EXECUTABLE} reset --hard
             WORKING_DIRECTORY ${project_git_clone_3rd_party_REPO_DIRECTORY}
             RESULT_VARIABLE LAST_GIT_RESET_RESULT
+            ${project_git_clone_3rd_party_EXECUTE_PROCESS_FLAGS}
         )
 
         if (LAST_GIT_RESET_RESULT AND NOT LAST_GIT_RESET_RESULT EQUAL 0)
@@ -318,65 +327,90 @@ function (project_git_clone_3rd_party)
         execute_process(
             COMMAND ${GIT_EXECUTABLE} init
             WORKING_DIRECTORY ${project_git_clone_3rd_party_REPO_DIRECTORY}
+            ${project_git_clone_3rd_party_EXECUTE_PROCESS_FLAGS}
         )
         execute_process(
             COMMAND ${GIT_EXECUTABLE} remote add origin "${project_git_clone_3rd_party_URL}"
             WORKING_DIRECTORY ${project_git_clone_3rd_party_REPO_DIRECTORY}
+            ${project_git_clone_3rd_party_EXECUTE_PROCESS_FLAGS}
         )
 
         if (NOT project_git_clone_3rd_party_GIT_BRANCH AND NOT project_git_clone_3rd_party_COMMIT)
             unset(project_git_clone_3rd_party_GIT_CHECK_REPO)
             execute_process(
                 COMMAND ${GIT_EXECUTABLE} ls-remote --symref origin HEAD
+                RESULT_VARIABLE project_git_clone_3rd_party_GIT_LS_REMOTE_RESULT
                 WORKING_DIRECTORY ${project_git_clone_3rd_party_REPO_DIRECTORY}
                 OUTPUT_VARIABLE project_git_clone_3rd_party_GIT_CHECK_REPO
+                ${project_git_clone_3rd_party_EXECUTE_PROCESS_FLAGS}
             )
             if (project_git_clone_3rd_party_GIT_CHECK_REPO AND project_git_clone_3rd_party_GIT_CHECK_REPO MATCHES "ref.*refs/heads/([^ \t]*)[ \t]*HEAD.*")
                 set(project_git_clone_3rd_party_GIT_BRANCH "${CMAKE_MATCH_1}")
             else ()
                 execute_process(
                     COMMAND ${GIT_EXECUTABLE} ls-remote origin HEAD
+                    RESULT_VARIABLE project_git_clone_3rd_party_GIT_LS_REMOTE_RESULT
                     WORKING_DIRECTORY ${project_git_clone_3rd_party_REPO_DIRECTORY}
                     OUTPUT_VARIABLE project_git_clone_3rd_party_GIT_CHECK_REPO
+                    ${project_git_clone_3rd_party_EXECUTE_PROCESS_FLAGS}
                 )
                 if (project_git_clone_3rd_party_GIT_CHECK_REPO MATCHES "^([a-zA-Z0-9]*)[ \t]*HEAD.*")
                     set(project_git_clone_3rd_party_COMMIT "${CMAKE_MATCH_1}")
                 endif ()
             endif ()
             if(NOT project_git_clone_3rd_party_GIT_BRANCH AND NOT project_git_clone_3rd_party_COMMIT)
+                if (NOT project_git_clone_3rd_party_GIT_LS_REMOTE_RESULT EQUAL 0 AND project_git_clone_3rd_party_REQUIRED)
+                    message(FATAL_ERROR "git ls-remote --symref origin(${project_git_clone_3rd_party_URL}) HEAD failed")
+                endif ()
                 # Fallback
                 set(project_git_clone_3rd_party_GIT_BRANCH master)
             endif ()
             unset(project_git_clone_3rd_party_GIT_CHECK_REPO)
+            unset(project_git_clone_3rd_party_GIT_LS_REMOTE_RESULT)
         endif()
 
         if (project_git_clone_3rd_party_GIT_BRANCH)
             execute_process(
                 COMMAND ${GIT_EXECUTABLE} fetch "--depth=${project_git_clone_3rd_party_DEPTH}" "-n" origin ${project_git_clone_3rd_party_GIT_BRANCH}
+                RESULT_VARIABLE project_git_clone_3rd_party_GIT_FETCH_RESULT
                 WORKING_DIRECTORY ${project_git_clone_3rd_party_REPO_DIRECTORY}
+                ${project_git_clone_3rd_party_EXECUTE_PROCESS_FLAGS}
             )
+            if (NOT project_git_clone_3rd_party_GIT_FETCH_RESULT EQUAL 0 AND project_git_clone_3rd_party_REQUIRED)
+                message(FATAL_ERROR "git fetch origin(${project_git_clone_3rd_party_URL}) ${project_git_clone_3rd_party_GIT_BRANCH} failed")
+            endif ()
         else ()
             if (GIT_VERSION_STRING VERSION_GREATER_EQUAL "2.11.0")
                 execute_process(
                     COMMAND ${GIT_EXECUTABLE} fetch "--deepen=${project_git_clone_3rd_party_DEPTH}" "-n" origin ${project_git_clone_3rd_party_COMMIT}
+                    RESULT_VARIABLE project_git_clone_3rd_party_GIT_FETCH_RESULT
                     WORKING_DIRECTORY ${project_git_clone_3rd_party_REPO_DIRECTORY}
+                    ${project_git_clone_3rd_party_EXECUTE_PROCESS_FLAGS}
                 )
             else()
                 message(WARNING "It's recommended to use git 2.11.0 or upper to only fetch partly of repository.")
                 execute_process(
                     COMMAND ${GIT_EXECUTABLE} fetch "-n" origin ${project_git_clone_3rd_party_COMMIT}
+                    RESULT_VARIABLE project_git_clone_3rd_party_GIT_FETCH_RESULT
                     WORKING_DIRECTORY ${project_git_clone_3rd_party_REPO_DIRECTORY}
+                    ${project_git_clone_3rd_party_EXECUTE_PROCESS_FLAGS}
                 )
             endif()
+            if (NOT project_git_clone_3rd_party_GIT_FETCH_RESULT EQUAL 0 AND project_git_clone_3rd_party_REQUIRED)
+                message(FATAL_ERROR "git fetch origin(${project_git_clone_3rd_party_URL}) ${project_git_clone_3rd_party_GIT_BRANCH} failed")
+            endif ()
         endif()
+        unset(project_git_clone_3rd_party_GIT_FETCH_RESULT)
         execute_process(
             COMMAND ${GIT_EXECUTABLE} reset --hard FETCH_HEAD
             WORKING_DIRECTORY ${project_git_clone_3rd_party_REPO_DIRECTORY}
+            ${project_git_clone_3rd_party_EXECUTE_PROCESS_FLAGS}
         )
         if (project_git_clone_3rd_party_GIT_ENABLE_SUBMODULE)
             execute_process(
                 COMMAND ${GIT_EXECUTABLE} submodule update --init -f
                 WORKING_DIRECTORY ${project_git_clone_3rd_party_REPO_DIRECTORY}
+                ${project_git_clone_3rd_party_EXECUTE_PROCESS_FLAGS}
             )
         endif ()
     endif ()
