@@ -75,15 +75,27 @@ namespace util {
             } catch (const LOG_WRAPPER_FWAPI_NAMESPACE format_error &e) {
                 const char *input_begin = e.what();
                 const char *input_end   = input_begin + strlen(input_begin);
-                return std::copy(input_begin, input_end, std::back_inserter(out));
+                while (input_begin && *input_begin && input_begin < input_end) {
+                    *out = *input_begin;
+                    ++out;
+                }
+                return out;
             } catch (const std::runtime_error &e) {
                 const char *input_begin = e.what();
                 const char *input_end   = input_begin + strlen(input_begin);
-                return std::copy(input_begin, input_end, std::back_inserter(out));
+                while (input_begin && *input_begin && input_begin < input_end) {
+                    *out = *input_begin;
+                    ++out;
+                }
+                return out;
             } catch (...) {
                 const char *input_begin = "format got unknown exception";
                 const char *input_end   = input_begin + strlen(input_begin);
-                return std::copy(input_begin, input_end, std::back_inserter(out));
+                while (input_begin && *input_begin && input_begin < input_end) {
+                    *out = *input_begin;
+                    ++out;
+                }
+                return out;
             }
 #endif
         }
