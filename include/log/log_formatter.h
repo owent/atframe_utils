@@ -43,9 +43,15 @@ namespace util {
 #if defined(UTIL_CONFIG_COMPILER_CXX_ALIAS_TEMPLATES) && UTIL_CONFIG_COMPILER_CXX_ALIAS_TEMPLATES
                 using iterator_category = std::output_iterator_tag;
                 using value_type        = typename std::iterator_traits<OutputIt>::value_type;
+                using difference_type   = void;
+                using pointer           = void;
+                using reference         = void;
 #else
                 typedef std::output_iterator_tag                                iterator_category;
                 typedef typename std::iterator_traits<OutputIt>::value_type     value_type;
+                typedef void                                                    difference_type;
+                typedef void                                                    pointer;
+                typedef void                                                    reference;
 #endif
 
                 OutputIt base() const { return out_; }
