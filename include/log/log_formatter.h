@@ -19,13 +19,91 @@
 #include <cstring>
 #include <ctime>
 #include <inttypes.h>
+#include <iterator>
 #include <stdint.h>
 #include <string>
+#include <type_traits>
 
 #include <config/atframe_utils_build_feature.h>
 
 namespace util {
     namespace log {
+#if defined(LOG_WRAPPER_ENABLE_FWAPI) && LOG_WRAPPER_ENABLE_FWAPI
+        namespace details {
+            template <class OutputIt>
+            class LIBATFRAME_UTILS_API_HEAD_ONLY truncating_iterator_base {
+            protected:
+                OutputIt out_;
+                size_t   limit_;
+                size_t   count_;
+
+                truncating_iterator_base(OutputIt out, size_t limit) : out_(out), limit_(limit), count_(0) {}
+
+            public:
+#if defined(UTIL_CONFIG_COMPILER_CXX_ALIAS_TEMPLATES) && UTIL_CONFIG_COMPILER_CXX_ALIAS_TEMPLATES
+                using iterator_category = std::output_iterator_tag;
+                using value_type        = typename std::iterator_traits<OutputIt>::value_type;
+#else
+                typedef std::output_iterator_tag                                iterator_category;
+                typedef typename std::iterator_traits<OutputIt>::value_type     value_type;
+#endif
+
+                OutputIt base() const { return out_; }
+                size_t   count() const { return count_; }
+            };
+
+            // An output iterator that truncates the output and counts the number of objects
+            // written to it.
+            template <class OutputIt, class Enable = typename std::is_void<typename std::iterator_traits<OutputIt>::value_type>::type>
+            class LIBATFRAME_UTILS_API_HEAD_ONLY truncating_iterator;
+
+            template <class OutputIt>
+            class LIBATFRAME_UTILS_API_HEAD_ONLY truncating_iterator<OutputIt, std::false_type>
+                : public truncating_iterator_base<OutputIt> {
+                mutable typename truncating_iterator_base<OutputIt>::value_type blackhole_;
+
+            public:
+#if defined(UTIL_CONFIG_COMPILER_CXX_ALIAS_TEMPLATES) && UTIL_CONFIG_COMPILER_CXX_ALIAS_TEMPLATES
+                using value_type = typename truncating_iterator_base<OutputIt>::value_type;
+#else
+                typedef typename truncating_iterator_base<OutputIt>::value_type value_type;
+#endif
+
+                truncating_iterator(OutputIt out, size_t limit) : truncating_iterator_base<OutputIt>(out, limit) {}
+
+                truncating_iterator &operator++() {
+                    if (this->count_++ < this->limit_) ++this->out_;
+                    return *this;
+                }
+
+                truncating_iterator operator++(int) {
+                    auto it = *this;
+                    ++*this;
+                    return it;
+                }
+
+                value_type &operator*() const { return this->count_ < this->limit_ ? *this->out_ : blackhole_; }
+            };
+
+            template <class OutputIt>
+            class LIBATFRAME_UTILS_API_HEAD_ONLY truncating_iterator<OutputIt, std::true_type> : public truncating_iterator_base<OutputIt> {
+            public:
+                truncating_iterator(OutputIt out, size_t limit) : truncating_iterator_base<OutputIt>(out, limit) {}
+
+                template <typename T>
+                truncating_iterator &operator=(T val) {
+                    if (this->count_++ < this->limit_) *this->out_++ = val;
+                    return *this;
+                }
+
+                truncating_iterator &operator++() { return *this; }
+                truncating_iterator &operator++(int) { return *this; }
+                truncating_iterator &operator*() { return *this; }
+            };
+
+        } // namespace details
+#endif
+
         /**
          * @brief 日志格式化数据
          */

@@ -16,23 +16,24 @@
 
 #include "std/functional.h"
 #include "std/smart_ptr.h"
+#include <algorithm>
 #include <bitset>
 #include <list>
 
 #include <config/atframe_utils_build_feature.h>
 
 #if defined(UTIL_CONFIG_COMPILER_CXX_RVALUE_REFERENCES) && UTIL_CONFIG_COMPILER_CXX_RVALUE_REFERENCES
-    #if defined(LIBATFRAME_UTILS_ENABLE_STD_FORMAT) && LIBATFRAME_UTILS_ENABLE_STD_FORMAT
-        #include <format>
-        #ifndef LOG_WRAPPER_FWAPI_FMT_STRING
-            #define LOG_WRAPPER_FWAPI_FMT_STRING(S) (S)
-        #endif
-    #elif defined(LIBATFRAME_UTILS_ENABLE_FMTLIB) && LIBATFRAME_UTILS_ENABLE_FMTLIB
-        #include <fmt/format.h>
-        #ifndef LOG_WRAPPER_FWAPI_FMT_STRING
-            #define LOG_WRAPPER_FWAPI_FMT_STRING(S) FMT_STRING(S)
-        #endif
-    #endif
+#if defined(LIBATFRAME_UTILS_ENABLE_STD_FORMAT) && LIBATFRAME_UTILS_ENABLE_STD_FORMAT
+#include <format>
+#ifndef LOG_WRAPPER_FWAPI_FMT_STRING
+#define LOG_WRAPPER_FWAPI_FMT_STRING(S) (S)
+#endif
+#elif defined(LIBATFRAME_UTILS_ENABLE_FMTLIB) && LIBATFRAME_UTILS_ENABLE_FMTLIB
+#include <fmt/format.h>
+#ifndef LOG_WRAPPER_FWAPI_FMT_STRING
+#define LOG_WRAPPER_FWAPI_FMT_STRING(S) FMT_STRING(S)
+#endif
+#endif
 #endif
 
 #include <config/compiler/template_prefix.h>
@@ -45,9 +46,86 @@
 
 namespace util {
     namespace log {
+
+#if defined(LOG_WRAPPER_ENABLE_FWAPI) && LOG_WRAPPER_ENABLE_FWAPI
+        template <class TFMT, class... TARGS>
+        LIBATFRAME_UTILS_API_HEAD_ONLY std::string format(TFMT &&fmt, TARGS &&... args) {
+#if defined(LIBATFRAME_UTILS_ENABLE_EXCEPTION) && LIBATFRAME_UTILS_ENABLE_EXCEPTION
+            try {
+#endif
+                return LOG_WRAPPER_FWAPI_NAMESPACE format(std::forward<TFMT>(fmt), std::forward<TARGS>(args)...);
+#if defined(LIBATFRAME_UTILS_ENABLE_EXCEPTION) && LIBATFRAME_UTILS_ENABLE_EXCEPTION
+            } catch (const LOG_WRAPPER_FWAPI_NAMESPACE format_error &e) {
+                return e.what();
+            } catch (const std::runtime_error &e) {
+                return e.what();
+            } catch (...) {
+                return "format got unknown exception";
+            }
+#endif
+        }
+
+        template <class OutputIt, class TFMT, class... TARGS>
+        LIBATFRAME_UTILS_API_HEAD_ONLY OutputIt format_to(OutputIt out, TFMT &&fmt, TARGS &&... args) {
+#if defined(LIBATFRAME_UTILS_ENABLE_EXCEPTION) && LIBATFRAME_UTILS_ENABLE_EXCEPTION
+            try {
+#endif
+                return LOG_WRAPPER_FWAPI_NAMESPACE format_to(out, std::forward<TFMT>(fmt), std::forward<TARGS>(args)...);
+#if defined(LIBATFRAME_UTILS_ENABLE_EXCEPTION) && LIBATFRAME_UTILS_ENABLE_EXCEPTION
+            } catch (const LOG_WRAPPER_FWAPI_NAMESPACE format_error &e) {
+                const char *input_begin = e.what();
+                const char *input_end   = input_begin + strlen(input_begin);
+                return std::copy(input_begin, input_end, std::back_inserter(out));
+            } catch (const std::runtime_error &e) {
+                const char *input_begin = e.what();
+                const char *input_end   = input_begin + strlen(input_begin);
+                return std::copy(input_begin, input_end, std::back_inserter(out));
+            } catch (...) {
+                const char *input_begin = "format got unknown exception";
+                const char *input_end   = input_begin + strlen(input_begin);
+                return std::copy(input_begin, input_end, std::back_inserter(out));
+            }
+#endif
+        }
+
+        template <class OutputIt, class TFMT, class... TARGS>
+        LIBATFRAME_UTILS_API_HEAD_ONLY LOG_WRAPPER_FWAPI_NAMESPACE format_to_n_result<OutputIt> format_to_n(OutputIt out, size_t n,
+                                                                                                            TFMT &&fmt, TARGS &&... args) {
+#if defined(LIBATFRAME_UTILS_ENABLE_EXCEPTION) && LIBATFRAME_UTILS_ENABLE_EXCEPTION
+            try {
+#endif
+                return LOG_WRAPPER_FWAPI_NAMESPACE format_to_n(out, n, std::forward<TFMT>(fmt), std::forward<TARGS>(args)...);
+#if defined(LIBATFRAME_UTILS_ENABLE_EXCEPTION) && LIBATFRAME_UTILS_ENABLE_EXCEPTION
+            } catch (const LOG_WRAPPER_FWAPI_NAMESPACE format_error &e) {
+                const char *                           input_begin = e.what();
+                const char *                           input_end   = input_begin + strlen(input_begin);
+                details::truncating_iterator<OutputIt> res =
+                    std::copy(input_begin, input_end, details::truncating_iterator<OutputIt>(out, n));
+                return {res.base(), res.count()};
+            } catch (const std::runtime_error &e) {
+                const char *                           input_begin = e.what();
+                const char *                           input_end   = input_begin + strlen(input_begin);
+                details::truncating_iterator<OutputIt> res =
+                    std::copy(input_begin, input_end, details::truncating_iterator<OutputIt>(out, n));
+                return {res.base(), res.count()};
+            } catch (...) {
+                const char *                           input_begin = "format got unknown exception";
+                const char *                           input_end   = input_begin + strlen(input_begin);
+                details::truncating_iterator<OutputIt> res =
+                    std::copy(input_begin, input_end, details::truncating_iterator<OutputIt>(out, n));
+                return {res.base(), res.count()};
+            }
+#endif
+        }
+#endif
+
         class log_wrapper {
         public:
-            typedef std::shared_ptr<log_wrapper> ptr_t;
+#if defined(UTIL_CONFIG_COMPILER_CXX_ALIAS_TEMPLATES) && UTIL_CONFIG_COMPILER_CXX_ALIAS_TEMPLATES
+            using ptr_t = std::shared_ptr<log_wrapper>;
+#else
+            typedef std::shared_ptr<log_wrapper>                                                               ptr_t;
+#endif
 
             struct LIBATFRAME_UTILS_API categorize_t {
                 enum type {
@@ -66,10 +144,15 @@ namespace util {
             };
 
         public:
-            typedef log_formatter::level_t       level_t;
-            typedef log_formatter::caller_info_t caller_info_t;
-
+#if defined(UTIL_CONFIG_COMPILER_CXX_ALIAS_TEMPLATES) && UTIL_CONFIG_COMPILER_CXX_ALIAS_TEMPLATES
+            using level_t       = log_formatter::level_t;
+            using caller_info_t = log_formatter::caller_info_t;
+            using log_handler_t = std::function<void(const caller_info_t &caller, const char *content, size_t content_size)>;
+#else
+            typedef log_formatter::level_t                                                                     level_t;
+            typedef log_formatter::caller_info_t                                                               caller_info_t;
             typedef std::function<void(const caller_info_t &caller, const char *content, size_t content_size)> log_handler_t;
+#endif
             struct log_router_t {
                 level_t::type level_min;
                 level_t::type level_max;
@@ -79,11 +162,11 @@ namespace util {
         private:
             struct LIBATFRAME_UTILS_API construct_helper_t {};
             struct LIBATFRAME_UTILS_API log_operation_t {
-                char* buffer;
+                char * buffer;
                 size_t total_size;
                 size_t writen_size;
             };
-            LIBATFRAME_UTILS_API        log_wrapper();
+            LIBATFRAME_UTILS_API log_wrapper();
 
         public:
             LIBATFRAME_UTILS_API log_wrapper(construct_helper_t &h);
@@ -112,34 +195,30 @@ namespace util {
 #endif
 
 #if defined(LOG_WRAPPER_ENABLE_FWAPI) && LOG_WRAPPER_ENABLE_FWAPI
-            template<class... TARGS>
-            LIBATFRAME_UTILS_API_HEAD_ONLY void format_log(const caller_info_t &caller, TARGS&&... args) {
+            template <class... TARGS>
+            LIBATFRAME_UTILS_API_HEAD_ONLY void format_log(const caller_info_t &caller, TARGS &&... args) {
                 log_operation_t writer;
                 start_log(caller, writer);
                 if (!log_sinks_.empty()) {
 #if defined(LIBATFRAME_UTILS_ENABLE_EXCEPTION) && LIBATFRAME_UTILS_ENABLE_EXCEPTION
                     try {
 #endif
-                        LOG_WRAPPER_FWAPI_NAMESPACE format_to_n_result<char*> result = 
-                            LOG_WRAPPER_FWAPI_NAMESPACE template format_to_n<char *>(
-                                writer.buffer + writer.writen_size,
-                                writer.total_size - writer.writen_size - 1,
-                                std::forward<TARGS>(args)...
-                            );
+                        LOG_WRAPPER_FWAPI_NAMESPACE format_to_n_result<char *> result = format_to_n<char *>(
+                            writer.buffer + writer.writen_size, writer.total_size - writer.writen_size - 1, std::forward<TARGS>(args)...);
                         if (result.size > 0) {
                             writer.writen_size += result.size;
                         }
                         if (writer.writen_size < writer.total_size) {
                             *(writer.buffer + writer.writen_size) = 0;
                         } else {
-                            writer.writen_size = writer.total_size - 1;
+                            writer.writen_size                       = writer.total_size - 1;
                             *(writer.buffer + writer.total_size - 1) = 0;
                         }
 #if defined(LIBATFRAME_UTILS_ENABLE_EXCEPTION) && LIBATFRAME_UTILS_ENABLE_EXCEPTION
-                    } catch (const LOG_WRAPPER_FWAPI_NAMESPACE format_error& e) {
+                    } catch (const LOG_WRAPPER_FWAPI_NAMESPACE format_error &e) {
                         append_log(writer, "\r\nGot format error:\r\n", 0);
                         append_log(writer, e.what(), 0);
-                    } catch (const std::runtime_error& e) {
+                    } catch (const std::runtime_error &e) {
                         append_log(writer, "\r\nGot runtime error:\r\n", 0);
                         append_log(writer, e.what(), 0);
                     } catch (...) {
@@ -228,12 +307,12 @@ namespace util {
             // 白名单及用户指定日志输出可以针对哪个用户创建log_wrapper实例
 
             static LIBATFRAME_UTILS_API log_wrapper *mutable_log_cat(uint32_t cats = categorize_t::DEFAULT);
-            static LIBATFRAME_UTILS_API ptr_t create_user_logger();
+            static LIBATFRAME_UTILS_API ptr_t        create_user_logger();
 
         private:
-            LIBATFRAME_UTILS_API void start_log(const caller_info_t &caller, log_operation_t&);
-            LIBATFRAME_UTILS_API void finish_log(const caller_info_t &caller, log_operation_t&);
-            LIBATFRAME_UTILS_API void append_log(log_operation_t&, const char* str, size_t strsz);
+            LIBATFRAME_UTILS_API void start_log(const caller_info_t &caller, log_operation_t &);
+            LIBATFRAME_UTILS_API void finish_log(const caller_info_t &caller, log_operation_t &);
+            LIBATFRAME_UTILS_API void append_log(log_operation_t &, const char *str, size_t strsz);
 
         private:
             level_t::type                           log_level_;
@@ -309,9 +388,9 @@ namespace util {
 #define FWINSTLOGERROR(inst, ...) FWINSTLOGDEFLV(util::log::log_wrapper::level_t::LOG_LW_ERROR, NULL, inst, __VA_ARGS__)
 #define FWINSTLOGFATAL(inst, ...) FWINSTLOGDEFLV(util::log::log_wrapper::level_t::LOG_LW_FATAL, NULL, inst, __VA_ARGS__)
 
-#define LOG_WRAPPER_FWAPI_FORMAT(...) LOG_WRAPPER_FWAPI_NAMESPACE format(__VA_ARGS__)
-#define LOG_WRAPPER_FWAPI_FORMAT_TO(...) LOG_WRAPPER_FWAPI_NAMESPACE format_to(__VA_ARGS__)
-#define LOG_WRAPPER_FWAPI_FORMAT_TO_N(...) LOG_WRAPPER_FWAPI_NAMESPACE format_to_n(__VA_ARGS__)
+#define LOG_WRAPPER_FWAPI_FORMAT(...) ::util::log::format(__VA_ARGS__)
+#define LOG_WRAPPER_FWAPI_FORMAT_TO(...) ::util::log::format_to(__VA_ARGS__)
+#define LOG_WRAPPER_FWAPI_FORMAT_TO_N(...) ::util::log::format_to_n(__VA_ARGS__)
 #endif
 
 #else
@@ -342,8 +421,9 @@ namespace util {
 
 #if defined(LOG_WRAPPER_ENABLE_FWAPI) && LOG_WRAPPER_ENABLE_FWAPI
 /** 全局日志输出工具 - std::format **/
-#define FWCLOGDEFLV(lv, lv_name, cat, FMT, args...) \
-    if (util::log::log_wrapper::check_level(WDTLOGGETCAT(cat), lv)) WDTLOGGETCAT(cat)->format_log(WDTLOGFILENF(lv, lv_name), LOG_WRAPPER_FWAPI_FMT_STRING(FMT), ##args);
+#define FWCLOGDEFLV(lv, lv_name, cat, FMT, args...)                 \
+    if (util::log::log_wrapper::check_level(WDTLOGGETCAT(cat), lv)) \
+        WDTLOGGETCAT(cat)->format_log(WDTLOGFILENF(lv, lv_name), LOG_WRAPPER_FWAPI_FMT_STRING(FMT), ##args);
 
 #define FWCLOGTRACE(...) FWCLOGDEFLV(util::log::log_wrapper::level_t::LOG_LW_TRACE, NULL, __VA_ARGS__)
 #define FWCLOGDEBUG(...) FWCLOGDEFLV(util::log::log_wrapper::level_t::LOG_LW_DEBUG, NULL, __VA_ARGS__)
@@ -365,9 +445,9 @@ namespace util {
 #define FWINSTLOGERROR(...) FWINSTLOGDEFLV(util::log::log_wrapper::level_t::LOG_LW_ERROR, NULL, __VA_ARGS__)
 #define FWINSTLOGFATAL(...) FWINSTLOGDEFLV(util::log::log_wrapper::level_t::LOG_LW_FATAL, NULL, __VA_ARGS__)
 
-#define LOG_WRAPPER_FWAPI_FORMAT(FMT, args...) LOG_WRAPPER_FWAPI_NAMESPACE format(LOG_WRAPPER_FWAPI_FMT_STRING(FMT), ##args)
-#define LOG_WRAPPER_FWAPI_FORMAT_TO(OUT, FMT, args...) LOG_WRAPPER_FWAPI_NAMESPACE format_to(OUT, LOG_WRAPPER_FWAPI_FMT_STRING(FMT), ##args)
-#define LOG_WRAPPER_FWAPI_FORMAT_TO_N(OUT, N, FMT, args...) LOG_WRAPPER_FWAPI_NAMESPACE format_to_n(OUT, N, LOG_WRAPPER_FWAPI_FMT_STRING(FMT), ##args)
+#define LOG_WRAPPER_FWAPI_FORMAT(FMT, args...) ::util::log::format(LOG_WRAPPER_FWAPI_FMT_STRING(FMT), ##args)
+#define LOG_WRAPPER_FWAPI_FORMAT_TO(OUT, FMT, args...) ::util::log::format_to(OUT, LOG_WRAPPER_FWAPI_FMT_STRING(FMT), ##args)
+#define LOG_WRAPPER_FWAPI_FORMAT_TO_N(OUT, N, FMT, args...) ::util::log::format_to_n(OUT, N, LOG_WRAPPER_FWAPI_FMT_STRING(FMT), ##args)
 #endif
 
 #endif
@@ -416,21 +496,23 @@ namespace util {
 
 #define PSTDINFO(...) printf(__VA_ARGS__)
 #define PSTDNOTICE(...) PSTDTERMCOLOR(cout, util::cli::shell_font_style::SHELL_FONT_COLOR_YELLOW, __VA_ARGS__)
-#define PSTDWARNING(...)                                                                                                            \
-    PSTDTERMCOLOR(cerr, util::cli::shell_font_style::SHELL_FONT_SPEC_BOLD |                                                         \
-    static_cast<int>(util::cli::shell_font_style::SHELL_FONT_COLOR_YELLOW), __VA_ARGS__)
-#define PSTDERROR(...)                                                                                                              \
-    PSTDTERMCOLOR(cerr, util::cli::shell_font_style::SHELL_FONT_SPEC_BOLD |                                                         \
-    static_cast<int>(util::cli::shell_font_style::SHELL_FONT_COLOR_RED), __VA_ARGS__)
+#define PSTDWARNING(...)                                                                                                                  \
+    PSTDTERMCOLOR(                                                                                                                        \
+        cerr, util::cli::shell_font_style::SHELL_FONT_SPEC_BOLD | static_cast<int>(util::cli::shell_font_style::SHELL_FONT_COLOR_YELLOW), \
+        __VA_ARGS__)
+#define PSTDERROR(...)                                                                                                                     \
+    PSTDTERMCOLOR(cerr,                                                                                                                    \
+                  util::cli::shell_font_style::SHELL_FONT_SPEC_BOLD | static_cast<int>(util::cli::shell_font_style::SHELL_FONT_COLOR_RED), \
+                  __VA_ARGS__)
 #define PSTDFATAL(...) PSTDTERMCOLOR(cerr, util::cli::shell_font_style::SHELL_FONT_COLOR_MAGENTA, __VA_ARGS__)
 #define PSTDOK(...) PSTDTERMCOLOR(cout, util::cli::shell_font_style::SHELL_FONT_COLOR_GREEN, __VA_ARGS__)
 //
 #ifndef NDEBUG
 #define PSTDTRACE(...) PSTDTERMCOLOR(cout, util::cli::shell_font_style::SHELL_FONT_COLOR_CYAN, __VA_ARGS__)
 #define PSTDDEBUG(...) PSTDTERMCOLOR(cout, util::cli::shell_font_style::SHELL_FONT_COLOR_CYAN, __VA_ARGS__)
-#define PSTDMARK                                                                                                                \
-    PSTDTERMCOLOR(cout, util::cli::shell_font_style::SHELL_FONT_SPEC_BOLD |                                                     \
-    static_cast<int>(util::cli::shell_font_style::SHELL_FONT_COLOR_RED),                                                        \
+#define PSTDMARK                                                                                                                           \
+    PSTDTERMCOLOR(cout,                                                                                                                    \
+                  util::cli::shell_font_style::SHELL_FONT_SPEC_BOLD | static_cast<int>(util::cli::shell_font_style::SHELL_FONT_COLOR_RED), \
                   "Mark: %s:%s (function %s)\n", __FILE__, __LINE__, __FUNCTION__)
 #else
 #define PSTDTRACE(...)
