@@ -740,12 +740,14 @@ namespace util {
                     return ret;
                 }
 
-                if (init_paramgen && EVP_PKEY_paramgen_init(ret) <= 0) {
-                    reset(ret);
-                    return ret;
+                if (init_paramgen) {
+                    if (EVP_PKEY_paramgen_init(ret) <= 0 && EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE != ERR_GET_REASON(ERR_peek_error())) {
+                        reset(ret);
+                        return ret;
+                    }
                 }
 
-                if (TLS_CURVE_CUSTOM != gtype && EVP_PKEY_CTX_set_ec_paramgen_curve_nid(ret, curve_nid) <= 0) {
+                if (TLS_CURVE_CUSTOM != gtype && init_paramgen && EVP_PKEY_CTX_set_ec_paramgen_curve_nid(ret, curve_nid) <= 0) {
                     reset(ret);
                 }
 
@@ -991,11 +993,16 @@ namespace util {
                 do {
                     details::reset(dh_param_.params_key);
                     EVP_PKEY_paramgen(dh_param_.paramgen_ctx, &dh_param_.params_key);
-                    if (NULL == dh_param_.params_key) {
+                    // openssl 1.1.1 will report EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE for x25519 and x448
+                    if (NULL == dh_param_.params_key && EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE != ERR_GET_REASON(ERR_peek_error())) {
                         break;
                     }
                     details::reset(dh_param_.keygen_ctx);
-                    dh_param_.keygen_ctx = details::initialize_pkey_ctx_by_pkey(dh_param_.params_key, true, false);
+                    if (NULL == dh_param_.params_key) {
+                        dh_param_.keygen_ctx = details::initialize_pkey_ctx_by_group_id(dh_param_.group_id, true, false);
+                    } else {
+                        dh_param_.keygen_ctx = details::initialize_pkey_ctx_by_pkey(dh_param_.params_key, true, false);
+                    }
                 } while (false);
 
                 if (error_code_t::OK != ret) {
@@ -1090,7 +1097,7 @@ namespace util {
             method_ = method_t::EN_CDT_INVALID;
 // random engine
 #if defined(CRYPTO_USE_OPENSSL) || defined(CRYPTO_USE_LIBRESSL) || defined(CRYPTO_USE_BORINGSSL)
-            details::reset(dh_param_.params_key);
+            details::reset(dh_param_.param);
             details::reset(dh_param_.paramgen_ctx);
             details::reset(dh_param_.params_key);
             details::reset(dh_param_.keygen_ctx);
@@ -1148,11 +1155,16 @@ namespace util {
 
             if (NULL == dh_param_.params_key) {
                 EVP_PKEY_paramgen(dh_param_.paramgen_ctx, &dh_param_.params_key);
-                if (NULL == dh_param_.params_key) {
+                // openssl 1.1.1 will report EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE for x25519 and x448
+                if (NULL == dh_param_.params_key && EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE != ERR_GET_REASON(ERR_peek_error())) {
                     return error_code_t::MALLOC;
                 }
                 details::reset(dh_param_.keygen_ctx);
-                dh_param_.keygen_ctx = details::initialize_pkey_ctx_by_pkey(dh_param_.params_key, true, false);
+                if (NULL == dh_param_.params_key) {
+                    dh_param_.keygen_ctx = details::initialize_pkey_ctx_by_group_id(dh_param_.group_id, true, false);
+                } else {
+                    dh_param_.keygen_ctx = details::initialize_pkey_ctx_by_pkey(dh_param_.params_key, true, false);
+                }
             }
 
             return error_code_t::OK;
@@ -1250,13 +1262,8 @@ namespace util {
 // init DH param file
 #if defined(CRYPTO_USE_OPENSSL) || defined(CRYPTO_USE_LIBRESSL) || defined(CRYPTO_USE_BORINGSSL)
                 if (false == shared_context->is_client_mode()) {
-                    if (NULL == shared_context->get_dh_parameter().params_key) {
-                        ret = error_code_t::NOT_SERVER_MODE;
-                        break;
-                    }
-
                     if (NULL == shared_context->get_dh_parameter().keygen_ctx) {
-                        ret = error_code_t::INIT_DH_GENERATE_KEY;
+                        ret = error_code_t::NOT_SERVER_MODE;
                         break;
                     }
                 }
@@ -1288,13 +1295,8 @@ namespace util {
 // init DH param file
 #if defined(CRYPTO_USE_OPENSSL) || defined(CRYPTO_USE_LIBRESSL) || defined(CRYPTO_USE_BORINGSSL)
                 if (false == shared_context->is_client_mode()) {
-                    if (NULL == shared_context->get_dh_parameter().params_key) {
-                        ret = error_code_t::NOT_SERVER_MODE;
-                        break;
-                    }
-
                     if (NULL == shared_context->get_dh_parameter().keygen_ctx) {
-                        ret = error_code_t::INIT_DH_GENERATE_KEY;
+                        ret = error_code_t::NOT_SERVER_MODE;
                         break;
                     }
                 }
@@ -2150,7 +2152,7 @@ namespace util {
                 return details::setup_errorno(*this, static_cast<int>(ERR_peek_error()), static_cast<error_code_t::type>(ret));
             }
 
-            if (NULL == shared_context_->get_dh_parameter().params_key) {
+            if (NULL == shared_context_->get_dh_parameter().paramgen_ctx) {
                 return error_code_t::MALLOC;
             }
 
