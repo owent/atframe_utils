@@ -1832,9 +1832,15 @@ namespace util {
         }
 
         LIBATFRAME_UTILS_API int dh::read_public(const unsigned char *input, size_t ilen) {
-            if (!shared_context_ || NULL == shared_context_->get_dh_parameter().keygen_ctx) {
+            if (!shared_context_) {
                 return details::setup_errorno(*this, 0, error_code_t::NOT_INITED);
             }
+
+#if defined(CRYPTO_USE_OPENSSL) || defined(CRYPTO_USE_LIBRESSL) || defined(CRYPTO_USE_BORINGSSL)
+            if (NULL == shared_context_->get_dh_parameter().keygen_ctx) {
+                return details::setup_errorno(*this, 0, error_code_t::NOT_INITED);
+            }
+#endif
 
             if (NULL == input || ilen == 0) {
                 return details::setup_errorno(*this, 0, error_code_t::INVALID_PARAM);
