@@ -34,7 +34,14 @@ CASE_TEST(crypto_dh, get_all_curve_names) {
     }
 
     CASE_MSG_INFO() << "All curves: " << ss.str() << std::endl;
+#if defined(CRYPTO_USE_OPENSSL) || defined(CRYPTO_USE_LIBRESSL) || defined(CRYPTO_USE_BORINGSSL)
+    // Openssl 1.0.1 or lower do not support ECDH
+#if (defined(OPENSSL_API_COMPAT) && OPENSSL_API_COMPAT >= 0x10002000L) ||   \
+    (defined(OPENSSL_API_LEVEL) && OPENSSL_API_LEVEL >= 10002) ||           \
+    (!defined(LIBRESSL_VERSION_NUMBER) && defined(OPENSSL_VERSION_NUMBER) && OPENSSL_VERSION_NUMBER >= 0x10002000L)
     CASE_EXPECT_NE(0, all_curves.size());
+#endif
+#endif
 }
 
 CASE_TEST(crypto_dh, dh) {

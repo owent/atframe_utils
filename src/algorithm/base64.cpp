@@ -133,6 +133,10 @@ namespace util {
             base64_encode_inner(NULL, 0, &olen, src, slen, base64_enc_map, padding_char);
             dst.resize(olen);
 
+            if (NULL == src || 0 == slen) {
+                return 0;
+            }
+
             int ret =
                 base64_encode_inner(reinterpret_cast<unsigned char *>(&dst[0]), dst.size(), &olen, src, slen, base64_enc_map, padding_char);
             assert(0 != ret || dst.size() == olen + 1);
@@ -242,6 +246,10 @@ namespace util {
 
             if (-2 == base64_decode_inner(NULL, 0, &olen, src, slen, base64_dec_map, padding_char)) {
                 return -2;
+            }
+
+            if (NULL == src || 0 == slen) {
+                return 0;
             }
 
             dst.resize(olen);

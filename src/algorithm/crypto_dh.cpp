@@ -381,6 +381,14 @@ static inline void DH_get0_key(const DH *dh, const BIGNUM **pub_key, const BIGNU
     if (priv_key != NULL) *priv_key = dh->priv_key;
 }
 
+static DH* EVP_PKEY_get0_DH(EVP_PKEY *pkey) {
+    DH* ret = EVP_PKEY_get1_DH(pkey);
+    if (NULL != ret) {
+        DH_free(ret);
+    }
+    return ret;
+}
+
 /**
  * @see crypto/dh/dh_lib.c in openssl 1.1.x or upper
  */
@@ -919,10 +927,14 @@ namespace util {
                         break;
                     }
 
+#if (defined(OPENSSL_API_COMPAT) && OPENSSL_API_COMPAT >= 0x10101000L) ||   \
+    (defined(OPENSSL_API_LEVEL) && OPENSSL_API_LEVEL >= 10101) ||           \
+    (!defined(LIBRESSL_VERSION_NUMBER) && defined(OPENSSL_VERSION_NUMBER) && OPENSSL_VERSION_NUMBER >= 0x10101000L)
                     if (1 != EVP_PKEY_param_check(dh_param_.paramgen_ctx)) {
                         ret = error_code_t::NOT_SUPPORT;
                         break;
                     }
+#endif
 
                     details::reset(dh_param_.keygen_ctx);
                     dh_param_.keygen_ctx = details::initialize_pkey_ctx_by_pkey(dh_param_.params_key, true, false);
@@ -1196,7 +1208,7 @@ namespace util {
                     return error_code_t::OPERATION;
                 }
                 details::reset(dh);
-                
+
                 details::reset(dh_param_.keygen_ctx);
                 dh_param_.keygen_ctx = details::initialize_pkey_ctx_by_pkey(dh_param_.params_key, true, false);
             }
@@ -1501,8 +1513,9 @@ namespace util {
                 //   EVP_PKEY_print_params()
                 //   EVP_PKEY_print_params()
                 unsigned char *point_data = NULL;
-#if (defined(OPENSSL_API_LEVEL) && OPENSSL_API_LEVEL >= 30000) || \
-    (!defined(LIBRESSL_VERSION_NUMBER) && defined(OPENSSL_VERSION_NUMBER) && OPENSSL_VERSION_NUMBER > 0x30000000L)
+#if (defined(OPENSSL_API_COMPAT) && OPENSSL_API_COMPAT >= 0x30000000L) ||   \
+    (defined(OPENSSL_API_LEVEL) && OPENSSL_API_LEVEL >= 30000) ||           \
+    (!defined(LIBRESSL_VERSION_NUMBER) && defined(OPENSSL_VERSION_NUMBER) && OPENSSL_VERSION_NUMBER >= 0x30000000L)
                 size_t encode_len = EVP_PKEY_get1_encoded_public_key(dh_context_.openssl_ecdh_pkey_, &point_data);
 #else
                 size_t encode_len = EVP_PKEY_get1_tls_encodedpoint(dh_context_.openssl_ecdh_pkey_, &point_data);
@@ -1691,8 +1704,9 @@ namespace util {
                 //     break;
                 // }
 
-#if (defined(OPENSSL_API_LEVEL) && OPENSSL_API_LEVEL >= 30000) || \
-    (!defined(LIBRESSL_VERSION_NUMBER) && defined(OPENSSL_VERSION_NUMBER) && OPENSSL_VERSION_NUMBER > 0x30000000L)
+#if (defined(OPENSSL_API_COMPAT) && OPENSSL_API_COMPAT >= 0x30000000L) ||   \
+    (defined(OPENSSL_API_LEVEL) && OPENSSL_API_LEVEL >= 30000) ||           \
+    (!defined(LIBRESSL_VERSION_NUMBER) && defined(OPENSSL_VERSION_NUMBER) && OPENSSL_VERSION_NUMBER >= 0x30000000L)
                 if (EVP_PKEY_set1_encoded_public_key(dh_context_.openssl_ecdh_peer_key_, &input[curve_grp_len], encoded_pt_len) <= 0) {
 #else
                 if (EVP_PKEY_set1_tls_encodedpoint(dh_context_.openssl_ecdh_peer_key_, &input[curve_grp_len], encoded_pt_len) <= 0) {
@@ -1775,8 +1789,9 @@ namespace util {
                 }
 
                 unsigned char *point_data = NULL;
-#if (defined(OPENSSL_API_LEVEL) && OPENSSL_API_LEVEL >= 30000) || \
-    (!defined(LIBRESSL_VERSION_NUMBER) && defined(OPENSSL_VERSION_NUMBER) && OPENSSL_VERSION_NUMBER > 0x30000000L)
+#if (defined(OPENSSL_API_COMPAT) && OPENSSL_API_COMPAT >= 0x30000000L) ||   \
+    (defined(OPENSSL_API_LEVEL) && OPENSSL_API_LEVEL >= 30000) ||           \
+    (!defined(LIBRESSL_VERSION_NUMBER) && defined(OPENSSL_VERSION_NUMBER) && OPENSSL_VERSION_NUMBER >= 0x30000000L)
                 size_t encode_len = EVP_PKEY_get1_encoded_public_key(dh_context_.openssl_ecdh_pkey_, &point_data);
 #else
                 size_t encode_len = EVP_PKEY_get1_tls_encodedpoint(dh_context_.openssl_ecdh_pkey_, &point_data);
@@ -1886,8 +1901,9 @@ namespace util {
                     break;
                 }
 
-#if (defined(OPENSSL_API_LEVEL) && OPENSSL_API_LEVEL >= 30000) || \
-    (!defined(LIBRESSL_VERSION_NUMBER) && defined(OPENSSL_VERSION_NUMBER) && OPENSSL_VERSION_NUMBER > 0x30000000L)
+#if (defined(OPENSSL_API_COMPAT) && OPENSSL_API_COMPAT >= 0x30000000L) ||   \
+    (defined(OPENSSL_API_LEVEL) && OPENSSL_API_LEVEL >= 30000) ||           \
+    (!defined(LIBRESSL_VERSION_NUMBER) && defined(OPENSSL_VERSION_NUMBER) && OPENSSL_VERSION_NUMBER >= 0x30000000L)
                 if (EVP_PKEY_set1_encoded_public_key(dh_context_.openssl_ecdh_peer_key_, &input[1], point_len) <= 0) {
 #else
                 if (EVP_PKEY_set1_tls_encodedpoint(dh_context_.openssl_ecdh_peer_key_, &input[1], point_len) <= 0) {
