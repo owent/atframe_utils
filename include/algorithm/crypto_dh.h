@@ -69,11 +69,12 @@ namespace util {
             struct LIBATFRAME_UTILS_API dh_context_t {
                 EVP_PKEY_CTX *openssl_pkey_ctx_;
                 union {
-                    DH *      openssl_dh_ptr_;
+                    EVP_PKEY *openssl_dh_pkey_;
                     EVP_PKEY *openssl_ecdh_pkey_;
                 };
                 union {
-                    BIGNUM *  peer_pubkey_;
+                    // BIGNUM *  peer_pubkey_;
+                    EVP_PKEY *openssl_dh_peer_key_;
                     EVP_PKEY *openssl_ecdh_peer_key_;
                 };
             };
@@ -124,8 +125,8 @@ namespace util {
                     std::vector<unsigned char> param_buffer;
                     int                        group_id;
                     EVP_PKEY_CTX *             paramgen_ctx;
-                    EVP_PKEY_CTX *             keygen_ctx;
                     EVP_PKEY *                 params_key;
+                    EVP_PKEY_CTX *             keygen_ctx;
                 };
 
                 struct random_engine_t {};
@@ -189,8 +190,18 @@ namespace util {
                 LIBATFRAME_UTILS_API const random_engine_t &get_random_engine() const;
                 LIBATFRAME_UTILS_API random_engine_t &get_random_engine();
 
-                LIBATFRAME_UTILS_API bool check_or_setup_ecp_id(int group_id);
-
+#if defined(CRYPTO_USE_OPENSSL) || defined(CRYPTO_USE_LIBRESSL) || defined(CRYPTO_USE_BORINGSSL)
+                LIBATFRAME_UTILS_API int try_reset_ecp_id(int group_id);
+                /**
+                 * @brief Try to reset DH Params of P,G
+                 * 
+                 * @param DH_p INOUT new P 
+                 * @param DH_g INOUT new G
+                 * @return 0 or error code
+                 * @note DH_p and DH_g will be set to NULL when moved in, user must free them if they are still not NULL
+                 */
+                LIBATFRAME_UTILS_API int try_reset_dh_params(BIGNUM *&DH_p, BIGNUM *&DH_g);
+#endif
             private:
                 uint32_t        flags_;
                 method_t::type  method_;
@@ -284,6 +295,11 @@ namespace util {
 
         public:
             static LIBATFRAME_UTILS_API const std::vector<std::string> &get_all_curve_names();
+
+#if defined(CRYPTO_USE_OPENSSL) || defined(CRYPTO_USE_LIBRESSL) || defined(CRYPTO_USE_BORINGSSL)
+            int check_or_setup_ecp_id(int group_id);
+            int check_or_setup_dh_pg(const unsigned char *&input, size_t &left_size);
+#endif
 
         private:
             int                   last_errorno_;
