@@ -52,7 +52,7 @@ namespace detail {
     static test_manager_tls_block_t g_global_counter_cache = {0, 0};
     test_manager_tls_block_t *get_test_manager_tls_block() {
         static THREAD_TLS test_manager_tls_block_t ret = g_global_counter_cache;
-        return ret;
+        return &ret;
     }
 #else
 
