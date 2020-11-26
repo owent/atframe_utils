@@ -13,7 +13,7 @@ protected:
     ~singleton_unit_test1() {}
 };
 
-CASE_TEST(singleton_test, instance) {
+CASE_TEST(singleton_test, instance1) {
     singleton_unit_test1 *pl = singleton_unit_test1::instance();
     singleton_unit_test1 &pr = singleton_unit_test1::get_instance();
 
@@ -35,7 +35,7 @@ public:
 };
 UTIL_SYMBOL_VISIBLE singleton_unit_test2::singleton_data_t singleton_unit_test2::singleton_wrapper_t::data;
 
-CASE_TEST(singleton_unit_test2, instance) {
+CASE_TEST(singleton_test, instance2) {
     singleton_unit_test2 *pl = singleton_unit_test2::instance();
     singleton_unit_test2 &pr = *singleton_unit_test2::me();
 
@@ -57,7 +57,7 @@ protected:
     ~singleton_unit_test3() {}
 };
 
-CASE_TEST(singleton_test, instance) {
+CASE_TEST(singleton_test, instance3) {
     singleton_unit_test3 *pl = singleton_unit_test3::instance();
     singleton_unit_test3 &pr = singleton_unit_test3::get_instance();
 
