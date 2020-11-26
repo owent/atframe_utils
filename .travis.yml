@@ -11,11 +11,11 @@ matrix:
     - os: osx
       env: USE_CC=clang USE_CXX=clang++ CMAKE_BIN=cmake CTEST_BIN=ctest
     - os: linux
-      dist: focal
+      dist: bionic
       sudo: required
       env: USE_CC=gcc USE_CXX=g++ CMAKE_BIN=$CMAKE_PREFIX/bin/cmake CTEST_BIN=$CMAKE_PREFIX/bin/ctest
     - os: linux
-      dist: focal
+      dist: bionic
       sudo: required
       env: USE_CC=gcc-4.8 USE_CXX=g++-4.8 CMAKE_BIN=$CMAKE_PREFIX/bin/cmake CTEST_BIN=$CMAKE_PREFIX/bin/ctest
       addons:
@@ -28,7 +28,7 @@ matrix:
             - g++-4.8
             - g++-4.8-multilib
     - os: linux
-      dist: focal
+      dist: bionic
       sudo: required
       env: USE_CC=gcc-10 USE_CXX=g++-10 CMAKE_BIN=$CMAKE_PREFIX/bin/cmake CTEST_BIN=$CMAKE_PREFIX/bin/ctest
       addons:
@@ -41,7 +41,7 @@ matrix:
             - g++-10
             - g++-10-multilib
     - os: linux
-      dist: focal
+      dist: bionic
       sudo: required
       env: USE_CC=gcc-10 USE_CXX=g++-10 MBEDTLS_VERSION=2.24.0 CMAKE_BIN=$CMAKE_PREFIX/bin/cmake CTEST_BIN=$CMAKE_PREFIX/bin/ctest
       addons:
@@ -54,7 +54,7 @@ matrix:
             - g++-10
             - g++-10-multilib
     - os: linux
-      dist: focal
+      dist: bionic
       sudo: required
       env: USE_CC=gcc-10 USE_CXX=g++-10 BUILD_SHARED_LIBS=ON CMAKE_BIN=$CMAKE_PREFIX/bin/cmake CTEST_BIN=$CMAKE_PREFIX/bin/ctest
       addons:
@@ -67,11 +67,11 @@ matrix:
             - g++-10
             - g++-10-multilib
     # - os: linux
-    #   dist: focal
+    #   dist: bionic
     #   sudo: required
     #   env: USE_CC=clang USE_CXX=clang++ CMAKE_BIN=$CMAKE_PREFIX/bin/cmake CTEST_BIN=$CMAKE_PREFIX/bin/ctest
     - os: linux
-      dist: focal
+      dist: bionic
       sudo: required
       env: COVERALLS_SERVICE_NAME=travis-ci GCOV_FLAGS='--coverage -fprofile-arcs -ftest-coverage' CMAKE_BIN=$CMAKE_PREFIX/bin/cmake CTEST_BIN=$CMAKE_PREFIX/bin/ctest
       # COVERALLS_REPO_TOKEN is set in travis-ci
