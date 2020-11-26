@@ -3,19 +3,19 @@
 #include "design_pattern/singleton.h"
 #include "frame/test_macros.h"
 
-class singleton_unit_test : public util::design_pattern::singleton<singleton_unit_test> {
+class singleton_unit_test1 : public util::design_pattern::singleton<singleton_unit_test1> {
 public:
     bool b;
     int i;
 
 protected:
-    singleton_unit_test(): b(false), i(-1) {}
-    ~singleton_unit_test() {}
+    singleton_unit_test1(): b(false), i(-1) {}
+    ~singleton_unit_test1() {}
 };
 
 CASE_TEST(singleton_test, instance) {
-    singleton_unit_test *pl = singleton_unit_test::instance();
-    singleton_unit_test &pr = singleton_unit_test::get_instance();
+    singleton_unit_test1 *pl = singleton_unit_test1::instance();
+    singleton_unit_test1 &pr = singleton_unit_test1::get_instance();
 
     pl->b = true;
     pl->i = 1024;
@@ -47,3 +47,24 @@ CASE_TEST(singleton_unit_test2, instance) {
     CASE_EXPECT_EQ(1024, pr.i);
 }
 
+class singleton_unit_test3 : public util::design_pattern::local_singleton<singleton_unit_test3> {
+public:
+    bool b;
+    int i;
+
+protected:
+    singleton_unit_test3(): b(false), i(-1) {}
+    ~singleton_unit_test3() {}
+};
+
+CASE_TEST(singleton_test, instance) {
+    singleton_unit_test3 *pl = singleton_unit_test3::instance();
+    singleton_unit_test3 &pr = singleton_unit_test3::get_instance();
+
+    pl->b = true;
+    pl->i = 1024;
+
+    CASE_EXPECT_EQ(pl, &pr);
+    CASE_EXPECT_EQ(true, pr.b);
+    CASE_EXPECT_EQ(1024, pr.i);
+}

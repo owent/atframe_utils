@@ -144,15 +144,17 @@ public:                                                                         
 private:
 
 
-#define UTIL_DESIGN_PATTERN_SINGLETON_VISIBLE_DECL(CLAZZ)                                       \
-    UTIL_DESIGN_PATTERN_SINGLETON_DEF_FUNCS(UTIL_SYMBOL_VISIBLE, CLAZZ, CLAZZ)
-
 #define UTIL_DESIGN_PATTERN_SINGLETON_IMPORT_DECL(CLAZZ)                                        \
     UTIL_DESIGN_PATTERN_SINGLETON_DEF_FUNCS(UTIL_SYMBOL_IMPORT, CLAZZ, CLAZZ)
 
 #define UTIL_DESIGN_PATTERN_SINGLETON_EXPORT_DECL(CLAZZ)                                        \
     UTIL_DESIGN_PATTERN_SINGLETON_DEF_FUNCS(UTIL_SYMBOL_EXPORT, CLAZZ, CLAZZ)
 
+#define UTIL_DESIGN_PATTERN_SINGLETON_VISIBLE_DECL(CLAZZ)                                       \
+    UTIL_DESIGN_PATTERN_SINGLETON_DEF_FUNCS(UTIL_SYMBOL_VISIBLE, CLAZZ, CLAZZ)
+
+#define UTIL_DESIGN_PATTERN_SINGLETON_LOCAL_DECL(CLAZZ)                                         \
+    UTIL_DESIGN_PATTERN_SINGLETON_DEF_FUNCS(UTIL_SYMBOL_LOCAL, CLAZZ, CLAZZ)
 
 namespace util {
     namespace design_pattern {
@@ -173,6 +175,22 @@ namespace util {
         template <class T>
         UTIL_SYMBOL_VISIBLE typename singleton<T>::singleton_data_t singleton<T>::singleton_wrapper_t::data;
 
+        template <class T>
+        class UTIL_SYMBOL_LOCAL local_singleton {
+        public:
+            /**
+             * @brief 自身类型声明
+             */
+            typedef T                          self_type;
+            typedef std::shared_ptr<self_type> ptr_t;
+
+            local_singleton() {}
+
+            UTIL_DESIGN_PATTERN_SINGLETON_DEF_FUNCS(UTIL_SYMBOL_LOCAL, self_type, local_singleton)
+        };
+
+        template <class T>
+        UTIL_SYMBOL_LOCAL typename local_singleton<T>::singleton_data_t local_singleton<T>::singleton_wrapper_t::data;
     } // namespace design_pattern
 } // namespace util
 #endif
