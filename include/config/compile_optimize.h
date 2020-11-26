@@ -1,7 +1,4 @@
-﻿#ifndef UTIL_CONFIG_COMPILE_OPTIMIZE_H
-#define UTIL_CONFIG_COMPILE_OPTIMIZE_H
-
-#pragma once
+﻿#pragma once
 
 
 // ================ branch prediction information ================
@@ -58,20 +55,46 @@
 // All Win32 development environments, including 64-bit Windows and MinGW, define
 // _WIN32 or one of its variant spellings. Note that Cygwin is a POSIX environment,
 // so does not define _WIN32 or its variants.
+#ifndef UTIL_SYMBOL_EXPORT
 #define UTIL_SYMBOL_EXPORT __attribute__((__dllexport__))
+#endif
+#ifndef UTIL_SYMBOL_IMPORT
 #define UTIL_SYMBOL_IMPORT __attribute__((__dllimport__))
+#endif
+
 #else
+
+#ifndef UTIL_SYMBOL_EXPORT
 #define UTIL_SYMBOL_EXPORT  __attribute__((visibility("default")))
+#endif
+#ifndef UTIL_SYMBOL_IMPORT
 #define UTIL_SYMBOL_IMPORT  __attribute__((visibility("default")))
+#endif
+#ifndef UTIL_SYMBOL_VISIBLE
 #define UTIL_SYMBOL_VISIBLE __attribute__((visibility("default")))
+#endif
+#ifndef UTIL_SYMBOL_LOCAL
 #define UTIL_SYMBOL_LOCAL   __attribute__((visibility("hidden")))
 #endif
+
+#endif
+
 #else
 // config/platform/win32.hpp will define UTIL_SYMBOL_EXPORT, etc., unless already defined
+#ifndef UTIL_SYMBOL_EXPORT
 #define UTIL_SYMBOL_EXPORT
+#endif
+
+#ifndef UTIL_SYMBOL_IMPORT
 #define UTIL_SYMBOL_IMPORT
+#endif
+#ifndef UTIL_SYMBOL_VISIBLE
 #define UTIL_SYMBOL_VISIBLE
+#endif
+#ifndef UTIL_SYMBOL_LOCAL
 #define UTIL_SYMBOL_LOCAL
+#endif
+
 #endif
 
 #elif defined(_MSC_VER)
@@ -89,8 +112,13 @@
 //  its boost/config/compiler/ file must define UTIL_SYMBOL_EXPORT and
 //  UTIL_SYMBOL_IMPORT
 #if !defined(UTIL_SYMBOL_EXPORT) && (defined(_WIN32) || defined(__WIN32__) || defined(WIN32) || defined(__CYGWIN__))
+
+#ifndef UTIL_SYMBOL_EXPORT
 #define UTIL_SYMBOL_EXPORT __declspec(dllexport)
+#endif
+#ifndef UTIL_SYMBOL_IMPORT
 #define UTIL_SYMBOL_IMPORT __declspec(dllimport)
+#endif
 #endif
 // ---------------- import/export: for platform ----------------
 
@@ -160,6 +188,4 @@
 #else
 #define UTIL_NOINLINE
 #endif
-#endif
-
 #endif
