@@ -159,7 +159,7 @@ private:
 namespace util {
     namespace design_pattern {
         template <class T>
-        class UTIL_SYMBOL_VISIBLE singleton {
+        class singleton {
         public:
             /**
              * @brief 自身类型声明
@@ -167,7 +167,8 @@ namespace util {
             typedef T                          self_type;
             typedef std::shared_ptr<self_type> ptr_t;
 
-            singleton() {}
+            UTIL_SYMBOL_VISIBLE singleton() {}
+            UTIL_SYMBOL_VISIBLE ~singleton() {}
 
             UTIL_DESIGN_PATTERN_SINGLETON_DEF_FUNCS(UTIL_SYMBOL_VISIBLE, self_type, singleton)
         };
@@ -176,7 +177,7 @@ namespace util {
         UTIL_SYMBOL_VISIBLE typename singleton<T>::singleton_data_t singleton<T>::singleton_wrapper_t::data;
 
         template <class T>
-        class UTIL_SYMBOL_LOCAL local_singleton {
+        class local_singleton {
         public:
             /**
              * @brief 自身类型声明
@@ -184,7 +185,8 @@ namespace util {
             typedef T                          self_type;
             typedef std::shared_ptr<self_type> ptr_t;
 
-            local_singleton() {}
+            UTIL_SYMBOL_LOCAL local_singleton() {}
+            UTIL_SYMBOL_LOCAL ~local_singleton() {}
 
             UTIL_DESIGN_PATTERN_SINGLETON_DEF_FUNCS(UTIL_SYMBOL_LOCAL, self_type, local_singleton)
         };
