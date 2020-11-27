@@ -141,7 +141,7 @@ namespace util {
 
         LIBATFRAME_UTILS_API time_utility::raw_time_desc_t time_utility::get_gmt_tm(time_t t) {
             struct tm ttm;
-            UTIL_STRFUNC_GMTIME_S(&t, &ttm);
+            UTIL_STRFUNC_GMTIME_S(&t, &ttm); // lgtm [cpp/potentially-dangerous-function]
             return ttm;
         }
 

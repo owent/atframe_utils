@@ -62,7 +62,7 @@ namespace util {
             static struct tm tm_obj;
             if (tm_tp != util::time::time_utility::get_sys_now()) {
                 tm_tp = util::time::time_utility::get_sys_now();
-                UTIL_STRFUNC_LOCALTIME_S(&tm_tp, &tm_obj);
+                UTIL_STRFUNC_LOCALTIME_S(&tm_tp, &tm_obj); // lgtm [cpp/potentially-dangerous-function]
             }
 
             return &tm_obj;
