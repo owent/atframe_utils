@@ -88,9 +88,6 @@ matrix:
         - pip install --user cpp-coveralls
         - coveralls -r .. --gcov-options '\-lp' -e sample -e test -e build/CMakeFiles
 
-before_install:
-  - if [ "$TRAVIS_OS_NAME" == "osx" ]; then brew update; brew upgrade cmake; fi
-
 install:
   - if [ "$TRAVIS_OS_NAME" == "linux" ] ; then
 
