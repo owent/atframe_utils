@@ -33,7 +33,7 @@ public:
 
     singleton_unit_test2(): b(false), i(0) {}
 };
-UTIL_SYMBOL_VISIBLE singleton_unit_test2::singleton_data_t singleton_unit_test2::singleton_wrapper_t::data;
+UTIL_DESIGN_PATTERN_SINGLETON_VISIBLE_DATA_DEFINITION(singleton_unit_test2);
 
 CASE_TEST(singleton_test, instance2) {
     singleton_unit_test2 *pl = singleton_unit_test2::instance();

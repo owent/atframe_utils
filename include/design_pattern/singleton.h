@@ -16,13 +16,20 @@
  *   2015.11.02 增加内存屏障，保证极端情况下多线程+编译优化导致的指令乱序问题
  *   2019-12-05 移除对noncopyable的继承链，以适应用于dllexport时自带的 util::design_pattern::noncopyable 未导出的问题
  *              增加nomovable实现
+ *   2020-11-27 增加基于C++11标准 N2660 的实现
+ *              优化销毁判定内存区的放置
+ *              优化初始化顺序
+ *              增加符号不导出的单例基类 local_singleton<T>
+ *              单例接口返回const的智能指针，不再允许替换单例对象
  * 
  * @note 如果在Windows下dll请使用宏来生成函数
  *          UTIL_DESIGN_PATTERN_SINGLETON_VISIBLE_DECL(类名): visiable 标记(.lib)
  *          UTIL_DESIGN_PATTERN_SINGLETON_IMPORT_DECL(类名): __attribute__((__dllimport__))/__declspec(dllimport) 标记(从其他dll中导入)
- *          UTIL_DESIGN_PATTERN_SINGLETON_EXPORT_DECL(类名): __attribute__((__dllexport__))/__declspec(dllexport) 标记(从其他dll中导入)
- *       然后需要在源文件中使用UTIL_DESIGN_PATTERN_SINGLETON_EXPORT_DECL(类名)的模块中导出实例符号
- *          UTIL_SYMBOL_EXPORT 类名::singleton_data_t 类名::singleton_wrapper_t::data;
+ *          UTIL_DESIGN_PATTERN_SINGLETON_EXPORT_DECL(类名): __attribute__((__dllexport__))/__declspec(dllexport) 标记(dll导出符号)
+ *       然后需要在源文件中请使用宏来定义部分静态数据的存放位置
+ *          UTIL_DESIGN_PATTERN_SINGLETON_VISIBLE_DATA_DEFINITION(类名): visiable 标记(.lib)
+ *          UTIL_DESIGN_PATTERN_SINGLETON_IMPORT_DATA_DEFINITION(类名): __attribute__((__dllimport__))/__declspec(dllimport) 标记(从其他dll中导入)
+ *          UTIL_DESIGN_PATTERN_SINGLETON_EXPORT_DATA_DEFINITION(类名): __attribute__((__dllexport__))/__declspec(dllexport) 标记(dll导出符号)
  *       如果单例对象不需要导出则也可以直接util::design_pattern::singleton<类名>或者用VISIBLE导出规则
  * @example 
  *      // singleton_class.h
@@ -40,11 +47,11 @@
  *      };
  *      // singleton_class.cpp
  *      #if (defined(LIB_EXPORT) && LIB_EXPORT) || (defined(EXE_EXPORT) && EXE_EXPORT)
- *          UTIL_SYMBOL_VISIBLE singleton_class::singleton_data_t singleton_class::singleton_wrapper_t::data;
+ *          UTIL_DESIGN_PATTERN_SINGLETON_VISIBLE_DATA_DEFINITION(singleton_class);
  *      #elif defined(DLL_EXPORT) && DLL_EXPORT
- *          UTIL_SYMBOL_EXPORT singleton_class::singleton_data_t singleton_class::singleton_wrapper_t::data;
+ *          UTIL_DESIGN_PATTERN_SINGLETON_IMPORT_DATA_DEFINITION(singleton_class);
  *      #else
- *          UTIL_SYMBOL_IMPORT singleton_class::singleton_data_t singleton_class::singleton_wrapper_t::data;
+ *          UTIL_DESIGN_PATTERN_SINGLETON_EXPORT_DATA_DEFINITION(singleton_class);
  *      #endif
  */
 
@@ -90,57 +97,111 @@
 #define UTIL_DESIGN_PATTERN_SINGLETON_NOMAVLBLE(CLAZZ)
 #endif
 
-#define UTIL_DESIGN_PATTERN_SINGLETON_DEF_FUNCS(LABEL, CLAZZ, BASE_CLAZZ)                       \
+#if defined(__cpp_threadsafe_static_init)
+#if __cpp_threadsafe_static_init >= 200806L
+#define UTIL_DESIGN_PATTERN_SINGLETON_DATA_IMPL_N2660 1
+#endif
+#elif defined(__cplusplus)
+// @see https://gcc.gnu.org/projects/cxx-status.html
+// @see http://clang.llvm.org/cxx_status.html
+#if __cplusplus >= 201103L
+#define UTIL_DESIGN_PATTERN_SINGLETON_DATA_IMPL_N2660 1
+#endif
+#elif defined(_MSC_VER) && defined(_MSVC_LANG)
+// @see https://docs.microsoft.com/en-us/cpp/build/reference/zc-threadsafeinit-thread-safe-local-static-initialization
+#if _MSC_VER >= 1900 && _MSVC_LANG >= 201103L
+#define UTIL_DESIGN_PATTERN_SINGLETON_DATA_IMPL_N2660 1
+#endif
+#endif
+
+#if defined(UTIL_DESIGN_PATTERN_SINGLETON_DATA_IMPL_N2660) && UTIL_DESIGN_PATTERN_SINGLETON_DATA_IMPL_N2660
+
+// @see https://wg21.link/n2660
+#define UTIL_DESIGN_PATTERN_SINGLETON_DATA_IMPL(LABEL, CLAZZ, BASE_CLAZZ)                       \
+private:                                                                                        \
+    template<class TCLASS>                                                                      \
+    class singleton_wrapper_permission_t : public TCLASS { };                                   \
+    class LABEL singleton_wrapper_t {                                                           \
+    public:                                                                                     \
+        typedef std::shared_ptr<singleton_wrapper_permission_t<CLAZZ> > ptr_permission_t;       \
+        typedef std::shared_ptr<CLAZZ> ptr_t;                                                   \
+        static LABEL bool __is_destroyed;                                                       \
+        struct deleter {                                                                        \
+            void operator()(singleton_wrapper_permission_t<CLAZZ>* p) const {                   \
+                __is_destroyed = true;                                                          \
+                UTIL_LOCK_ATOMIC_THREAD_FENCE(::util::lock::memory_order_release);              \
+                delete p;                                                                       \
+            }                                                                                   \
+        };                                                                                      \
+        static LABEL const ptr_t &me() {                                                        \
+            static ptr_t data = std::static_pointer_cast<CLAZZ>(ptr_permission_t(new singleton_wrapper_permission_t<CLAZZ>(), deleter())); \
+            return data;                                                                        \
+        }                                                                                       \
+    };                                                                                          \
+private:                                                                                        \
+    friend class singleton_wrapper_t;                                                           \
+
+#else
+
+#define UTIL_DESIGN_PATTERN_SINGLETON_DATA_IMPL(LABEL, CLAZZ, BASE_CLAZZ)                       \
 private:                                                                                        \
     template<class TCLASS>                                                                      \
     class singleton_wrapper_permission_t : public TCLASS { };                                   \
     class LABEL singleton_data_t {                                                              \
     public:                                                                                     \
-        bool destroyed;                                                                         \
         std::shared_ptr<CLAZZ> instance;                                                        \
         util::lock::spin_lock lock;                                                             \
-        singleton_data_t(): destroyed(false) {}                                                 \
     };                                                                                          \
     class LABEL singleton_wrapper_t {                                                           \
     public:                                                                                     \
         typedef std::shared_ptr<singleton_wrapper_permission_t<CLAZZ> > ptr_permission_t;       \
         typedef std::shared_ptr<CLAZZ> ptr_t;                                                   \
-        static LABEL singleton_data_t data;                                                     \
+        static LABEL bool __is_destroyed;                                                       \
         struct deleter {                                                                        \
             void operator()(singleton_wrapper_permission_t<CLAZZ>* p) const {                   \
-                data.destroyed = true;                                                          \
+                __is_destroyed = true;                                                          \
+                UTIL_LOCK_ATOMIC_THREAD_FENCE(::util::lock::memory_order_release);              \
                 delete p;                                                                       \
             }                                                                                   \
         };                                                                                      \
-        static LABEL void use(CLAZZ const &) {}                                                 \
-        static LABEL ptr_t &me() {                                                              \
-            if (!data.instance) {                                                               \
-                util::lock::lock_holder<util::lock::spin_lock> lock_opr(data.lock);             \
+        static LABEL const ptr_t &me() {                                                        \
+            if (!__data().instance) {                                                           \
+                util::lock::lock_holder<util::lock::spin_lock> lock_opr(__data().lock);         \
                 UTIL_LOCK_ATOMIC_THREAD_FENCE(::util::lock::memory_order_acquire);              \
                 do {                                                                            \
-                    if (data.instance) {                                                        \
+                    if (__data().instance) {                                                    \
                         break;                                                                  \
                     }                                                                           \
                     ptr_t new_data = std::static_pointer_cast<CLAZZ>(ptr_permission_t(new singleton_wrapper_permission_t<CLAZZ>(), deleter())); \
-                    data.instance    = new_data;                                                \
+                    __data().instance    = new_data;                                            \
                 } while (false);                                                                \
                 UTIL_LOCK_ATOMIC_THREAD_FENCE(::util::lock::memory_order_release);              \
-                use(*data.instance);                                                            \
+                __use(*__data().instance);                                                      \
             }                                                                                   \
-            return data.instance;                                                               \
+            return __data().instance;                                                           \
         }                                                                                       \
     };                                                                                          \
 private:                                                                                        \
     friend class singleton_wrapper_t;                                                           \
-    BASE_CLAZZ(const BASE_CLAZZ &) UTIL_CONFIG_DELETED_FUNCTION;                                \
-    BASE_CLAZZ &operator=(const BASE_CLAZZ &) UTIL_CONFIG_DELETED_FUNCTION;                     \
-    UTIL_DESIGN_PATTERN_SINGLETON_NOMAVLBLE(BASE_CLAZZ)                                         \
-public:                                                                                         \
-    static LABEL CLAZZ &get_instance() { return *singleton_wrapper_t::me(); }                   \
-    static LABEL const CLAZZ &get_const_instance() { return get_instance(); }                   \
-    static LABEL CLAZZ *instance() { return singleton_wrapper_t::me().get(); }                  \
-    static LABEL std::shared_ptr<CLAZZ> &me() { return singleton_wrapper_t::me(); }             \
-    static LABEL bool is_instance_destroyed() { return singleton_wrapper_t::data.destroyed; }   \
+    static LABEL void __use(CLAZZ const &) {}                                                   \
+    static LABEL singleton_data_t &__data() {                                                   \
+        static singleton_data_t data;                                                           \
+        return data;                                                                            \
+    }                                                                                           \
+
+#endif
+
+#define UTIL_DESIGN_PATTERN_SINGLETON_DEF_FUNCS(LABEL, CLAZZ, BASE_CLAZZ)                         \
+    UTIL_DESIGN_PATTERN_SINGLETON_DATA_IMPL(LABEL, CLAZZ, BASE_CLAZZ)                             \
+    BASE_CLAZZ(const BASE_CLAZZ &) UTIL_CONFIG_DELETED_FUNCTION;                                  \
+    BASE_CLAZZ &operator=(const BASE_CLAZZ &) UTIL_CONFIG_DELETED_FUNCTION;                       \
+    UTIL_DESIGN_PATTERN_SINGLETON_NOMAVLBLE(BASE_CLAZZ)                                           \
+public:                                                                                           \
+    static LABEL CLAZZ &get_instance() { return *singleton_wrapper_t::me(); }                     \
+    static LABEL const CLAZZ &get_const_instance() { return get_instance(); }                     \
+    static LABEL CLAZZ *instance() { return singleton_wrapper_t::me().get(); }                    \
+    static LABEL const std::shared_ptr<CLAZZ> &me() { return singleton_wrapper_t::me(); }         \
+    static LABEL bool is_instance_destroyed() { return singleton_wrapper_t::__is_destroyed; }     \
 private:
 
 
@@ -155,6 +216,19 @@ private:
 
 #define UTIL_DESIGN_PATTERN_SINGLETON_LOCAL_DECL(CLAZZ)                                         \
     UTIL_DESIGN_PATTERN_SINGLETON_DEF_FUNCS(UTIL_SYMBOL_LOCAL, CLAZZ, CLAZZ)
+
+#define UTIL_DESIGN_PATTERN_SINGLETON_IMPORT_DATA_DEFINITION(CLAZZ)                             \
+    UTIL_SYMBOL_IMPORT bool CLAZZ::singleton_wrapper_t::__is_destroyed = false
+
+#define UTIL_DESIGN_PATTERN_SINGLETON_EXPORT_DATA_DEFINITION(CLAZZ)                             \
+    UTIL_SYMBOL_EXPORT bool CLAZZ::singleton_wrapper_t::__is_destroyed = false
+
+#define UTIL_DESIGN_PATTERN_SINGLETON_VISIBLE_DATA_DEFINITION(CLAZZ)                            \
+    UTIL_SYMBOL_VISIBLE bool CLAZZ::singleton_wrapper_t::__is_destroyed = false
+
+#define UTIL_DESIGN_PATTERN_SINGLETON_LOCAL_DATA_DEFINITION(CLAZZ)                              \
+    UTIL_SYMBOL_LOCAL bool CLAZZ::singleton_wrapper_t::__is_destroyed = false
+
 
 namespace util {
     namespace design_pattern {
@@ -172,9 +246,8 @@ namespace util {
 
             UTIL_DESIGN_PATTERN_SINGLETON_DEF_FUNCS(UTIL_SYMBOL_VISIBLE, self_type, singleton)
         };
-
         template <class T>
-        UTIL_SYMBOL_VISIBLE typename singleton<T>::singleton_data_t singleton<T>::singleton_wrapper_t::data;
+        UTIL_DESIGN_PATTERN_SINGLETON_VISIBLE_DATA_DEFINITION(singleton<T>);
 
         template <class T>
         class local_singleton {
@@ -190,9 +263,8 @@ namespace util {
 
             UTIL_DESIGN_PATTERN_SINGLETON_DEF_FUNCS(UTIL_SYMBOL_LOCAL, self_type, local_singleton)
         };
-
         template <class T>
-        UTIL_SYMBOL_LOCAL typename local_singleton<T>::singleton_data_t local_singleton<T>::singleton_wrapper_t::data;
+        UTIL_DESIGN_PATTERN_SINGLETON_LOCAL_DATA_DEFINITION(local_singleton<T>);
     } // namespace design_pattern
 } // namespace util
 #endif
