@@ -346,9 +346,7 @@ if(NOT DEFINED __COMPILER_OPTION_LOADED)
                 " COMPILER_OPTIONS_TEST_STD_COROUTINE_TS)
             endif()
         else()
-            if(NOT CMAKE_MSVC_RUNTIME_LIBRARY)
-                set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>DLL")
-            endif()
+            set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>$<$<NOT:$<STREQUAL:${VCPKG_CRT_LINKAGE},static>>:DLL>" CACHE STRING "")
 
             # Try add coroutine
             set(CMAKE_REQUIRED_FLAGS "${COMPILER_OPTIONS_BAKCUP_CMAKE_REQUIRED_FLAGS} /await")
