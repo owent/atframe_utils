@@ -57,21 +57,20 @@ set(Pbc_NAMES pbc libpbc)
 
 # Try each search configuration.
 find_path(Pbc_INCLUDE_DIR NAMES pbc.h ${_PBC_SEARCH_ROOT})
-find_library(Pbc_LIBRARY  NAMES ${Pbc_NAMES} ${_PBC_SEARCH_ROOT})
+find_library(Pbc_LIBRARY NAMES ${Pbc_NAMES} ${_PBC_SEARCH_ROOT})
 
 mark_as_advanced(Pbc_LIBRARY Pbc_INCLUDE_DIR)
 
-# handle the QUIETLY and REQUIRED arguments and set LIBUV_FOUND to TRUE if
-# all listed variables are TRUE
+# handle the QUIETLY and REQUIRED arguments and set LIBUV_FOUND to TRUE if all listed variables are TRUE
 include("FindPackageHandleStandardArgs")
-FIND_PACKAGE_HANDLE_STANDARD_ARGS(Pbc
+find_package_handle_standard_args(
+  Pbc
   REQUIRED_VARS Pbc_LIBRARY Pbc_INCLUDE_DIR
-  FOUND_VAR Pbc_FOUND
-)
+  FOUND_VAR Pbc_FOUND)
 
 if(Pbc_FOUND)
-    set(Pbc_INCLUDE_DIRS ${Pbc_INCLUDE_DIR})
-    set(Pbc_LIBRARIES ${Pbc_LIBRARY})
+  set(Pbc_INCLUDE_DIRS ${Pbc_INCLUDE_DIR})
+  set(Pbc_LIBRARIES ${Pbc_LIBRARY})
 
-    set(PBC_FOUND ${Pbc_FOUND})
+  set(PBC_FOUND ${Pbc_FOUND})
 endif()
