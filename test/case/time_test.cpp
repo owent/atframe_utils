@@ -543,9 +543,12 @@ CASE_TEST(time_test, jiffies_timer_remove_in_callback) {
 
     CASE_EXPECT_EQ(short_timer_t::error_type_t::EN_JTET_SUCCESS, short_timer.add_timer(0, jiffies_timer_remove_in_callback_fn(), NULL));
     CASE_EXPECT_EQ(short_timer_t::error_type_t::EN_JTET_SUCCESS, short_timer.add_timer(30, jiffies_timer_remove_in_callback_fn(), NULL));
-    CASE_EXPECT_EQ(short_timer_t::error_type_t::EN_JTET_SUCCESS, short_timer.add_timer(40, jiffies_timer_remove_in_callback_fn(), NULL, &timer_holer));
+    CASE_EXPECT_EQ(short_timer_t::error_type_t::EN_JTET_SUCCESS, short_timer.add_timer(40, jiffies_timer_remove_in_callback_fn(), &short_timer, &timer_holer));
     CASE_EXPECT_EQ(3, static_cast<int>(short_timer.size()));
+
     timer_ptr = timer_holer.lock();
+    CASE_EXPECT_EQ(&short_timer, short_timer_t::set_timer_private_data(*timer_ptr, &timer_holer));
+    CASE_EXPECT_EQ(&timer_holer, short_timer_t::get_timer_private_data(*timer_ptr));
 
     short_timer.tick(max_tick + 1);
     CASE_EXPECT_EQ(2, static_cast<int>(short_timer.size()));
