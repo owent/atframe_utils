@@ -91,6 +91,7 @@ namespace util {
          *       每次tick的最低时间复杂度: O(LVL_DEPTH) <br />
          *       每层定时器误差倍数: 2^LVL_CLK_SHIFT <br />
          *       最大定时器范围: 2^(LVL_CLK_SHIFT * (LVL_DEPTH - 1) + LVL_BITS) * tick周期 <br />
+         * @note 如果外部需要引用定时器对象，请使用 timer_t 代替函数签名中的 timer_type
          */
         template <time_t LVL_BITS = 6, time_t LVL_CLK_SHIFT = 3, size_t LVL_DEPTH = 8>
         class LIBATFRAME_UTILS_API_HEAD_ONLY jiffies_timer {
@@ -118,9 +119,15 @@ namespace util {
             struct timer_type;
 
         public:
+#if defined(UTIL_CONFIG_COMPILER_CXX_RVALUE_REFERENCES) && UTIL_CONFIG_COMPILER_CXX_RVALUE_REFERENCES
+            using timer_callback_fn_t = std::function<void(time_t tick_time, const timer_type &timer)>;
+            using timer_ptr_t         = std::shared_ptr<timer_type>;    // 外部请勿直接访问内部成员，只允许通过API访问
+            using timer_wptr_t        = std::weak_ptr<timer_type>;      // 外部请勿直接访问内部成员，只允许通过API访问
+#else
             typedef std::function<void(time_t tick_time, const timer_type &timer)> timer_callback_fn_t;
             typedef std::shared_ptr<timer_type> timer_ptr_t;  // 外部请勿直接访问内部成员，只允许通过API访问
             typedef std::weak_ptr<timer_type>   timer_wptr_t; // 外部请勿直接访问内部成员，只允许通过API访问
+#endif
 
         private:
             struct timer_type {
@@ -135,7 +142,11 @@ namespace util {
             };                                                          // 外部请勿直接访问内部成员，只允许通过API访问
 
         public:
+#if defined(UTIL_CONFIG_COMPILER_CXX_RVALUE_REFERENCES) && UTIL_CONFIG_COMPILER_CXX_RVALUE_REFERENCES
+            using timer_t = timer_type;
+#else
             typedef timer_type timer_t; // 外部请勿直接访问内部成员，只允许通过API访问
+#endif
 
             struct flag_t {
                 enum type {
@@ -192,8 +203,9 @@ namespace util {
  * @return 0或错误码
  */
 #if defined(UTIL_CONFIG_COMPILER_CXX_RVALUE_REFERENCES) && UTIL_CONFIG_COMPILER_CXX_RVALUE_REFERENCES
-            inline int add_timer(time_t delta, const timer_callback_fn_t &fn, void *priv_data, timer_wptr_t *watcher) {
-                return add_timer(delta, std::move(timer_callback_fn_t(fn)), priv_data, watcher);
+            template<class TCALLBACK>
+            inline int add_timer(time_t delta, TCALLBACK&& fn, void *priv_data, timer_wptr_t *watcher) {
+                return add_timer(delta, std::move(timer_callback_fn_t(std::forward<TCALLBACK>(fn))), priv_data, watcher);
             }
 
             int add_timer(time_t delta, timer_callback_fn_t &&fn, void *priv_data, timer_wptr_t *watcher) {
