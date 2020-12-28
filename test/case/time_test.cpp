@@ -523,3 +523,36 @@ CASE_TEST(time_test, jiffies_timer_remove) {
     CASE_EXPECT_EQ(0, count);
     CASE_EXPECT_EQ(0, static_cast<int>(short_timer.size()));
 }
+
+struct jiffies_timer_remove_in_callback_fn {
+    jiffies_timer_remove_in_callback_fn() {}
+
+    void operator()(time_t, const short_timer_t::timer_t &timer) {
+        CASE_MSG_INFO() << "jiffies_timer " << short_timer_t::get_timer_sequence(timer) << " removed in callback" << std::endl;
+    }
+};
+
+
+CASE_TEST(time_test, jiffies_timer_remove_in_callback) {
+    short_timer_t short_timer;
+    time_t        max_tick = short_timer.get_max_tick_distance() + 1;
+    short_timer_t::timer_wptr_t timer_holer;
+    short_timer_t::timer_ptr_t timer_ptr;
+
+    CASE_EXPECT_EQ(short_timer_t::error_type_t::EN_JTET_SUCCESS, short_timer.init(max_tick));
+
+    CASE_EXPECT_EQ(short_timer_t::error_type_t::EN_JTET_SUCCESS, short_timer.add_timer(0, jiffies_timer_remove_in_callback_fn(), NULL));
+    CASE_EXPECT_EQ(short_timer_t::error_type_t::EN_JTET_SUCCESS, short_timer.add_timer(30, jiffies_timer_remove_in_callback_fn(), NULL));
+    CASE_EXPECT_EQ(short_timer_t::error_type_t::EN_JTET_SUCCESS, short_timer.add_timer(40, jiffies_timer_remove_in_callback_fn(), NULL, &timer_holer));
+    CASE_EXPECT_EQ(3, static_cast<int>(short_timer.size()));
+    timer_ptr = timer_holer.lock();
+
+    short_timer.tick(max_tick + 1);
+    CASE_EXPECT_EQ(2, static_cast<int>(short_timer.size()));
+
+    short_timer.tick(max_tick + 64);
+    CASE_EXPECT_EQ(0, static_cast<int>(short_timer.size()));
+
+    // 重复调用remove_timer是安全的
+    short_timer_t::remove_timer(*timer_ptr);
+}

@@ -282,21 +282,25 @@ namespace util {
 
                         // 从高层级往低层级走，这样能保证定时器时序
                         for (typename std::list<timer_ptr_t>::iterator iter = timer_list[list_sz]->begin();
-                             iter != timer_list[list_sz]->end(); ++iter) {
-                            if (*iter) {
-                                if ((*iter)->fn && !((*iter)->flags & timer_flag_t::EN_JTTF_DISABLED)) {
-                                    (*iter)->fn(last_tick_, **iter);
+                             iter != timer_list[list_sz]->end();) {
+                            // 在定时器回调函数中可能调用remove_timer来让当前迭代器失效
+                            // 所以这里必须保存定时器智能指针，然后直接滚动到下一个，因为当前迭代器可能失效
+                            timer_ptr_t timer_ptr = *iter;
+                            ++ iter;
+                            if (timer_ptr) {  
+                                if (timer_ptr->fn && !(timer_ptr->flags & timer_flag_t::EN_JTTF_DISABLED)) {
+                                    timer_ptr->fn(last_tick_, *timer_ptr);
                                     ++ret;
                                 }
 
-                                if (NULL != (*iter)->owner_round) {
-                                    (*iter)->owner_iter  = (*iter)->owner_round->end();
-                                    (*iter)->owner_round = NULL;
+                                if (NULL != timer_ptr->owner_round) {
+                                    timer_ptr->owner_iter  = timer_ptr->owner_round->end();
+                                    timer_ptr->owner_round = NULL;
                                 }
 
-                                if (NULL != (*iter)->owner) {
-                                    --(*iter)->owner->size_;
-                                    (*iter)->owner = NULL;
+                                if (NULL != timer_ptr->owner) {
+                                    --timer_ptr->owner->size_;
+                                    timer_ptr->owner = NULL;
                                 }
                             }
                         }
@@ -329,7 +333,7 @@ namespace util {
 
 
             static inline size_t calc_index(time_t expires, size_t lvl) {
-                // 这里的expires 必然大于last_tick_，并且至少加一帧
+                // 这里的expires 必然大于等于last_tick_，并且至少加一帧
                 // 本帧的定时器列表检查可能会多次执行，所以不能加在当前帧
                 expires = (expires + LVL_GRAN(lvl)) >> LVL_SHIFT(lvl);
                 return LVL_OFFS(lvl) + static_cast<size_t>(expires & LVL_MASK);
