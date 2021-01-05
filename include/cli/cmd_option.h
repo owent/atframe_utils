@@ -458,7 +458,7 @@ namespace util {
             inline void start(int argv, char *argc[], bool is_single_cmd = false, void *ext_param = NULL) const {
                 typedef const char *conv_char_t;
 
-                start(argv, (conv_char_t *)argc, is_single_cmd, ext_param);
+                start(argv, const_cast<conv_char_t *>(argc), is_single_cmd, ext_param);
             }
 
             /**
@@ -594,9 +594,10 @@ namespace util {
  */
 #if defined(UTIL_CONFIG_COMPILER_CXX_VARIADIC_TEMPLATES) && UTIL_CONFIG_COMPILER_CXX_VARIADIC_TEMPLATES
             template <typename _F, typename... _Args> // 绑定函数(_Arg:参数[注意值的复制发生在本函数执行时], _R: 绑定函数返回值类型)
-            LIBATFRAME_UTILS_API_HEAD_ONLY std::shared_ptr<binder::cmd_option_bindt<typename binder::maybe_wrap_member_pointer<_F>::caller_type,
-                                                     binder::cmd_option_bind_param_list<_Args...> > >
-            bind_cmd(const std::string &cmd_content, _F raw_fn, _Args... args) {
+            LIBATFRAME_UTILS_API_HEAD_ONLY
+                std::shared_ptr<binder::cmd_option_bindt<typename binder::maybe_wrap_member_pointer<_F>::caller_type,
+                                                         binder::cmd_option_bind_param_list<_Args...> > >
+                bind_cmd(const std::string &cmd_content, _F raw_fn, _Args... args) {
                 typedef binder::cmd_option_bind_param_list<_Args...>                       list_type;
                 typedef typename binder::maybe_wrap_member_pointer<_F>::caller_type        caller_type;
                 typedef std::shared_ptr<binder::cmd_option_bindt<caller_type, list_type> > obj_type;
@@ -632,9 +633,10 @@ namespace util {
             }
 
             template <typename _F, typename _Arg0> // 绑定函数(_Arg:参数[注意值的复制发生在本函数执行时], _R: 绑定函数返回值类型)
-            LIBATFRAME_UTILS_API_HEAD_ONLY std::shared_ptr<binder::cmd_option_bindt<typename binder::maybe_wrap_member_pointer<_F>::caller_type,
-                                                     binder::cmd_option_bind_param_list1<_Arg0> > >
-            bind_cmd(const std::string &cmd_content, _F raw_fn, _Arg0 arg0) {
+            LIBATFRAME_UTILS_API_HEAD_ONLY
+                std::shared_ptr<binder::cmd_option_bindt<typename binder::maybe_wrap_member_pointer<_F>::caller_type,
+                                                         binder::cmd_option_bind_param_list1<_Arg0> > >
+                bind_cmd(const std::string &cmd_content, _F raw_fn, _Arg0 arg0) {
                 typedef binder::cmd_option_bind_param_list1<_Arg0> list_type;
                 typedef typename binder::maybe_wrap_member_pointer<_F>::caller_type caller_type;
                 typedef std::shared_ptr<binder::cmd_option_bindt<caller_type, list_type> > obj_type;
@@ -652,9 +654,10 @@ namespace util {
 
             template <typename _F, typename _Arg0,
                       typename _Arg1> // 绑定函数(_Arg:参数[注意值的复制发生在本函数执行时], _R: 绑定函数返回值类型)
-            LIBATFRAME_UTILS_API_HEAD_ONLY std::shared_ptr<binder::cmd_option_bindt<typename binder::maybe_wrap_member_pointer<_F>::caller_type,
-                                                     binder::cmd_option_bind_param_list2<_Arg0, _Arg1> > >
-            bind_cmd(const std::string &cmd_content, _F raw_fn, _Arg0 arg0, _Arg1 arg1) {
+            LIBATFRAME_UTILS_API_HEAD_ONLY
+                std::shared_ptr<binder::cmd_option_bindt<typename binder::maybe_wrap_member_pointer<_F>::caller_type,
+                                                         binder::cmd_option_bind_param_list2<_Arg0, _Arg1> > >
+                bind_cmd(const std::string &cmd_content, _F raw_fn, _Arg0 arg0, _Arg1 arg1) {
                 typedef binder::cmd_option_bind_param_list2<_Arg0, _Arg1> list_type;
                 typedef typename binder::maybe_wrap_member_pointer<_F>::caller_type caller_type;
                 typedef std::shared_ptr<binder::cmd_option_bindt<caller_type, list_type> > obj_type;
@@ -672,9 +675,10 @@ namespace util {
 
             template <typename _F, typename _Arg0, typename _Arg1,
                       typename _Arg2> // 绑定函数(_Arg:参数[注意值的复制发生在本函数执行时], _R: 绑定函数返回值类型)
-            LIBATFRAME_UTILS_API_HEAD_ONLY std::shared_ptr<binder::cmd_option_bindt<typename binder::maybe_wrap_member_pointer<_F>::caller_type,
-                                                     binder::cmd_option_bind_param_list3<_Arg0, _Arg1, _Arg2> > >
-            bind_cmd(const std::string &cmd_content, _F raw_fn, _Arg0 arg0, _Arg1 arg1, _Arg2 arg2) {
+            LIBATFRAME_UTILS_API_HEAD_ONLY
+                std::shared_ptr<binder::cmd_option_bindt<typename binder::maybe_wrap_member_pointer<_F>::caller_type,
+                                                         binder::cmd_option_bind_param_list3<_Arg0, _Arg1, _Arg2> > >
+                bind_cmd(const std::string &cmd_content, _F raw_fn, _Arg0 arg0, _Arg1 arg1, _Arg2 arg2) {
                 typedef binder::cmd_option_bind_param_list3<_Arg0, _Arg1, _Arg2> list_type;
                 typedef typename binder::maybe_wrap_member_pointer<_F>::caller_type caller_type;
                 typedef std::shared_ptr<binder::cmd_option_bindt<caller_type, list_type> > obj_type;
@@ -693,9 +697,10 @@ namespace util {
 
             template <typename _F, typename _Arg0, typename _Arg1, typename _Arg2,
                       typename _Arg3> // 绑定函数(_Arg:参数[注意值的复制发生在本函数执行时], _R: 绑定函数返回值类型)
-            LIBATFRAME_UTILS_API_HEAD_ONLY std::shared_ptr<binder::cmd_option_bindt<typename binder::maybe_wrap_member_pointer<_F>::caller_type,
-                                                     binder::cmd_option_bind_param_list4<_Arg0, _Arg1, _Arg2, _Arg3> > >
-            bind_cmd(const std::string &cmd_content, _F raw_fn, _Arg0 arg0, _Arg1 arg1, _Arg2 arg2, _Arg3 arg3) {
+            LIBATFRAME_UTILS_API_HEAD_ONLY
+                std::shared_ptr<binder::cmd_option_bindt<typename binder::maybe_wrap_member_pointer<_F>::caller_type,
+                                                         binder::cmd_option_bind_param_list4<_Arg0, _Arg1, _Arg2, _Arg3> > >
+                bind_cmd(const std::string &cmd_content, _F raw_fn, _Arg0 arg0, _Arg1 arg1, _Arg2 arg2, _Arg3 arg3) {
                 typedef binder::cmd_option_bind_param_list4<_Arg0, _Arg1, _Arg2, _Arg3> list_type;
                 typedef typename binder::maybe_wrap_member_pointer<_F>::caller_type caller_type;
                 typedef std::shared_ptr<binder::cmd_option_bindt<caller_type, list_type> > obj_type;
@@ -739,7 +744,7 @@ namespace util {
 #else
                 std::shared_ptr<binder::cmd_option_bind_base> base_node = std::static_pointer_cast<binder::cmd_option_bind_base>(cmd_opt);
 #endif
-                std::vector<std::string>                      cmds      = split_cmd(cmd_content.c_str());
+                std::vector<std::string> cmds = split_cmd(cmd_content.c_str());
                 for (std::vector<std::string>::size_type index = 0; index < cmds.size(); ++index) {
                     TCmdStr cmd_obj             = TCmdStr(cmds[index].c_str(), cmds[index].size());
                     callback_funcs_[cmd_obj]    = base_node;

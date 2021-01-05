@@ -50,7 +50,7 @@ namespace detail {
 #endif
 
     static test_manager_tls_block_t g_global_counter_cache = {0, 0};
-    test_manager_tls_block_t *get_test_manager_tls_block() {
+    test_manager_tls_block_t *      get_test_manager_tls_block() {
         static THREAD_TLS test_manager_tls_block_t ret = g_global_counter_cache;
         return &ret;
     }
@@ -78,7 +78,7 @@ namespace detail {
     }
 
     static test_manager_tls_block_t g_global_counter_cache;
-    test_manager_tls_block_t *get_test_manager_tls_block() {
+    test_manager_tls_block_t *      get_test_manager_tls_block() {
         (void)pthread_once(&gt_test_manager_tls_block_once, init_pthread_test_manager_tls_block);
         test_manager_tls_block_t *block = reinterpret_cast<test_manager_tls_block_t *>(pthread_getspecific(gt_test_manager_tls_block_key));
         if (NULL == block) {
@@ -436,7 +436,7 @@ void test_manager::set_counter_ptr(int *success_counter_ptr, int *failed_counter
         block->failed_counter_ptr  = failed_counter_ptr;
     }
     detail::g_global_counter_cache.success_counter_ptr = success_counter_ptr;
-    detail::g_global_counter_cache.failed_counter_ptr = failed_counter_ptr;
+    detail::g_global_counter_cache.failed_counter_ptr  = failed_counter_ptr;
 }
 
 void test_manager::inc_success_counter() {

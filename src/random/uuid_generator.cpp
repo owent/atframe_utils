@@ -321,11 +321,11 @@ namespace util {
             struct uuid_generator_clock_file_guard_t {
                 int state_fd;
                 FILE* state_f;
-                uuid_generator_clock_file_guard_t(): state_fd(-2), state_f(NULL) {};
+                uuid_generator_clock_file_guard_t(): state_fd(-2), state_f(NULL) {}
                 ~uuid_generator_clock_file_guard_t() {
                     close_file();
                     close_fd();
-                };
+                }
 
                 void close_fd() {
                     if (state_fd >= 0) {
