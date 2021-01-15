@@ -42,7 +42,7 @@ namespace util {
                 /// \endcond
                 seed_type xoshinro_seed_;
 
-                static inline result_type rotl(const result_type x, int k) {
+                static inline result_type rotl(const result_type x, int k) UTIL_CONFIG_NOEXCEPT {
                     return (x << k) | (x >> ((sizeof(result_type) * 8) - static_cast<result_type>(k)));
                 }
 
@@ -51,16 +51,16 @@ namespace util {
 
                 template <class T>
                 struct LIBATFRAME_UTILS_API_HEAD_ONLY next_init<T, true> {
-                    static inline result_type call(seed_type &s) { return s[0] + s[3]; }
+                    static inline result_type call(seed_type &s) UTIL_CONFIG_NOEXCEPT { return s[0] + s[3]; }
                 };
 
                 template <class T>
                 struct LIBATFRAME_UTILS_API_HEAD_ONLY next_init<T, false> {
-                    static inline result_type call(seed_type &s) { return rotl(s[iidx] * 5, 7) * 9; }
+                    static inline result_type call(seed_type &s) UTIL_CONFIG_NOEXCEPT { return rotl(s[iidx] * 5, 7) * 9; }
                 };
 
             protected:
-                result_type next() {
+                result_type next() UTIL_CONFIG_NOEXCEPT {
                     const result_type ret = next_init<UIntType, is_plus>::call(xoshinro_seed_);
                     const result_type t   = xoshinro_seed_[1] << n1;
 
@@ -75,7 +75,7 @@ namespace util {
                     return ret;
                 }
 
-                void jump(const seed_type &JUMP) {
+                void jump(const seed_type &JUMP) UTIL_CONFIG_NOEXCEPT {
                     result_type s0 = 0;
                     result_type s1 = 0;
                     result_type s2 = 0;
@@ -113,7 +113,7 @@ namespace util {
                     init_seed(s);
                 }
 
-                void init_seed(result_type s) {
+                void init_seed(result_type s) UTIL_CONFIG_NOEXCEPT {
                     xoshinro_seed_[0] = s;
                     xoshinro_seed_[1] = 0xff;
                     xoshinro_seed_[2] = 0;
@@ -143,11 +143,31 @@ namespace util {
                     }
                 }
 
-                result_type random() { return next(); }
+                inline size_t block_size() const UTIL_CONFIG_NOEXCEPT { return sizeof(xoshinro_seed_); }
 
-                result_type operator()() { return random(); }
+                inline bool dump(unsigned char *output, size_t size) const UTIL_CONFIG_NOEXCEPT {
+                    if (NULL == output || size < block_size()) {
+                        return false;
+                    }
 
-                inline const seed_type &get_seed() const { return xoshinro_seed_; }
+                    memcpy(output, xoshinro_seed_, sizeof(xoshinro_seed_));
+                    return true;
+                }
+
+                inline bool load(const unsigned char *input, size_t size) UTIL_CONFIG_NOEXCEPT {
+                    if (NULL == input || size < block_size()) {
+                        return false;
+                    }
+
+                    memcpy(xoshinro_seed_, input, sizeof(xoshinro_seed_));
+                    return true;
+                }
+
+                result_type random() UTIL_CONFIG_NOEXCEPT { return next(); }
+
+                result_type operator()() UTIL_CONFIG_NOEXCEPT { return random(); }
+
+                inline const seed_type &get_seed() const UTIL_CONFIG_NOEXCEPT { return xoshinro_seed_; }
             };
 
             template <bool is_plus>
@@ -166,7 +186,7 @@ namespace util {
                 /**
                  * @brief just like call next() for 2^64 times
                  */
-                void jump() {
+                void jump() UTIL_CONFIG_NOEXCEPT {
                     static const result_type jump_params[4] = {0x8764000b, 0xf542d2d3, 0x6fa035c3, 0x77f2db5b};
                     jump(jump_params);
                 }
@@ -188,7 +208,7 @@ namespace util {
                 /**
                  * @brief just like call next() for 2^128 times
                  */
-                void jump() {
+                void jump() UTIL_CONFIG_NOEXCEPT {
                     static const result_type jump_params[4] = {0x180ec6d33cfd0aba, 0xd5a61266f0c9392c, 0xa9582618e03fc9aa,
                                                                0x39abdc4529b1661c};
                     jump(jump_params);
@@ -197,7 +217,7 @@ namespace util {
                 /**
                  * @brief just like call next() for 2^192 times
                  */
-                void long_jump() {
+                void long_jump() UTIL_CONFIG_NOEXCEPT {
                     static const result_type jump_params[4] = {0x76e15d3efefdcbbf, 0xc5004e441c522fb3, 0x77710069854ee241,
                                                                0x39109bb02acbe635};
                     jump(jump_params);

@@ -48,6 +48,37 @@ CASE_TEST(random_test, random_gen_mt19937) {
 
     gen1.shuffle(shuffle_arr.begin(), shuffle_arr.end());
     print_vec(CASE_MSG_INFO() << "random_shuffle => ", shuffle_arr);
+    
+    // Test load/dump
+    {
+        std::vector<unsigned char> buffer;
+        uint64_t first_random[256] = {0};
+        bool check_result = false;
+        CASE_EXPECT_GT(gen1.block_size(), 0);
+        buffer.resize(gen1.block_size());
+        CASE_EXPECT_FALSE(gen1.dump(NULL, buffer.size()));
+        CASE_EXPECT_FALSE(gen1.dump(&buffer[0], buffer.size() - 1));
+        CASE_EXPECT_TRUE(gen1.dump(&buffer[0], buffer.size()));
+
+        for(int i = 0; i < 256; ++ i) {
+            first_random[i] = static_cast<uint64_t>(gen1.random());
+            if (0 != first_random[i]) {
+                check_result = true;
+            }
+        }
+
+        CASE_EXPECT_FALSE(gen1.load(NULL, buffer.size()));
+        CASE_EXPECT_FALSE(gen1.load(&buffer[0], buffer.size() - 1));
+        CASE_EXPECT_TRUE(gen1.load(&buffer[0], buffer.size()));
+
+        for(int i = 0; i < 256; ++ i) {
+            uint64_t second_random = static_cast<uint64_t>(gen1.random());
+            CASE_EXPECT_EQ(first_random[i], second_random);
+            if (first_random[i] != second_random) {
+                break;
+            }
+        }
+    }
 }
 
 CASE_TEST(random_test, random_gen_mt19937_64) {
@@ -68,6 +99,37 @@ CASE_TEST(random_test, random_gen_mt19937_64) {
     }
     gen1.shuffle(shuffle_arr.begin(), shuffle_arr.end());
     print_vec(CASE_MSG_INFO() << "random_shuffle => ", shuffle_arr);
+
+    // Test load/dump
+    {
+        std::vector<unsigned char> buffer;
+        uint64_t first_random[256] = {0};
+        bool check_result = false;
+        CASE_EXPECT_GT(gen1.block_size(), 0);
+        buffer.resize(gen1.block_size());
+        CASE_EXPECT_FALSE(gen1.dump(NULL, buffer.size()));
+        CASE_EXPECT_FALSE(gen1.dump(&buffer[0], buffer.size() - 1));
+        CASE_EXPECT_TRUE(gen1.dump(&buffer[0], buffer.size()));
+
+        for(int i = 0; i < 256; ++ i) {
+            first_random[i] = static_cast<uint64_t>(gen1.random());
+            if (0 != first_random[i]) {
+                check_result = true;
+            }
+        }
+
+        CASE_EXPECT_FALSE(gen1.load(NULL, buffer.size()));
+        CASE_EXPECT_FALSE(gen1.load(&buffer[0], buffer.size() - 1));
+        CASE_EXPECT_TRUE(gen1.load(&buffer[0], buffer.size()));
+
+        for(int i = 0; i < 256; ++ i) {
+            uint64_t second_random = static_cast<uint64_t>(gen1.random());
+            CASE_EXPECT_EQ(first_random[i], second_random);
+            if (first_random[i] != second_random) {
+                break;
+            }
+        }
+    }
 }
 
 CASE_TEST(random_test, random_gen_64_mt11213B) {
@@ -88,6 +150,37 @@ CASE_TEST(random_test, random_gen_64_mt11213B) {
     }
     gen1.shuffle(shuffle_arr.begin(), shuffle_arr.end());
     print_vec(CASE_MSG_INFO() << "random_shuffle => ", shuffle_arr);
+
+    // Test load/dump
+    {
+        std::vector<unsigned char> buffer;
+        uint64_t first_random[256] = {0};
+        bool check_result = false;
+        CASE_EXPECT_GT(gen1.block_size(), 0);
+        buffer.resize(gen1.block_size());
+        CASE_EXPECT_FALSE(gen1.dump(NULL, buffer.size()));
+        CASE_EXPECT_FALSE(gen1.dump(&buffer[0], buffer.size() - 1));
+        CASE_EXPECT_TRUE(gen1.dump(&buffer[0], buffer.size()));
+
+        for(int i = 0; i < 256; ++ i) {
+            first_random[i] = static_cast<uint64_t>(gen1.random());
+            if (0 != first_random[i]) {
+                check_result = true;
+            }
+        }
+
+        CASE_EXPECT_FALSE(gen1.load(NULL, buffer.size()));
+        CASE_EXPECT_FALSE(gen1.load(&buffer[0], buffer.size() - 1));
+        CASE_EXPECT_TRUE(gen1.load(&buffer[0], buffer.size()));
+
+        for(int i = 0; i < 256; ++ i) {
+            uint64_t second_random = static_cast<uint64_t>(gen1.random());
+            CASE_EXPECT_EQ(first_random[i], second_random);
+            if (first_random[i] != second_random) {
+                break;
+            }
+        }
+    }
 }
 
 CASE_TEST(random_test, random_gen_taus88) {
@@ -108,6 +201,37 @@ CASE_TEST(random_test, random_gen_taus88) {
     }
     gen1.shuffle(shuffle_arr.begin(), shuffle_arr.end());
     print_vec(CASE_MSG_INFO() << "random_shuffle => ", shuffle_arr);
+
+    // Test load/dump
+    {
+        std::vector<unsigned char> buffer;
+        uint64_t first_random[256] = {0};
+        bool check_result = false;
+        CASE_EXPECT_GT(gen1.block_size(), 0);
+        buffer.resize(gen1.block_size());
+        CASE_EXPECT_FALSE(gen1.dump(NULL, buffer.size()));
+        CASE_EXPECT_FALSE(gen1.dump(&buffer[0], buffer.size() - 1));
+        CASE_EXPECT_TRUE(gen1.dump(&buffer[0], buffer.size()));
+
+        for(int i = 0; i < 256; ++ i) {
+            first_random[i] = static_cast<uint64_t>(gen1.random());
+            if (0 != first_random[i]) {
+                check_result = true;
+            }
+        }
+
+        CASE_EXPECT_FALSE(gen1.load(NULL, buffer.size()));
+        CASE_EXPECT_FALSE(gen1.load(&buffer[0], buffer.size() - 1));
+        CASE_EXPECT_TRUE(gen1.load(&buffer[0], buffer.size()));
+
+        for(int i = 0; i < 256; ++ i) {
+            uint64_t second_random = static_cast<uint64_t>(gen1.random());
+            CASE_EXPECT_EQ(first_random[i], second_random);
+            if (first_random[i] != second_random) {
+                break;
+            }
+        }
+    }
 }
 
 CASE_TEST(random_test, xoroshiro128_starstar) {
@@ -156,6 +280,37 @@ CASE_TEST(random_test, xoroshiro128_starstar) {
     }
     gen1.shuffle(shuffle_arr.begin(), shuffle_arr.end());
     print_vec(CASE_MSG_INFO() << "random_shuffle => ", shuffle_arr);
+
+    // Test load/dump
+    {
+        std::vector<unsigned char> buffer;
+        uint64_t first_random[256] = {0};
+        bool check_result = false;
+        CASE_EXPECT_GT(gen1.block_size(), 0);
+        buffer.resize(gen1.block_size());
+        CASE_EXPECT_FALSE(gen1.dump(NULL, buffer.size()));
+        CASE_EXPECT_FALSE(gen1.dump(&buffer[0], buffer.size() - 1));
+        CASE_EXPECT_TRUE(gen1.dump(&buffer[0], buffer.size()));
+
+        for(int i = 0; i < 256; ++ i) {
+            first_random[i] = static_cast<uint64_t>(gen1.random());
+            if (0 != first_random[i]) {
+                check_result = true;
+            }
+        }
+
+        CASE_EXPECT_FALSE(gen1.load(NULL, buffer.size()));
+        CASE_EXPECT_FALSE(gen1.load(&buffer[0], buffer.size() - 1));
+        CASE_EXPECT_TRUE(gen1.load(&buffer[0], buffer.size()));
+
+        for(int i = 0; i < 256; ++ i) {
+            uint64_t second_random = static_cast<uint64_t>(gen1.random());
+            CASE_EXPECT_EQ(first_random[i], second_random);
+            if (first_random[i] != second_random) {
+                break;
+            }
+        }
+    }
 }
 
 CASE_TEST(random_test, xoroshiro128_plus) {
@@ -204,6 +359,37 @@ CASE_TEST(random_test, xoroshiro128_plus) {
     }
     gen1.shuffle(shuffle_arr.begin(), shuffle_arr.end());
     print_vec(CASE_MSG_INFO() << "random_shuffle => ", shuffle_arr);
+
+    // Test load/dump
+    {
+        std::vector<unsigned char> buffer;
+        uint64_t first_random[256] = {0};
+        bool check_result = false;
+        CASE_EXPECT_GT(gen1.block_size(), 0);
+        buffer.resize(gen1.block_size());
+        CASE_EXPECT_FALSE(gen1.dump(NULL, buffer.size()));
+        CASE_EXPECT_FALSE(gen1.dump(&buffer[0], buffer.size() - 1));
+        CASE_EXPECT_TRUE(gen1.dump(&buffer[0], buffer.size()));
+
+        for(int i = 0; i < 256; ++ i) {
+            first_random[i] = static_cast<uint64_t>(gen1.random());
+            if (0 != first_random[i]) {
+                check_result = true;
+            }
+        }
+
+        CASE_EXPECT_FALSE(gen1.load(NULL, buffer.size()));
+        CASE_EXPECT_FALSE(gen1.load(&buffer[0], buffer.size() - 1));
+        CASE_EXPECT_TRUE(gen1.load(&buffer[0], buffer.size()));
+
+        for(int i = 0; i < 256; ++ i) {
+            uint64_t second_random = static_cast<uint64_t>(gen1.random());
+            CASE_EXPECT_EQ(first_random[i], second_random);
+            if (first_random[i] != second_random) {
+                break;
+            }
+        }
+    }
 }
 
 
@@ -269,6 +455,37 @@ CASE_TEST(random_test, xoshiro256_starstar) {
     }
     gen1.shuffle(shuffle_arr.begin(), shuffle_arr.end());
     print_vec(CASE_MSG_INFO() << "random_shuffle => ", shuffle_arr);
+
+    // Test load/dump
+    {
+        std::vector<unsigned char> buffer;
+        uint64_t first_random[256] = {0};
+        bool check_result = false;
+        CASE_EXPECT_GT(gen1.block_size(), 0);
+        buffer.resize(gen1.block_size());
+        CASE_EXPECT_FALSE(gen1.dump(NULL, buffer.size()));
+        CASE_EXPECT_FALSE(gen1.dump(&buffer[0], buffer.size() - 1));
+        CASE_EXPECT_TRUE(gen1.dump(&buffer[0], buffer.size()));
+
+        for(int i = 0; i < 256; ++ i) {
+            first_random[i] = static_cast<uint64_t>(gen1.random());
+            if (0 != first_random[i]) {
+                check_result = true;
+            }
+        }
+
+        CASE_EXPECT_FALSE(gen1.load(NULL, buffer.size()));
+        CASE_EXPECT_FALSE(gen1.load(&buffer[0], buffer.size() - 1));
+        CASE_EXPECT_TRUE(gen1.load(&buffer[0], buffer.size()));
+
+        for(int i = 0; i < 256; ++ i) {
+            uint64_t second_random = static_cast<uint64_t>(gen1.random());
+            CASE_EXPECT_EQ(first_random[i], second_random);
+            if (first_random[i] != second_random) {
+                break;
+            }
+        }
+    }
 }
 
 
@@ -334,6 +551,38 @@ CASE_TEST(random_test, xoshiro256_plus) {
     }
     gen1.shuffle(shuffle_arr.begin(), shuffle_arr.end());
     print_vec(CASE_MSG_INFO() << "random_shuffle => ", shuffle_arr);
+
+
+    // Test load/dump
+    {
+        std::vector<unsigned char> buffer;
+        uint64_t first_random[256] = {0};
+        bool check_result = false;
+        CASE_EXPECT_GT(gen1.block_size(), 0);
+        buffer.resize(gen1.block_size());
+        CASE_EXPECT_FALSE(gen1.dump(NULL, buffer.size()));
+        CASE_EXPECT_FALSE(gen1.dump(&buffer[0], buffer.size() - 1));
+        CASE_EXPECT_TRUE(gen1.dump(&buffer[0], buffer.size()));
+
+        for(int i = 0; i < 256; ++ i) {
+            first_random[i] = static_cast<uint64_t>(gen1.random());
+            if (0 != first_random[i]) {
+                check_result = true;
+            }
+        }
+
+        CASE_EXPECT_FALSE(gen1.load(NULL, buffer.size()));
+        CASE_EXPECT_FALSE(gen1.load(&buffer[0], buffer.size() - 1));
+        CASE_EXPECT_TRUE(gen1.load(&buffer[0], buffer.size()));
+
+        for(int i = 0; i < 256; ++ i) {
+            uint64_t second_random = static_cast<uint64_t>(gen1.random());
+            CASE_EXPECT_EQ(first_random[i], second_random);
+            if (first_random[i] != second_random) {
+                break;
+            }
+        }
+    }
 }
 
 CASE_TEST(random_test, uuid_generator) {

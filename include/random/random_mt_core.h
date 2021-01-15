@@ -139,6 +139,28 @@ namespace util {
                     }
                 }
 
+                inline size_t block_size() const UTIL_CONFIG_NOEXCEPT { return sizeof(mt_status) + sizeof(mt_index); }
+
+                inline bool dump(unsigned char *output, size_t size) const UTIL_CONFIG_NOEXCEPT {
+                    if (NULL == output || size < block_size()) {
+                        return false;
+                    }
+
+                    memcpy(output, mt_status, sizeof(mt_status));
+                    memcpy(output + sizeof(mt_status), &mt_index, sizeof(mt_index));
+                    return true;
+                }
+
+                inline bool load(const unsigned char *input, size_t size) UTIL_CONFIG_NOEXCEPT {
+                    if (NULL == input || size < block_size()) {
+                        return false;
+                    }
+
+                    memcpy(mt_status, input, sizeof(mt_status));
+                    memcpy(&mt_index, input + sizeof(mt_status), sizeof(mt_index));
+                    return true;
+                }
+
                 /**
                  * 产生一个随机数
                  * @return 产生的随机数

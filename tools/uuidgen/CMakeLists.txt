@@ -16,6 +16,7 @@ target_compile_options(${BIN_NAME} PRIVATE ${COMPILER_STRICT_EXTRA_CFLAGS} ${COM
 
 if(MSVC)
   set_property(TARGET ${BIN_NAME} PROPERTY FOLDER "atframework/tools")
+  add_target_properties(${BIN_NAME} LINK_FLAGS /NODEFAULTLIB:library)
 endif(MSVC)
 
 add_test(NAME test COMMAND ${BIN_NAME})

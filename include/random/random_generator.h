@@ -19,7 +19,6 @@
 #include <ctime>
 #include <stdint.h>
 
-
 #include <algorithm>
 #include <cstddef>
 #include <limits>
@@ -78,6 +77,28 @@ namespace util {
             void init_seed(result_type rd_seed) { core_.init_seed(rd_seed); }
 
             /**
+             * 获取转储数据块的长度
+             * @return 获取转储数据块的长度
+             */
+            inline size_t block_size() const UTIL_CONFIG_NOEXCEPT { return core_.block_size(); }
+
+            /**
+             * 转储随机数引擎的状态数据，可用于以后恢复
+             * @param [out] output 输出数据地址
+             * @param [in] size 输出数据大小,必须>=block_size()
+             * @return output为空或数据长度错误返回false，其他情况返回true
+             */
+            inline bool dump(unsigned char *output, size_t size) const UTIL_CONFIG_NOEXCEPT { return core_.dump(output, size); }
+
+            /**
+             * 恢复随机数引擎的状态数据
+             * @param [in] input 输入数据地址
+             * @param [in] size 输入数据大小,必须>=block_size()
+             * @return input为空或数据长度错误返回false，其他情况返回true
+             */
+            inline bool load(const unsigned char *input, size_t size) UTIL_CONFIG_NOEXCEPT { return core_.load(input, size); }
+
+            /**
              * 初始化随机数种子
              * @note 取值范围为 [first, last)
              * @param [in] first 随机数种子散列值起始位置
@@ -108,7 +129,7 @@ namespace util {
              * @return 产生的随机数
              */
             template <typename ResultType>
-            LIBATFRAME_UTILS_API_HEAD_ONLY ResultType random_between(ResultType lowest, ResultType highest) {
+            LIBATFRAME_UTILS_API_HEAD_ONLY ResultType random_between(ResultType lowest, ResultType highest) UTIL_CONFIG_NOEXCEPT {
                 if (highest <= lowest) {
                     return lowest;
                 }
@@ -166,9 +187,9 @@ namespace util {
             core::mersenne_twister<uint32_t, 351, 175, 19, 0xccab8ee7, 11, 0xffffffff, 7, 0x31b6ab00, 15, 0xffe50000, 17, 1812433253> >;
         using mt19937 = random_manager_wrapper<
             core::mersenne_twister<uint32_t, 624, 397, 31, 0x9908b0df, 11, 0xffffffff, 7, 0x9d2c5680, 15, 0xefc60000, 18, 1812433253> >;
-        using mt19937_64 = random_manager_wrapper<
-            core::mersenne_twister<uint64_t, 312, 156, 31, 0xb5026f5aa96619e9ULL, 29, 0x5555555555555555ULL, 17, 0x71d67fffeda60000ULL, 37,
-                                   0xfff7eee000000000ULL, 43, 6364136223846793005ULL> >;
+        using mt19937_64 =
+            random_manager_wrapper<core::mersenne_twister<uint64_t, 312, 156, 31, 0xb5026f5aa96619e9ULL, 29, 0x5555555555555555ULL, 17,
+                                                          0x71d67fffeda60000ULL, 37, 0xfff7eee000000000ULL, 43, 6364136223846793005ULL> >;
 #endif
         // ============== 随机数生成器 - taus 算法(比梅森旋转算法消耗更少的内存，但是循环节更小) ==============
 #if defined(UTIL_CONFIG_COMPILER_CXX_ALIAS_TEMPLATES) && UTIL_CONFIG_COMPILER_CXX_ALIAS_TEMPLATES
