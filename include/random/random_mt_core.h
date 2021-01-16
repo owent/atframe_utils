@@ -19,6 +19,9 @@
 
 #pragma once
 
+#include <memory>
+#include <cstring>
+
 #include <config/atframe_utils_build_feature.h>
 
 namespace util {
