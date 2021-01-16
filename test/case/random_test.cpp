@@ -70,6 +70,7 @@ CASE_TEST(random_test, random_gen_mt19937) {
         CASE_EXPECT_FALSE(gen1.load(NULL, buffer.size()));
         CASE_EXPECT_FALSE(gen1.load(&buffer[0], buffer.size() - 1));
         CASE_EXPECT_TRUE(gen1.load(&buffer[0], buffer.size()));
+        CASE_EXPECT_TRUE(check_result);
 
         for(int i = 0; i < 256; ++ i) {
             uint64_t second_random = static_cast<uint64_t>(gen1.random());
@@ -121,6 +122,7 @@ CASE_TEST(random_test, random_gen_mt19937_64) {
         CASE_EXPECT_FALSE(gen1.load(NULL, buffer.size()));
         CASE_EXPECT_FALSE(gen1.load(&buffer[0], buffer.size() - 1));
         CASE_EXPECT_TRUE(gen1.load(&buffer[0], buffer.size()));
+        CASE_EXPECT_TRUE(check_result);
 
         for(int i = 0; i < 256; ++ i) {
             uint64_t second_random = static_cast<uint64_t>(gen1.random());
@@ -172,6 +174,7 @@ CASE_TEST(random_test, random_gen_64_mt11213B) {
         CASE_EXPECT_FALSE(gen1.load(NULL, buffer.size()));
         CASE_EXPECT_FALSE(gen1.load(&buffer[0], buffer.size() - 1));
         CASE_EXPECT_TRUE(gen1.load(&buffer[0], buffer.size()));
+        CASE_EXPECT_TRUE(check_result);
 
         for(int i = 0; i < 256; ++ i) {
             uint64_t second_random = static_cast<uint64_t>(gen1.random());
@@ -223,6 +226,7 @@ CASE_TEST(random_test, random_gen_taus88) {
         CASE_EXPECT_FALSE(gen1.load(NULL, buffer.size()));
         CASE_EXPECT_FALSE(gen1.load(&buffer[0], buffer.size() - 1));
         CASE_EXPECT_TRUE(gen1.load(&buffer[0], buffer.size()));
+        CASE_EXPECT_TRUE(check_result);
 
         for(int i = 0; i < 256; ++ i) {
             uint64_t second_random = static_cast<uint64_t>(gen1.random());
@@ -302,6 +306,7 @@ CASE_TEST(random_test, xoroshiro128_starstar) {
         CASE_EXPECT_FALSE(gen1.load(NULL, buffer.size()));
         CASE_EXPECT_FALSE(gen1.load(&buffer[0], buffer.size() - 1));
         CASE_EXPECT_TRUE(gen1.load(&buffer[0], buffer.size()));
+        CASE_EXPECT_TRUE(check_result);
 
         for(int i = 0; i < 256; ++ i) {
             uint64_t second_random = static_cast<uint64_t>(gen1.random());
@@ -381,6 +386,7 @@ CASE_TEST(random_test, xoroshiro128_plus) {
         CASE_EXPECT_FALSE(gen1.load(NULL, buffer.size()));
         CASE_EXPECT_FALSE(gen1.load(&buffer[0], buffer.size() - 1));
         CASE_EXPECT_TRUE(gen1.load(&buffer[0], buffer.size()));
+        CASE_EXPECT_TRUE(check_result);
 
         for(int i = 0; i < 256; ++ i) {
             uint64_t second_random = static_cast<uint64_t>(gen1.random());
@@ -477,6 +483,7 @@ CASE_TEST(random_test, xoshiro256_starstar) {
         CASE_EXPECT_FALSE(gen1.load(NULL, buffer.size()));
         CASE_EXPECT_FALSE(gen1.load(&buffer[0], buffer.size() - 1));
         CASE_EXPECT_TRUE(gen1.load(&buffer[0], buffer.size()));
+        CASE_EXPECT_TRUE(check_result);
 
         for(int i = 0; i < 256; ++ i) {
             uint64_t second_random = static_cast<uint64_t>(gen1.random());
@@ -574,6 +581,7 @@ CASE_TEST(random_test, xoshiro256_plus) {
         CASE_EXPECT_FALSE(gen1.load(NULL, buffer.size()));
         CASE_EXPECT_FALSE(gen1.load(&buffer[0], buffer.size() - 1));
         CASE_EXPECT_TRUE(gen1.load(&buffer[0], buffer.size()));
+        CASE_EXPECT_TRUE(check_result);
 
         for(int i = 0; i < 256; ++ i) {
             uint64_t second_random = static_cast<uint64_t>(gen1.random());
