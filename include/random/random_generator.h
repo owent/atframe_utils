@@ -208,19 +208,19 @@ namespace util {
         // ============== 随机数生成器 - xoshiro 算法(比梅森旋转算法消耗更少的内存，但是循环节更小，随机性比taus好) ==============
         // @see http://xoshiro.di.unimi.it
 #if defined(UTIL_CONFIG_COMPILER_CXX_ALIAS_TEMPLATES) && UTIL_CONFIG_COMPILER_CXX_ALIAS_TEMPLATES
-        using xoroshiro128_starstar = random_manager_wrapper<core::xoshinro_engine_128<false> >;
-        using xoroshiro128_plus     = random_manager_wrapper<core::xoshinro_engine_128<true> >;
-        using xoshiro256_starstar   = random_manager_wrapper<core::xoshinro_engine_256<false> >;
-        using xoshiro256_plus       = random_manager_wrapper<core::xoshinro_engine_256<true> >;
+        using xoroshiro128_starstar = random_manager_wrapper<core::xoshiro_engine_128<false> >;
+        using xoroshiro128_plus     = random_manager_wrapper<core::xoshiro_engine_128<true> >;
+        using xoshiro256_starstar   = random_manager_wrapper<core::xoshiro_engine_256<false> >;
+        using xoshiro256_plus       = random_manager_wrapper<core::xoshiro_engine_256<true> >;
 #else
         // 循环节： 2^128 − 1
-        typedef random_manager_wrapper<core::xoshinro_engine_128<false> > xoroshiro128_starstar;
+        typedef random_manager_wrapper<core::xoshiro_engine_128<false> > xoroshiro128_starstar;
         // 循环节： 2^128 − 1，少一次旋转，更快一点点
-        typedef random_manager_wrapper<core::xoshinro_engine_128<true> > xoroshiro128_plus;
+        typedef random_manager_wrapper<core::xoshiro_engine_128<true> > xoroshiro128_plus;
         // 循环节： 2^256 − 1
-        typedef random_manager_wrapper<core::xoshinro_engine_256<false> > xoshiro256_starstar;
+        typedef random_manager_wrapper<core::xoshiro_engine_256<false> > xoshiro256_starstar;
         // 循环节： 2^256 − 1，少一次旋转，更快一点点
-        typedef random_manager_wrapper<core::xoshinro_engine_256<true> > xoshiro256_plus;
+        typedef random_manager_wrapper<core::xoshiro_engine_256<true> > xoshiro256_plus;
 #endif
     } // namespace random
 } // namespace util

@@ -10,6 +10,7 @@
  * @date 2018年09月30日
  *
  * @history
+ *  2021-01-20: 修正拼写错误
  *
  */
 
@@ -36,14 +37,14 @@ namespace util {
              * @note not support for xoroshiro64** 、xoroshiro64*、xoroshiro512** 、xoroshiro512*、xoroshiro1024** 、xoroshiro1024*
              */
             template <class UIntType, bool is_plus, int iidx, int n1, int n2>
-            class LIBATFRAME_UTILS_API_HEAD_ONLY xoshinro_engine {
+            class LIBATFRAME_UTILS_API_HEAD_ONLY xoshiro_engine {
             public:
                 typedef UIntType    result_type;
                 typedef result_type seed_type[4];
 
             private:
                 /// \endcond
-                seed_type xoshinro_seed_;
+                seed_type xoshiro_seed_;
 
                 static inline result_type rotl(const result_type x, int k) UTIL_CONFIG_NOEXCEPT {
                     return (x << k) | (x >> ((sizeof(result_type) * 8) - static_cast<result_type>(k)));
@@ -64,16 +65,16 @@ namespace util {
 
             protected:
                 result_type next() UTIL_CONFIG_NOEXCEPT {
-                    const result_type ret = next_init<UIntType, is_plus>::call(xoshinro_seed_);
-                    const result_type t   = xoshinro_seed_[1] << n1;
+                    const result_type ret = next_init<UIntType, is_plus>::call(xoshiro_seed_);
+                    const result_type t   = xoshiro_seed_[1] << n1;
 
-                    xoshinro_seed_[2] ^= xoshinro_seed_[0];
-                    xoshinro_seed_[3] ^= xoshinro_seed_[1];
-                    xoshinro_seed_[1] ^= xoshinro_seed_[2];
-                    xoshinro_seed_[0] ^= xoshinro_seed_[3];
+                    xoshiro_seed_[2] ^= xoshiro_seed_[0];
+                    xoshiro_seed_[3] ^= xoshiro_seed_[1];
+                    xoshiro_seed_[1] ^= xoshiro_seed_[2];
+                    xoshiro_seed_[0] ^= xoshiro_seed_[3];
 
-                    xoshinro_seed_[2] ^= t;
-                    xoshinro_seed_[3] = rotl(xoshinro_seed_[3], n2);
+                    xoshiro_seed_[2] ^= t;
+                    xoshiro_seed_[3] = rotl(xoshiro_seed_[3], n2);
 
                     return ret;
                 }
@@ -86,41 +87,41 @@ namespace util {
                     for (size_t i = 0; i < sizeof(JUMP) / sizeof(JUMP[0]); i++) {
                         for (size_t b = 0; b < sizeof(result_type) * 8; b++) {
                             if (JUMP[i] & result_type(1) << b) {
-                                s0 ^= xoshinro_seed_[0];
-                                s1 ^= xoshinro_seed_[1];
-                                s2 ^= xoshinro_seed_[2];
-                                s3 ^= xoshinro_seed_[3];
+                                s0 ^= xoshiro_seed_[0];
+                                s1 ^= xoshiro_seed_[1];
+                                s2 ^= xoshiro_seed_[2];
+                                s3 ^= xoshiro_seed_[3];
                             }
                             next();
                         }
                     }
 
-                    xoshinro_seed_[0] = s0;
-                    xoshinro_seed_[1] = s1;
-                    xoshinro_seed_[2] = s2;
-                    xoshinro_seed_[3] = s3;
+                    xoshiro_seed_[0] = s0;
+                    xoshiro_seed_[1] = s1;
+                    xoshiro_seed_[2] = s2;
+                    xoshiro_seed_[3] = s3;
                 }
 
             public:
-                xoshinro_engine() {
-                    xoshinro_seed_[0] = 0;
-                    xoshinro_seed_[1] = 0;
-                    xoshinro_seed_[2] = 0;
-                    xoshinro_seed_[3] = 0;
+                xoshiro_engine() {
+                    xoshiro_seed_[0] = 0;
+                    xoshiro_seed_[1] = 0;
+                    xoshiro_seed_[2] = 0;
+                    xoshiro_seed_[3] = 0;
                 }
-                xoshinro_engine(result_type s) {
-                    xoshinro_seed_[0] = 0;
-                    xoshinro_seed_[1] = 0;
-                    xoshinro_seed_[2] = 0;
-                    xoshinro_seed_[3] = 0;
+                xoshiro_engine(result_type s) {
+                    xoshiro_seed_[0] = 0;
+                    xoshiro_seed_[1] = 0;
+                    xoshiro_seed_[2] = 0;
+                    xoshiro_seed_[3] = 0;
                     init_seed(s);
                 }
 
                 void init_seed(result_type s) UTIL_CONFIG_NOEXCEPT {
-                    xoshinro_seed_[0] = s;
-                    xoshinro_seed_[1] = 0xff;
-                    xoshinro_seed_[2] = 0;
-                    xoshinro_seed_[3] = 0;
+                    xoshiro_seed_[0] = s;
+                    xoshiro_seed_[1] = 0xff;
+                    xoshiro_seed_[2] = 0;
+                    xoshiro_seed_[3] = 0;
 
                     // just like in lua 5.4
                     for (int i = 0; i < 16; ++i) {
@@ -133,10 +134,10 @@ namespace util {
                     It begin = first;
                     for (int i = 0; i < 4; ++i) {
                         if (begin != last) {
-                            xoshinro_seed_[i] = *begin;
+                            xoshiro_seed_[i] = *begin;
                             ++begin;
                         } else {
-                            xoshinro_seed_[i] = 0;
+                            xoshiro_seed_[i] = 0;
                         }
                     }
 
@@ -146,14 +147,14 @@ namespace util {
                     }
                 }
 
-                inline size_t block_size() const UTIL_CONFIG_NOEXCEPT { return sizeof(xoshinro_seed_); }
+                inline size_t block_size() const UTIL_CONFIG_NOEXCEPT { return sizeof(xoshiro_seed_); }
 
                 inline bool dump(unsigned char *output, size_t size) const UTIL_CONFIG_NOEXCEPT {
                     if (NULL == output || size < block_size()) {
                         return false;
                     }
 
-                    memcpy(output, xoshinro_seed_, sizeof(xoshinro_seed_));
+                    memcpy(output, xoshiro_seed_, sizeof(xoshiro_seed_));
                     return true;
                 }
 
@@ -162,7 +163,7 @@ namespace util {
                         return false;
                     }
 
-                    memcpy(xoshinro_seed_, input, sizeof(xoshinro_seed_));
+                    memcpy(xoshiro_seed_, input, sizeof(xoshiro_seed_));
                     return true;
                 }
 
@@ -170,19 +171,19 @@ namespace util {
 
                 result_type operator()() UTIL_CONFIG_NOEXCEPT { return random(); }
 
-                inline const seed_type &get_seed() const UTIL_CONFIG_NOEXCEPT { return xoshinro_seed_; }
+                inline const seed_type &get_seed() const UTIL_CONFIG_NOEXCEPT { return xoshiro_seed_; }
             };
 
             template <bool is_plus>
-            class LIBATFRAME_UTILS_API_HEAD_ONLY xoshinro_engine_128 : public xoshinro_engine<uint32_t, is_plus, 0, 9, 11> {
+            class LIBATFRAME_UTILS_API_HEAD_ONLY xoshiro_engine_128 : public xoshiro_engine<uint32_t, is_plus, 0, 9, 11> {
             public:
-                typedef xoshinro_engine<uint32_t, is_plus, 0, 9, 11> base_type;
+                typedef xoshiro_engine<uint32_t, is_plus, 0, 9, 11> base_type;
                 typedef typename base_type::result_type              result_type;
                 typedef typename base_type::seed_type                seed_type;
 
             public:
-                xoshinro_engine_128() {}
-                xoshinro_engine_128(result_type s) : base_type(s) {}
+                xoshiro_engine_128() {}
+                xoshiro_engine_128(result_type s) : base_type(s) {}
 
                 using base_type::jump;
 
@@ -196,15 +197,15 @@ namespace util {
             };
 
             template <bool is_plus>
-            class LIBATFRAME_UTILS_API_HEAD_ONLY xoshinro_engine_256 : public xoshinro_engine<uint64_t, is_plus, 1, 17, 45> {
+            class LIBATFRAME_UTILS_API_HEAD_ONLY xoshiro_engine_256 : public xoshiro_engine<uint64_t, is_plus, 1, 17, 45> {
             public:
-                typedef xoshinro_engine<uint64_t, is_plus, 1, 17, 45> base_type;
+                typedef xoshiro_engine<uint64_t, is_plus, 1, 17, 45> base_type;
                 typedef typename base_type::result_type               result_type;
                 typedef typename base_type::seed_type                 seed_type;
 
             public:
-                xoshinro_engine_256() {}
-                xoshinro_engine_256(result_type s) : base_type(s) {}
+                xoshiro_engine_256() {}
+                xoshiro_engine_256(result_type s) : base_type(s) {}
 
                 using base_type::jump;
 

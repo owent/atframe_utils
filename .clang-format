@@ -7,6 +7,7 @@ AlignConsecutiveDeclarations: true
 AllowAllParametersOfDeclarationOnNextLine: false
 AllowShortIfStatementsOnASingleLine: true
 AlwaysBreakTemplateDeclarations: true
+SpacesBeforeTrailingComments: 2
 ColumnLimit: 140
 CommentPragmas: ''
 IndentWidth: 4
