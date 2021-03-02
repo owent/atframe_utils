@@ -178,7 +178,7 @@ namespace util {
             sz = sz ? sz : strlen(uri);
             return _decode_uri(uri, sz, true);
         }
-    } // namespace uri
+    }  // namespace uri
 
     namespace types {
         LIBATFRAME_UTILS_API item_impl::~item_impl() {}
@@ -284,7 +284,7 @@ namespace util {
                 for (index = 0; index < data_.size(); ++index) {
                     ret = data_[index]->encode(output, new_prefix.c_str()) && ret;
                 }
-            } else // 带下标编码
+            } else  // 带下标编码
             {
                 for (index = 0; index < data_.size(); ++index) {
                     new_prefix = pre_prefix + '[' + uri::any_to_query_string(index) + ']';
@@ -342,6 +342,10 @@ namespace util {
         }
 
         LIBATFRAME_UTILS_API bool item_object::parse(const std::vector<std::string> &keys, size_t index, const std::string &value) {
+            if (index >= keys.size()) {
+                return false;
+            }
+
             data_iterator iter = data_.find(keys[index]);
             if (iter == data_.end()) {
                 types::item_impl::ptr_type ptr;
@@ -389,7 +393,9 @@ namespace util {
             return ret;
         }
 
-        LIBATFRAME_UTILS_API const LIBATFRAME_UTILS_AUTO_SELETC_MAP(std::string, std::shared_ptr<item_impl>) &item_object::data() const { return data_; }
+        LIBATFRAME_UTILS_API const LIBATFRAME_UTILS_AUTO_SELETC_MAP(std::string, std::shared_ptr<item_impl>) & item_object::data() const {
+            return data_;
+        }
 
         LIBATFRAME_UTILS_API std::shared_ptr<item_impl> item_object::get(const std::string &key) {
             data_iterator iter = data_.find(key);
@@ -418,7 +424,7 @@ namespace util {
 
         LIBATFRAME_UTILS_API void item_object::clear() { data_.clear(); };
 
-    } // namespace types
+    }  // namespace types
 
     LIBATFRAME_UTILS_API tquerystring::tquerystring() : spliter_("?#&") {}
 
@@ -452,12 +458,12 @@ namespace util {
         sz         = sz ? sz : strlen(content);
 
         for (size_t i = 0; i < spliter_.size(); ++i) {
-            decl_map[static_cast<int>(spliter_[i])] = true;
+            decl_map[static_cast<unsigned char>(spliter_[i])] = true;
         }
 
         while (sz) {
             for (is_decl = 0, len = 0; len < sz; ++len) {
-                if (decl_map[static_cast<int>(*(content + len))]) {
+                if (decl_map[static_cast<unsigned char>(*(content + len))]) {
                     is_decl = 1;
                     break;
                 }
@@ -512,9 +518,10 @@ namespace util {
 
         if (seg.size() > 0) {
             keys.push_back(seg);
+            return parse(keys, 0, value);
+        } else {
+            return false;
         }
-
-        return parse(keys, 0, value);
     }
 
     LIBATFRAME_UTILS_API bool tquerystring::encode(std::string &output, const char *) const {
@@ -544,4 +551,4 @@ namespace util {
     LIBATFRAME_UTILS_API types::item_array::ptr_type tquerystring::create_array() { return types::item_array::create(); };
 
     LIBATFRAME_UTILS_API types::item_object::ptr_type tquerystring::create_object() { return types::item_object::create(); };
-} // namespace util
+}  // namespace util
