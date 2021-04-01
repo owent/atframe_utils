@@ -83,12 +83,15 @@ set(PROJECT_BUILD_TOOLS_CMAKE_INHERIT_VARS_COMMON
     CMAKE_MSVC_RUNTIME_LIBRARY)
 
 if(NOT CMAKE_SYSTEM_NAME STREQUAL CMAKE_HOST_SYSTEM_NAME)
-  # Set CMAKE_SYSTEM_NAME will cause cmake to set CMAKE_CROSSCOMPILING to TRUE, so we don't set it when not crosscompiling
-  list(APPEND PROJECT_BUILD_TOOLS_CMAKE_INHERIT_VARS_COMMON CMAKE_SYSTEM_NAME CMAKE_SYSTEM_PROCESSOR CMAKE_SYSTEM_VERSION)
+  # Set CMAKE_SYSTEM_NAME will cause cmake to set CMAKE_CROSSCOMPILING to TRUE, so we don't set it
+  # when not crosscompiling
+  list(APPEND PROJECT_BUILD_TOOLS_CMAKE_INHERIT_VARS_COMMON CMAKE_SYSTEM_NAME
+       CMAKE_SYSTEM_PROCESSOR CMAKE_SYSTEM_VERSION)
 endif()
 
-set(PROJECT_BUILD_TOOLS_CMAKE_INHERIT_VARS ${PROJECT_BUILD_TOOLS_CMAKE_INHERIT_VARS_COMMON} ${PROJECT_BUILD_TOOLS_CMAKE_INHERIT_VARS_C}
-                                           ${PROJECT_BUILD_TOOLS_CMAKE_INHERIT_VARS_CXX} ${PROJECT_BUILD_TOOLS_CMAKE_INHERIT_VARS_ASM})
+set(PROJECT_BUILD_TOOLS_CMAKE_INHERIT_VARS
+    ${PROJECT_BUILD_TOOLS_CMAKE_INHERIT_VARS_COMMON} ${PROJECT_BUILD_TOOLS_CMAKE_INHERIT_VARS_C}
+    ${PROJECT_BUILD_TOOLS_CMAKE_INHERIT_VARS_CXX} ${PROJECT_BUILD_TOOLS_CMAKE_INHERIT_VARS_ASM})
 
 macro(project_build_tools_append_cmake_inherit_options OUTVAR)
   list(APPEND ${ARGV0} "-G" "${CMAKE_GENERATOR}")
@@ -96,7 +99,8 @@ macro(project_build_tools_append_cmake_inherit_options OUTVAR)
   set(project_build_tools_append_cmake_inherit_options_DISABLE_C_FLAGS FALSE)
   set(project_build_tools_append_cmake_inherit_options_DISABLE_CXX_FLAGS FALSE)
   set(project_build_tools_append_cmake_inherit_options_DISABLE_ASM_FLAGS FALSE)
-  set(project_build_tools_append_cmake_inherit_options_VARS PROJECT_BUILD_TOOLS_CMAKE_INHERIT_VARS_COMMON)
+  set(project_build_tools_append_cmake_inherit_options_VARS
+      PROJECT_BUILD_TOOLS_CMAKE_INHERIT_VARS_COMMON)
   foreach(ARG ${ARGN})
     if("${ARG}" STREQUAL "DISABLE_C_FLAGS")
       set(project_build_tools_append_cmake_inherit_options_DISABLE_C_FLAGS TRUE)
@@ -110,13 +114,16 @@ macro(project_build_tools_append_cmake_inherit_options OUTVAR)
   endforeach()
 
   if(NOT project_build_tools_append_cmake_inherit_options_DISABLE_C_FLAGS)
-    list(APPEND project_build_tools_append_cmake_inherit_options_VARS PROJECT_BUILD_TOOLS_CMAKE_INHERIT_VARS_C)
+    list(APPEND project_build_tools_append_cmake_inherit_options_VARS
+         PROJECT_BUILD_TOOLS_CMAKE_INHERIT_VARS_C)
   endif()
   if(NOT project_build_tools_append_cmake_inherit_options_DISABLE_CXX_FLAGS)
-    list(APPEND project_build_tools_append_cmake_inherit_options_VARS PROJECT_BUILD_TOOLS_CMAKE_INHERIT_VARS_CXX)
+    list(APPEND project_build_tools_append_cmake_inherit_options_VARS
+         PROJECT_BUILD_TOOLS_CMAKE_INHERIT_VARS_CXX)
   endif()
   if(NOT project_build_tools_append_cmake_inherit_options_DISABLE_ASM_FLAGS)
-    list(APPEND project_build_tools_append_cmake_inherit_options_VARS PROJECT_BUILD_TOOLS_CMAKE_INHERIT_VARS_ASM)
+    list(APPEND project_build_tools_append_cmake_inherit_options_VARS
+         PROJECT_BUILD_TOOLS_CMAKE_INHERIT_VARS_ASM)
   endif()
 
   foreach(VAR_NAME IN LISTS ${project_build_tools_append_cmake_inherit_options_VARS})
@@ -137,6 +144,18 @@ macro(project_build_tools_append_cmake_inherit_options OUTVAR)
   if(CMAKE_GENERATOR_TOOLSET)
     list(APPEND ${ARGV0} "-T" "${CMAKE_GENERATOR_TOOLSET}")
   endif()
+
+  # Policy
+  unset(project_build_tools_append_cmake_inherit_options_POLICY_VALUE)
+  cmake_policy(GET CMP0091 project_build_tools_append_cmake_inherit_options_POLICY_VALUE)
+  if(project_build_tools_append_cmake_inherit_options_POLICY_VALUE)
+    list(
+      APPEND
+      ${ARGV0}
+      "-DCMAKE_POLICY_DEFAULT_CMP0091=${project_build_tools_append_cmake_inherit_options_POLICY_VALUE}"
+    )
+  endif()
+  unset(project_build_tools_append_cmake_inherit_options_POLICY_VALUE)
 
   unset(project_build_tools_append_cmake_inherit_options_DISABLE_C_FLAGS)
   unset(project_build_tools_append_cmake_inherit_options_DISABLE_CXX_FLAGS)
@@ -172,16 +191,23 @@ macro(project_build_tools_append_cmake_cxx_standard_options)
     endif()
   endforeach()
   if(CMAKE_C_STANDARD AND NOT project_build_tools_append_cmake_cxx_standard_options_DISABLE_C_FLAGS)
-    list(APPEND ${project_build_tools_append_cmake_cxx_standard_options_OUTVAR} "-DCMAKE_C_STANDARD=${CMAKE_C_STANDARD}")
+    list(APPEND ${project_build_tools_append_cmake_cxx_standard_options_OUTVAR}
+         "-DCMAKE_C_STANDARD=${CMAKE_C_STANDARD}")
   endif()
-  if(CMAKE_OBJC_STANDARD AND NOT project_build_tools_append_cmake_cxx_standard_options_DISABLE_C_FLAGS)
-    list(APPEND ${project_build_tools_append_cmake_cxx_standard_options_OUTVAR} "-DCMAKE_OBJC_STANDARD=${CMAKE_OBJC_STANDARD}")
+  if(CMAKE_OBJC_STANDARD AND NOT
+                             project_build_tools_append_cmake_cxx_standard_options_DISABLE_C_FLAGS)
+    list(APPEND ${project_build_tools_append_cmake_cxx_standard_options_OUTVAR}
+         "-DCMAKE_OBJC_STANDARD=${CMAKE_OBJC_STANDARD}")
   endif()
-  if(CMAKE_CXX_STANDARD AND NOT project_build_tools_append_cmake_cxx_standard_options_DISABLE_CXX_FLAGS)
-    list(APPEND ${project_build_tools_append_cmake_cxx_standard_options_OUTVAR} "-DCMAKE_CXX_STANDARD=${CMAKE_CXX_STANDARD}")
+  if(CMAKE_CXX_STANDARD AND NOT
+                            project_build_tools_append_cmake_cxx_standard_options_DISABLE_CXX_FLAGS)
+    list(APPEND ${project_build_tools_append_cmake_cxx_standard_options_OUTVAR}
+         "-DCMAKE_CXX_STANDARD=${CMAKE_CXX_STANDARD}")
   endif()
-  if(CMAKE_OBJCXX_STANDARD AND NOT project_build_tools_append_cmake_cxx_standard_options_DISABLE_CXX_FLAGS)
-    list(APPEND ${project_build_tools_append_cmake_cxx_standard_options_OUTVAR} "-DCMAKE_OBJCXX_STANDARD=${CMAKE_OBJCXX_STANDARD}")
+  if(CMAKE_OBJCXX_STANDARD
+     AND NOT project_build_tools_append_cmake_cxx_standard_options_DISABLE_CXX_FLAGS)
+    list(APPEND ${project_build_tools_append_cmake_cxx_standard_options_OUTVAR}
+         "-DCMAKE_OBJCXX_STANDARD=${CMAKE_OBJCXX_STANDARD}")
   endif()
 
   unset(project_build_tools_append_cmake_cxx_standard_options_OUTVAR)
@@ -235,7 +261,8 @@ macro(project_expand_list_for_command_line OUTPUT INPUT)
     else()
       if(project_expand_list_for_command_line_ENABLE_CONVERT)
         string(REPLACE "\\" "\\\\" project_expand_list_for_command_line_OUT_VAR ${ARG})
-        string(REPLACE "\"" "\\\"" project_expand_list_for_command_line_OUT_VAR ${project_expand_list_for_command_line_OUT_VAR})
+        string(REPLACE "\"" "\\\"" project_expand_list_for_command_line_OUT_VAR
+                       ${project_expand_list_for_command_line_OUT_VAR})
       else()
         set(project_expand_list_for_command_line_OUT_VAR ${ARG})
       endif()
@@ -260,23 +287,28 @@ function(project_expand_list_for_command_line_to_file)
     else()
       if(project_expand_list_for_command_line_to_file_ENABLE_CONVERT)
         string(REPLACE "\\" "\\\\" project_expand_list_for_command_line_OUT_VAR ${ARG})
-        string(REPLACE "\"" "\\\"" project_expand_list_for_command_line_OUT_VAR ${project_expand_list_for_command_line_OUT_VAR})
+        string(REPLACE "\"" "\\\"" project_expand_list_for_command_line_OUT_VAR
+                       ${project_expand_list_for_command_line_OUT_VAR})
       else()
         set(project_expand_list_for_command_line_OUT_VAR ${ARG})
       endif()
       if(project_expand_list_for_command_line_to_file_LINE)
         set(project_expand_list_for_command_line_to_file_LINE
-            "${project_expand_list_for_command_line_to_file_LINE} \"${project_expand_list_for_command_line_OUT_VAR}\"")
+            "${project_expand_list_for_command_line_to_file_LINE} \"${project_expand_list_for_command_line_OUT_VAR}\""
+        )
       else()
-        set(project_expand_list_for_command_line_to_file_LINE "\"${project_expand_list_for_command_line_OUT_VAR}\"")
+        set(project_expand_list_for_command_line_to_file_LINE
+            "\"${project_expand_list_for_command_line_OUT_VAR}\"")
       endif()
       unset(project_expand_list_for_command_line_OUT_VAR)
     endif()
   endforeach()
 
   if(project_expand_list_for_command_line_to_file_OUTPUT)
-    file(APPEND "${project_expand_list_for_command_line_to_file_OUTPUT}"
-         "${project_expand_list_for_command_line_to_file_LINE}${PROJECT_THIRD_PARTY_BUILDTOOLS_BASH_EOL}")
+    file(
+      APPEND "${project_expand_list_for_command_line_to_file_OUTPUT}"
+      "${project_expand_list_for_command_line_to_file_LINE}${PROJECT_THIRD_PARTY_BUILDTOOLS_BASH_EOL}"
+    )
   endif()
   unset(project_expand_list_for_command_line_to_file_OUTPUT)
   unset(project_expand_list_for_command_line_to_file_LINE)
@@ -317,7 +349,8 @@ function(project_git_clone_3rd_party)
     message(FATAL_ERROR "REPO_DIRECTORY is required")
   endif()
   if(NOT project_git_clone_3rd_party_WORKING_DIRECTORY)
-    get_filename_component(project_git_clone_3rd_party_WORKING_DIRECTORY ${project_git_clone_3rd_party_REPO_DIRECTORY} DIRECTORY)
+    get_filename_component(project_git_clone_3rd_party_WORKING_DIRECTORY
+                           ${project_git_clone_3rd_party_REPO_DIRECTORY} DIRECTORY)
   endif()
   if(NOT project_git_clone_3rd_party_CHECK_PATH)
     set(project_git_clone_3rd_party_CHECK_PATH ".git")
@@ -345,7 +378,8 @@ function(project_git_clone_3rd_party)
     list(APPEND project_git_clone_3rd_party_EXECUTE_PROCESS_FLAGS COMMAND_ECHO STDOUT)
   endif()
   if(CMAKE_VERSION VERSION_GREATER_EQUAL "3.18")
-    list(APPEND project_git_clone_3rd_party_EXECUTE_PROCESS_FLAGS ECHO_OUTPUT_VARIABLE ECHO_ERROR_VARIABLE)
+    list(APPEND project_git_clone_3rd_party_EXECUTE_PROCESS_FLAGS ECHO_OUTPUT_VARIABLE
+         ECHO_ERROR_VARIABLE)
   endif()
 
   if(PROJECT_RESET_DENPEND_REPOSITORIES AND EXISTS ${project_git_clone_3rd_party_REPO_DIRECTORY})
@@ -360,21 +394,27 @@ function(project_git_clone_3rd_party)
     endif()
   endif()
 
-  if(NOT EXISTS "${project_git_clone_3rd_party_REPO_DIRECTORY}/${project_git_clone_3rd_party_CHECK_PATH}")
+  if(NOT EXISTS
+     "${project_git_clone_3rd_party_REPO_DIRECTORY}/${project_git_clone_3rd_party_CHECK_PATH}")
     if(EXISTS ${project_git_clone_3rd_party_REPO_DIRECTORY})
       file(REMOVE_RECURSE ${project_git_clone_3rd_party_REPO_DIRECTORY})
     endif()
   endif()
 
-  if(NOT EXISTS "${project_git_clone_3rd_party_REPO_DIRECTORY}/${project_git_clone_3rd_party_CHECK_PATH}")
+  if(NOT EXISTS
+     "${project_git_clone_3rd_party_REPO_DIRECTORY}/${project_git_clone_3rd_party_CHECK_PATH}")
     if(NOT EXISTS ${project_git_clone_3rd_party_REPO_DIRECTORY})
       file(MAKE_DIRECTORY ${project_git_clone_3rd_party_REPO_DIRECTORY})
     endif()
 
-    execute_process(COMMAND ${GIT_EXECUTABLE} init WORKING_DIRECTORY ${project_git_clone_3rd_party_REPO_DIRECTORY}
-                                                                     ${project_git_clone_3rd_party_EXECUTE_PROCESS_FLAGS})
-    execute_process(COMMAND ${GIT_EXECUTABLE} remote add origin "${project_git_clone_3rd_party_URL}"
-                    WORKING_DIRECTORY ${project_git_clone_3rd_party_REPO_DIRECTORY} ${project_git_clone_3rd_party_EXECUTE_PROCESS_FLAGS})
+    execute_process(
+      COMMAND ${GIT_EXECUTABLE} init
+      WORKING_DIRECTORY ${project_git_clone_3rd_party_REPO_DIRECTORY}
+                        ${project_git_clone_3rd_party_EXECUTE_PROCESS_FLAGS})
+    execute_process(
+      COMMAND ${GIT_EXECUTABLE} remote add origin "${project_git_clone_3rd_party_URL}"
+      WORKING_DIRECTORY ${project_git_clone_3rd_party_REPO_DIRECTORY}
+                        ${project_git_clone_3rd_party_EXECUTE_PROCESS_FLAGS})
 
     if(NOT project_git_clone_3rd_party_GIT_BRANCH AND NOT project_git_clone_3rd_party_COMMIT)
       unset(project_git_clone_3rd_party_GIT_CHECK_REPO)
@@ -382,23 +422,29 @@ function(project_git_clone_3rd_party)
         COMMAND ${GIT_EXECUTABLE} ls-remote --symref origin HEAD
         RESULT_VARIABLE project_git_clone_3rd_party_GIT_LS_REMOTE_RESULT
         WORKING_DIRECTORY ${project_git_clone_3rd_party_REPO_DIRECTORY}
-        OUTPUT_VARIABLE project_git_clone_3rd_party_GIT_CHECK_REPO ${project_git_clone_3rd_party_EXECUTE_PROCESS_FLAGS})
-      if(project_git_clone_3rd_party_GIT_CHECK_REPO AND project_git_clone_3rd_party_GIT_CHECK_REPO MATCHES
-                                                        "ref.*refs/heads/([^ \t]*)[ \t]*HEAD.*")
+        OUTPUT_VARIABLE project_git_clone_3rd_party_GIT_CHECK_REPO
+                        ${project_git_clone_3rd_party_EXECUTE_PROCESS_FLAGS})
+      if(project_git_clone_3rd_party_GIT_CHECK_REPO
+         AND project_git_clone_3rd_party_GIT_CHECK_REPO MATCHES
+             "ref.*refs/heads/([^ \t]*)[ \t]*HEAD.*")
         set(project_git_clone_3rd_party_GIT_BRANCH "${CMAKE_MATCH_1}")
       else()
         execute_process(
           COMMAND ${GIT_EXECUTABLE} ls-remote origin HEAD
           RESULT_VARIABLE project_git_clone_3rd_party_GIT_LS_REMOTE_RESULT
           WORKING_DIRECTORY ${project_git_clone_3rd_party_REPO_DIRECTORY}
-          OUTPUT_VARIABLE project_git_clone_3rd_party_GIT_CHECK_REPO ${project_git_clone_3rd_party_EXECUTE_PROCESS_FLAGS})
+          OUTPUT_VARIABLE project_git_clone_3rd_party_GIT_CHECK_REPO
+                          ${project_git_clone_3rd_party_EXECUTE_PROCESS_FLAGS})
         if(project_git_clone_3rd_party_GIT_CHECK_REPO MATCHES "^([a-zA-Z0-9]*)[ \t]*HEAD.*")
           set(project_git_clone_3rd_party_COMMIT "${CMAKE_MATCH_1}")
         endif()
       endif()
       if(NOT project_git_clone_3rd_party_GIT_BRANCH AND NOT project_git_clone_3rd_party_COMMIT)
-        if(NOT project_git_clone_3rd_party_GIT_LS_REMOTE_RESULT EQUAL 0 AND project_git_clone_3rd_party_REQUIRED)
-          message(FATAL_ERROR "git ls-remote --symref origin(${project_git_clone_3rd_party_URL}) HEAD failed")
+        if(NOT project_git_clone_3rd_party_GIT_LS_REMOTE_RESULT EQUAL 0
+           AND project_git_clone_3rd_party_REQUIRED)
+          message(
+            FATAL_ERROR
+              "git ls-remote --symref origin(${project_git_clone_3rd_party_URL}) HEAD failed")
         endif()
         # Fallback
         set(project_git_clone_3rd_party_GIT_BRANCH master)
@@ -409,35 +455,53 @@ function(project_git_clone_3rd_party)
 
     if(project_git_clone_3rd_party_GIT_BRANCH)
       execute_process(
-        COMMAND ${GIT_EXECUTABLE} fetch "--depth=${project_git_clone_3rd_party_DEPTH}" "-n" origin ${project_git_clone_3rd_party_GIT_BRANCH}
+        COMMAND ${GIT_EXECUTABLE} fetch "--depth=${project_git_clone_3rd_party_DEPTH}" "-n" origin
+                ${project_git_clone_3rd_party_GIT_BRANCH}
         RESULT_VARIABLE project_git_clone_3rd_party_GIT_FETCH_RESULT
-        WORKING_DIRECTORY ${project_git_clone_3rd_party_REPO_DIRECTORY} ${project_git_clone_3rd_party_EXECUTE_PROCESS_FLAGS})
-      if(NOT project_git_clone_3rd_party_GIT_FETCH_RESULT EQUAL 0 AND project_git_clone_3rd_party_REQUIRED)
-        message(FATAL_ERROR "git fetch origin(${project_git_clone_3rd_party_URL}) ${project_git_clone_3rd_party_GIT_BRANCH} failed")
+        WORKING_DIRECTORY ${project_git_clone_3rd_party_REPO_DIRECTORY}
+                          ${project_git_clone_3rd_party_EXECUTE_PROCESS_FLAGS})
+      if(NOT project_git_clone_3rd_party_GIT_FETCH_RESULT EQUAL 0
+         AND project_git_clone_3rd_party_REQUIRED)
+        message(
+          FATAL_ERROR
+            "git fetch origin(${project_git_clone_3rd_party_URL}) ${project_git_clone_3rd_party_GIT_BRANCH} failed"
+        )
       endif()
     else()
       if(GIT_VERSION_STRING VERSION_GREATER_EQUAL "2.11.0")
         execute_process(
-          COMMAND ${GIT_EXECUTABLE} fetch "--deepen=${project_git_clone_3rd_party_DEPTH}" "-n" origin ${project_git_clone_3rd_party_COMMIT}
+          COMMAND ${GIT_EXECUTABLE} fetch "--deepen=${project_git_clone_3rd_party_DEPTH}" "-n"
+                  origin ${project_git_clone_3rd_party_COMMIT}
           RESULT_VARIABLE project_git_clone_3rd_party_GIT_FETCH_RESULT
-          WORKING_DIRECTORY ${project_git_clone_3rd_party_REPO_DIRECTORY} ${project_git_clone_3rd_party_EXECUTE_PROCESS_FLAGS})
+          WORKING_DIRECTORY ${project_git_clone_3rd_party_REPO_DIRECTORY}
+                            ${project_git_clone_3rd_party_EXECUTE_PROCESS_FLAGS})
       else()
-        message(WARNING "It's recommended to use git 2.11.0 or upper to only fetch partly of repository.")
+        message(
+          WARNING "It's recommended to use git 2.11.0 or upper to only fetch partly of repository.")
         execute_process(
           COMMAND ${GIT_EXECUTABLE} fetch "-n" origin ${project_git_clone_3rd_party_COMMIT}
           RESULT_VARIABLE project_git_clone_3rd_party_GIT_FETCH_RESULT
-          WORKING_DIRECTORY ${project_git_clone_3rd_party_REPO_DIRECTORY} ${project_git_clone_3rd_party_EXECUTE_PROCESS_FLAGS})
+          WORKING_DIRECTORY ${project_git_clone_3rd_party_REPO_DIRECTORY}
+                            ${project_git_clone_3rd_party_EXECUTE_PROCESS_FLAGS})
       endif()
-      if(NOT project_git_clone_3rd_party_GIT_FETCH_RESULT EQUAL 0 AND project_git_clone_3rd_party_REQUIRED)
-        message(FATAL_ERROR "git fetch origin(${project_git_clone_3rd_party_URL}) ${project_git_clone_3rd_party_GIT_BRANCH} failed")
+      if(NOT project_git_clone_3rd_party_GIT_FETCH_RESULT EQUAL 0
+         AND project_git_clone_3rd_party_REQUIRED)
+        message(
+          FATAL_ERROR
+            "git fetch origin(${project_git_clone_3rd_party_URL}) ${project_git_clone_3rd_party_GIT_BRANCH} failed"
+        )
       endif()
     endif()
     unset(project_git_clone_3rd_party_GIT_FETCH_RESULT)
-    execute_process(COMMAND ${GIT_EXECUTABLE} reset --hard FETCH_HEAD
-                    WORKING_DIRECTORY ${project_git_clone_3rd_party_REPO_DIRECTORY} ${project_git_clone_3rd_party_EXECUTE_PROCESS_FLAGS})
+    execute_process(
+      COMMAND ${GIT_EXECUTABLE} reset --hard FETCH_HEAD
+      WORKING_DIRECTORY ${project_git_clone_3rd_party_REPO_DIRECTORY}
+                        ${project_git_clone_3rd_party_EXECUTE_PROCESS_FLAGS})
     if(project_git_clone_3rd_party_GIT_ENABLE_SUBMODULE)
-      execute_process(COMMAND ${GIT_EXECUTABLE} submodule update --init -f
-                      WORKING_DIRECTORY ${project_git_clone_3rd_party_REPO_DIRECTORY} ${project_git_clone_3rd_party_EXECUTE_PROCESS_FLAGS})
+      execute_process(
+        COMMAND ${GIT_EXECUTABLE} submodule update --init -f
+        WORKING_DIRECTORY ${project_git_clone_3rd_party_REPO_DIRECTORY}
+                          ${project_git_clone_3rd_party_EXECUTE_PROCESS_FLAGS})
     endif()
   endif()
 endfunction()
@@ -448,7 +512,9 @@ if(NOT PROJECT_BUILD_TOOLS_PATCH_PROTOBUF_SOURCES_OPTIONS_SET)
     set(PROJECT_BUILD_TOOLS_PATCH_PROTOBUF_SOURCES_OPTIONS /wd4244 /wd4251 /wd4309)
 
     if(MSVC_VERSION GREATER_EQUAL 1922)
-      # see https://docs.microsoft.com/en-us/cpp/overview/cpp-conformance-improvements?view=vs-2019#improvements_162 for detail
+      # see
+      # https://docs.microsoft.com/en-us/cpp/overview/cpp-conformance-improvements?view=vs-2019#improvements_162
+      # for detail
       list(APPEND PROJECT_BUILD_TOOLS_PATCH_PROTOBUF_SOURCES_OPTIONS /wd5054)
     endif()
 
@@ -462,11 +528,14 @@ if(NOT PROJECT_BUILD_TOOLS_PATCH_PROTOBUF_SOURCES_OPTIONS_SET)
   else()
     unset(PROJECT_BUILD_TOOLS_PATCH_PROTOBUF_SOURCES_OPTIONS CACHE)
     include(CheckCXXCompilerFlag)
-    check_cxx_compiler_flag(-Wno-unused-parameter project_build_tools_patch_protobuf_sources_LINT_NO_UNUSED_PARAMETER)
+    check_cxx_compiler_flag(-Wno-unused-parameter
+                            project_build_tools_patch_protobuf_sources_LINT_NO_UNUSED_PARAMETER)
     if(project_build_tools_patch_protobuf_sources_LINT_NO_UNUSED_PARAMETER)
       list(APPEND PROJECT_BUILD_TOOLS_PATCH_PROTOBUF_SOURCES_OPTIONS -Wno-unused-parameter)
     endif()
-    check_cxx_compiler_flag(-Wno-deprecated-declarations project_build_tools_patch_protobuf_sources_LINT_NO_DEPRECATED_DECLARATIONS)
+    check_cxx_compiler_flag(
+      -Wno-deprecated-declarations
+      project_build_tools_patch_protobuf_sources_LINT_NO_DEPRECATED_DECLARATIONS)
     if(project_build_tools_patch_protobuf_sources_LINT_NO_DEPRECATED_DECLARATIONS)
       list(APPEND PROJECT_BUILD_TOOLS_PATCH_PROTOBUF_SOURCES_OPTIONS -Wno-deprecated-declarations)
     endif()
@@ -516,7 +585,8 @@ function(project_build_tools_patch_imported_link_interface_libraries TARGET_NAME
   endif()
   if(NOT PROPERTY_NAME)
     get_target_property(OLD_IMPORTED_CONFIGURATIONS ${TARGET_NAME} IMPORTED_CONFIGURATIONS)
-    get_target_property(OLD_LINK_LIBRARIES ${TARGET_NAME} "IMPORTED_LINK_INTERFACE_LIBRARIES_${OLD_IMPORTED_CONFIGURATIONS}")
+    get_target_property(OLD_LINK_LIBRARIES ${TARGET_NAME}
+                        "IMPORTED_LINK_INTERFACE_LIBRARIES_${OLD_IMPORTED_CONFIGURATIONS}")
     if(OLD_LINK_LIBRARIES)
       set(PROPERTY_NAME "IMPORTED_LINK_INTERFACE_LIBRARIES_${OLD_IMPORTED_CONFIGURATIONS}")
     endif()
@@ -563,7 +633,10 @@ function(project_build_tools_patch_imported_link_interface_libraries TARGET_NAME
 
   if(NOT OLD_LINK_LIBRARIES STREQUAL PATCH_INNER_LIBS)
     set_target_properties(${TARGET_NAME} PROPERTIES ${PROPERTY_NAME} "${PATCH_INNER_LIBS}")
-    message(STATUS "Patch: ${PROPERTY_NAME} of ${TARGET_NAME} from \"${OLD_LINK_LIBRARIES}\" to \"${PATCH_INNER_LIBS}\"")
+    message(
+      STATUS
+        "Patch: ${PROPERTY_NAME} of ${TARGET_NAME} from \"${OLD_LINK_LIBRARIES}\" to \"${PATCH_INNER_LIBS}\""
+    )
   endif()
 endfunction()
 
@@ -571,11 +644,13 @@ macro(project_build_tools_get_imported_location OUTPUT_VAR_NAME TARGET_NAME)
   get_target_property(${OUTPUT_VAR_NAME} ${TARGET_NAME} IMPORTED_LOCATION)
   if(NOT ${OUTPUT_VAR_NAME})
     unset(project_build_tools_get_imported_location_IMPORTED_CONFIGURATIONS)
-    get_target_property(project_build_tools_get_imported_location_IMPORTED_CONFIGURATIONS ${TARGET_NAME} IMPORTED_CONFIGURATIONS)
+    get_target_property(project_build_tools_get_imported_location_IMPORTED_CONFIGURATIONS
+                        ${TARGET_NAME} IMPORTED_CONFIGURATIONS)
     foreach(project_build_tools_get_imported_location_IMPORTED_CONFIGURATION IN
             LISTS project_build_tools_get_imported_location_IMPORTED_CONFIGURATIONS)
-      get_target_property(${OUTPUT_VAR_NAME} ${TARGET_NAME}
-                          "IMPORTED_LOCATION_${project_build_tools_get_imported_location_IMPORTED_CONFIGURATION}")
+      get_target_property(
+        ${OUTPUT_VAR_NAME} ${TARGET_NAME}
+        "IMPORTED_LOCATION_${project_build_tools_get_imported_location_IMPORTED_CONFIGURATION}")
       if(${OUTPUT_VAR_NAME})
         break()
       endif()

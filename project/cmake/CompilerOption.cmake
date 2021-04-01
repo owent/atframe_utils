@@ -3,14 +3,16 @@ if(CMAKE_VERSION VERSION_GREATER_EQUAL "3.10")
 endif()
 
 # default configure, can be load multiple times
-# ##########################################################################################################################################
+# ##################################################################################################
 if(NOT DEFINED __COMPILER_OPTION_LOADED)
   include(CheckCXXSourceCompiles)
   set(__COMPILER_OPTION_LOADED 1)
   cmake_policy(PUSH)
   cmake_policy(SET CMP0067 NEW)
 
-  option(COMPILER_OPTION_MSVC_ZC_CPP "Add /Zc:__cplusplus for MSVC (let __cplusplus be equal to _MSVC_LANG) when it support." ON)
+  option(COMPILER_OPTION_MSVC_ZC_CPP
+         "Add /Zc:__cplusplus for MSVC (let __cplusplus be equal to _MSVC_LANG) when it support."
+         ON)
   option(COMPILER_OPTION_CLANG_ENABLE_LIBCXX "Try to use libc++ when using clang." ON)
   set(CMAKE_POSITION_INDEPENDENT_CODE
       ON
@@ -134,10 +136,11 @@ if(NOT DEFINED __COMPILER_OPTION_LOADED)
     endif()
     # disable -Wno-unused-local-typedefs (which is often used in type_traits)
     if(CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL "4.8.0")
-      # GCC < 4.8 doesn't support the address sanitizer -fsanitize=address require -lasan be placed before -lstdc++, every target shoud add
-      # this
+      # GCC < 4.8 doesn't support the address sanitizer -fsanitize=address require -lasan be placed
+      # before -lstdc++, every target shoud add this
       add_compile_options(-Wno-unused-local-typedefs)
-      message(STATUS "GCC Version ${CMAKE_CXX_COMPILER_VERSION} Found, -Wno-unused-local-typedefs added.")
+      message(
+        STATUS "GCC Version ${CMAKE_CXX_COMPILER_VERSION} Found, -Wno-unused-local-typedefs added.")
     endif()
 
     if(CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL "5.0.0")
@@ -149,11 +152,17 @@ if(NOT DEFINED __COMPILER_OPTION_LOADED)
       else()
         try_set_compiler_lang_standard(CMAKE_CXX_STANDARD 14)
       endif()
-      message(STATUS "GCC Version ${CMAKE_CXX_COMPILER_VERSION} , using -std=c${CMAKE_C_STANDARD}/c++${CMAKE_CXX_STANDARD}.")
+      message(
+        STATUS
+          "GCC Version ${CMAKE_CXX_COMPILER_VERSION} , using -std=c${CMAKE_C_STANDARD}/c++${CMAKE_CXX_STANDARD}."
+      )
     elseif(CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL "4.7.0")
       try_set_compiler_lang_standard(CMAKE_C_STANDARD 11)
       try_set_compiler_lang_standard(CMAKE_CXX_STANDARD 14)
-      message(STATUS "GCC Version ${CMAKE_CXX_COMPILER_VERSION} , using -std=c${CMAKE_C_STANDARD}/c++${CMAKE_CXX_STANDARD}.")
+      message(
+        STATUS
+          "GCC Version ${CMAKE_CXX_COMPILER_VERSION} , using -std=c${CMAKE_C_STANDARD}/c++${CMAKE_CXX_STANDARD}."
+      )
     elseif(CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL "4.4.0")
       add_compiler_flags_to_var(CMAKE_CXX_FLAGS -std=c++0x)
       message(STATUS "GCC Version ${CMAKE_CXX_COMPILER_VERSION} , using -std=c++0x.")
@@ -182,19 +191,21 @@ if(NOT DEFINED __COMPILER_OPTION_LOADED)
       try_set_compiler_lang_standard(CMAKE_C_STANDARD 11)
       try_set_compiler_lang_standard(CMAKE_CXX_STANDARD 11)
     endif()
-    message(STATUS "Clang Version ${CMAKE_CXX_COMPILER_VERSION} , using -std=c${CMAKE_C_STANDARD}/c++${CMAKE_CXX_STANDARD}.")
+    message(
+      STATUS
+        "Clang Version ${CMAKE_CXX_COMPILER_VERSION} , using -std=c${CMAKE_C_STANDARD}/c++${CMAKE_CXX_STANDARD}."
+    )
     # Test libc++ and libc++abi
     set(COMPILER_CLANG_TEST_BAKCUP_CMAKE_REQUIRED_FLAGS ${CMAKE_REQUIRED_FLAGS})
     set(COMPILER_CLANG_TEST_BAKCUP_CMAKE_REQUIRED_LIBRARIES ${CMAKE_REQUIRED_LIBRARIES})
     set(CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS} -stdlib=libc++")
     list(APPEND CMAKE_REQUIRED_LIBRARIES c++ c++abi)
     check_cxx_source_compiles(
-      "
-        #include <iostream>
-        int main() {
-            std::cout<< __cplusplus<< std::endl;
-            return 0;
-        }
+      "#include <iostream>
+       int main() {
+         std::cout<< __cplusplus<< std::endl;
+         return 0;
+       }
         "
       COMPILER_CLANG_TEST_LIBCXX)
     set(CMAKE_REQUIRED_FLAGS ${COMPILER_CLANG_TEST_BAKCUP_CMAKE_REQUIRED_FLAGS})
@@ -215,14 +226,16 @@ if(NOT DEFINED __COMPILER_OPTION_LOADED)
       if(MINGW)
         # list(APPEND COMPILER_OPTION_EXTERN_CXX_LIBS stdc++)
         set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -static-libstdc++ -static-libgcc")
-        set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -static-libstdc++ -static-libgcc")
+        set(CMAKE_SHARED_LINKER_FLAGS
+            "${CMAKE_SHARED_LINKER_FLAGS} -static-libstdc++ -static-libgcc")
       endif()
     endif()
 
     # C++20 coroutine precondition
     if(CMAKE_CXX_COMPILER_VERSION VERSION_LESS "8.0")
-      # @see https://en.cppreference.com/w/cpp/compiler_support Clang 6 and older will crash when visit local variable of a c++20 coroutine
-      # stack It will use movaps of SSE to initialize local variables of a c++20 coroutine stack but doesn't aligned to 16, which will cause
+      # @see https://en.cppreference.com/w/cpp/compiler_support Clang 6 and older will crash when
+      # visit local variable of a c++20 coroutine stack It will use movaps of SSE to initialize
+      # local variables of a c++20 coroutine stack but doesn't aligned to 16, which will cause
       # crash. @see https://github.com/HJLebbink/asm-dude/wiki/MOVAPS for details
       set(COMPILER_OPTIONS_TEST_STD_COROUTINE FALSE)
       set(COMPILER_OPTIONS_TEST_STD_COROUTINE_TS FALSE)
@@ -244,20 +257,21 @@ if(NOT DEFINED __COMPILER_OPTION_LOADED)
       try_set_compiler_lang_standard(CMAKE_C_STANDARD 11)
       try_set_compiler_lang_standard(CMAKE_CXX_STANDARD 11)
     endif()
-    message(STATUS "AppleClang Version ${CMAKE_CXX_COMPILER_VERSION} , using -std=c${CMAKE_C_STANDARD}/c++${CMAKE_CXX_STANDARD}.")
+    message(
+      STATUS
+        "AppleClang Version ${CMAKE_CXX_COMPILER_VERSION} , using -std=c${CMAKE_C_STANDARD}/c++${CMAKE_CXX_STANDARD}."
+    )
     # Test libc++ and libc++abi
     set(COMPILER_CLANG_TEST_BAKCUP_CMAKE_REQUIRED_FLAGS ${CMAKE_REQUIRED_FLAGS})
     set(COMPILER_CLANG_TEST_BAKCUP_CMAKE_REQUIRED_LIBRARIES ${CMAKE_REQUIRED_LIBRARIES})
     set(CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS} -stdlib=libc++")
     list(APPEND CMAKE_REQUIRED_LIBRARIES c++ c++abi)
     check_cxx_source_compiles(
-      "
-        #include <iostream>
-        int main() {
-            std::cout<< __cplusplus<< std::endl;
-            return 0;
-        }
-        "
+      "#include <iostream>
+       int main() {
+         std::cout<< __cplusplus<< std::endl;
+         return 0;
+      }"
       COMPILER_CLANG_TEST_LIBCXX)
     set(CMAKE_REQUIRED_FLAGS ${COMPILER_CLANG_TEST_BAKCUP_CMAKE_REQUIRED_FLAGS})
     set(CMAKE_REQUIRED_LIBRARIES ${COMPILER_CLANG_TEST_BAKCUP_CMAKE_REQUIRED_LIBRARIES})
@@ -273,9 +287,10 @@ if(NOT DEFINED __COMPILER_OPTION_LOADED)
 
     # C++20 coroutine precondition
     if(CMAKE_CXX_COMPILER_VERSION VERSION_LESS "10.0.1")
-      # @see https://en.cppreference.com/w/cpp/compiler_support Apple clang 9 and older will crash when visit local variable of a c++20
-      # coroutine stack. It will use movaps of SSE to initialize local variables of a c++20 coroutine stack but doesn't aligned to 16, which
-      # will cause crash. @see https://github.com/HJLebbink/asm-dude/wiki/MOVAPS for details
+      # @see https://en.cppreference.com/w/cpp/compiler_support Apple clang 9 and older will crash
+      # when visit local variable of a c++20 coroutine stack. It will use movaps of SSE to
+      # initialize local variables of a c++20 coroutine stack but doesn't aligned to 16, which will
+      # cause crash. @see https://github.com/HJLebbink/asm-dude/wiki/MOVAPS for details
       set(COMPILER_OPTIONS_TEST_STD_COROUTINE FALSE)
       set(COMPILER_OPTIONS_TEST_STD_COROUTINE_TS FALSE)
     endif()
@@ -303,17 +318,19 @@ if(NOT DEFINED __COMPILER_OPTION_LOADED)
       try_set_compiler_lang_standard(CMAKE_CXX_STANDARD 14)
     endif()
     # https://docs.microsoft.com/en-us/cpp/error-messages/compiler-warnings/compiler-warnings-by-compiler-version
-    # https://docs.microsoft.com/en-us/cpp/preprocessor/predefined-macros?view=vs-2019#microsoft-specific-predefined-macros if (MSVC_VERSION
-    # GREATER_EQUAL 1910) add_compiler_flags_to_var(CMAKE_CXX_FLAGS /std:c++17) message(STATUS "MSVC ${MSVC_VERSION} found. using
-    # /std:c++17") endif() set __cplusplus to standard value, @see https://docs.microsoft.com/zh-cn/cpp/build/reference/zc-cplusplus
+    # https://docs.microsoft.com/en-us/cpp/preprocessor/predefined-macros?view=vs-2019#microsoft-specific-predefined-macros
+    # if (MSVC_VERSION GREATER_EQUAL 1910) add_compiler_flags_to_var(CMAKE_CXX_FLAGS /std:c++17)
+    # message(STATUS "MSVC ${MSVC_VERSION} found. using /std:c++17") endif() set __cplusplus to
+    # standard value, @see https://docs.microsoft.com/zh-cn/cpp/build/reference/zc-cplusplus
     if(MSVC_VERSION GREATER_EQUAL 1914 AND COMPILER_OPTION_MSVC_ZC_CPP)
       add_compiler_flags_to_var(CMAKE_CXX_FLAGS /Zc:__cplusplus)
     endif()
 
     # C++20 coroutine precondition
     if(MSVC_VERSION LESS 1910)
-      # VS2015 is the first version to support coroutine API, but it defines macro of yield,resume and etc. Which is conflict with our old
-      # coroutine context and task. So we disable c++20 coroutine support for it.
+      # VS2015 is the first version to support coroutine API, but it defines macro of yield,resume
+      # and etc. Which is conflict with our old coroutine context and task. So we disable c++20
+      # coroutine support for it.
       set(COMPILER_OPTIONS_TEST_STD_COROUTINE FALSE)
       set(COMPILER_OPTIONS_TEST_STD_COROUTINE_TS FALSE)
     endif()
@@ -324,8 +341,10 @@ if(NOT DEFINED __COMPILER_OPTION_LOADED)
       add_compiler_flags_to_var(CMAKE_CXX_FLAGS_DEBUG -ggdb)
       add_compiler_flags_to_var(CMAKE_CXX_FLAGS_RELWITHDEBINFO -ggdb)
     endif()
-    # add_compiler_flags_to_var(CMAKE_CXX_FLAGS_DEBUG -ggdb) add_compiler_flags_to_var(CMAKE_CXX_FLAGS_RELEASE)
-    # add_compiler_flags_to_var(CMAKE_CXX_FLAGS_RELWITHDEBINFO -ggdb) add_compiler_flags_to_var(CMAKE_CXX_FLAGS_MINSIZEREL)
+    # add_compiler_flags_to_var(CMAKE_CXX_FLAGS_DEBUG -ggdb)
+    # add_compiler_flags_to_var(CMAKE_CXX_FLAGS_RELEASE)
+    # add_compiler_flags_to_var(CMAKE_CXX_FLAGS_RELWITHDEBINFO -ggdb)
+    # add_compiler_flags_to_var(CMAKE_CXX_FLAGS_MINSIZEREL)
   else()
     add_compiler_flags_to_var(CMAKE_CXX_FLAGS_DEBUG /Od)
     add_compiler_flags_to_var(CMAKE_CXX_FLAGS_RELEASE /O2 /D NDEBUG)
@@ -339,28 +358,38 @@ if(NOT DEFINED __COMPILER_OPTION_LOADED)
       # Try add coroutine
       set(CMAKE_REQUIRED_FLAGS "${COMPILER_OPTIONS_BAKCUP_CMAKE_REQUIRED_FLAGS} -fcoroutines")
       check_cxx_source_compiles(
-        "
-            #include <coroutine>
-            int main() {
-                return std::suspend_always().await_ready()? 0: 1;
-            }
-            "
+        "#include <coroutine>
+         int main() {
+           return std::suspend_always().await_ready()? 0: 1;
+         }"
         COMPILER_OPTIONS_TEST_STD_COROUTINE)
       if(NOT COMPILER_OPTIONS_TEST_STD_COROUTINE)
         set(CMAKE_REQUIRED_FLAGS "${COMPILER_OPTIONS_BAKCUP_CMAKE_REQUIRED_FLAGS} -fcoroutines-ts")
         check_cxx_source_compiles(
-          "
-                #include <experimental/coroutine>
-                int main() {
-                    return std::experimental::suspend_always().await_ready()? 0: 1;
-                }
-                "
+          "#include <experimental/coroutine>
+           int main() {
+             return std::experimental::suspend_always().await_ready()? 0: 1;
+           }"
           COMPILER_OPTIONS_TEST_STD_COROUTINE_TS)
       endif()
     else()
-      set(CMAKE_MSVC_RUNTIME_LIBRARY
-          "MultiThreaded$<$<CONFIG:Debug>:Debug>$<$<NOT:$<STREQUAL:${VCPKG_CRT_LINKAGE},static>>:DLL>"
-          CACHE STRING "")
+      if(CMAKE_VERSION VERSION_GREATER_EQUAL "3.15.0")
+        set(CMAKE_MSVC_RUNTIME_LIBRARY
+            "MultiThreaded$<$<CONFIG:Debug>:Debug>$<$<NOT:$<STREQUAL:${VCPKG_CRT_LINKAGE},static>>:DLL>"
+            CACHE STRING "")
+      else()
+        if(VCPKG_CRT_LINKAGE STREQUAL "static")
+          add_compiler_flags_to_var(CMAKE_CXX_FLAGS_DEBUG /MTd)
+          add_compiler_flags_to_var(CMAKE_CXX_FLAGS_RELEASE /MT)
+          add_compiler_flags_to_var(CMAKE_CXX_FLAGS_RELWITHDEBINFO /MT)
+          add_compiler_flags_to_var(CMAKE_CXX_FLAGS_MINSIZEREL /MT)
+        else()
+          add_compiler_flags_to_var(CMAKE_CXX_FLAGS_DEBUG /MDd)
+          add_compiler_flags_to_var(CMAKE_CXX_FLAGS_RELEASE /MD)
+          add_compiler_flags_to_var(CMAKE_CXX_FLAGS_RELWITHDEBINFO /MD)
+          add_compiler_flags_to_var(CMAKE_CXX_FLAGS_MINSIZEREL /MD)
+        endif()
+      endif()
 
       # Try add coroutine
       set(CMAKE_REQUIRED_FLAGS "${COMPILER_OPTIONS_BAKCUP_CMAKE_REQUIRED_FLAGS} /await")
@@ -372,12 +401,10 @@ if(NOT DEFINED __COMPILER_OPTION_LOADED)
         COMPILER_OPTIONS_TEST_STD_COROUTINE)
       if(NOT COMPILER_OPTIONS_TEST_STD_COROUTINE)
         check_cxx_source_compiles(
-          "
-                #include <experimental/coroutine>
-                int main() {
-                    return std::experimental::suspend_always().await_ready()? 0: 1;
-                }
-                "
+          "#include <experimental/coroutine>
+           int main() {
+             return std::experimental::suspend_always().await_ready()? 0: 1;
+           }"
           COMPILER_OPTIONS_TEST_STD_COROUTINE_TS)
       endif()
     endif()
@@ -399,29 +426,28 @@ if(NOT DEFINED __COMPILER_OPTION_LOADED)
   endif()
 
   # Check if exception enabled
-  check_cxx_source_compiles("int main () { try { throw 123; } catch (...) {} return 0; }" COMPILER_OPTIONS_TEST_EXCEPTION)
+  check_cxx_source_compiles("int main () { try { throw 123; } catch (...) {} return 0; }"
+                            COMPILER_OPTIONS_TEST_EXCEPTION)
   if(COMPILER_OPTIONS_TEST_EXCEPTION)
     check_cxx_source_compiles(
-      "
-        #include <exception>
-        void handle_eptr(std::exception_ptr eptr) {
-            try {
-                if (eptr) {
-                    std::rethrow_exception(eptr);
-                }
-            } catch(...) {}
-        }
+      "#include <exception>
+       void handle_eptr(std::exception_ptr eptr) {
+           try {
+               if (eptr) {
+                   std::rethrow_exception(eptr);
+               }
+           } catch(...) {}
+       }
 
-        int main() {
-            std::exception_ptr eptr;
-            try {
-                throw 1;
-            } catch(...) {
-                eptr = std::current_exception(); // capture
-            }
-            handle_eptr(eptr);
-        }
-        "
+       int main() {
+           std::exception_ptr eptr;
+           try {
+               throw 1;
+           } catch(...) {
+               eptr = std::current_exception(); // capture
+           }
+           handle_eptr(eptr);
+       }"
       COMPILER_OPTIONS_TEST_STD_EXCEPTION_PTR)
   else()
     unset(COMPILER_OPTIONS_TEST_STD_EXCEPTION_PTR CACHE)

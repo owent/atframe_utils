@@ -3,37 +3,71 @@
 #
 # find package, and try to configure it when not found in system.
 #
-# FindConfigurePackage( PACKAGE <name> BUILD_WITH_CONFIGURE BUILD_WITH_CMAKE BUILD_WITH_SCONS BUILD_WITH_CUSTOM_COMMAND CONFIGURE_FLAGS
-# [configure options...] CMAKE_FLAGS [cmake options...] FIND_PACKAGE_FLAGS [options will be passed into find_package(...)]
-# CMAKE_INHIRT_BUILD_ENV CMAKE_INHIRT_BUILD_ENV_DISABLE_C_FLAGS CMAKE_INHIRT_BUILD_ENV_DISABLE_CXX_FLAGS
-# CMAKE_INHIRT_BUILD_ENV_DISABLE_ASM_FLAGS SCONS_FLAGS [scons options...] CUSTOM_BUILD_COMMAND [custom build cmd...] MAKE_FLAGS [make
-# options...] PREBUILD_COMMAND [run cmd before build ...] AFTERBUILD_COMMAND [run cmd after build ...] RESET_FIND_VARS [cmake vars]
-# WORKING_DIRECTORY <work directory> BUILD_DIRECTORY <build directory> PREFIX_DIRECTORY <prefix directory> SRC_DIRECTORY_NAME <source
-# directory name> MSVC_CONFIGURE <Debug/Release/RelWithDebInfo/MinSizeRel> INSTALL_TARGET [install targets...] ZIP_URL <zip url> TAR_URL
-# <tar url> SVN_URL <svn url> GIT_URL <git url> GIT_BRANCH <git branch> GIT_COMMIT <git commit sha> GIT_FETCH_DEPTH <fetch depth/deepen> )
+# FindConfigurePackage(
+#   PACKAGE <name>
+#   BUILD_WITH_CONFIGURE
+#   BUILD_WITH_CMAKE
+#   BUILD_WITH_SCONS
+#   BUILD_WITH_CUSTOM_COMMAND
+#   CONFIGURE_FLAGS [configure options...]
+#   CMAKE_FLAGS [cmake options...]
+#   FIND_PACKAGE_FLAGS [options will be passed into find_package(...)]
+#   CMAKE_INHIRT_BUILD_ENV
+#   CMAKE_INHIRT_BUILD_ENV_DISABLE_C_FLAGS
+#   CMAKE_INHIRT_BUILD_ENV_DISABLE_CXX_FLAGS
+#   CMAKE_INHIRT_BUILD_ENV_DISABLE_ASM_FLAGS
+#   SCONS_FLAGS [scons options...]
+#   CUSTOM_BUILD_COMMAND [custom build cmd...]
+#   MAKE_FLAGS [make options...]
+#   PREBUILD_COMMAND [run cmd before build ...]
+#   AFTERBUILD_COMMAND [run cmd after build ...]
+#   RESET_FIND_VARS [cmake vars]
+#   WORKING_DIRECTORY <work directory>
+#   BUILD_DIRECTORY <build directory>
+#   PREFIX_DIRECTORY <prefix directory>
+#   SRC_DIRECTORY_NAME <source directory name>
+#   MSVC_CONFIGURE <Debug/Release/RelWithDebInfo/MinSizeRel>
+#   INSTALL_TARGET [install targets...]
+#   ZIP_URL <zip url>
+#   TAR_URL <tar url>
+#   SVN_URL <svn url>
+#   GIT_URL <git url>
+#   GIT_BRANCH <git branch>
+#   GIT_COMMIT <git commit sha>
+#   GIT_FETCH_DEPTH <fetch depth/deepen>
+# )
 #
 # ::
 #
-# <configure options>     - flags added to configure command <cmake options>         - flags added to cmake command <scons options> - flags
-# added to scons command <custom build cmd>      - custom commands for build <make options>          - flags added to make command <pre
-# build cmd>         - commands to run before build tool <work directory>        - work directory <build directory>       - where to execute
-# configure and make <prefix directory>      - prefix directory(default: <work directory>) <source directory name> - source directory
-# name(default detected by download url) <install targets>       - which target(s) used to install package(default: install) <zip url> -
-# from where to download zip when find package failed <tar url>               - from where to download tar.* or tgz when find package failed
-# <svn url>               - from where to svn co when find package failed <git url>               - from where to git clone when find
-# package failed <git branch>            - git branch or tag to fetch <git commit>            - git commit to fetch, server must support
-# --deepen=<depth>. if both <git branch> and <git commit> is set, we will use <git branch> <fetch depth/deepen>    - --deepen or --depth for
-# git fetch depend using <git branch> or <git commit>
+# <configure options>     - flags added to configure command
+# <cmake options>         - flags added to cmake command
+# <scons options> - flags added to scons command
+# <custom build cmd>      - custom commands for build
+# <make options>          - flags added to make command
+# <pre build cmd>         - commands to run before build tool
+# <work directory>        - work directory
+# <build directory>       - where to execute configure and make
+# <prefix directory>      - prefix directory(default: <work directory>)
+# <source directory name> - source directory name(default detected by download url)
+# <install targets>       - which target(s) used to install package(default: install) <zip url> - from where to download zip when find package failed
+# <tar url>               - from where to download tar.* or tgz when find package failed <svn url>               - from where to svn co when find package failed
+# <git url>               - from where to git clone when find package failed
+# <git branch>            - git branch or tag to fetch
+# <git commit>            - git commit to fetch, server must support --deepen=<depth>. if both <git branch> and <git commit> is set, we will use <git branch>
+# <fetch depth/deepen>    - --deepen or --depth for git fetch depend using <git branch> or <git commit>
+#
 
 # =============================================================================
-# Copyright 2014-2020 OWenT.
+# Copyright 2014-2021 OWenT.
 #
-# Distributed under the OSI-approved BSD License (the "License"); see accompanying file Copyright.txt for details.
+# Distributed under the OSI-approved BSD License (the "License"); see accompanying file
+# Copyright.txt for details.
 #
-# This software is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
-# PURPOSE. See the License for more information.
+# This software is distributed WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the License for more information.
 # =============================================================================
-# (To distribute this file outside of CMake, substitute the full License text for the above reference.)
+# (To distribute this file outside of CMake, substitute the full License text for the above
+# reference.)
 
 include("${CMAKE_CURRENT_LIST_DIR}/ProjectBuildTools.cmake")
 
@@ -55,7 +89,8 @@ function(FindConfigurePackageUnzip src work_dir)
   if(CMAKE_HOST_UNIX)
     find_program(FindConfigurePackage_UNZIP_BIN unzip)
     if(FindConfigurePackage_UNZIP_BIN)
-      execute_process(COMMAND ${FindConfigurePackage_UNZIP_BIN} -uo ${src} WORKING_DIRECTORY ${work_dir})
+      execute_process(COMMAND ${FindConfigurePackage_UNZIP_BIN} -uo ${src}
+                      WORKING_DIRECTORY ${work_dir})
       return()
     endif()
   endif()
@@ -67,7 +102,8 @@ function(FindConfigurePackageTarXV src work_dir)
   if(CMAKE_HOST_UNIX)
     find_program(FindConfigurePackage_TAR_BIN tar)
     if(FindConfigurePackage_TAR_BIN)
-      execute_process(COMMAND ${FindConfigurePackage_TAR_BIN} -xvf ${src} WORKING_DIRECTORY ${work_dir})
+      execute_process(COMMAND ${FindConfigurePackage_TAR_BIN} -xvf ${src}
+                      WORKING_DIRECTORY ${work_dir})
       return()
     endif()
   endif()
@@ -164,7 +200,8 @@ macro(FindConfigurePackage)
     unset(FindConfigurePackage_${RESTORE_VAR})
   endforeach()
 
-  cmake_parse_arguments(FindConfigurePackage "${optionArgs}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
+  cmake_parse_arguments(FindConfigurePackage "${optionArgs}" "${oneValueArgs}" "${multiValueArgs}"
+                        ${ARGN})
 
   if(NOT FindConfigurePackage_INSTALL_TARGET)
     set(FindConfigurePackage_INSTALL_TARGET "install")
@@ -199,15 +236,19 @@ macro(FindConfigurePackage)
       if(NOT FindConfigurePackage_UNPACK_SOURCE AND FindConfigurePackage_TAR_URL)
         get_filename_component(DOWNLOAD_FILENAME "${FindConfigurePackage_TAR_URL}" NAME)
         if(NOT FindConfigurePackage_SRC_DIRECTORY_NAME)
-          string(REGEX REPLACE "\\.tar\\.[A-Za-z0-9]+$" "" FindConfigurePackage_SRC_DIRECTORY_NAME "${DOWNLOAD_FILENAME}")
+          string(REGEX REPLACE "\\.tar\\.[A-Za-z0-9]+$" "" FindConfigurePackage_SRC_DIRECTORY_NAME
+                               "${DOWNLOAD_FILENAME}")
         endif()
-        set(FindConfigurePackage_DOWNLOAD_SOURCE_DIR "${FindConfigurePackage_WORKING_DIRECTORY}/${FindConfigurePackage_SRC_DIRECTORY_NAME}")
+        set(FindConfigurePackage_DOWNLOAD_SOURCE_DIR
+            "${FindConfigurePackage_WORKING_DIRECTORY}/${FindConfigurePackage_SRC_DIRECTORY_NAME}")
         findconfigurepackageremoveemptydir(${FindConfigurePackage_DOWNLOAD_SOURCE_DIR})
 
         if(NOT EXISTS "${FindConfigurePackage_WORKING_DIRECTORY}/${DOWNLOAD_FILENAME}")
-          message(STATUS "start to download ${DOWNLOAD_FILENAME} from ${FindConfigurePackage_TAR_URL}")
-          findconfigurepackagedownloadfile("${FindConfigurePackage_TAR_URL}"
-                                           "${FindConfigurePackage_WORKING_DIRECTORY}/${DOWNLOAD_FILENAME}")
+          message(
+            STATUS "start to download ${DOWNLOAD_FILENAME} from ${FindConfigurePackage_TAR_URL}")
+          findconfigurepackagedownloadfile(
+            "${FindConfigurePackage_TAR_URL}"
+            "${FindConfigurePackage_WORKING_DIRECTORY}/${DOWNLOAD_FILENAME}")
         endif()
 
         findconfigurepackagetarxv("${FindConfigurePackage_WORKING_DIRECTORY}/${DOWNLOAD_FILENAME}"
@@ -222,15 +263,19 @@ macro(FindConfigurePackage)
       if(NOT FindConfigurePackage_UNPACK_SOURCE AND FindConfigurePackage_ZIP_URL)
         get_filename_component(DOWNLOAD_FILENAME "${FindConfigurePackage_ZIP_URL}" NAME)
         if(NOT FindConfigurePackage_SRC_DIRECTORY_NAME)
-          string(REGEX REPLACE "\\.zip$" "" FindConfigurePackage_SRC_DIRECTORY_NAME "${DOWNLOAD_FILENAME}")
+          string(REGEX REPLACE "\\.zip$" "" FindConfigurePackage_SRC_DIRECTORY_NAME
+                               "${DOWNLOAD_FILENAME}")
         endif()
-        set(FindConfigurePackage_DOWNLOAD_SOURCE_DIR "${FindConfigurePackage_WORKING_DIRECTORY}/${FindConfigurePackage_SRC_DIRECTORY_NAME}")
+        set(FindConfigurePackage_DOWNLOAD_SOURCE_DIR
+            "${FindConfigurePackage_WORKING_DIRECTORY}/${FindConfigurePackage_SRC_DIRECTORY_NAME}")
         findconfigurepackageremoveemptydir(${FindConfigurePackage_DOWNLOAD_SOURCE_DIR})
 
         if(NOT EXISTS "${FindConfigurePackage_WORKING_DIRECTORY}/${DOWNLOAD_FILENAME}")
-          message(STATUS "start to download ${DOWNLOAD_FILENAME} from ${FindConfigurePackage_ZIP_URL}")
-          findconfigurepackagedownloadfile("${FindConfigurePackage_ZIP_URL}"
-                                           "${FindConfigurePackage_WORKING_DIRECTORY}/${DOWNLOAD_FILENAME}")
+          message(
+            STATUS "start to download ${DOWNLOAD_FILENAME} from ${FindConfigurePackage_ZIP_URL}")
+          findconfigurepackagedownloadfile(
+            "${FindConfigurePackage_ZIP_URL}"
+            "${FindConfigurePackage_WORKING_DIRECTORY}/${DOWNLOAD_FILENAME}")
         endif()
 
         if(NOT EXISTS ${FindConfigurePackage_DOWNLOAD_SOURCE_DIR})
@@ -247,10 +292,13 @@ macro(FindConfigurePackage)
       if(NOT FindConfigurePackage_UNPACK_SOURCE AND FindConfigurePackage_GIT_URL)
         get_filename_component(DOWNLOAD_FILENAME "${FindConfigurePackage_GIT_URL}" NAME)
         if(NOT FindConfigurePackage_SRC_DIRECTORY_NAME)
-          get_filename_component(FindConfigurePackage_SRC_DIRECTORY_FULL_NAME "${DOWNLOAD_FILENAME}" NAME)
-          string(REGEX REPLACE "\\.git$" "" FindConfigurePackage_SRC_DIRECTORY_NAME "${FindConfigurePackage_SRC_DIRECTORY_FULL_NAME}")
+          get_filename_component(FindConfigurePackage_SRC_DIRECTORY_FULL_NAME
+                                 "${DOWNLOAD_FILENAME}" NAME)
+          string(REGEX REPLACE "\\.git$" "" FindConfigurePackage_SRC_DIRECTORY_NAME
+                               "${FindConfigurePackage_SRC_DIRECTORY_FULL_NAME}")
         endif()
-        set(FindConfigurePackage_DOWNLOAD_SOURCE_DIR "${FindConfigurePackage_WORKING_DIRECTORY}/${FindConfigurePackage_SRC_DIRECTORY_NAME}")
+        set(FindConfigurePackage_DOWNLOAD_SOURCE_DIR
+            "${FindConfigurePackage_WORKING_DIRECTORY}/${FindConfigurePackage_SRC_DIRECTORY_NAME}")
         findconfigurepackageremoveemptydir(${FindConfigurePackage_DOWNLOAD_SOURCE_DIR})
 
         if(EXISTS "${FindConfigurePackage_DOWNLOAD_SOURCE_DIR}/.git")
@@ -260,7 +308,10 @@ macro(FindConfigurePackage)
             OUTPUT_VARIABLE FindConfigurePackage_GIT_CHECK_REPO)
           string(STRIP "${FindConfigurePackage_GIT_CHECK_REPO}" FindConfigurePackage_GIT_CHECK_REPO)
           if(FindConfigurePackage_GIT_CHECK_REPO STREQUAL "")
-            message(STATUS "${FindConfigurePackage_DOWNLOAD_SOURCE_DIR} is not a valid git reposutory, remove it...")
+            message(
+              STATUS
+                "${FindConfigurePackage_DOWNLOAD_SOURCE_DIR} is not a valid git reposutory, remove it..."
+            )
             file(REMOVE_RECURSE ${FindConfigurePackage_DOWNLOAD_SOURCE_DIR})
           endif()
           unset(FindConfigurePackage_GIT_CHECK_REPO)
@@ -271,19 +322,25 @@ macro(FindConfigurePackage)
             if(NOT EXISTS ${FindConfigurePackage_DOWNLOAD_SOURCE_DIR})
               file(MAKE_DIRECTORY ${FindConfigurePackage_DOWNLOAD_SOURCE_DIR})
             endif()
-            execute_process(COMMAND ${GIT_EXECUTABLE} init WORKING_DIRECTORY ${FindConfigurePackage_DOWNLOAD_SOURCE_DIR})
-            execute_process(COMMAND ${GIT_EXECUTABLE} remote add origin "${FindConfigurePackage_GIT_URL}"
+            execute_process(COMMAND ${GIT_EXECUTABLE} init
                             WORKING_DIRECTORY ${FindConfigurePackage_DOWNLOAD_SOURCE_DIR})
+            execute_process(
+              COMMAND ${GIT_EXECUTABLE} remote add origin "${FindConfigurePackage_GIT_URL}"
+              WORKING_DIRECTORY ${FindConfigurePackage_DOWNLOAD_SOURCE_DIR})
             if(NOT FindConfigurePackage_GIT_BRANCH AND NOT FindConfigurePackage_GIT_COMMIT)
               execute_process(
                 COMMAND ${GIT_EXECUTABLE} ls-remote --symref origin HEAD
                 WORKING_DIRECTORY ${FindConfigurePackage_DOWNLOAD_SOURCE_DIR}
                 OUTPUT_VARIABLE FindConfigurePackage_GIT_CHECK_REPO)
-              string(REGEX REPLACE ".*refs/heads/([^ \t]*)[ \t]*HEAD.*" "\\1" FindConfigurePackage_GIT_BRANCH
-                                   ${FindConfigurePackage_GIT_CHECK_REPO})
-              if(NOT FindConfigurePackage_GIT_BRANCH OR FindConfigurePackage_GIT_BRANCH STREQUAL FindConfigurePackage_GIT_CHECK_REPO)
-                string(REGEX REPLACE "([^ \t]*)[ \t]*HEAD.*" "\\1" FindConfigurePackage_GIT_BRANCH ${FindConfigurePackage_GIT_CHECK_REPO})
-                if(NOT FindConfigurePackage_GIT_BRANCH OR FindConfigurePackage_GIT_BRANCH STREQUAL FindConfigurePackage_GIT_CHECK_REPO)
+              string(REGEX
+                     REPLACE ".*refs/heads/([^ \t]*)[ \t]*HEAD.*" "\\1"
+                             FindConfigurePackage_GIT_BRANCH ${FindConfigurePackage_GIT_CHECK_REPO})
+              if(NOT FindConfigurePackage_GIT_BRANCH OR FindConfigurePackage_GIT_BRANCH STREQUAL
+                                                        FindConfigurePackage_GIT_CHECK_REPO)
+                string(REGEX REPLACE "([^ \t]*)[ \t]*HEAD.*" "\\1" FindConfigurePackage_GIT_BRANCH
+                                     ${FindConfigurePackage_GIT_CHECK_REPO})
+                if(NOT FindConfigurePackage_GIT_BRANCH OR FindConfigurePackage_GIT_BRANCH STREQUAL
+                                                          FindConfigurePackage_GIT_CHECK_REPO)
                   set(FindConfigurePackage_GIT_BRANCH master)
                 endif()
               endif()
@@ -293,19 +350,28 @@ macro(FindConfigurePackage)
               set(FindConfigurePackage_GIT_FETCH_DEPTH ${FindConfigurePackageGitFetchDepth})
             endif()
             if(FindConfigurePackage_GIT_BRANCH)
-              execute_process(COMMAND ${GIT_EXECUTABLE} fetch "--depth=${FindConfigurePackage_GIT_FETCH_DEPTH}" "-n" origin
-                                      ${FindConfigurePackage_GIT_BRANCH} WORKING_DIRECTORY ${FindConfigurePackage_DOWNLOAD_SOURCE_DIR})
+              execute_process(
+                COMMAND ${GIT_EXECUTABLE} fetch "--depth=${FindConfigurePackage_GIT_FETCH_DEPTH}"
+                        "-n" origin ${FindConfigurePackage_GIT_BRANCH}
+                WORKING_DIRECTORY ${FindConfigurePackage_DOWNLOAD_SOURCE_DIR})
             else()
               if(GIT_VERSION_STRING VERSION_GREATER_EQUAL "2.11.0")
-                execute_process(COMMAND ${GIT_EXECUTABLE} fetch "--deepen=${FindConfigurePackage_GIT_FETCH_DEPTH}" "-n" origin
-                                        ${FindConfigurePackage_GIT_COMMIT} WORKING_DIRECTORY ${FindConfigurePackage_DOWNLOAD_SOURCE_DIR})
+                execute_process(
+                  COMMAND ${GIT_EXECUTABLE} fetch "--deepen=${FindConfigurePackage_GIT_FETCH_DEPTH}"
+                          "-n" origin ${FindConfigurePackage_GIT_COMMIT}
+                  WORKING_DIRECTORY ${FindConfigurePackage_DOWNLOAD_SOURCE_DIR})
               else()
-                message(WARNING "It's recommended to use git 2.11.0 or upper to only fetch partly of repository.")
-                execute_process(COMMAND ${GIT_EXECUTABLE} fetch "-n" origin ${FindConfigurePackage_GIT_COMMIT}
-                                WORKING_DIRECTORY ${FindConfigurePackage_DOWNLOAD_SOURCE_DIR})
+                message(
+                  WARNING
+                    "It's recommended to use git 2.11.0 or upper to only fetch partly of repository."
+                )
+                execute_process(
+                  COMMAND ${GIT_EXECUTABLE} fetch "-n" origin ${FindConfigurePackage_GIT_COMMIT}
+                  WORKING_DIRECTORY ${FindConfigurePackage_DOWNLOAD_SOURCE_DIR})
               endif()
             endif()
-            execute_process(COMMAND ${GIT_EXECUTABLE} reset --hard FETCH_HEAD WORKING_DIRECTORY ${FindConfigurePackage_DOWNLOAD_SOURCE_DIR})
+            execute_process(COMMAND ${GIT_EXECUTABLE} reset --hard FETCH_HEAD
+                            WORKING_DIRECTORY ${FindConfigurePackage_DOWNLOAD_SOURCE_DIR})
             if(FindConfigurePackage_GIT_ENABLE_SUBMODULE)
               execute_process(COMMAND ${GIT_EXECUTABLE} submodule update --init -f
                               WORKING_DIRECTORY ${FindConfigurePackage_DOWNLOAD_SOURCE_DIR})
@@ -324,16 +390,19 @@ macro(FindConfigurePackage)
       if(NOT FindConfigurePackage_UNPACK_SOURCE AND FindConfigurePackage_SVN_URL)
         get_filename_component(DOWNLOAD_FILENAME "${FindConfigurePackage_SVN_URL}" NAME)
         if(NOT FindConfigurePackage_SRC_DIRECTORY_NAME)
-          get_filename_component(FindConfigurePackage_SRC_DIRECTORY_NAME "${DOWNLOAD_FILENAME}" NAME)
+          get_filename_component(FindConfigurePackage_SRC_DIRECTORY_NAME "${DOWNLOAD_FILENAME}"
+                                 NAME)
         endif()
-        set(FindConfigurePackage_DOWNLOAD_SOURCE_DIR "${FindConfigurePackage_WORKING_DIRECTORY}/${FindConfigurePackage_SRC_DIRECTORY_NAME}")
+        set(FindConfigurePackage_DOWNLOAD_SOURCE_DIR
+            "${FindConfigurePackage_WORKING_DIRECTORY}/${FindConfigurePackage_SRC_DIRECTORY_NAME}")
         findconfigurepackageremoveemptydir(${FindConfigurePackage_DOWNLOAD_SOURCE_DIR})
 
         if(NOT EXISTS ${FindConfigurePackage_DOWNLOAD_SOURCE_DIR})
           find_package(Subversion)
           if(SUBVERSION_FOUND)
             execute_process(
-              COMMAND ${Subversion_SVN_EXECUTABLE} co "${FindConfigurePackage_SVN_URL}" "${FindConfigurePackage_SRC_DIRECTORY_NAME}"
+              COMMAND ${Subversion_SVN_EXECUTABLE} co "${FindConfigurePackage_SVN_URL}"
+                      "${FindConfigurePackage_SRC_DIRECTORY_NAME}"
               WORKING_DIRECTORY "${FindConfigurePackage_WORKING_DIRECTORY}")
           else()
             message(STATUS "svn not found, skip ${FindConfigurePackage_SVN_URL}")
@@ -359,7 +428,8 @@ macro(FindConfigurePackage)
 
       # prebuild commands
       foreach(cmd ${FindConfigurePackage_PREBUILD_COMMAND})
-        message(STATUS "FindConfigurePackage - Run: ${cmd} @ ${FindConfigurePackage_BUILD_DIRECTORY}")
+        message(
+          STATUS "FindConfigurePackage - Run: ${cmd} @ ${FindConfigurePackage_BUILD_DIRECTORY}")
         execute_process(COMMAND ${cmd} WORKING_DIRECTORY ${FindConfigurePackage_BUILD_DIRECTORY})
       endforeach()
 
@@ -369,8 +439,12 @@ macro(FindConfigurePackage)
           file(RELATIVE_PATH CONFIGURE_EXEC_FILE ${FindConfigurePackage_BUILD_DIRECTORY}
                "${FindConfigurePackage_PROJECT_DIRECTORY}/configure")
         else()
-          file(RELATIVE_PATH CONFIGURE_EXEC_FILE ${FindConfigurePackage_BUILD_DIRECTORY}
-               "${FindConfigurePackage_WORKING_DIRECTORY}/${FindConfigurePackage_SRC_DIRECTORY_NAME}/configure")
+          file(
+            RELATIVE_PATH
+            CONFIGURE_EXEC_FILE
+            ${FindConfigurePackage_BUILD_DIRECTORY}
+            "${FindConfigurePackage_WORKING_DIRECTORY}/${FindConfigurePackage_SRC_DIRECTORY_NAME}/configure"
+          )
         endif()
         if(${CONFIGURE_EXEC_FILE} STREQUAL "configure")
           set(CONFIGURE_EXEC_FILE "./configure")
@@ -379,22 +453,27 @@ macro(FindConfigurePackage)
           STATUS
             "@${FindConfigurePackage_BUILD_DIRECTORY} Run: ${CONFIGURE_EXEC_FILE} --prefix=${FindConfigurePackage_PREFIX_DIRECTORY} ${FindConfigurePackage_CONFIGURE_FLAGS}"
         )
-        execute_process(COMMAND ${CONFIGURE_EXEC_FILE} "--prefix=${FindConfigurePackage_PREFIX_DIRECTORY}"
-                                ${FindConfigurePackage_CONFIGURE_FLAGS} WORKING_DIRECTORY "${FindConfigurePackage_BUILD_DIRECTORY}")
+        execute_process(
+          COMMAND ${CONFIGURE_EXEC_FILE} "--prefix=${FindConfigurePackage_PREFIX_DIRECTORY}"
+                  ${FindConfigurePackage_CONFIGURE_FLAGS}
+          WORKING_DIRECTORY "${FindConfigurePackage_BUILD_DIRECTORY}")
 
         if(PROJECT_FIND_CONFIGURE_PACKAGE_PARALLEL_BUILD)
           set(FindConfigurePackageCMakeBuildParallelFlags "-j")
         else()
           unset(FindConfigurePackageCMakeBuildParallelFlags)
         endif()
-        execute_process(COMMAND "make" ${FindConfigurePackage_MAKE_FLAGS} ${FindConfigurePackage_INSTALL_TARGET}
-                                ${FindConfigurePackageCMakeBuildParallelFlags} WORKING_DIRECTORY ${FindConfigurePackage_BUILD_DIRECTORY})
+        execute_process(
+          COMMAND "make" ${FindConfigurePackage_MAKE_FLAGS} ${FindConfigurePackage_INSTALL_TARGET}
+                  ${FindConfigurePackageCMakeBuildParallelFlags}
+          WORKING_DIRECTORY ${FindConfigurePackage_BUILD_DIRECTORY})
         unset(FindConfigurePackageCMakeBuildParallelFlags)
 
         # build using cmake and make
       elseif(FindConfigurePackage_BUILD_WITH_CMAKE)
         if(FindConfigurePackage_PROJECT_DIRECTORY)
-          file(RELATIVE_PATH BUILD_WITH_CMAKE_PROJECT_DIR ${FindConfigurePackage_BUILD_DIRECTORY} ${FindConfigurePackage_PROJECT_DIRECTORY})
+          file(RELATIVE_PATH BUILD_WITH_CMAKE_PROJECT_DIR ${FindConfigurePackage_BUILD_DIRECTORY}
+               ${FindConfigurePackage_PROJECT_DIRECTORY})
         else()
           file(RELATIVE_PATH BUILD_WITH_CMAKE_PROJECT_DIR ${FindConfigurePackage_BUILD_DIRECTORY}
                ${FindConfigurePackage_DOWNLOAD_SOURCE_DIR})
@@ -403,21 +482,26 @@ macro(FindConfigurePackage)
           set(BUILD_WITH_CMAKE_PROJECT_DIR ".")
         endif()
 
-        set(FindConfigurePackage_BUILD_WITH_CMAKE_GENERATOR "-DCMAKE_INSTALL_PREFIX=${FindConfigurePackage_PREFIX_DIRECTORY}")
+        set(FindConfigurePackage_BUILD_WITH_CMAKE_GENERATOR
+            "-DCMAKE_INSTALL_PREFIX=${FindConfigurePackage_PREFIX_DIRECTORY}")
 
         if(FindConfigurePackage_CMAKE_INHIRT_BUILD_ENV)
           set(FindConfigurePackage_CMAKE_INHIRT_BUILD_ENV OFF)
-          set(project_build_tools_append_cmake_inherit_options_CALL_VARS FindConfigurePackage_BUILD_WITH_CMAKE_GENERATOR)
+          set(project_build_tools_append_cmake_inherit_options_CALL_VARS
+              FindConfigurePackage_BUILD_WITH_CMAKE_GENERATOR)
           if(FindConfigurePackage_CMAKE_INHIRT_BUILD_ENV_DISABLE_C_FLAGS)
             list(APPEND project_build_tools_append_cmake_inherit_options_CALL_VARS DISABLE_C_FLAGS)
           endif()
           if(FindConfigurePackage_CMAKE_INHIRT_BUILD_ENV_DISABLE_CXX_FLAGS)
-            list(APPEND project_build_tools_append_cmake_inherit_options_CALL_VARS DISABLE_CXX_FLAGS)
+            list(APPEND project_build_tools_append_cmake_inherit_options_CALL_VARS
+                 DISABLE_CXX_FLAGS)
           endif()
           if(FindConfigurePackage_CMAKE_INHIRT_BUILD_ENV_DISABLE_ASM_FLAGS)
-            list(APPEND project_build_tools_append_cmake_inherit_options_CALL_VARS DISABLE_ASM_FLAGS)
+            list(APPEND project_build_tools_append_cmake_inherit_options_CALL_VARS
+                 DISABLE_ASM_FLAGS)
           endif()
-          project_build_tools_append_cmake_inherit_options(${project_build_tools_append_cmake_inherit_options_CALL_VARS})
+          project_build_tools_append_cmake_inherit_options(
+            ${project_build_tools_append_cmake_inherit_options_CALL_VARS})
           unset(project_build_tools_append_cmake_inherit_options_CALL_VARS)
         endif()
 
@@ -426,8 +510,11 @@ macro(FindConfigurePackage)
             "@${FindConfigurePackage_BUILD_DIRECTORY} Run: ${CMAKE_COMMAND} ${BUILD_WITH_CMAKE_PROJECT_DIR} ${FindConfigurePackage_BUILD_WITH_CMAKE_GENERATOR} ${FindConfigurePackage_CMAKE_FLAGS}"
         )
 
-        execute_process(COMMAND ${CMAKE_COMMAND} ${BUILD_WITH_CMAKE_PROJECT_DIR} ${FindConfigurePackage_BUILD_WITH_CMAKE_GENERATOR}
-                                ${FindConfigurePackage_CMAKE_FLAGS} WORKING_DIRECTORY ${FindConfigurePackage_BUILD_DIRECTORY})
+        execute_process(
+          COMMAND
+            ${CMAKE_COMMAND} ${BUILD_WITH_CMAKE_PROJECT_DIR}
+            ${FindConfigurePackage_BUILD_WITH_CMAKE_GENERATOR} ${FindConfigurePackage_CMAKE_FLAGS}
+          WORKING_DIRECTORY ${FindConfigurePackage_BUILD_DIRECTORY})
 
         # cmake --build and install
         if(PROJECT_FIND_CONFIGURE_PACKAGE_PARALLEL_BUILD)
@@ -442,8 +529,10 @@ macro(FindConfigurePackage)
                 "@${FindConfigurePackage_BUILD_DIRECTORY} Run: ${CMAKE_COMMAND} --build . --target ${FindConfigurePackage_INSTALL_TARGET} --config ${FindConfigurePackage_MSVC_CONFIGURE} ${FindConfigurePackageCMakeBuildParallelFlags}"
             )
             execute_process(
-              COMMAND ${CMAKE_COMMAND} --build . --target ${FindConfigurePackage_INSTALL_TARGET} --config
-                      ${FindConfigurePackage_MSVC_CONFIGURE} ${FindConfigurePackageCMakeBuildParallelFlags}
+              COMMAND
+                ${CMAKE_COMMAND} --build . --target ${FindConfigurePackage_INSTALL_TARGET} --config
+                ${FindConfigurePackage_MSVC_CONFIGURE}
+                ${FindConfigurePackageCMakeBuildParallelFlags}
               WORKING_DIRECTORY ${FindConfigurePackage_BUILD_DIRECTORY})
           else()
             message(
@@ -451,23 +540,26 @@ macro(FindConfigurePackage)
                 "@${FindConfigurePackage_BUILD_DIRECTORY} Run: ${CMAKE_COMMAND} --build . --target ${FindConfigurePackage_INSTALL_TARGET} --config Debug ${FindConfigurePackageCMakeBuildParallelFlags}"
             )
             execute_process(
-              COMMAND ${CMAKE_COMMAND} --build . --target ${FindConfigurePackage_INSTALL_TARGET} --config Debug
-                      ${FindConfigurePackageCMakeBuildParallelFlags} WORKING_DIRECTORY ${FindConfigurePackage_BUILD_DIRECTORY})
+              COMMAND ${CMAKE_COMMAND} --build . --target ${FindConfigurePackage_INSTALL_TARGET}
+                      --config Debug ${FindConfigurePackageCMakeBuildParallelFlags}
+              WORKING_DIRECTORY ${FindConfigurePackage_BUILD_DIRECTORY})
             message(
               STATUS
                 "@${FindConfigurePackage_BUILD_DIRECTORY} Run: ${CMAKE_COMMAND} --build . --target ${FindConfigurePackage_INSTALL_TARGET} --config Release ${FindConfigurePackageCMakeBuildParallelFlags}"
             )
             execute_process(
-              COMMAND ${CMAKE_COMMAND} --build . --target ${FindConfigurePackage_INSTALL_TARGET} --config Release
-                      ${FindConfigurePackageCMakeBuildParallelFlags} WORKING_DIRECTORY ${FindConfigurePackage_BUILD_DIRECTORY})
+              COMMAND ${CMAKE_COMMAND} --build . --target ${FindConfigurePackage_INSTALL_TARGET}
+                      --config Release ${FindConfigurePackageCMakeBuildParallelFlags}
+              WORKING_DIRECTORY ${FindConfigurePackage_BUILD_DIRECTORY})
             if(CMAKE_BUILD_TYPE)
               message(
                 STATUS
                   "@${FindConfigurePackage_BUILD_DIRECTORY} Run: ${CMAKE_COMMAND} --build . --target ${FindConfigurePackage_INSTALL_TARGET} --config ${CMAKE_BUILD_TYPE} ${FindConfigurePackageCMakeBuildParallelFlags}"
               )
               execute_process(
-                COMMAND ${CMAKE_COMMAND} --build . --target ${FindConfigurePackage_INSTALL_TARGET} --config ${CMAKE_BUILD_TYPE}
-                        ${FindConfigurePackageCMakeBuildParallelFlags} WORKING_DIRECTORY ${FindConfigurePackage_BUILD_DIRECTORY})
+                COMMAND ${CMAKE_COMMAND} --build . --target ${FindConfigurePackage_INSTALL_TARGET}
+                        --config ${CMAKE_BUILD_TYPE} ${FindConfigurePackageCMakeBuildParallelFlags}
+                WORKING_DIRECTORY ${FindConfigurePackage_BUILD_DIRECTORY})
             endif()
           endif()
 
@@ -476,8 +568,10 @@ macro(FindConfigurePackage)
             STATUS
               "@${FindConfigurePackage_BUILD_DIRECTORY} Run: ${CMAKE_COMMAND} --build . --target ${FindConfigurePackage_INSTALL_TARGET} ${FindConfigurePackageCMakeBuildParallelFlags}"
           )
-          execute_process(COMMAND ${CMAKE_COMMAND} --build . --target ${FindConfigurePackage_INSTALL_TARGET}
-                                  ${FindConfigurePackageCMakeBuildParallelFlags} WORKING_DIRECTORY ${FindConfigurePackage_BUILD_DIRECTORY})
+          execute_process(
+            COMMAND ${CMAKE_COMMAND} --build . --target ${FindConfigurePackage_INSTALL_TARGET}
+                    ${FindConfigurePackageCMakeBuildParallelFlags}
+            WORKING_DIRECTORY ${FindConfigurePackage_BUILD_DIRECTORY})
         endif()
         unset(FindConfigurePackageCMakeBuildParallelFlags)
 
@@ -487,7 +581,8 @@ macro(FindConfigurePackage)
         # build using scons
       elseif(FindConfigurePackage_BUILD_WITH_SCONS)
         if(FindConfigurePackage_PROJECT_DIRECTORY)
-          file(RELATIVE_PATH BUILD_WITH_SCONS_PROJECT_DIR ${FindConfigurePackage_BUILD_DIRECTORY} ${FindConfigurePackage_PROJECT_DIRECTORY})
+          file(RELATIVE_PATH BUILD_WITH_SCONS_PROJECT_DIR ${FindConfigurePackage_BUILD_DIRECTORY}
+               ${FindConfigurePackage_PROJECT_DIRECTORY})
         else()
           file(RELATIVE_PATH BUILD_WITH_SCONS_PROJECT_DIR ${FindConfigurePackage_BUILD_DIRECTORY}
                ${FindConfigurePackage_DOWNLOAD_SOURCE_DIR})
@@ -499,9 +594,12 @@ macro(FindConfigurePackage)
         set(OLD_ENV_PREFIX $ENV{prefix})
         set(ENV{prefix} ${FindConfigurePackage_PREFIX_DIRECTORY})
         message(
-          STATUS "@${FindConfigurePackage_BUILD_DIRECTORY} Run: scons ${FindConfigurePackage_SCONS_FLAGS} ${BUILD_WITH_SCONS_PROJECT_DIR}")
-        execute_process(COMMAND "scons" ${FindConfigurePackage_SCONS_FLAGS} ${BUILD_WITH_SCONS_PROJECT_DIR}
-                        WORKING_DIRECTORY ${FindConfigurePackage_BUILD_DIRECTORY})
+          STATUS
+            "@${FindConfigurePackage_BUILD_DIRECTORY} Run: scons ${FindConfigurePackage_SCONS_FLAGS} ${BUILD_WITH_SCONS_PROJECT_DIR}"
+        )
+        execute_process(
+          COMMAND "scons" ${FindConfigurePackage_SCONS_FLAGS} ${BUILD_WITH_SCONS_PROJECT_DIR}
+          WORKING_DIRECTORY ${FindConfigurePackage_BUILD_DIRECTORY})
         set(ENV{prefix} ${OLD_ENV_PREFIX})
 
         # build using custom commands(such as gyp)
@@ -517,7 +615,8 @@ macro(FindConfigurePackage)
 
       # afterbuild commands
       foreach(cmd ${FindConfigurePackage_AFTERBUILD_COMMAND})
-        message(STATUS "FindConfigurePackage - Run: ${cmd} @ ${FindConfigurePackage_BUILD_DIRECTORY}")
+        message(
+          STATUS "FindConfigurePackage - Run: ${cmd} @ ${FindConfigurePackage_BUILD_DIRECTORY}")
         execute_process(COMMAND ${cmd} WORKING_DIRECTORY ${FindConfigurePackage_BUILD_DIRECTORY})
       endforeach()
 
