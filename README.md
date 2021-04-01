@@ -4,7 +4,7 @@ cxx utils code
 |                           | [Linux+OSX(clang+gcc)][linux-link] | [Windows+MinGW(vc+gcc)][windows-link] |
 |:-------------------------:|:----------------------------------:|:-------------------------------------:|
 | Build & Unit Test         | ![linux-badge]                     | ![windows-badge]                      |
-Compilers | linux-clang-10/11 <br /> linux-gcc-9 <br /> linux-gcc-10 <br /> macOS-clang-12.0 <br /> | MSVC 14(Visual Studio 2015) <br /> MSVC 15(Visual Studio 2017) <br /> MSVC 16(Visual Studio 2019) <br /> Mingw32-gcc <br /> Mingw64-gcc |  
+Compilers | linux-clang-10/11 <br /> linux-gcc-9 <br /> linux-gcc-10 <br /> ~~macOS-clang-12.0~~ <br /> | MSVC 14(Visual Studio 2015) <br /> MSVC 15(Visual Studio 2017) <br /> MSVC 16(Visual Studio 2019) <br /> Mingw32-gcc <br /> Mingw64-gcc |  
 
 [![codecov badge]][coverage status] [![lgtm-badge]][lgtm-link]
 
