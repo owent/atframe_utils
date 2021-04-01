@@ -32,13 +32,13 @@ jobs:
           - os: ubuntu-20.04
             triplet: x64-linux
             cc: clang-11
-          - os: macos-11.0
+          - os: macos-latest
             triplet: x64-osx
             cc: clang
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v1
+        uses: actions/checkout@v2
       - name: Build & Test
         shell: bash
         env:
@@ -70,7 +70,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v1
+        uses: actions/checkout@v2
       - name: Generate coverage
         shell: bash
         env:
