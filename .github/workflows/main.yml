@@ -26,10 +26,6 @@ jobs:
             ssl: mbedtls
           - os: ubuntu-20.04
             triplet: x64-linux
-            cc: gcc
-            gcov_flags: "--coverage -fprofile-arcs -ftest-coverage"
-          - os: ubuntu-20.04
-            triplet: x64-linux
             cc: gcc-7
           - os: ubuntu-20.04
             triplet: x64-linux
@@ -43,13 +39,11 @@ jobs:
           - os: macos-latest
             triplet: x64-osx
             cc: clang
-        os: [ubuntu-latest, macos-latest]
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout
         uses: actions/checkout@v1
       - name: Build & Test
-        if: ${{ ! matrix.gcov_flags }}
         shell: bash
         env:
           USE_CC: ${{ matrix.cc }}
@@ -67,13 +61,28 @@ jobs:
           cd build_jobs_ci ;
           cmake --build . -j ;
           ctest . -V ;
+  coverage: # job id, can be any string
+    # Job name is Build And Publish
+    name: Build
+    # This job runs on Linux
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-20.04
+            triplet: x64-linux
+            cc: gcc
+            gcov_flags: "--coverage -fprofile-arcs -ftest-coverage"
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v1
       - name: Generate coverage
-        if: ${{ matrix.gcov_flags }}
         shell: bash
         env:
           USE_CC: ${{ matrix.cc }}
           VCPKG_TARGET_TRIPLET: ${{ matrix.triplet }}
           USE_SSL: ${{ matrix.ssl }}
+          GCOV_FLAGS: "${{ matrix.gcov_flags }}"
         run: |
           if [[ "x$USE_SSL" == "xmbedtls" ]]; then
             vcpkg install --triplet=$VCPKG_TARGET_TRIPLET mbedtls;
@@ -82,14 +91,13 @@ jobs:
             vcpkg install --triplet=$VCPKG_TARGET_TRIPLET openssl;
             CRYPTO_OPTIONS="-DCRYPTO_USE_OPENSSL=ON";
           fi
-          bash cmake_dev.sh -lus -b Debug -r build_jobs_coverage -c $USE_CC -- $CRYPTO_OPTIONS "-DCMAKE_C_FLAGS=${{ matrix.gcov_flags }}" "-DCMAKE_CXX_FLAGS=${{ matrix.gcov_flags }}" "-DCMAKE_EXE_LINKER_FLAGS=${{ matrix.gcov_flags }}" -DCMAKE_TOOLCHAIN_FILE=$VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake -DVCPKG_TARGET_TRIPLET=$VCPKG_TARGET_TRIPLET ;
+          bash cmake_dev.sh -lus -b Debug -r build_jobs_coverage -c $USE_CC -- $CRYPTO_OPTIONS "-DCMAKE_C_FLAGS=$GCOV_FLAGS" "-DCMAKE_CXX_FLAGS=$GCOV_FLAGS" "-DCMAKE_EXE_LINKER_FLAGS=$GCOV_FLAGS" -DCMAKE_TOOLCHAIN_FILE=$VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake -DVCPKG_TARGET_TRIPLET=$VCPKG_TARGET_TRIPLET ;
           cd build_jobs_coverage ;
           cmake --build .;
           ctest . -V ;
           pip install --user cpp-coveralls ;
           coveralls -r .. --gcov-options '\-lp' -e sample -e test -e tools -e build_jobs_coverage ;
       - name: Cache pip
-        if: ${{ matrix.gcov_flags }}
         uses: actions/cache@v2
         with:
           path: |

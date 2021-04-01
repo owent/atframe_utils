@@ -48,11 +48,12 @@ write_compiler_detection_header(
            cxx_static_assert
            cxx_thread_local
            cxx_variadic_templates)
-# file(MAKE_DIRECTORY "${PROJECT_ATFRAME_UTILS_INCLUDE_DIR}/config") file(RENAME "${CMAKE_BINARY_DIR}/compiler_features.h"
+# file(MAKE_DIRECTORY "${PROJECT_ATFRAME_UTILS_INCLUDE_DIR}/config") file(RENAME
+# "${CMAKE_BINARY_DIR}/compiler_features.h"
 # "${PROJECT_ATFRAME_UTILS_INCLUDE_DIR}/config/compiler_features.h")
 
 # 默认配置选项
-# ##########################################################################################################################################
+# ##################################################################################################
 option(LIBUNWIND_ENABLED "Enable using libunwind." OFF)
 option(LOG_WRAPPER_ENABLE_LUA_SUPPORT "Enable lua support." ON)
 option(LOG_WRAPPER_CHECK_LUA "Check lua support." ON)
@@ -119,7 +120,8 @@ else()
 endif()
 
 if(ANDROID)
-  # Android发现偶现_Unwind_Backtrace调用崩溃,默认金庸掉这个功能。 可以用adb logcat | ./ndk-stack -sym $PROJECT_PATH/obj/local/armeabi 代替
+  # Android发现偶现_Unwind_Backtrace调用崩溃,默认金庸掉这个功能。 可以用adb logcat | ./ndk-stack -sym
+  # $PROJECT_PATH/obj/local/armeabi 代替
   option(LOG_WRAPPER_ENABLE_STACKTRACE "Try to enable stacktrace for log." OFF)
 else()
   option(LOG_WRAPPER_ENABLE_STACKTRACE "Try to enable stacktrace for log." ON)
@@ -141,11 +143,16 @@ endif()
 
 find_package(Libuuid)
 if(TARGET libuuid)
-  echowithcolor(COLOR YELLOW "-- Dependency(${PROJECT_NAME}): uuid generator with libuuid.(Target: libuuid)")
+  echowithcolor(COLOR YELLOW
+                "-- Dependency(${PROJECT_NAME}): uuid generator with libuuid.(Target: libuuid)")
   list(APPEND PROJECT_ATFRAME_UTILS_PUBLIC_LINK_NAMES libuuid)
   set(LIBATFRAME_UTILS_ENABLE_LIBUUID TRUE)
 elseif(Libuuid_FOUND)
-  echowithcolor(COLOR YELLOW "-- Dependency(${PROJECT_NAME}): uuid generator with libuuid.(${Libuuid_INCLUDE_DIRS}:${Libuuid_LIBRARIES})")
+  echowithcolor(
+    COLOR
+    YELLOW
+    "-- Dependency(${PROJECT_NAME}): uuid generator with libuuid.(${Libuuid_INCLUDE_DIRS}:${Libuuid_LIBRARIES})"
+  )
   list(APPEND PROJECT_ATFRAME_UTILS_PUBLIC_INCLUDE_DIRS ${Libuuid_INCLUDE_DIRS})
   if(Libuuid_LIBRARIES)
     list(APPEND PROJECT_ATFRAME_UTILS_PUBLIC_LINK_NAMES ${Libuuid_LIBRARIES})
@@ -176,13 +183,15 @@ if(NOT LIBATFRAME_UTILS_ENABLE_LIBUUID AND WIN32)
   if(LIBATFRAME_UTILS_TEST_UUID)
     set(LIBATFRAME_UTILS_ENABLE_UUID_WINRPC TRUE)
     list(APPEND PROJECT_ATFRAME_UTILS_PUBLIC_LINK_NAMES Rpcrt4)
-    echowithcolor(COLOR YELLOW "-- Dependency(${PROJECT_NAME}): uuid generator with Windows Rpcrt4.")
+    echowithcolor(COLOR YELLOW
+                  "-- Dependency(${PROJECT_NAME}): uuid generator with Windows Rpcrt4.")
   endif()
 endif()
 
 if(NOT LIBATFRAME_UTILS_ENABLE_LIBUUID AND NOT LIBATFRAME_UTILS_ENABLE_UUID_WINRPC)
   set(LIBATFRAME_UTILS_ENABLE_UUID_INTERNAL_IMPLEMENT TRUE)
-  echowithcolor(COLOR YELLOW "-- Dependency(${PROJECT_NAME}): uuid generator with internal implement.")
+  echowithcolor(COLOR YELLOW
+                "-- Dependency(${PROJECT_NAME}): uuid generator with internal implement.")
 else()
   set(LIBATFRAME_UTILS_ENABLE_UUID_INTERNAL_IMPLEMENT FALSE)
 endif()
@@ -255,7 +264,10 @@ if(CRYPTO_USE_OPENSSL
   if(OPENSSL_FOUND OR LIBRESSL_FOUND)
     message(STATUS "Crypto enabled.(openssl/libressl found - ${PROJECT_NAME})")
   else()
-    message(FATAL_ERROR "CRYPTO_USE_OPENSSL,CRYPTO_USE_LIBRESSL,CRYPTO_USE_BORINGSSL is set but openssl/libressl not found")
+    message(
+      FATAL_ERROR
+        "CRYPTO_USE_OPENSSL,CRYPTO_USE_LIBRESSL,CRYPTO_USE_BORINGSSL is set but openssl/libressl not found"
+    )
   endif()
 elseif(CRYPTO_USE_MBEDTLS)
   if(TARGET mbedtls_static OR TARGET mbedtls)
@@ -348,9 +360,11 @@ if(OPENSSL_FOUND)
       list(APPEND PROJECT_ATFRAME_UTILS_PUBLIC_LINK_NAMES OpenSSL::Crypto)
     endif()
   else()
-    message(STATUS "OpenSSL using(${PROJECT_NAME}): ${OPENSSL_SSL_LIBRARY};${OPENSSL_CRYPTO_LIBRARY}")
+    message(
+      STATUS "OpenSSL using(${PROJECT_NAME}): ${OPENSSL_SSL_LIBRARY};${OPENSSL_CRYPTO_LIBRARY}")
     list(APPEND PROJECT_ATFRAME_UTILS_PUBLIC_INCLUDE_DIRS ${OPENSSL_INCLUDE_DIR})
-    list(APPEND PROJECT_ATFRAME_UTILS_PUBLIC_LINK_NAMES ${OPENSSL_SSL_LIBRARY} ${OPENSSL_CRYPTO_LIBRARY})
+    list(APPEND PROJECT_ATFRAME_UTILS_PUBLIC_LINK_NAMES ${OPENSSL_SSL_LIBRARY}
+         ${OPENSSL_CRYPTO_LIBRARY})
   endif()
   if(NOT LIBRESSL_FOUND AND WIN32)
     find_library(ATFRAME_UTILS_OPENSSL_FIND_CRYPT32 Crypt32)
@@ -476,8 +490,9 @@ set(BOOST_ROOT
     ""
     CACHE STRING "Boost root directory")
 option(PROJECT_TEST_ENABLE_BOOST_UNIT_TEST "Enable boost unit test." OFF)
-option(PROJECT_FIND_CONFIGURE_PACKAGE_PARALLEL_BUILD
-       "Parallel building for FindConfigurePackage. It's usually useful for some CI with low memory." ON)
+option(
+  PROJECT_FIND_CONFIGURE_PACKAGE_PARALLEL_BUILD
+  "Parallel building for FindConfigurePackage. It's usually useful for some CI with low memory." ON)
 
 option(PROJECT_ENABLE_UNITTEST "Enable unit test" OFF)
 option(PROJECT_ENABLE_SAMPLE "Enable sample" OFF)
