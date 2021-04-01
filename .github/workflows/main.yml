@@ -20,7 +20,6 @@ jobs:
           - os: ubuntu-20.04
             triplet: x64-linux
             cc: gcc
-            ssl: openssl
           - os: ubuntu-20.04
             triplet: x64-linux
             cc: gcc
@@ -28,28 +27,22 @@ jobs:
           - os: ubuntu-20.04
             triplet: x64-linux
             cc: gcc
-            ssl: openssl
             gcov_flags: "--coverage -fprofile-arcs -ftest-coverage"
           - os: ubuntu-20.04
             triplet: x64-linux
             cc: gcc-7
-            ssl: openssl
           - os: ubuntu-20.04
             triplet: x64-linux
             cc: gcc-10
-            ssl: openssl
           - os: ubuntu-20.04
             triplet: x64-linux
             cc: clang
-            ssl: openssl
           - os: ubuntu-20.04
             triplet: x64-linux
             cc: clang-11
-            ssl: openssl
           - os: macos-latest
             triplet: x64-osx
             cc: clang
-            ssl: openssl
         os: [ubuntu-latest, macos-latest]
     runs-on: ${{ matrix.os }}
     steps:
@@ -58,28 +51,38 @@ jobs:
       - name: Build & Test
         if: ${{ ! matrix.gcov_flags }}
         shell: bash
+        env:
+          USE_CC: ${{ matrix.cc }}
+          VCPKG_TARGET_TRIPLET: ${{ matrix.triplet }}
+          USE_SSL: ${{ matrix.ssl }}
         run: |
-          vcpkg install --triplet=${{ matrix.triplet }} ${{ matrix.ssl }}
-          if [[ "${{ matrix.ssl }}" == "mbedtls" ]]; then
+          if [[ "x$USE_SSL" == "xmbedtls" ]]; then
+            vcpkg install --triplet=$VCPKG_TARGET_TRIPLET mbedtls;
             CRYPTO_OPTIONS="-DCRYPTO_USE_MBEDTLS=ON";
           else
+            vcpkg install --triplet=$VCPKG_TARGET_TRIPLET openssl;
             CRYPTO_OPTIONS="-DCRYPTO_USE_OPENSSL=ON";
           fi
-          bash cmake_dev.sh -lus -b Debug -r build_jobs_ci -c ${{ matrix.cc }} -- $CRYPTO_OPTIONS -DCMAKE_TOOLCHAIN_FILE=$VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake -DVCPKG_TARGET_TRIPLET=${{ matrix.triplet }} ;
+          bash cmake_dev.sh -lus -b Debug -r build_jobs_ci -c $USE_CC -- $CRYPTO_OPTIONS -DCMAKE_TOOLCHAIN_FILE=$VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake -DVCPKG_TARGET_TRIPLET=$VCPKG_TARGET_TRIPLET ;
           cd build_jobs_ci ;
           cmake --build . -j ;
           ctest . -V ;
       - name: Generate coverage
         if: ${{ matrix.gcov_flags }}
         shell: bash
+        env:
+          USE_CC: ${{ matrix.cc }}
+          VCPKG_TARGET_TRIPLET: ${{ matrix.triplet }}
+          USE_SSL: ${{ matrix.ssl }}
         run: |
-          vcpkg install --triplet=${{ matrix.triplet }} ${{ matrix.ssl }}
-          if [[ "${{ matrix.ssl }}" == "mbedtls" ]]; then
+          if [[ "x$USE_SSL" == "xmbedtls" ]]; then
+            vcpkg install --triplet=$VCPKG_TARGET_TRIPLET mbedtls;
             CRYPTO_OPTIONS="-DCRYPTO_USE_MBEDTLS=ON";
           else
+            vcpkg install --triplet=$VCPKG_TARGET_TRIPLET openssl;
             CRYPTO_OPTIONS="-DCRYPTO_USE_OPENSSL=ON";
           fi
-          bash cmake_dev.sh -lus -b Debug -r build_jobs_coverage -c ${{ matrix.cc }} -- $CRYPTO_OPTIONS "-DCMAKE_C_FLAGS=${{ matrix.gcov_flags }}" "-DCMAKE_CXX_FLAGS=${{ matrix.gcov_flags }}" "-DCMAKE_EXE_LINKER_FLAGS=${{ matrix.gcov_flags }}" -DCMAKE_TOOLCHAIN_FILE=$VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake -DVCPKG_TARGET_TRIPLET=${{ matrix.triplet }} ;
+          bash cmake_dev.sh -lus -b Debug -r build_jobs_coverage -c $USE_CC -- $CRYPTO_OPTIONS "-DCMAKE_C_FLAGS=${{ matrix.gcov_flags }}" "-DCMAKE_CXX_FLAGS=${{ matrix.gcov_flags }}" "-DCMAKE_EXE_LINKER_FLAGS=${{ matrix.gcov_flags }}" -DCMAKE_TOOLCHAIN_FILE=$VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake -DVCPKG_TARGET_TRIPLET=$VCPKG_TARGET_TRIPLET ;
           cd build_jobs_coverage ;
           cmake --build .;
           ctest . -V ;
