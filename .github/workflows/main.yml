@@ -11,7 +11,6 @@ on: # @see https://help.github.com/en/articles/events-that-trigger-workflows#web
 
 jobs:
   build: # job id, can be any string
-    # Job name is Build And Publish
     name: Build
     # This job runs on Linux
     strategy:
@@ -24,9 +23,6 @@ jobs:
             triplet: x64-linux
             cc: gcc
             ssl: mbedtls
-          - os: ubuntu-20.04
-            triplet: x64-linux
-            cc: gcc-7
           - os: ubuntu-20.04
             triplet: x64-linux
             cc: gcc-10
@@ -62,8 +58,7 @@ jobs:
           cmake --build . -j ;
           ctest . -V ;
   coverage: # job id, can be any string
-    # Job name is Build And Publish
-    name: Build
+    name: Coverage
     # This job runs on Linux
     strategy:
       matrix:
@@ -95,11 +90,10 @@ jobs:
           cd build_jobs_coverage ;
           cmake --build .;
           ctest . -V ;
-          pip install --user cpp-coveralls ;
-          coveralls -r .. --gcov-options '\-lp' -e sample -e test -e tools -e build_jobs_coverage ;
-      - name: Cache pip
-        uses: actions/cache@v2
+      - name: Uploaded code coverage
+        uses: codecov/codecov-action@v1
         with:
-          path: |
-            ~/.local
-          key: ${{ runner.os }}-${{ hashFiles('~/.local/**') }}
+          # token: ${{secrets.CODECOV_TOKEN}} # not required for public repos
+          fail_ci_if_error: true
+          gcov_args: '-lp'
+          gcov_path_exclude: sample,test,tools,build_jobs_coverage/CMakeFiles
