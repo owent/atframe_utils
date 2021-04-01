@@ -6,14 +6,14 @@ cxx utils code
 | Build & Unit Test         | ![linux-badge]                     | ![windows-badge]                      |
 Compilers | linux-clang-10/11 <br /> linux-gcc-9 <br /> linux-gcc-10 <br /> ~~macOS-clang-12.0~~ <br /> | MSVC 14(Visual Studio 2015) <br /> MSVC 15(Visual Studio 2017) <br /> MSVC 16(Visual Studio 2019) <br /> Mingw32-gcc <br /> Mingw64-gcc |  
 
-[![codecov badge]][coverage status] [![lgtm-badge]][lgtm-link]
+[![codecov badge]][codecov status] [![lgtm-badge]][lgtm-link]
 
 [linux-badge]: https://github.com/atframework/atframe_utils/actions/workflows/main.yml/badge.svg "Github action build status"
 [linux-link]:  https://github.com/atframework/atframe_utils/actions/workflows/main.yml "Github action build status"
 [windows-badge]: https://ci.appveyor.com/api/projects/status/7e6q54xxdga6ov00?svg=true "AppVeyor build status"
 [windows-link]:  https://ci.appveyor.com/project/owt5008137/atframe-utils/branch/master "AppVeyor build status"
-[codecov badge]: https://codecov.io/gh/atframework/atlist-rs/branch/master/graph/badge.svg
-[coverage status]: https://codecov.io/gh/atframework/atlist-rs
+[codecov badge]: https://codecov.io/gh/atframework/atframe_utils/branch/master/graph/badge.svg
+[codecov status]: https://codecov.io/gh/atframework/atframe_utils
 [lgtm-badge]: https://img.shields.io/lgtm/grade/cpp/g/atframework/atframe_utils.svg?logo=lgtm&logoWidth=18 "LGTM"
 [lgtm-link]:  https://lgtm.com/projects/g/atframework/atframe_utils/context:cpp "LGTM"
 
