@@ -12,7 +12,8 @@ set_target_properties(
 
 target_link_libraries(${BIN_NAME} ${PROJECT_ATFRAME_UTILS_LIB_NAME})
 
-target_compile_options(${BIN_NAME} PRIVATE ${COMPILER_STRICT_EXTRA_CFLAGS} ${COMPILER_STRICT_CFLAGS})
+target_compile_options(${BIN_NAME} PRIVATE ${COMPILER_STRICT_EXTRA_CFLAGS}
+                                           ${COMPILER_STRICT_CFLAGS})
 
 if(MSVC)
   set_property(TARGET ${BIN_NAME} PROPERTY FOLDER "atframework/tools")
@@ -20,3 +21,8 @@ if(MSVC)
 endif(MSVC)
 
 add_test(NAME test COMMAND ${BIN_NAME})
+add_test(NAME test COMMAND ${BIN_NAME} -r)
+add_test(NAME test COMMAND ${BIN_NAME} -t)
+add_test(NAME test COMMAND ${BIN_NAME} -V)
+add_test(NAME test COMMAND ${BIN_NAME} -h)
+add_test(NAME test COMMAND ${BIN_NAME} --bad-params)
