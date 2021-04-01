@@ -11,6 +11,7 @@ CMAKE_CLANG_TIDY="";
 CMAKE_CLANG_ANALYZER=0;
 CMAKE_CLANG_ANALYZER_PATH="";
 BUILD_DIR=$(echo "build_jobs_$SYS_NAME" | tr '[:upper:]' '[:lower:]');
+CUSTOM_BUILD_DIR=;
 CMAKE_BUILD_TYPE=Debug;
 
 if [ ! -z "$MSYSTEM" ]; then
@@ -19,7 +20,7 @@ else
     CHECK_MSYS="";
 fi
 
-while getopts "ab:c:d:e:hm:o:tus-" OPTION; do
+while getopts "ab:c:d:e:hlm:o:r:tus-" OPTION; do
     case $OPTION in
         a)
             echo "Ready to check ccc-analyzer and c++-analyzer, please do not use -c to change the compiler when using clang-analyzer.";
@@ -88,6 +89,9 @@ while getopts "ab:c:d:e:hm:o:tus-" OPTION; do
             echo "-s                            enable sample.";
             exit 0;
         ;;
+        l)
+            CMAKE_OPTIONS="$CMAKE_OPTIONS -DPROJECT_ENABLE_TOOLS=YES";
+        ;;
         m)
             if [ ! -z "$OPTARG" ]; then
                 CMAKE_OPTIONS="$CMAKE_OPTIONS -DMBEDTLS_ROOT=$OPTARG -DCRYPTO_USE_MBEDTLS=YES";
@@ -101,6 +105,9 @@ while getopts "ab:c:d:e:hm:o:tus-" OPTION; do
             else
                 CMAKE_OPTIONS="$CMAKE_OPTIONS -DOPENSSL_ROOT_DIR=c:/workspace/lib/crypt/prebuilt/openssl-1.0.2h-vs2015 -DCRYPTO_USE_OPENSSL=YES";
             fi
+        ;;
+        r)
+            CUSTOM_BUILD_DIR="$OPTARG";
         ;;
         t)
             CMAKE_CLANG_TIDY="-D -checks=* --";
@@ -123,6 +130,11 @@ done
 
 shift $(($OPTIND - 1));
 SCRIPT_DIR="$(cd $(dirname $0) && pwd)";
+
+if [[ "x$CUSTOM_BUILD_DIR" != "x" ]]; then
+    BUILD_DIR="$CUSTOM_BUILD_DIR";
+fi
+
 mkdir -p "$SCRIPT_DIR/$BUILD_DIR";
 cd "$SCRIPT_DIR/$BUILD_DIR";
 

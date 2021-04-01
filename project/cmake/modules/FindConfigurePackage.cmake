@@ -41,7 +41,7 @@
 #
 # <configure options>     - flags added to configure command
 # <cmake options>         - flags added to cmake command
-# <scons options> - flags added to scons command
+# <scons options>         - flags added to scons command
 # <custom build cmd>      - custom commands for build
 # <make options>          - flags added to make command
 # <pre build cmd>         - commands to run before build tool

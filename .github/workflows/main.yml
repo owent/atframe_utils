@@ -1,0 +1,94 @@
+name: "main"
+
+on: # @see https://help.github.com/en/articles/events-that-trigger-workflows#webhook-events
+  push:
+    branches: # Array of patterns that match refs/heads
+      - master # Push events on master branch
+      - dev
+      - main
+    tags:
+      - "*"
+
+jobs:
+  build: # job id, can be any string
+    # Job name is Build And Publish
+    name: Build
+    # This job runs on Linux
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-20.04
+            triplet: x64-linux
+            cc: gcc
+            ssl: openssl
+          - os: ubuntu-20.04
+            triplet: x64-linux
+            cc: gcc
+            ssl: mbedtls
+          - os: ubuntu-20.04
+            triplet: x64-linux
+            cc: gcc
+            ssl: openssl
+            gcov_flags: "--coverage -fprofile-arcs -ftest-coverage"
+          - os: ubuntu-20.04
+            triplet: x64-linux
+            cc: gcc-7
+            ssl: openssl
+          - os: ubuntu-20.04
+            triplet: x64-linux
+            cc: gcc-10
+            ssl: openssl
+          - os: ubuntu-20.04
+            triplet: x64-linux
+            cc: clang
+            ssl: openssl
+          - os: ubuntu-20.04
+            triplet: x64-linux
+            cc: clang-11
+            ssl: openssl
+          - os: macos-latest
+            triplet: x64-osx
+            cc: clang
+            ssl: openssl
+        os: [ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v1
+      - name: Build & Test
+        if: ${{ ! matrix.gcov_flags }}
+        shell: bash
+        run: |
+          vcpkg install --triplet=${{ matrix.triplet }} ${{ matrix.ssl }}
+          if [[ "${{ matrix.ssl }}" == "mbedtls" ]]; then
+            CRYPTO_OPTIONS="-DCRYPTO_USE_MBEDTLS=ON";
+          else
+            CRYPTO_OPTIONS="-DCRYPTO_USE_OPENSSL=ON";
+          fi
+          bash cmake_dev.sh -lus -b Debug -r build_jobs_ci -c ${{ matrix.cc }} -- $CRYPTO_OPTIONS -DCMAKE_TOOLCHAIN_FILE=$VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake -DVCPKG_TARGET_TRIPLET=${{ matrix.triplet }} ;
+          cd build_jobs_ci ;
+          cmake --build . -j ;
+          ctest . -V ;
+      - name: Generate coverage
+        if: ${{ matrix.gcov_flags }}
+        shell: bash
+        run: |
+          vcpkg install --triplet=${{ matrix.triplet }} ${{ matrix.ssl }}
+          if [[ "${{ matrix.ssl }}" == "mbedtls" ]]; then
+            CRYPTO_OPTIONS="-DCRYPTO_USE_MBEDTLS=ON";
+          else
+            CRYPTO_OPTIONS="-DCRYPTO_USE_OPENSSL=ON";
+          fi
+          bash cmake_dev.sh -lus -b Debug -r build_jobs_coverage -c ${{ matrix.cc }} -- $CRYPTO_OPTIONS "-DCMAKE_C_FLAGS=${{ matrix.gcov_flags }}" "-DCMAKE_CXX_FLAGS=${{ matrix.gcov_flags }}" "-DCMAKE_EXE_LINKER_FLAGS=${{ matrix.gcov_flags }}" -DCMAKE_TOOLCHAIN_FILE=$VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake -DVCPKG_TARGET_TRIPLET=${{ matrix.triplet }} ;
+          cd build_jobs_coverage ;
+          cmake --build .;
+          ctest . -V ;
+          pip install --user cpp-coveralls ;
+          coveralls -r .. --gcov-options '\-lp' -e sample -e test -e tools -e build_jobs_coverage ;
+      - name: Cache pip
+        if: ${{ matrix.gcov_flags }}
+        uses: actions/cache@v2
+        with:
+          path: |
+            ~/.local
+          key: ${{ runner.os }}-${{ hashFiles('~/.local/**') }}
