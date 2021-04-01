@@ -527,6 +527,7 @@ if(NOT PROJECT_BUILD_TOOLS_PATCH_PROTOBUF_SOURCES_OPTIONS_SET)
     endif()
   else()
     unset(PROJECT_BUILD_TOOLS_PATCH_PROTOBUF_SOURCES_OPTIONS CACHE)
+    set(PROJECT_BUILD_TOOLS_PATCH_PROTOBUF_SOURCES_OPTIONS -Wno-type-limits)
     include(CheckCXXCompilerFlag)
     check_cxx_compiler_flag(-Wno-unused-parameter
                             project_build_tools_patch_protobuf_sources_LINT_NO_UNUSED_PARAMETER)

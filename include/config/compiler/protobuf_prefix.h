@@ -23,9 +23,11 @@
 #pragma GCC diagnostic push
 #endif
 #pragma GCC diagnostic ignored "-Wunused-parameter"
+#pragma GCC diagnostic ignored "-Wtype-limits"
 #elif defined(__clang__) || defined(__apple_build_version__)
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wunused-parameter"
+#pragma clang diagnostic ignored "-Wtype-limits"
 #endif
 
 #include "template_prefix.h"

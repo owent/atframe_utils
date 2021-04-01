@@ -53,10 +53,17 @@ jobs:
             vcpkg install --triplet=$VCPKG_TARGET_TRIPLET openssl;
             CRYPTO_OPTIONS="-DCRYPTO_USE_OPENSSL=ON";
           fi
+          vcpkg install --triplet=$VCPKG_TARGET_TRIPLET fmt ;
           bash cmake_dev.sh -lus -b Debug -r build_jobs_ci -c $USE_CC -- $CRYPTO_OPTIONS -DCMAKE_TOOLCHAIN_FILE=$VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake -DVCPKG_TARGET_TRIPLET=$VCPKG_TARGET_TRIPLET ;
           cd build_jobs_ci ;
           cmake --build . -j ;
           ctest . -V ;
+      - name: Cache packages
+        uses: actions/cache@v2
+        with:
+          path: |
+            /usr/local/share/vcpkg/installed
+          key: ${{ runner.os }}-${{ hashFiles('/usr/local/share/vcpkg/installed/**') }}
   coverage: # job id, can be any string
     name: Coverage
     # This job runs on Linux
@@ -86,6 +93,7 @@ jobs:
             vcpkg install --triplet=$VCPKG_TARGET_TRIPLET openssl;
             CRYPTO_OPTIONS="-DCRYPTO_USE_OPENSSL=ON";
           fi
+          vcpkg install --triplet=$VCPKG_TARGET_TRIPLET fmt ;
           bash cmake_dev.sh -lus -b Debug -r build_jobs_coverage -c $USE_CC -- $CRYPTO_OPTIONS "-DCMAKE_C_FLAGS=$GCOV_FLAGS" "-DCMAKE_CXX_FLAGS=$GCOV_FLAGS" "-DCMAKE_EXE_LINKER_FLAGS=$GCOV_FLAGS" -DCMAKE_TOOLCHAIN_FILE=$VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake -DVCPKG_TARGET_TRIPLET=$VCPKG_TARGET_TRIPLET ;
           cd build_jobs_coverage ;
           cmake --build .;
@@ -96,3 +104,9 @@ jobs:
           # token: ${{secrets.CODECOV_TOKEN}} # not required for public repos
           fail_ci_if_error: true
           gcov_args: '-lp'
+      - name: Cache packages
+        uses: actions/cache@v2
+        with:
+          path: |
+            /usr/local/share/vcpkg/installed
+          key: ${{ runner.os }}-${{ hashFiles('/usr/local/share/vcpkg/installed/**') }}
