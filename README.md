@@ -19,8 +19,8 @@ Compilers | linux-clang-10/11 <br /> linux-gcc-9 <br /> linux-gcc-10 <br /> ~~ma
 
 # Usage:
 
-+ require [cmake][cmake] 3.7.0 or upper
-+ require gcc 4.4+/clang 3.4+/apple clang 6.0+/MSVC 14+
++ require [cmake][cmake] 3.16.0 or upper
++ require gcc 4.8+/clang 3.8+/apple clang 6.0+/MSVC 14+
 
 ~~~~~~~~~~bash
 # clone and make build directory

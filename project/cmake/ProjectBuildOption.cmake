@@ -2,10 +2,9 @@ if(CMAKE_VERSION VERSION_GREATER_EQUAL "3.10")
   include_guard(GLOBAL)
 endif()
 
-include(WriteCompilerDetectionHeader)
-
 # generate check header
 if(CMAKE_VERSION VERSION_LESS "3.20.0")
+  include(WriteCompilerDetectionHeader)
   write_compiler_detection_header(
     FILE "${PROJECT_ATFRAME_UTILS_INCLUDE_DIR}/config/compiler_features.h" PREFIX UTIL_CONFIG
     COMPILERS GNU Clang AppleClang MSVC
