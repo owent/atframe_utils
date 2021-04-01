@@ -96,4 +96,3 @@ jobs:
           # token: ${{secrets.CODECOV_TOKEN}} # not required for public repos
           fail_ci_if_error: true
           gcov_args: '-lp'
-          gcov_path_exclude: sample,test,tools,build_jobs_coverage/CMakeFiles

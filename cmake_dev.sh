@@ -61,9 +61,17 @@ while getopts "ab:c:d:e:hlm:o:r:tus-" OPTION; do
             CMAKE_BUILD_TYPE="$OPTARG";
         ;;
         c)
-            CC="$OPTARG";
-            CXX="${CC/%clang/clang++}";
-            CXX="${CXX/%gcc/g++}";
+            if [[ $CMAKE_CLANG_ANALYZER -ne 0 ]]; then
+                CCC_CC="$OPTARG";
+                CCC_CXX="${CCC_CC/%clang/clang++}";
+                CCC_CXX="${CCC_CXX/%gcc/g++}";
+                export CCC_CC;
+                export CCC_CXX;
+            else
+                CC="$OPTARG";
+                CXX="$(echo "$CC" | sed 's/\(.*\)clang/\1clang++/')";
+                CXX="$(echo "$CXX" | sed 's/\(.*\)gcc/\1g++/')";
+            fi
         ;;
         d)
             if [ ! -z "$OPTARG" ]; then

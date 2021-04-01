@@ -1,0 +1,5 @@
+ignore:
+  - "**/sample/*"
+  - "**/test/*"
+  - "**/tools/*"
+  - "**/build_jobs_coverage/CMakeFiles/*"
