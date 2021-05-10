@@ -38,7 +38,7 @@ elif [[ "$1" == "gcc.legacy.test" ]]; then
   cd build_jobs_ci ;
   cmake --build . -j ;
   ctest . -V ;
-if [[ "$1" == "msys2.mingw.test" ]]; then
+elif [[ "$1" == "msys2.mingw.test" ]]; then
   pacman -S --needed --noconfirm mingw-w64-x86_64-cmake git mingw-w64-x86_64-git-lfs m4 curl wget tar autoconf automake mingw-w64-x86_64-toolchain mingw-w64-x86_64-libtool python || true ;
   git config --global http.sslBackend openssl ;
   mkdir -p build_jobs_ci ;
