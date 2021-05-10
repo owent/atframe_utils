@@ -148,8 +148,8 @@ CASE_TEST(sha, sha384) {
     const unsigned char sha1_test_buf[3][113] =
     {
         { "abc" },
-        { "abcdefghbcdefghicdefghijdefghijkefghijklfghijklmghijklmn"
-          "hijklmnoijklmnopjklmnopqklmnopqrlmnopqrsmnopqrstnopqrstu" },
+        { ("abcdefghbcdefghicdefghijdefghijkefghijklfghijklmghijklmn"
+          "hijklmnoijklmnopjklmnopqklmnopqrlmnopqrsmnopqrstnopqrstu") },
         { "" }
     };
 
@@ -203,8 +203,8 @@ CASE_TEST(sha, sha512) {
     const unsigned char sha1_test_buf[3][113] =
     {
         { "abc" },
-        { "abcdefghbcdefghicdefghijdefghijkefghijklfghijklmghijklmn"
-          "hijklmnoijklmnopjklmnopqklmnopqrlmnopqrsmnopqrstnopqrstu" },
+        { ("abcdefghbcdefghicdefghijdefghijkefghijklfghijklmghijklmn"
+          "hijklmnoijklmnopjklmnopqklmnopqrlmnopqrsmnopqrstnopqrstu") },
         { "" }
     };
 
