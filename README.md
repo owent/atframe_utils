@@ -1,26 +1,37 @@
 # atframe_utils
+
 cxx utils code
 
-|                           | [Linux+OSX(clang+gcc)][linux-link] | [Windows+MinGW(vc+gcc)][windows-link] |
-|:-------------------------:|:----------------------------------:|:-------------------------------------:|
-| Build & Unit Test         | ![linux-badge]                     | ![windows-badge]                      |
-Compilers | linux-clang-10/11 <br /> linux-gcc-9 <br /> linux-gcc-10 <br /> ~~macOS-clang-12.0~~ <br /> | MSVC 14(Visual Studio 2015) <br /> MSVC 15(Visual Studio 2017) <br /> MSVC 16(Visual Studio 2019) <br /> Mingw32-gcc <br /> Mingw64-gcc |  
+[![ci-badge]][ci-link] [![codecov badge]][codecov status] [![lgtm-badge]][lgtm-link]
 
-[![codecov badge]][codecov status] [![lgtm-badge]][lgtm-link]
-
-[linux-badge]: https://github.com/atframework/atframe_utils/actions/workflows/main.yml/badge.svg "Github action build status"
-[linux-link]:  https://github.com/atframework/atframe_utils/actions/workflows/main.yml "Github action build status"
-[windows-badge]: https://ci.appveyor.com/api/projects/status/7e6q54xxdga6ov00?svg=true "AppVeyor build status"
-[windows-link]:  https://ci.appveyor.com/project/owt5008137/atframe-utils/branch/master "AppVeyor build status"
+[ci-badge]: https://github.com/atframework/atframe_utils/actions/workflows/main.yml/badge.svg "Github action build status"
+[ci-link]:  https://github.com/atframework/atframe_utils/actions/workflows/main.yml "Github action build status"
 [codecov badge]: https://codecov.io/gh/atframework/atframe_utils/branch/master/graph/badge.svg
 [codecov status]: https://codecov.io/gh/atframework/atframe_utils
 [lgtm-badge]: https://img.shields.io/lgtm/grade/cpp/g/atframework/atframe_utils.svg?logo=lgtm&logoWidth=18 "LGTM"
 [lgtm-link]:  https://lgtm.com/projects/g/atframework/atframe_utils/context:cpp "LGTM"
 
-# Usage:
+## CI Job Matrix
+
+| Target System | Toolchain             | Note
+|---------------|-----------------------|--------------------------------
+| Linux         | GCC                   |
+| Linux         | GCC-10                |
+| Linux         | Clang                 | With libc++
+| Linux         | Clang-11              | With libc++
+| Linux         | GCC                   |
+| Linux         | GCC 4.8               |
+| MinGW64       | GCC                   | Static linking
+| MinGW64       | GCC                   | Dynamic linking
+| Windows       | Visual Studio 2019    | Static linking
+| Windows       | Visual Studio 2019    | Dynamic linking
+| Windows       | Visual Studio 2017    | Legacy,Static linking
+| macOS         | AppleClang            | With libc++
+
+## Usage
 
 + require [cmake][cmake] 3.16.0 or upper
-+ require gcc 4.8+/clang 3.8+/apple clang 6.0+/MSVC 14+
++ require gcc 4.8+/clang 3.8+/apple clang 6.0+/MSVC 14.10+
 
 ~~~~~~~~~~bash
 # clone and make build directory
@@ -29,7 +40,7 @@ mkdir atframe_utils/build && cd atframe_utils/build
 
 # run cmake
 # cmake <atframe_utils dir> [options...]
-cmake .. -DPROJECT_ENABLE_SAMPLE=YES -DPROJECT_ENABLE_UNITTEST=YES #  -DCMAKE_INSTALL_PREFIX=<install prefix>
+cmake .. -DPROJECT_ENABLE_SAMPLE=YES -DPROJECT_ENABLE_UNITTEST=YES -DPROJECT_ENABLE_TOOLS=ON #  -DCMAKE_INSTALL_PREFIX=<install prefix>
 
 # build
 cmake --build . # using clang or gcc
