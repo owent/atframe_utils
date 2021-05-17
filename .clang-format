@@ -22,6 +22,6 @@ IndentPPDirectives: AfterHash
 ---
 Language: Proto
 BasedOnStyle: Google
-ColumnLimit: 100
+ColumnLimit: 120
 ---
 

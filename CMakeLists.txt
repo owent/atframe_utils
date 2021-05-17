@@ -12,21 +12,12 @@ enable_testing()
 
 project(
   atframe_utils
-  VERSION "1.2.3"
+  VERSION "1.3.0"
   HOMEPAGE_URL "https://github.com/atframework/atframe_utils"
   LANGUAGES C CXX)
 
-set(PROJECT_CMAKE_MODULE_DIR "${CMAKE_CURRENT_LIST_DIR}/project/cmake")
-
 # 编译选项
-# ##################################################################################################
-include("${PROJECT_CMAKE_MODULE_DIR}/CompilerOption.cmake")
-include("${PROJECT_CMAKE_MODULE_DIR}/TargetOption.cmake")
-list(APPEND CMAKE_MODULE_PATH "${PROJECT_CMAKE_MODULE_DIR}/modules")
-include(IncludeDirectoryRecurse)
-include(EchoWithColor)
-include(FindConfigurePackage)
-
+# ######################################################################################################################
 # 工程选项
 unset(PROJECT_ATFRAME_UTILS_EXTENTION_LINK_LIB)
 set(PROJECT_ATFRAME_UTILS_INCLUDE_DIR "${CMAKE_CURRENT_LIST_DIR}/include")
@@ -39,7 +30,7 @@ unset(PROJECT_ATFRAME_UTILS_PRIVATE_LINK_NAMES)
 unset(PROJECT_ATFRAME_UTILS_INTERFACE_LINK_NAMES)
 unset(PROJECT_ATFRAME_UTILS_DEP_SYS_LINK_NAMES)
 
-include("${PROJECT_CMAKE_MODULE_DIR}/ProjectBuildOption.cmake")
+include("${CMAKE_CURRENT_LIST_DIR}/project/cmake/ProjectBuildOption.cmake")
 
 # 增加相对链接路径
 set(CMAKE_INSTALL_RPATH_USE_LINK_PATH YES)
@@ -47,10 +38,8 @@ set(CMAKE_BUILD_WITH_INSTALL_RPATH NO)
 set(CMAKE_BUILD_RPATH_USE_ORIGIN YES)
 
 # 源码
-file(GLOB_RECURSE SRC_LIST "${PROJECT_ATFRAME_UTILS_SOURCE_DIR}/*.c"
-     "${PROJECT_ATFRAME_UTILS_SOURCE_DIR}/*.cpp")
-file(GLOB_RECURSE HEADER_LIST "${PROJECT_ATFRAME_UTILS_INCLUDE_DIR}/*.h"
-     "${PROJECT_ATFRAME_UTILS_INCLUDE_DIR}/*.hpp")
+file(GLOB_RECURSE SRC_LIST "${PROJECT_ATFRAME_UTILS_SOURCE_DIR}/*.c" "${PROJECT_ATFRAME_UTILS_SOURCE_DIR}/*.cpp")
+file(GLOB_RECURSE HEADER_LIST "${PROJECT_ATFRAME_UTILS_INCLUDE_DIR}/*.h" "${PROJECT_ATFRAME_UTILS_INCLUDE_DIR}/*.hpp")
 
 # lib名称
 set(PROJECT_ATFRAME_UTILS_LIB_NAME atframe_utils)
@@ -65,9 +54,8 @@ message(STATUS "Configure ${PROJECT_ATFRAME_UTILS_LIB_NAME}")
 if(LIBATFRAME_UTILS_ENABLE_UUID_INTERNAL_IMPLEMENT)
   include(CheckIncludeFile)
 
-  get_source_file_property(
-    LIBATFRAME_UTILS_UUID_GENERATOR_DEFS
-    "${PROJECT_ATFRAME_UTILS_SOURCE_DIR}/random/uuid_generator.cpp" COMPILE_DEFINITIONS)
+  get_source_file_property(LIBATFRAME_UTILS_UUID_GENERATOR_DEFS
+                           "${PROJECT_ATFRAME_UTILS_SOURCE_DIR}/random/uuid_generator.cpp" COMPILE_DEFINITIONS)
   macro(LIBATFRAME_UTILS_UUID_GENERATOR_CHECK_DEF FILE_PATH DEF_NAME)
     check_include_file(${FILE_PATH} ${DEF_NAME})
     if(${DEF_NAME})
@@ -91,9 +79,8 @@ if(LIBATFRAME_UTILS_ENABLE_UUID_INTERNAL_IMPLEMENT)
   libatframe_utils_uuid_generator_check_def("sys/sockio.h" HAVE_SYS_SOCKIO_H)
   libatframe_utils_uuid_generator_check_def("net/if_dl.h" HAVE_NET_IF_DL_H)
 
-  set_source_files_properties(
-    "${PROJECT_ATFRAME_UTILS_SOURCE_DIR}/random/uuid_generator.cpp"
-    PROPERTIES COMPILE_DEFINITIONS "${LIBATFRAME_UTILS_UUID_GENERATOR_DEFS}")
+  set_source_files_properties("${PROJECT_ATFRAME_UTILS_SOURCE_DIR}/random/uuid_generator.cpp"
+                              PROPERTIES COMPILE_DEFINITIONS "${LIBATFRAME_UTILS_UUID_GENERATOR_DEFS}")
   unset(LIBATFRAME_UTILS_UUID_GENERATOR_DEFS)
 endif()
 
@@ -117,15 +104,13 @@ else()
     PROPERTIES C_VISIBILITY_PRESET "hidden"
                CXX_VISIBILITY_PRESET "hidden"
                VERSION ${PROJECT_VERSION})
-  target_compile_definitions(${PROJECT_ATFRAME_UTILS_LIB_NAME}
-                             PRIVATE LIBATFRAME_UTILS_API_NATIVE=1)
+  target_compile_definitions(${PROJECT_ATFRAME_UTILS_LIB_NAME} PRIVATE LIBATFRAME_UTILS_API_NATIVE=1)
   target_compile_options(${PROJECT_ATFRAME_UTILS_LIB_NAME} PRIVATE ${COMPILER_STRICT_EXTRA_CFLAGS}
                                                                    ${COMPILER_STRICT_CFLAGS})
 endif()
 
 if(PROJECT_ATFRAME_UTILS_PUBLIC_DEFINITIONS)
-  target_compile_definitions(${PROJECT_ATFRAME_UTILS_LIB_NAME}
-                             PUBLIC ${PROJECT_ATFRAME_UTILS_PUBLIC_DEFINITIONS})
+  target_compile_definitions(${PROJECT_ATFRAME_UTILS_LIB_NAME} PUBLIC ${PROJECT_ATFRAME_UTILS_PUBLIC_DEFINITIONS})
 endif()
 
 if(MSVC)
@@ -158,14 +143,12 @@ target_include_directories(
   ${PROJECT_ATFRAME_UTILS_LIB_NAME} PUBLIC "$<BUILD_INTERFACE:${PROJECT_ATFRAME_UTILS_INCLUDE_DIR}>"
                                            "$<INSTALL_INTERFACE:include>")
 if(PROJECT_ATFRAME_UTILS_PUBLIC_INCLUDE_DIRS)
-  target_include_directories(
-    ${PROJECT_ATFRAME_UTILS_LIB_NAME}
-    PUBLIC "$<BUILD_INTERFACE:${PROJECT_ATFRAME_UTILS_PUBLIC_INCLUDE_DIRS}>")
+  target_include_directories(${PROJECT_ATFRAME_UTILS_LIB_NAME}
+                             PUBLIC "$<BUILD_INTERFACE:${PROJECT_ATFRAME_UTILS_PUBLIC_INCLUDE_DIRS}>")
 endif()
 if(PROJECT_ATFRAME_UTILS_PRIVATE_INCLUDE_DIRS)
-  target_include_directories(
-    ${PROJECT_ATFRAME_UTILS_LIB_NAME}
-    PRIVATE "$<BUILD_INTERFACE:${PROJECT_ATFRAME_UTILS_PRIVATE_INCLUDE_DIRS}>")
+  target_include_directories(${PROJECT_ATFRAME_UTILS_LIB_NAME}
+                             PRIVATE "$<BUILD_INTERFACE:${PROJECT_ATFRAME_UTILS_PRIVATE_INCLUDE_DIRS}>")
 endif()
 
 target_link_libraries(
@@ -174,8 +157,7 @@ target_link_libraries(
   INTERFACE ${PROJECT_ATFRAME_UTILS_INTERFACE_LINK_NAMES} ${COMPILER_OPTION_EXTERN_CXX_LIBS}
             ${PROJECT_ATFRAME_UTILS_DEP_SYS_LINK_NAMES})
 if(PROJECT_ATFRAME_UTILS_PRIVATE_LINK_NAMES)
-  target_link_libraries(${PROJECT_ATFRAME_UTILS_LIB_NAME}
-                        PRIVATE ${PROJECT_ATFRAME_UTILS_PRIVATE_LINK_NAMES})
+  target_link_libraries(${PROJECT_ATFRAME_UTILS_LIB_NAME} PRIVATE ${PROJECT_ATFRAME_UTILS_PRIVATE_LINK_NAMES})
 endif()
 
 set(LIBATFRAME_UTILS_VERSION_MAJOR "${PROJECT_VERSION_MAJOR}")
