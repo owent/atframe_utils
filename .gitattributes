@@ -11,6 +11,7 @@
 *.md eol=crlf
 *.bat eol=crlf
 *.ps1 eol=crlf
+*.reg eol=crlf
 *.rst eol=lf
 *.cmake eol=lf
 *.cmake.in eol=lf

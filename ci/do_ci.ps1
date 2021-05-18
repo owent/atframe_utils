@@ -5,6 +5,12 @@ $OutputEncoding = [System.Text.UTF8Encoding]::new()
 $SCRIPT_DIR = Split-Path -Parent $MyInvocation.MyCommand.Definition
 $WORK_DIR = Get-Location
 
+if ($IsWindows) {
+  # See https://docs.microsoft.com/en-us/windows/win32/fileio/maximum-file-path-limitation?tabs=cmd
+  New-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\FileSystem" `
+    -Name "LongPathsEnabled" -Value 1 -PropertyType DWORD -Force
+}
+
 Set-Location "$SCRIPT_DIR/.."
 $RUN_MODE = $args[0]
 

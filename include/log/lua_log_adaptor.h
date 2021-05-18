@@ -18,19 +18,18 @@
 
 #if defined(LOG_WRAPPER_ENABLE_LUA_SUPPORT) && LOG_WRAPPER_ENABLE_LUA_SUPPORT
 
-#ifdef __cplusplus
+#  ifdef __cplusplus
 extern "C" {
-#endif
+#  endif
 
-#include "lauxlib.h"
-#include "lua.h"
-
+#  include "lauxlib.h"
+#  include "lua.h"
 
 LIBATFRAME_UTILS_API int lua_log_adaptor_openLib(lua_State *L);
 
-#ifdef __cplusplus
+#  ifdef __cplusplus
 }
-#endif
+#  endif
 
 #endif
 

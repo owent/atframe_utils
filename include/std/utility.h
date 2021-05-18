@@ -14,7 +14,6 @@
 #ifndef STD_UTILITY_H
 #define STD_UTILITY_H
 
-
 #pragma once
 
 // ============================================================
@@ -36,30 +35,30 @@
 // VC9.0 SP1以上分支判断
 #if defined(_MSC_VER) && ((_MSC_VER == 1500 && defined(_HAS_TR1)) || _MSC_VER > 1500)
 // 采用VC std::tr1库
-#include <utility>
+#  include <utility>
 #elif defined(__clang__) && __clang_major__ >= 3
 // 采用Clang c++11库
-#include <utility>
+#  include <utility>
 #elif defined(__GNUC__) && __GNUC__ >= 4
 // 采用G++ std::tr1库
-#if __cplusplus >= 201103L || defined(__GXX_EXPERIMENTAL_CXX0X__)
-#include <utility>
-#else
-#include <tr1/utility>
+#  if __cplusplus >= 201103L || defined(__GXX_EXPERIMENTAL_CXX0X__)
+#    include <utility>
+#  else
+#    include <tr1/utility>
 namespace std {
-    using tr1::get;
-    using tr1::tuple_element;
-    using tr1::tuple_size;
-} // namespace std
-#endif
+using tr1::get;
+using tr1::tuple_element;
+using tr1::tuple_size;
+}  // namespace std
+#  endif
 #else
 // 采用boost库
-#include <boost/tr1/utility.hpp>
+#  include <boost/tr1/utility.hpp>
 namespace std {
-    using tr1::get;
-    using tr1::tuple_element;
-    using tr1::tuple_size;
-} // namespace std
+using tr1::get;
+using tr1::tuple_element;
+using tr1::tuple_size;
+}  // namespace std
 #endif
 
 #endif

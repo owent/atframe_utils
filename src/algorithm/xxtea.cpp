@@ -1,9 +1,8 @@
 ﻿#include <inttypes.h>
-#include <limits>
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
-
+#include <limits>
 
 #include "algorithm/xxtea.h"
 
@@ -13,174 +12,181 @@
  * 32-bit integer manipulation macros (big endian)
  */
 #ifndef XXTEA_GET_UINT32_BE
-#define XXTEA_GET_UINT32_BE(n, b, i) \
-                                     \
-    { (n) = ((uint32_t)(b)[(i)] << 24) | ((uint32_t)(b)[(i) + 1] << 16) | ((uint32_t)(b)[(i) + 2] << 8) | ((uint32_t)(b)[(i) + 3]); }
+#  define XXTEA_GET_UINT32_BE(n, b, i)                                                                    \
+                                                                                                          \
+    {                                                                                                     \
+      (n) = ((uint32_t)(b)[(i)] << 24) | ((uint32_t)(b)[(i) + 1] << 16) | ((uint32_t)(b)[(i) + 2] << 8) | \
+            ((uint32_t)(b)[(i) + 3]);                                                                     \
+    }
 #endif
 
 #if defined(max)
-#undef max
+#  undef max
 #endif
 
 namespace util {
 
-    namespace detail {
-        template <bool CHECK_ENABLE>
-        struct xxtea_check_length;
+namespace detail {
+template <bool CHECK_ENABLE>
+struct xxtea_check_length;
 
-        template <>
-        struct xxtea_check_length<true> {
-            static bool check_protect(size_t len) { return len > (static_cast<size_t>(std::numeric_limits<uint32_t>::max()) << 2); }
-        };
+template <>
+struct xxtea_check_length<true> {
+  static bool check_protect(size_t len) {
+    return len > (static_cast<size_t>(std::numeric_limits<uint32_t>::max()) << 2);
+  }
+};
 
-        template <bool CHECK_ENABLE>
-        struct xxtea_check_length {
-            static bool check_protect(size_t) { return false; }
-        };
+template <bool CHECK_ENABLE>
+struct xxtea_check_length {
+  static bool check_protect(size_t) { return false; }
+};
 
-        template <typename Ty>
-        struct xxtea_check_length_delegate {
-            static const bool value = sizeof(Ty) > sizeof(uint32_t);
-        };
-    } // namespace detail
+template <typename Ty>
+struct xxtea_check_length_delegate {
+  static const bool value = sizeof(Ty) > sizeof(uint32_t);
+};
+}  // namespace detail
 
-    LIBATFRAME_UTILS_API void xxtea_setup(xxtea_key *k, const unsigned char filled[4 * sizeof(uint32_t)]) {
-        int i;
+LIBATFRAME_UTILS_API void xxtea_setup(xxtea_key *k, const unsigned char filled[4 * sizeof(uint32_t)]) {
+  int i;
 
-        memset(k->data, 0, sizeof(k->data));
+  memset(k->data, 0, sizeof(k->data));
 
-        for (i = 0; i < 4; i++) {
-            XXTEA_GET_UINT32_BE(k->data[i], filled, i << 2);
-        }
+  for (i = 0; i < 4; i++) {
+    XXTEA_GET_UINT32_BE(k->data[i], filled, i << 2);
+  }
+}
+
+LIBATFRAME_UTILS_API void xxtea_encrypt(const xxtea_key *key, void *buffer, size_t len) {
+  if (len & 0x03) {
+    abort();
+  }
+
+  if (detail::xxtea_check_length<detail::xxtea_check_length_delegate<size_t>::value>::check_protect(len)) {
+    abort();
+  }
+
+  if (NULL == key || NULL == buffer || 0 == len) {
+    return;
+  }
+
+  uint32_t *v = reinterpret_cast<uint32_t *>(buffer);
+  uint32_t n = static_cast<uint32_t>(len >> 2);
+
+  uint32_t y, z, sum;
+  uint32_t p, rounds, e;
+
+  rounds = 6 + 52 / n;
+  sum = 0;
+  z = v[n - 1];
+  do {
+    sum += XXTEA_DELTA;
+    e = (sum >> 2) & 3;
+    for (p = 0; p < n - 1; p++) {
+      y = v[p + 1];
+      z = v[p] += XXTEA_MX;
+    }
+    y = v[0];
+    z = v[n - 1] += XXTEA_MX;
+  } while (--rounds);
+}
+
+LIBATFRAME_UTILS_API void xxtea_encrypt(const xxtea_key *key, const void *input, size_t ilen, void *output,
+                                        size_t *olen) {
+  bool is_success = false;
+  do {
+    if (NULL == key || input == NULL || ilen <= 0 || output == NULL || NULL == olen) {
+      break;
     }
 
-    LIBATFRAME_UTILS_API void xxtea_encrypt(const xxtea_key *key, void *buffer, size_t len) {
-        if (len & 0x03) {
-            abort();
-        }
-
-        if (detail::xxtea_check_length<detail::xxtea_check_length_delegate<size_t>::value>::check_protect(len)) {
-            abort();
-        }
-
-        if (NULL == key || NULL == buffer || 0 == len) {
-            return;
-        }
-
-        uint32_t *v = reinterpret_cast<uint32_t *>(buffer);
-        uint32_t  n = static_cast<uint32_t>(len >> 2);
-
-        uint32_t y, z, sum;
-        uint32_t p, rounds, e;
-
-        rounds = 6 + 52 / n;
-        sum    = 0;
-        z      = v[n - 1];
-        do {
-            sum += XXTEA_DELTA;
-            e = (sum >> 2) & 3;
-            for (p = 0; p < n - 1; p++) {
-                y = v[p + 1];
-                z = v[p] += XXTEA_MX;
-            }
-            y = v[0];
-            z = v[n - 1] += XXTEA_MX;
-        } while (--rounds);
+    size_t real_olen = ((ilen - 1) | 0x03) + 1;
+    if (*olen < real_olen) {
+      break;
     }
 
-    LIBATFRAME_UTILS_API void xxtea_encrypt(const xxtea_key *key, const void *input, size_t ilen, void *output, size_t *olen) {
-        bool is_success = false;
-        do {
-            if (NULL == key || input == NULL || ilen <= 0 || output == NULL || NULL == olen) {
-                break;
-            }
-
-            size_t real_olen = ((ilen - 1) | 0x03) + 1;
-            if (*olen < real_olen) {
-                break;
-            }
-
-            if (input != output) {
-                memcpy(output, input, ilen);
-            }
-
-            if (real_olen > ilen) {
-                memset(reinterpret_cast<char *>(output) + ilen, 0, real_olen - ilen);
-            }
-
-            *olen = real_olen;
-            util::xxtea_encrypt(key, output, *olen);
-
-            is_success = true;
-        } while (false);
-
-        if (!is_success && NULL != olen) {
-            *olen = 0;
-        }
+    if (input != output) {
+      memcpy(output, input, ilen);
     }
 
-    LIBATFRAME_UTILS_API void xxtea_decrypt(const xxtea_key *key, void *buffer, size_t len) {
-        if (len & 0x03) {
-            abort();
-        }
-
-        if (detail::xxtea_check_length<detail::xxtea_check_length_delegate<size_t>::value>::check_protect(len)) {
-            abort();
-        }
-
-        if (NULL == key || NULL == buffer || 0 == len) {
-            return;
-        }
-
-        uint32_t *v = reinterpret_cast<uint32_t *>(buffer);
-        uint32_t  n = static_cast<uint32_t>(len >> 2);
-
-        uint32_t y, z, sum;
-        uint32_t p, rounds, e;
-
-        rounds = 6 + 52 / n;
-        sum    = rounds * XXTEA_DELTA;
-        y      = v[0];
-        do {
-            e = (sum >> 2) & 3;
-            for (p = n - 1; p > 0; p--) {
-                z = v[p - 1];
-                y = v[p] -= XXTEA_MX;
-            }
-            z = v[n - 1];
-            y = v[0] -= XXTEA_MX;
-            sum -= XXTEA_DELTA;
-        } while (--rounds);
+    if (real_olen > ilen) {
+      memset(reinterpret_cast<char *>(output) + ilen, 0, real_olen - ilen);
     }
 
-    LIBATFRAME_UTILS_API void xxtea_decrypt(const xxtea_key *key, const void *input, size_t ilen, void *output, size_t *olen) {
-        bool is_success = false;
-        do {
-            if (NULL == key || input == NULL || ilen <= 0 || output == NULL || NULL == olen) {
-                break;
-            }
+    *olen = real_olen;
+    util::xxtea_encrypt(key, output, *olen);
 
-            size_t real_olen = ((ilen - 1) | 0x03) + 1;
-            if (*olen < real_olen) {
-                break;
-            }
+    is_success = true;
+  } while (false);
 
-            if (input != output) {
-                memcpy(output, input, ilen);
-            }
+  if (!is_success && NULL != olen) {
+    *olen = 0;
+  }
+}
 
-            if (real_olen > ilen) {
-                memset(reinterpret_cast<char *>(output) + ilen, 0, real_olen - ilen);
-            }
+LIBATFRAME_UTILS_API void xxtea_decrypt(const xxtea_key *key, void *buffer, size_t len) {
+  if (len & 0x03) {
+    abort();
+  }
 
-            *olen = real_olen;
-            util::xxtea_decrypt(key, output, *olen);
+  if (detail::xxtea_check_length<detail::xxtea_check_length_delegate<size_t>::value>::check_protect(len)) {
+    abort();
+  }
 
-            is_success = true;
-        } while (false);
+  if (NULL == key || NULL == buffer || 0 == len) {
+    return;
+  }
 
-        if (!is_success && NULL != olen) {
-            *olen = 0;
-        }
+  uint32_t *v = reinterpret_cast<uint32_t *>(buffer);
+  uint32_t n = static_cast<uint32_t>(len >> 2);
+
+  uint32_t y, z, sum;
+  uint32_t p, rounds, e;
+
+  rounds = 6 + 52 / n;
+  sum = rounds * XXTEA_DELTA;
+  y = v[0];
+  do {
+    e = (sum >> 2) & 3;
+    for (p = n - 1; p > 0; p--) {
+      z = v[p - 1];
+      y = v[p] -= XXTEA_MX;
     }
-} // namespace util
+    z = v[n - 1];
+    y = v[0] -= XXTEA_MX;
+    sum -= XXTEA_DELTA;
+  } while (--rounds);
+}
+
+LIBATFRAME_UTILS_API void xxtea_decrypt(const xxtea_key *key, const void *input, size_t ilen, void *output,
+                                        size_t *olen) {
+  bool is_success = false;
+  do {
+    if (NULL == key || input == NULL || ilen <= 0 || output == NULL || NULL == olen) {
+      break;
+    }
+
+    size_t real_olen = ((ilen - 1) | 0x03) + 1;
+    if (*olen < real_olen) {
+      break;
+    }
+
+    if (input != output) {
+      memcpy(output, input, ilen);
+    }
+
+    if (real_olen > ilen) {
+      memset(reinterpret_cast<char *>(output) + ilen, 0, real_olen - ilen);
+    }
+
+    *olen = real_olen;
+    util::xxtea_decrypt(key, output, *olen);
+
+    is_success = true;
+  } while (false);
+
+  if (!is_success && NULL != olen) {
+    *olen = 0;
+  }
+}
+}  // namespace util

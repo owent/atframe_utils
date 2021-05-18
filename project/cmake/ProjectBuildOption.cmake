@@ -3,6 +3,7 @@ include_guard(GLOBAL)
 include("${CMAKE_CURRENT_LIST_DIR}/FetchToolset.cmake")
 
 include("${ATFRAMEWORK_CMAKE_TOOLSET_DIR}/Import.cmake")
+include(IncludeDirectoryRecurse)
 
 include(EchoWithColor)
 
@@ -374,6 +375,10 @@ option(PROJECT_TEST_ENABLE_BOOST_UNIT_TEST "Enable boost unit test." OFF)
 
 option(PROJECT_ENABLE_UNITTEST "Enable unit test" OFF)
 option(PROJECT_ENABLE_SAMPLE "Enable sample" OFF)
-option(PROJECT_ENABLE_TOOLS "Enable sample" ON)
+if(CMAKE_CROSSCOMPILING)
+  option(PROJECT_ENABLE_TOOLS "Enable sample" OFF)
+else()
+  option(PROJECT_ENABLE_TOOLS "Enable sample" ON)
+endif()
 
 option(ATFRAMEWORK_USE_DYNAMIC_LIBRARY "Build and linking with dynamic libraries." OFF)

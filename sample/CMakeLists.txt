@@ -10,8 +10,7 @@ add_executable(${BIN_NAME} ${SRC_LIST_SAMPLE})
 
 target_link_libraries(${BIN_NAME} ${PROJECT_ATFRAME_UTILS_LIB_NAME})
 
-target_compile_options(${BIN_NAME} PRIVATE ${COMPILER_STRICT_EXTRA_CFLAGS}
-                                           ${COMPILER_STRICT_CFLAGS})
+target_compile_options(${BIN_NAME} PRIVATE ${COMPILER_STRICT_EXTRA_CFLAGS} ${COMPILER_STRICT_CFLAGS})
 
 set_target_properties(
   ${BIN_NAME}
@@ -30,5 +29,4 @@ if(NOT EXISTS ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})
 endif()
 execute_process(COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_CURRENT_LIST_DIR}/config.ini"
                         ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})
-execute_process(COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_CURRENT_LIST_DIR}/test.ini"
-                        ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})
+execute_process(COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_CURRENT_LIST_DIR}/test.ini" ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})

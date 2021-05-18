@@ -14,7 +14,6 @@
 #ifndef STD_CHRONO_H
 #define STD_CHRONO_H
 
-
 #pragma once
 
 // ============================================================
@@ -30,46 +29,46 @@
 
 #if __cplusplus >= 201103L
 // C++ 11 and upper
-#include <chrono>
+#  include <chrono>
 
 #elif defined(_MSC_VER) && ((_MSC_VER == 1500 && defined(_HAS_TR1)) || _MSC_VER > 1500)
 // VC9.0 SP1以上分支判断
 // 采用VC std::tr1库
-#include <chrono>
+#  include <chrono>
 
 #elif defined(__clang__) && __clang_major__ >= 3
 // 采用Clang c++11库
-#include <chrono>
+#  include <chrono>
 
 #elif defined(__GNUC__) && __GNUC__ >= 4 && (__GNUC__ > 4 || __GNUC_MINOR__ >= 4) && defined(__GXX_EXPERIMENTAL_CXX0X__)
 // 采用G++ std::tr1库
-#include <chrono>
+#  include <chrono>
 
 #else
 // 采用boost.chrono库
-#include <boost/chrono.hpp>
+#  include <boost/chrono.hpp>
 namespace std {
-    namespace chrono {
-        using boost::chrono::duration;
-        using boost::chrono::time_point;
+namespace chrono {
+using boost::chrono::duration;
+using boost::chrono::time_point;
 
-        using boost::chrono::duration_cast;
+using boost::chrono::duration_cast;
 
-        using boost::chrono::high_resolution_clock;
-        using boost::chrono::steady_clock;
-        using boost::chrono::system_clock;
-        // 下面两个是boost独有，并不在std中
-        // using boost::chrono::process_cpu_clock
-        // using boost::chrono::thread_clock
+using boost::chrono::high_resolution_clock;
+using boost::chrono::steady_clock;
+using boost::chrono::system_clock;
+// 下面两个是boost独有，并不在std中
+// using boost::chrono::process_cpu_clock
+// using boost::chrono::thread_clock
 
-        using boost::chrono::hours;
-        using boost::chrono::microseconds;
-        using boost::chrono::milliseconds;
-        using boost::chrono::minutes;
-        using boost::chrono::nanoseconds;
-        using boost::chrono::seconds;
-    } // namespace chrono
-} // namespace std
+using boost::chrono::hours;
+using boost::chrono::microseconds;
+using boost::chrono::milliseconds;
+using boost::chrono::minutes;
+using boost::chrono::nanoseconds;
+using boost::chrono::seconds;
+}  // namespace chrono
+}  // namespace std
 #endif
 
 #endif

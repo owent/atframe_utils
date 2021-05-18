@@ -12,8 +12,7 @@ set_target_properties(
 
 target_link_libraries(${BIN_NAME} ${PROJECT_ATFRAME_UTILS_LIB_NAME})
 
-target_compile_options(${BIN_NAME} PRIVATE ${COMPILER_STRICT_EXTRA_CFLAGS}
-                                           ${COMPILER_STRICT_CFLAGS})
+target_compile_options(${BIN_NAME} PRIVATE ${COMPILER_STRICT_EXTRA_CFLAGS} ${COMPILER_STRICT_CFLAGS})
 
 if(MSVC)
   set_property(TARGET ${BIN_NAME} PROPERTY FOLDER "atframework/tools")

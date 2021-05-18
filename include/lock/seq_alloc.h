@@ -28,50 +28,50 @@
 #include "atomic_int_type.h"
 
 namespace util {
-    namespace lock {
-        template <typename Ty>
-        class LIBATFRAME_UTILS_API_HEAD_ONLY seq_alloc {
-        public:
-            typedef Ty value_type;
+namespace lock {
+template <typename Ty>
+class LIBATFRAME_UTILS_API_HEAD_ONLY seq_alloc {
+ public:
+  typedef Ty value_type;
 
-        private:
-            ::util::lock::atomic_int_type<value_type> data_;
+ private:
+  ::util::lock::atomic_int_type<value_type> data_;
 
-        public:
-            seq_alloc() { data_.store(static_cast<value_type>(0)); }
+ public:
+  seq_alloc() { data_.store(static_cast<value_type>(0)); }
 
-            value_type get() const { return data_.load(util::lock::memory_order_acquire); }
+  value_type get() const { return data_.load(util::lock::memory_order_acquire); }
 
-            value_type set(value_type val) { return data_.exchange(val, util::lock::memory_order_release); }
+  value_type set(value_type val) { return data_.exchange(val, util::lock::memory_order_release); }
 
-            value_type add(value_type val) { return data_.fetch_add(val, util::lock::memory_order_release); }
+  value_type add(value_type val) { return data_.fetch_add(val, util::lock::memory_order_release); }
 
-            value_type sub(value_type val) { return data_.fetch_sub(val, util::lock::memory_order_release); }
+  value_type sub(value_type val) { return data_.fetch_sub(val, util::lock::memory_order_release); }
 
-            value_type band(value_type val) { return data_.fetch_and(val, util::lock::memory_order_release); }
+  value_type band(value_type val) { return data_.fetch_and(val, util::lock::memory_order_release); }
 
-            value_type bor(value_type val) { return data_.fetch_or(val, util::lock::memory_order_release); }
+  value_type bor(value_type val) { return data_.fetch_or(val, util::lock::memory_order_release); }
 
-            value_type bxor(value_type val) { return data_.fetch_xor(val, util::lock::memory_order_release); }
+  value_type bxor(value_type val) { return data_.fetch_xor(val, util::lock::memory_order_release); }
 
-            bool compare_exchange(value_type expected, value_type val) {
-                return data_.compare_exchange_strong(expected, val, util::lock::memory_order_acq_rel);
-            }
+  bool compare_exchange(value_type expected, value_type val) {
+    return data_.compare_exchange_strong(expected, val, util::lock::memory_order_acq_rel);
+  }
 
-            value_type inc() { return ++data_; }
+  value_type inc() { return ++data_; }
 
-            value_type dec() { return --data_; }
-        };
+  value_type dec() { return --data_; }
+};
 
-        typedef seq_alloc<uint8_t> seq_alloc_u8;
-        typedef seq_alloc<uint16_t> seq_alloc_u16;
-        typedef seq_alloc<uint32_t> seq_alloc_u32;
-        typedef seq_alloc<uint64_t> seq_alloc_u64;
-        typedef seq_alloc<int8_t> seq_alloc_i8;
-        typedef seq_alloc<int16_t> seq_alloc_i16;
-        typedef seq_alloc<int32_t> seq_alloc_i32;
-        typedef seq_alloc<int64_t> seq_alloc_i64;
-    }
-}
+typedef seq_alloc<uint8_t> seq_alloc_u8;
+typedef seq_alloc<uint16_t> seq_alloc_u16;
+typedef seq_alloc<uint32_t> seq_alloc_u32;
+typedef seq_alloc<uint64_t> seq_alloc_u64;
+typedef seq_alloc<int8_t> seq_alloc_i8;
+typedef seq_alloc<int16_t> seq_alloc_i16;
+typedef seq_alloc<int32_t> seq_alloc_i32;
+typedef seq_alloc<int64_t> seq_alloc_i64;
+}  // namespace lock
+}  // namespace util
 
 #endif /* _UTIL_LOCK_SEQ_ALLOC_H_ */

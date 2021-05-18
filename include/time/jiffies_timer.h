@@ -69,13 +69,12 @@
  */
 
 #include <assert.h>
+#include <stdint.h>
 #include <bitset>
 #include <cstddef>
 #include <cstring>
 #include <ctime>
 #include <list>
-#include <stdint.h>
-
 
 #include <config/compiler_features.h>
 #include <std/functional.h>
@@ -84,111 +83,110 @@
 #include <config/atframe_utils_build_feature.h>
 
 namespace util {
-    namespace time {
-        /**
-         * @brief jiffies timer 定时器实现
-         * @note 空间复杂度: O(LVL_DEPTH * 2^LVL_BITS * sizeof(std::list)) <br />
-         *       每次tick的最低时间复杂度: O(LVL_DEPTH) <br />
-         *       每层定时器误差倍数: 2^LVL_CLK_SHIFT <br />
-         *       最大定时器范围: 2^(LVL_CLK_SHIFT * (LVL_DEPTH - 1) + LVL_BITS) * tick周期 <br />
-         * @note 如果外部需要引用定时器对象，请使用 timer_t 代替函数签名中的 timer_type
-         */
-        template <time_t LVL_BITS = 6, time_t LVL_CLK_SHIFT = 3, size_t LVL_DEPTH = 8>
-        class LIBATFRAME_UTILS_API_HEAD_ONLY jiffies_timer {
-        public:
-            UTIL_CONFIG_STATIC_ASSERT(LVL_CLK_SHIFT < LVL_BITS);
+namespace time {
+/**
+ * @brief jiffies timer 定时器实现
+ * @note 空间复杂度: O(LVL_DEPTH * 2^LVL_BITS * sizeof(std::list)) <br />
+ *       每次tick的最低时间复杂度: O(LVL_DEPTH) <br />
+ *       每层定时器误差倍数: 2^LVL_CLK_SHIFT <br />
+ *       最大定时器范围: 2^(LVL_CLK_SHIFT * (LVL_DEPTH - 1) + LVL_BITS) * tick周期 <br />
+ * @note 如果外部需要引用定时器对象，请使用 timer_t 代替函数签名中的 timer_type
+ */
+template <time_t LVL_BITS = 6, time_t LVL_CLK_SHIFT = 3, size_t LVL_DEPTH = 8>
+class LIBATFRAME_UTILS_API_HEAD_ONLY jiffies_timer {
+ public:
+  UTIL_CONFIG_STATIC_ASSERT(LVL_CLK_SHIFT < LVL_BITS);
 
-            enum lvl_clk_consts {
-                LVL_CLK_DIV  = 1 << LVL_CLK_SHIFT,
-                LVL_CLK_MASK = LVL_CLK_DIV - 1,
-            };
-            static inline time_t LVL_SHIFT(time_t n) { return n * LVL_CLK_SHIFT; }
+  enum lvl_clk_consts {
+    LVL_CLK_DIV = 1 << LVL_CLK_SHIFT,
+    LVL_CLK_MASK = LVL_CLK_DIV - 1,
+  };
+  static inline time_t LVL_SHIFT(time_t n) { return n * LVL_CLK_SHIFT; }
 
-            static inline time_t LVL_GRAN(time_t n) { return static_cast<time_t>(1) << LVL_SHIFT(n); }
+  static inline time_t LVL_GRAN(time_t n) { return static_cast<time_t>(1) << LVL_SHIFT(n); }
 
-            enum lvl_consts {
-                LVL_SIZE   = 1 << LVL_BITS, //
-                LVL_MASK   = LVL_SIZE - 1,
-                WHEEL_SIZE = LVL_SIZE * LVL_DEPTH
-            };
-            static inline size_t LVL_OFFS(size_t n) { return n * LVL_SIZE; }
+  enum lvl_consts {
+    LVL_SIZE = 1 << LVL_BITS,  //
+    LVL_MASK = LVL_SIZE - 1,
+    WHEEL_SIZE = LVL_SIZE * LVL_DEPTH
+  };
+  static inline size_t LVL_OFFS(size_t n) { return n * LVL_SIZE; }
 
-            static inline time_t LVL_START(size_t n) { return static_cast<time_t>((LVL_SIZE) << ((n - 1) * LVL_CLK_SHIFT)); }
+  static inline time_t LVL_START(size_t n) { return static_cast<time_t>((LVL_SIZE) << ((n - 1) * LVL_CLK_SHIFT)); }
 
-        private:
-            struct timer_type;
+ private:
+  struct timer_type;
 
-        public:
+ public:
 #if defined(UTIL_CONFIG_COMPILER_CXX_RVALUE_REFERENCES) && UTIL_CONFIG_COMPILER_CXX_RVALUE_REFERENCES
-            using timer_callback_fn_t = std::function<void(time_t tick_time, const timer_type &timer)>;
-            using timer_ptr_t         = std::shared_ptr<timer_type>;    // 外部请勿直接访问内部成员，只允许通过API访问
-            using timer_wptr_t        = std::weak_ptr<timer_type>;      // 外部请勿直接访问内部成员，只允许通过API访问
+  using timer_callback_fn_t = std::function<void(time_t tick_time, const timer_type &timer)>;
+  using timer_ptr_t = std::shared_ptr<timer_type>;  // 外部请勿直接访问内部成员，只允许通过API访问
+  using timer_wptr_t = std::weak_ptr<timer_type>;   // 外部请勿直接访问内部成员，只允许通过API访问
 #else
-            typedef std::function<void(time_t tick_time, const timer_type &timer)> timer_callback_fn_t;
-            typedef std::shared_ptr<timer_type> timer_ptr_t;  // 外部请勿直接访问内部成员，只允许通过API访问
-            typedef std::weak_ptr<timer_type>   timer_wptr_t; // 外部请勿直接访问内部成员，只允许通过API访问
+  typedef std::function<void(time_t tick_time, const timer_type &timer)> timer_callback_fn_t;
+  typedef std::shared_ptr<timer_type> timer_ptr_t;  // 外部请勿直接访问内部成员，只允许通过API访问
+  typedef std::weak_ptr<timer_type> timer_wptr_t;   // 外部请勿直接访问内部成员，只允许通过API访问
 #endif
 
-        private:
-            struct timer_type {
-                mutable uint32_t                          flags;        // 定时器标记位
-                uint32_t                                  sequence;     // 定时器序号
-                time_t                                    timeout;      // 原始的超时时间
-                void *                                    private_data; // 私有数据指针
-                timer_callback_fn_t                       fn;           // 回掉函数
-                jiffies_timer *                           owner;        // 所属的定时器管理器
-                std::list<timer_ptr_t> *                  owner_round;  // 所属的时间轮
-                typename std::list<timer_ptr_t>::iterator owner_iter;   // 所属的时间轮迭代器
-            };                                                          // 外部请勿直接访问内部成员，只允许通过API访问
+ private:
+  struct timer_type {
+    mutable uint32_t flags;                                // 定时器标记位
+    uint32_t sequence;                                     // 定时器序号
+    time_t timeout;                                        // 原始的超时时间
+    void *private_data;                                    // 私有数据指针
+    timer_callback_fn_t fn;                                // 回掉函数
+    jiffies_timer *owner;                                  // 所属的定时器管理器
+    std::list<timer_ptr_t> *owner_round;                   // 所属的时间轮
+    typename std::list<timer_ptr_t>::iterator owner_iter;  // 所属的时间轮迭代器
+  };  // 外部请勿直接访问内部成员，只允许通过API访问
 
-        public:
+ public:
 #if defined(UTIL_CONFIG_COMPILER_CXX_RVALUE_REFERENCES) && UTIL_CONFIG_COMPILER_CXX_RVALUE_REFERENCES
-            using timer_t = timer_type;
+  using timer_t = timer_type;
 #else
-            typedef timer_type timer_t; // 外部请勿直接访问内部成员，只允许通过API访问
+  typedef timer_type timer_t;                       // 外部请勿直接访问内部成员，只允许通过API访问
 #endif
 
-            struct flag_t {
-                enum type {
-                    EN_JTFT_INITED = 0,
-                    EN_JTFT_MAX,
-                };
-            };
+  struct flag_t {
+    enum type {
+      EN_JTFT_INITED = 0,
+      EN_JTFT_MAX,
+    };
+  };
 
-            struct timer_flag_t {
-                enum type {
-                    EN_JTTF_DISABLED = 0x0001,
-                };
-            };
+  struct timer_flag_t {
+    enum type {
+      EN_JTTF_DISABLED = 0x0001,
+    };
+  };
 
-            struct error_type_t {
-                enum type {
-                    EN_JTET_SUCCESS          = 0,    // 成功
-                    EN_JTET_NOT_INITED       = -101, // 未初始化
-                    EN_JTET_ALREADY_INITED   = -102, // 已初始化
-                    EN_JTET_TIMEOUT_EXTENDED = -103, // 超时时间超出上限
-                };
-            };
+  struct error_type_t {
+    enum type {
+      EN_JTET_SUCCESS = 0,              // 成功
+      EN_JTET_NOT_INITED = -101,        // 未初始化
+      EN_JTET_ALREADY_INITED = -102,    // 已初始化
+      EN_JTET_TIMEOUT_EXTENDED = -103,  // 超时时间超出上限
+    };
+  };
 
-        public:
-            /**
-             * @brief 初始化定时器
-             * @param init_tick 初始定时器tick数（绝对时间），定时器将从这个时间开始触发
-             * @return 0或错误码
-             */
-            int init(time_t init_tick) {
-                if (flags_.test(flag_t::EN_JTFT_INITED)) {
-                    return error_type_t::EN_JTET_ALREADY_INITED;
-                }
-                flags_.set(flag_t::EN_JTFT_INITED, true);
+ public:
+  /**
+   * @brief 初始化定时器
+   * @param init_tick 初始定时器tick数（绝对时间），定时器将从这个时间开始触发
+   * @return 0或错误码
+   */
+  int init(time_t init_tick) {
+    if (flags_.test(flag_t::EN_JTFT_INITED)) {
+      return error_type_t::EN_JTET_ALREADY_INITED;
+    }
+    flags_.set(flag_t::EN_JTFT_INITED, true);
 
-                last_tick_ = init_tick;
-                seq_alloc_ = 0;
-                size_      = 0;
+    last_tick_ = init_tick;
+    seq_alloc_ = 0;
+    size_ = 0;
 
-                return error_type_t::EN_JTET_SUCCESS;
-            }
-
+    return error_type_t::EN_JTET_SUCCESS;
+  }
 
 /**
  * @brief 添加定时器
@@ -203,225 +201,231 @@ namespace util {
  * @return 0或错误码
  */
 #if defined(UTIL_CONFIG_COMPILER_CXX_RVALUE_REFERENCES) && UTIL_CONFIG_COMPILER_CXX_RVALUE_REFERENCES
-            template<class TCALLBACK>
-            inline int add_timer(time_t delta, TCALLBACK&& fn, void *priv_data, timer_wptr_t *watcher) {
-                return add_timer(delta, std::move(timer_callback_fn_t(std::forward<TCALLBACK>(fn))), priv_data, watcher);
-            }
+  template <class TCALLBACK>
+  inline int add_timer(time_t delta, TCALLBACK &&fn, void *priv_data, timer_wptr_t *watcher) {
+    return add_timer(delta, std::move(timer_callback_fn_t(std::forward<TCALLBACK>(fn))), priv_data, watcher);
+  }
 
-            int add_timer(time_t delta, timer_callback_fn_t &&fn, void *priv_data, timer_wptr_t *watcher) {
+  int add_timer(time_t delta, timer_callback_fn_t &&fn, void *priv_data, timer_wptr_t *watcher) {
 #else
-            int add_timer(time_t delta, const timer_callback_fn_t &fn, void *priv_data, timer_wptr_t *watcher) {
+  int add_timer(time_t delta, const timer_callback_fn_t &fn, void *priv_data, timer_wptr_t *watcher) {
 #endif
-                if (!flags_.test(flag_t::EN_JTFT_INITED)) {
-                    return error_type_t::EN_JTET_NOT_INITED;
-                }
+    if (!flags_.test(flag_t::EN_JTFT_INITED)) {
+      return error_type_t::EN_JTET_NOT_INITED;
+    }
 
-                if (delta > get_max_tick_distance()) {
-                    return error_type_t::EN_JTET_TIMEOUT_EXTENDED;
-                }
+    if (delta > get_max_tick_distance()) {
+      return error_type_t::EN_JTET_TIMEOUT_EXTENDED;
+    }
 
-                if (!fn) {
-                    return error_type_t::EN_JTET_SUCCESS;
-                }
+    if (!fn) {
+      return error_type_t::EN_JTET_SUCCESS;
+    }
 
-                // must greater than 0
-                if (delta < 0) {
-                    delta = 0;
-                }
+    // must greater than 0
+    if (delta < 0) {
+      delta = 0;
+    }
 
-                timer_ptr_t timer_inst   = std::make_shared<timer_type>();
-                timer_inst->flags        = 0;
-                timer_inst->timeout      = last_tick_ + delta;
-                timer_inst->private_data = priv_data;
-                timer_inst->owner_round  = NULL;
-                timer_inst->owner        = this;
-                // timer_inst->owner_iter = ...
-                while (0 == ++seq_alloc_)
-                    ;
-                timer_inst->sequence = seq_alloc_;
+    timer_ptr_t timer_inst = std::make_shared<timer_type>();
+    timer_inst->flags = 0;
+    timer_inst->timeout = last_tick_ + delta;
+    timer_inst->private_data = priv_data;
+    timer_inst->owner_round = NULL;
+    timer_inst->owner = this;
+    // timer_inst->owner_iter = ...
+    while (0 == ++seq_alloc_)
+      ;
+    timer_inst->sequence = seq_alloc_;
 
-
-                size_t idx = calc_wheel_index(timer_inst->timeout, last_tick_);
-                assert(idx < WHEEL_SIZE);
+    size_t idx = calc_wheel_index(timer_inst->timeout, last_tick_);
+    assert(idx < WHEEL_SIZE);
 
 #if defined(UTIL_CONFIG_COMPILER_CXX_RVALUE_REFERENCES) && UTIL_CONFIG_COMPILER_CXX_RVALUE_REFERENCES
-                timer_inst->fn = std::move(fn);
+    timer_inst->fn = std::move(fn);
 #else
-                timer_inst->fn = fn;
+    timer_inst->fn = fn;
 #endif
 
-                // assign to watcher
-                if (watcher != NULL) {
-                    *watcher = timer_inst;
-                }
-                timer_inst->owner_iter  = timer_base_[idx].insert(timer_base_[idx].end(), timer_inst);
-                timer_inst->owner_round = &timer_base_[idx];
-                ++size_;
+    // assign to watcher
+    if (watcher != NULL) {
+      *watcher = timer_inst;
+    }
+    timer_inst->owner_iter = timer_base_[idx].insert(timer_base_[idx].end(), timer_inst);
+    timer_inst->owner_round = &timer_base_[idx];
+    ++size_;
 
-                return error_type_t::EN_JTET_SUCCESS;
-            }
+    return error_type_t::EN_JTET_SUCCESS;
+  }
 
-            inline int add_timer(time_t delta, const timer_callback_fn_t &fn, void *priv_data) {
-                return add_timer(delta, fn, priv_data, NULL);
-            }
+  inline int add_timer(time_t delta, const timer_callback_fn_t &fn, void *priv_data) {
+    return add_timer(delta, fn, priv_data, NULL);
+  }
 
 #if defined(UTIL_CONFIG_COMPILER_CXX_RVALUE_REFERENCES) && UTIL_CONFIG_COMPILER_CXX_RVALUE_REFERENCES
-            inline int add_timer(time_t delta, timer_callback_fn_t &&fn, void *priv_data) { return add_timer(delta, fn, priv_data, NULL); }
+  inline int add_timer(time_t delta, timer_callback_fn_t &&fn, void *priv_data) {
+    return add_timer(delta, fn, priv_data, NULL);
+  }
 #endif
-            /**
-             * @brief 定时器滴答
-             * @param expires 到期的定时器时间（绝对时间）
-             * @return 错误码或触发的定时器数量
-             */
-            int tick(time_t expires) {
-                std::list<timer_ptr_t> *timer_list[LVL_DEPTH];
-                int                     ret = 0;
+  /**
+   * @brief 定时器滴答
+   * @param expires 到期的定时器时间（绝对时间）
+   * @return 错误码或触发的定时器数量
+   */
+  int tick(time_t expires) {
+    std::list<timer_ptr_t> *timer_list[LVL_DEPTH];
+    int ret = 0;
 
-                if (!flags_.test(flag_t::EN_JTFT_INITED)) {
-                    return error_type_t::EN_JTET_NOT_INITED;
-                }
+    if (!flags_.test(flag_t::EN_JTFT_INITED)) {
+      return error_type_t::EN_JTET_NOT_INITED;
+    }
 
-                if (expires < last_tick_) {
-                    return ret;
-                }
+    if (expires < last_tick_) {
+      return ret;
+    }
 
-                while (last_tick_ < expires) {
-                    ++last_tick_;
+    while (last_tick_ < expires) {
+      ++last_tick_;
 
-                    size_t list_sz = collect_expired_timers(last_tick_, timer_list);
-                    while (list_sz > 0) {
-                        --list_sz;
+      size_t list_sz = collect_expired_timers(last_tick_, timer_list);
+      while (list_sz > 0) {
+        --list_sz;
 
-                        // 从高层级往低层级走，这样能保证定时器时序
-                        for (typename std::list<timer_ptr_t>::iterator iter = timer_list[list_sz]->begin();
-                             iter != timer_list[list_sz]->end();) {
-                            // 在定时器回调函数中可能调用remove_timer来让当前迭代器失效
-                            // 所以这里必须保存定时器智能指针，然后直接滚动到下一个，因为当前迭代器可能失效
-                            timer_ptr_t timer_ptr = *iter;
-                            ++ iter;
-                            if (timer_ptr) {  
-                                if (timer_ptr->fn && !(timer_ptr->flags & timer_flag_t::EN_JTTF_DISABLED)) {
-                                    timer_ptr->fn(last_tick_, *timer_ptr);
-                                    ++ret;
-                                }
-
-                                if (NULL != timer_ptr->owner_round) {
-                                    timer_ptr->owner_iter  = timer_ptr->owner_round->end();
-                                    timer_ptr->owner_round = NULL;
-                                }
-
-                                if (NULL != timer_ptr->owner) {
-                                    --timer_ptr->owner->size_;
-                                    timer_ptr->owner = NULL;
-                                }
-                            }
-                        }
-
-                        timer_list[list_sz]->clear();
-                    }
-                }
-
-                return ret;
+        // 从高层级往低层级走，这样能保证定时器时序
+        for (typename std::list<timer_ptr_t>::iterator iter = timer_list[list_sz]->begin();
+             iter != timer_list[list_sz]->end();) {
+          // 在定时器回调函数中可能调用remove_timer来让当前迭代器失效
+          // 所以这里必须保存定时器智能指针，然后直接滚动到下一个，因为当前迭代器可能失效
+          timer_ptr_t timer_ptr = *iter;
+          ++iter;
+          if (timer_ptr) {
+            if (timer_ptr->fn && !(timer_ptr->flags & timer_flag_t::EN_JTTF_DISABLED)) {
+              timer_ptr->fn(last_tick_, *timer_ptr);
+              ++ret;
             }
 
-            /**
-             * @brief 获取最后一次定时器滴答时间（当前定时器时间）
-             * @return 最后一次定时器滴答时间（当前定时器时间）
-             */
-            inline time_t get_last_tick() const { return last_tick_; }
-
-            /**
-             * @brief 获取最后一次定时器滴答时间（当前定时器时间）
-             * @return 最后一次定时器滴答时间（当前定时器时间）
-             */
-            inline size_t size() const { return size_; }
-
-        public:
-            /**
-             * @brief 获取当前定时器类型的最大时间范围（tick）
-             * @return 当前定时器类型的最大时间范围（tick）
-             */
-            static inline UTIL_CONFIG_CONSTEXPR time_t get_max_tick_distance() { return LVL_START(LVL_DEPTH) - 1; }
-
-
-            static inline size_t calc_index(time_t expires, size_t lvl) {
-                // 这里的expires 必然大于等于last_tick_，并且至少加一帧
-                // 本帧的定时器列表检查可能会多次执行，所以不能加在当前帧
-                expires = (expires + LVL_GRAN(lvl)) >> LVL_SHIFT(lvl);
-                return LVL_OFFS(lvl) + static_cast<size_t>(expires & LVL_MASK);
+            if (NULL != timer_ptr->owner_round) {
+              timer_ptr->owner_iter = timer_ptr->owner_round->end();
+              timer_ptr->owner_round = NULL;
             }
 
-            static size_t calc_wheel_index(time_t expires, time_t clk) {
-                assert(expires >= clk);
-                time_t delta = expires - clk;
-                size_t idx   = WHEEL_SIZE;
-
-                for (size_t lvl = 0; lvl < LVL_DEPTH; ++lvl) {
-                    if (delta < LVL_START(lvl + 1)) {
-                        idx = calc_index(expires, lvl);
-                        break;
-                    }
-                }
-
-                assert(idx < WHEEL_SIZE);
-                return idx;
+            if (NULL != timer_ptr->owner) {
+              --timer_ptr->owner->size_;
+              timer_ptr->owner = NULL;
             }
+          }
+        }
 
-        public:
-            static inline void *   get_timer_private_data(const timer_type &timer) { return timer.private_data; }
-            static inline void *   set_timer_private_data(timer_type &timer, void* priv_data) { 
-                void * old_value = timer.private_data;
-                timer.private_data = priv_data;
-                return old_value; 
-            }
-            static inline uint32_t get_timer_sequence(const timer_type &timer) { return timer.sequence; }
-            static inline bool     check_timer_flags(const timer_type &timer, typename timer_flag_t::type f) { return !!(timer.flags & static_cast<uint32_t>(f)); }
-            static inline void     set_timer_flags(const timer_type &timer, typename timer_flag_t::type f) { timer.flags |= static_cast<uint32_t>(f); }
-            static inline void     unset_timer_flags(const timer_type &timer, typename timer_flag_t::type f) { timer.flags &= ~static_cast<uint32_t>(f); }
-            static inline void     remove_timer(timer_type &timer) {
-                if (NULL != timer.owner_round) {
-                    if (timer.owner_iter != timer.owner_round->end()) {
-                        timer.owner_round->erase(timer.owner_iter);
-                    }
+        timer_list[list_sz]->clear();
+      }
+    }
 
-                    timer.owner_iter  = timer.owner_round->end();
-                    timer.owner_round = NULL;
-                }
+    return ret;
+  }
 
-                if (NULL != timer.owner) {
-                    --timer.owner->size_;
-                    timer.owner = NULL;
-                }
-            }
+  /**
+   * @brief 获取最后一次定时器滴答时间（当前定时器时间）
+   * @return 最后一次定时器滴答时间（当前定时器时间）
+   */
+  inline time_t get_last_tick() const { return last_tick_; }
 
-        private:
-            size_t collect_expired_timers(time_t tick_time, std::list<timer_ptr_t> *timer_list[LVL_DEPTH]) {
-                size_t ret = 0;
-                for (size_t i = 0; i < LVL_DEPTH; ++i) {
-                    size_t idx = static_cast<size_t>(tick_time & LVL_MASK) + LVL_OFFS(i);
+  /**
+   * @brief 获取最后一次定时器滴答时间（当前定时器时间）
+   * @return 最后一次定时器滴答时间（当前定时器时间）
+   */
+  inline size_t size() const { return size_; }
 
-                    if (!timer_base_[idx].empty()) {
-                        timer_list[ret++] = &timer_base_[idx];
-                    }
+ public:
+  /**
+   * @brief 获取当前定时器类型的最大时间范围（tick）
+   * @return 当前定时器类型的最大时间范围（tick）
+   */
+  static inline UTIL_CONFIG_CONSTEXPR time_t get_max_tick_distance() { return LVL_START(LVL_DEPTH) - 1; }
 
-                    if (tick_time & LVL_CLK_MASK) {
-                        break;
-                    }
+  static inline size_t calc_index(time_t expires, size_t lvl) {
+    // 这里的expires 必然大于等于last_tick_，并且至少加一帧
+    // 本帧的定时器列表检查可能会多次执行，所以不能加在当前帧
+    expires = (expires + LVL_GRAN(lvl)) >> LVL_SHIFT(lvl);
+    return LVL_OFFS(lvl) + static_cast<size_t>(expires & LVL_MASK);
+  }
 
-                    tick_time >>= LVL_CLK_SHIFT;
-                }
+  static size_t calc_wheel_index(time_t expires, time_t clk) {
+    assert(expires >= clk);
+    time_t delta = expires - clk;
+    size_t idx = WHEEL_SIZE;
 
-                return ret;
-            }
+    for (size_t lvl = 0; lvl < LVL_DEPTH; ++lvl) {
+      if (delta < LVL_START(lvl + 1)) {
+        idx = calc_index(expires, lvl);
+        break;
+      }
+    }
 
-        private:
-            time_t                           last_tick_;
-            std::bitset<flag_t::EN_JTFT_MAX> flags_;
-            std::list<timer_ptr_t>           timer_base_[WHEEL_SIZE];
-            uint32_t                         seq_alloc_;
-            size_t                           size_;
-        };
-    } // namespace time
-} // namespace util
+    assert(idx < WHEEL_SIZE);
+    return idx;
+  }
 
-#endif // _UTIL_TIME_TIME_UTILITY_H_
+ public:
+  static inline void *get_timer_private_data(const timer_type &timer) { return timer.private_data; }
+  static inline void *set_timer_private_data(timer_type &timer, void *priv_data) {
+    void *old_value = timer.private_data;
+    timer.private_data = priv_data;
+    return old_value;
+  }
+  static inline uint32_t get_timer_sequence(const timer_type &timer) { return timer.sequence; }
+  static inline bool check_timer_flags(const timer_type &timer, typename timer_flag_t::type f) {
+    return !!(timer.flags & static_cast<uint32_t>(f));
+  }
+  static inline void set_timer_flags(const timer_type &timer, typename timer_flag_t::type f) {
+    timer.flags |= static_cast<uint32_t>(f);
+  }
+  static inline void unset_timer_flags(const timer_type &timer, typename timer_flag_t::type f) {
+    timer.flags &= ~static_cast<uint32_t>(f);
+  }
+  static inline void remove_timer(timer_type &timer) {
+    if (NULL != timer.owner_round) {
+      if (timer.owner_iter != timer.owner_round->end()) {
+        timer.owner_round->erase(timer.owner_iter);
+      }
+
+      timer.owner_iter = timer.owner_round->end();
+      timer.owner_round = NULL;
+    }
+
+    if (NULL != timer.owner) {
+      --timer.owner->size_;
+      timer.owner = NULL;
+    }
+  }
+
+ private:
+  size_t collect_expired_timers(time_t tick_time, std::list<timer_ptr_t> *timer_list[LVL_DEPTH]) {
+    size_t ret = 0;
+    for (size_t i = 0; i < LVL_DEPTH; ++i) {
+      size_t idx = static_cast<size_t>(tick_time & LVL_MASK) + LVL_OFFS(i);
+
+      if (!timer_base_[idx].empty()) {
+        timer_list[ret++] = &timer_base_[idx];
+      }
+
+      if (tick_time & LVL_CLK_MASK) {
+        break;
+      }
+
+      tick_time >>= LVL_CLK_SHIFT;
+    }
+
+    return ret;
+  }
+
+ private:
+  time_t last_tick_;
+  std::bitset<flag_t::EN_JTFT_MAX> flags_;
+  std::list<timer_ptr_t> timer_base_[WHEEL_SIZE];
+  uint32_t seq_alloc_;
+  size_t size_;
+};
+}  // namespace time
+}  // namespace util
+
+#endif  // _UTIL_TIME_TIME_UTILITY_H_

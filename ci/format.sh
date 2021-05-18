@@ -1,7 +1,8 @@
 #!/bin/bash
 
-find . -type f 
-  -regex ".*third_party/.*" -prune                \
+find . -type f                                    \
+  -regex ".*third_party/packages/.*" -prune       \
+  -o -regex ".*third_party/install/.*" -prune     \
   -o -regex ".*build_jobs_.*" -prune              \
   -o -regex ".*project/cmake/toolset/.*" -prune   \
   -o -name "*.cmake" -print                       \
@@ -9,8 +10,9 @@ find . -type f
   -o -name 'CMakeLists.txt' -print                \
   | xargs cmake-format -i
 
-find . -type f 
-  -regex ".*third_party/.*" -prune                \
+find . -type f                                    \
+  -regex ".*third_party/packages/.*" -prune       \
+  -o -regex ".*third_party/install/.*" -prune     \
   -o -regex ".*build_jobs_.*" -prune              \
   -o -regex ".*project/cmake/toolset/.*" -prune   \
   -o -name "*.h" -print                           \
@@ -19,4 +21,4 @@ find . -type f
   -o -name '*.cpp' -print                         \
   -o -name '*.cc' -print                          \
   -o -name '*.c' -print                           \
-  | xargs clang-format -i --style=file --fallback-style= none
+  | xargs -r -n 32 clang-format -i --style=file --fallback-style=none
