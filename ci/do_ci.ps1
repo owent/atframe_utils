@@ -9,6 +9,12 @@ if ($IsWindows) {
   # See https://docs.microsoft.com/en-us/windows/win32/fileio/maximum-file-path-limitation?tabs=cmd
   New-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\FileSystem" `
     -Name "LongPathsEnabled" -Value 1 -PropertyType DWORD -Force
+
+  $ALL_DLL_FILES = Get-ChildItem -Path "../third_party/install/*.dll" -Recurse
+  $ALL_DLL_DIRS = $(foreach ($dll_file in $ALL_DLL_FILES) {
+      $dll_file.Directory.FullName
+    }) | Sort-Object | Get-Unique
+  $ENV:PATH = ($ALL_DLL_DIRS + $ENV:PATH) -Join [IO.Path]::PathSeparator
 }
 
 Set-Location "$SCRIPT_DIR/.."
