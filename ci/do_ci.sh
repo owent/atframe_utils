@@ -4,7 +4,19 @@ cd "$(cd "$(dirname $0)" && pwd)/..";
 
 set -ex ;
 
-if [[ "$1" == "coverage" ]]; then
+if [[ "$1" == "format" ]]; then
+  python3 -m pip install --user -r ./ci/requirements.txt ;
+  export PATH="$HOME/.local/bin:$PATH"
+  bash ./ci/format.sh ;
+  CHANGED="$(git -c core.autocrlf=true ls-files --modified)" ;
+  if [[ ! -z "$CHANGED" ]]; then
+    echo "The following files have changes:" ;
+    echo "$CHANGED" ;
+    git diff ;
+    exit 1 ;
+  fi
+  exit 0 ;
+elif [[ "$1" == "coverage" ]]; then
   if [[ "x$USE_SSL" == "xmbedtls" ]]; then
     vcpkg install --triplet=$VCPKG_TARGET_TRIPLET mbedtls ;
     CRYPTO_OPTIONS="-DATFRAMEWORK_CMAKE_TOOLSET_THIRD_PARTY_CRYPTO_USE_MBEDTLS=ON" ;

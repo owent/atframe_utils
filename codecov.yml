@@ -1,4 +1,5 @@
 ignore:
+  - "**/third_party/**"
   - "**/sample/**"
   - "**/test/**"
   - "**/tools/**"
