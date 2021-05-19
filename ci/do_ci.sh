@@ -13,7 +13,7 @@ if [[ "$1" == "format" ]]; then
     echo "The following files have changes:" ;
     echo "$CHANGED" ;
     git diff ;
-    exit 1 ;
+    # exit 1 ; # Just warning, some versions of clang-format have different default style for unsupport syntax
   fi
   exit 0 ;
 elif [[ "$1" == "coverage" ]]; then

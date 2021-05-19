@@ -30,33 +30,10 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY cmd_option_bindt_cc_caller {
  public:
   cmd_option_bindt_cc_caller(_TF f) : func_(f) {}
 
-#if defined(UTIL_CONFIG_COMPILER_CXX_VARIADIC_TEMPLATES) && UTIL_CONFIG_COMPILER_CXX_VARIADIC_TEMPLATES
   template <typename _TCBP, typename... _Args>
   void operator()(_TCBP &param, _Args &...args) {
     func_(param, args...);
   }
-
-#else
-  template <typename _TCBP>
-  void operator()(_TCBP &args) {
-    func_(args);
-  }
-
-  template <typename _TCBP, typename _Arg0>
-  void operator()(_TCBP &args, _Arg0 &arg0) {
-    func_(args, arg0);
-  }
-
-  template <typename _TCBP, typename _Arg0, typename _Arg1>
-  void operator()(_TCBP &args, _Arg0 &arg0, _Arg1 &arg1) {
-    func_(args, arg0, arg1);
-  }
-
-  template <typename _TCBP, typename _Arg0, typename _Arg1, typename _Arg2>
-  void operator()(_TCBP &args, _Arg0 &arg0, _Arg1 &arg1, _Arg2 &arg2) {
-    func_(args, arg0, arg1, arg2);
-  }
-#endif
 };
 }  // namespace binder
 }  // namespace cli
