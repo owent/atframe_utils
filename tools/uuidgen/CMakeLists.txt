@@ -10,7 +10,7 @@ set_target_properties(
              BUILD_WITH_INSTALL_RPATH NO
              BUILD_RPATH_USE_ORIGIN YES)
 
-target_link_libraries(${BIN_NAME} ${PROJECT_ATFRAME_UTILS_LIB_NAME})
+target_link_libraries(${BIN_NAME} ${PROJECT_NAME})
 
 target_compile_options(${BIN_NAME} PRIVATE ${COMPILER_STRICT_EXTRA_CFLAGS} ${COMPILER_STRICT_CFLAGS})
 

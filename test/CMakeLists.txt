@@ -32,7 +32,7 @@ if(MSVC)
   add_target_properties(atframe_utils_unit_test LINK_FLAGS /NODEFAULTLIB:library)
 endif(MSVC)
 
-target_link_libraries(atframe_utils_unit_test ${PROJECT_TEST_LIB_LINK} ${PROJECT_ATFRAME_UTILS_LIB_NAME})
+target_link_libraries(atframe_utils_unit_test ${PROJECT_TEST_LIB_LINK} ${PROJECT_NAME})
 
 target_compile_options(atframe_utils_unit_test PRIVATE ${COMPILER_STRICT_EXTRA_CFLAGS} ${COMPILER_STRICT_CFLAGS})
 
