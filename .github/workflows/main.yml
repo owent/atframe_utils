@@ -35,7 +35,7 @@ jobs:
             ssl: mbedtls
           - os: ubuntu-20.04
             triplet: x64-linux
-            cc: gcc-10
+            cc: gcc-11
           - os: ubuntu-18.04
             triplet: x64-linux
             cc: gcc-4.8
