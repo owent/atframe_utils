@@ -60,7 +60,7 @@ function(atframe_add_test_executable TARGET_NAME)
     target_link_libraries(${TARGET_NAME} ${PROJECT_TEST_LIB_LINK})
   endif()
   if(PROJECT_TEST_DEFINITIONS)
-    target_compile_options(${TARGET_NAME} PRIVATE ${PROJECT_TEST_DEFINITIONS})
+    target_compile_definitions(${TARGET_NAME} PRIVATE ${PROJECT_TEST_DEFINITIONS})
   endif()
 
   # add_test(NAME test COMMAND ${TARGET_NAME})
