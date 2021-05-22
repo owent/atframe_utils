@@ -6,8 +6,6 @@ on: # @see https://help.github.com/en/articles/events-that-trigger-workflows#web
       - master # Push events on master branch
       - dev
       - main
-    tags:
-      - "*"
 
 jobs:
   format:
@@ -26,25 +24,22 @@ jobs:
     strategy:
       matrix:
         include:
-          - os: ubuntu-20.04
+          - os: ubuntu-latest
             triplet: x64-linux
             cc: gcc
-          - os: ubuntu-20.04
+          - os: ubuntu-latest
             triplet: x64-linux
             cc: gcc
             ssl: mbedtls
-          - os: ubuntu-20.04
+          - os: ubuntu-latest
             triplet: x64-linux
             cc: gcc-11
           - os: ubuntu-18.04
             triplet: x64-linux
             cc: gcc-4.8
-          - os: ubuntu-20.04
+          - os: ubuntu-latest
             triplet: x64-linux
             cc: clang
-          - os: ubuntu-20.04
-            triplet: x64-linux
-            cc: clang-11
           - os: macos-latest
             triplet: x64-osx
             cc: clang
@@ -147,7 +142,7 @@ jobs:
     strategy:
       matrix:
         include:
-          - os: ubuntu-20.04
+          - os: ubuntu-latest
             triplet: x64-linux
             cc: gcc
             gcov_flags: "--coverage -fprofile-arcs -ftest-coverage"

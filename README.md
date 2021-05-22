@@ -13,20 +13,19 @@ cxx utils code
 
 ## CI Job Matrix
 
-| Target System | Toolchain             | Note
-|---------------|-----------------------|--------------------------------
-| Linux         | GCC                   |
-| Linux         | GCC-10                |
-| Linux         | Clang                 | With libc++
-| Linux         | Clang-11              | With libc++
-| Linux         | GCC                   |
-| Linux         | GCC 4.8               |
-| MinGW64       | GCC                   | Static linking
-| MinGW64       | GCC                   | Dynamic linking
-| Windows       | Visual Studio 2019    | Static linking
-| Windows       | Visual Studio 2019    | Dynamic linking
-| Windows       | Visual Studio 2017    | Legacy,Static linking
-| macOS         | AppleClang            | With libc++
+| Target System | Toolchain          | Note                  |
+| ------------- | ------------------ | --------------------- |
+| Linux         | GCC                |
+| Linux         | GCC                | With MbedTLS          |
+| Linux         | GCC-11             |
+| Linux         | Clang              | With libc++           |
+| Linux         | GCC 4.8            |
+| MinGW64       | GCC                | Static linking        |
+| MinGW64       | GCC                | Dynamic linking       |
+| Windows       | Visual Studio 2019 | Static linking        |
+| Windows       | Visual Studio 2019 | Dynamic linking       |
+| Windows       | Visual Studio 2017 | Legacy,Static linking |
+| macOS         | AppleClang         | With libc++           |
 
 ## Usage
 
@@ -56,16 +55,16 @@ cmake --build . --target INSTALL # using clang or gcc
 
 ## Other options
 
-| Option  | Description |
-|---------|-------------|
-| BUILD\_SHARED\_LIBS=YES\|NO | [default=NO] Build dynamic library |
-| LIBUNWIND\_ENABLED=YES\|NO | [default=NO] Enable and using libunwind for callstack unwind |
-| LOG\_WRAPPER\_ENABLE\_LUA\_SUPPORT=YES\|NO | [default=YES] Enable lua support for log system |
-| LOG\_WRAPPER\_CHECK\_LUA=YES\|NO | [default=YES] Enable checking for lua support |
-| LOG\_WRAPPER\_ENABLE\_STACKTRACE=YES\|NO | [default=YES] Enable stack trace for log system |
-| ENABLE\_MIXEDINT\_MAGIC\_MASK=0-8 | [default=0] Set mixed int mask |
-| CRYPTO\_DISABLED=YES\|NO | [default=NO] Disable crypto and DH/ECDH support |
-| CRYPTO\_USE\_OPENSSL=YES\|NO | [default=NO] Using openssl for crypto and DH/ECDH support, and close auto detection |
-| CRYPTO\_USE\_MBEDTLS=YES\|NO | [default=NO] Using mbedtls for crypto and DH/ECDH support, and close auto detection |
+| Option                                     | Description                                                                         |
+| ------------------------------------------ | ----------------------------------------------------------------------------------- |
+| BUILD\_SHARED\_LIBS=YES\|NO                | [default=NO] Build dynamic library                                                  |
+| LIBUNWIND\_ENABLED=YES\|NO                 | [default=NO] Enable and using libunwind for callstack unwind                        |
+| LOG\_WRAPPER\_ENABLE\_LUA\_SUPPORT=YES\|NO | [default=YES] Enable lua support for log system                                     |
+| LOG\_WRAPPER\_CHECK\_LUA=YES\|NO           | [default=YES] Enable checking for lua support                                       |
+| LOG\_WRAPPER\_ENABLE\_STACKTRACE=YES\|NO   | [default=YES] Enable stack trace for log system                                     |
+| ENABLE\_MIXEDINT\_MAGIC\_MASK=0-8          | [default=0] Set mixed int mask                                                      |
+| CRYPTO\_DISABLED=YES\|NO                   | [default=NO] Disable crypto and DH/ECDH support                                     |
+| CRYPTO\_USE\_OPENSSL=YES\|NO               | [default=NO] Using openssl for crypto and DH/ECDH support, and close auto detection |
+| CRYPTO\_USE\_MBEDTLS=YES\|NO               | [default=NO] Using mbedtls for crypto and DH/ECDH support, and close auto detection |
 
 [cmake]: https://cmake.org/
