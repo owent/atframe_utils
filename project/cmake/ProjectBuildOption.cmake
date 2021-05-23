@@ -4,20 +4,7 @@ include("${CMAKE_CURRENT_LIST_DIR}/FetchToolset.cmake")
 
 include("${ATFRAMEWORK_CMAKE_TOOLSET_DIR}/Import.cmake")
 include(IncludeDirectoryRecurse)
-
 include(EchoWithColor)
-
-# third_party
-if(NOT ANDROID AND NOT CMAKE_OSX_DEPLOYMENT_TARGET)
-  # include("${ATFRAMEWORK_CMAKE_TOOLSET_DIR}/ports/jemalloc/jemalloc.cmake")
-  if(NOT WIN32 AND NOT MINGW)
-    include("${ATFRAMEWORK_CMAKE_TOOLSET_DIR}/ports/libunwind/libunwind.cmake")
-  endif()
-endif()
-include("${ATFRAMEWORK_CMAKE_TOOLSET_DIR}/ports/lua/lua.cmake")
-include("${ATFRAMEWORK_CMAKE_TOOLSET_DIR}/ports/libuv/libuv.cmake")
-include("${ATFRAMEWORK_CMAKE_TOOLSET_DIR}/ports/ssl/port.cmake")
-include("${ATFRAMEWORK_CMAKE_TOOLSET_DIR}/ports/libcurl/libcurl.cmake")
 
 # generate check header
 if(CMAKE_VERSION VERSION_LESS "3.20.0")
@@ -80,6 +67,7 @@ set(LOG_WRAPPER_MAX_SIZE_PER_LINE
 set(LOG_WRAPPER_CATEGORIZE_SIZE
     "16"
     CACHE STRING "Default log categorize number.")
+option(ENABLE_NETWORK "Enable network support." ON)
 
 # Check pthread
 find_package(Threads)
@@ -150,6 +138,30 @@ if(NOT ENABLE_MIXEDINT_MAGIC_MASK)
   set(ENABLE_MIXEDINT_MAGIC_MASK 0)
 endif()
 
+# third_party
+
+if(LOG_WRAPPER_ENABLE_LUA_SUPPORT AND LOG_WRAPPER_CHECK_LUA)
+  include("${ATFRAMEWORK_CMAKE_TOOLSET_DIR}/ports/lua/lua.cmake")
+endif()
+
+if(LOG_WRAPPER_ENABLE_STACKTRACE)
+  if(NOT ANDROID AND NOT CMAKE_OSX_DEPLOYMENT_TARGET)
+    # include("${ATFRAMEWORK_CMAKE_TOOLSET_DIR}/ports/jemalloc/jemalloc.cmake")
+    if(NOT WIN32 AND NOT MINGW)
+      include("${ATFRAMEWORK_CMAKE_TOOLSET_DIR}/ports/libunwind/libunwind.cmake")
+    endif()
+  endif()
+endif()
+
+if(NOT ATFRAMEWORK_CMAKE_TOOLSET_THIRD_PARTY_CRYPTO_DISABLED)
+  include("${ATFRAMEWORK_CMAKE_TOOLSET_DIR}/ports/ssl/port.cmake")
+endif()
+
+if(ENABLE_NETWORK)
+  include("${ATFRAMEWORK_CMAKE_TOOLSET_DIR}/ports/libuv/libuv.cmake")
+  include("${ATFRAMEWORK_CMAKE_TOOLSET_DIR}/ports/libcurl/libcurl.cmake")
+endif()
+
 find_package(Libuuid)
 if(TARGET libuuid)
   echowithcolor(COLOR YELLOW "-- Dependency(${PROJECT_NAME}): uuid generator with libuuid.(Target: libuuid)")
@@ -201,7 +213,6 @@ else()
 endif()
 
 # libuv
-option(ENABLE_NETWORK "Enable network support." ON)
 if(ENABLE_NETWORK)
   if(ATFRAMEWORK_CMAKE_TOOLSET_THIRD_PARTY_LIBUV_LINK_NAME)
     set(NETWORK_EVPOLL_ENABLE_LIBUV 1)
@@ -279,7 +290,7 @@ if(NOT ATFRAMEWORK_CMAKE_TOOLSET_THIRD_PARTY_CRYPTO_DISABLED)
   endif()
 endif()
 
-# Check fmtlib(https://fmt.dev/)/std::format
+# Check fmtlib(https://fmt.dev/) or std::format
 check_cxx_source_compiles(
   "
 #include <format>
