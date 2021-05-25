@@ -4,7 +4,6 @@ on: # @see https://help.github.com/en/articles/events-that-trigger-workflows#web
   push:
     branches: # Array of patterns that match refs/heads
       - master # Push events on master branch
-      - dev
       - main
   pull_request:
     branches: [ main ]
