@@ -430,7 +430,7 @@ CASE_TEST(atomic_int_test, multi_thread_add) {
 
   typedef std::shared_ptr<std::thread> thread_ptr;
   std::vector<thread_ptr> thds;
-  uint64_t thd_num = 5000;
+  uint64_t thd_num = 500;
   thds.resize(static_cast<size_t>(thd_num));
 
   for (size_t i = 0; i < thds.size(); ++i) {
