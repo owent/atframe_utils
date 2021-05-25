@@ -59,7 +59,7 @@ if ( $RUN_MODE -eq "msvc.2019.test" ) {
   Set-Location "build_jobs_ci"
   & cmake ".." "-G" "$Env:CMAKE_GENERATOR" "-A" $Env:CMAKE_PLATFORM "-DBUILD_SHARED_LIBS=$Env:BUILD_SHARED_LIBS"  `
     "-DPROJECT_ENABLE_UNITTEST=ON" "-DPROJECT_ENABLE_SAMPLE=ON" "-DPROJECT_ENABLE_TOOLS=ON"                       `
-    "-DCMAKE_VS_WINDOWS_TARGET_PLATFORM_VERSION=$selectWinSDKVersion"
+    "-DCMAKE_SYSTEM_VERSION=$selectWinSDKVersion" "-DATFRAMEWORK_CMAKE_TOOLSET_THIRD_PARTY_LOW_MEMORY_MODE=ON"
   if ( $LastExitCode -ne 0 ) {
     exit $LastExitCode
   }
@@ -85,7 +85,7 @@ elseif ( $RUN_MODE -eq "msvc.2017.test" ) {
   Set-Location "build_jobs_ci"
   & cmake ".." "-G" "$Env:CMAKE_GENERATOR" "-DBUILD_SHARED_LIBS=$ENV:BUILD_SHARED_LIBS"       `
     "-DPROJECT_ENABLE_UNITTEST=ON" "-DPROJECT_ENABLE_SAMPLE=ON" "-DPROJECT_ENABLE_TOOLS=ON" `
-    "-DCMAKE_VS_WINDOWS_TARGET_PLATFORM_VERSION=$selectWinSDKVersion"
+    "-DCMAKE_SYSTEM_VERSION=$selectWinSDKVersion" "-DATFRAMEWORK_CMAKE_TOOLSET_THIRD_PARTY_LOW_MEMORY_MODE=ON"
   if ( $LastExitCode -ne 0 ) {
     exit $LastExitCode
   }
