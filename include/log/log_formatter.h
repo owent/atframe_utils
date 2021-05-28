@@ -34,10 +34,21 @@ namespace util {
             class LIBATFRAME_UTILS_API_HEAD_ONLY truncating_iterator_base {
             protected:
                 OutputIt out_;
-                size_t   limit_;
-                size_t   count_;
 
-                truncating_iterator_base(OutputIt out, size_t limit) : out_(out), limit_(limit), count_(0) {}
+#if defined(LIBATFRAME_UTILS_ENABLE_STD_FORMAT) && LIBATFRAME_UTILS_ENABLE_STD_FORMAT
+                using size_type = std::iter_difference_t<OutputIt>;
+#else
+#  if defined(UTIL_CONFIG_COMPILER_CXX_ALIAS_TEMPLATES) && UTIL_CONFIG_COMPILER_CXX_ALIAS_TEMPLATES
+                using size_type = size_t;
+#  else
+                typedef size_t size_type;
+#  endif
+#endif
+
+                size_type limit_;
+                size_type count_;
+
+                truncating_iterator_base(OutputIt out, size_type limit) : out_(out), limit_(limit), count_(0) {}
 
             public:
 #if defined(UTIL_CONFIG_COMPILER_CXX_ALIAS_TEMPLATES) && UTIL_CONFIG_COMPILER_CXX_ALIAS_TEMPLATES
@@ -55,7 +66,7 @@ namespace util {
 #endif
 
                 OutputIt base() const { return out_; }
-                size_t   count() const { return count_; }
+                size_type count() const { return count_; }
             };
 
             // An output iterator that truncates the output and counts the number of objects
@@ -71,11 +82,13 @@ namespace util {
             public:
 #if defined(UTIL_CONFIG_COMPILER_CXX_ALIAS_TEMPLATES) && UTIL_CONFIG_COMPILER_CXX_ALIAS_TEMPLATES
                 using value_type = typename truncating_iterator_base<OutputIt>::value_type;
+                using size_type = typename truncating_iterator_base<OutputIt>::size_type;
 #else
                 typedef typename truncating_iterator_base<OutputIt>::value_type value_type;
+                typedef typename truncating_iterator_base<OutputIt>::size_type size_type;
 #endif
 
-                truncating_iterator(OutputIt out, size_t limit) : truncating_iterator_base<OutputIt>(out, limit) {}
+                truncating_iterator(OutputIt out, size_type limit) : truncating_iterator_base<OutputIt>(out, limit) {}
 
                 truncating_iterator &operator++() {
                     if (this->count_++ < this->limit_) ++this->out_;
@@ -94,7 +107,16 @@ namespace util {
             template <class OutputIt>
             class LIBATFRAME_UTILS_API_HEAD_ONLY truncating_iterator<OutputIt, std::true_type> : public truncating_iterator_base<OutputIt> {
             public:
-                truncating_iterator(OutputIt out, size_t limit) : truncating_iterator_base<OutputIt>(out, limit) {}
+#if defined(UTIL_CONFIG_COMPILER_CXX_ALIAS_TEMPLATES) && UTIL_CONFIG_COMPILER_CXX_ALIAS_TEMPLATES
+                using value_type = typename truncating_iterator_base<OutputIt>::value_type;
+                using size_type = typename truncating_iterator_base<OutputIt>::size_type;
+#else
+                typedef typename truncating_iterator_base<OutputIt>::value_type value_type;
+                typedef typename truncating_iterator_base<OutputIt>::size_type size_type;
+#endif
+
+            public:
+                truncating_iterator(OutputIt out, typename truncating_iterator_base<OutputIt>::size_type limit) : truncating_iterator_base<OutputIt>(out, limit) {}
 
                 template <typename T>
                 truncating_iterator &operator=(T val) {

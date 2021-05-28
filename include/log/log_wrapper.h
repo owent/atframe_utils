@@ -101,8 +101,8 @@ namespace util {
         }
 
         template <class OutputIt, class TFMT, class... TARGS>
-        LIBATFRAME_UTILS_API_HEAD_ONLY LOG_WRAPPER_FWAPI_NAMESPACE format_to_n_result<OutputIt> format_to_n(OutputIt out, size_t n,
-                                                                                                            TFMT &&fmt, TARGS &&... args) {
+        LIBATFRAME_UTILS_API_HEAD_ONLY LOG_WRAPPER_FWAPI_NAMESPACE format_to_n_result<OutputIt> format_to_n(
+            OutputIt out, typename details::truncating_iterator<OutputIt>::size_type n, TFMT &&fmt, TARGS &&... args) {
 #if defined(LIBATFRAME_UTILS_ENABLE_EXCEPTION) && LIBATFRAME_UTILS_ENABLE_EXCEPTION
             try {
 #endif
@@ -218,7 +218,7 @@ namespace util {
                         LOG_WRAPPER_FWAPI_NAMESPACE format_to_n_result<char *> result = format_to_n<char *>(
                             writer.buffer + writer.writen_size, writer.total_size - writer.writen_size - 1, std::forward<TARGS>(args)...);
                         if (result.size > 0) {
-                            writer.writen_size += result.size;
+                            writer.writen_size += static_cast<size_t>(result.size);
                         }
                         if (writer.writen_size < writer.total_size) {
                             *(writer.buffer + writer.writen_size) = 0;
