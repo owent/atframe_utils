@@ -8,7 +8,9 @@ extraction:
         - g++
     configure: # Customizable step used only by C/C++ extraction.
       command:
-        - mkdir build_jobs_dir; cd build_jobs_dir; cmake ..
+        - curl --insecure -L https://github.com/Kitware/CMake/releases/download/v3.20.3/cmake-3.20.3-linux-x86_64.sh -o cmake.sh
+        - bash cmake.sh --prefix=$HOME/.local --skip-license
+        - mkdir build_jobs_dir; cd build_jobs_dir; export PATH="$HOME/.local/bin:$PATH"; cmake ..
     before_index: # Customizable step used by all languages.
       - export LANG=zh_CN.utf-8
       - export LC_ALL=zh_CN.utf-8
@@ -17,4 +19,4 @@ extraction:
       - export CFLAGS="-D__STDC_WANT_LIB_EXT1__=1"
     index: # Customizable step used by all languages.
       build_command:
-        - if [[ -e build_jobs_dir ]]; then cd build_jobs_dir; fi ; cmake --build . -j
+        - if [[ -e build_jobs_dir ]]; then cd build_jobs_dir; fi ; export PATH="$HOME/.local/bin:$PATH"; cmake --build . -j

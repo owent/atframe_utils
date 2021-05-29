@@ -20,6 +20,10 @@
 
 #include "config/ini_loader.h"
 
+#if defined(LIBATFRAME_UTILS_ENABLE_EXCEPTION) && LIBATFRAME_UTILS_ENABLE_EXCEPTION
+#  include <stdexcept>
+#endif
+
 #define CALL_SAMPLE(x)                                                                        \
   std::cout << std::endl << "=============== begin " << #x << " ==============" << std::endl; \
   x();                                                                                        \
@@ -39,12 +43,44 @@ namespace LOG_WRAPPER_FWAPI_NAMESPACE_ID {
 template <class CharT>
 struct formatter<test_custom_object_for_log_formatter, CharT> : formatter<CharT *, CharT> {
   template <class FormatContext>
-  auto format(const test_custom_object_for_log_formatter &vec, FormatContext &ctx) {
-    std::cout << util::log::vformat("{}, {}", LOG_WRAPPER_FWAPI_MAKE_FORMAT_ARGS(vec.x, vec.y)) << std::endl;
-    return util::log::vformat_to(ctx.out(), "({}, {})", util::log::make_format_args(vec.x, vec.y));
+  auto format(const test_custom_object_for_log_formatter &obj, FormatContext &ctx) {
+    std::cout << util::log::vformat("{}, {}", LOG_WRAPPER_FWAPI_MAKE_FORMAT_ARGS(obj.x, obj.y)) << std::endl;
+    return util::log::vformat_to(ctx.out(), "({}, {})", util::log::make_format_args(obj.x, obj.y));
+  }
+};
+
+}  // namespace LOG_WRAPPER_FWAPI_NAMESPACE_ID
+
+#  if defined(LIBATFRAME_UTILS_ENABLE_EXCEPTION) && LIBATFRAME_UTILS_ENABLE_EXCEPTION
+struct test_exception_for_log_formatter {
+  bool runtime_error;
+  bool throw_exception;
+};
+
+namespace LOG_WRAPPER_FWAPI_NAMESPACE_ID {
+template <class CharT>
+struct formatter<test_exception_for_log_formatter, CharT> : formatter<CharT *, CharT> {
+  template <class FormatContext>
+  auto format(const test_exception_for_log_formatter &obj, FormatContext &ctx) {
+    if (obj.throw_exception) {
+      if (obj.runtime_error) {
+        throw std::runtime_error("runtime_error");
+      } else {
+        throw std::logic_error("runtime_error");
+      }
+    }
+
+    auto ret = ctx.out();
+    if (obj.runtime_error) {
+      *(ret++) = '1';
+    } else {
+      *(ret++) = '0';
+    }
+    return ret;
   }
 };
 }  // namespace LOG_WRAPPER_FWAPI_NAMESPACE_ID
+#  endif
 #endif
 
 void log_sample_func1(int times) {
@@ -184,7 +220,7 @@ void log_sample_func6() {
   WLOG_INIT(util::log::log_wrapper::categorize_t::DEFAULT, util::log::log_wrapper::level_t::LOG_LW_DEBUG);
   WLOG_GETCAT(util::log::log_wrapper::categorize_t::DEFAULT)->clear_sinks();
   WLOG_GETCAT(util::log::log_wrapper::categorize_t::DEFAULT)->add_sink(log_sample_func6_stdout);
-  std::cout << "----------------setup log sink for std::format done--------------" << std::endl;
+  std::cout << "---------------- setup log sink for std::format done--------------" << std::endl;
 #  if defined(LOG_WRAPPER_ENABLE_FWAPI) && LOG_WRAPPER_ENABLE_FWAPI
   FWLOGINFO("{} {}: {}", "Hello", std::string("World"), 42);
 #    if defined(_MSC_VER)
@@ -194,11 +230,83 @@ void log_sample_func6() {
   WLOG_GETCAT(util::log::log_wrapper::categorize_t::DEFAULT)->pop_sink();
   FWLOGERROR("No log sink now");
 }
+
+#  if defined(LIBATFRAME_UTILS_ENABLE_EXCEPTION) && LIBATFRAME_UTILS_ENABLE_EXCEPTION
+void log_sample_func7() {
+  // Do not throw exception
+  test_custom_object_for_log_formatter custom_obj;
+  custom_obj.x = 123;
+  custom_obj.y = __FUNCTION__;
+  std::cout << "---------------- catch exception of log format APIs --------------" << std::endl;
+  std::cout << "format: " << util::log::format("{},{},{},{}", 1, 2, 3) << std::endl;
+  std::cout << "format: " << util::log::format("{},{}", 1, test_exception_for_log_formatter(true, true)) << std::endl;
+  std::cout << "format: " << util::log::format("{},{}", 1, test_exception_for_log_formatter(false, true)) << std::endl;
+
+  char string_buffer[256] = {0};
+  util::log::format_to(string_buffer, "{},{},{},{}", 1, 2, 3);
+  std::cout << "format_to: " << string_buffer << std::endl;
+  memset(string_buffer, 0, sizeof(string_buffer));
+  util::log::format_to(string_buffer, "{},{}", 1, test_exception_for_log_formatter(true, true));
+  std::cout << "format_to: " << string_buffer << std::endl;
+  memset(string_buffer, 0, sizeof(string_buffer));
+  util::log::format_to(string_buffer, "{},{}", 1, test_exception_for_log_formatter(false, true));
+  std::cout << "format_to: " << string_buffer << std::endl;
+  memset(string_buffer, 0, sizeof(string_buffer));
+
+  util::log::format_to_n(string_buffer, 100, "{},{},{},{}", 1, 2, 3);
+  std::cout << "format_to_n: " << string_buffer << std::endl;
+  memset(string_buffer, 0, sizeof(string_buffer));
+  util::log::format_to_n(string_buffer, 100, "{},{}", 1, test_exception_for_log_formatter(true, true));
+  std::cout << "format_to_n: " << string_buffer << std::endl;
+  memset(string_buffer, 0, sizeof(string_buffer));
+  util::log::format_to_n(string_buffer, 100, "{},{}", 1, test_exception_for_log_formatter(false, true));
+  std::cout << "format_to_n: " << string_buffer << std::endl;
+  memset(string_buffer, 0, sizeof(string_buffer));
+
+  std::cout << "vformat: " << util::log::vformat("{},{},{},{}", util::log::make_format_args(1, 2, 3)) << std::endl;
+  std::cout << "vformat: "
+            << util::log::vformat("{},{}", util::log::make_format_args(1, test_exception_for_log_formatter(true, true)))
+            << std::endl;
+  std::cout << "vformat: "
+            << util::log::vformat("{},{}",
+                                  util::log::make_format_args(1, test_exception_for_log_formatter(false, true)))
+            << std::endl;
+
+  std::string vstr;
+#    if defined(UTIL_CONFIG_COMPILER_CXX_ALIAS_TEMPLATES) && UTIL_CONFIG_COMPILER_CXX_ALIAS_TEMPLATES
+  using iterator_type = std::back_insert_iterator<std::string>;
+#    else
+  typedef std::back_insert_iterator<std::string> iterator_type;
+#    endif
+  util::log::vformat_to(
+      iterator_type(vstr), "{},{},{},{}",
+      util::log::make_format_args<LOG_WRAPPER_FWAPI_NAMESPACE basic_format_context<iterator_type, char> >(1, 2, 3));
+  std::cout << "vformat_to: " << vstr << std::endl;
+  vstr.clear();
+
+  util::log::vformat_to(
+      iterator_type(vstr), "{},{}",
+      util::log::make_format_args<LOG_WRAPPER_FWAPI_NAMESPACE basic_format_context<iterator_type, char> >(
+          1, test_exception_for_log_formatter(true, true)));
+  std::cout << "vformat_to: " << vstr << std::endl;
+  vstr.clear();
+
+  util::log::vformat_to(
+      iterator_type(vstr), "{},{}",
+      util::log::make_format_args<LOG_WRAPPER_FWAPI_NAMESPACE basic_format_context<iterator_type, char> >(
+          1, test_exception_for_log_formatter(false, true)));
+  std::cout << "vformat_to: " << vstr << std::endl;
+}
+#  endif
+
 #endif
 void log_sample() {
   log_sample_func5(9);
 #if defined(LOG_WRAPPER_ENABLE_FWAPI) && LOG_WRAPPER_ENABLE_FWAPI
   log_sample_func6();
+#  if defined(LIBATFRAME_UTILS_ENABLE_EXCEPTION) && LIBATFRAME_UTILS_ENABLE_EXCEPTION
+  log_sample_func7();
+#  endif
 #endif
 }
 

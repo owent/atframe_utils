@@ -50,9 +50,9 @@ namespace util {
 namespace log {
 
 #if defined(LOG_WRAPPER_ENABLE_FWAPI) && LOG_WRAPPER_ENABLE_FWAPI
-template <class... TARGS>
+template <class TCONTEXT = LOG_WRAPPER_FWAPI_NAMESPACE format_context, class... TARGS>
 LIBATFRAME_UTILS_API_HEAD_ONLY auto make_format_args(TARGS &&...args) {
-  return LOG_WRAPPER_FWAPI_NAMESPACE make_format_args(std::forward<TARGS>(args)...);
+  return LOG_WRAPPER_FWAPI_NAMESPACE make_format_args<TCONTEXT>(std::forward<TARGS>(args)...);
 }
 
 template <class TFMT, class... TARGS>
@@ -77,8 +77,7 @@ LIBATFRAME_UTILS_API_HEAD_ONLY auto format_to(OutputIt out, TFMT &&fmt, TARGS &&
 #  if defined(LIBATFRAME_UTILS_ENABLE_EXCEPTION) && LIBATFRAME_UTILS_ENABLE_EXCEPTION
   try {
 #  endif
-    return LOG_WRAPPER_FWAPI_NAMESPACE format_to(std::forward<OutputIt>(out), std::forward<TFMT>(fmt),
-                                                 std::forward<TARGS>(args)...);
+    return LOG_WRAPPER_FWAPI_NAMESPACE format_to(out, std::forward<TFMT>(fmt), std::forward<TARGS>(args)...);
 #  if defined(LIBATFRAME_UTILS_ENABLE_EXCEPTION) && LIBATFRAME_UTILS_ENABLE_EXCEPTION
   } catch (const LOG_WRAPPER_FWAPI_NAMESPACE format_error &e) {
     const char *input_begin = e.what();
@@ -86,6 +85,7 @@ LIBATFRAME_UTILS_API_HEAD_ONLY auto format_to(OutputIt out, TFMT &&fmt, TARGS &&
     while (input_begin && *input_begin && input_begin < input_end) {
       *out = *input_begin;
       ++out;
+      ++input_begin;
     }
     return out;
   } catch (const std::runtime_error &e) {
@@ -94,6 +94,7 @@ LIBATFRAME_UTILS_API_HEAD_ONLY auto format_to(OutputIt out, TFMT &&fmt, TARGS &&
     while (input_begin && *input_begin && input_begin < input_end) {
       *out = *input_begin;
       ++out;
+      ++input_begin;
     }
     return out;
   } catch (...) {
@@ -102,6 +103,7 @@ LIBATFRAME_UTILS_API_HEAD_ONLY auto format_to(OutputIt out, TFMT &&fmt, TARGS &&
     while (input_begin && *input_begin && input_begin < input_end) {
       *out = *input_begin;
       ++out;
+      ++input_begin;
     }
     return out;
   }
@@ -117,8 +119,8 @@ LIBATFRAME_UTILS_API_HEAD_ONLY LOG_WRAPPER_FWAPI_NAMESPACE format_to_n_result<Ou
   try {
 #  endif
     return LOG_WRAPPER_FWAPI_NAMESPACE format_to_n(
-        std::forward<OutputIt>(out), static_cast<typename details::truncating_iterator<OutputIt>::size_type>(n),
-        std::forward<TFMT>(fmt), std::forward<TARGS>(args)...);
+        out, static_cast<typename details::truncating_iterator<OutputIt>::size_type>(n), std::forward<TFMT>(fmt),
+        std::forward<TARGS>(args)...);
 #  if defined(LIBATFRAME_UTILS_ENABLE_EXCEPTION) && LIBATFRAME_UTILS_ENABLE_EXCEPTION
   } catch (const LOG_WRAPPER_FWAPI_NAMESPACE format_error &e) {
     const char *input_begin = e.what();
@@ -160,12 +162,11 @@ LIBATFRAME_UTILS_API_HEAD_ONLY std::string vformat(TFMT &&fmt, TARGS &&args) {
 }
 
 template <class OutputIt, class TFMT, class TARGS>
-LIBATFRAME_UTILS_API_HEAD_ONLY auto vformat_to(OutputIt out, TFMT &&fmt, TARGS &&args) {
+LIBATFRAME_UTILS_API_HEAD_ONLY OutputIt vformat_to(OutputIt out, TFMT &&fmt, TARGS &&args) {
 #  if defined(LIBATFRAME_UTILS_ENABLE_EXCEPTION) && LIBATFRAME_UTILS_ENABLE_EXCEPTION
   try {
 #  endif
-    return LOG_WRAPPER_FWAPI_NAMESPACE vformat_to(std::forward<OutputIt>(out), std::forward<TFMT>(fmt),
-                                                  std::forward<TARGS>(args));
+    return LOG_WRAPPER_FWAPI_NAMESPACE vformat_to(out, std::forward<TFMT>(fmt), std::forward<TARGS>(args));
 #  if defined(LIBATFRAME_UTILS_ENABLE_EXCEPTION) && LIBATFRAME_UTILS_ENABLE_EXCEPTION
   } catch (const LOG_WRAPPER_FWAPI_NAMESPACE format_error &e) {
     const char *input_begin = e.what();
@@ -173,6 +174,7 @@ LIBATFRAME_UTILS_API_HEAD_ONLY auto vformat_to(OutputIt out, TFMT &&fmt, TARGS &
     while (input_begin && *input_begin && input_begin < input_end) {
       *out = *input_begin;
       ++out;
+      ++input_begin;
     }
     return out;
   } catch (const std::runtime_error &e) {
@@ -181,6 +183,7 @@ LIBATFRAME_UTILS_API_HEAD_ONLY auto vformat_to(OutputIt out, TFMT &&fmt, TARGS &
     while (input_begin && *input_begin && input_begin < input_end) {
       *out = *input_begin;
       ++out;
+      ++input_begin;
     }
     return out;
   } catch (...) {
@@ -189,6 +192,7 @@ LIBATFRAME_UTILS_API_HEAD_ONLY auto vformat_to(OutputIt out, TFMT &&fmt, TARGS &
     while (input_begin && *input_begin && input_begin < input_end) {
       *out = *input_begin;
       ++out;
+      ++input_begin;
     }
     return out;
   }
