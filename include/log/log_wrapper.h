@@ -17,6 +17,8 @@
 #include <algorithm>
 #include <bitset>
 #include <list>
+#include <type_traits>
+
 #include "std/functional.h"
 #include "std/smart_ptr.h"
 
@@ -48,6 +50,11 @@ namespace util {
 namespace log {
 
 #if defined(LOG_WRAPPER_ENABLE_FWAPI) && LOG_WRAPPER_ENABLE_FWAPI
+template <class... TARGS>
+LIBATFRAME_UTILS_API_HEAD_ONLY auto make_format_args(TARGS &&...args) {
+  return LOG_WRAPPER_FWAPI_NAMESPACE make_format_args(std::forward<TARGS>(args)...);
+}
+
 template <class TFMT, class... TARGS>
 LIBATFRAME_UTILS_API_HEAD_ONLY std::string format(TFMT &&fmt, TARGS &&...args) {
 #  if defined(LIBATFRAME_UTILS_ENABLE_EXCEPTION) && LIBATFRAME_UTILS_ENABLE_EXCEPTION
@@ -66,11 +73,12 @@ LIBATFRAME_UTILS_API_HEAD_ONLY std::string format(TFMT &&fmt, TARGS &&...args) {
 }
 
 template <class OutputIt, class TFMT, class... TARGS>
-LIBATFRAME_UTILS_API_HEAD_ONLY OutputIt format_to(OutputIt out, TFMT &&fmt, TARGS &&...args) {
+LIBATFRAME_UTILS_API_HEAD_ONLY auto format_to(OutputIt out, TFMT &&fmt, TARGS &&...args) {
 #  if defined(LIBATFRAME_UTILS_ENABLE_EXCEPTION) && LIBATFRAME_UTILS_ENABLE_EXCEPTION
   try {
 #  endif
-    return LOG_WRAPPER_FWAPI_NAMESPACE format_to(out, std::forward<TFMT>(fmt), std::forward<TARGS>(args)...);
+    return LOG_WRAPPER_FWAPI_NAMESPACE format_to(std::forward<OutputIt>(out), std::forward<TFMT>(fmt),
+                                                 std::forward<TARGS>(args)...);
 #  if defined(LIBATFRAME_UTILS_ENABLE_EXCEPTION) && LIBATFRAME_UTILS_ENABLE_EXCEPTION
   } catch (const LOG_WRAPPER_FWAPI_NAMESPACE format_error &e) {
     const char *input_begin = e.what();
@@ -108,7 +116,9 @@ LIBATFRAME_UTILS_API_HEAD_ONLY LOG_WRAPPER_FWAPI_NAMESPACE format_to_n_result<Ou
 #  if defined(LIBATFRAME_UTILS_ENABLE_EXCEPTION) && LIBATFRAME_UTILS_ENABLE_EXCEPTION
   try {
 #  endif
-    return LOG_WRAPPER_FWAPI_NAMESPACE format_to_n(out, n, std::forward<TFMT>(fmt), std::forward<TARGS>(args)...);
+    return LOG_WRAPPER_FWAPI_NAMESPACE format_to_n(
+        std::forward<OutputIt>(out), static_cast<typename details::truncating_iterator<OutputIt>::size_type>(n),
+        std::forward<TFMT>(fmt), std::forward<TARGS>(args)...);
 #  if defined(LIBATFRAME_UTILS_ENABLE_EXCEPTION) && LIBATFRAME_UTILS_ENABLE_EXCEPTION
   } catch (const LOG_WRAPPER_FWAPI_NAMESPACE format_error &e) {
     const char *input_begin = e.what();
@@ -128,6 +138,59 @@ LIBATFRAME_UTILS_API_HEAD_ONLY LOG_WRAPPER_FWAPI_NAMESPACE format_to_n_result<Ou
     details::truncating_iterator<OutputIt> res =
         std::copy(input_begin, input_end, details::truncating_iterator<OutputIt>(out, n));
     return {res.base(), res.count()};
+  }
+#  endif
+}
+
+template <class TFMT, class TARGS>
+LIBATFRAME_UTILS_API_HEAD_ONLY std::string vformat(TFMT &&fmt, TARGS &&args) {
+#  if defined(LIBATFRAME_UTILS_ENABLE_EXCEPTION) && LIBATFRAME_UTILS_ENABLE_EXCEPTION
+  try {
+#  endif
+    return LOG_WRAPPER_FWAPI_NAMESPACE vformat(std::forward<TFMT>(fmt), std::forward<TARGS>(args));
+#  if defined(LIBATFRAME_UTILS_ENABLE_EXCEPTION) && LIBATFRAME_UTILS_ENABLE_EXCEPTION
+  } catch (const LOG_WRAPPER_FWAPI_NAMESPACE format_error &e) {
+    return e.what();
+  } catch (const std::runtime_error &e) {
+    return e.what();
+  } catch (...) {
+    return "format got unknown exception";
+  }
+#  endif
+}
+
+template <class OutputIt, class TFMT, class TARGS>
+LIBATFRAME_UTILS_API_HEAD_ONLY auto vformat_to(OutputIt out, TFMT &&fmt, TARGS &&args) {
+#  if defined(LIBATFRAME_UTILS_ENABLE_EXCEPTION) && LIBATFRAME_UTILS_ENABLE_EXCEPTION
+  try {
+#  endif
+    return LOG_WRAPPER_FWAPI_NAMESPACE vformat_to(std::forward<OutputIt>(out), std::forward<TFMT>(fmt),
+                                                  std::forward<TARGS>(args));
+#  if defined(LIBATFRAME_UTILS_ENABLE_EXCEPTION) && LIBATFRAME_UTILS_ENABLE_EXCEPTION
+  } catch (const LOG_WRAPPER_FWAPI_NAMESPACE format_error &e) {
+    const char *input_begin = e.what();
+    const char *input_end = input_begin + strlen(input_begin);
+    while (input_begin && *input_begin && input_begin < input_end) {
+      *out = *input_begin;
+      ++out;
+    }
+    return out;
+  } catch (const std::runtime_error &e) {
+    const char *input_begin = e.what();
+    const char *input_end = input_begin + strlen(input_begin);
+    while (input_begin && *input_begin && input_begin < input_end) {
+      *out = *input_begin;
+      ++out;
+    }
+    return out;
+  } catch (...) {
+    const char *input_begin = "format got unknown exception";
+    const char *input_end = input_begin + strlen(input_begin);
+    while (input_begin && *input_begin && input_begin < input_end) {
+      *out = *input_begin;
+      ++out;
+    }
+    return out;
   }
 #  endif
 }
@@ -221,7 +284,7 @@ class log_wrapper {
             format_to_n<char *>(writer.buffer + writer.writen_size, writer.total_size - writer.writen_size - 1,
                                 std::forward<TARGS>(args)...);
         if (result.size > 0) {
-          writer.writen_size += result.size;
+          writer.writen_size += static_cast<size_t>(result.size);
         }
         if (writer.writen_size < writer.total_size) {
           *(writer.buffer + writer.writen_size) = 0;
@@ -418,6 +481,9 @@ class log_wrapper {
 #    define LOG_WRAPPER_FWAPI_FORMAT(...) ::util::log::format(__VA_ARGS__)
 #    define LOG_WRAPPER_FWAPI_FORMAT_TO(...) ::util::log::format_to(__VA_ARGS__)
 #    define LOG_WRAPPER_FWAPI_FORMAT_TO_N(...) ::util::log::format_to_n(__VA_ARGS__)
+#    define LOG_WRAPPER_FWAPI_VFORMAT(...) ::util::log::vformat(__VA_ARGS__)
+#    define LOG_WRAPPER_FWAPI_VFORMAT_TO(...) ::util::log::vformat_to(__VA_ARGS__)
+#    define LOG_WRAPPER_FWAPI_MAKE_FORMAT_ARGS(...) ::util::log::make_format_args(__VA_ARGS__)
 #  endif
 
 #else
@@ -479,6 +545,10 @@ class log_wrapper {
       ::util::log::format_to(OUT, LOG_WRAPPER_FWAPI_FMT_STRING(FMT), ##args)
 #    define LOG_WRAPPER_FWAPI_FORMAT_TO_N(OUT, N, FMT, args...) \
       ::util::log::format_to_n(OUT, N, LOG_WRAPPER_FWAPI_FMT_STRING(FMT), ##args)
+#    define LOG_WRAPPER_FWAPI_VFORMAT(FMT, args) ::util::log::vformat(LOG_WRAPPER_FWAPI_FMT_STRING(FMT), ##args)
+#    define LOG_WRAPPER_FWAPI_VFORMAT_TO(OUT, FMT, args...) \
+      ::util::log::vformat_to(OUT, LOG_WRAPPER_FWAPI_FMT_STRING(FMT), ##args)
+#    define LOG_WRAPPER_FWAPI_MAKE_FORMAT_ARGS(...) ::util::log::make_format_args(__VA_ARGS__)
 #  endif
 
 #endif

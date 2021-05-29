@@ -3,6 +3,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <iostream>
+#include <type_traits>
 #include <vector>
 
 #include "log/log_sink_file_backend.h"
@@ -27,6 +28,25 @@
 std::string g_exec_dir;
 
 //=======================================================================================================
+
+#if defined(LOG_WRAPPER_ENABLE_FWAPI) && LOG_WRAPPER_ENABLE_FWAPI
+struct test_custom_object_for_log_formatter {
+  int32_t x;
+  std::string y;
+};
+
+namespace LOG_WRAPPER_FWAPI_NAMESPACE_ID {
+template <class CharT>
+struct formatter<test_custom_object_for_log_formatter, CharT> : formatter<CharT *, CharT> {
+  template <class FormatContext>
+  auto format(const test_custom_object_for_log_formatter &vec, FormatContext &ctx) {
+    std::cout << util::log::vformat("{}, {}", LOG_WRAPPER_FWAPI_MAKE_FORMAT_ARGS(vec.x, vec.y)) << std::endl;
+    return util::log::vformat_to(ctx.out(), "({}, {})", util::log::make_format_args(vec.x, vec.y));
+  }
+};
+}  // namespace LOG_WRAPPER_FWAPI_NAMESPACE_ID
+#endif
+
 void log_sample_func1(int times) {
   if (times > 0) {
     log_sample_func1(times - 1);
@@ -68,6 +88,27 @@ void log_sample_func1(int times) {
   for (int i = 0; i < 16; ++i) {
     WLOGDEBUG("first dir test log: %d", i);
   }
+
+#if defined(LOG_WRAPPER_ENABLE_FWAPI) && LOG_WRAPPER_ENABLE_FWAPI
+  test_custom_object_for_log_formatter custom_obj;
+  for (int32_t i = 0; i < 16; ++i) {
+    custom_obj.x = i * i;
+    custom_obj.y += "H";
+    std::string origin_fmt_str = LOG_WRAPPER_FWAPI_NAMESPACE format("{}", custom_obj);
+
+    std::string fmt_str = LOG_WRAPPER_FWAPI_FORMAT("{}", custom_obj);
+    char buffer1[256] = {0};
+    LOG_WRAPPER_FWAPI_FORMAT_TO(buffer1, "{}", custom_obj);
+    std::string fmt_to_str = buffer1;
+    char buffer2[16] = {0};
+    LOG_WRAPPER_FWAPI_FORMAT_TO_N(buffer2, 10, "{}", custom_obj);
+    std::string fmt_to_n_str = buffer2;
+    FWLOGDEBUG(
+        "test log formatter(std::format/fmt::format) - {}\n\torigin format: {}\n\tformat: {}\n\tformat_to: "
+        "{}\n\tformat_to_n: {}",
+        i, origin_fmt_str, fmt_str, fmt_to_str, fmt_to_n_str);
+  }
+#endif
 
   THREAD_SLEEP_MS(1000);
   util::time::time_utility::update();

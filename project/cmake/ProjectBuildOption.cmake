@@ -291,30 +291,48 @@ if(NOT ATFRAMEWORK_CMAKE_TOOLSET_THIRD_PARTY_CRYPTO_DISABLED)
 endif()
 
 # Check fmtlib(https://fmt.dev/) or std::format
-check_cxx_source_compiles(
-  "
+if(NOT DEFINED LIBATFRAME_UTILS_ENABLE_STD_FORMAT AND NOT DEFINED CACHE{LIBATFRAME_UTILS_ENABLE_STD_FORMAT})
+  check_cxx_source_compiles(
+    "
 #include <format>
 #include <iostream>
 #include <string>
-int main() {
-    std::cout<< std::format(\"The answer is {}.\", 42)<< std::endl;
-    char buffer[64] = {0};
-    const auto result = std::format_to_n(buffer, sizeof(buffer), \"{} {}: {}\", \"Hello\", \"World!\", 42);
-    std::cout << \"Buffer: \" << buffer << \",Untruncated output size = \" << result.size << std::endl;
-    return 0;
-}"
-  LIBATFRAME_UTILS_ENABLE_STD_FORMAT)
-if(NOT LIBATFRAME_UTILS_ENABLE_STD_FORMAT)
-  include("${ATFRAMEWORK_CMAKE_TOOLSET_DIR}/ports/fmtlib/fmtlib.cmake")
-  if(ATFRAMEWORK_CMAKE_TOOLSET_THIRD_PARTY_FMTLIB_LINK_NAME)
-    set(LIBATFRAME_UTILS_FMT_TARGET ${ATFRAMEWORK_CMAKE_TOOLSET_THIRD_PARTY_FMTLIB_LINK_NAME})
-  else()
-    unset(LIBATFRAME_UTILS_FMT_TARGET)
-  endif()
+struct custom_object {
+  int32_t x;
+  std::string y;
+};
 
-  if(LIBATFRAME_UTILS_FMT_TARGET)
+// Some STL implement may have BUGs on some APIs, we need check it
+template <class CharT>
+struct std::formatter<custom_object, CharT> : std::formatter<CharT*, CharT> {
+  template <class FormatContext>
+  auto format(const custom_object &vec, FormatContext &ctx) {
+    return std::vformat_to(ctx.out(), \"({},{})\", std::make_format_args(vec.x, vec.y));
+  }
+};
+int main() {
+  custom_object custom_obj;
+  custom_obj.x = 43;
+  custom_obj.y = \"44\";
+  std::cout<< std::format(\"The answer is {}, custom object: {}.\", 42, custom_obj)<< std::endl;
+  char buffer[64] = {0};
+  const auto result = std::format_to_n(buffer, sizeof(buffer), \"{} {}: {}\", \"Hello\", \"World!\", 42);
+  std::cout << \"Buffer: \" << buffer << \",Untruncated output size = \" << result.size << std::endl;
+  return 0;
+}"
+    LIBATFRAME_UTILS_ENABLE_STD_FORMAT)
+  set(LIBATFRAME_UTILS_ENABLE_STD_FORMAT
+      ${LIBATFRAME_UTILS_ENABLE_STD_FORMAT}
+      CACHE BOOL "Using std format for log formatter")
+endif()
+if(NOT LIBATFRAME_UTILS_ENABLE_STD_FORMAT)
+  set(ATFRAMEWORK_CMAKE_TOOLSET_THIRD_PARTY_TEST_STD_FORMAT OFF)
+  include("${ATFRAMEWORK_CMAKE_TOOLSET_DIR}/ports/fmtlib/fmtlib.cmake")
+  if(ATFRAMEWORK_CMAKE_TOOLSET_THIRD_PARTY_FMTLIB_LINK_NAME
+     AND NOT DEFINED LIBATFRAME_UTILS_ENABLE_FMTLIB
+     AND NOT DEFINED CACHE{LIBATFRAME_UTILS_ENABLE_FMTLIB})
     set(LIBATFRAME_UTILS_TEST_FMT_BACKUP_CMAKE_REQUIRED_LIBRARIES ${CMAKE_REQUIRED_LIBRARIES})
-    set(CMAKE_REQUIRED_LIBRARIES ${LIBATFRAME_UTILS_FMT_TARGET})
+    set(CMAKE_REQUIRED_LIBRARIES ${ATFRAMEWORK_CMAKE_TOOLSET_THIRD_PARTY_FMTLIB_LINK_NAME})
     check_cxx_source_compiles(
       "
         #include <fmt/format.h>
@@ -330,10 +348,14 @@ if(NOT LIBATFRAME_UTILS_ENABLE_STD_FORMAT)
       LIBATFRAME_UTILS_ENABLE_FMTLIB)
     set(CMAKE_REQUIRED_LIBRARIES ${LIBATFRAME_UTILS_TEST_FMT_BACKUP_CMAKE_REQUIRED_LIBRARIES})
     unset(LIBATFRAME_UTILS_TEST_FMT_BACKUP_CMAKE_REQUIRED_LIBRARIES)
+
+    set(LIBATFRAME_UTILS_ENABLE_FMTLIB
+        ${LIBATFRAME_UTILS_ENABLE_FMTLIB}
+        CACHE BOOL "Using fmt.dev for log formatter")
   endif()
 
   if(LIBATFRAME_UTILS_ENABLE_FMTLIB)
-    list(APPEND PROJECT_ATFRAME_UTILS_PUBLIC_LINK_NAMES ${LIBATFRAME_UTILS_FMT_TARGET})
+    list(APPEND PROJECT_ATFRAME_UTILS_PUBLIC_LINK_NAMES ${ATFRAMEWORK_CMAKE_TOOLSET_THIRD_PARTY_FMTLIB_LINK_NAME})
   endif()
 endif()
 
