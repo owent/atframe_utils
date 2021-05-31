@@ -50,11 +50,10 @@ if(CMAKE_VERSION VERSION_LESS "3.20.0")
              cxx_variadic_templates)
 endif()
 # file(MAKE_DIRECTORY "${PROJECT_ATFRAME_UTILS_INCLUDE_DIR}/config") file(RENAME
-# "${CMAKE_BINARY_DIR}/compiler_features.h"
-# "${PROJECT_ATFRAME_UTILS_INCLUDE_DIR}/config/compiler_features.h")
+# "${CMAKE_BINARY_DIR}/compiler_features.h" "${PROJECT_ATFRAME_UTILS_INCLUDE_DIR}/config/compiler_features.h")
 
 # 默认配置选项
-# ##################################################################################################
+# ######################################################################################################################
 option(LIBUNWIND_ENABLED "Enable using libunwind." OFF)
 option(LOG_WRAPPER_ENABLE_LUA_SUPPORT "Enable lua support." ON)
 option(LOG_WRAPPER_CHECK_LUA "Check lua support." ON)
@@ -121,8 +120,7 @@ else()
 endif()
 
 if(ANDROID)
-  # Android发现偶现_Unwind_Backtrace调用崩溃,默认金庸掉这个功能。 可以用adb logcat | ./ndk-stack -sym
-  # $PROJECT_PATH/obj/local/armeabi 代替
+  # Android发现偶现_Unwind_Backtrace调用崩溃,默认金庸掉这个功能。 可以用adb logcat | ./ndk-stack -sym $PROJECT_PATH/obj/local/armeabi 代替
   option(LOG_WRAPPER_ENABLE_STACKTRACE "Try to enable stacktrace for log." OFF)
 else()
   option(LOG_WRAPPER_ENABLE_STACKTRACE "Try to enable stacktrace for log." ON)
@@ -144,16 +142,13 @@ endif()
 
 find_package(Libuuid)
 if(TARGET libuuid)
-  echowithcolor(COLOR YELLOW
-                "-- Dependency(${PROJECT_NAME}): uuid generator with libuuid.(Target: libuuid)")
+  echowithcolor(COLOR YELLOW "-- Dependency(${PROJECT_NAME}): uuid generator with libuuid.(Target: libuuid)")
   list(APPEND PROJECT_ATFRAME_UTILS_PUBLIC_LINK_NAMES libuuid)
   set(LIBATFRAME_UTILS_ENABLE_LIBUUID TRUE)
 elseif(Libuuid_FOUND)
   echowithcolor(
-    COLOR
-    YELLOW
-    "-- Dependency(${PROJECT_NAME}): uuid generator with libuuid.(${Libuuid_INCLUDE_DIRS}:${Libuuid_LIBRARIES})"
-  )
+    COLOR YELLOW
+    "-- Dependency(${PROJECT_NAME}): uuid generator with libuuid.(${Libuuid_INCLUDE_DIRS}:${Libuuid_LIBRARIES})")
   list(APPEND PROJECT_ATFRAME_UTILS_PUBLIC_INCLUDE_DIRS ${Libuuid_INCLUDE_DIRS})
   if(Libuuid_LIBRARIES)
     list(APPEND PROJECT_ATFRAME_UTILS_PUBLIC_LINK_NAMES ${Libuuid_LIBRARIES})
@@ -184,15 +179,13 @@ if(NOT LIBATFRAME_UTILS_ENABLE_LIBUUID AND WIN32)
   if(LIBATFRAME_UTILS_TEST_UUID)
     set(LIBATFRAME_UTILS_ENABLE_UUID_WINRPC TRUE)
     list(APPEND PROJECT_ATFRAME_UTILS_PUBLIC_LINK_NAMES Rpcrt4)
-    echowithcolor(COLOR YELLOW
-                  "-- Dependency(${PROJECT_NAME}): uuid generator with Windows Rpcrt4.")
+    echowithcolor(COLOR YELLOW "-- Dependency(${PROJECT_NAME}): uuid generator with Windows Rpcrt4.")
   endif()
 endif()
 
 if(NOT LIBATFRAME_UTILS_ENABLE_LIBUUID AND NOT LIBATFRAME_UTILS_ENABLE_UUID_WINRPC)
   set(LIBATFRAME_UTILS_ENABLE_UUID_INTERNAL_IMPLEMENT TRUE)
-  echowithcolor(COLOR YELLOW
-                "-- Dependency(${PROJECT_NAME}): uuid generator with internal implement.")
+  echowithcolor(COLOR YELLOW "-- Dependency(${PROJECT_NAME}): uuid generator with internal implement.")
 else()
   set(LIBATFRAME_UTILS_ENABLE_UUID_INTERNAL_IMPLEMENT FALSE)
 endif()
@@ -266,9 +259,7 @@ if(CRYPTO_USE_OPENSSL
     message(STATUS "Crypto enabled.(openssl/libressl found - ${PROJECT_NAME})")
   else()
     message(
-      FATAL_ERROR
-        "CRYPTO_USE_OPENSSL,CRYPTO_USE_LIBRESSL,CRYPTO_USE_BORINGSSL is set but openssl/libressl not found"
-    )
+      FATAL_ERROR "CRYPTO_USE_OPENSSL,CRYPTO_USE_LIBRESSL,CRYPTO_USE_BORINGSSL is set but openssl/libressl not found")
   endif()
 elseif(CRYPTO_USE_MBEDTLS)
   if(TARGET mbedtls_static OR TARGET mbedtls)
@@ -361,11 +352,9 @@ if(OPENSSL_FOUND)
       list(APPEND PROJECT_ATFRAME_UTILS_PUBLIC_LINK_NAMES OpenSSL::Crypto)
     endif()
   else()
-    message(
-      STATUS "OpenSSL using(${PROJECT_NAME}): ${OPENSSL_SSL_LIBRARY};${OPENSSL_CRYPTO_LIBRARY}")
+    message(STATUS "OpenSSL using(${PROJECT_NAME}): ${OPENSSL_SSL_LIBRARY};${OPENSSL_CRYPTO_LIBRARY}")
     list(APPEND PROJECT_ATFRAME_UTILS_PUBLIC_INCLUDE_DIRS ${OPENSSL_INCLUDE_DIR})
-    list(APPEND PROJECT_ATFRAME_UTILS_PUBLIC_LINK_NAMES ${OPENSSL_SSL_LIBRARY}
-         ${OPENSSL_CRYPTO_LIBRARY})
+    list(APPEND PROJECT_ATFRAME_UTILS_PUBLIC_LINK_NAMES ${OPENSSL_SSL_LIBRARY} ${OPENSSL_CRYPTO_LIBRARY})
   endif()
   if(NOT LIBRESSL_FOUND AND WIN32)
     find_library(ATFRAME_UTILS_OPENSSL_FIND_CRYPT32 Crypt32)
@@ -396,20 +385,40 @@ if(NOT CRYPTO_DISABLED)
   endif()
 endif()
 
-# Check fmtlib(https://fmt.dev/)/std::format
-check_cxx_source_compiles(
-  "
+# Check fmtlib(https://fmt.dev/) or std::format
+if(NOT DEFINED LIBATFRAME_UTILS_ENABLE_STD_FORMAT AND NOT DEFINED CACHE{LIBATFRAME_UTILS_ENABLE_STD_FORMAT})
+  check_cxx_source_compiles(
+    "
 #include <format>
 #include <iostream>
 #include <string>
+struct custom_object {
+  int32_t x;
+  std::string y;
+};
+// Some STL implement may have BUGs on some APIs, we need check it
+template <class CharT>
+struct std::formatter<custom_object, CharT> : std::formatter<CharT*, CharT> {
+  template <class FormatContext>
+  auto format(const custom_object &vec, FormatContext &ctx) {
+    return std::vformat_to(ctx.out(), \"({},{})\", std::make_format_args(vec.x, vec.y));
+  }
+};
 int main() {
-    std::cout<< std::format(\"The answer is {}.\", 42)<< std::endl;
-    char buffer[64] = {0};
-    const auto result = std::format_to_n(buffer, sizeof(buffer), \"{} {}: {}\", \"Hello\", \"World!\", 42);
-    std::cout << \"Buffer: \" << buffer << \",Untruncated output size = \" << result.size << std::endl;
-    return 0;
+  custom_object custom_obj;
+  custom_obj.x = 43;
+  custom_obj.y = \"44\";
+  std::cout<< std::format(\"The answer is {}, custom object: {}.\", 42, custom_obj)<< std::endl;
+  char buffer[64] = {0};
+  const auto result = std::format_to_n(buffer, sizeof(buffer), \"{} {}: {}\", \"Hello\", \"World!\", 42);
+  std::cout << \"Buffer: \" << buffer << \",Untruncated output size = \" << result.size << std::endl;
+  return 0;
 }"
-  LIBATFRAME_UTILS_ENABLE_STD_FORMAT)
+    LIBATFRAME_UTILS_ENABLE_STD_FORMAT)
+  set(LIBATFRAME_UTILS_ENABLE_STD_FORMAT
+      ${LIBATFRAME_UTILS_ENABLE_STD_FORMAT}
+      CACHE BOOL "Using std format for log formatter")
+endif()
 if(NOT LIBATFRAME_UTILS_ENABLE_STD_FORMAT)
   find_package(fmt QUIET)
   if(TARGET fmt::fmt-header-only)
@@ -420,7 +429,7 @@ if(NOT LIBATFRAME_UTILS_ENABLE_STD_FORMAT)
     unset(LIBATFRAME_UTILS_FMT_TARGET)
   endif()
 
-  if(LIBATFRAME_UTILS_FMT_TARGET)
+  if(NOT DEFINED LIBATFRAME_UTILS_ENABLE_FMTLIB AND NOT DEFINED CACHE{LIBATFRAME_UTILS_ENABLE_FMTLIB})
     set(LIBATFRAME_UTILS_TEST_FMT_BACKUP_CMAKE_REQUIRED_LIBRARIES ${CMAKE_REQUIRED_LIBRARIES})
     set(CMAKE_REQUIRED_LIBRARIES ${LIBATFRAME_UTILS_FMT_TARGET})
     check_cxx_source_compiles(
@@ -438,6 +447,10 @@ if(NOT LIBATFRAME_UTILS_ENABLE_STD_FORMAT)
       LIBATFRAME_UTILS_ENABLE_FMTLIB)
     set(CMAKE_REQUIRED_LIBRARIES ${LIBATFRAME_UTILS_TEST_FMT_BACKUP_CMAKE_REQUIRED_LIBRARIES})
     unset(LIBATFRAME_UTILS_TEST_FMT_BACKUP_CMAKE_REQUIRED_LIBRARIES)
+
+    set(LIBATFRAME_UTILS_ENABLE_FMTLIB
+        ${LIBATFRAME_UTILS_ENABLE_FMTLIB}
+        CACHE BOOL "Using fmt.dev for log formatter")
   endif()
 
   if(LIBATFRAME_UTILS_ENABLE_FMTLIB)
@@ -491,9 +504,8 @@ set(BOOST_ROOT
     ""
     CACHE STRING "Boost root directory")
 option(PROJECT_TEST_ENABLE_BOOST_UNIT_TEST "Enable boost unit test." OFF)
-option(
-  PROJECT_FIND_CONFIGURE_PACKAGE_PARALLEL_BUILD
-  "Parallel building for FindConfigurePackage. It's usually useful for some CI with low memory." ON)
+option(PROJECT_FIND_CONFIGURE_PACKAGE_PARALLEL_BUILD
+       "Parallel building for FindConfigurePackage. It's usually useful for some CI with low memory." ON)
 
 option(PROJECT_ENABLE_UNITTEST "Enable unit test" OFF)
 option(PROJECT_ENABLE_SAMPLE "Enable sample" OFF)
