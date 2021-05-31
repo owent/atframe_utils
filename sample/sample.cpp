@@ -35,6 +35,10 @@ std::string g_exec_dir;
 
 #if defined(LOG_WRAPPER_ENABLE_FWAPI) && LOG_WRAPPER_ENABLE_FWAPI
 
+enum test_auto_enum_conversation_for_log_formatter {
+  EN_TAECFLF_NONE = 0,
+};
+
 struct test_exception_for_log_formatter {
   bool runtime_error;
   bool throw_exception;
@@ -42,6 +46,23 @@ struct test_exception_for_log_formatter {
 };
 
 namespace LOG_WRAPPER_FWAPI_NAMESPACE_ID {
+template <class CharT>
+struct formatter<test_auto_enum_conversation_for_log_formatter, CharT> : formatter<CharT *, CharT> {
+  template <class FormatContext>
+  auto format(const test_auto_enum_conversation_for_log_formatter &obj, FormatContext &ctx) {
+    auto ret = ctx.out();
+    switch (obj) {
+      case EN_TAECFLF_NONE:
+        *(ret++) = 'Y';
+        break;
+      default:
+        *(ret++) = 'N';
+        break;
+    }
+    return ret;
+  }
+};
+
 template <class CharT>
 struct formatter<test_exception_for_log_formatter, CharT> : formatter<CharT *, CharT> {
   template <class FormatContext>
@@ -230,7 +251,8 @@ void log_sample_func6() {
   WLOG_GETCAT(util::log::log_wrapper::categorize_t::DEFAULT)->add_sink(log_sample_func6_stdout);
   std::cout << "---------------- setup log sink for std::format done--------------" << std::endl;
 #  if defined(LOG_WRAPPER_ENABLE_FWAPI) && LOG_WRAPPER_ENABLE_FWAPI
-  FWLOGINFO("{} {}: {}", "Hello", std::string("World"), 42);
+  FWLOGINFO("{} {}: {} {}", "Hello", std::string("World"), 42,
+            test_auto_enum_conversation_for_log_formatter::EN_TAECFLF_NONE);
 #    if defined(_MSC_VER)
   FWLOGINFO("{:d}", "foo");  // This will cause compile error when using fmtlib and gcc/clang
 #    endif
