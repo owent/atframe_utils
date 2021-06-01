@@ -26,36 +26,51 @@
 
 #include <config/atframe_utils_build_feature.h>
 
+#if defined(UTIL_CONFIG_COMPILER_CXX_RVALUE_REFERENCES) && UTIL_CONFIG_COMPILER_CXX_RVALUE_REFERENCES
+#  if defined(LIBATFRAME_UTILS_ENABLE_STD_FORMAT) && LIBATFRAME_UTILS_ENABLE_STD_FORMAT
+#    include <format>
+#    ifndef LOG_WRAPPER_FWAPI_FMT_STRING
+#      define LOG_WRAPPER_FWAPI_FMT_STRING(S) (S)
+#    endif
+#  elif defined(LIBATFRAME_UTILS_ENABLE_FMTLIB) && LIBATFRAME_UTILS_ENABLE_FMTLIB
+#    include <fmt/format.h>
+#    ifndef LOG_WRAPPER_FWAPI_FMT_STRING
+#      define LOG_WRAPPER_FWAPI_FMT_STRING(S) FMT_STRING(S)
+#    endif
+#  endif
+#endif
+
+#if defined(LOG_WRAPPER_ENABLE_FWAPI) && LOG_WRAPPER_ENABLE_FWAPI
 namespace util {
 namespace log {
-#if defined(LOG_WRAPPER_ENABLE_FWAPI) && LOG_WRAPPER_ENABLE_FWAPI
+#  if defined(LOG_WRAPPER_ENABLE_FWAPI) && LOG_WRAPPER_ENABLE_FWAPI
 namespace details {
 template <class OutputIt>
 class LIBATFRAME_UTILS_API_HEAD_ONLY truncating_iterator_base {
  public:
-#  if defined(LIBATFRAME_UTILS_ENABLE_STD_FORMAT) && LIBATFRAME_UTILS_ENABLE_STD_FORMAT
+#    if defined(LIBATFRAME_UTILS_ENABLE_STD_FORMAT) && LIBATFRAME_UTILS_ENABLE_STD_FORMAT
   using size_type = typename std::iter_difference_t<OutputIt>;
-#  else
-#    if defined(UTIL_CONFIG_COMPILER_CXX_ALIAS_TEMPLATES) && UTIL_CONFIG_COMPILER_CXX_ALIAS_TEMPLATES
-  using size_type = size_t;
 #    else
+#      if defined(UTIL_CONFIG_COMPILER_CXX_ALIAS_TEMPLATES) && UTIL_CONFIG_COMPILER_CXX_ALIAS_TEMPLATES
+  using size_type = size_t;
+#      else
   typedef size_t size_type;
+#      endif
 #    endif
-#  endif
 
-#  if defined(UTIL_CONFIG_COMPILER_CXX_ALIAS_TEMPLATES) && UTIL_CONFIG_COMPILER_CXX_ALIAS_TEMPLATES
+#    if defined(UTIL_CONFIG_COMPILER_CXX_ALIAS_TEMPLATES) && UTIL_CONFIG_COMPILER_CXX_ALIAS_TEMPLATES
   using iterator_category = std::output_iterator_tag;
   using value_type = typename std::iterator_traits<OutputIt>::value_type;
   using difference_type = void;
   using pointer = void;
   using reference = void;
-#  else
+#    else
   typedef std::output_iterator_tag iterator_category;
   typedef typename std::iterator_traits<OutputIt>::value_type value_type;
   typedef void difference_type;
   typedef void pointer;
   typedef void reference;
-#  endif
+#    endif
 
   truncating_iterator_base(OutputIt out, size_type limit) : out_(out), limit_(limit), count_(0) {}
 
@@ -80,13 +95,13 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY truncating_iterator<OutputIt, std::false_ty
   mutable typename truncating_iterator_base<OutputIt>::value_type blackhole_;
 
  public:
-#  if defined(UTIL_CONFIG_COMPILER_CXX_ALIAS_TEMPLATES) && UTIL_CONFIG_COMPILER_CXX_ALIAS_TEMPLATES
+#    if defined(UTIL_CONFIG_COMPILER_CXX_ALIAS_TEMPLATES) && UTIL_CONFIG_COMPILER_CXX_ALIAS_TEMPLATES
   using value_type = typename truncating_iterator_base<OutputIt>::value_type;
   using size_type = typename truncating_iterator_base<OutputIt>::size_type;
-#  else
+#    else
   typedef typename truncating_iterator_base<OutputIt>::value_type value_type;
   typedef typename truncating_iterator_base<OutputIt>::size_type size_type;
-#  endif
+#    endif
 
   truncating_iterator(OutputIt out, size_type limit) : truncating_iterator_base<OutputIt>(out, limit) {}
 
@@ -108,13 +123,13 @@ template <class OutputIt>
 class LIBATFRAME_UTILS_API_HEAD_ONLY truncating_iterator<OutputIt, std::true_type>
     : public truncating_iterator_base<OutputIt> {
  public:
-#  if defined(UTIL_CONFIG_COMPILER_CXX_ALIAS_TEMPLATES) && UTIL_CONFIG_COMPILER_CXX_ALIAS_TEMPLATES
+#    if defined(UTIL_CONFIG_COMPILER_CXX_ALIAS_TEMPLATES) && UTIL_CONFIG_COMPILER_CXX_ALIAS_TEMPLATES
   using value_type = typename truncating_iterator_base<OutputIt>::value_type;
   using size_type = typename truncating_iterator_base<OutputIt>::size_type;
-#  else
+#    else
   typedef typename truncating_iterator_base<OutputIt>::value_type value_type;
   typedef typename truncating_iterator_base<OutputIt>::size_type size_type;
-#  endif
+#    endif
 
   truncating_iterator(OutputIt out, size_type limit) : truncating_iterator_base<OutputIt>(out, limit) {}
 
@@ -130,7 +145,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY truncating_iterator<OutputIt, std::true_typ
 };
 
 }  // namespace details
-#endif
+#  endif
 
 /**
  * @brief 日志格式化数据
@@ -225,26 +240,27 @@ class log_formatter {
 }  // namespace log
 }  // namespace util
 
-#if defined(LOG_WRAPPER_ENABLE_FWAPI) && LOG_WRAPPER_ENABLE_FWAPI
-namespace LOG_WRAPPER_FWAPI_NAMESPACE_ID {
-template <class CharT>
-struct formatter<typename ::util::log::log_formatter::flag_t::type, CharT> : public formatter<CharT *, CharT> {
-  template <class FormatContext>
-  auto format(const typename ::util::log::log_formatter::flag_t::type &obj, FormatContext &ctx) {
-    return LOG_WRAPPER_FWAPI_NAMESPACE vformat_to(
-        ctx.out(), "{}", LOG_WRAPPER_FWAPI_NAMESPACE make_format_args(static_cast<int32_t>(obj)));
-  }
-};
+#  if defined(LIBATFRAME_UTILS_ENABLE_STD_FORMAT) && LIBATFRAME_UTILS_ENABLE_STD_FORMAT
+#    define LOG_WRAPPER_FWAPI_DECL_NAMESPACE() namespace std
+#    define LOG_WRAPPER_FWAPI_FORMAT_AS(Type, Base)                                 \
+      LOG_WRAPPER_FWAPI_DECL_NAMESPACE() {                                          \
+        template <typename Char>                                                    \
+        struct formatter<Type, Char> : formatter<Base, Char> {                      \
+          template <typename FormatContext>                                         \
+          auto format(Type const &val, FormatContext &ctx) -> decltype(ctx.out()) { \
+            return formatter<Base, Char>::format(val, ctx);                         \
+          }                                                                         \
+        };                                                                          \
+      }
+#  else
+#    define LOG_WRAPPER_FWAPI_DECL_NAMESPACE() namespace fmt
+#    define LOG_WRAPPER_FWAPI_FORMAT_AS(Type, Base) \
+      LOG_WRAPPER_FWAPI_DECL_NAMESPACE() { FMT_FORMAT_AS(Type, Base); }
+#  endif
 
-template <class CharT>
-struct formatter<typename ::util::log::log_formatter::level_t::type, CharT> : public formatter<CharT *, CharT> {
-  template <class FormatContext>
-  auto format(const typename ::util::log::log_formatter::level_t::type &obj, FormatContext &ctx) {
-    return LOG_WRAPPER_FWAPI_NAMESPACE vformat_to(
-        ctx.out(), "{}", LOG_WRAPPER_FWAPI_NAMESPACE make_format_args(static_cast<int32_t>(obj)));
-  }
-};
-}  // namespace LOG_WRAPPER_FWAPI_NAMESPACE_ID
+LOG_WRAPPER_FWAPI_FORMAT_AS(typename ::util::log::log_formatter::flag_t::type, int);
+LOG_WRAPPER_FWAPI_FORMAT_AS(typename ::util::log::log_formatter::level_t::type, int);
+
 #endif
 
 #endif
