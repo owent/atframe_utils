@@ -3,7 +3,6 @@ name: "main"
 on: # @see https://help.github.com/en/articles/events-that-trigger-workflows#webhook-events
   push:
     branches: # Array of patterns that match refs/heads
-      - master # Push events on master branch
       - main
   pull_request:
     branches: [ main ]
