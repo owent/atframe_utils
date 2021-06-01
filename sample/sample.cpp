@@ -64,7 +64,7 @@ struct formatter<test_auto_enum_conversation_for_log_formatter, CharT> : formatt
 };
 
 template <class CharT>
-struct formatter<test_exception_for_log_formatter, CharT> : formatter<CharT *, CharT> {
+struct formatter<test_exception_for_log_formatter, CharT> : public formatter<CharT *, CharT> {
   template <class FormatContext>
   auto format(const test_exception_for_log_formatter &obj, FormatContext &ctx) {
 #  if defined(LIBATFRAME_UTILS_ENABLE_EXCEPTION) && LIBATFRAME_UTILS_ENABLE_EXCEPTION
@@ -99,7 +99,7 @@ struct test_custom_object_for_log_formatter {
 
 namespace LOG_WRAPPER_FWAPI_NAMESPACE_ID {
 template <class CharT>
-struct formatter<test_custom_object_for_log_formatter, CharT> : formatter<CharT *, CharT> {
+struct formatter<test_custom_object_for_log_formatter, CharT> : public formatter<CharT *, CharT> {
   template <class FormatContext>
   auto format(const test_custom_object_for_log_formatter &obj, FormatContext &ctx) {
     test_exception_for_log_formatter x(false, false);

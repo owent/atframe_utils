@@ -632,18 +632,18 @@ class log_wrapper {
 #if defined(LOG_WRAPPER_ENABLE_FWAPI) && LOG_WRAPPER_ENABLE_FWAPI
 namespace LOG_WRAPPER_FWAPI_NAMESPACE_ID {
 template <class CharT>
-struct formatter<::util::log::log_wrapper::categorize_t::type, CharT> : public formatter<CharT *, CharT> {
+struct formatter<typename ::util::log::log_wrapper::categorize_t::type, CharT> : public formatter<CharT *, CharT> {
   template <class FormatContext>
-  auto format(const ::util::log::log_wrapper::categorize_t::type &obj, FormatContext &ctx) {
+  auto format(const typename ::util::log::log_wrapper::categorize_t::type &obj, FormatContext &ctx) {
     return LOG_WRAPPER_FWAPI_NAMESPACE vformat_to(
         ctx.out(), "{}", LOG_WRAPPER_FWAPI_NAMESPACE make_format_args(static_cast<int32_t>(obj)));
   }
 };
 
 template <class CharT>
-struct formatter<::util::log::log_wrapper::options_t::type, CharT> : public formatter<CharT *, CharT> {
+struct formatter<typename ::util::log::log_wrapper::options_t::type, CharT> : public formatter<CharT *, CharT> {
   template <class FormatContext>
-  auto format(const ::util::log::log_wrapper::options_t::type &obj, FormatContext &ctx) {
+  auto format(const typename ::util::log::log_wrapper::options_t::type &obj, FormatContext &ctx) {
     return LOG_WRAPPER_FWAPI_NAMESPACE vformat_to(
         ctx.out(), "{}", LOG_WRAPPER_FWAPI_NAMESPACE make_format_args(static_cast<int32_t>(obj)));
   }
