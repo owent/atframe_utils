@@ -26,6 +26,20 @@
 
 #include <config/atframe_utils_build_feature.h>
 
+#if defined(UTIL_CONFIG_COMPILER_CXX_RVALUE_REFERENCES) && UTIL_CONFIG_COMPILER_CXX_RVALUE_REFERENCES
+#  if defined(LIBATFRAME_UTILS_ENABLE_STD_FORMAT) && LIBATFRAME_UTILS_ENABLE_STD_FORMAT
+#    include <format>
+#    ifndef LOG_WRAPPER_FWAPI_FMT_STRING
+#      define LOG_WRAPPER_FWAPI_FMT_STRING(S) (S)
+#    endif
+#  elif defined(LIBATFRAME_UTILS_ENABLE_FMTLIB) && LIBATFRAME_UTILS_ENABLE_FMTLIB
+#    include <fmt/format.h>
+#    ifndef LOG_WRAPPER_FWAPI_FMT_STRING
+#      define LOG_WRAPPER_FWAPI_FMT_STRING(S) FMT_STRING(S)
+#    endif
+#  endif
+#endif
+
 namespace util {
 namespace log {
 #if defined(LOG_WRAPPER_ENABLE_FWAPI) && LOG_WRAPPER_ENABLE_FWAPI
@@ -226,25 +240,30 @@ class log_formatter {
 }  // namespace util
 
 #if defined(LOG_WRAPPER_ENABLE_FWAPI) && LOG_WRAPPER_ENABLE_FWAPI
-namespace LOG_WRAPPER_FWAPI_NAMESPACE_ID {
-template <class CharT>
-struct formatter<::util::log::log_formatter::flag_t::type, CharT> : public formatter<CharT *, CharT> {
-  template <class FormatContext>
-  auto format(const ::util::log::log_formatter::flag_t::type &obj, FormatContext &ctx) {
-    return LOG_WRAPPER_FWAPI_NAMESPACE vformat_to(
-        ctx.out(), "{}", LOG_WRAPPER_FWAPI_NAMESPACE make_format_args(static_cast<int32_t>(obj)));
-  }
-};
 
-template <class CharT>
-struct formatter<::util::log::log_formatter::level_t::type, CharT> : public formatter<CharT *, CharT> {
-  template <class FormatContext>
-  auto format(const ::util::log::log_formatter::level_t::type &obj, FormatContext &ctx) {
-    return LOG_WRAPPER_FWAPI_NAMESPACE vformat_to(
-        ctx.out(), "{}", LOG_WRAPPER_FWAPI_NAMESPACE make_format_args(static_cast<int32_t>(obj)));
+#if defined(LIBATFRAME_UTILS_ENABLE_STD_FORMAT) && LIBATFRAME_UTILS_ENABLE_STD_FORMAT
+#define LOG_WRAPPER_FWAPI_DECL_NAMESPACE() namespace std
+#define LOG_WRAPPER_FWAPI_FORMAT_AS(Type, Base)                                 \
+  LOG_WRAPPER_FWAPI_DECL_NAMESPACE() {                                          \
+    template <typename Char>                                                    \
+    struct formatter<Type, Char> : formatter<Base, Char> {                      \
+      template <typename FormatContext>                                         \
+      auto format(Type const& val, FormatContext& ctx) -> decltype(ctx.out()) { \
+        return formatter<Base, Char>::format(val, ctx);                         \
+      }                                                                         \
+    };                                                                          \
   }
-};
-}  // namespace LOG_WRAPPER_FWAPI_NAMESPACE_ID
+#else
+#define LOG_WRAPPER_FWAPI_DECL_NAMESPACE() namespace fmt
+#define LOG_WRAPPER_FWAPI_FORMAT_AS(Type, Base)           \
+  LOG_WRAPPER_FWAPI_DECL_NAMESPACE() {                    \
+    FMT_FORMAT_AS(Type, Base);                            \
+  }
+#endif
+
+LOG_WRAPPER_FWAPI_FORMAT_AS(typename ::util::log::log_formatter::flag_t::type, int);
+LOG_WRAPPER_FWAPI_FORMAT_AS(typename ::util::log::log_formatter::level_t::type, int);
+
 #endif
 
 #endif
