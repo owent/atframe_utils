@@ -11,7 +11,7 @@
 
 #ifdef CRYPTO_CIPHER_ENABLED
 
-#  ifdef CRYPTO_USE_LIBSODIUM
+#  if defined(CRYPTO_USE_LIBSODIUM) && CRYPTO_USE_LIBSODIUM
 #    include <sodium.h>
 
 #    define LIBSODIUM_BLOCK_SIZE 64
@@ -170,7 +170,7 @@ static const cipher_interface_info_t supported_ciphers[] = {
      EN_CIFT_NONE},
 #  endif
 
-#  ifdef CRYPTO_USE_LIBSODIUM
+#  if defined(CRYPTO_USE_LIBSODIUM) && CRYPTO_USE_LIBSODIUM
     {"chacha20", EN_CIMT_LIBSODIUM_CHACHA20, NULL, "CHACHA20", EN_CIFT_NONE},
     {"chacha20-ietf", EN_CIMT_LIBSODIUM_CHACHA20_IETF, NULL, "CHACHA20-IETF", EN_CIFT_NONE},
 #    ifdef crypto_stream_xchacha20_KEYBYTES
@@ -194,7 +194,7 @@ static const cipher_interface_info_t supported_ciphers[] = {
      EN_CIFT_AEAD | EN_CIFT_VARIABLE_IV_LEN},
 #  endif
 
-#  ifdef CRYPTO_USE_LIBSODIUM
+#  if defined(CRYPTO_USE_LIBSODIUM) && CRYPTO_USE_LIBSODIUM
     {"chacha20-poly1305", EN_CIMT_LIBSODIUM_CHACHA20_POLY1305, NULL, "CHACHA20-POLY1305", EN_CIFT_AEAD},
     {"chacha20-poly1305-ietf", EN_CIMT_LIBSODIUM_CHACHA20_POLY1305_IETF, NULL, "CHACHA20-POLY1305-IETF", EN_CIFT_AEAD},
 #    ifdef crypto_aead_xchacha20poly1305_ietf_KEYBYTES
@@ -505,7 +505,7 @@ LIBATFRAME_UTILS_API uint32_t cipher::get_iv_size() const {
         return 0;
       }
 
-#  ifdef CRYPTO_USE_LIBSODIUM
+#  if defined(CRYPTO_USE_LIBSODIUM) && CRYPTO_USE_LIBSODIUM
     case EN_CIMT_LIBSODIUM_CHACHA20:
       return LIBSODIUM_COUNTER_SIZE + crypto_stream_chacha20_NONCEBYTES;
     case EN_CIMT_LIBSODIUM_CHACHA20_IETF:
@@ -564,7 +564,7 @@ LIBATFRAME_UTILS_API uint32_t cipher::get_key_bits() const {
         return 0;
       }
 
-#  ifdef CRYPTO_USE_LIBSODIUM
+#  if defined(CRYPTO_USE_LIBSODIUM) && CRYPTO_USE_LIBSODIUM
     case EN_CIMT_LIBSODIUM_CHACHA20:
       UTIL_CONFIG_STATIC_ASSERT(crypto_stream_chacha20_KEYBYTES <= sizeof(libsodium_context_t));
       return crypto_stream_chacha20_KEYBYTES * 8;
@@ -846,7 +846,7 @@ LIBATFRAME_UTILS_API int cipher::encrypt(const unsigned char *input, size_t ilen
 #  endif
     }
 
-#  ifdef CRYPTO_USE_LIBSODIUM
+#  if defined(CRYPTO_USE_LIBSODIUM) && CRYPTO_USE_LIBSODIUM
     case EN_CIMT_LIBSODIUM_CHACHA20:
       if ((last_errorno_ = crypto_stream_chacha20_xor_ic(output, input, ilen, &iv_[LIBSODIUM_COUNTER_SIZE],
                                                          libsodium_get_counter(&iv_[0]), libsodium_context_.key)) !=
@@ -968,7 +968,7 @@ LIBATFRAME_UTILS_API int cipher::decrypt(const unsigned char *input, size_t ilen
 #  endif
     }
 
-#  ifdef CRYPTO_USE_LIBSODIUM
+#  if defined(CRYPTO_USE_LIBSODIUM) && CRYPTO_USE_LIBSODIUM
     case EN_CIMT_LIBSODIUM_CHACHA20:
       if ((last_errorno_ = crypto_stream_chacha20_xor_ic(output, input, ilen, &iv_[LIBSODIUM_COUNTER_SIZE],
                                                          libsodium_get_counter(&iv_[0]), libsodium_context_.key)) !=
@@ -1115,7 +1115,7 @@ LIBATFRAME_UTILS_API int cipher::encrypt_aead(const unsigned char *input, size_t
 #  endif
     }
 
-#  ifdef CRYPTO_USE_LIBSODIUM
+#  if defined(CRYPTO_USE_LIBSODIUM) && CRYPTO_USE_LIBSODIUM
 
     case EN_CIMT_LIBSODIUM_CHACHA20_POLY1305: {
       if (crypto_aead_chacha20poly1305_ABYTES > tag_len) {
@@ -1273,7 +1273,7 @@ LIBATFRAME_UTILS_API int cipher::decrypt_aead(const unsigned char *input, size_t
 #  endif
     }
 
-#  ifdef CRYPTO_USE_LIBSODIUM
+#  if defined(CRYPTO_USE_LIBSODIUM) && CRYPTO_USE_LIBSODIUM
 
     case EN_CIMT_LIBSODIUM_CHACHA20_POLY1305: {
       if (crypto_aead_chacha20poly1305_ABYTES > tag_len) {
