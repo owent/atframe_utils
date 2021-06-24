@@ -6,56 +6,6 @@ include("${ATFRAMEWORK_CMAKE_TOOLSET_DIR}/Import.cmake")
 include(IncludeDirectoryRecurse)
 include(EchoWithColor)
 
-# generate check header
-if(CMAKE_VERSION VERSION_LESS "3.20.0")
-  include(WriteCompilerDetectionHeader)
-  write_compiler_detection_header(
-    FILE "${PROJECT_ATFRAME_UTILS_INCLUDE_DIR}/config/compiler_features.h" PREFIX UTIL_CONFIG
-    COMPILERS GNU Clang AppleClang MSVC
-    FEATURES c_std_90
-             c_std_99
-             c_std_11
-             c_restrict
-             c_static_assert
-             c_variadic_macros
-             cxx_std_98
-             cxx_std_11
-             cxx_std_14
-             cxx_std_17
-             cxx_std_20
-             cxx_alias_templates
-             cxx_attributes
-             cxx_attribute_deprecated
-             cxx_auto_type
-             cxx_constexpr
-             cxx_decltype
-             cxx_decltype_auto
-             cxx_default_function_template_args
-             cxx_defaulted_functions
-             cxx_delegating_constructors
-             cxx_deleted_functions
-             cxx_final
-             cxx_generic_lambdas
-             cxx_inheriting_constructors
-             cxx_lambdas
-             cxx_long_long_type
-             cxx_noexcept
-             cxx_nonstatic_member_init
-             cxx_nullptr
-             cxx_override
-             cxx_range_for
-             cxx_raw_string_literals
-             cxx_relaxed_constexpr
-             cxx_return_type_deduction
-             cxx_rvalue_references
-             cxx_sizeof_member
-             cxx_static_assert
-             cxx_thread_local
-             cxx_variadic_templates)
-endif()
-# file(MAKE_DIRECTORY "${PROJECT_ATFRAME_UTILS_INCLUDE_DIR}/config") file(RENAME
-# "${CMAKE_BINARY_DIR}/compiler_features.h" "${PROJECT_ATFRAME_UTILS_INCLUDE_DIR}/config/compiler_features.h")
-
 # 默认配置选项
 # ######################################################################################################################
 option(LIBUNWIND_ENABLED "Enable using libunwind." OFF)
@@ -269,10 +219,10 @@ if(OPENSSL_FOUND)
        OR MINGW
        OR (CMAKE_SYSTEM_NAME STREQUAL "MinGW")
        OR (CMAKE_SYSTEM_NAME STREQUAL "Windows"))
-        list(APPEND PROJECT_ATFRAME_UTILS_PUBLIC_LINK_NAMES Ws2_32 Crypt32)
+      list(APPEND PROJECT_ATFRAME_UTILS_PUBLIC_LINK_NAMES Ws2_32 Crypt32)
     endif()
   endif()
-  
+
 elseif(MBEDTLS_FOUND)
   if(TARGET mbedtls_static)
     message(STATUS "MbedTLS using target(${PROJECT_NAME}): mbedtls_static")

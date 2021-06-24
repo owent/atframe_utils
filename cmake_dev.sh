@@ -20,7 +20,7 @@ else
     CHECK_MSYS="";
 fi
 
-while getopts "ab:c:d:e:hlm:o:r:tus-" OPTION; do
+while getopts "ab:c:d:e:hlr:tus-" OPTION; do
     case $OPTION in
         a)
             echo "Ready to check ccc-analyzer and c++-analyzer, please do not use -c to change the compiler when using clang-analyzer.";
@@ -90,8 +90,6 @@ while getopts "ab:c:d:e:hlm:o:r:tus-" OPTION; do
             echo "-d [libsodium root]           set root of libsodium.";
             echo "-e <ccache path>              try to use specify ccache to speed up building.";
             echo "-h                            help message.";
-            echo "-m [mbedtls root]             set root of mbedtls.";
-            echo "-o [openssl root]             set root of openssl.";
             echo "-t                            enable clang-tidy.";
             echo "-u                            enable unit test.";
             echo "-s                            enable sample.";
@@ -99,20 +97,6 @@ while getopts "ab:c:d:e:hlm:o:r:tus-" OPTION; do
         ;;
         l)
             CMAKE_OPTIONS="$CMAKE_OPTIONS -DPROJECT_ENABLE_TOOLS=YES";
-        ;;
-        m)
-            if [ ! -z "$OPTARG" ]; then
-                CMAKE_OPTIONS="$CMAKE_OPTIONS -DMBEDTLS_ROOT=$OPTARG -DCRYPTO_USE_MBEDTLS=YES";
-            else
-                CMAKE_OPTIONS="$CMAKE_OPTIONS -DMBEDTLS_ROOT=c:/workspace/lib/crypt/prebuilt/win64 -DCRYPTO_USE_MBEDTLS=YES";
-            fi
-        ;;
-        o)
-            if [ ! -z "$OPTARG" ]; then
-                CMAKE_OPTIONS="$CMAKE_OPTIONS -DOPENSSL_ROOT_DIR=$OPTARG -DCRYPTO_USE_OPENSSL=YES";
-            else
-                CMAKE_OPTIONS="$CMAKE_OPTIONS -DOPENSSL_ROOT_DIR=c:/workspace/lib/crypt/prebuilt/openssl-1.0.2h-vs2015 -DCRYPTO_USE_OPENSSL=YES";
-            fi
         ;;
         r)
             CUSTOM_BUILD_DIR="$OPTARG";
