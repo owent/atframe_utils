@@ -1,9 +1,13 @@
-﻿#include <algorithm>
+﻿// Copyright 2021 atframework
+// Created by owent
+
+#include "config/ini_loader.h"
+
+#include <algorithm>
 #include <cstddef>
 #include <cstring>
 #include <fstream>
-
-#include <config/ini_loader.h>
+#include <string>
 
 namespace util {
 namespace config {
@@ -33,7 +37,7 @@ struct identify {
 
 // key
 struct key {
-  typedef std::list<std::pair<const char *, const char *> > list_type;
+  typedef std::list<std::string> list_type;
   list_type _keys;
 
   bool test(const char *begin, const char *end);
@@ -42,7 +46,7 @@ struct key {
 
 // section
 struct section {
-  typedef std::list<std::pair<const char *, const char *> > list_type;
+  typedef std::list<std::string> list_type;
   list_type _keys;
 
   bool test(const char *begin, const char *end);
@@ -216,14 +220,7 @@ LIBATFRAME_UTILS_API ini_value::ptr_t ini_value::get_child_by_path(const std::st
   _keys.parse(begin, end);
   analysis::section::list_type::iterator iter = _keys._keys.begin();
   for (; iter != _keys._keys.end(); ++iter) {
-    if (iter->first >= iter->second) {
-      continue;
-    }
-
-    std::string key;
-    key.assign(iter->first, iter->second);
-
-    node_type::const_iterator child_iter = ret->children_nodes_.find(key);
+    node_type::const_iterator child_iter = ret->children_nodes_.find(*iter);
     if (child_iter == ret->children_nodes_.end()) {
       ret = NULL;
       break;
@@ -473,14 +470,18 @@ const char *key::parse(const char *begin, const char *end) {
       return begin;
     }
 
-    identify idt;
-    begin = idt.parse(begin, end);
-    if (idt._begin_ptr >= idt._end_ptr) {
-      return begin;
+    analysis::string str;
+    if (str.test(begin, end)) {
+      begin = str.parse(begin, end, (*begin) == '\"');
+      _keys.push_back(str._value);
+    } else {
+      identify idt;
+      begin = idt.parse(begin, end);
+      if (idt._begin_ptr >= idt._end_ptr) {
+        return begin;
+      }
+      _keys.push_back(std::string(idt._begin_ptr, idt._end_ptr));
     }
-
-    // 提取key
-    _keys.push_back(std::make_pair(idt._begin_ptr, idt._end_ptr));
 
     spaces spliter;
     begin = spliter.parse(begin, end);
@@ -523,10 +524,20 @@ const char *section::parse(const char *begin, const char *end) {
 
     if (start < begin) {
       // 提取key
-      if (push_front) {
-        _keys.push_front(std::make_pair(start, begin));
+      analysis::string str;
+      if (str.test(start, begin)) {
+        str.parse(start, begin, *start == '\"');
+        if (push_front) {
+          _keys.push_front(str._value);
+        } else {
+          _keys.push_back(str._value);
+        }
       } else {
-        _keys.push_back(std::make_pair(start, begin));
+        if (push_front) {
+          _keys.push_front(std::string(start, begin));
+        } else {
+          _keys.push_back(std::string(start, begin));
+        }
       }
     }
 
@@ -772,13 +783,7 @@ LIBATFRAME_UTILS_API int ini_loader::load_stream(std::istream &in, bool is_appen
       current_node_ptr_ = &get_root_node();
       analysis::section::list_type::iterator iter = one_sentence._sect.second._keys.begin();
       for (; iter != one_sentence._sect.second._keys.end(); ++iter) {
-        if (iter->first >= iter->second) {
-          continue;
-        }
-
-        std::string key;
-        key.assign(iter->first, iter->second);
-        current_node_ptr_ = &get_node(key, current_node_ptr_);
+        current_node_ptr_ = &get_node(*iter, current_node_ptr_);
       }
     }
 
@@ -787,13 +792,7 @@ LIBATFRAME_UTILS_API int ini_loader::load_stream(std::istream &in, bool is_appen
       ini_value *opr_node = &get_section();
       analysis::key::list_type::iterator iter = one_sentence._exp.second._key._keys.begin();
       for (; iter != one_sentence._exp.second._key._keys.end(); ++iter) {
-        if (iter->first >= iter->second) {
-          continue;
-        }
-
-        std::string key;
-        key.assign(iter->first, iter->second);
-        opr_node = &get_node(key, opr_node);
+        opr_node = &get_node(*iter, opr_node);
       }
 
       if (!one_sentence._exp.second._value._value.empty()) {
@@ -857,15 +856,9 @@ LIBATFRAME_UTILS_API ini_value &ini_loader::get_node(const std::string &path, in
   begin = spliter.parse(begin, end);
 
   _keys.parse(begin, end);
-  analysis::section::list_type::iterator iter = _keys._keys.begin();
+  analysis::key::list_type::iterator iter = _keys._keys.begin();
   for (; iter != _keys._keys.end(); ++iter) {
-    if (iter->first >= iter->second) {
-      continue;
-    }
-
-    std::string key;
-    key.assign(iter->first, iter->second);
-    father_ptr = &get_child_node(key, father_ptr);
+    father_ptr = &get_child_node(*iter, father_ptr);
   }
 
   return *father_ptr;
