@@ -173,7 +173,7 @@ if(PROJECT_ENABLE_SAMPLE)
   add_subdirectory("${CMAKE_CURRENT_LIST_DIR}/sample")
 endif()
 
-if(PROJECT_ENABLE_UNITTEST)
+if(PROJECT_ENABLE_UNITTEST OR BUILD_TESTING)
   add_subdirectory("${CMAKE_CURRENT_LIST_DIR}/test")
 endif()
 
