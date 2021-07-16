@@ -74,7 +74,7 @@ using wstring_view = basic_string_view<const wchar_t>;
 template <class CharT, class Traits = std::char_traits<CharT> >
 std::basic_ostream<CharT, Traits> &operator<<(std::basic_ostream<CharT, Traits> &os,
                                               basic_string_view<CharT, Traits> const &spn) {
-  typename Stream::sentry sentry(os);
+  typename std::basic_ostream<CharT, Traits>::sentry sentry(os);
 
   if (!os) return os;
 
@@ -104,7 +104,7 @@ using wstring_view = basic_string_view<const wchar_t>;
 template <class CharT, class Traits = std::char_traits<CharT> >
 std::basic_ostream<CharT, Traits> &operator<<(std::basic_ostream<CharT, Traits> &os,
                                               basic_string_view<CharT, Traits> const &spn) {
-  typename Stream::sentry sentry(os);
+  typename std::basic_ostream<CharT, Traits>::sentry sentry(os);
 
   if (!os) return os;
 
@@ -236,7 +236,7 @@ using wstring_view = basic_string_view<const wchar_t>;
 template <class CharT, class Traits = std::char_traits<CharT> >
 std::basic_ostream<CharT, Traits>& operator<<(std::basic_ostream<CharT, Traits>& os,
                                               basic_string_view<CharT, Traits> const& spn) {
-  typename Stream::sentry sentry(os);
+  typename std::basic_ostream<CharT, Traits>::sentry sentry(os);
 
   if (!os) return os;
 
