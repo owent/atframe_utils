@@ -1,6 +1,8 @@
 include_guard(GLOBAL)
 
-if(NOT TARGET Microsoft.GSL::GSL AND NOT TARGET gsl::gsl-lite)
+if(NOT TARGET Microsoft.GSL::GSL
+   AND NOT TARGET gsl::gsl-lite-v1
+   AND NOT TARGET gsl::gsl-lite)
   if(${CMAKE_CXX_COMPILER_ID} STREQUAL "GNU")
     if(CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL "8")
       include("${ATFRAMEWORK_CMAKE_TOOLSET_DIR}/ports/gsl/ms-gsl.cmake")
@@ -29,7 +31,10 @@ if(TARGET Microsoft.GSL::GSL)
   list(APPEND PROJECT_ATFRAME_UTILS_PUBLIC_LINK_NAMES Microsoft.GSL::GSL)
 endif()
 
-if(TARGET gsl::gsl-lite)
+if(TARGET gsl::gsl-lite-v1)
+  set(LIBATFRAME_UTILS_ENABLE_GSL_WITH_GSL_LITE ON)
+  list(APPEND PROJECT_ATFRAME_UTILS_PUBLIC_LINK_NAMES gsl::gsl-lite-v1)
+elseif(TARGET gsl::gsl-lite)
   set(LIBATFRAME_UTILS_ENABLE_GSL_WITH_GSL_LITE ON)
   list(APPEND PROJECT_ATFRAME_UTILS_PUBLIC_LINK_NAMES gsl::gsl-lite)
 endif()

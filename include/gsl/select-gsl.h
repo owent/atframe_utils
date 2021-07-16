@@ -68,8 +68,23 @@ using std::wstring_view;
 #  else
 template <class CharT, class Traits = std::char_traits<CharT> >
 using basic_string_view = span<CharT>;
-using string_view = basic_string_view<char>;
-using wstring_view = basic_string_view<wchar_t>;
+using string_view = basic_string_view<const char>;
+using wstring_view = basic_string_view<const wchar_t>;
+
+template <class CharT, class Traits = std::char_traits<CharT> >
+std::basic_ostream<CharT, Traits> &operator<<(std::basic_ostream<CharT, Traits> &os,
+                                              basic_string_view<CharT, Traits> const &spn) {
+  typename Stream::sentry sentry(os);
+
+  if (!os) return os;
+
+  const std::streamsize length = gsl::narrow_cast<std::streamsize>(spn.size());
+
+  // Write span characters
+  os.rdbuf()->sputn(spn.begin(), length);
+
+  return os;
+}
 #  endif
 }  // namespace gsl
 
@@ -83,14 +98,30 @@ using std::wstring_view;
 #  else
 template <class CharT, class Traits = std::char_traits<CharT> >
 using basic_string_view = span<CharT>;
-using string_view = basic_string_view<char>;
-using wstring_view = basic_string_view<wchar_t>;
+using string_view = basic_string_view<const char>;
+using wstring_view = basic_string_view<const wchar_t>;
+
+template <class CharT, class Traits = std::char_traits<CharT> >
+std::basic_ostream<CharT, Traits> &operator<<(std::basic_ostream<CharT, Traits> &os,
+                                              basic_string_view<CharT, Traits> const &spn) {
+  typename Stream::sentry sentry(os);
+
+  if (!os) return os;
+
+  const std::streamsize length = gsl::narrow_cast<std::streamsize>(spn.size());
+
+  // Write span characters
+  os.rdbuf()->sputn(spn.begin(), length);
+
+  return os;
+}
 #  endif
 }  // namespace gsl
 #elif defined(LIBATFRAME_UTILS_ENABLE_GSL_WITH_FALLBACK_STL) && LIBATFRAME_UTILS_ENABLE_GSL_WITH_FALLBACK_STL
 
 #  include <array>
 #  include <cstddef>
+#  include <iostream>
 #  include <memory>
 #  include <type_traits>
 #  include <utility>
@@ -199,8 +230,23 @@ using std::wstring_view;
       LIBATFRAME_UTILS_ENABLE_GSL_WITH_FALLBACK_STL_SPAN
 template <class CharT, class Traits = std::char_traits<CharT> >
 using basic_string_view = span<CharT>;
-using string_view = basic_string_view<char>;
-using wstring_view = basic_string_view<wchar_t>;
+using string_view = basic_string_view<const char>;
+using wstring_view = basic_string_view<const wchar_t>;
+
+template <class CharT, class Traits = std::char_traits<CharT> >
+std::basic_ostream<CharT, Traits>& operator<<(std::basic_ostream<CharT, Traits>& os,
+                                              basic_string_view<CharT, Traits> const& spn) {
+  typename Stream::sentry sentry(os);
+
+  if (!os) return os;
+
+  const std::streamsize length = gsl::narrow_cast<std::streamsize>(spn.size());
+
+  // Write span characters
+  os.rdbuf()->sputn(spn.begin(), length);
+
+  return os;
+}
 #  endif
 
 using zstring = char*;
