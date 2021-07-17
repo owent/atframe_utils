@@ -264,8 +264,6 @@ inline bool operator>=(T *a, intrusive_ptr<U> const &b) noexcept {
 
 #endif
 
-#if defined(UTIL_CONFIG_COMPILER_CXX_NULLPTR) && UTIL_CONFIG_COMPILER_CXX_NULLPTR
-
 template <typename T>
 inline bool operator==(intrusive_ptr<T> const &p, std::nullptr_t) noexcept {
   return p.get() == nullptr;
@@ -276,7 +274,7 @@ inline bool operator==(std::nullptr_t, intrusive_ptr<T> const &p) noexcept {
   return p.get() == nullptr;
 }
 
-#  ifdef __cpp_impl_three_way_comparison
+#ifdef __cpp_impl_three_way_comparison
 template <typename T>
 inline std::strong_ordering operator<=>(intrusive_ptr<T> const &p, std::nullptr_t) noexcept {
   return p.get() <=> nullptr;
@@ -286,7 +284,7 @@ template <typename T>
 inline std::strong_ordering operator<=>(std::nullptr_t, intrusive_ptr<T> const &p) noexcept {
   return p.get() <=> nullptr;
 }
-#  else
+#else
 template <typename T>
 inline bool operator!=(intrusive_ptr<T> const &p, std::nullptr_t) noexcept {
   return p.get() != nullptr;
@@ -336,8 +334,6 @@ template <typename T>
 inline bool operator>=(std::nullptr_t, intrusive_ptr<T> const &p) noexcept {
   return p.get() >= nullptr;
 }
-#  endif
-
 #endif
 
 template <typename T>

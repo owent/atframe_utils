@@ -255,14 +255,12 @@ LIBATFRAME_UTILS_API shell_stream::shell_stream_opr &shell_stream::shell_stream_
   return (*this);
 }
 
-#if defined(UTIL_CONFIG_COMPILER_CXX_NULLPTR) && UTIL_CONFIG_COMPILER_CXX_NULLPTR
 LIBATFRAME_UTILS_API const shell_stream::shell_stream_opr &shell_stream::shell_stream_opr::operator<<(
     std::nullptr_t) const {
   close();
   (*pOs) << "nullptr";
   return (*this);
 }
-#endif
 
 LIBATFRAME_UTILS_API const shell_stream::shell_stream_opr &shell_stream::shell_stream_opr::operator<<(
     shell_font_style::shell_font_spec style) const {

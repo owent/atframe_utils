@@ -184,9 +184,7 @@ class UTIL_SYMBOL_VISIBLE shell_stream {
       return (*this);
     }
 
-#if defined(UTIL_CONFIG_COMPILER_CXX_NULLPTR) && UTIL_CONFIG_COMPILER_CXX_NULLPTR
     LIBATFRAME_UTILS_API const shell_stream_opr &operator<<(std::nullptr_t) const;
-#endif
     LIBATFRAME_UTILS_API const shell_stream_opr &operator<<(shell_font_style::shell_font_spec style) const;
     LIBATFRAME_UTILS_API const shell_stream_opr &operator<<(shell_font_style::shell_font_color style) const;
     LIBATFRAME_UTILS_API const shell_stream_opr &operator<<(shell_font_style::shell_font_background_color style) const;
