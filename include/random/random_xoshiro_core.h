@@ -45,7 +45,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY xoshiro_engine {
   /// \endcond
   seed_type xoshiro_seed_;
 
-  static inline result_type rotl(const result_type x, int k) UTIL_CONFIG_NOEXCEPT {
+  static inline result_type rotl(const result_type x, int k) noexcept {
     return (x << k) | (x >> ((sizeof(result_type) * 8) - static_cast<result_type>(k)));
   }
 
@@ -54,16 +54,16 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY xoshiro_engine {
 
   template <class T>
   struct LIBATFRAME_UTILS_API_HEAD_ONLY next_init<T, true> {
-    static inline result_type call(seed_type &s) UTIL_CONFIG_NOEXCEPT { return s[0] + s[3]; }
+    static inline result_type call(seed_type &s) noexcept { return s[0] + s[3]; }
   };
 
   template <class T>
   struct LIBATFRAME_UTILS_API_HEAD_ONLY next_init<T, false> {
-    static inline result_type call(seed_type &s) UTIL_CONFIG_NOEXCEPT { return rotl(s[iidx] * 5, 7) * 9; }
+    static inline result_type call(seed_type &s) noexcept { return rotl(s[iidx] * 5, 7) * 9; }
   };
 
  protected:
-  result_type next() UTIL_CONFIG_NOEXCEPT {
+  result_type next() noexcept {
     const result_type ret = next_init<UIntType, is_plus>::call(xoshiro_seed_);
     const result_type t = xoshiro_seed_[1] << n1;
 
@@ -78,7 +78,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY xoshiro_engine {
     return ret;
   }
 
-  void jump(const seed_type &JUMP) UTIL_CONFIG_NOEXCEPT {
+  void jump(const seed_type &JUMP) noexcept {
     result_type s0 = 0;
     result_type s1 = 0;
     result_type s2 = 0;
@@ -116,7 +116,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY xoshiro_engine {
     init_seed(s);
   }
 
-  void init_seed(result_type s) UTIL_CONFIG_NOEXCEPT {
+  void init_seed(result_type s) noexcept {
     xoshiro_seed_[0] = s;
     xoshiro_seed_[1] = 0xff;
     xoshiro_seed_[2] = 0;
@@ -146,9 +146,9 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY xoshiro_engine {
     }
   }
 
-  inline size_t block_size() const UTIL_CONFIG_NOEXCEPT { return sizeof(xoshiro_seed_); }
+  inline size_t block_size() const noexcept { return sizeof(xoshiro_seed_); }
 
-  inline bool dump(unsigned char *output, size_t size) const UTIL_CONFIG_NOEXCEPT {
+  inline bool dump(unsigned char *output, size_t size) const noexcept {
     if (NULL == output || size < block_size()) {
       return false;
     }
@@ -157,7 +157,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY xoshiro_engine {
     return true;
   }
 
-  inline bool load(const unsigned char *input, size_t size) UTIL_CONFIG_NOEXCEPT {
+  inline bool load(const unsigned char *input, size_t size) noexcept {
     if (NULL == input || size < block_size()) {
       return false;
     }
@@ -166,11 +166,11 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY xoshiro_engine {
     return true;
   }
 
-  result_type random() UTIL_CONFIG_NOEXCEPT { return next(); }
+  result_type random() noexcept { return next(); }
 
-  result_type operator()() UTIL_CONFIG_NOEXCEPT { return random(); }
+  result_type operator()() noexcept { return random(); }
 
-  inline const seed_type &get_seed() const UTIL_CONFIG_NOEXCEPT { return xoshiro_seed_; }
+  inline const seed_type &get_seed() const noexcept { return xoshiro_seed_; }
 };
 
 template <bool is_plus>
@@ -189,7 +189,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY xoshiro_engine_128 : public xoshiro_engine<
   /**
    * @brief just like call next() for 2^64 times
    */
-  void jump() UTIL_CONFIG_NOEXCEPT {
+  void jump() noexcept {
     static const result_type jump_params[4] = {0x8764000b, 0xf542d2d3, 0x6fa035c3, 0x77f2db5b};
     jump(jump_params);
   }
@@ -211,7 +211,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY xoshiro_engine_256 : public xoshiro_engine<
   /**
    * @brief just like call next() for 2^128 times
    */
-  void jump() UTIL_CONFIG_NOEXCEPT {
+  void jump() noexcept {
     static const result_type jump_params[4] = {0x180ec6d33cfd0aba, 0xd5a61266f0c9392c, 0xa9582618e03fc9aa,
                                                0x39abdc4529b1661c};
     jump(jump_params);
@@ -220,7 +220,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY xoshiro_engine_256 : public xoshiro_engine<
   /**
    * @brief just like call next() for 2^192 times
    */
-  void long_jump() UTIL_CONFIG_NOEXCEPT {
+  void long_jump() noexcept {
     static const result_type jump_params[4] = {0x76e15d3efefdcbbf, 0xc5004e441c522fb3, 0x77710069854ee241,
                                                0x39109bb02acbe635};
     jump(jump_params);

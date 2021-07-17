@@ -142,9 +142,9 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY mersenne_twister {
     }
   }
 
-  inline size_t block_size() const UTIL_CONFIG_NOEXCEPT { return sizeof(mt_status) + sizeof(mt_index); }
+  inline size_t block_size() const noexcept { return sizeof(mt_status) + sizeof(mt_index); }
 
-  inline bool dump(unsigned char *output, size_t size) const UTIL_CONFIG_NOEXCEPT {
+  inline bool dump(unsigned char *output, size_t size) const noexcept {
     if (NULL == output || size < block_size()) {
       return false;
     }
@@ -154,7 +154,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY mersenne_twister {
     return true;
   }
 
-  inline bool load(const unsigned char *input, size_t size) UTIL_CONFIG_NOEXCEPT {
+  inline bool load(const unsigned char *input, size_t size) noexcept {
     if (NULL == input || size < block_size()) {
       return false;
     }

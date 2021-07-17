@@ -49,7 +49,7 @@ namespace detail {
 template <typename TSINT>
 class LIBATFRAME_UTILS_API_HEAD_ONLY mixed_signed_int {
  public:
-  typedef TSINT value_type;
+  using value_type = TSINT;
 
   static const size_t TYPE_BIT = 8 * sizeof(value_type);
   static const size_t TYPE_LEFT_BIT = ENABLE_MIXEDINT_MAGIC_MASK % TYPE_BIT;

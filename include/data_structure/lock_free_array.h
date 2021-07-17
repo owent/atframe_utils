@@ -31,8 +31,8 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY lock_free_array {
   typedef TContainer container_type;
 
  private:
-  lock_free_array(const lock_free_array &) UTIL_CONFIG_DELETED_FUNCTION;
-  lock_free_array &operator=(const lock_free_array &) UTIL_CONFIG_DELETED_FUNCTION;
+  lock_free_array(const lock_free_array &) = delete;
+  lock_free_array &operator=(const lock_free_array &) = delete;
 
  public:
   typedef pointer_type iterator;

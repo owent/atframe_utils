@@ -94,8 +94,8 @@
 
 #if defined(UTIL_CONFIG_COMPILER_CXX_RVALUE_REFERENCES) && UTIL_CONFIG_COMPILER_CXX_RVALUE_REFERENCES
 #  define UTIL_DESIGN_PATTERN_SINGLETON_NOMAVLBLE(CLAZZ) \
-    CLAZZ(CLAZZ &&) UTIL_CONFIG_DELETED_FUNCTION;        \
-    CLAZZ &operator=(CLAZZ &&) UTIL_CONFIG_DELETED_FUNCTION;
+    CLAZZ(CLAZZ &&) = delete;                            \
+    CLAZZ &operator=(CLAZZ &&) = delete;
 #else
 #  define UTIL_DESIGN_PATTERN_SINGLETON_NOMAVLBLE(CLAZZ)
 #endif
@@ -200,8 +200,8 @@
 
 #define UTIL_DESIGN_PATTERN_SINGLETON_DEF_FUNCS(LABEL, CLAZZ, BASE_CLAZZ)                   \
   UTIL_DESIGN_PATTERN_SINGLETON_DATA_IMPL(LABEL, CLAZZ, BASE_CLAZZ)                         \
-  BASE_CLAZZ(const BASE_CLAZZ &) UTIL_CONFIG_DELETED_FUNCTION;                              \
-  BASE_CLAZZ &operator=(const BASE_CLAZZ &) UTIL_CONFIG_DELETED_FUNCTION;                   \
+  BASE_CLAZZ(const BASE_CLAZZ &) = delete;                                                  \
+  BASE_CLAZZ &operator=(const BASE_CLAZZ &) = delete;                                       \
   UTIL_DESIGN_PATTERN_SINGLETON_NOMAVLBLE(BASE_CLAZZ)                                       \
  public:                                                                                    \
   static LABEL CLAZZ &get_instance() { return *singleton_wrapper_t::me(); }                 \

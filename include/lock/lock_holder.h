@@ -96,8 +96,8 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY lock_holder {
   bool is_available() const { return NULL != lock_flag_; }
 
  private:
-  lock_holder(const lock_holder &) UTIL_CONFIG_DELETED_FUNCTION;
-  lock_holder &operator=(const lock_holder &) UTIL_CONFIG_DELETED_FUNCTION;
+  lock_holder(const lock_holder &) = delete;
+  lock_holder &operator=(const lock_holder &) = delete;
 
  private:
   value_type *lock_flag_;

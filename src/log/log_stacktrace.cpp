@@ -108,22 +108,22 @@ class log_stacktrace_com_holder {
   T *holder_;
 
  private:
-  log_stacktrace_com_holder(const log_stacktrace_com_holder &) UTIL_CONFIG_DELETED_FUNCTION;
-  log_stacktrace_com_holder &operator=(const log_stacktrace_com_holder &) UTIL_CONFIG_DELETED_FUNCTION;
+  log_stacktrace_com_holder(const log_stacktrace_com_holder &) = delete;
+  log_stacktrace_com_holder &operator=(const log_stacktrace_com_holder &) = delete;
 
  public:
-  log_stacktrace_com_holder() UTIL_CONFIG_NOEXCEPT : holder_(NULL) {}
-  ~log_stacktrace_com_holder() UTIL_CONFIG_NOEXCEPT {
+  log_stacktrace_com_holder() noexcept : holder_(NULL) {}
+  ~log_stacktrace_com_holder() noexcept {
     if (holder_) {
       holder_->Release();
     }
   }
 
-  T *operator->() const UTIL_CONFIG_NOEXCEPT { return holder_; }
+  T *operator->() const noexcept { return holder_; }
 
-  PVOID *to_pvoid_ptr() UTIL_CONFIG_NOEXCEPT { return reinterpret_cast<PVOID *>(&holder_); }
+  PVOID *to_pvoid_ptr() noexcept { return reinterpret_cast<PVOID *>(&holder_); }
 
-  bool is_inited() const UTIL_CONFIG_NOEXCEPT { return !!holder_; }
+  bool is_inited() const noexcept { return !!holder_; }
 };
 
 #endif
@@ -151,7 +151,7 @@ const stacktrace_options &default_stacktrace_options() {
 }
 }  // namespace details
 
-LIBATFRAME_UTILS_API bool is_stacktrace_enabled() UTIL_CONFIG_NOEXCEPT {
+LIBATFRAME_UTILS_API bool is_stacktrace_enabled() noexcept {
 #if defined(LOG_STACKTRACE_USING_LIBUNWIND) && LOG_STACKTRACE_USING_LIBUNWIND
   return true;
 #elif defined(LOG_STACKTRACE_USING_EXECINFO) && LOG_STACKTRACE_USING_EXECINFO
@@ -275,11 +275,9 @@ struct stacktrace_symbol_group_t {
   std::string func_address;
 };
 
-inline bool stacktrace_is_space_char(char c) UTIL_CONFIG_NOEXCEPT {
-  return ' ' == c || '\r' == c || '\t' == c || '\n' == c;
-}
+inline bool stacktrace_is_space_char(char c) noexcept { return ' ' == c || '\r' == c || '\t' == c || '\n' == c; }
 
-static const char *stacktrace_skip_space(const char *name) UTIL_CONFIG_NOEXCEPT {
+static const char *stacktrace_skip_space(const char *name) noexcept {
   if (NULL == name) {
     return name;
   }
@@ -291,14 +289,14 @@ static const char *stacktrace_skip_space(const char *name) UTIL_CONFIG_NOEXCEPT 
   return name;
 }
 
-inline bool stacktrace_is_number_char(char c) UTIL_CONFIG_NOEXCEPT { return c >= '0' && c <= '9'; }
+inline bool stacktrace_is_number_char(char c) noexcept { return c >= '0' && c <= '9'; }
 
-inline bool stacktrace_is_ident_char(char c) UTIL_CONFIG_NOEXCEPT {
+inline bool stacktrace_is_ident_char(char c) noexcept {
   return '_' == c || '$' == c || stacktrace_is_number_char(c) || (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') ||
          (c & 0x80);  // utf-8 or unicode
 }
 
-static const char *stacktrace_get_ident_end(const char *name) UTIL_CONFIG_NOEXCEPT {
+static const char *stacktrace_get_ident_end(const char *name) noexcept {
   if (NULL == name) {
     return name;
   }
@@ -311,7 +309,7 @@ static const char *stacktrace_get_ident_end(const char *name) UTIL_CONFIG_NOEXCE
 }
 
 static bool stacktrace_pick_ident(const char *name, const char *&start, const char *&end, char &previous_c,
-                                  bool &clear_sym) UTIL_CONFIG_NOEXCEPT {
+                                  bool &clear_sym) noexcept {
   previous_c = 0;
   start = name;
   end = name;
@@ -344,7 +342,7 @@ static bool stacktrace_pick_ident(const char *name, const char *&start, const ch
   return ret;
 }
 
-static void stacktrace_fix_number(std::string &num) UTIL_CONFIG_NOEXCEPT {
+static void stacktrace_fix_number(std::string &num) noexcept {
   size_t fixed_len = num.size();
   while (fixed_len > 0 && (num[fixed_len - 1] > '9' || num[fixed_len - 1] < '0')) {
     --fixed_len;
@@ -473,7 +471,7 @@ struct stacktrace_unwind_state_t {
   _Unwind_Word *end;
 };
 
-static _Unwind_Reason_Code stacktrace_unwind_callback(::_Unwind_Context *context, void *arg) UTIL_CONFIG_NOEXCEPT {
+static _Unwind_Reason_Code stacktrace_unwind_callback(::_Unwind_Context *context, void *arg) noexcept {
   // Note: do not write `::_Unwind_GetIP` because it is a macro on some platforms.
   // Use `_Unwind_GetIP` instead!
   stacktrace_unwind_state_t *const state = reinterpret_cast<stacktrace_unwind_state_t *>(arg);

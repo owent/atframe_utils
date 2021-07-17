@@ -62,13 +62,8 @@ struct LIBATFRAME_UTILS_API_HEAD_ONLY duration_value {
 // ================= 存储层 =================
 class ini_value : public std::enable_shared_from_this<ini_value> {
  public:
-#if defined(UTIL_CONFIG_COMPILER_CXX_ALIAS_TEMPLATES) && UTIL_CONFIG_COMPILER_CXX_ALIAS_TEMPLATES
   using ptr_t = std::shared_ptr<ini_value>;
   using node_type = LIBATFRAME_UTILS_AUTO_SELETC_MAP(std::string, ptr_t);
-#else
-  typedef std::shared_ptr<ini_value> ptr_t;
-  typedef LIBATFRAME_UTILS_AUTO_SELETC_MAP(std::string, ptr_t) node_type;
-#endif
 
  private:
   std::vector<std::string> data_;

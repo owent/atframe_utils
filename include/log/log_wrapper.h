@@ -188,11 +188,7 @@ LIBATFRAME_UTILS_API_HEAD_ONLY OutputIt vformat_to(OutputIt out, TFMT &&fmt, TAR
 
 class log_wrapper {
  public:
-#if defined(UTIL_CONFIG_COMPILER_CXX_ALIAS_TEMPLATES) && UTIL_CONFIG_COMPILER_CXX_ALIAS_TEMPLATES
   using ptr_t = std::shared_ptr<log_wrapper>;
-#else
-  typedef std::shared_ptr<log_wrapper> ptr_t;
-#endif
 
   struct LIBATFRAME_UTILS_API categorize_t {
     enum type {
@@ -211,15 +207,10 @@ class log_wrapper {
   };
 
  public:
-#if defined(UTIL_CONFIG_COMPILER_CXX_ALIAS_TEMPLATES) && UTIL_CONFIG_COMPILER_CXX_ALIAS_TEMPLATES
   using level_t = log_formatter::level_t;
   using caller_info_t = log_formatter::caller_info_t;
   using log_handler_t = std::function<void(const caller_info_t &caller, const char *content, size_t content_size)>;
-#else
-  typedef log_formatter::level_t level_t;
-  typedef log_formatter::caller_info_t caller_info_t;
-  typedef std::function<void(const caller_info_t &caller, const char *content, size_t content_size)> log_handler_t;
-#endif
+
   struct log_router_t {
     level_t::type level_min;
     level_t::type level_max;

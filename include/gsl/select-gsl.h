@@ -136,87 +136,85 @@ using std::shared_ptr;
 using std::unique_ptr;
 
 template <class T, size_t N>
-EXPLICIT_NODISCARD_ATTR LIBATFRAME_UTILS_API_HEAD_ONLY inline UTIL_CONFIG_CONSTEXPR T& at(T (&arr)[N], size_t pos) {
+EXPLICIT_NODISCARD_ATTR LIBATFRAME_UTILS_API_HEAD_ONLY inline constexpr T& at(T (&arr)[N], size_t pos) {
   return arr[pos];
 }
 
 template <class Container>
-EXPLICIT_NODISCARD_ATTR LIBATFRAME_UTILS_API_HEAD_ONLY inline UTIL_CONFIG_CONSTEXPR typename Container::value_type& at(
+EXPLICIT_NODISCARD_ATTR LIBATFRAME_UTILS_API_HEAD_ONLY inline constexpr typename Container::value_type& at(
     Container& cont, size_t pos) {
   return cont[pos];
 }
 
 template <class Container>
-EXPLICIT_NODISCARD_ATTR LIBATFRAME_UTILS_API_HEAD_ONLY inline UTIL_CONFIG_CONSTEXPR
-    typename Container::value_type const&
-    at(Container const& cont, size_t pos) {
+EXPLICIT_NODISCARD_ATTR LIBATFRAME_UTILS_API_HEAD_ONLY inline constexpr typename Container::value_type const& at(
+    Container const& cont, size_t pos) {
   return cont[pos];
 }
 
 #  if gsl_HAVE(INITIALIZER_LIST)
 
 template <class T>
-EXPLICIT_NODISCARD_ATTR LIBATFRAME_UTILS_API_HEAD_ONLY inline const UTIL_CONFIG_CONSTEXPR T
-at(std::initializer_list<T> cont, size_t pos) {
+EXPLICIT_NODISCARD_ATTR LIBATFRAME_UTILS_API_HEAD_ONLY inline const constexpr T at(std::initializer_list<T> cont,
+                                                                                   size_t pos) {
   return *(cont.begin() + pos);
 }
 #  endif
 
 template <class T>
-EXPLICIT_NODISCARD_ATTR LIBATFRAME_UTILS_API_HEAD_ONLY inline UTIL_CONFIG_CONSTEXPR T& at(span<T> s, size_t pos) {
+EXPLICIT_NODISCARD_ATTR LIBATFRAME_UTILS_API_HEAD_ONLY inline constexpr T& at(span<T> s, size_t pos) {
   return s[pos];
 }
 
 #  if defined(LIBATFRAME_UTILS_ENABLE_GSL_WITH_FALLBACK_STL_SPAN) && LIBATFRAME_UTILS_ENABLE_GSL_WITH_FALLBACK_STL_SPAN
 using std::span;
 template <class T>
-EXPLICIT_NODISCARD_ATTR LIBATFRAME_UTILS_API_HEAD_ONLY inline UTIL_CONFIG_CONSTEXPR span<T> make_span(
+EXPLICIT_NODISCARD_ATTR LIBATFRAME_UTILS_API_HEAD_ONLY inline constexpr span<T> make_span(
     T* ptr, typename span<T>::index_type count) {
   return span<T>(ptr, count);
 }
 
 template <class T>
-EXPLICIT_NODISCARD_ATTR LIBATFRAME_UTILS_API_HEAD_ONLY inline UTIL_CONFIG_CONSTEXPR span<T> make_span(T* first,
-                                                                                                      T* last) {
+EXPLICIT_NODISCARD_ATTR LIBATFRAME_UTILS_API_HEAD_ONLY inline constexpr span<T> make_span(T* first, T* last) {
   return span<T>(first, last);
 }
 
 template <class T, size_t N>
-EXPLICIT_NODISCARD_ATTR LIBATFRAME_UTILS_API_HEAD_ONLY inline UTIL_CONFIG_CONSTEXPR span<T> make_span(T (&arr)[N]) {
+EXPLICIT_NODISCARD_ATTR LIBATFRAME_UTILS_API_HEAD_ONLY inline constexpr span<T> make_span(T (&arr)[N]) {
   return span<T>(&arr[0], N);
 }
 
 template <class T, size_t N>
-EXPLICIT_NODISCARD_ATTR inline UTIL_CONFIG_CONSTEXPR span<T> make_span(std::array<T, N>& arr) {
+EXPLICIT_NODISCARD_ATTR inline constexpr span<T> make_span(std::array<T, N>& arr) {
   return span<T>(arr);
 }
 
 template <class T, size_t N>
-EXPLICIT_NODISCARD_ATTR inline UTIL_CONFIG_CONSTEXPR span<const T> make_span(std::array<T, N> const& arr) {
+EXPLICIT_NODISCARD_ATTR inline constexpr span<const T> make_span(std::array<T, N> const& arr) {
   return span<const T>(arr);
 }
 
 template <class Container, class EP = decltype(std17::data(std::declval<Container&>()))>
-EXPLICIT_NODISCARD_ATTR inline UTIL_CONFIG_CONSTEXPR auto make_span(Container& cont)
+EXPLICIT_NODISCARD_ATTR inline constexpr auto make_span(Container& cont)
     -> span<typename std::remove_pointer<EP>::type> {
   return span<typename std::remove_pointer<EP>::type>(cont);
 }
 
 template <class Container, class EP = decltype(std17::data(std::declval<Container&>()))>
-EXPLICIT_NODISCARD_ATTR inline UTIL_CONFIG_CONSTEXPR auto make_span(Container const& cont)
+EXPLICIT_NODISCARD_ATTR inline constexpr auto make_span(Container const& cont)
     -> span<const typename std::remove_pointer<EP>::type> {
   return span<const typename std::remove_pointer<EP>::type>(cont);
 }
 
 template <class Container>
-EXPLICIT_NODISCARD_ATTR inline UTIL_CONFIG_CONSTEXPR span<typename Container::value_type> make_span(
-    with_container_t, Container& cont) UTIL_CONFIG_NOEXCEPT {
+EXPLICIT_NODISCARD_ATTR inline constexpr span<typename Container::value_type> make_span(with_container_t,
+                                                                                        Container& cont) noexcept {
   return span<typename Container::value_type>(with_container, cont);
 }
 
 template <class Container>
-EXPLICIT_NODISCARD_ATTR inline UTIL_CONFIG_CONSTEXPR span<const typename Container::value_type> make_span(
-    with_container_t, Container const& cont) UTIL_CONFIG_NOEXCEPT {
+EXPLICIT_NODISCARD_ATTR inline constexpr span<const typename Container::value_type> make_span(
+    with_container_t, Container const& cont) noexcept {
   return span<const typename Container::value_type>(with_container, cont);
 }
 
@@ -266,8 +264,7 @@ using std::byte;
 #    if defined(LIBATFRAME_UTILS_ENABLE_GSL_WITH_FALLBACK_STL_SPAN) && \
         LIBATFRAME_UTILS_ENABLE_GSL_WITH_FALLBACK_STL_SPAN
 template <class T>
-EXPLICIT_NODISCARD_ATTR LIBATFRAME_UTILS_API_HEAD_ONLY inline span<const byte> as_bytes(span<T> spn)
-    UTIL_CONFIG_NOEXCEPT {
+EXPLICIT_NODISCARD_ATTR LIBATFRAME_UTILS_API_HEAD_ONLY inline span<const byte> as_bytes(span<T> spn) noexcept {
   return span<const byte>(reinterpret_cast<const byte*>(spn.data()), spn.size_bytes());  // NOLINT
 }
 #    endif
@@ -276,23 +273,23 @@ EXPLICIT_NODISCARD_ATTR LIBATFRAME_UTILS_API_HEAD_ONLY inline span<const byte> a
 template <class F>
 class LIBATFRAME_UTILS_API_HEAD_ONLY final_action {
  public:
-  explicit final_action(F action) UTIL_CONFIG_NOEXCEPT : action_(std::move(action)), invoke_(true) {}
+  explicit final_action(F action) noexcept : action_(std::move(action)), invoke_(true) {}
 
-  final_action(final_action&& other) UTIL_CONFIG_NOEXCEPT : action_(std::move(other.action_)), invoke_(other.invoke_) {
+  final_action(final_action&& other) noexcept : action_(std::move(other.action_)), invoke_(other.invoke_) {
     other.invoke_ = false;
   }
 
-  virtual ~final_action() UTIL_CONFIG_NOEXCEPT {
+  virtual ~final_action() noexcept {
     if (invoke_) action_();
   }
 
  private:
-  final_action(final_action const&) UTIL_CONFIG_DELETED_FUNCTION;
-  final_action& operator=(final_action const&) UTIL_CONFIG_DELETED_FUNCTION;
-  final_action& operator=(final_action&&) UTIL_CONFIG_DELETED_FUNCTION;
+  final_action(final_action const&) = delete;
+  final_action& operator=(final_action const&) = delete;
+  final_action& operator=(final_action&&) = delete;
 
  protected:
-  void dismiss() UTIL_CONFIG_NOEXCEPT { invoke_ = false; }
+  void dismiss() noexcept { invoke_ = false; }
 
  private:
   F action_;
@@ -300,18 +297,17 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY final_action {
 };
 
 template <class F>
-EXPLICIT_NODISCARD_ATTR inline final_action<F> finally(F const& action) UTIL_CONFIG_NOEXCEPT {
+EXPLICIT_NODISCARD_ATTR inline final_action<F> finally(F const& action) noexcept {
   return final_action<F>(action);
 }
 
 template <class F>
-EXPLICIT_NODISCARD_ATTR inline final_action<F> finally(F&& action) UTIL_CONFIG_NOEXCEPT {
+EXPLICIT_NODISCARD_ATTR inline final_action<F> finally(F&& action) noexcept {
   return final_action<F>(std::forward<F>(action));
 }
 
 template <class T, class U>
-EXPLICIT_NODISCARD_ATTR LIBATFRAME_UTILS_API_HEAD_ONLY inline UTIL_CONFIG_CONSTEXPR T narrow_cast(U&& u)
-    UTIL_CONFIG_NOEXCEPT {
+EXPLICIT_NODISCARD_ATTR LIBATFRAME_UTILS_API_HEAD_ONLY inline constexpr T narrow_cast(U&& u) noexcept {
   return static_cast<T>(std::forward<U>(u));
 }
 

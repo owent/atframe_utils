@@ -50,8 +50,8 @@
 
 namespace util {
 
-inline const char *demangle_alloc(const char *name) UTIL_CONFIG_NOEXCEPT;
-inline void demangle_free(const char *name) UTIL_CONFIG_NOEXCEPT;
+inline const char *demangle_alloc(const char *name) noexcept;
+inline void demangle_free(const char *name) noexcept;
 
 class scoped_demangled_name {
  private:
@@ -59,9 +59,9 @@ class scoped_demangled_name {
   UTIL_DESIGN_PATTERN_NOCOPYABLE(scoped_demangled_name)
 
  public:
-  explicit scoped_demangled_name(const char *name) UTIL_CONFIG_NOEXCEPT : m_p(demangle_alloc(name)) {}
+  explicit scoped_demangled_name(const char *name) noexcept : m_p(demangle_alloc(name)) {}
 
-  ~scoped_demangled_name() UTIL_CONFIG_NOEXCEPT {
+  ~scoped_demangled_name() noexcept {
     if (NULL != m_p) {
       demangle_free(m_p);
     }
@@ -77,12 +77,12 @@ class scoped_demangled_name {
   }
 #endif
 
-  const char *get() const UTIL_CONFIG_NOEXCEPT { return m_p; }
+  const char *get() const noexcept { return m_p; }
 };
 
 #if defined(UTIL_COMMON_DEMANGLE_USING_CXX_ABI)
 
-inline const char *demangle_alloc(const char *name) UTIL_CONFIG_NOEXCEPT {
+inline const char *demangle_alloc(const char *name) noexcept {
   if (NULL == name) {
     return NULL;
   }
@@ -91,7 +91,7 @@ inline const char *demangle_alloc(const char *name) UTIL_CONFIG_NOEXCEPT {
   return abi::__cxa_demangle(name, NULL, &size, &status);
 }
 
-inline void demangle_free(const char *name) UTIL_CONFIG_NOEXCEPT { std::free(const_cast<char *>(name)); }
+inline void demangle_free(const char *name) noexcept { std::free(const_cast<char *>(name)); }
 
 inline std::string demangle(const char *name) {
   scoped_demangled_name demangled_name(name);
@@ -104,8 +104,8 @@ inline std::string demangle(const char *name) {
 
 #else
 
-inline const char *demangle_alloc(const char *name) UTIL_CONFIG_NOEXCEPT { return name; }
-inline void demangle_free(const char *) UTIL_CONFIG_NOEXCEPT {}
+inline const char *demangle_alloc(const char *name) noexcept { return name; }
+inline void demangle_free(const char *) noexcept {}
 inline std::string demangle(const char *name) { return name; }
 
 #endif

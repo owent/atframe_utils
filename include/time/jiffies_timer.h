@@ -340,7 +340,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY jiffies_timer {
    * @brief 获取当前定时器类型的最大时间范围（tick）
    * @return 当前定时器类型的最大时间范围（tick）
    */
-  static inline UTIL_CONFIG_CONSTEXPR time_t get_max_tick_distance() { return LVL_START(LVL_DEPTH) - 1; }
+  static inline constexpr time_t get_max_tick_distance() { return LVL_START(LVL_DEPTH) - 1; }
 
   static inline size_t calc_index(time_t expires, size_t lvl) {
     // 这里的expires 必然大于等于last_tick_，并且至少加一帧
