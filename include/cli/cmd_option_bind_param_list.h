@@ -33,9 +33,9 @@ struct LIBATFRAME_UTILS_API_HEAD_ONLY maybe_wrap_member_pointer {
   typedef _Tp type;
   typedef cmd_option_bindt_cc_caller<_Tp> caller_type;
 
-  static const _Tp &do_wrap(const _Tp &__x) { return __x; }
+  static constexpr const _Tp &do_wrap(const _Tp &__x) { return __x; }
 
-  static _Tp &do_wrap(_Tp &__x) { return __x; }
+  static constexpr _Tp &do_wrap(_Tp &__x) { return __x; }
 };
 
 /**

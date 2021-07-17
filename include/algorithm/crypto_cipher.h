@@ -229,7 +229,7 @@ class cipher {
   /**
    * @biref               split cipher names by space, comma, semicolon or colon
    * @param in            string contain some cipher names
-   * @return              begin(first) and end(second) address of a cipher name, both NULL if not found.
+   * @return              begin(first) and end(second) address of a cipher name, both nullptr if not found.
    *                      you can use second pointer as the paramter of next call, just like strtok
    */
   static LIBATFRAME_UTILS_API std::pair<const char *, const char *> ciphertok(const char *in);

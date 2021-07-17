@@ -8,12 +8,12 @@
  */
 #pragma once
 
+#include <config/atframe_utils_build_feature.h>
+
 #include <functional>
 #include <list>
 #include <map>
-#include "std/smart_ptr.h"
-
-#include <config/atframe_utils_build_feature.h>
+#include <memory>
 
 namespace util {
 namespace ds {

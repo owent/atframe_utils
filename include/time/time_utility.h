@@ -67,7 +67,7 @@ class time_utility {
    * @brief 更新时间
    * @param t 可以指定时间对象
    */
-  static LIBATFRAME_UTILS_API void update(raw_time_t *t = NULL);
+  static LIBATFRAME_UTILS_API void update(raw_time_t *t = nullptr);
 
   /**
    * @brief 获取原始系统时间对象

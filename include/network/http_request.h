@@ -15,13 +15,12 @@
 
 #include <cstddef>
 #include <cstdio>
+#include <functional>
 #include <memory>
 #include <sstream>
 #include <string>
 
 #include "design_pattern/noncopyable.h"
-#include "std/functional.h"
-#include "std/smart_ptr.h"
 #include "string/tquerystring.h"
 
 #include "config/atframe_utils_build_feature.h"
@@ -229,7 +228,7 @@ class http_request : public std::enable_shared_from_this<http_request>, public :
 
   template <typename T>
   LIBATFRAME_UTILS_API_HEAD_ONLY void set_opt_long(CURLoption k, T v) {
-    if (NULL == mutable_request()) {
+    if (nullptr == mutable_request()) {
       return;
     }
 
@@ -250,7 +249,7 @@ class http_request : public std::enable_shared_from_this<http_request>, public :
 
   /**
    * @brief set accept encoding for this request
-   * @param enc pass empty string("") to use all built-in supported encodings, and NULL to disable it
+   * @param enc pass empty string("") to use all built-in supported encodings, and nullptr to disable it
    */
   LIBATFRAME_UTILS_API void set_opt_accept_encoding(const char *enc);
 

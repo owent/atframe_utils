@@ -101,7 +101,7 @@ CASE_TEST(string_oprs, reverse) {
   char t1[] = "abcdefg";
   char t2[] = "abcdefg";
 
-  util::string::reverse(&t1[0], NULL);
+  util::string::reverse(&t1[0], nullptr);
   util::string::reverse(t2, t2 + 7);
 
   CASE_EXPECT_EQ(t1, "gfedcba");

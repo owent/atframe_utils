@@ -47,11 +47,11 @@ CASE_TEST(lru_object_pool_test, basic) {
     CASE_EXPECT_EQ(3, mgr->item_count().get());
     CASE_EXPECT_EQ(lru.size(), mgr->item_count().get());
 
-    CASE_EXPECT_EQ(NULL, lru.pull(789));
+    CASE_EXPECT_EQ(nullptr, lru.pull(789));
     CASE_EXPECT_EQ(check_ptr, lru.pull(456));
-    CASE_EXPECT_EQ(NULL, lru.pull(456));
+    CASE_EXPECT_EQ(nullptr, lru.pull(456));
     delete check_ptr;
-    check_ptr = NULL;
+    check_ptr = nullptr;
 
     CASE_EXPECT_EQ(3, g_stat_lru[0]);
     CASE_EXPECT_EQ(1, g_stat_lru[1]);

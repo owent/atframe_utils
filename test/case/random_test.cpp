@@ -54,7 +54,7 @@ CASE_TEST(random_test, random_gen_mt19937) {
     bool check_result = false;
     CASE_EXPECT_GT(gen1.block_size(), 0);
     buffer.resize(gen1.block_size());
-    CASE_EXPECT_FALSE(gen1.dump(NULL, buffer.size()));
+    CASE_EXPECT_FALSE(gen1.dump(nullptr, buffer.size()));
     CASE_EXPECT_FALSE(gen1.dump(&buffer[0], buffer.size() - 1));
     CASE_EXPECT_TRUE(gen1.dump(&buffer[0], buffer.size()));
 
@@ -65,7 +65,7 @@ CASE_TEST(random_test, random_gen_mt19937) {
       }
     }
 
-    CASE_EXPECT_FALSE(gen1.load(NULL, buffer.size()));
+    CASE_EXPECT_FALSE(gen1.load(nullptr, buffer.size()));
     CASE_EXPECT_FALSE(gen1.load(&buffer[0], buffer.size() - 1));
     CASE_EXPECT_TRUE(gen1.load(&buffer[0], buffer.size()));
     CASE_EXPECT_TRUE(check_result);
@@ -106,7 +106,7 @@ CASE_TEST(random_test, random_gen_mt19937_64) {
     bool check_result = false;
     CASE_EXPECT_GT(gen1.block_size(), 0);
     buffer.resize(gen1.block_size());
-    CASE_EXPECT_FALSE(gen1.dump(NULL, buffer.size()));
+    CASE_EXPECT_FALSE(gen1.dump(nullptr, buffer.size()));
     CASE_EXPECT_FALSE(gen1.dump(&buffer[0], buffer.size() - 1));
     CASE_EXPECT_TRUE(gen1.dump(&buffer[0], buffer.size()));
 
@@ -117,7 +117,7 @@ CASE_TEST(random_test, random_gen_mt19937_64) {
       }
     }
 
-    CASE_EXPECT_FALSE(gen1.load(NULL, buffer.size()));
+    CASE_EXPECT_FALSE(gen1.load(nullptr, buffer.size()));
     CASE_EXPECT_FALSE(gen1.load(&buffer[0], buffer.size() - 1));
     CASE_EXPECT_TRUE(gen1.load(&buffer[0], buffer.size()));
     CASE_EXPECT_TRUE(check_result);
@@ -158,7 +158,7 @@ CASE_TEST(random_test, random_gen_64_mt11213B) {
     bool check_result = false;
     CASE_EXPECT_GT(gen1.block_size(), 0);
     buffer.resize(gen1.block_size());
-    CASE_EXPECT_FALSE(gen1.dump(NULL, buffer.size()));
+    CASE_EXPECT_FALSE(gen1.dump(nullptr, buffer.size()));
     CASE_EXPECT_FALSE(gen1.dump(&buffer[0], buffer.size() - 1));
     CASE_EXPECT_TRUE(gen1.dump(&buffer[0], buffer.size()));
 
@@ -169,7 +169,7 @@ CASE_TEST(random_test, random_gen_64_mt11213B) {
       }
     }
 
-    CASE_EXPECT_FALSE(gen1.load(NULL, buffer.size()));
+    CASE_EXPECT_FALSE(gen1.load(nullptr, buffer.size()));
     CASE_EXPECT_FALSE(gen1.load(&buffer[0], buffer.size() - 1));
     CASE_EXPECT_TRUE(gen1.load(&buffer[0], buffer.size()));
     CASE_EXPECT_TRUE(check_result);
@@ -210,7 +210,7 @@ CASE_TEST(random_test, random_gen_taus88) {
     bool check_result = false;
     CASE_EXPECT_GT(gen1.block_size(), 0);
     buffer.resize(gen1.block_size());
-    CASE_EXPECT_FALSE(gen1.dump(NULL, buffer.size()));
+    CASE_EXPECT_FALSE(gen1.dump(nullptr, buffer.size()));
     CASE_EXPECT_FALSE(gen1.dump(&buffer[0], buffer.size() - 1));
     CASE_EXPECT_TRUE(gen1.dump(&buffer[0], buffer.size()));
 
@@ -221,7 +221,7 @@ CASE_TEST(random_test, random_gen_taus88) {
       }
     }
 
-    CASE_EXPECT_FALSE(gen1.load(NULL, buffer.size()));
+    CASE_EXPECT_FALSE(gen1.load(nullptr, buffer.size()));
     CASE_EXPECT_FALSE(gen1.load(&buffer[0], buffer.size() - 1));
     CASE_EXPECT_TRUE(gen1.load(&buffer[0], buffer.size()));
     CASE_EXPECT_TRUE(check_result);
@@ -288,7 +288,7 @@ CASE_TEST(random_test, xoroshiro128_starstar) {
     bool check_result = false;
     CASE_EXPECT_GT(gen1.block_size(), 0);
     buffer.resize(gen1.block_size());
-    CASE_EXPECT_FALSE(gen1.dump(NULL, buffer.size()));
+    CASE_EXPECT_FALSE(gen1.dump(nullptr, buffer.size()));
     CASE_EXPECT_FALSE(gen1.dump(&buffer[0], buffer.size() - 1));
     CASE_EXPECT_TRUE(gen1.dump(&buffer[0], buffer.size()));
 
@@ -299,7 +299,7 @@ CASE_TEST(random_test, xoroshiro128_starstar) {
       }
     }
 
-    CASE_EXPECT_FALSE(gen1.load(NULL, buffer.size()));
+    CASE_EXPECT_FALSE(gen1.load(nullptr, buffer.size()));
     CASE_EXPECT_FALSE(gen1.load(&buffer[0], buffer.size() - 1));
     CASE_EXPECT_TRUE(gen1.load(&buffer[0], buffer.size()));
     CASE_EXPECT_TRUE(check_result);
@@ -366,7 +366,7 @@ CASE_TEST(random_test, xoroshiro128_plus) {
     bool check_result = false;
     CASE_EXPECT_GT(gen1.block_size(), 0);
     buffer.resize(gen1.block_size());
-    CASE_EXPECT_FALSE(gen1.dump(NULL, buffer.size()));
+    CASE_EXPECT_FALSE(gen1.dump(nullptr, buffer.size()));
     CASE_EXPECT_FALSE(gen1.dump(&buffer[0], buffer.size() - 1));
     CASE_EXPECT_TRUE(gen1.dump(&buffer[0], buffer.size()));
 
@@ -377,7 +377,7 @@ CASE_TEST(random_test, xoroshiro128_plus) {
       }
     }
 
-    CASE_EXPECT_FALSE(gen1.load(NULL, buffer.size()));
+    CASE_EXPECT_FALSE(gen1.load(nullptr, buffer.size()));
     CASE_EXPECT_FALSE(gen1.load(&buffer[0], buffer.size() - 1));
     CASE_EXPECT_TRUE(gen1.load(&buffer[0], buffer.size()));
     CASE_EXPECT_TRUE(check_result);
@@ -466,7 +466,7 @@ CASE_TEST(random_test, xoshiro256_starstar) {
     bool check_result = false;
     CASE_EXPECT_GT(gen1.block_size(), 0);
     buffer.resize(gen1.block_size());
-    CASE_EXPECT_FALSE(gen1.dump(NULL, buffer.size()));
+    CASE_EXPECT_FALSE(gen1.dump(nullptr, buffer.size()));
     CASE_EXPECT_FALSE(gen1.dump(&buffer[0], buffer.size() - 1));
     CASE_EXPECT_TRUE(gen1.dump(&buffer[0], buffer.size()));
 
@@ -477,7 +477,7 @@ CASE_TEST(random_test, xoshiro256_starstar) {
       }
     }
 
-    CASE_EXPECT_FALSE(gen1.load(NULL, buffer.size()));
+    CASE_EXPECT_FALSE(gen1.load(nullptr, buffer.size()));
     CASE_EXPECT_FALSE(gen1.load(&buffer[0], buffer.size() - 1));
     CASE_EXPECT_TRUE(gen1.load(&buffer[0], buffer.size()));
     CASE_EXPECT_TRUE(check_result);
@@ -566,7 +566,7 @@ CASE_TEST(random_test, xoshiro256_plus) {
     bool check_result = false;
     CASE_EXPECT_GT(gen1.block_size(), 0);
     buffer.resize(gen1.block_size());
-    CASE_EXPECT_FALSE(gen1.dump(NULL, buffer.size()));
+    CASE_EXPECT_FALSE(gen1.dump(nullptr, buffer.size()));
     CASE_EXPECT_FALSE(gen1.dump(&buffer[0], buffer.size() - 1));
     CASE_EXPECT_TRUE(gen1.dump(&buffer[0], buffer.size()));
 
@@ -577,7 +577,7 @@ CASE_TEST(random_test, xoshiro256_plus) {
       }
     }
 
-    CASE_EXPECT_FALSE(gen1.load(NULL, buffer.size()));
+    CASE_EXPECT_FALSE(gen1.load(nullptr, buffer.size()));
     CASE_EXPECT_FALSE(gen1.load(&buffer[0], buffer.size() - 1));
     CASE_EXPECT_TRUE(gen1.load(&buffer[0], buffer.size()));
     CASE_EXPECT_TRUE(check_result);

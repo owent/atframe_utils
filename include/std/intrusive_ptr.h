@@ -42,7 +42,7 @@ namespace std {
 //      void intrusive_ptr_add_ref(T * p);
 //      void intrusive_ptr_release(T * p);
 //
-//          (p != NULL)
+//          (p != nullptr)
 //
 //  The object is responsible for destroying itself.
 //
@@ -53,31 +53,31 @@ class intrusive_ptr {
   typedef intrusive_ptr<T> self_type;
   typedef T element_type;
 
-  constexpr intrusive_ptr() noexcept : px(NULL) {}
+  constexpr intrusive_ptr() noexcept : px(nullptr) {}
 
   intrusive_ptr(T *p, bool add_ref = true) : px(p) {
-    if (px != NULL && add_ref) {
+    if (px != nullptr && add_ref) {
       intrusive_ptr_add_ref(px);
     }
   }
 
   template <typename U>
   intrusive_ptr(intrusive_ptr<U> const &rhs,
-                typename std::enable_if<std::is_convertible<U *, T *>::value>::type * = NULL)
+                typename std::enable_if<std::is_convertible<U *, T *>::value>::type * = nullptr)
       : px(rhs.get()) {
-    if (px != NULL) {
+    if (px != nullptr) {
       intrusive_ptr_add_ref(px);
     }
   }
 
   intrusive_ptr(self_type const &rhs) : px(rhs.px) {
-    if (px != NULL) {
+    if (px != nullptr) {
       intrusive_ptr_add_ref(px);
     }
   }
 
   ~intrusive_ptr() {
-    if (px != NULL) {
+    if (px != nullptr) {
       intrusive_ptr_release(px);
     }
   }
@@ -95,7 +95,7 @@ class intrusive_ptr {
 
 #if defined(UTIL_CONFIG_COMPILER_CXX_RVALUE_REFERENCES) && UTIL_CONFIG_COMPILER_CXX_RVALUE_REFERENCES
 
-  intrusive_ptr(self_type &&rhs) noexcept : px(rhs.px) { rhs.px = NULL; }
+  intrusive_ptr(self_type &&rhs) noexcept : px(rhs.px) { rhs.px = nullptr; }
 
   self_type &operator=(self_type &&rhs) noexcept {
     self_type(static_cast<self_type &&>(rhs)).swap(*this);
@@ -104,9 +104,9 @@ class intrusive_ptr {
 
   template <typename U>
   intrusive_ptr(intrusive_ptr<U> &&rhs,
-                typename std::enable_if<std::is_convertible<U *, T *>::value>::type * = NULL) noexcept
+                typename std::enable_if<std::is_convertible<U *, T *>::value>::type * = nullptr) noexcept
       : px(rhs.px) {
-    rhs.px = NULL;
+    rhs.px = nullptr;
   }
 
   template <typename U, typename Deleter>
@@ -131,7 +131,7 @@ class intrusive_ptr {
 
   inline element_type *detach() noexcept {
     element_type *ret = px;
-    px = NULL;
+    px = nullptr;
     return ret;
   }
 
@@ -146,9 +146,9 @@ class intrusive_ptr {
   }
 
   // implicit conversion to "bool"
-  inline operator bool() const noexcept { return px != NULL; }
+  inline operator bool() const noexcept { return px != nullptr; }
   // operator! is redundant, but some compilers need it
-  inline bool operator!() const noexcept { return px == NULL; }
+  inline bool operator!() const noexcept { return px == nullptr; }
 
   inline void swap(intrusive_ptr &rhs) noexcept {
     element_type *tmp = px;

@@ -17,14 +17,13 @@
 
 #pragma once
 
-#include <stdint.h>
-#include <cstddef>
-#include <list>
-
 #include <config/atframe_utils_build_feature.h>
 #include <config/compiler_features.h>
 
-#include <std/smart_ptr.h>
+#include <stdint.h>
+#include <cstddef>
+#include <list>
+#include <memory>
 
 #if defined(LIBATFRAME_UTILS_ENABLE_UNORDERED_MAP_SET) && LIBATFRAME_UTILS_ENABLE_UNORDERED_MAP_SET
 #  include <unordered_map>

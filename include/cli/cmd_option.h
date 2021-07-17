@@ -19,20 +19,18 @@
  *
  */
 
+#include <config/atframe_utils_build_feature.h>
+
 #include <assert.h>
 #include <cstdio>
 #include <exception>
-#include <set>
-
+#include <functional>
 #include <map>
+#include <memory>
 #include <ostream>
+#include <set>
 #include <sstream>
 #include <vector>
-
-#include <config/atframe_utils_build_feature.h>
-
-#include "std/ref.h"
-#include "std/smart_ptr.h"
 
 #include <config/compiler/template_prefix.h>
 
@@ -135,7 +133,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY cmd_option_bind : public binder::cmd_option
 
       help_list_t::iterator iter_m;
       help_msg_t *obj;
-      for (iter_m = msg.begin(), obj = NULL; iter_m != msg.end(); ++iter_m) {
+      for (iter_m = msg.begin(), obj = nullptr; iter_m != msg.end(); ++iter_m) {
         if ((*iter_m).binded_obj == iter->second) {
           obj = &(*iter_m);
           break;
@@ -154,7 +152,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY cmd_option_bind : public binder::cmd_option
         continue;
       }
 
-      if (NULL == obj) {
+      if (nullptr == obj) {
         msg.push_back(help_msg_t());
         obj = &msg.back();
         assert(obj);
@@ -435,7 +433,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY cmd_option_bind : public binder::cmd_option
    * @param is_single_cmd 是否强制单指令, 如果不强制, 则指令名称不能重复
    * @param ext_param 透传参数
    */
-  inline void start(int argv, const char *argc[], bool is_single_cmd = false, void *ext_param = NULL) const {
+  inline void start(int argv, const char *argc[], bool is_single_cmd = false, void *ext_param = nullptr) const {
     cmd_option_list copt_list(argv, argc);
     copt_list.set_ext_param(ext_param);
 
@@ -449,7 +447,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY cmd_option_bind : public binder::cmd_option
    * @param is_single_cmd 是否强制单指令, 如果不强制, 则指令名称不能重复
    * @param ext_param 透传参数
    */
-  inline void start(int argv, char *argc[], bool is_single_cmd = false, void *ext_param = NULL) const {
+  inline void start(int argv, char *argc[], bool is_single_cmd = false, void *ext_param = nullptr) const {
     typedef const char *conv_char_t;
 
     start(argv, const_cast<conv_char_t *>(argc), is_single_cmd, ext_param);
@@ -461,7 +459,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY cmd_option_bind : public binder::cmd_option
    * @param is_single_cmd 是否强制单指令, 如果不强制, 则指令名称不能重复
    * @param ext_param 透传参数
    */
-  inline void start(const std::vector<std::string> &cmds, bool is_single_cmd = false, void *ext_param = NULL) const {
+  inline void start(const std::vector<std::string> &cmds, bool is_single_cmd = false, void *ext_param = nullptr) const {
     cmd_option_list copt_list(cmds);
     copt_list.set_ext_param(ext_param);
 
@@ -473,7 +471,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY cmd_option_bind : public binder::cmd_option
    * @param cmd_content 指令
    * @param is_single_cmd 是否强制单指令, 如果不强制, 则指令名称不能重复
    */
-  void start(const char *cmd_content, bool is_single_cmd = false, void *ext_param = NULL) const {
+  void start(const char *cmd_content, bool is_single_cmd = false, void *ext_param = nullptr) const {
     cmd_option_list cmds;
     std::string seg;
 
@@ -493,7 +491,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY cmd_option_bind : public binder::cmd_option
    * @param cmd_content 指令
    * @param is_single_cmd 是否强制单指令, 如果不强制, 则指令名称不能重复
    */
-  inline void start(const std::string &cmd_content, bool is_single_cmd = false, void *ext_param = NULL) const {
+  inline void start(const std::string &cmd_content, bool is_single_cmd = false, void *ext_param = nullptr) const {
     start(cmd_content.c_str(), is_single_cmd, ext_param);
   }
 

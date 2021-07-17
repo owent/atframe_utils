@@ -44,7 +44,7 @@ struct xxtea_check_length {
 
 template <typename Ty>
 struct xxtea_check_length_delegate {
-  static const bool value = sizeof(Ty) > sizeof(uint32_t);
+  static constexpr const bool value = sizeof(Ty) > sizeof(uint32_t);
 };
 }  // namespace detail
 
@@ -67,7 +67,7 @@ LIBATFRAME_UTILS_API void xxtea_encrypt(const xxtea_key *key, void *buffer, size
     abort();
   }
 
-  if (NULL == key || NULL == buffer || 0 == len) {
+  if (nullptr == key || nullptr == buffer || 0 == len) {
     return;
   }
 
@@ -96,7 +96,7 @@ LIBATFRAME_UTILS_API void xxtea_encrypt(const xxtea_key *key, const void *input,
                                         size_t *olen) {
   bool is_success = false;
   do {
-    if (NULL == key || input == NULL || ilen <= 0 || output == NULL || NULL == olen) {
+    if (nullptr == key || input == nullptr || ilen <= 0 || output == nullptr || nullptr == olen) {
       break;
     }
 
@@ -119,7 +119,7 @@ LIBATFRAME_UTILS_API void xxtea_encrypt(const xxtea_key *key, const void *input,
     is_success = true;
   } while (false);
 
-  if (!is_success && NULL != olen) {
+  if (!is_success && nullptr != olen) {
     *olen = 0;
   }
 }
@@ -133,7 +133,7 @@ LIBATFRAME_UTILS_API void xxtea_decrypt(const xxtea_key *key, void *buffer, size
     abort();
   }
 
-  if (NULL == key || NULL == buffer || 0 == len) {
+  if (nullptr == key || nullptr == buffer || 0 == len) {
     return;
   }
 
@@ -162,7 +162,7 @@ LIBATFRAME_UTILS_API void xxtea_decrypt(const xxtea_key *key, const void *input,
                                         size_t *olen) {
   bool is_success = false;
   do {
-    if (NULL == key || input == NULL || ilen <= 0 || output == NULL || NULL == olen) {
+    if (nullptr == key || input == nullptr || ilen <= 0 || output == nullptr || nullptr == olen) {
       break;
     }
 
@@ -185,7 +185,7 @@ LIBATFRAME_UTILS_API void xxtea_decrypt(const xxtea_key *key, const void *input,
     is_success = true;
   } while (false);
 
-  if (!is_success && NULL != olen) {
+  if (!is_success && nullptr != olen) {
     *olen = 0;
   }
 }

@@ -11,13 +11,13 @@ namespace util {
 namespace log {
 namespace detail {
 static const char *log_formatter_get_level_name(int l) {
-  static const char *all_level_name[log_formatter::level_t::LOG_LW_TRACE + 1] = {NULL};
+  static const char *all_level_name[log_formatter::level_t::LOG_LW_TRACE + 1] = {nullptr};
 
   if (l > log_formatter::level_t::LOG_LW_TRACE || l < 0) {
     return "Unknown";
   }
 
-  if (NULL == all_level_name[log_formatter::level_t::LOG_LW_TRACE]) {
+  if (nullptr == all_level_name[log_formatter::level_t::LOG_LW_TRACE]) {
     all_level_name[log_formatter::level_t::LOG_LW_DISABLED] = "Disabled";
     all_level_name[log_formatter::level_t::LOG_LW_FATAL] = "Fatal";
     all_level_name[log_formatter::level_t::LOG_LW_ERROR] = "Error";
@@ -33,19 +33,19 @@ static const char *log_formatter_get_level_name(int l) {
 
 LIBATFRAME_UTILS_API log_formatter::caller_info_t::caller_info_t()
     : level_id(level_t::LOG_LW_DISABLED),
-      level_name(NULL),
-      file_path(NULL),
+      level_name(nullptr),
+      file_path(nullptr),
       line_number(0),
-      func_name(NULL),
+      func_name(nullptr),
       rotate_index(0) {
-  if (NULL == level_name) {
+  if (nullptr == level_name) {
     level_name = detail::log_formatter_get_level_name(level_id);
   }
 }
 LIBATFRAME_UTILS_API log_formatter::caller_info_t::caller_info_t(level_t::type lid, const char *lname,
                                                                  const char *fpath, uint32_t lnum, const char *fnname)
     : level_id(lid), level_name(lname), file_path(fpath), line_number(lnum), func_name(fnname), rotate_index(0) {
-  if (NULL == level_name) {
+  if (nullptr == level_name) {
     level_name = detail::log_formatter_get_level_name(level_id);
   }
 }
@@ -54,7 +54,7 @@ LIBATFRAME_UTILS_API log_formatter::caller_info_t::caller_info_t(level_t::type l
                                                                  const char *fpath, uint32_t lnum, const char *fnname,
                                                                  uint32_t ridx)
     : level_id(lid), level_name(lname), file_path(fpath), line_number(lnum), func_name(fnname), rotate_index(ridx) {
-  if (NULL == level_name) {
+  if (nullptr == level_name) {
     level_name = detail::log_formatter_get_level_name(level_id);
   }
 }
@@ -78,11 +78,11 @@ LIBATFRAME_UTILS_API struct tm *log_formatter::get_iso_tm() {
 
 LIBATFRAME_UTILS_API size_t log_formatter::format(char *buff, size_t bufz, const char *fmt, size_t fmtz,
                                                   const caller_info_t &caller) {
-  if (NULL == buff || 0 == bufz) {
+  if (nullptr == buff || 0 == bufz) {
     return 0;
   }
 
-  if (NULL == fmt || 0 == fmtz) {
+  if (nullptr == fmt || 0 == fmtz) {
     buff[0] = '\0';
     return 0;
   }
@@ -90,14 +90,14 @@ LIBATFRAME_UTILS_API size_t log_formatter::format(char *buff, size_t bufz, const
   bool need_parse = false, running = true;
   size_t ret = 0;
   struct tm tm_obj_cache;
-  struct tm *tm_obj_ptr = NULL;
+  struct tm *tm_obj_ptr = nullptr;
 
 // 时间加缓存，以防使用过程中时间变化
 #define LOG_FMT_FN_TM_MEM(VAR, EXPRESS) \
                                         \
   int VAR;                              \
                                         \
-  if (NULL == tm_obj_ptr) {             \
+  if (nullptr == tm_obj_ptr) {          \
     tm_obj_cache = *get_iso_tm();       \
     tm_obj_ptr = &tm_obj_cache;         \
     VAR = tm_obj_ptr->EXPRESS;          \
@@ -291,7 +291,7 @@ LIBATFRAME_UTILS_API size_t log_formatter::format(char *buff, size_t bufz, const
 
       // =================== caller data ===================
       case 'L': {
-        if (NULL != caller.level_name) {
+        if (nullptr != caller.level_name) {
           int res = UTIL_STRFUNC_SNPRINTF(&buff[ret], bufz - ret, "%8s", caller.level_name);
           if (res < 0) {
             running = false;
@@ -311,7 +311,7 @@ LIBATFRAME_UTILS_API size_t log_formatter::format(char *buff, size_t bufz, const
         break;
       }
       case 's': {
-        if (NULL != caller.file_path) {
+        if (nullptr != caller.file_path) {
           const char *file_path = caller.file_path;
           if (!project_dir_.empty()) {
             for (size_t j = 0; j < project_dir_.size(); ++j) {
@@ -338,7 +338,7 @@ LIBATFRAME_UTILS_API size_t log_formatter::format(char *buff, size_t bufz, const
         break;
       }
       case 'k': {
-        if (NULL != caller.file_path) {
+        if (nullptr != caller.file_path) {
           const char *file_name = caller.file_path;
           for (const char *dir_split = caller.file_path; *dir_split; ++dir_split) {
             if ('/' == *dir_split || '\\' == *dir_split) {
@@ -364,7 +364,7 @@ LIBATFRAME_UTILS_API size_t log_formatter::format(char *buff, size_t bufz, const
         break;
       }
       case 'C': {
-        if (NULL != caller.func_name) {
+        if (nullptr != caller.func_name) {
           int res = UTIL_STRFUNC_SNPRINTF(&buff[ret], bufz - ret, "%s", caller.func_name);
           if (res < 0) {
             running = false;
@@ -424,7 +424,7 @@ LIBATFRAME_UTILS_API bool log_formatter::has_format(const char *fmt, size_t fmtz
 }
 
 LIBATFRAME_UTILS_API void log_formatter::set_project_directory(const char *dirbuf, size_t dirsz) {
-  if (NULL == dirbuf) {
+  if (nullptr == dirbuf) {
     project_dir_.clear();
   } else if (dirsz <= 0) {
     project_dir_ = dirbuf;
@@ -434,7 +434,7 @@ LIBATFRAME_UTILS_API void log_formatter::set_project_directory(const char *dirbu
 }
 
 LIBATFRAME_UTILS_API log_formatter::level_t::type log_formatter::get_level_by_name(const char *name) {
-  if (NULL == name) {
+  if (nullptr == name) {
     return level_t::LOG_LW_DEBUG;
   }
 

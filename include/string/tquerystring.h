@@ -20,14 +20,13 @@
 
 #pragma once
 
+#include <config/atframe_utils_build_feature.h>
+
 #include <cstddef>
+#include <memory>
 #include <sstream>
 #include <string>
 #include <vector>
-
-#include "std/smart_ptr.h"
-
-#include <config/atframe_utils_build_feature.h>
 
 #if defined(LIBATFRAME_UTILS_ENABLE_UNORDERED_MAP_SET) && LIBATFRAME_UTILS_ENABLE_UNORDERED_MAP_SET
 #  include <unordered_map>

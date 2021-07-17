@@ -174,15 +174,15 @@ CASE_TEST(ac_automation, dump_dot) {
   actree.set_skip('\n');
 
   const char *node_options[] = {"shape=box",     "fontname = \"SimHei\"", "labelfontname = \"SimHei\"",
-                                "fontsize = 14", "labelfontsize = 14",    NULL};
+                                "fontsize = 14", "labelfontsize = 14",    nullptr};
 
   const char *edge_options[] = {"fontname = \"SimHei\"", "labelfontname = \"SimHei\"", "fontsize = 14",
-                                "labelfontsize = 14", NULL};
-  actree.dump_dot(std::cout, NULL, node_options, edge_options);
+                                "labelfontsize = 14", nullptr};
+  actree.dump_dot(std::cout, nullptr, node_options, edge_options);
 
   std::fstream fos;
   fos.open("ac_automation.dump_dot.txt", std::ios::out);
-  actree.dump_dot(fos, NULL, node_options, edge_options);
+  actree.dump_dot(fos, nullptr, node_options, edge_options);
 }
 
 CASE_TEST(ac_automation, load_and_dump) {
@@ -204,10 +204,10 @@ CASE_TEST(ac_automation, load_and_dump) {
   }
 
   const char *node_options[] = {"shape=box",     "fontname = \"SimHei\"", "labelfontname = \"SimHei\"",
-                                "fontsize = 14", "labelfontsize = 14",    NULL};
+                                "fontsize = 14", "labelfontsize = 14",    nullptr};
   const char *edge_options[] = {"fontname = \"SimHei\"", "labelfontname = \"SimHei\"", "fontsize = 14",
-                                "labelfontsize = 14", NULL};
+                                "labelfontsize = 14", nullptr};
 
   actree.dump(fos);
-  actree.dump_dot(fdot, NULL, node_options, edge_options);
+  actree.dump_dot(fdot, nullptr, node_options, edge_options);
 }

@@ -528,7 +528,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY actrie {
 
     // 已到目标串目末尾，无匹配
     if (left_sz <= 0) {
-      out.keyword = NULL;
+      out.keyword = nullptr;
       return left_sz;
     }
 
@@ -547,7 +547,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY actrie {
     }
 
     // 忽略字符，直接往后匹配
-    if (NULL != skip && (*skip)[c]) {
+    if (nullptr != skip && (*skip)[c]) {
       out.has_skip = true;
       return match(storage, out, chp + csz, left_sz - csz, skip);
     }
@@ -575,7 +575,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY actrie {
    * @param end_sz 字符串结束位置
    */
   size_t find_start(const char *str, size_t end_sz) const {
-    if (end_sz <= 0 || NULL == str) {
+    if (end_sz <= 0 || nullptr == str) {
       return 0;
     }
 
@@ -700,11 +700,11 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY ac_automation {
       typename trie_type::match_result_t mres;
       mres.start = 0;
       mres.length = 0;
-      mres.keyword = NULL;
+      mres.keyword = nullptr;
       mres.has_skip = false;
 
       size_t res = storage_[0]->match(storage_, mres, end - left, left, &skip_charset_);
-      if (NULL != mres.keyword && mres.keyword->is_leaf()) {
+      if (nullptr != mres.keyword && mres.keyword->is_leaf()) {
         ret.push_back(match_t());
         match_t &item = ret.back();
         item.keyword = &mres.keyword->get_leaf();
@@ -760,8 +760,9 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY ac_automation {
    * @param edge_options 边绘制选项(最后跟一个NULL表示结束)
    */
   template <typename TC, typename TCTT>
-  LIBATFRAME_UTILS_API_HEAD_ONLY void dump_dot(std::basic_ostream<TC, TCTT> &os, const char *options[] = NULL,
-                                               const char *node_options[] = NULL, const char *edge_options[] = NULL) {
+  LIBATFRAME_UTILS_API_HEAD_ONLY void dump_dot(std::basic_ostream<TC, TCTT> &os, const char *options[] = nullptr,
+                                               const char *node_options[] = nullptr,
+                                               const char *edge_options[] = nullptr) {
     init();
 
     os << "digraph \"ac_automation";

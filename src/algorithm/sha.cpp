@@ -651,7 +651,7 @@ static void inner_internal_sha256_process(sha256_context_t &ctx, const unsigned 
   uint32_t A[8];
   unsigned int i;
 
-  static const uint32_t K[] = {
+  static constexpr const uint32_t K[] = {
       0x428A2F98, 0x71374491, 0xB5C0FBCF, 0xE9B5DBA5, 0x3956C25B, 0x59F111F1, 0x923F82A4, 0xAB1C5ED5,
       0xD807AA98, 0x12835B01, 0x243185BE, 0x550C7DC3, 0x72BE5D74, 0x80DEB1FE, 0x9BDC06A7, 0xC19BF174,
       0xE49B69C1, 0xEFBE4786, 0x0FC19DC6, 0x240CA1CC, 0x2DE92C6F, 0x4A7484AA, 0x5CB0A9DC, 0x76F988DA,
@@ -821,7 +821,7 @@ static void inner_internal_sha512_process(sha512_context_t &ctx, const unsigned 
   /*
    * Round constants
    */
-  static const uint64_t K[80] = {
+  static constexpr const uint64_t K[80] = {
       UL64(0x428A2F98D728AE22), UL64(0x7137449123EF65CD), UL64(0xB5C0FBCFEC4D3B2F), UL64(0xE9B5DBA58189DBBC),
       UL64(0x3956C25BF348B538), UL64(0x59F111F1B605D019), UL64(0x923F82A4AF194F9B), UL64(0xAB1C5ED5DA6D8118),
       UL64(0xD807AA98A3030242), UL64(0x12835B0145706FBE), UL64(0x243185BE4EE4B28C), UL64(0x550C7DC3D5FFB4E2),

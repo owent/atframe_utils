@@ -7,14 +7,6 @@
  *  Released under the MIT license
  */
 
-#include <cstring>
-#include <iostream>
-#include <list>
-#include <sstream>
-#include <string>
-#include <vector>
-
-#include <std/smart_ptr.h>
 #include <std/thread.h>
 
 #include <config/atframe_utils_build_feature.h>
@@ -24,6 +16,14 @@
 #if defined(UTIL_CONFIG_COMPILER_CXX_STATIC_ASSERT) && UTIL_CONFIG_COMPILER_CXX_STATIC_ASSERT
 #  include <type_traits>
 #endif
+
+#include <cstring>
+#include <iostream>
+#include <list>
+#include <memory>
+#include <sstream>
+#include <string>
+#include <vector>
 
 #include "cli/cmd_option.h"
 #include "cli/cmd_option_phoenix.h"
@@ -61,14 +61,14 @@ struct test_manager_tls_block_t {
   int *success_counter_ptr;
   int *failed_counter_ptr;
 
-  test_manager_tls_block_t() : success_counter_ptr(NULL), failed_counter_ptr(NULL) {}
+  test_manager_tls_block_t() : success_counter_ptr(nullptr), failed_counter_ptr(nullptr) {}
 };
 static pthread_once_t gt_test_manager_tls_block_once = PTHREAD_ONCE_INIT;
 static pthread_key_t gt_test_manager_tls_block_key;
 
 static void dtor_pthread_test_manager_tls_block(void *p) {
   test_manager_tls_block_t *block = reinterpret_cast<test_manager_tls_block_t *>(p);
-  if (NULL != block) {
+  if (nullptr != block) {
     delete block;
   }
 }
@@ -82,7 +82,7 @@ test_manager_tls_block_t *get_test_manager_tls_block() {
   (void)pthread_once(&gt_test_manager_tls_block_once, init_pthread_test_manager_tls_block);
   test_manager_tls_block_t *block =
       reinterpret_cast<test_manager_tls_block_t *>(pthread_getspecific(gt_test_manager_tls_block_key));
-  if (NULL == block) {
+  if (nullptr == block) {
     block = new test_manager_tls_block_t(g_global_counter_cache);
     pthread_setspecific(gt_test_manager_tls_block_key, block);
   }
@@ -93,14 +93,14 @@ struct gt_test_manager_tls_block_main_thread_dtor_t {
   test_manager_tls_block_t *block_ptr;
   gt_test_manager_tls_block_main_thread_dtor_t() {
     block_ptr = get_test_manager_tls_block();
-    if (NULL != block_ptr) {
-      block_ptr->success_counter_ptr = NULL;
-      block_ptr->failed_counter_ptr = NULL;
+    if (nullptr != block_ptr) {
+      block_ptr->success_counter_ptr = nullptr;
+      block_ptr->failed_counter_ptr = nullptr;
     }
   }
 
   ~gt_test_manager_tls_block_main_thread_dtor_t() {
-    pthread_setspecific(gt_test_manager_tls_block_key, NULL);
+    pthread_setspecific(gt_test_manager_tls_block_key, nullptr);
     dtor_pthread_test_manager_tls_block(reinterpret_cast<void *>(block_ptr));
   }
 };
@@ -172,7 +172,7 @@ void test_manager::append_event_on_exit(const std::string &event_name, on_exit_p
 #ifdef UTILS_TEST_MACRO_TEST_ENABLE_BOOST_TEST
 
 boost::unit_test::test_suite *&test_manager::test_suit() {
-  static boost::unit_test::test_suite *ret = NULL;
+  static boost::unit_test::test_suite *ret = nullptr;
   return ret;
 }
 
@@ -450,7 +450,7 @@ std::string test_manager::get_expire_time(clock_t begin, clock_t end) {
 
 void test_manager::set_counter_ptr(int *success_counter_ptr, int *failed_counter_ptr) {
   detail::test_manager_tls_block_t *block = detail::get_test_manager_tls_block();
-  if (NULL != block) {
+  if (nullptr != block) {
     block->success_counter_ptr = success_counter_ptr;
     block->failed_counter_ptr = failed_counter_ptr;
   }
@@ -460,7 +460,7 @@ void test_manager::set_counter_ptr(int *success_counter_ptr, int *failed_counter
 
 void test_manager::inc_success_counter() {
   detail::test_manager_tls_block_t *block = detail::get_test_manager_tls_block();
-  if (likely(NULL != block && NULL != block->success_counter_ptr)) {
+  if (likely(nullptr != block && nullptr != block->success_counter_ptr)) {
     ++(*block->success_counter_ptr);
     return;
   }
@@ -473,7 +473,7 @@ void test_manager::inc_success_counter() {
 
 void test_manager::inc_failed_counter() {
   detail::test_manager_tls_block_t *block = detail::get_test_manager_tls_block();
-  if (likely(NULL != block && NULL != block->failed_counter_ptr)) {
+  if (likely(nullptr != block && nullptr != block->failed_counter_ptr)) {
     ++(*block->failed_counter_ptr);
     return;
   }

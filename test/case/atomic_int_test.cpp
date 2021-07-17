@@ -417,7 +417,7 @@ CASE_TEST(atomic_int_test, uint64) {
 #if defined(UTIL_CONFIG_COMPILER_CXX_THREAD_LOCAL) && defined(UTIL_CONFIG_COMPILER_CXX_LAMBDAS) && \
     UTIL_CONFIG_COMPILER_CXX_LAMBDAS
 
-#  include <std/smart_ptr.h>
+#  include <memory>
 #  include <thread>
 #  include <vector>
 

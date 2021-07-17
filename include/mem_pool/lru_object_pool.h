@@ -27,6 +27,8 @@
 
 #pragma once
 
+#include <config/atframe_utils_build_feature.h>
+
 #include <assert.h>
 #include <stdint.h>
 #include <algorithm>
@@ -34,10 +36,7 @@
 #include <ctime>
 #include <limits>
 #include <list>
-
-#include <config/atframe_utils_build_feature.h>
-
-#include "std/smart_ptr.h"
+#include <memory>
 
 #include "lock/seq_alloc.h"
 
@@ -280,7 +279,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY lru_pool : public lru_pool_base {
     value_type *pull() {
       // pull, FILO
       if (cache_.empty()) {
-        return NULL;
+        return nullptr;
       }
 
       wrapper res = cache_.front();
@@ -369,7 +368,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY lru_pool : public lru_pool_base {
       return false;
     }
 #endif
-    if (NULL == obj) {
+    if (nullptr == obj) {
       return false;
     }
 
@@ -405,12 +404,12 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY lru_pool : public lru_pool_base {
   TObj *pull(key_t id) {
     typename cat_map_type::iterator iter = data_.find(id);
     if (iter == data_.end()) {
-      return NULL;
+      return nullptr;
     }
 
     if (!iter->second || iter->second->empty()) {
       data_.erase(iter);
-      return NULL;
+      return nullptr;
     }
 
     TObj *ret = iter->second->pull();
@@ -419,7 +418,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY lru_pool : public lru_pool_base {
       data_.erase(iter);
     }
 
-    if (NULL == ret) {
+    if (nullptr == ret) {
       return ret;
     }
 

@@ -51,11 +51,11 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY mixed_signed_int {
  public:
   using value_type = TSINT;
 
-  static const size_t TYPE_BIT = 8 * sizeof(value_type);
-  static const size_t TYPE_LEFT_BIT = ENABLE_MIXEDINT_MAGIC_MASK % TYPE_BIT;
-  static const size_t TYPE_RIGHT_BIT = TYPE_BIT - TYPE_LEFT_BIT;
-  static const value_type RIGHT_MASK = (((value_type)1) << TYPE_RIGHT_BIT) - 1;
-  static const value_type SYMBOL_MASK = ((value_type)1) << (TYPE_LEFT_BIT - 1);
+  static constexpr const size_t TYPE_BIT = 8 * sizeof(value_type);
+  static constexpr const size_t TYPE_LEFT_BIT = ENABLE_MIXEDINT_MAGIC_MASK % TYPE_BIT;
+  static constexpr const size_t TYPE_RIGHT_BIT = TYPE_BIT - TYPE_LEFT_BIT;
+  static constexpr const value_type RIGHT_MASK = (((value_type)1) << TYPE_RIGHT_BIT) - 1;
+  static constexpr const value_type SYMBOL_MASK = ((value_type)1) << (TYPE_LEFT_BIT - 1);
 
  public:
   static value_type encode(value_type d) { return (d << TYPE_LEFT_BIT) ^ (d >> TYPE_RIGHT_BIT); }
@@ -70,11 +70,11 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY mixed_unsigned_int {
  public:
   typedef TUSINT value_type;
 
-  static const size_t TYPE_BIT = 8 * sizeof(value_type);
-  static const size_t TYPE_LEFT_BIT = ENABLE_MIXEDINT_MAGIC_MASK % TYPE_BIT;
-  static const size_t TYPE_RIGHT_BIT = TYPE_BIT - TYPE_LEFT_BIT;
-  static const value_type RIGHT_MASK = (((value_type)1) << TYPE_RIGHT_BIT) - 1;
-  static const value_type SYMBOL_MASK = ((value_type)1) << (TYPE_LEFT_BIT - 1);
+  static constexpr const size_t TYPE_BIT = 8 * sizeof(value_type);
+  static constexpr const size_t TYPE_LEFT_BIT = ENABLE_MIXEDINT_MAGIC_MASK % TYPE_BIT;
+  static constexpr const size_t TYPE_RIGHT_BIT = TYPE_BIT - TYPE_LEFT_BIT;
+  static constexpr const value_type RIGHT_MASK = (((value_type)1) << TYPE_RIGHT_BIT) - 1;
+  static constexpr const value_type SYMBOL_MASK = ((value_type)1) << (TYPE_LEFT_BIT - 1);
 
  public:
   static value_type encode(value_type d) { return (d << TYPE_LEFT_BIT) ^ (d >> TYPE_RIGHT_BIT); }

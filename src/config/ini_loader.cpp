@@ -103,10 +103,10 @@ T tolower(T c) {
   return c;
 }
 template <typename T>
-T str2int(const_cstring str, const_cstring *left = NULL) {
+T str2int(const_cstring str, const_cstring *left = nullptr) {
   T out = 0;
-  if (NULL == str || !(*str)) {
-    if (NULL != left) {
+  if (nullptr == str || !(*str)) {
+    if (nullptr != left) {
       *left = str;
     }
 
@@ -121,7 +121,7 @@ T str2int(const_cstring str, const_cstring *left = NULL) {
   }
 
   if (!(*str)) {
-    if (NULL != left) {
+    if (nullptr != left) {
       *left = str;
     }
 
@@ -154,7 +154,7 @@ T str2int(const_cstring str, const_cstring *left = NULL) {
     }
   }
 
-  if (NULL != left) {
+  if (nullptr != left) {
     *left = str + i;
   }
 
@@ -222,7 +222,7 @@ LIBATFRAME_UTILS_API ini_value::ptr_t ini_value::get_child_by_path(const std::st
   for (; iter != _keys._keys.end(); ++iter) {
     node_type::const_iterator child_iter = ret->children_nodes_.find(*iter);
     if (child_iter == ret->children_nodes_.end()) {
-      ret = NULL;
+      ret = nullptr;
       break;
     }
     ret = child_iter->second.get();
@@ -232,7 +232,7 @@ LIBATFRAME_UTILS_API ini_value::ptr_t ini_value::get_child_by_path(const std::st
     return const_cast<ini_value *>(ret)->shared_from_this();
   }
 
-  return NULL;
+  return nullptr;
 }
 
 LIBATFRAME_UTILS_API const std::string &ini_value::get_empty_string() {
@@ -335,7 +335,7 @@ LIBATFRAME_UTILS_API duration_value ini_value::as_duration(size_t index) const {
     return ret;
   }
 
-  detail::const_cstring word_begin = NULL;
+  detail::const_cstring word_begin = nullptr;
   time_t tm_val = detail::str2int<time_t>(as_cpp_string(index).c_str(), &word_begin);
   while (word_begin && *word_begin) {
     if (analysis::spaces::test_char(*word_begin)) {
@@ -805,7 +805,7 @@ LIBATFRAME_UTILS_API int ini_loader::load_stream(std::istream &in, bool is_appen
 }
 
 LIBATFRAME_UTILS_API int ini_loader::load_file(const char *file_path, bool is_append) {
-  if (NULL == file_path) {
+  if (nullptr == file_path) {
     return EIEC_OPENFILE;
   }
 
@@ -844,7 +844,7 @@ LIBATFRAME_UTILS_API ini_value &ini_loader::get_root_node() { return *root_node_
 LIBATFRAME_UTILS_API const ini_value &ini_loader::get_root_node() const { return *root_node_; }
 
 LIBATFRAME_UTILS_API ini_value &ini_loader::get_node(const std::string &path, ini_value *father_ptr) {
-  if (NULL == father_ptr) {
+  if (nullptr == father_ptr) {
     father_ptr = root_node_.get();
   }
 
@@ -865,7 +865,7 @@ LIBATFRAME_UTILS_API ini_value &ini_loader::get_node(const std::string &path, in
 }
 
 LIBATFRAME_UTILS_API ini_value &ini_loader::get_child_node(const std::string &path, ini_value *father_ptr) {
-  if (NULL == father_ptr) {
+  if (nullptr == father_ptr) {
     father_ptr = root_node_.get();
   }
 

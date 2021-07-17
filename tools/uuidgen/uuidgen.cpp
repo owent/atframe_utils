@@ -1,14 +1,13 @@
 ﻿
+#include <cli/cmd_option.h>
+#include <cli/cmd_option_phoenix.h>
+
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <functional>
 #include <iostream>
 #include <vector>
-
-#include <std/ref.h>
-
-#include <cli/cmd_option.h>
-#include <cli/cmd_option_phoenix.h>
 
 #include "random/uuid_generator.h"
 

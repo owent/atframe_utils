@@ -63,15 +63,14 @@
 
 #pragma once
 
-#include <cstddef>
-#include <memory>
-
 #include <config/compile_optimize.h>
 #include <config/compiler_features.h>
 
+#include <cstddef>
+#include <memory>
+
 #include "lock/lock_holder.h"
 #include "lock/spin_lock.h"
-#include "std/smart_ptr.h"
 
 /**
  * @brief if you are under Windows, you may want to declare import/export of singleton<T>

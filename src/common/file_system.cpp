@@ -52,7 +52,7 @@
 
 namespace util {
 LIBATFRAME_UTILS_API bool file_system::get_file_content(std::string &out, const char *file_path, bool is_binary) {
-  FILE *f = NULL;
+  FILE *f = nullptr;
   if (is_binary) {
     UTIL_FS_OPEN(error_code, f, file_path, "rb");
     COMPILER_UNUSED(error_code);
@@ -61,7 +61,7 @@ LIBATFRAME_UTILS_API bool file_system::get_file_content(std::string &out, const 
     COMPILER_UNUSED(error_code);
   }
 
-  if (NULL == f) {
+  if (nullptr == f) {
     return false;
   }
 
@@ -80,7 +80,7 @@ LIBATFRAME_UTILS_API bool file_system::get_file_content(std::string &out, const 
     }
   } else {
     // fclose(f);
-    // f = NULL;
+    // f = nullptr;
     // if (is_binary) {
     //     UTIL_FS_OPEN(error_code, f, file_path, "rb");
     //     COMPILER_UNUSED(error_code);
@@ -89,7 +89,7 @@ LIBATFRAME_UTILS_API bool file_system::get_file_content(std::string &out, const 
     //     COMPILER_UNUSED(error_code);
     // }
 
-    // if (NULL == f) {
+    // if (nullptr == f) {
     //     return false;
     // }
 
@@ -112,7 +112,7 @@ LIBATFRAME_UTILS_API bool file_system::get_file_content(std::string &out, const 
 }
 
 LIBATFRAME_UTILS_API bool file_system::split_path(std::vector<std::string> &out, const char *path, bool compact) {
-  if (NULL == path) {
+  if (nullptr == path) {
     return false;
   }
 
@@ -124,9 +124,9 @@ LIBATFRAME_UTILS_API bool file_system::split_path(std::vector<std::string> &out,
   strncpy(opr_path, path, sizeof(opr_path) - 1);
 #endif
 
-  char *saveptr = NULL;
+  char *saveptr = nullptr;
   char *token = SAFE_STRTOK_S(opr_path, "\\/", &saveptr);
-  while (NULL != token) {
+  while (nullptr != token) {
     if (0 != strlen(token)) {
       if (compact) {
         // 紧缩路径
@@ -143,7 +143,7 @@ LIBATFRAME_UTILS_API bool file_system::split_path(std::vector<std::string> &out,
         out.push_back(token);
       }
     }
-    token = SAFE_STRTOK_S(NULL, "\\/", &saveptr);
+    token = SAFE_STRTOK_S(nullptr, "\\/", &saveptr);
   }
 
   return !out.empty();
@@ -152,11 +152,11 @@ LIBATFRAME_UTILS_API bool file_system::split_path(std::vector<std::string> &out,
 LIBATFRAME_UTILS_API bool file_system::is_exist(const char *file_path) { return 0 == FUNC_ACCESS(file_path); }
 
 LIBATFRAME_UTILS_API bool file_system::file_size(const char *file_path, size_t &sz) {
-  FILE *f = NULL;
+  FILE *f = nullptr;
   UTIL_FS_OPEN(error_code, f, file_path, "rb");
   COMPILER_UNUSED(error_code);
 
-  if (NULL == f) {
+  if (nullptr == f) {
     return false;
   }
 
@@ -186,7 +186,7 @@ LIBATFRAME_UTILS_API bool file_system::mkdir(const char *dir_path, bool recursio
 
   std::string now_path;
   // 初始路径在Unix系统下会被转为相对路径
-  if (NULL != dir_path && ('/' == *dir_path || '\\' == *dir_path)) {
+  if (nullptr != dir_path && ('/' == *dir_path || '\\' == *dir_path)) {
     // 留一个\0和一个分隔符位
     now_path.reserve(strlen(dir_path) + 4);
 
@@ -215,7 +215,7 @@ LIBATFRAME_UTILS_API bool file_system::mkdir(const char *dir_path, bool recursio
 }
 
 LIBATFRAME_UTILS_API bool file_system::dirname(const char *file_path, size_t sz, std::string &dir, int depth) {
-  if (NULL == file_path || 0 == file_path[0]) {
+  if (nullptr == file_path || 0 == file_path[0]) {
     return false;
   }
 
@@ -246,14 +246,14 @@ LIBATFRAME_UTILS_API bool file_system::dirname(const char *file_path, size_t sz,
 
 LIBATFRAME_UTILS_API std::string file_system::get_cwd() {
   std::string ret;
-  char *res = NULL;
+  char *res = nullptr;
 #ifdef UTIL_FS_WINDOWS_API
-  res = _getcwd(NULL, 0);
+  res = _getcwd(nullptr, 0);
 #else
-  res = getcwd(NULL, 0);
+  res = getcwd(nullptr, 0);
 #endif
 
-  if (NULL != res) {
+  if (nullptr != res) {
     ret = res;
     free(res);
   }
@@ -297,7 +297,7 @@ LIBATFRAME_UTILS_API std::string file_system::getenv(const char *name) {
   std::string ret;
 #if defined(UTIL_FS_C11_API)
   size_t len = 0;
-  if (0 != getenv_s(&len, NULL, 0, name)) {
+  if (0 != getenv_s(&len, nullptr, 0, name)) {
     return ret;
   }
   if (len == 0) {
@@ -317,7 +317,7 @@ LIBATFRAME_UTILS_API std::string file_system::getenv(const char *name) {
   return ret;
 #else
   char *val = ::getenv(name);
-  if (NULL != val) {
+  if (nullptr != val) {
     ret = val;
   }
 
@@ -330,12 +330,12 @@ LIBATFRAME_UTILS_API std::string file_system::getenv(const char *name) {
 
 LIBATFRAME_UTILS_API FILE *file_system::open_tmp_file() {
 #if defined(UTIL_FS_C11_API)
-  FILE *ret = NULL;
+  FILE *ret = nullptr;
   if (0 == tmpfile_s(&ret)) {
     return ret;
   }
 
-  return NULL;
+  return nullptr;
 #else
   return tmpfile();
 #endif
@@ -381,7 +381,7 @@ LIBATFRAME_UTILS_API bool file_system::generate_tmp_file_name(std::string &inout
     return false;
   }
 #    else
-  if (NULL != _mktemp(&inout[0])) {
+  if (nullptr != _mktemp(&inout[0])) {
     inout.pop_back();
     return true;
   } else {
@@ -434,7 +434,7 @@ LIBATFRAME_UTILS_API bool file_system::generate_tmp_file_name(std::string &inout
 #    else
   char path_buffer[util::file_system::MAX_PATH_LEN + 1] = {0};
 #    endif
-  if (NULL != tmpnam(path_buffer)) {
+  if (nullptr != tmpnam(path_buffer)) {
     inout = &path_buffer[0];
     return true;
   } else {
@@ -540,19 +540,19 @@ LIBATFRAME_UTILS_API int file_system::scan_dir(const char *dir_path, std::list<s
     return 0;
   }
 #else
-  DIR *dir = NULL;
+  DIR *dir = nullptr;
   if (base_dir.empty()) {
     dir = opendir(".");
   } else {
     dir = opendir(base_dir.c_str());
   }
-  if (NULL == dir) {
+  if (nullptr == dir) {
     return errno;
   }
 
   do {
     struct dirent *child_node = readdir(dir);
-    if (NULL == child_node) {
+    if (nullptr == child_node) {
       break;
     }
 
@@ -651,7 +651,7 @@ LIBATFRAME_UTILS_API int file_system::scan_dir(const char *dir_path, std::list<s
 }
 
 LIBATFRAME_UTILS_API bool file_system::is_abs_path(const char *dir_path) {
-  if (NULL == dir_path) {
+  if (nullptr == dir_path) {
     return false;
   }
 
@@ -697,7 +697,7 @@ LIBATFRAME_UTILS_API int file_system::link(const char *oldpath, const char *newp
 
     return static_cast<int>(GetLastError());
   } else {
-    if (CreateHardLink(VC_TEXT(newpath), VC_TEXT(oldpath), NULL)) {
+    if (CreateHardLink(VC_TEXT(newpath), VC_TEXT(oldpath), nullptr)) {
       return 0;
     }
 

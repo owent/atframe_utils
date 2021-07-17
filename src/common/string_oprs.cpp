@@ -4,7 +4,7 @@
 namespace util {
 namespace string {
 LIBATFRAME_UTILS_API const char *version_tok(const char *v, int64_t &out) {
-  if (NULL == v) {
+  if (nullptr == v) {
     out = 0;
     return v;
   }

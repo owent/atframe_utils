@@ -53,7 +53,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY linear_feedback_shift_engine {
   inline size_t block_size() const noexcept { return sizeof(xor_c_seed_); }
 
   inline bool dump(unsigned char *output, size_t size) const noexcept {
-    if (NULL == output || size < block_size()) {
+    if (nullptr == output || size < block_size()) {
       return false;
     }
 
@@ -62,7 +62,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY linear_feedback_shift_engine {
   }
 
   inline bool load(const unsigned char *input, size_t size) noexcept {
-    if (NULL == input || size < block_size()) {
+    if (nullptr == input || size < block_size()) {
       return false;
     }
 
@@ -117,7 +117,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY xor_combine_engine {
   inline size_t block_size() const noexcept { return xor_c_rng_left_.block_size() + xor_c_rng_right_.block_size(); }
 
   inline bool dump(unsigned char *output, size_t size) const noexcept {
-    if (NULL == output || size < block_size()) {
+    if (nullptr == output || size < block_size()) {
       return false;
     }
 
@@ -126,7 +126,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY xor_combine_engine {
   }
 
   inline bool load(const unsigned char *input, size_t size) noexcept {
-    if (NULL == input || size < block_size()) {
+    if (nullptr == input || size < block_size()) {
       return false;
     }
 

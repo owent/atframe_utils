@@ -35,7 +35,7 @@ struct LIBATFRAME_UTILS_API stacktrace_options {
 
 LIBATFRAME_UTILS_API bool is_stacktrace_enabled() noexcept;
 
-LIBATFRAME_UTILS_API size_t stacktrace_write(char *buf, size_t bufsz, const stacktrace_options *options = NULL);
+LIBATFRAME_UTILS_API size_t stacktrace_write(char *buf, size_t bufsz, const stacktrace_options *options = nullptr);
 }  // namespace log
 }  // namespace util
 

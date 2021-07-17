@@ -14,11 +14,11 @@
  */
 
 #include <map>
+#include <memory>
 #include <string>
 #include <vector>
 
 #include "cli/cmd_option_value.h"
-#include "std/smart_ptr.h"
 
 namespace util {
 namespace cli {

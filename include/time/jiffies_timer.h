@@ -68,19 +68,19 @@
  *  7   1792  209715200 ms (~58h) 6710886400 ms - 13421772700 ms (~19d - ~621d)
  */
 
+#include <config/compiler_features.h>
+
+#include <config/atframe_utils_build_feature.h>
+
 #include <assert.h>
 #include <stdint.h>
 #include <bitset>
 #include <cstddef>
 #include <cstring>
 #include <ctime>
+#include <functional>
 #include <list>
-
-#include <config/compiler_features.h>
-#include <std/functional.h>
-#include <std/smart_ptr.h>
-
-#include <config/atframe_utils_build_feature.h>
+#include <memory>
 
 namespace util {
 namespace time {
@@ -231,7 +231,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY jiffies_timer {
     timer_inst->flags = 0;
     timer_inst->timeout = last_tick_ + delta;
     timer_inst->private_data = priv_data;
-    timer_inst->owner_round = NULL;
+    timer_inst->owner_round = nullptr;
     timer_inst->owner = this;
     // timer_inst->owner_iter = ...
     while (0 == ++seq_alloc_)
@@ -248,7 +248,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY jiffies_timer {
 #endif
 
     // assign to watcher
-    if (watcher != NULL) {
+    if (watcher != nullptr) {
       *watcher = timer_inst;
     }
     timer_inst->owner_iter = timer_base_[idx].insert(timer_base_[idx].end(), timer_inst);
@@ -259,12 +259,12 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY jiffies_timer {
   }
 
   inline int add_timer(time_t delta, const timer_callback_fn_t &fn, void *priv_data) {
-    return add_timer(delta, fn, priv_data, NULL);
+    return add_timer(delta, fn, priv_data, nullptr);
   }
 
 #if defined(UTIL_CONFIG_COMPILER_CXX_RVALUE_REFERENCES) && UTIL_CONFIG_COMPILER_CXX_RVALUE_REFERENCES
   inline int add_timer(time_t delta, timer_callback_fn_t &&fn, void *priv_data) {
-    return add_timer(delta, fn, priv_data, NULL);
+    return add_timer(delta, fn, priv_data, nullptr);
   }
 #endif
   /**
@@ -304,14 +304,14 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY jiffies_timer {
               ++ret;
             }
 
-            if (NULL != timer_ptr->owner_round) {
+            if (nullptr != timer_ptr->owner_round) {
               timer_ptr->owner_iter = timer_ptr->owner_round->end();
-              timer_ptr->owner_round = NULL;
+              timer_ptr->owner_round = nullptr;
             }
 
-            if (NULL != timer_ptr->owner) {
+            if (nullptr != timer_ptr->owner) {
               --timer_ptr->owner->size_;
-              timer_ptr->owner = NULL;
+              timer_ptr->owner = nullptr;
             }
           }
         }
@@ -383,18 +383,18 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY jiffies_timer {
     timer.flags &= ~static_cast<uint32_t>(f);
   }
   static inline void remove_timer(timer_type &timer) {
-    if (NULL != timer.owner_round) {
+    if (nullptr != timer.owner_round) {
       if (timer.owner_iter != timer.owner_round->end()) {
         timer.owner_round->erase(timer.owner_iter);
       }
 
       timer.owner_iter = timer.owner_round->end();
-      timer.owner_round = NULL;
+      timer.owner_round = nullptr;
     }
 
-    if (NULL != timer.owner) {
+    if (nullptr != timer.owner) {
       --timer.owner->size_;
-      timer.owner = NULL;
+      timer.owner = nullptr;
     }
   }
 

@@ -1,8 +1,8 @@
-﻿#include <std/chrono.h>
-#include <std/smart_ptr.h>
+﻿#include <chrono>
 #include <cstdlib>
 #include <cstring>
 #include <fstream>
+#include <memory>
 
 #include "algorithm/crypto_cipher.h"
 #include "common/file_system.h"
@@ -56,10 +56,10 @@ CASE_TEST(crypto_cipher, split_ciphers) {
   std::pair<const char *, const char *> res;
   res.first = in.c_str();
   res.second = in.c_str();
-  while (NULL != res.second) {
+  while (nullptr != res.second) {
     res = util::crypto::cipher::ciphertok(res.second);
 
-    if (NULL != res.second && NULL != res.first) {
+    if (nullptr != res.second && nullptr != res.first) {
       all_ciphers.push_back(std::string(res.first, res.second));
     }
   }

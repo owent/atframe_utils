@@ -69,14 +69,14 @@
 namespace util {
 class file_system {
  public:
-  static const char DIRECTORY_SEPARATOR =
+  static constexpr const char DIRECTORY_SEPARATOR =
 #ifdef _WIN32
       '\\';
 #else
       '/';
 #endif
 
-  static const size_t MAX_PATH_LEN =
+  static constexpr const size_t MAX_PATH_LEN =
 #if defined(MAX_PATH)
       MAX_PATH;
 #elif defined(_MAX_PATH)

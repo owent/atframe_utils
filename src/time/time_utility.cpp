@@ -15,7 +15,7 @@ time_utility::~time_utility() {}
 
 LIBATFRAME_UTILS_API void time_utility::update(raw_time_t *t) {
   // raw_time_t prev_tp = now_;
-  if (NULL != t) {
+  if (nullptr != t) {
     now_ = *t + global_now_offset_;
   } else {
     now_ = std::chrono::system_clock::now() + global_now_offset_;

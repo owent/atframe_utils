@@ -48,10 +48,9 @@
 
 #ifdef CRYPTO_DH_ENABLED
 
+#  include <memory>
 #  include <string>
 #  include <vector>
-
-#  include "std/smart_ptr.h"
 
 namespace util {
 namespace crypto {
@@ -198,7 +197,7 @@ class dh {
      * @param DH_p INOUT new P
      * @param DH_g INOUT new G
      * @return 0 or error code
-     * @note DH_p and DH_g will be set to NULL when moved in, user must free them if they are still not NULL
+     * @note DH_p and DH_g will be set to nullptr when moved in, user must free them if they are still not nullptr
      */
     LIBATFRAME_UTILS_API int try_reset_dh_params(BIGNUM *&DH_p, BIGNUM *&DH_g);
 #  endif

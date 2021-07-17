@@ -37,7 +37,7 @@ static pthread_key_t gt_get_log_tls_key;
 
 static void dtor_pthread_get_log_tls(void *p) {
   char *buffer_block = reinterpret_cast<char *>(p);
-  if (NULL != buffer_block) {
+  if (nullptr != buffer_block) {
     delete[] buffer_block;
   }
 }
@@ -47,7 +47,7 @@ static void init_pthread_get_log_tls() { (void)pthread_key_create(&gt_get_log_tl
 char *get_log_tls_buffer() {
   (void)pthread_once(&gt_get_log_tls_once, init_pthread_get_log_tls);
   char *buffer_block = reinterpret_cast<char *>(pthread_getspecific(gt_get_log_tls_key));
-  if (NULL == buffer_block) {
+  if (nullptr == buffer_block) {
     buffer_block = new char[LOG_WRAPPER_MAX_SIZE_PER_LINE];
     pthread_setspecific(gt_get_log_tls_key, buffer_block);
   }
@@ -59,7 +59,7 @@ struct gt_get_log_tls_buffer_main_thread_dtor_t {
   gt_get_log_tls_buffer_main_thread_dtor_t() { buffer_ptr = get_log_tls_buffer(); }
 
   ~gt_get_log_tls_buffer_main_thread_dtor_t() {
-    pthread_setspecific(gt_get_log_tls_key, NULL);
+    pthread_setspecific(gt_get_log_tls_key, nullptr);
     dtor_pthread_get_log_tls(buffer_ptr);
   }
 };
@@ -178,13 +178,13 @@ LIBATFRAME_UTILS_API void log_wrapper::log(const caller_info_t &caller,
 #endif
 ) {
   log_operation_t writer;
-  writer.buffer = NULL;
+  writer.buffer = nullptr;
   writer.total_size = 0;
   writer.writen_size = 0;
 
   start_log(caller, writer);
 
-  if (!log_sinks_.empty() && NULL != writer.buffer) {
+  if (!log_sinks_.empty() && nullptr != writer.buffer) {
     va_list va_args;
     va_start(va_args, fmt);
     int prt_res = UTIL_STRFUNC_VSNPRINTF(writer.buffer + writer.writen_size, writer.total_size - writer.writen_size - 1,
@@ -217,13 +217,13 @@ LIBATFRAME_UTILS_API void log_wrapper::write_log(const caller_info_t &caller, co
 
 LIBATFRAME_UTILS_API log_wrapper *log_wrapper::mutable_log_cat(uint32_t cats) {
   if (detail::log_wrapper_global_destroyed_) {
-    return NULL;
+    return nullptr;
   }
 
   static log_wrapper all_logger[categorize_t::MAX];
 
   if (cats >= categorize_t::MAX) {
-    return NULL;
+    return nullptr;
   }
 
   return &all_logger[cats];
@@ -257,7 +257,7 @@ LIBATFRAME_UTILS_API void log_wrapper::start_log(const caller_info_t &caller, lo
 }
 
 LIBATFRAME_UTILS_API void log_wrapper::finish_log(const caller_info_t &caller, log_operation_t &writer) {
-  if (log_sinks_.empty() || NULL == writer.buffer) {
+  if (log_sinks_.empty() || nullptr == writer.buffer) {
     return;
   }
 

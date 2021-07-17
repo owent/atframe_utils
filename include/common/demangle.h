@@ -62,13 +62,13 @@ class scoped_demangled_name {
   explicit scoped_demangled_name(const char *name) noexcept : m_p(demangle_alloc(name)) {}
 
   ~scoped_demangled_name() noexcept {
-    if (NULL != m_p) {
+    if (nullptr != m_p) {
       demangle_free(m_p);
     }
   }
 
 #if defined(UTIL_CONFIG_COMPILER_CXX_RVALUE_REFERENCES) && UTIL_CONFIG_COMPILER_CXX_RVALUE_REFERENCES
-  scoped_demangled_name(scoped_demangled_name &&other) : m_p(other.m_p) { other.m_p = NULL; }
+  scoped_demangled_name(scoped_demangled_name &&other) : m_p(other.m_p) { other.m_p = nullptr; }
   scoped_demangled_name &operator=(scoped_demangled_name &&other) {
     const char *tmp = m_p;
     m_p = other.m_p;
@@ -83,12 +83,12 @@ class scoped_demangled_name {
 #if defined(UTIL_COMMON_DEMANGLE_USING_CXX_ABI)
 
 inline const char *demangle_alloc(const char *name) noexcept {
-  if (NULL == name) {
-    return NULL;
+  if (nullptr == name) {
+    return nullptr;
   }
   int status = 0;
   std::size_t size = 0;
-  return abi::__cxa_demangle(name, NULL, &size, &status);
+  return abi::__cxa_demangle(name, nullptr, &size, &status);
 }
 
 inline void demangle_free(const char *name) noexcept { std::free(const_cast<char *>(name)); }

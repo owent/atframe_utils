@@ -149,7 +149,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY xoshiro_engine {
   inline size_t block_size() const noexcept { return sizeof(xoshiro_seed_); }
 
   inline bool dump(unsigned char *output, size_t size) const noexcept {
-    if (NULL == output || size < block_size()) {
+    if (nullptr == output || size < block_size()) {
       return false;
     }
 
@@ -158,7 +158,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY xoshiro_engine {
   }
 
   inline bool load(const unsigned char *input, size_t size) noexcept {
-    if (NULL == input || size < block_size()) {
+    if (nullptr == input || size < block_size()) {
       return false;
     }
 
@@ -190,7 +190,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY xoshiro_engine_128 : public xoshiro_engine<
    * @brief just like call next() for 2^64 times
    */
   void jump() noexcept {
-    static const result_type jump_params[4] = {0x8764000b, 0xf542d2d3, 0x6fa035c3, 0x77f2db5b};
+    static constexpr const result_type jump_params[4] = {0x8764000b, 0xf542d2d3, 0x6fa035c3, 0x77f2db5b};
     jump(jump_params);
   }
 };
@@ -212,8 +212,8 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY xoshiro_engine_256 : public xoshiro_engine<
    * @brief just like call next() for 2^128 times
    */
   void jump() noexcept {
-    static const result_type jump_params[4] = {0x180ec6d33cfd0aba, 0xd5a61266f0c9392c, 0xa9582618e03fc9aa,
-                                               0x39abdc4529b1661c};
+    static constexpr const result_type jump_params[4] = {0x180ec6d33cfd0aba, 0xd5a61266f0c9392c, 0xa9582618e03fc9aa,
+                                                         0x39abdc4529b1661c};
     jump(jump_params);
   }
 
@@ -221,8 +221,8 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY xoshiro_engine_256 : public xoshiro_engine<
    * @brief just like call next() for 2^192 times
    */
   void long_jump() noexcept {
-    static const result_type jump_params[4] = {0x76e15d3efefdcbbf, 0xc5004e441c522fb3, 0x77710069854ee241,
-                                               0x39109bb02acbe635};
+    static constexpr const result_type jump_params[4] = {0x76e15d3efefdcbbf, 0xc5004e441c522fb3, 0x77710069854ee241,
+                                                         0x39109bb02acbe635};
     jump(jump_params);
   }
 };

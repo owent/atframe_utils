@@ -1,7 +1,8 @@
-﻿#include <algorithm>
+﻿
+#include <algorithm>
 #include <cstdio>
+#include <functional>
 #include <iostream>
-#include "std/ref.h"
 
 #include "cli/cmd_option.h"
 
@@ -14,7 +15,7 @@
 #include "cmd_option_caseignore_bind.h"
 
 class foo;
-foo *g_test = NULL;
+foo *g_test = nullptr;
 
 class foo {
  public:
