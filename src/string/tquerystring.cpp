@@ -7,7 +7,8 @@
 
 namespace util {
 namespace uri {
-typedef bool uri_map_type[256];
+using uri_map_type = bool[256];
+
 static uri_map_type g_raw_url_map = {false};
 static uri_map_type g_uri_map = {false};
 static uri_map_type g_uri_component_map = {false};

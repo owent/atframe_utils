@@ -63,15 +63,14 @@
 
 #pragma once
 
-#include <cstddef>
-#include <memory>
-
 #include <config/compile_optimize.h>
 #include <config/compiler_features.h>
 
+#include <cstddef>
+#include <memory>
+
 #include "lock/lock_holder.h"
 #include "lock/spin_lock.h"
-#include "std/smart_ptr.h"
 
 /**
  * @brief if you are under Windows, you may want to declare import/export of singleton<T>
@@ -92,13 +91,9 @@
 #  define UTIL_DESIGN_PATTERN_SINGLETON_EXPORT(T)
 #endif
 
-#if defined(UTIL_CONFIG_COMPILER_CXX_RVALUE_REFERENCES) && UTIL_CONFIG_COMPILER_CXX_RVALUE_REFERENCES
-#  define UTIL_DESIGN_PATTERN_SINGLETON_NOMAVLBLE(CLAZZ) \
-    CLAZZ(CLAZZ &&) UTIL_CONFIG_DELETED_FUNCTION;        \
-    CLAZZ &operator=(CLAZZ &&) UTIL_CONFIG_DELETED_FUNCTION;
-#else
-#  define UTIL_DESIGN_PATTERN_SINGLETON_NOMAVLBLE(CLAZZ)
-#endif
+#define UTIL_DESIGN_PATTERN_SINGLETON_NOMAVLBLE(CLAZZ) \
+  CLAZZ(CLAZZ &&) = delete;                            \
+  CLAZZ &operator=(CLAZZ &&) = delete;
 
 #if defined(__cpp_threadsafe_static_init)
 #  if __cpp_threadsafe_static_init >= 200806L
@@ -126,8 +121,8 @@
     class singleton_wrapper_permission_t : public TCLASS {};                                                           \
     class LABEL singleton_wrapper_t {                                                                                  \
      public:                                                                                                           \
-      typedef std::shared_ptr<singleton_wrapper_permission_t<CLAZZ> > ptr_permission_t;                                \
-      typedef std::shared_ptr<CLAZZ> ptr_t;                                                                            \
+      using ptr_permission_t = std::shared_ptr<singleton_wrapper_permission_t<CLAZZ> >;                                \
+      using ptr_t = std::shared_ptr<CLAZZ>;                                                                            \
       static LABEL bool __is_destroyed;                                                                                \
       struct deleter {                                                                                                 \
         void operator()(singleton_wrapper_permission_t<CLAZZ> *p) const {                                              \
@@ -159,8 +154,8 @@
     };                                                                                     \
     class LABEL singleton_wrapper_t {                                                      \
      public:                                                                               \
-      typedef std::shared_ptr<singleton_wrapper_permission_t<CLAZZ> > ptr_permission_t;    \
-      typedef std::shared_ptr<CLAZZ> ptr_t;                                                \
+      using ptr_permission_t = std::shared_ptr<singleton_wrapper_permission_t<CLAZZ> >;    \
+      using ptr_t = std::shared_ptr<CLAZZ>;                                                \
       static LABEL bool __is_destroyed;                                                    \
       struct deleter {                                                                     \
         void operator()(singleton_wrapper_permission_t<CLAZZ> *p) const {                  \
@@ -200,8 +195,8 @@
 
 #define UTIL_DESIGN_PATTERN_SINGLETON_DEF_FUNCS(LABEL, CLAZZ, BASE_CLAZZ)                   \
   UTIL_DESIGN_PATTERN_SINGLETON_DATA_IMPL(LABEL, CLAZZ, BASE_CLAZZ)                         \
-  BASE_CLAZZ(const BASE_CLAZZ &) UTIL_CONFIG_DELETED_FUNCTION;                              \
-  BASE_CLAZZ &operator=(const BASE_CLAZZ &) UTIL_CONFIG_DELETED_FUNCTION;                   \
+  BASE_CLAZZ(const BASE_CLAZZ &) = delete;                                                  \
+  BASE_CLAZZ &operator=(const BASE_CLAZZ &) = delete;                                       \
   UTIL_DESIGN_PATTERN_SINGLETON_NOMAVLBLE(BASE_CLAZZ)                                       \
  public:                                                                                    \
   static LABEL CLAZZ &get_instance() { return *singleton_wrapper_t::me(); }                 \
@@ -244,8 +239,8 @@ class singleton {
   /**
    * @brief 自身类型声明
    */
-  typedef T self_type;
-  typedef std::shared_ptr<self_type> ptr_t;
+  using self_type = T;
+  using ptr_t = std::shared_ptr<self_type>;
 
   UTIL_SYMBOL_VISIBLE singleton() {}
   UTIL_SYMBOL_VISIBLE ~singleton() {}
@@ -261,8 +256,8 @@ class local_singleton {
   /**
    * @brief 自身类型声明
    */
-  typedef T self_type;
-  typedef std::shared_ptr<self_type> ptr_t;
+  using self_type = T;
+  using ptr_t = std::shared_ptr<self_type>;
 
   UTIL_SYMBOL_LOCAL local_singleton() {}
   UTIL_SYMBOL_LOCAL ~local_singleton() {}

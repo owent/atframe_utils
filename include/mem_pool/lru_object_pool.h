@@ -27,6 +27,8 @@
 
 #pragma once
 
+#include <config/atframe_utils_build_feature.h>
+
 #include <assert.h>
 #include <stdint.h>
 #include <algorithm>
@@ -34,10 +36,7 @@
 #include <ctime>
 #include <limits>
 #include <list>
-
-#include <config/atframe_utils_build_feature.h>
-
-#include "std/smart_ptr.h"
+#include <memory>
 
 #include "lock/seq_alloc.h"
 
@@ -78,14 +77,14 @@ class LIBATFRAME_UTILS_API lru_pool_base {
  */
 class lru_pool_manager {
  public:
-  typedef std::shared_ptr<lru_pool_manager> ptr_t;
+  using ptr_t = std::shared_ptr<lru_pool_manager>;
 
   struct check_item_t {
     time_t push_tick;
     std::weak_ptr<lru_pool_base::list_type_base> list_;
   };
 
-  typedef std::list<check_item_t> check_list_t;
+  using check_list_t = std::list<check_item_t>;
 
  public:
   static LIBATFRAME_UTILS_API ptr_t create();
@@ -181,13 +180,13 @@ struct LIBATFRAME_UTILS_API_HEAD_ONLY lru_default_action {
 template <typename TKey, typename TObj, typename TAction = lru_default_action<TObj> >
 class LIBATFRAME_UTILS_API_HEAD_ONLY lru_pool : public lru_pool_base {
  public:
-  typedef TKey key_t;
-  typedef TObj value_type;
-  typedef TAction action_type;
+  using key_t = TKey;
+  using value_type = TObj;
+  using action_type = TAction;
 
   class list_type;
-  typedef std::shared_ptr<list_type> list_ptr_type;
-  typedef LIBATFRAME_UTILS_AUTO_SELETC_MAP(key_t, list_ptr_type) cat_map_type;
+  using list_ptr_type = std::shared_ptr<list_type>;
+  using cat_map_type = LIBATFRAME_UTILS_AUTO_SELETC_MAP(key_t, list_ptr_type);
 
   class list_type : public lru_pool_base::list_type_base {
    public:
@@ -280,7 +279,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY lru_pool : public lru_pool_base {
     value_type *pull() {
       // pull, FILO
       if (cache_.empty()) {
-        return NULL;
+        return nullptr;
       }
 
       wrapper res = cache_.front();
@@ -369,7 +368,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY lru_pool : public lru_pool_base {
       return false;
     }
 #endif
-    if (NULL == obj) {
+    if (nullptr == obj) {
       return false;
     }
 
@@ -405,12 +404,12 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY lru_pool : public lru_pool_base {
   TObj *pull(key_t id) {
     typename cat_map_type::iterator iter = data_.find(id);
     if (iter == data_.end()) {
-      return NULL;
+      return nullptr;
     }
 
     if (!iter->second || iter->second->empty()) {
       data_.erase(iter);
-      return NULL;
+      return nullptr;
     }
 
     TObj *ret = iter->second->pull();
@@ -419,7 +418,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY lru_pool : public lru_pool_base {
       data_.erase(iter);
     }
 
-    if (NULL == ret) {
+    if (nullptr == ret) {
       return ret;
     }
 

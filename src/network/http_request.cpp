@@ -32,9 +32,9 @@ namespace util {
 namespace network {
 namespace detail {
 /* initialize custom header list (stating that Expect: 100-continue is not wanted */
-static const char custom_no_expect_header[] = "Expect:";
-static const char content_type_multipart_post[] = "Content-Type: application/x-www-form-urlencoded";
-// static const char content_type_multipart_form_data[] = "Content-Type: multipart/form-data";
+static constexpr const char custom_no_expect_header[] = "Expect:";
+static constexpr const char content_type_multipart_post[] = "Content-Type: application/x-www-form-urlencoded";
+// static constexpr const char content_type_multipart_form_data[] = "Content-Type: multipart/form-data";
 }  // namespace detail
 
 LIBATFRAME_UTILS_API http_request::ptr_t http_request::create(curl_m_bind_t *curl_multi, const std::string &url) {
@@ -60,16 +60,16 @@ LIBATFRAME_UTILS_API int http_request::get_status_code_group(int code) { return 
 LIBATFRAME_UTILS_API http_request::http_request(curl_m_bind_t *curl_multi)
     : timeout_ms_(0),
       bind_m_(curl_multi),
-      request_(NULL),
+      request_(nullptr),
       flags_(0),
       response_code_(0),
       last_error_code_(0),
-      priv_data_(NULL) {
-  http_form_.begin = NULL;
-  http_form_.end = NULL;
-  http_form_.headerlist = NULL;
+      priv_data_(nullptr) {
+  http_form_.begin = nullptr;
+  http_form_.end = nullptr;
+  http_form_.headerlist = nullptr;
   http_form_.posted_size = 0;
-  http_form_.uploaded_file = NULL;
+  http_form_.uploaded_file = nullptr;
   http_form_.flags = 0;
   set_user_agent("libcurl");
 }
@@ -78,11 +78,11 @@ LIBATFRAME_UTILS_API http_request::~http_request() { cleanup(); }
 
 LIBATFRAME_UTILS_API int http_request::start(method_t::type method, bool wait) {
   CURL *req = mutable_request();
-  if (NULL == req) {
+  if (nullptr == req) {
     return -1;
   }
 
-  if (!wait && (NULL == bind_m_ || NULL == bind_m_->curl_multi)) {
+  if (!wait && (nullptr == bind_m_ || nullptr == bind_m_->curl_multi)) {
     return -1;
   }
 
@@ -115,7 +115,7 @@ LIBATFRAME_UTILS_API int http_request::start(method_t::type method, bool wait) {
   last_error_code_ = CURLE_OK;
   build_http_form(method);
 
-  if (NULL != http_form_.begin) {
+  if (nullptr != http_form_.begin) {
     set_libcurl_no_expect();
     curl_easy_setopt(req, CURLOPT_HTTPPOST, http_form_.begin);
     // curl_easy_setopt(req, CURLOPT_VERBOSE, 1L);
@@ -126,7 +126,7 @@ LIBATFRAME_UTILS_API int http_request::start(method_t::type method, bool wait) {
     // curl_easy_setopt(req, CURLOPT_COPYPOSTFIELDS, post_data_.c_str());
   }
 
-  if (NULL != http_form_.headerlist) {
+  if (nullptr != http_form_.headerlist) {
     curl_easy_setopt(req, CURLOPT_HTTPHEADER, http_form_.headerlist);
   }
 
@@ -135,7 +135,7 @@ LIBATFRAME_UTILS_API int http_request::start(method_t::type method, bool wait) {
     curl_easy_setopt(req, CURLOPT_READDATA, this);
 
     long infile_size = 0;
-    if (NULL != http_form_.uploaded_file) {
+    if (nullptr != http_form_.uploaded_file) {
       fseek(http_form_.uploaded_file, 0, SEEK_END);
       infile_size = ftell(http_form_.uploaded_file);
       fseek(http_form_.uploaded_file, 0, SEEK_SET);
@@ -169,7 +169,7 @@ LIBATFRAME_UTILS_API int http_request::start(method_t::type method, bool wait) {
 }
 
 LIBATFRAME_UTILS_API int http_request::stop() {
-  if (NULL == request_) {
+  if (nullptr == request_) {
     return -1;
   }
 
@@ -192,7 +192,7 @@ LIBATFRAME_UTILS_API int http_request::stop() {
 }
 
 LIBATFRAME_UTILS_API void http_request::set_url(const std::string &v) {
-  if (NULL == mutable_request()) {
+  if (nullptr == mutable_request()) {
     return;
   }
 
@@ -203,7 +203,7 @@ LIBATFRAME_UTILS_API void http_request::set_url(const std::string &v) {
 LIBATFRAME_UTILS_API const std::string &http_request::get_url() const { return url_; }
 
 LIBATFRAME_UTILS_API void http_request::set_user_agent(const std::string &v) {
-  if (NULL == mutable_request()) {
+  if (nullptr == mutable_request()) {
     return;
   }
 
@@ -221,7 +221,7 @@ LIBATFRAME_UTILS_API int http_request::get_response_code() const {
     return response_code_;
   }
 
-  if (NULL != request_) {
+  if (nullptr != request_) {
     long rsp_code = 0;
     curl_easy_getinfo(request_, CURLINFO_RESPONSE_CODE, &rsp_code);
     response_code_ = static_cast<int>(rsp_code);
@@ -242,14 +242,14 @@ LIBATFRAME_UTILS_API int http_request::add_form_file(const std::string &fieldnam
     return -1;
   }
 
-  if (NULL != http_form_.uploaded_file) {
+  if (nullptr != http_form_.uploaded_file) {
     fclose(http_form_.uploaded_file);
-    http_form_.uploaded_file = NULL;
+    http_form_.uploaded_file = nullptr;
   }
 
   UTIL_FS_OPEN(res, http_form_.uploaded_file, filename, "rb");
-  if (0 != res || NULL == http_form_.uploaded_file) {
-    if (NULL != http_form_.uploaded_file) {
+  if (0 != res || nullptr == http_form_.uploaded_file) {
+    if (nullptr != http_form_.uploaded_file) {
       fclose(http_form_.uploaded_file);
     }
     return res;
@@ -261,7 +261,7 @@ LIBATFRAME_UTILS_API int http_request::add_form_file(const std::string &fieldnam
     http_form_.flags |= form_list_t::EN_FLFT_HAS_FORM_FILE;
   } else {
     fclose(http_form_.uploaded_file);
-    http_form_.uploaded_file = NULL;
+    http_form_.uploaded_file = nullptr;
   }
   return ret;
 }
@@ -272,14 +272,14 @@ LIBATFRAME_UTILS_API int http_request::add_form_file(const std::string &fieldnam
     return -1;
   }
 
-  if (NULL != http_form_.uploaded_file) {
+  if (nullptr != http_form_.uploaded_file) {
     fclose(http_form_.uploaded_file);
-    http_form_.uploaded_file = NULL;
+    http_form_.uploaded_file = nullptr;
   }
 
   UTIL_FS_OPEN(res, http_form_.uploaded_file, filename, "rb");
-  if (0 != res || NULL == http_form_.uploaded_file) {
-    if (NULL != http_form_.uploaded_file) {
+  if (0 != res || nullptr == http_form_.uploaded_file) {
+    if (nullptr != http_form_.uploaded_file) {
       fclose(http_form_.uploaded_file);
     }
     return res;
@@ -292,7 +292,7 @@ LIBATFRAME_UTILS_API int http_request::add_form_file(const std::string &fieldnam
     http_form_.flags |= form_list_t::EN_FLFT_HAS_FORM_FILE;
   } else {
     fclose(http_form_.uploaded_file);
-    http_form_.uploaded_file = NULL;
+    http_form_.uploaded_file = nullptr;
   }
   return ret;
 }
@@ -303,14 +303,14 @@ LIBATFRAME_UTILS_API int http_request::add_form_file(const std::string &fieldnam
     return -1;
   }
 
-  if (NULL != http_form_.uploaded_file) {
+  if (nullptr != http_form_.uploaded_file) {
     fclose(http_form_.uploaded_file);
-    http_form_.uploaded_file = NULL;
+    http_form_.uploaded_file = nullptr;
   }
 
   UTIL_FS_OPEN(res, http_form_.uploaded_file, filename, "rb");
-  if (0 != res || NULL == http_form_.uploaded_file) {
-    if (NULL != http_form_.uploaded_file) {
+  if (0 != res || nullptr == http_form_.uploaded_file) {
+    if (nullptr != http_form_.uploaded_file) {
       fclose(http_form_.uploaded_file);
     }
     return res;
@@ -323,7 +323,7 @@ LIBATFRAME_UTILS_API int http_request::add_form_file(const std::string &fieldnam
     http_form_.flags |= form_list_t::EN_FLFT_HAS_FORM_FILE;
   } else {
     fclose(http_form_.uploaded_file);
-    http_form_.uploaded_file = NULL;
+    http_form_.uploaded_file = nullptr;
   }
   return ret;
 }
@@ -343,7 +343,7 @@ LIBATFRAME_UTILS_API void http_request::set_priv_data(void *v) { priv_data_ = v;
 LIBATFRAME_UTILS_API void *http_request::get_priv_data() const { return priv_data_; }
 
 LIBATFRAME_UTILS_API void http_request::set_opt_bool(CURLoption k, bool v) {
-  if (NULL == mutable_request()) {
+  if (nullptr == mutable_request()) {
     return;
   }
 
@@ -352,7 +352,7 @@ LIBATFRAME_UTILS_API void http_request::set_opt_bool(CURLoption k, bool v) {
 }
 
 LIBATFRAME_UTILS_API void http_request::set_opt_string(CURLoption k, const char *v) {
-  if (NULL == mutable_request()) {
+  if (nullptr == mutable_request()) {
     return;
   }
 
@@ -441,7 +441,7 @@ LIBATFRAME_UTILS_API void http_request::set_on_progress(on_progress_fn_t fn) {
   on_progress_fn_ = fn;
 
   CURL *req = mutable_request();
-  if (NULL == req) {
+  if (nullptr == req) {
     return;
   }
 
@@ -457,11 +457,11 @@ LIBATFRAME_UTILS_API void http_request::set_on_progress(on_progress_fn_t fn) {
   } else if (false == CHECK_FLAG(flags_, flag_t::EN_FT_STOPING)) {
     set_opt_bool(CURLOPT_NOPROGRESS, true);
 #    if LIBCURL_VERSION_NUM >= 0x072000
-    curl_easy_setopt(req, CURLOPT_XFERINFOFUNCTION, NULL);
-    curl_easy_setopt(req, CURLOPT_XFERINFODATA, NULL);
+    curl_easy_setopt(req, CURLOPT_XFERINFOFUNCTION, nullptr);
+    curl_easy_setopt(req, CURLOPT_XFERINFODATA, nullptr);
 #    else
-    curl_easy_setopt(req, CURLOPT_PROGRESSFUNCTION, NULL);
-    curl_easy_setopt(req, CURLOPT_PROGRESSDATA, NULL);
+    curl_easy_setopt(req, CURLOPT_PROGRESSFUNCTION, nullptr);
+    curl_easy_setopt(req, CURLOPT_PROGRESSDATA, nullptr);
 #    endif
   }
 }
@@ -471,7 +471,7 @@ LIBATFRAME_UTILS_API void http_request::set_on_header(on_header_fn_t fn) {
   on_header_fn_ = fn;
 
   CURL *req = mutable_request();
-  if (NULL == req) {
+  if (nullptr == req) {
     return;
   }
 
@@ -479,8 +479,8 @@ LIBATFRAME_UTILS_API void http_request::set_on_header(on_header_fn_t fn) {
     curl_easy_setopt(req, CURLOPT_HEADERFUNCTION, curl_callback_on_header);
     curl_easy_setopt(req, CURLOPT_HEADERDATA, this);
   } else {
-    curl_easy_setopt(req, CURLOPT_HEADERFUNCTION, NULL);
-    curl_easy_setopt(req, CURLOPT_HEADERDATA, NULL);
+    curl_easy_setopt(req, CURLOPT_HEADERFUNCTION, nullptr);
+    curl_easy_setopt(req, CURLOPT_HEADERDATA, nullptr);
   }
 }
 
@@ -508,7 +508,7 @@ LIBATFRAME_UTILS_API void http_request::set_on_verbose(on_verbose_fn_t fn) {
   on_verbose_fn_ = fn;
 
   CURL *req = mutable_request();
-  if (NULL == req) {
+  if (nullptr == req) {
     return;
   }
 
@@ -517,8 +517,8 @@ LIBATFRAME_UTILS_API void http_request::set_on_verbose(on_verbose_fn_t fn) {
     curl_easy_setopt(req, CURLOPT_DEBUGDATA, this);
     set_opt_verbose(true);
   } else {
-    curl_easy_setopt(req, CURLOPT_DEBUGFUNCTION, NULL);
-    curl_easy_setopt(req, CURLOPT_DEBUGDATA, NULL);
+    curl_easy_setopt(req, CURLOPT_DEBUGFUNCTION, nullptr);
+    curl_easy_setopt(req, CURLOPT_DEBUGDATA, nullptr);
     set_opt_verbose(false);
   }
 }
@@ -527,9 +527,9 @@ LIBATFRAME_UTILS_API bool http_request::is_running() const { return CHECK_FLAG(f
 
 LIBATFRAME_UTILS_API void http_request::remove_curl_request() {
   CURL *req = request_;
-  request_ = NULL;
-  if (NULL != req) {
-    if (NULL != bind_m_ && CHECK_FLAG(flags_, flag_t::EN_FT_CURL_MULTI_HANDLE)) {
+  request_ = nullptr;
+  if (nullptr != req) {
+    if (nullptr != bind_m_ && CHECK_FLAG(flags_, flag_t::EN_FT_CURL_MULTI_HANDLE)) {
       // can not be called inside socket callback
       last_error_code_ = curl_multi_remove_handle(bind_m_->curl_multi, req);
       UNSET_FLAG(flags_, flag_t::EN_FT_CURL_MULTI_HANDLE);
@@ -540,23 +540,23 @@ LIBATFRAME_UTILS_API void http_request::remove_curl_request() {
   UNSET_FLAG(flags_, flag_t::EN_FT_STOPING);
   UNSET_FLAG(flags_, flag_t::EN_FT_RUNNING);
 
-  if (NULL != http_form_.begin) {
+  if (nullptr != http_form_.begin) {
     curl_formfree(http_form_.begin);
-    http_form_.begin = NULL;
-    http_form_.end = NULL;
+    http_form_.begin = nullptr;
+    http_form_.end = nullptr;
     http_form_.qs_fields.clear();
   }
 
-  if (NULL != http_form_.headerlist) {
+  if (nullptr != http_form_.headerlist) {
     curl_slist_free_all(http_form_.headerlist);
-    http_form_.headerlist = NULL;
+    http_form_.headerlist = nullptr;
   }
 
   http_form_.posted_size = 0;
 
-  if (NULL != http_form_.uploaded_file) {
+  if (nullptr != http_form_.uploaded_file) {
     fclose(http_form_.uploaded_file);
-    http_form_.uploaded_file = NULL;
+    http_form_.uploaded_file = nullptr;
   }
   http_form_.flags = 0;
 
@@ -600,12 +600,12 @@ LIBATFRAME_UTILS_API void http_request::finish_req_rsp() {
 }
 
 LIBATFRAME_UTILS_API CURL *http_request::mutable_request() {
-  if (NULL != request_) {
+  if (nullptr != request_) {
     return request_;
   }
 
   request_ = curl_easy_init();
-  if (NULL != request_) {
+  if (nullptr != request_) {
     curl_easy_setopt(request_, CURLOPT_PRIVATE, this);
     curl_easy_setopt(request_, CURLOPT_WRITEDATA, this);
     curl_easy_setopt(request_, CURLOPT_WRITEFUNCTION, curl_callback_on_write);
@@ -635,11 +635,11 @@ LIBATFRAME_UTILS_API void http_request::build_http_form(method_t::type method) {
       http_form_.qs_fields.to_string().swap(post_data_);
       http_form_.flags |= form_list_t::EN_FLFT_WRITE_FORM_USE_FUNC;
 
-      if (NULL != http_form_.uploaded_file) {
+      if (nullptr != http_form_.uploaded_file) {
         fclose(http_form_.uploaded_file);
-        http_form_.uploaded_file = NULL;
+        http_form_.uploaded_file = nullptr;
       }
-    } else if (NULL != http_form_.uploaded_file) {
+    } else if (nullptr != http_form_.uploaded_file) {
       set_libcurl_no_expect();
     }
   } else if (!http_form_.qs_fields.empty()) {
@@ -654,7 +654,7 @@ LIBATFRAME_UTILS_API void http_request::build_http_form(method_t::type method) {
         util::types::item_string *val = static_cast<util::types::item_string *>(iter->second.get());
 #    endif
 
-        if (NULL != val) {
+        if (nullptr != val) {
           curl_formadd(&http_form_.begin, &http_form_.end, CURLFORM_PTRNAME, iter->first.c_str(), CURLFORM_NAMELENGTH,
                        static_cast<long>(iter->first.size()), CURLFORM_PTRCONTENTS, val->data().c_str(),
 #    if LIBCURL_VERSION_NUM >= 0x072e00
@@ -672,16 +672,16 @@ LIBATFRAME_UTILS_API void http_request::build_http_form(method_t::type method) {
       }
     }
 
-    if (NULL != http_form_.uploaded_file) {
+    if (nullptr != http_form_.uploaded_file) {
       fclose(http_form_.uploaded_file);
-      http_form_.uploaded_file = NULL;
+      http_form_.uploaded_file = nullptr;
     }
   }
 }
 
 LIBATFRAME_UTILS_API http_request::curl_poll_context_t *http_request::malloc_poll(http_request *req,
                                                                                   curl_socket_t sockfd) {
-  if (NULL == req) {
+  if (nullptr == req) {
     abort();
   }
 
@@ -689,7 +689,7 @@ LIBATFRAME_UTILS_API http_request::curl_poll_context_t *http_request::malloc_pol
   assert(req->bind_m_->ev_loop);
 
   curl_poll_context_t *ret = reinterpret_cast<curl_poll_context_t *>(malloc(sizeof(curl_poll_context_t)));
-  if (NULL == ret) {
+  if (nullptr == ret) {
     return ret;
   }
 
@@ -708,15 +708,15 @@ LIBATFRAME_UTILS_API void http_request::check_multi_info(CURLM *curl_handle) {
   CURLMsg *message;
   int pending;
 
-  for (message = curl_multi_info_read(curl_handle, &pending); NULL != message;
+  for (message = curl_multi_info_read(curl_handle, &pending); nullptr != message;
        message = curl_multi_info_read(curl_handle, &pending)) {
     switch (message->msg) {
       case CURLMSG_DONE: {
-        http_request *req = NULL;
+        http_request *req = nullptr;
         curl_easy_getinfo(message->easy_handle, CURLINFO_PRIVATE, &req);
         assert(req);
 
-        if (NULL != req) {
+        if (nullptr != req) {
           http_request::ptr_t req_p = req->shared_from_this();
           req->last_error_code_ = message->data.result;
           // this may cause req not available any more
@@ -734,7 +734,7 @@ LIBATFRAME_UTILS_API void http_request::check_multi_info(CURLM *curl_handle) {
   }
 }
 
-LIBATFRAME_UTILS_API http_request::curl_m_bind_t::curl_m_bind_t() : ev_loop(NULL), curl_multi(NULL) {}
+LIBATFRAME_UTILS_API http_request::curl_m_bind_t::curl_m_bind_t() : ev_loop(nullptr), curl_multi(nullptr) {}
 
 LIBATFRAME_UTILS_API int http_request::create_curl_multi(uv_loop_t *evloop, std::shared_ptr<curl_m_bind_t> &manager) {
   assert(evloop);
@@ -747,7 +747,7 @@ LIBATFRAME_UTILS_API int http_request::create_curl_multi(uv_loop_t *evloop, std:
   }
 
   manager->curl_multi = curl_multi_init();
-  if (NULL == manager->curl_multi) {
+  if (nullptr == manager->curl_multi) {
     manager.reset();
     return -1;
   }
@@ -778,7 +778,7 @@ LIBATFRAME_UTILS_API int http_request::destroy_curl_multi(std::shared_ptr<curl_m
   assert(manager->curl_multi);
 
   int ret = curl_multi_cleanup(manager->curl_multi);
-  manager->curl_multi = NULL;
+  manager->curl_multi = nullptr;
 
   // hold self in case of timer in libuv invalid
   manager->self_holder = manager;
@@ -794,7 +794,7 @@ LIBATFRAME_UTILS_API void http_request::ev_callback_on_timer_closed(uv_handle_t 
   assert(bind);
 
   // release self holder
-  if (NULL != bind) {
+  if (nullptr != bind) {
     bind->self_holder.reset();
   }
 }
@@ -809,7 +809,7 @@ LIBATFRAME_UTILS_API void http_request::ev_callback_on_poll_closed(uv_handle_t *
 LIBATFRAME_UTILS_API void http_request::ev_callback_on_timeout(uv_timer_t *handle) {
   curl_m_bind_t *bind = reinterpret_cast<curl_m_bind_t *>(handle->data);
   assert(bind);
-  if (NULL == bind) {
+  if (nullptr == bind) {
     return;
   }
 
@@ -820,7 +820,7 @@ LIBATFRAME_UTILS_API void http_request::ev_callback_on_timeout(uv_timer_t *handl
 
 LIBATFRAME_UTILS_API void http_request::ev_callback_curl_perform(uv_poll_t *req, int, int events) {
   assert(req && req->data);
-  if (NULL == req || NULL == req->data) {
+  if (nullptr == req || nullptr == req->data) {
     return;
   }
   curl_poll_context_t *context = reinterpret_cast<curl_poll_context_t *>(req->data);
@@ -870,10 +870,10 @@ LIBATFRAME_UTILS_API int http_request::curl_callback_handle_socket(CURL *easy, c
                                                                    void *socketp) {
   curl_poll_context_t *context = reinterpret_cast<curl_poll_context_t *>(socketp);
   if (action == CURL_POLL_IN || action == CURL_POLL_OUT || action == CURL_POLL_INOUT) {
-    if (NULL == context) {
+    if (nullptr == context) {
       http_request *req;
       curl_easy_getinfo(easy, CURLINFO_PRIVATE, &req);
-      if (NULL != req && NULL != req->bind_m_) {
+      if (nullptr != req && nullptr != req->bind_m_) {
         assert(req->bind_m_);
         assert(req->bind_m_->curl_multi);
 
@@ -883,7 +883,7 @@ LIBATFRAME_UTILS_API int http_request::curl_callback_handle_socket(CURL *easy, c
     }
   }
 
-  if (NULL == context) {
+  if (nullptr == context) {
     return 0;
   }
 
@@ -915,7 +915,7 @@ LIBATFRAME_UTILS_API int http_request::curl_callback_handle_socket(CURL *easy, c
         // already removed by libcurl
         uv_poll_stop(&context->poll_object);
         uv_close(reinterpret_cast<uv_handle_t *>(&context->poll_object), ev_callback_on_poll_closed);
-        curl_multi_assign(curl_multi, s, NULL);
+        curl_multi_assign(curl_multi, s, nullptr);
       }
       break;
     }
@@ -930,7 +930,7 @@ LIBATFRAME_UTILS_API int http_request::curl_callback_handle_socket(CURL *easy, c
 LIBATFRAME_UTILS_API size_t http_request::curl_callback_on_write(char *ptr, size_t size, size_t nmemb, void *userdata) {
   http_request *self = reinterpret_cast<http_request *>(userdata);
   assert(self);
-  if (NULL == self) {
+  if (nullptr == self) {
     return 0;
   }
 
@@ -940,7 +940,7 @@ LIBATFRAME_UTILS_API size_t http_request::curl_callback_on_write(char *ptr, size
     self->on_write_fn_(*self, data, data_len, data, data_len);
   }
 
-  if (NULL != data && data_len > 0) {
+  if (nullptr != data && data_len > 0) {
     self->response_.write(data, data_len);
   }
 
@@ -956,7 +956,7 @@ LIBATFRAME_UTILS_API int http_request::curl_callback_on_progress(void *clientp, 
 #    endif
   http_request *self = reinterpret_cast<http_request *>(clientp);
   int ret = 0;
-  if (NULL == self) {
+  if (nullptr == self) {
     return ret;
   }
 
@@ -981,11 +981,11 @@ LIBATFRAME_UTILS_API size_t http_request::curl_callback_on_read(char *buffer, si
                                                                 void *instream) {
   http_request *self = reinterpret_cast<http_request *>(instream);
   assert(self);
-  if (NULL == self) {
+  if (nullptr == self) {
     return 0;
   }
 
-  if (self->post_data_.empty() && NULL != self->http_form_.uploaded_file) {
+  if (self->post_data_.empty() && nullptr != self->http_form_.uploaded_file) {
     return fread(buffer, size, nitems, self->http_form_.uploaded_file);
   }
 
@@ -1020,7 +1020,7 @@ LIBATFRAME_UTILS_API size_t http_request::curl_callback_on_header(char *buffer, 
 
   const char *key = buffer;
   size_t keylen = 0;
-  const char *val = NULL;
+  const char *val = nullptr;
 
   for (; keylen < nwrite; ++keylen) {
     if (':' == key[keylen]) {
@@ -1035,11 +1035,11 @@ LIBATFRAME_UTILS_API size_t http_request::curl_callback_on_header(char *buffer, 
     }
   }
 
-  if (keylen > 0 && NULL != self && self->on_header_fn_) {
+  if (keylen > 0 && nullptr != self && self->on_header_fn_) {
     if (static_cast<size_t>(val - buffer) < nwrite) {
       self->on_header_fn_(*self, key, keylen, val, nwrite - (val - key));
     } else {
-      self->on_header_fn_(*self, key, keylen, NULL, 0);
+      self->on_header_fn_(*self, key, keylen, nullptr, 0);
     }
   }
 

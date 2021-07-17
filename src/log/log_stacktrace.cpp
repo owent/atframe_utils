@@ -53,7 +53,7 @@ struct SymInitializeHelper {
     process = GetCurrentProcess();
 
     // SymSetOptions(SYMOPT_UNDNAME | SYMOPT_DEFERRED_LOADS | SYMOPT_LOAD_LINES);
-    SymInitialize(process, NULL, TRUE);
+    SymInitialize(process, nullptr, TRUE);
   }
 
   ~SymInitializeHelper() { SymCleanup(process); }
@@ -108,22 +108,22 @@ class log_stacktrace_com_holder {
   T *holder_;
 
  private:
-  log_stacktrace_com_holder(const log_stacktrace_com_holder &) UTIL_CONFIG_DELETED_FUNCTION;
-  log_stacktrace_com_holder &operator=(const log_stacktrace_com_holder &) UTIL_CONFIG_DELETED_FUNCTION;
+  log_stacktrace_com_holder(const log_stacktrace_com_holder &) = delete;
+  log_stacktrace_com_holder &operator=(const log_stacktrace_com_holder &) = delete;
 
  public:
-  log_stacktrace_com_holder() UTIL_CONFIG_NOEXCEPT : holder_(NULL) {}
-  ~log_stacktrace_com_holder() UTIL_CONFIG_NOEXCEPT {
+  log_stacktrace_com_holder() noexcept : holder_(nullptr) {}
+  ~log_stacktrace_com_holder() noexcept {
     if (holder_) {
       holder_->Release();
     }
   }
 
-  T *operator->() const UTIL_CONFIG_NOEXCEPT { return holder_; }
+  T *operator->() const noexcept { return holder_; }
 
-  PVOID *to_pvoid_ptr() UTIL_CONFIG_NOEXCEPT { return reinterpret_cast<PVOID *>(&holder_); }
+  PVOID *to_pvoid_ptr() noexcept { return reinterpret_cast<PVOID *>(&holder_); }
 
-  bool is_inited() const UTIL_CONFIG_NOEXCEPT { return !!holder_; }
+  bool is_inited() const noexcept { return !!holder_; }
 };
 
 #endif
@@ -151,7 +151,7 @@ const stacktrace_options &default_stacktrace_options() {
 }
 }  // namespace details
 
-LIBATFRAME_UTILS_API bool is_stacktrace_enabled() UTIL_CONFIG_NOEXCEPT {
+LIBATFRAME_UTILS_API bool is_stacktrace_enabled() noexcept {
 #if defined(LOG_STACKTRACE_USING_LIBUNWIND) && LOG_STACKTRACE_USING_LIBUNWIND
   return true;
 #elif defined(LOG_STACKTRACE_USING_EXECINFO) && LOG_STACKTRACE_USING_EXECINFO
@@ -169,11 +169,11 @@ LIBATFRAME_UTILS_API bool is_stacktrace_enabled() UTIL_CONFIG_NOEXCEPT {
 
 #if defined(LOG_STACKTRACE_USING_LIBUNWIND) && LOG_STACKTRACE_USING_LIBUNWIND
 LIBATFRAME_UTILS_API size_t stacktrace_write(char *buf, size_t bufsz, const stacktrace_options *options) {
-  if (NULL == buf || bufsz <= 0) {
+  if (nullptr == buf || bufsz <= 0) {
     return 0;
   }
 
-  if (NULL == options) {
+  if (nullptr == options) {
     options = &details::default_stacktrace_options();
   }
 
@@ -228,7 +228,7 @@ LIBATFRAME_UTILS_API size_t stacktrace_write(char *buf, size_t bufsz, const stac
 #  if defined(USING_LIBSTDCXX_ABI) || defined(USING_LIBCXX_ABI)
       int cxx_abi_status;
       char *realfunc_name = abi::__cxa_demangle(func_name_cache, 0, 0, &cxx_abi_status);
-      if (NULL != realfunc_name) {
+      if (nullptr != realfunc_name) {
         func_name = realfunc_name;
       }
 #  endif
@@ -246,9 +246,9 @@ LIBATFRAME_UTILS_API size_t stacktrace_write(char *buf, size_t bufsz, const stac
       bufsz -= static_cast<size_t>(res);
 
 #  if defined(USING_LIBSTDCXX_ABI) || defined(USING_LIBCXX_ABI)
-      if (NULL != realfunc_name) {
+      if (nullptr != realfunc_name) {
         free(realfunc_name);
-        realfunc_name = NULL;
+        realfunc_name = nullptr;
       }
 #  endif
     }
@@ -275,12 +275,10 @@ struct stacktrace_symbol_group_t {
   std::string func_address;
 };
 
-inline bool stacktrace_is_space_char(char c) UTIL_CONFIG_NOEXCEPT {
-  return ' ' == c || '\r' == c || '\t' == c || '\n' == c;
-}
+inline bool stacktrace_is_space_char(char c) noexcept { return ' ' == c || '\r' == c || '\t' == c || '\n' == c; }
 
-static const char *stacktrace_skip_space(const char *name) UTIL_CONFIG_NOEXCEPT {
-  if (NULL == name) {
+static const char *stacktrace_skip_space(const char *name) noexcept {
+  if (nullptr == name) {
     return name;
   }
 
@@ -291,15 +289,15 @@ static const char *stacktrace_skip_space(const char *name) UTIL_CONFIG_NOEXCEPT 
   return name;
 }
 
-inline bool stacktrace_is_number_char(char c) UTIL_CONFIG_NOEXCEPT { return c >= '0' && c <= '9'; }
+inline bool stacktrace_is_number_char(char c) noexcept { return c >= '0' && c <= '9'; }
 
-inline bool stacktrace_is_ident_char(char c) UTIL_CONFIG_NOEXCEPT {
+inline bool stacktrace_is_ident_char(char c) noexcept {
   return '_' == c || '$' == c || stacktrace_is_number_char(c) || (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') ||
          (c & 0x80);  // utf-8 or unicode
 }
 
-static const char *stacktrace_get_ident_end(const char *name) UTIL_CONFIG_NOEXCEPT {
-  if (NULL == name) {
+static const char *stacktrace_get_ident_end(const char *name) noexcept {
+  if (nullptr == name) {
     return name;
   }
 
@@ -311,13 +309,13 @@ static const char *stacktrace_get_ident_end(const char *name) UTIL_CONFIG_NOEXCE
 }
 
 static bool stacktrace_pick_ident(const char *name, const char *&start, const char *&end, char &previous_c,
-                                  bool &clear_sym) UTIL_CONFIG_NOEXCEPT {
+                                  bool &clear_sym) noexcept {
   previous_c = 0;
   start = name;
   end = name;
 
   bool ret = false;
-  if (NULL == name) {
+  if (nullptr == name) {
     return false;
   }
 
@@ -344,7 +342,7 @@ static bool stacktrace_pick_ident(const char *name, const char *&start, const ch
   return ret;
 }
 
-static void stacktrace_fix_number(std::string &num) UTIL_CONFIG_NOEXCEPT {
+static void stacktrace_fix_number(std::string &num) noexcept {
   size_t fixed_len = num.size();
   while (fixed_len > 0 && (num[fixed_len - 1] > '9' || num[fixed_len - 1] < '0')) {
     --fixed_len;
@@ -359,7 +357,7 @@ static void stacktrace_pick_symbol_info(const char *name, stacktrace_symbol_grou
   out.func_offset.clear();
   out.func_address.clear();
 
-  if (NULL == name || 0 == *name) {
+  if (nullptr == name || 0 == *name) {
     return;
   }
 
@@ -402,16 +400,16 @@ static void stacktrace_pick_symbol_info(const char *name, stacktrace_symbol_grou
 }
 
 LIBATFRAME_UTILS_API size_t stacktrace_write(char *buf, size_t bufsz, const stacktrace_options *options) {
-  if (NULL == buf || bufsz <= 0) {
+  if (nullptr == buf || bufsz <= 0) {
     return 0;
   }
 
-  if (NULL == options) {
+  if (nullptr == options) {
     options = &details::default_stacktrace_options();
   }
 
   size_t ret = 0;
-  void *stacks[LOG_STACKTRACE_MAX_STACKS_ARRAY_SIZE] = {NULL};
+  void *stacks[LOG_STACKTRACE_MAX_STACKS_ARRAY_SIZE] = {nullptr};
   size_t frames_count = backtrace(stacks, LOG_STACKTRACE_MAX_STACKS_ARRAY_SIZE);
   char **func_name_cache = backtrace_symbols(stacks, (int)frames_count);
   size_t skip_frames = 1 + static_cast<size_t>(options->skip_start_frames);
@@ -428,7 +426,7 @@ LIBATFRAME_UTILS_API size_t stacktrace_write(char *buf, size_t bufsz, const stac
       break;
     }
 
-    if (NULL == func_name_cache[i] || NULL == stacks[i] || 0x01 == reinterpret_cast<intptr_t>(stacks[i])) {
+    if (nullptr == func_name_cache[i] || nullptr == stacks[i] || 0x01 == reinterpret_cast<intptr_t>(stacks[i])) {
       break;
     }
 
@@ -439,11 +437,11 @@ LIBATFRAME_UTILS_API size_t stacktrace_write(char *buf, size_t bufsz, const stac
     if (!symbol.func_name.empty()) {
       int cxx_abi_status;
       char *realfunc_name = abi::__cxa_demangle(symbol.func_name.c_str(), 0, 0, &cxx_abi_status);
-      if (NULL != realfunc_name) {
+      if (nullptr != realfunc_name) {
         symbol.func_name = realfunc_name;
       }
 
-      if (NULL != realfunc_name) {
+      if (nullptr != realfunc_name) {
         free(realfunc_name);
       }
     }
@@ -473,7 +471,7 @@ struct stacktrace_unwind_state_t {
   _Unwind_Word *end;
 };
 
-static _Unwind_Reason_Code stacktrace_unwind_callback(::_Unwind_Context *context, void *arg) UTIL_CONFIG_NOEXCEPT {
+static _Unwind_Reason_Code stacktrace_unwind_callback(::_Unwind_Context *context, void *arg) noexcept {
   // Note: do not write `::_Unwind_GetIP` because it is a macro on some platforms.
   // Use `_Unwind_GetIP` instead!
   stacktrace_unwind_state_t *const state = reinterpret_cast<stacktrace_unwind_state_t *>(arg);
@@ -493,11 +491,11 @@ static _Unwind_Reason_Code stacktrace_unwind_callback(::_Unwind_Context *context
 }
 
 LIBATFRAME_UTILS_API size_t stacktrace_write(char *buf, size_t bufsz, const stacktrace_options *options) {
-  if (NULL == buf || bufsz <= 0) {
+  if (nullptr == buf || bufsz <= 0) {
     return 0;
   }
 
-  if (NULL == options) {
+  if (nullptr == options) {
     options = &details::default_stacktrace_options();
   }
 
@@ -548,16 +546,16 @@ LIBATFRAME_UTILS_API size_t stacktrace_write(char *buf, size_t bufsz, const stac
 #elif (defined(LOG_STACKTRACE_USING_DBGHELP) && LOG_STACKTRACE_USING_DBGHELP) || \
     (defined(LOG_STACKTRACE_USING_DBGENG) && LOG_STACKTRACE_USING_DBGENG)
 LIBATFRAME_UTILS_API size_t stacktrace_write(char *buf, size_t bufsz, const stacktrace_options *options) {
-  if (NULL == buf || bufsz <= 0) {
+  if (nullptr == buf || bufsz <= 0) {
     return 0;
   }
 
-  if (NULL == options) {
+  if (nullptr == options) {
     options = &details::default_stacktrace_options();
   }
 
   PVOID stacks[LOG_STACKTRACE_MAX_STACKS_ARRAY_SIZE];
-  USHORT frames_count = CaptureStackBackTrace(0, LOG_STACKTRACE_MAX_STACKS_ARRAY_SIZE, stacks, NULL);
+  USHORT frames_count = CaptureStackBackTrace(0, LOG_STACKTRACE_MAX_STACKS_ARRAY_SIZE, stacks, nullptr);
 
   size_t ret = 0;
   USHORT skip_frames = 1 + static_cast<USHORT>(options->skip_start_frames);
@@ -576,7 +574,7 @@ LIBATFRAME_UTILS_API size_t stacktrace_write(char *buf, size_t bufsz, const stac
       break;
     }
 
-    if (NULL == stacks[i]) {
+    if (nullptr == stacks[i]) {
       break;
     }
 
@@ -609,7 +607,7 @@ LIBATFRAME_UTILS_API size_t stacktrace_write(char *buf, size_t bufsz, const stac
       break;
     }
 
-    if (NULL == stacks[i]) {
+    if (nullptr == stacks[i]) {
       break;
     }
 
@@ -641,7 +639,7 @@ LIBATFRAME_UTILS_API size_t stacktrace_write(char *buf, size_t bufsz, const stac
   log_stacktrace_com_holder<IDebugClient> dbg_cli;
   log_stacktrace_com_holder<IDebugControl> dbg_ctrl;
   log_stacktrace_com_holder<IDebugSymbols> dbg_sym;
-  const char *error_msg = NULL;
+  const char *error_msg = nullptr;
   do {
     if (S_OK != ::DebugCreate(__uuidof(IDebugClient), dbg_cli.to_pvoid_ptr())) {
       error_msg = "DebugCreate(IDebugClient) failed";
@@ -664,7 +662,7 @@ LIBATFRAME_UTILS_API size_t stacktrace_write(char *buf, size_t bufsz, const stac
       break;
     }
 
-    // No cheking: QueryInterface sets the output parameter to NULL in case of error.
+    // No cheking: QueryInterface sets the output parameter to nullptr in case of error.
     dbg_cli->QueryInterface(__uuidof(IDebugSymbols), dbg_sym.to_pvoid_ptr());
 
     bool try_read_sym = true;
@@ -674,7 +672,7 @@ LIBATFRAME_UTILS_API size_t stacktrace_write(char *buf, size_t bufsz, const stac
         break;
       }
 
-      if (NULL == stacks[i]) {
+      if (nullptr == stacks[i]) {
         break;
       }
       const ULONG64 offset = reinterpret_cast<ULONG64>(stacks[i]);
@@ -729,9 +727,9 @@ LIBATFRAME_UTILS_API size_t stacktrace_write(char *buf, size_t bufsz, const stac
   } while (false);
 
   // append error msg
-  if (error_msg != NULL) {
+  if (error_msg != nullptr) {
     size_t error_msg_len = strlen(error_msg);
-    if (NULL != buf && bufsz > error_msg_len) {
+    if (nullptr != buf && bufsz > error_msg_len) {
       memcpy(buf, error_msg, error_msg_len + 1);
       ret += error_msg_len;
     }
@@ -742,7 +740,7 @@ LIBATFRAME_UTILS_API size_t stacktrace_write(char *buf, size_t bufsz, const stac
 #else
 LIBATFRAME_UTILS_API size_t stacktrace_write(char *buf, size_t bufsz, const stacktrace_options *) {
   const char *msg = "stacktrace disabled.";
-  if (NULL == buf || bufsz <= strlen(msg)) {
+  if (nullptr == buf || bufsz <= strlen(msg)) {
     return 0;
   }
 

@@ -28,10 +28,8 @@ class UTIL_SYMBOL_VISIBLE nomovable {
   ~nomovable() {}
 
  private:
-#if defined(UTIL_CONFIG_COMPILER_CXX_RVALUE_REFERENCES) && UTIL_CONFIG_COMPILER_CXX_RVALUE_REFERENCES
-  nomovable(nomovable &&) UTIL_CONFIG_DELETED_FUNCTION;
-  nomovable &operator=(nomovable &&) UTIL_CONFIG_DELETED_FUNCTION;
-#endif
+  nomovable(nomovable &&) = delete;
+  nomovable &operator=(nomovable &&) = delete;
   // we has defined copy constructor, so move constructor will not generated
 };
 }  // namespace design_pattern
@@ -40,17 +38,9 @@ class UTIL_SYMBOL_VISIBLE nomovable {
 /**
  * @brief 侵入式的禁止move实现，有一些场景下需要使用dllexport或者-fvisibility=hidden
  */
-#if defined(UTIL_CONFIG_COMPILER_CXX_RVALUE_REFERENCES) && UTIL_CONFIG_COMPILER_CXX_RVALUE_REFERENCES
-
-#  define UTIL_DESIGN_PATTERN_NOMOVABLE(CLAZZ)    \
-   private:                                       \
-    CLAZZ(CLAZZ &&) UTIL_CONFIG_DELETED_FUNCTION; \
-    CLAZZ &operator=(CLAZZ &&) UTIL_CONFIG_DELETED_FUNCTION;
-
-#else
-
-#  define UTIL_DESIGN_PATTERN_NOMOVABLE(CLAZZ)
-
-#endif
+#define UTIL_DESIGN_PATTERN_NOMOVABLE(CLAZZ) \
+ private:                                    \
+  CLAZZ(CLAZZ &&) = delete;                  \
+  CLAZZ &operator=(CLAZZ &&) = delete;
 
 #endif

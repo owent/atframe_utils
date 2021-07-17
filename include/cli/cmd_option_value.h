@@ -15,66 +15,85 @@
 
 #include <stdint.h>
 #include <cstring>
+#include <memory>
 #include <sstream>
 #include <string>
 #include <type_traits>
 #include <vector>
 
-#include "std/smart_ptr.h"
-
 #include <common/string_oprs.h>
 
 namespace util {
 namespace cli {
+template <typename Tt>
+struct string2any;
+
+template <>
+struct string2any<std::string> {
+  UTIL_FORCEINLINE std::string operator()(const std::string &s) const { return s; }
+};
+
+template <>
+struct string2any<char> {
+  UTIL_FORCEINLINE char operator()(const std::string &s) const { return s.empty() ? 0 : s[0]; }
+};
+
+template <>
+struct string2any<unsigned char> {
+  UTIL_FORCEINLINE unsigned char operator()(const std::string &s) const {
+    return static_cast<unsigned char>(s.empty() ? 0 : s[0]);
+  }
+};
+
+template <>
+struct string2any<int16_t> {
+  UTIL_FORCEINLINE int16_t operator()(const std::string &s) const { return util::string::to_int<int16_t>(s.c_str()); }
+};
+
+template <>
+struct string2any<uint16_t> {
+  UTIL_FORCEINLINE uint16_t operator()(const std::string &s) const { return util::string::to_int<uint16_t>(s.c_str()); }
+};
+
+template <>
+struct string2any<int32_t> {
+  UTIL_FORCEINLINE int32_t operator()(const std::string &s) const { return util::string::to_int<int32_t>(s.c_str()); }
+};
+
+template <>
+struct string2any<uint32_t> {
+  UTIL_FORCEINLINE uint32_t operator()(const std::string &s) const { return util::string::to_int<uint32_t>(s.c_str()); }
+};
+
+template <>
+struct string2any<int64_t> {
+  UTIL_FORCEINLINE int64_t operator()(const std::string &s) const { return util::string::to_int<int64_t>(s.c_str()); }
+};
+
+template <>
+struct string2any<uint64_t> {
+  UTIL_FORCEINLINE uint64_t operator()(const std::string &s) const { return util::string::to_int<uint64_t>(s.c_str()); }
+};
+
+template <>
+struct string2any<bool> {
+  UTIL_FORCEINLINE bool operator()(const std::string &s) const { return !s.empty() && "0" != s; }
+};
+
+template <typename Tt>
+struct string2any {
+  UTIL_FORCEINLINE Tt operator()(const std::string &s) const {
+    Tt ret;
+    std::stringstream ss;
+    ss.str(s);
+    ss >> ret;
+    return ret;
+  }
+};
+
 class cmd_option_value {
  protected:
   std::string data_;
-
-  struct string2any {
-    template <typename Tt>
-    static UTIL_FORCEINLINE Tt conv(const std::string &s, Tt *) {
-      Tt ret;
-      std::stringstream ss;
-      ss.str(s);
-      ss >> ret;
-      return ret;
-    }
-
-    static UTIL_FORCEINLINE const std::string &conv(const std::string &s, std::string *) { return s; }
-
-    // static const char *conv(const std::string &s, const char **) { return s.c_str(); }
-
-    static UTIL_FORCEINLINE char conv(const std::string &s, char *) { return s.empty() ? 0 : s[0]; }
-
-    static UTIL_FORCEINLINE unsigned char conv(const std::string &s, unsigned char *) {
-      return static_cast<unsigned char>(s.empty() ? 0 : s[0]);
-    }
-
-    static UTIL_FORCEINLINE int16_t conv(const std::string &s, int16_t *) {
-      return util::string::to_int<int16_t>(s.c_str());
-    }
-
-    static UTIL_FORCEINLINE uint16_t conv(const std::string &s, uint16_t *) {
-      return util::string::to_int<int16_t>(s.c_str());
-    }
-
-    static UTIL_FORCEINLINE int32_t conv(const std::string &s, int32_t *) {
-      return util::string::to_int<int32_t>(s.c_str());
-    }
-
-    static UTIL_FORCEINLINE uint32_t conv(const std::string &s, uint32_t *) {
-      return util::string::to_int<uint32_t>(s.c_str());
-    }
-
-    static UTIL_FORCEINLINE int64_t conv(const std::string &s, int64_t *) {
-      return util::string::to_int<int64_t>(s.c_str());
-    }
-    static UTIL_FORCEINLINE uint64_t conv(const std::string &s, uint64_t *) {
-      return util::string::to_int<uint64_t>(s.c_str());
-    }
-
-    static UTIL_FORCEINLINE bool conv(const std::string &s, bool *) { return !s.empty() && "0" != s; }
-  };
 
  public:
   LIBATFRAME_UTILS_API cmd_option_value(const char *str_data);
@@ -83,8 +102,8 @@ class cmd_option_value {
 
   template <typename Tr>
   LIBATFRAME_UTILS_API_HEAD_ONLY Tr to() const {
-    typedef typename ::std::remove_cv<Tr>::type cv_type;
-    return string2any::conv(data_, reinterpret_cast<cv_type *>(NULL));
+    using cv_type = typename ::std::remove_cv<Tr>::type;
+    return string2any<cv_type>()(data_);
   }
 
   // 获取存储对象的字符串

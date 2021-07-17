@@ -9,11 +9,11 @@
 #include "mem_pool/lru_map.h"
 
 CASE_TEST(lru_map_test, basic_container) {
-  typedef util::mempool::lru_map<int, long> lru_t;
+  using lru_t = util::mempool::lru_map<int, long>;
   lru_t lru;
   lru.reserve(128);
 
-  typedef std::pair<lru_t::iterator, bool> insert_pair_t;
+  using insert_pair_t = std::pair<lru_t::iterator, bool>;
 
   CASE_EXPECT_TRUE(lru.empty());
   CASE_EXPECT_EQ(0, lru.size());
@@ -85,7 +85,7 @@ CASE_TEST(lru_map_test, basic_container) {
 }
 
 CASE_TEST(lru_map_test, erase_range) {
-  typedef util::mempool::lru_map<int, long> lru_t;
+  using lru_t = util::mempool::lru_map<int, long>;
   lru_t lru;
   lru.reserve(128);
 
@@ -108,11 +108,10 @@ CASE_TEST(lru_map_test, erase_range) {
   CASE_EXPECT_EQ(0, lru.size());
 }
 
-#if UTIL_CONFIG_COMPILER_CXX_RVALUE_REFERENCES
 CASE_TEST(lru_map_test, emplace) {
-  typedef util::mempool::lru_map<int, std::vector<long> > lru_t;
+  using lru_t = util::mempool::lru_map<int, std::vector<long> >;
   lru_t lru;
-  typedef std::pair<lru_t::iterator, bool> insert_pair_t;
+  using insert_pair_t = std::pair<lru_t::iterator, bool>;
 
   std::vector<long> vec;
   vec.push_back(1001);
@@ -128,10 +127,9 @@ CASE_TEST(lru_map_test, emplace) {
 
   CASE_EXPECT_EQ(3, lru.front().second->size());
 }
-#endif
 
 CASE_TEST(lru_map_test, lru_reorder) {
-  typedef util::mempool::lru_map<int, long> lru_t;
+  using lru_t = util::mempool::lru_map<int, long>;
   lru_t lru;
 
   for (int i = 1; i <= 60; ++i) {

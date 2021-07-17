@@ -49,7 +49,7 @@ template <typename UIntType, std::size_t MAX_STATUS_N_SIZE, std::size_t RD_M, st
           std::size_t RD_L, UIntType INIT_SEED_F>
 class LIBATFRAME_UTILS_API_HEAD_ONLY mersenne_twister {
  public:
-  typedef UIntType result_type;
+  using result_type = UIntType;
 
  private:
   UIntType mt_status[MAX_STATUS_N_SIZE];
@@ -142,10 +142,10 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY mersenne_twister {
     }
   }
 
-  inline size_t block_size() const UTIL_CONFIG_NOEXCEPT { return sizeof(mt_status) + sizeof(mt_index); }
+  inline size_t block_size() const noexcept { return sizeof(mt_status) + sizeof(mt_index); }
 
-  inline bool dump(unsigned char *output, size_t size) const UTIL_CONFIG_NOEXCEPT {
-    if (NULL == output || size < block_size()) {
+  inline bool dump(unsigned char *output, size_t size) const noexcept {
+    if (nullptr == output || size < block_size()) {
       return false;
     }
 
@@ -154,8 +154,8 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY mersenne_twister {
     return true;
   }
 
-  inline bool load(const unsigned char *input, size_t size) UTIL_CONFIG_NOEXCEPT {
-    if (NULL == input || size < block_size()) {
+  inline bool load(const unsigned char *input, size_t size) noexcept {
+    if (nullptr == input || size < block_size()) {
       return false;
     }
 

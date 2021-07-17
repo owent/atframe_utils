@@ -181,7 +181,7 @@ namespace lock {
  */
 class LIBATFRAME_UTILS_API_HEAD_ONLY spin_lock {
  private:
-  typedef enum { UNLOCKED = 0, LOCKED = 1 } lock_state_t;
+  enum lock_state_t { UNLOCKED = 0, LOCKED = 1 };
   ::util::lock::atomic_int_type<
 #if defined(LOCK_DISABLE_MT) && LOCK_DISABLE_MT
       ::util::lock::unsafe_int_type<unsigned int>

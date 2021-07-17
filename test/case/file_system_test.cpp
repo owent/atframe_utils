@@ -96,9 +96,9 @@ CASE_TEST(file_system, file_size) {
 
 CASE_TEST(file_system, open_tmp_file) {
   FILE* f = util::file_system::open_tmp_file();
-  CASE_EXPECT_NE(f, NULL);
+  CASE_EXPECT_NE(f, nullptr);
 
-  if (NULL != f) {
+  if (nullptr != f) {
     UTIL_FS_CLOSE(f);
   }
 
@@ -110,8 +110,8 @@ CASE_TEST(file_system, open_tmp_file) {
   if (fname.empty()) {
     UTIL_FS_OPEN(open_res, f, fname.c_str(), "w");
     UNUSED(open_res);  // For old compiler
-    CASE_EXPECT_NE(f, NULL);
-    if (NULL != f) {
+    CASE_EXPECT_NE(f, nullptr);
+    if (nullptr != f) {
       UTIL_FS_CLOSE(f);
     }
   }

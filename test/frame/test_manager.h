@@ -48,13 +48,13 @@
  */
 class test_manager {
  public:
-  typedef test_case_base *case_ptr_type;
-  typedef test_on_start_base *on_start_ptr_type;
-  typedef test_on_exit_base *on_exit_ptr_type;
-  typedef std::vector<std::pair<std::string, case_ptr_type> > test_type;
-  typedef std::vector<std::pair<std::string, on_start_ptr_type> > event_on_start_type;
-  typedef std::vector<std::pair<std::string, on_exit_ptr_type> > event_on_exit_type;
-  typedef UTILS_TEST_ENV_AUTO_MAP(std::string, test_type) test_data_type;
+  using case_ptr_type = test_case_base *;
+  using on_start_ptr_type = test_on_start_base *;
+  using on_exit_ptr_type = test_on_exit_base *;
+  using test_type = std::vector<std::pair<std::string, case_ptr_type> >;
+  using event_on_start_type = std::vector<std::pair<std::string, on_start_ptr_type> >;
+  using event_on_exit_type = std::vector<std::pair<std::string, on_exit_ptr_type> >;
+  using test_data_type = UTILS_TEST_ENV_AUTO_MAP(std::string, test_type);
 
  public:
   test_manager();

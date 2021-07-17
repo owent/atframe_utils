@@ -9,8 +9,8 @@ namespace util {
 namespace network {
 namespace http_content_type {
 LIBATFRAME_UTILS_API const char *get_type(main_type mt) {
-  static const char *ret[EN_HCT_MT_MAX] = {NULL};
-  if (unlikely(NULL == ret[EN_HCT_MT_DISCRETE_TEXT])) {
+  static const char *ret[EN_HCT_MT_MAX] = {nullptr};
+  if (unlikely(nullptr == ret[EN_HCT_MT_DISCRETE_TEXT])) {
     ret[EN_HCT_MT_DISCRETE_TEXT] = "text";
     ret[EN_HCT_MT_DISCRETE_IMAGE] = "image";
     ret[EN_HCT_MT_DISCRETE_AUDIO] = "audio";
@@ -22,15 +22,15 @@ LIBATFRAME_UTILS_API const char *get_type(main_type mt) {
   }
 
   if (mt >= EN_HCT_MT_MAX) {
-    return NULL;
+    return nullptr;
   }
 
   return ret[mt];
 }
 
 LIBATFRAME_UTILS_API const char *get_subtype(sub_type st) {
-  static const char *ret[EN_HCT_ST_MAX] = {NULL};
-  if (unlikely(NULL == ret[EN_HCT_ST_TEXT_PLAIN])) {
+  static const char *ret[EN_HCT_ST_MAX] = {nullptr};
+  if (unlikely(nullptr == ret[EN_HCT_ST_TEXT_PLAIN])) {
     ret[EN_HCT_ST_TEXT_PLAIN] = "plain";
 
     ret[EN_HCT_ST_AUDIO_BASIC] = "basic";
@@ -49,7 +49,7 @@ LIBATFRAME_UTILS_API const char *get_subtype(sub_type st) {
   }
 
   if (st >= EN_HCT_ST_MAX) {
-    return NULL;
+    return nullptr;
   }
 
   return ret[st];
@@ -58,11 +58,11 @@ LIBATFRAME_UTILS_API const char *get_subtype(sub_type st) {
 LIBATFRAME_UTILS_API int make_content_type(char *dst, size_t dst_sz, const char *type, const char *subtype,
                                            const char *parameter_key[], const char *parameter_value[],
                                            size_t parameter_sz) {
-  if (NULL == dst || dst_sz < 14) {
+  if (nullptr == dst || dst_sz < 14) {
     return -1;
   }
 
-  if (NULL == type || NULL == subtype) {
+  if (nullptr == type || nullptr == subtype) {
     return -2;
   }
 
@@ -72,9 +72,9 @@ LIBATFRAME_UTILS_API int make_content_type(char *dst, size_t dst_sz, const char 
   }
 
   int used = res;
-  if (parameter_sz > 0 && NULL != parameter_key) {
+  if (parameter_sz > 0 && nullptr != parameter_key) {
     for (size_t i = 0; i < parameter_sz && parameter_key[i]; ++i) {
-      if (parameter_value && NULL != parameter_value[i]) {
+      if (parameter_value && nullptr != parameter_value[i]) {
         res = UTIL_STRFUNC_SNPRINTF(dst + used, static_cast<int>(dst_sz) - used, "; %s=\"%s\"", parameter_key[i],
                                     parameter_value[i]);
       } else {
@@ -95,7 +95,7 @@ LIBATFRAME_UTILS_API int make_content_type(char *dst, size_t dst_sz, main_type m
                                            const char *parameter_key[], const char *parameter_value[],
                                            size_t parameter_sz) {
   const char *mt_str = get_type(mt);
-  if (NULL == mt_str) {
+  if (nullptr == mt_str) {
     return -11;
   }
 
@@ -106,7 +106,7 @@ LIBATFRAME_UTILS_API int make_content_type(char *dst, size_t dst_sz, const char 
                                            const char *parameter_key[], const char *parameter_value[],
                                            size_t parameter_sz) {
   const char *st_str = get_subtype(st);
-  if (NULL == st_str) {
+  if (nullptr == st_str) {
     return -21;
   }
 
@@ -117,7 +117,7 @@ LIBATFRAME_UTILS_API int make_content_type(char *dst, size_t dst_sz, main_type m
                                            const char *parameter_key[], const char *parameter_value[],
                                            size_t parameter_sz) {
   const char *st_str = get_subtype(st);
-  if (NULL == st_str) {
+  if (nullptr == st_str) {
     return -21;
   }
 

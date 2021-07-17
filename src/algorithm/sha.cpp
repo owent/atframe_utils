@@ -23,17 +23,17 @@ struct sha_inner_data {
 static inline sha_inner_data *into_inner_type(void *in) { return reinterpret_cast<sha_inner_data *>(in); }
 
 static inline void free_inner_type(void *in, util::hash::sha::type) {
-  if (in == UTIL_CONFIG_NULLPTR) {
+  if (in == nullptr) {
     return;
   }
 
-  if (into_inner_type(in)->ctx != UTIL_CONFIG_NULLPTR) {
+  if (into_inner_type(in)->ctx != nullptr) {
 #  if OPENSSL_VERSION_NUMBER < 0x10100000L
     EVP_MD_CTX_destroy(into_inner_type(in)->ctx);
 #  else
     EVP_MD_CTX_free(into_inner_type(in)->ctx);
 #  endif
-    into_inner_type(in)->ctx = UTIL_CONFIG_NULLPTR;
+    into_inner_type(in)->ctx = nullptr;
   }
 
   free(into_inner_type(in));
@@ -41,20 +41,20 @@ static inline void free_inner_type(void *in, util::hash::sha::type) {
 
 static inline sha_inner_data *malloc_inner_type(util::hash::sha::type t) {
   sha_inner_data *ret = reinterpret_cast<sha_inner_data *>(malloc(sizeof(sha_inner_data)));
-  if (ret == UTIL_CONFIG_NULLPTR) {
-    return UTIL_CONFIG_NULLPTR;
+  if (ret == nullptr) {
+    return nullptr;
   }
 #  if OPENSSL_VERSION_NUMBER < 0x10100000L
   ret->ctx = EVP_MD_CTX_create();
 #  else
   ret->ctx = EVP_MD_CTX_new();
 #  endif
-  if (ret->ctx == UTIL_CONFIG_NULLPTR) {
+  if (ret->ctx == nullptr) {
     free_inner_type(ret, t);
-    return UTIL_CONFIG_NULLPTR;
+    return nullptr;
   }
 
-  const EVP_MD *md = UTIL_CONFIG_NULLPTR;
+  const EVP_MD *md = nullptr;
   switch (t) {
     case util::hash::sha::EN_ALGORITHM_SHA1:
       md = EVP_get_digestbynid(NID_sha1);
@@ -75,22 +75,22 @@ static inline sha_inner_data *malloc_inner_type(util::hash::sha::type t) {
       break;
   }
 
-  if (md == UTIL_CONFIG_NULLPTR) {
+  if (md == nullptr) {
     free_inner_type(ret, t);
-    return UTIL_CONFIG_NULLPTR;
+    return nullptr;
   }
 
-  if (1 != EVP_DigestInit_ex(ret->ctx, md, UTIL_CONFIG_NULLPTR)) {
+  if (1 != EVP_DigestInit_ex(ret->ctx, md, nullptr)) {
     free_inner_type(ret, t);
-    return UTIL_CONFIG_NULLPTR;
+    return nullptr;
   }
 
   return ret;
 }
 
 static inline unsigned char *get_output_buffer(void *in) {
-  if (in == UTIL_CONFIG_NULLPTR) {
-    return UTIL_CONFIG_NULLPTR;
+  if (in == nullptr) {
+    return nullptr;
   }
 
   return into_inner_type(in)->output;
@@ -111,7 +111,7 @@ struct sha_inner_data {
 static inline sha_inner_data *into_inner_type(void *in) { return reinterpret_cast<sha_inner_data *>(in); }
 
 static inline void free_inner_type(void *in, util::hash::sha::type t) {
-  if (in == UTIL_CONFIG_NULLPTR) {
+  if (in == nullptr) {
     return;
   }
 
@@ -142,8 +142,8 @@ static inline void free_inner_type(void *in, util::hash::sha::type t) {
 
 static inline sha_inner_data *malloc_inner_type(util::hash::sha::type t) {
   sha_inner_data *ret = reinterpret_cast<sha_inner_data *>(malloc(sizeof(sha_inner_data)));
-  if (ret == UTIL_CONFIG_NULLPTR) {
-    return UTIL_CONFIG_NULLPTR;
+  if (ret == nullptr) {
+    return nullptr;
   }
 
   bool is_success = false;
@@ -174,15 +174,15 @@ static inline sha_inner_data *malloc_inner_type(util::hash::sha::type t) {
 
   if (false == is_success) {
     free_inner_type(ret, t);
-    ret = UTIL_CONFIG_NULLPTR;
+    ret = nullptr;
   }
 
   return ret;
 }
 
 static inline unsigned char *get_output_buffer(void *in) {
-  if (in == UTIL_CONFIG_NULLPTR) {
-    return UTIL_CONFIG_NULLPTR;
+  if (in == nullptr) {
+    return nullptr;
   }
 
   return into_inner_type(in)->output;
@@ -278,7 +278,7 @@ struct sha_inner_data {
 static inline sha_inner_data *into_inner_type(void *in) { return reinterpret_cast<sha_inner_data *>(in); }
 
 static inline void free_inner_type(void *in, util::hash::sha::type) {
-  if (in == UTIL_CONFIG_NULLPTR) {
+  if (in == nullptr) {
     return;
   }
 
@@ -362,8 +362,8 @@ static void inner_sha512_starts_ret(sha512_context_t &ctx, bool is384) {
 
 static sha_inner_data *malloc_inner_type(util::hash::sha::type t) {
   sha_inner_data *ret = reinterpret_cast<sha_inner_data *>(malloc(sizeof(sha_inner_data)));
-  if (ret == UTIL_CONFIG_NULLPTR) {
-    return UTIL_CONFIG_NULLPTR;
+  if (ret == nullptr) {
+    return nullptr;
   }
 
   switch (t) {
@@ -395,8 +395,8 @@ static sha_inner_data *malloc_inner_type(util::hash::sha::type t) {
 }
 
 static inline unsigned char *get_output_buffer(void *in) {
-  if (in == UTIL_CONFIG_NULLPTR) {
-    return UTIL_CONFIG_NULLPTR;
+  if (in == nullptr) {
+    return nullptr;
   }
 
   return into_inner_type(in)->output;
@@ -565,7 +565,7 @@ static void inner_sha1_update(sha1_context_t &ctx, const unsigned char *input, s
   size_t fill;
   uint32_t left;
 
-  if (ilen == 0 || input == UTIL_CONFIG_NULLPTR) {
+  if (ilen == 0 || input == nullptr) {
     return;
   }
 
@@ -651,7 +651,7 @@ static void inner_internal_sha256_process(sha256_context_t &ctx, const unsigned 
   uint32_t A[8];
   unsigned int i;
 
-  static const uint32_t K[] = {
+  static constexpr const uint32_t K[] = {
       0x428A2F98, 0x71374491, 0xB5C0FBCF, 0xE9B5DBA5, 0x3956C25B, 0x59F111F1, 0x923F82A4, 0xAB1C5ED5,
       0xD807AA98, 0x12835B01, 0x243185BE, 0x550C7DC3, 0x72BE5D74, 0x80DEB1FE, 0x9BDC06A7, 0xC19BF174,
       0xE49B69C1, 0xEFBE4786, 0x0FC19DC6, 0x240CA1CC, 0x2DE92C6F, 0x4A7484AA, 0x5CB0A9DC, 0x76F988DA,
@@ -732,7 +732,7 @@ static void inner_sha256_update(sha256_context_t &ctx, const unsigned char *inpu
   size_t fill;
   uint32_t left;
 
-  if (ilen == 0 || input == UTIL_CONFIG_NULLPTR) return;
+  if (ilen == 0 || input == nullptr) return;
 
   left = ctx.total[0] & 0x3F;
   fill = 64 - left;
@@ -821,7 +821,7 @@ static void inner_internal_sha512_process(sha512_context_t &ctx, const unsigned 
   /*
    * Round constants
    */
-  static const uint64_t K[80] = {
+  static constexpr const uint64_t K[80] = {
       UL64(0x428A2F98D728AE22), UL64(0x7137449123EF65CD), UL64(0xB5C0FBCFEC4D3B2F), UL64(0xE9B5DBA58189DBBC),
       UL64(0x3956C25BF348B538), UL64(0x59F111F1B605D019), UL64(0x923F82A4AF194F9B), UL64(0xAB1C5ED5DA6D8118),
       UL64(0xD807AA98A3030242), UL64(0x12835B0145706FBE), UL64(0x243185BE4EE4B28C), UL64(0x550C7DC3D5FFB4E2),
@@ -926,7 +926,7 @@ static void inner_sha512_update(sha512_context_t &ctx, const unsigned char *inpu
   size_t fill;
   unsigned int left;
 
-  if (ilen == 0 || input == UTIL_CONFIG_NULLPTR) {
+  if (ilen == 0 || input == nullptr) {
     return;
   }
 
@@ -1014,23 +1014,22 @@ static void inner_sha512_finish(sha512_context_t &ctx, unsigned char output[64])
 #endif
 }  // namespace detail
 
-LIBATFRAME_UTILS_API sha::sha() : hash_type_(EN_ALGORITHM_UNINITED), private_raw_data_(UTIL_CONFIG_NULLPTR) {}
+LIBATFRAME_UTILS_API sha::sha() : hash_type_(EN_ALGORITHM_UNINITED), private_raw_data_(nullptr) {}
 LIBATFRAME_UTILS_API sha::~sha() { close(); }
 
-#if defined(UTIL_CONFIG_COMPILER_CXX_RVALUE_REFERENCES) && UTIL_CONFIG_COMPILER_CXX_RVALUE_REFERENCES
-LIBATFRAME_UTILS_API sha::sha(sha &&other) : hash_type_(EN_ALGORITHM_UNINITED), private_raw_data_(UTIL_CONFIG_NULLPTR) {
+LIBATFRAME_UTILS_API sha::sha(sha &&other) : hash_type_(EN_ALGORITHM_UNINITED), private_raw_data_(nullptr) {
   swap(other);
 }
+
 LIBATFRAME_UTILS_API sha &sha::operator=(sha &&other) {
   swap(other);
   return *this;
 }
-#endif
 
 LIBATFRAME_UTILS_API bool sha::init(type t) {
   close();
   private_raw_data_ = detail::malloc_inner_type(t);
-  if (private_raw_data_ == UTIL_CONFIG_NULLPTR) {
+  if (private_raw_data_ == nullptr) {
     return false;
   }
 
@@ -1039,14 +1038,14 @@ LIBATFRAME_UTILS_API bool sha::init(type t) {
 }
 
 LIBATFRAME_UTILS_API void sha::close() {
-  if (hash_type_ == EN_ALGORITHM_UNINITED || private_raw_data_ == UTIL_CONFIG_NULLPTR) {
+  if (hash_type_ == EN_ALGORITHM_UNINITED || private_raw_data_ == nullptr) {
     return;
   }
 
   detail::free_inner_type(private_raw_data_, hash_type_);
 
   hash_type_ = EN_ALGORITHM_UNINITED;
-  private_raw_data_ = UTIL_CONFIG_NULLPTR;
+  private_raw_data_ = nullptr;
   return;
 }
 
@@ -1058,7 +1057,7 @@ LIBATFRAME_UTILS_API void sha::swap(sha &other) {
 
 LIBATFRAME_UTILS_API bool sha::update(const unsigned char *in, size_t inlen) {
   detail::sha_inner_data *inner_obj = detail::into_inner_type(private_raw_data_);
-  if (inner_obj == UTIL_CONFIG_NULLPTR) {
+  if (inner_obj == nullptr) {
     return false;
   }
 #if defined(UTIL_HASH_IMPLEMENT_SHA_USING_OPENSSL) && UTIL_HASH_IMPLEMENT_SHA_USING_OPENSSL
@@ -1105,7 +1104,7 @@ LIBATFRAME_UTILS_API bool sha::update(const unsigned char *in, size_t inlen) {
 
 LIBATFRAME_UTILS_API bool sha::final() {
   detail::sha_inner_data *inner_obj = detail::into_inner_type(private_raw_data_);
-  if (inner_obj == UTIL_CONFIG_NULLPTR) {
+  if (inner_obj == nullptr) {
     return false;
   }
 #if defined(UTIL_HASH_IMPLEMENT_SHA_USING_OPENSSL) && UTIL_HASH_IMPLEMENT_SHA_USING_OPENSSL
@@ -1155,7 +1154,7 @@ LIBATFRAME_UTILS_API size_t sha::get_output_length() const { return get_output_l
 
 LIBATFRAME_UTILS_API size_t sha::get_output_length(type bt) {
 #if defined(CRYPTO_USE_OPENSSL) || defined(CRYPTO_USE_LIBRESSL) || defined(CRYPTO_USE_BORINGSSL)
-  const EVP_MD *md = UTIL_CONFIG_NULLPTR;
+  const EVP_MD *md = nullptr;
   switch (bt) {
     case util::hash::sha::EN_ALGORITHM_SHA1:
       md = EVP_get_digestbynid(NID_sha1);
@@ -1176,7 +1175,7 @@ LIBATFRAME_UTILS_API size_t sha::get_output_length(type bt) {
       break;
   }
 
-  if (md == UTIL_CONFIG_NULLPTR) {
+  if (md == nullptr) {
     return 0;
   }
 

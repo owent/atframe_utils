@@ -31,7 +31,7 @@ static const unsigned char base64_test_enc_url[] =
 CASE_TEST(base64, encode_standard) {
   unsigned char buffer[128] = {0};
   size_t len = 0;
-  CASE_EXPECT_EQ(-1, util::base64_encode(NULL, 0, &len, base64_test_dec, 64));
+  CASE_EXPECT_EQ(-1, util::base64_encode(nullptr, 0, &len, base64_test_dec, 64));
   CASE_EXPECT_EQ(len, 89);  // \0 for tail
 
   CASE_EXPECT_EQ(0, util::base64_encode(buffer, sizeof(buffer), &len, base64_test_dec, 64));
@@ -57,7 +57,7 @@ CASE_TEST(base64, encode_standard) {
 CASE_TEST(base64, decode_standard) {
   unsigned char buffer[128] = {0};
   size_t len = 0;
-  CASE_EXPECT_EQ(-1, util::base64_decode(NULL, 0, &len, base64_test_enc_standard, 88));
+  CASE_EXPECT_EQ(-1, util::base64_decode(nullptr, 0, &len, base64_test_enc_standard, 88));
   CASE_EXPECT_EQ(len, 64);
 
   CASE_EXPECT_EQ(0, util::base64_decode(buffer, sizeof(buffer), &len, base64_test_enc_standard, 88));
@@ -115,7 +115,7 @@ CASE_TEST(base64, encode_no_padding) {
 CASE_TEST(base64, encode_utf7) {
   unsigned char buffer[128] = {0};
   size_t len = 0;
-  CASE_EXPECT_EQ(-1, util::base64_encode(NULL, 0, &len, base64_test_dec, 64, util::base64_mode_t::EN_BMT_UTF7));
+  CASE_EXPECT_EQ(-1, util::base64_encode(nullptr, 0, &len, base64_test_dec, 64, util::base64_mode_t::EN_BMT_UTF7));
   CASE_EXPECT_EQ(len, 87);  // \0 for tail
 
   CASE_EXPECT_EQ(
@@ -127,7 +127,7 @@ CASE_TEST(base64, encode_utf7) {
 CASE_TEST(base64, decode_utf7) {
   unsigned char buffer[128] = {0};
   size_t len = 0;
-  CASE_EXPECT_EQ(-1, util::base64_decode(NULL, 0, &len, base64_test_enc_utf7, 86, util::base64_mode_t::EN_BMT_UTF7));
+  CASE_EXPECT_EQ(-1, util::base64_decode(nullptr, 0, &len, base64_test_enc_utf7, 86, util::base64_mode_t::EN_BMT_UTF7));
   CASE_EXPECT_EQ(len, 64);
 
   CASE_EXPECT_EQ(
@@ -140,7 +140,7 @@ CASE_TEST(base64, encode_imap) {
   unsigned char buffer[128] = {0};
   size_t len = 0;
   CASE_EXPECT_EQ(
-      -1, util::base64_encode(NULL, 0, &len, base64_test_dec, 64, util::base64_mode_t::EN_BMT_IMAP_MAILBOX_NAME));
+      -1, util::base64_encode(nullptr, 0, &len, base64_test_dec, 64, util::base64_mode_t::EN_BMT_IMAP_MAILBOX_NAME));
   CASE_EXPECT_EQ(len, 87);  // \0 for tail
 
   CASE_EXPECT_EQ(0, util::base64_encode(buffer, sizeof(buffer), &len, base64_test_dec, 64,
@@ -152,8 +152,8 @@ CASE_TEST(base64, encode_imap) {
 CASE_TEST(base64, decode_imap) {
   unsigned char buffer[128] = {0};
   size_t len = 0;
-  CASE_EXPECT_EQ(
-      -1, util::base64_decode(NULL, 0, &len, base64_test_enc_imap, 86, util::base64_mode_t::EN_BMT_IMAP_MAILBOX_NAME));
+  CASE_EXPECT_EQ(-1, util::base64_decode(nullptr, 0, &len, base64_test_enc_imap, 86,
+                                         util::base64_mode_t::EN_BMT_IMAP_MAILBOX_NAME));
   CASE_EXPECT_EQ(len, 64);
 
   CASE_EXPECT_EQ(0, util::base64_decode(buffer, sizeof(buffer), &len, base64_test_enc_imap, 86,
@@ -166,7 +166,7 @@ CASE_TEST(base64, encode_url) {
   unsigned char buffer[128] = {0};
   size_t len = 0;
   CASE_EXPECT_EQ(
-      -1, util::base64_encode(NULL, 0, &len, base64_test_dec, 64, util::base64_mode_t::EN_BMT_URL_FILENAME_SAFE));
+      -1, util::base64_encode(nullptr, 0, &len, base64_test_dec, 64, util::base64_mode_t::EN_BMT_URL_FILENAME_SAFE));
   CASE_EXPECT_EQ(len, 89);  // \0 for tail
 
   CASE_EXPECT_EQ(0, util::base64_encode(buffer, sizeof(buffer), &len, base64_test_dec, 64,
@@ -178,8 +178,8 @@ CASE_TEST(base64, encode_url) {
 CASE_TEST(base64, decode_url) {
   unsigned char buffer[128] = {0};
   size_t len = 0;
-  CASE_EXPECT_EQ(
-      -1, util::base64_decode(NULL, 0, &len, base64_test_enc_url, 88, util::base64_mode_t::EN_BMT_URL_FILENAME_SAFE));
+  CASE_EXPECT_EQ(-1, util::base64_decode(nullptr, 0, &len, base64_test_enc_url, 88,
+                                         util::base64_mode_t::EN_BMT_URL_FILENAME_SAFE));
   CASE_EXPECT_EQ(len, 64);
 
   CASE_EXPECT_EQ(0, util::base64_decode(buffer, sizeof(buffer), &len, base64_test_enc_url, 88,

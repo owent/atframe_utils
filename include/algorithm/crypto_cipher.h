@@ -56,9 +56,9 @@ class cipher {
   };
 
 #  if defined(CRYPTO_USE_OPENSSL) || defined(CRYPTO_USE_LIBRESSL) || defined(CRYPTO_USE_BORINGSSL)
-  typedef EVP_CIPHER cipher_kt_t;
-  typedef EVP_CIPHER_CTX cipher_evp_t;
-  typedef EVP_MD digest_type_t;
+  using cipher_kt_t = EVP_CIPHER;
+  using cipher_evp_t = EVP_CIPHER_CTX;
+  using digest_type_t = EVP_MD;
   enum {
     MAX_KEY_LENGTH = EVP_MAX_KEY_LENGTH,  //
     MAX_IV_LENGTH = EVP_MAX_IV_LENGTH,    //
@@ -66,9 +66,9 @@ class cipher {
   };
 
 #  elif defined(CRYPTO_USE_MBEDTLS)
-  typedef mbedtls_cipher_info_t cipher_kt_t;
-  typedef mbedtls_cipher_context_t cipher_evp_t;
-  typedef mbedtls_md_info_t digest_type_t;
+  using cipher_kt_t = mbedtls_cipher_info_t;
+  using cipher_evp_t = mbedtls_cipher_context_t;
+  using digest_type_t = mbedtls_md_info_t;
   enum {
     MAX_KEY_LENGTH = 64,  //
     MAX_IV_LENGTH = MBEDTLS_MAX_IV_LENGTH,
@@ -229,7 +229,7 @@ class cipher {
   /**
    * @biref               split cipher names by space, comma, semicolon or colon
    * @param in            string contain some cipher names
-   * @return              begin(first) and end(second) address of a cipher name, both NULL if not found.
+   * @return              begin(first) and end(second) address of a cipher name, both nullptr if not found.
    *                      you can use second pointer as the paramter of next call, just like strtok
    */
   static LIBATFRAME_UTILS_API std::pair<const char *, const char *> ciphertok(const char *in);

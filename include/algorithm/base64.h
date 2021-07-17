@@ -103,7 +103,7 @@ LIBATFRAME_UTILS_API int base64_encode(std::string &dst, const std::string &in,
 /**
  * @brief          Decode a base64-formatted buffer, support no padding
  *
- * @param dst      destination buffer (can be NULL for checking size)
+ * @param dst      destination buffer (can be nullptr for checking size)
  * @param dlen     size of the destination buffer
  * @param olen     number of bytes written
  * @param src      source buffer
@@ -114,7 +114,7 @@ LIBATFRAME_UTILS_API int base64_encode(std::string &dst, const std::string &in,
  *                 not correct. *olen is always updated to reflect the amount
  *                 of data that has (or would have) been written.
  *
- * @note           Call this function with *dst = NULL or dlen = 0 to obtain
+ * @note           Call this function with *dst = nullptr or dlen = 0 to obtain
  *                 the required buffer size in *olen
  */
 LIBATFRAME_UTILS_API int base64_decode(unsigned char *dst, size_t dlen, size_t *olen, const unsigned char *src,

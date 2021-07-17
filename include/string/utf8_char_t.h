@@ -21,6 +21,7 @@
 #include <cstddef>
 #include <cstring>
 #include <iostream>
+#include <memory>
 #include <string>
 
 #ifdef __cpp_impl_three_way_comparison
@@ -28,9 +29,8 @@
 #endif
 
 #include "common/string_oprs.h"
-#include "std/smart_ptr.h"
 
-#include <config/atframe_utils_build_feature.h>
+#include "config/atframe_utils_build_feature.h"
 
 namespace util {
 namespace string {
@@ -61,7 +61,7 @@ struct LIBATFRAME_UTILS_API_HEAD_ONLY utf8_char_t {
   static inline size_t length(const char *s) {
     size_t ret = 1;
     char c = 0;
-    if (NULL != s) {
+    if (nullptr != s) {
       c = *s;
     }
 

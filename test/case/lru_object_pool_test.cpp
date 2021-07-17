@@ -12,7 +12,7 @@ struct test_lru_data {};
 static int g_stat_lru[4] = {0, 0, 0, 0};
 
 struct test_lru_action : public util::mempool::lru_default_action<test_lru_data> {
-  typedef util::mempool::lru_default_action<test_lru_data> base_type;
+  using base_type = util::mempool::lru_default_action<test_lru_data>;
   void push(test_lru_data *) { ++g_stat_lru[0]; }
 
   void pull(test_lru_data *) { ++g_stat_lru[1]; }
@@ -27,7 +27,7 @@ struct test_lru_action : public util::mempool::lru_default_action<test_lru_data>
 
 CASE_TEST(lru_object_pool_test, basic) {
   {
-    typedef util::mempool::lru_pool<uint32_t, test_lru_data, test_lru_action> test_lru_pool_t;
+    using test_lru_pool_t = util::mempool::lru_pool<uint32_t, test_lru_data, test_lru_action>;
     util::mempool::lru_pool_manager::ptr_t mgr = util::mempool::lru_pool_manager::create();
     test_lru_pool_t lru;
     test_lru_data *check_ptr;
@@ -47,11 +47,11 @@ CASE_TEST(lru_object_pool_test, basic) {
     CASE_EXPECT_EQ(3, mgr->item_count().get());
     CASE_EXPECT_EQ(lru.size(), mgr->item_count().get());
 
-    CASE_EXPECT_EQ(NULL, lru.pull(789));
+    CASE_EXPECT_EQ(nullptr, lru.pull(789));
     CASE_EXPECT_EQ(check_ptr, lru.pull(456));
-    CASE_EXPECT_EQ(NULL, lru.pull(456));
+    CASE_EXPECT_EQ(nullptr, lru.pull(456));
     delete check_ptr;
-    check_ptr = NULL;
+    check_ptr = nullptr;
 
     CASE_EXPECT_EQ(3, g_stat_lru[0]);
     CASE_EXPECT_EQ(1, g_stat_lru[1]);
@@ -73,7 +73,7 @@ CASE_TEST(lru_object_pool_test, basic) {
 }
 
 CASE_TEST(lru_object_pool_test, inner_gc_proc) {
-  typedef util::mempool::lru_pool<uint32_t, test_lru_data, test_lru_action> test_lru_pool_t;
+  using test_lru_pool_t = util::mempool::lru_pool<uint32_t, test_lru_data, test_lru_action>;
   util::mempool::lru_pool_manager::ptr_t mgr = util::mempool::lru_pool_manager::create();
   test_lru_pool_t lru;
   lru.init(mgr);
@@ -132,7 +132,7 @@ CASE_TEST(lru_object_pool_test, inner_gc_proc) {
 }
 
 CASE_TEST(lru_object_pool_test, timeout) {
-  typedef util::mempool::lru_pool<uint32_t, test_lru_data, test_lru_action> test_lru_pool_t;
+  using test_lru_pool_t = util::mempool::lru_pool<uint32_t, test_lru_data, test_lru_action>;
   util::mempool::lru_pool_manager::ptr_t mgr = util::mempool::lru_pool_manager::create();
   test_lru_pool_t lru;
   lru.init(mgr);
@@ -186,7 +186,7 @@ CASE_TEST(lru_object_pool_test, timeout) {
 }
 
 struct test_lru_action_donothing : public util::mempool::lru_default_action<test_lru_action_donothing> {
-  typedef util::mempool::lru_default_action<test_lru_action_donothing> base_type;
+  using base_type = util::mempool::lru_default_action<test_lru_action_donothing>;
   void push(void *) {}
   void pull(void *) {}
   void reset(void *) {}
@@ -217,7 +217,7 @@ CASE_TEST(lru_object_pool_test, adjust_bound) {
 
   // push and make cache larger
   {
-    typedef util::mempool::lru_pool<uint32_t, void, test_lru_action_donothing> test_lru_pool_t;
+    using test_lru_pool_t = util::mempool::lru_pool<uint32_t, void, test_lru_action_donothing>;
     util::mempool::lru_pool_manager::ptr_t mgr = util::mempool::lru_pool_manager::create();
     test_lru_pool_t lru;
     lru.init(mgr);

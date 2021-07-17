@@ -13,8 +13,8 @@
 namespace util {
 
 namespace detail {
-typedef const unsigned char base_enc_map_t[64];
-typedef const unsigned char base_dec_map_t[128];
+using base_enc_map_t = const unsigned char[64];
+using base_dec_map_t = const unsigned char[128];
 static base_enc_map_t base64_enc_map_basic = {
     'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V',
     'W', 'X', 'Y', 'Z', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r',
@@ -41,12 +41,12 @@ static base_dec_map_t base64_dec_map_imap = {
     23,  24,  25,  127, 127, 127, 127, 127, 127, 26,  27,  28,  29,  30,  31,  32,  33,  34,  35,  36,  37,  38,
     39,  40,  41,  42,  43,  44,  45,  46,  47,  48,  49,  50,  51,  127, 127, 127, 127, 127};
 
-static const unsigned char base64_enc_map_url[64] = {
+static constexpr const unsigned char base64_enc_map_url[64] = {
     'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V',
     'W', 'X', 'Y', 'Z', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r',
     's', 't', 'u', 'v', 'w', 'x', 'y', 'z', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '-', '_'};
 
-static const unsigned char base64_dec_map_url[128] = {
+static constexpr const unsigned char base64_dec_map_url[128] = {
     127, 127, 127, 127, 127, 127, 127, 127, 127, 127, 127, 127, 127, 127, 127, 127, 127, 127, 127, 127, 127, 127,
     127, 127, 127, 127, 127, 127, 127, 127, 127, 127, 127, 127, 127, 127, 127, 127, 127, 127, 127, 127, 127, 127,
     127, 62,  127, 127, 52,  53,  54,  55,  56,  57,  58,  59,  60,  61,  127, 127, 127, 127, 127, 127, 127, 0,
@@ -82,7 +82,7 @@ static int base64_encode_inner(unsigned char *dst, size_t dlen, size_t *olen, co
     }
   }
 
-  if ((dlen < n + 1) || (NULL == dst)) {
+  if ((dlen < n + 1) || (nullptr == dst)) {
     *olen = n + 1;
     return -1;
   }
@@ -127,10 +127,10 @@ static int base64_encode_inner(unsigned char *dst, size_t dlen, size_t *olen, co
 static inline int base64_encode_inner(std::string &dst, const unsigned char *src, size_t slen,
                                       base_enc_map_t &base64_enc_map, unsigned char padding_char) {
   size_t olen = 0;
-  base64_encode_inner(NULL, 0, &olen, src, slen, base64_enc_map, padding_char);
+  base64_encode_inner(nullptr, 0, &olen, src, slen, base64_enc_map, padding_char);
   dst.resize(olen);
 
-  if (NULL == src || 0 == slen) {
+  if (nullptr == src || 0 == slen) {
     return 0;
   }
 
@@ -206,7 +206,7 @@ static int base64_decode_inner(unsigned char *dst, size_t dlen, size_t *olen, co
   n = (6 * (n >> 3)) + ((6 * (n & 0x7) + 7) >> 3);
   n -= j;
 
-  if (dst == NULL || dlen < n) {
+  if (dst == nullptr || dlen < n) {
     *olen = n;
     return -1;
   }
@@ -242,11 +242,11 @@ static inline int base64_decode_inner(std::string &dst, const unsigned char *src
                                       base_dec_map_t &base64_dec_map, unsigned char padding_char) {
   size_t olen = 0;
 
-  if (-2 == base64_decode_inner(NULL, 0, &olen, src, slen, base64_dec_map, padding_char)) {
+  if (-2 == base64_decode_inner(nullptr, 0, &olen, src, slen, base64_dec_map, padding_char)) {
     return -2;
   }
 
-  if (NULL == src || 0 == slen) {
+  if (nullptr == src || 0 == slen) {
     return 0;
   }
 

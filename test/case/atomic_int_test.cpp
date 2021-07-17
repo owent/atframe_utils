@@ -7,7 +7,7 @@
 #include "lock/atomic_int_type.h"
 
 CASE_TEST(atomic_int_test, int8) {
-  typedef int8_t tested_type;
+  using tested_type = int8_t;
   ::util::lock::atomic_int_type<tested_type> tested(43);
 
   // store and load
@@ -58,7 +58,7 @@ CASE_TEST(atomic_int_test, int8) {
 }
 
 CASE_TEST(atomic_int_test, uint8) {
-  typedef uint8_t tested_type;
+  using tested_type = uint8_t;
   ::util::lock::atomic_int_type<tested_type> tested(43);
 
   // store and load
@@ -109,7 +109,7 @@ CASE_TEST(atomic_int_test, uint8) {
 }
 
 CASE_TEST(atomic_int_test, int16) {
-  typedef int16_t tested_type;
+  using tested_type = int16_t;
   ::util::lock::atomic_int_type<tested_type> tested(43);
 
   // store and load
@@ -160,7 +160,7 @@ CASE_TEST(atomic_int_test, int16) {
 }
 
 CASE_TEST(atomic_int_test, uint16) {
-  typedef uint16_t tested_type;
+  using tested_type = uint16_t;
   ::util::lock::atomic_int_type<tested_type> tested(43);
 
   // store and load
@@ -211,7 +211,7 @@ CASE_TEST(atomic_int_test, uint16) {
 }
 
 CASE_TEST(atomic_int_test, int32) {
-  typedef int32_t tested_type;
+  using tested_type = int32_t;
   ::util::lock::atomic_int_type<tested_type> tested(43);
 
   // store and load
@@ -262,7 +262,7 @@ CASE_TEST(atomic_int_test, int32) {
 }
 
 CASE_TEST(atomic_int_test, uint32) {
-  typedef uint32_t tested_type;
+  using tested_type = uint32_t;
   ::util::lock::atomic_int_type<tested_type> tested(43);
 
   // store and load
@@ -313,7 +313,7 @@ CASE_TEST(atomic_int_test, uint32) {
 }
 
 CASE_TEST(atomic_int_test, int64) {
-  typedef int64_t tested_type;
+  using tested_type = int64_t;
   ::util::lock::atomic_int_type<tested_type> tested(43);
 
   // store and load
@@ -364,7 +364,7 @@ CASE_TEST(atomic_int_test, int64) {
 }
 
 CASE_TEST(atomic_int_test, uint64) {
-  typedef uint64_t tested_type;
+  using tested_type = uint64_t;
   ::util::lock::atomic_int_type<tested_type> tested(43);
 
   // store and load
@@ -417,18 +417,18 @@ CASE_TEST(atomic_int_test, uint64) {
 #if defined(UTIL_CONFIG_COMPILER_CXX_THREAD_LOCAL) && defined(UTIL_CONFIG_COMPILER_CXX_LAMBDAS) && \
     UTIL_CONFIG_COMPILER_CXX_LAMBDAS
 
-#  include <std/smart_ptr.h>
+#  include <memory>
 #  include <thread>
 #  include <vector>
 
 CASE_TEST(atomic_int_test, multi_thread_add) {
-  typedef uint64_t tested_type;
+  using tested_type = uint64_t;
   ::util::lock::atomic_int_type<tested_type> tested(43);
 
   // store and load
   CASE_EXPECT_EQ(43, tested.load());
 
-  typedef std::shared_ptr<std::thread> thread_ptr;
+  using thread_ptr = std::shared_ptr<std::thread>;
   std::vector<thread_ptr> thds;
   uint64_t thd_num = 500;
   thds.resize(static_cast<size_t>(thd_num));
@@ -450,7 +450,7 @@ CASE_TEST(atomic_int_test, multi_thread_add) {
 #endif
 
 CASE_TEST(atomic_int_test, unsafe_int8) {
-  typedef int8_t tested_type;
+  using tested_type = int8_t;
   ::util::lock::atomic_int_type< ::util::lock::unsafe_int_type<tested_type> > tested(43);
 
   // store and load
@@ -501,7 +501,7 @@ CASE_TEST(atomic_int_test, unsafe_int8) {
 }
 
 CASE_TEST(atomic_int_test, unsafe_uint32) {
-  typedef uint32_t tested_type;
+  using tested_type = uint32_t;
   ::util::lock::atomic_int_type< ::util::lock::unsafe_int_type<tested_type> > tested(43);
 
   // store and load

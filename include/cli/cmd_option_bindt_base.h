@@ -33,7 +33,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY cmd_option_bindt : public cmd_option_bind_b
   _PL param_list_;  // 参数列表结构
 
  public:
-  typedef cmd_option_bindt this_type;
+  using this_type = cmd_option_bindt;
 
   cmd_option_bindt(_F f, _PL l) : func_obj_(f), param_list_(l) {}
 

@@ -144,13 +144,13 @@ static int _check_term_color_status() {
   std::string my_term_name;
 
 #ifdef _MSC_VER
-  char *term_name = NULL;
+  char *term_name = nullptr;
   size_t term_name_len = 0;
   _dupenv_s(&term_name, &term_name_len, "TERM");
 #else
   char *term_name = getenv("TERM");
 #endif
-  if (NULL != term_name) {
+  if (nullptr != term_name) {
 #ifdef _MSC_VER
     my_term_name.assign(term_name, term_name_len);
     ::free(term_name);
@@ -226,13 +226,13 @@ LIBATFRAME_UTILS_API shell_stream::shell_stream_opr::shell_stream_opr(stream_t *
   } else if (os == &std::cerr) {
     hOsHandle = GetStdHandle(STD_ERROR_HANDLE);
   } else {
-    hOsHandle = NULL;
+    hOsHandle = nullptr;
   }
 #endif
 }
 
 LIBATFRAME_UTILS_API shell_stream::shell_stream_opr::~shell_stream_opr() {
-  if (NULL == pOs) {
+  if (nullptr == pOs) {
     return;
   }
 
@@ -300,7 +300,7 @@ LIBATFRAME_UTILS_API const shell_stream::shell_stream_opr &shell_stream::shell_s
 }
 
 LIBATFRAME_UTILS_API void shell_stream::shell_stream_opr::close() const {
-  if (NULL == pOs) {
+  if (nullptr == pOs) {
     return;
   }
 
@@ -309,7 +309,7 @@ LIBATFRAME_UTILS_API void shell_stream::shell_stream_opr::close() const {
   }
 
 #ifdef SHELL_FONT_USING_WIN32_CONSOLE
-  if (NULL != hOsHandle) {
+  if (nullptr != hOsHandle) {
     std::map<int, WORD> &color_map = _get_flag_mapping();
     WORD style = 0;
     int left_flag = flag;
@@ -334,14 +334,14 @@ LIBATFRAME_UTILS_API void shell_stream::shell_stream_opr::close() const {
 }
 
 LIBATFRAME_UTILS_API void shell_stream::shell_stream_opr::reset() const {
-  if (NULL == pOs) {
+  if (nullptr == pOs) {
     return;
   }
 
   close();
 
 #ifdef SHELL_FONT_USING_WIN32_CONSOLE
-  if (NULL != hOsHandle) {
+  if (nullptr != hOsHandle) {
     SetConsoleTextAttribute(hOsHandle, _get_default_color());
   }
 #else

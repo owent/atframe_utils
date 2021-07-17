@@ -31,8 +31,8 @@ class UTIL_SYMBOL_VISIBLE noncopyable {
   ~noncopyable() {}
 
  private:
-  noncopyable(const noncopyable &) UTIL_CONFIG_DELETED_FUNCTION;
-  noncopyable &operator=(const noncopyable &) UTIL_CONFIG_DELETED_FUNCTION;
+  noncopyable(const noncopyable &) = delete;
+  noncopyable &operator=(const noncopyable &) = delete;
   // we has defined copy constructor, so move constructor will not generated
 };
 }  // namespace design_pattern
@@ -41,9 +41,9 @@ class UTIL_SYMBOL_VISIBLE noncopyable {
 /**
  * @brief 侵入式的禁止copy实现，有一些场景下需要使用dllexport或者-fvisibility=hidden
  */
-#define UTIL_DESIGN_PATTERN_NOCOPYABLE(CLAZZ)        \
- private:                                            \
-  CLAZZ(const CLAZZ &) UTIL_CONFIG_DELETED_FUNCTION; \
-  CLAZZ &operator=(const CLAZZ &) UTIL_CONFIG_DELETED_FUNCTION;
+#define UTIL_DESIGN_PATTERN_NOCOPYABLE(CLAZZ) \
+ private:                                     \
+  CLAZZ(const CLAZZ &) = delete;              \
+  CLAZZ &operator=(const CLAZZ &) = delete;
 
 #endif

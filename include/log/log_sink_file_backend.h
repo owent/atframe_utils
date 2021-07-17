@@ -18,11 +18,11 @@
 #include <cstdio>
 #include <cstdlib>
 #include <fstream>
+#include <memory>
 #include <string>
 #include <vector>
-#include "lock/spin_lock.h"
-#include "std/smart_ptr.h"
 
+#include "lock/spin_lock.h"
 #include "log_formatter.h"
 
 namespace util {

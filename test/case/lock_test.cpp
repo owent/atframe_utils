@@ -123,7 +123,7 @@ CASE_TEST(lock_test, spin_rw_lock_holder) {
 #if defined(UTIL_CONFIG_COMPILER_CXX_THREAD_LOCAL) && defined(UTIL_CONFIG_COMPILER_CXX_LAMBDAS) && \
     UTIL_CONFIG_COMPILER_CXX_LAMBDAS
 
-#  include <std/smart_ptr.h>
+#  include <memory>
 #  include <thread>
 
 CASE_TEST(lock_test, spin_rw_lock_mt) {

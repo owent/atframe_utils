@@ -14,16 +14,16 @@
  */
 
 #include <map>
+#include <memory>
 #include <string>
 #include <vector>
 
 #include "cli/cmd_option_value.h"
-#include "std/smart_ptr.h"
 
 namespace util {
 namespace cli {
 class cmd_option_list;
-typedef cmd_option_list &callback_param;
+using callback_param = cmd_option_list &;
 
 namespace binder {
 struct UTIL_SYMBOL_VISIBLE unspecified {};
@@ -38,7 +38,7 @@ class UTIL_SYMBOL_VISIBLE cmd_option_bind_base : public std::enable_shared_from_
     std::string description;
     std::shared_ptr<cmd_option_bind_base> binded_obj;
   };
-  typedef std::vector<help_msg_t> help_list_t;
+  using help_list_t = std::vector<help_msg_t>;
 
   std::string help_msg_;
   LIBATFRAME_UTILS_API cmd_option_bind_base();
@@ -52,7 +52,7 @@ class UTIL_SYMBOL_VISIBLE cmd_option_bind_base : public std::enable_shared_from_
 
  public:
   // 定义参数类型
-  typedef callback_param param_type;
+  using param_type = callback_param;
 
   LIBATFRAME_UTILS_API virtual void operator()(callback_param arg) = 0;
 
@@ -70,10 +70,10 @@ class UTIL_SYMBOL_VISIBLE cmd_option_bind_base : public std::enable_shared_from_
 class UTIL_SYMBOL_VISIBLE cmd_option_list {
  public:
   // 类型定义
-  typedef std::vector<std::pair<std::string, std::shared_ptr<binder::cmd_option_bind_base> > >
-      cmd_array_type;                                    // 大小类型
-  typedef std::shared_ptr<cmd_option_value> value_type;  // 值类型
-  typedef std::vector<value_type>::size_type size_type;  // 大小类型
+  using cmd_array_type =
+      std::vector<std::pair<std::string, std::shared_ptr<binder::cmd_option_bind_base> > >;  // 大小类型
+  using value_type = std::shared_ptr<cmd_option_value>;                                      // 值类型
+  using size_type = std::vector<value_type>::size_type;                                      // 大小类型
 
  protected:
   std::shared_ptr<std::map<std::string, std::shared_ptr<cmd_option_value> > > key_value_;

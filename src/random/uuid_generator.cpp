@@ -177,7 +177,7 @@ static int getuid(void) { return 1; }
  * use glibc pseudo-random functions.
  */
 static void random_get_bytes(unsigned char *buf, size_t nbytes) {
-  typedef util::random::mt19937_64 uuid_generator_rand_engine;
+  using uuid_generator_rand_engine = util::random::mt19937_64;
   static util::lock::spin_lock random_generator_lock;
   static uuid_generator_rand_engine random_generator;
   static bool uuid_generator_rand_engine_inited = false;
@@ -313,7 +313,7 @@ static int get_node_id(unsigned char *node_id) {
 struct uuid_generator_clock_file_guard_t {
   int state_fd;
   FILE *state_f;
-  uuid_generator_clock_file_guard_t() : state_fd(-2), state_f(NULL) {}
+  uuid_generator_clock_file_guard_t() : state_fd(-2), state_f(nullptr) {}
   ~uuid_generator_clock_file_guard_t() {
     close_file();
     close_fd();
@@ -327,9 +327,9 @@ struct uuid_generator_clock_file_guard_t {
   }
 
   void close_file() {
-    if (state_f != NULL) {
+    if (state_f != nullptr) {
       fclose(state_f);
-      state_f = NULL;
+      state_f = nullptr;
     }
   }
 };

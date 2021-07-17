@@ -27,17 +27,16 @@
 
 #pragma once
 
+#include <config/atframe_utils_build_feature.h>
+#include <config/compile_optimize.h>
+
 #include <stdint.h>
 #include <cstddef>
 #include <list>
+#include <memory>
 #include <sstream>
 #include <string>
 #include <vector>
-
-#include <std/smart_ptr.h>
-
-#include "atframe_utils_build_feature.h"
-#include "compile_optimize.h"
 
 #if defined(LIBATFRAME_UTILS_ENABLE_UNORDERED_MAP_SET) && LIBATFRAME_UTILS_ENABLE_UNORDERED_MAP_SET
 #  include <unordered_map>
@@ -62,13 +61,8 @@ struct LIBATFRAME_UTILS_API_HEAD_ONLY duration_value {
 // ================= 存储层 =================
 class ini_value : public std::enable_shared_from_this<ini_value> {
  public:
-#if defined(UTIL_CONFIG_COMPILER_CXX_ALIAS_TEMPLATES) && UTIL_CONFIG_COMPILER_CXX_ALIAS_TEMPLATES
   using ptr_t = std::shared_ptr<ini_value>;
   using node_type = LIBATFRAME_UTILS_AUTO_SELETC_MAP(std::string, ptr_t);
-#else
-  typedef std::shared_ptr<ini_value> ptr_t;
-  typedef LIBATFRAME_UTILS_AUTO_SELETC_MAP(std::string, ptr_t) node_type;
-#endif
 
  private:
   std::vector<std::string> data_;
@@ -79,7 +73,7 @@ class ini_value : public std::enable_shared_from_this<ini_value> {
 
   UTIL_FORCEINLINE static void clear_data(float &data) { data = 0.0f; }
   UTIL_FORCEINLINE static void clear_data(double &data) { data = 0.0; }
-  UTIL_FORCEINLINE static void clear_data(char *&data) { data = NULL; }
+  UTIL_FORCEINLINE static void clear_data(char *&data) { data = nullptr; }
   UTIL_FORCEINLINE static void clear_data(std::string &data) { data.clear(); }
   UTIL_FORCEINLINE static void clear_data(bool &data) { data = false; }
   UTIL_FORCEINLINE static void clear_data(char &data) { data = 0; }
@@ -334,7 +328,7 @@ class ini_loader {
    * @return 子节点
    * @note 如果子节点不存在会创建空列表节点
    */
-  LIBATFRAME_UTILS_API ini_value &get_node(const std::string &path, ini_value *father_ptr = NULL);
+  LIBATFRAME_UTILS_API ini_value &get_node(const std::string &path, ini_value *father_ptr = nullptr);
 
   /**
    * @brief 根据子节点名称获取子节点
@@ -343,7 +337,7 @@ class ini_loader {
    * @return 子节点
    * @note 如果子节点不存在会创建空列表节点
    */
-  LIBATFRAME_UTILS_API ini_value &get_child_node(const std::string &path, ini_value *father_ptr = NULL);
+  LIBATFRAME_UTILS_API ini_value &get_child_node(const std::string &path, ini_value *father_ptr = nullptr);
 
   // ========================= 单值容器转储 =========================
 

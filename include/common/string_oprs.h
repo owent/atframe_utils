@@ -160,11 +160,11 @@ LIBATFRAME_UTILS_API_HEAD_ONLY std::pair<const TCH *, size_t> trim(const TCH *st
 template <typename TCH, typename TCHE>
 LIBATFRAME_UTILS_API_HEAD_ONLY void reverse(TCH *begin, TCHE end_any) {
   TCH *end = reinterpret_cast<TCH *>(end_any);
-  if (NULL == begin) {
+  if (nullptr == begin) {
     return;
   }
 
-  if (NULL == end) {
+  if (nullptr == end) {
     end = begin;
     while (*end) {
       ++end;
@@ -188,6 +188,11 @@ LIBATFRAME_UTILS_API_HEAD_ONLY void reverse(TCH *begin, TCHE end_any) {
 template <typename TCH>
 LIBATFRAME_UTILS_API_HEAD_ONLY inline void reverse(TCH *begin, int end_any) {
   reverse<TCH, TCH *>(begin, reinterpret_cast<TCH *>(static_cast<intptr_t>(end_any)));
+}
+
+template <typename TCH>
+LIBATFRAME_UTILS_API_HEAD_ONLY inline void reverse(TCH *begin, std::nullptr_t) {
+  reverse<TCH, TCH *>(begin, static_cast<TCH *>(nullptr));
 }
 
 template <typename T>
@@ -238,8 +243,8 @@ LIBATFRAME_UTILS_API_HEAD_ONLY size_t int2str_signed(char *str, size_t strsz, T 
 
 template <typename T>
 struct LIBATFRAME_UTILS_API_HEAD_ONLY int2str_helper {
-  typedef T value_type_s;
-  typedef typename std::make_unsigned<T>::type value_type_u;
+  using value_type_s = T;
+  using value_type_u = typename std::make_unsigned<T>::type;
 
   static inline size_t call(char *str, size_t strsz, value_type_s in) { return int2str_signed(str, strsz, in); }
 
@@ -272,7 +277,7 @@ LIBATFRAME_UTILS_API_HEAD_ONLY inline size_t int2str(char *str, size_t strsz, co
 template <typename T, typename TCHAR>
 LIBATFRAME_UTILS_API_HEAD_ONLY const TCHAR *str2int(T &out, const TCHAR *str, size_t strsz = 0) {
   out = static_cast<T>(0);
-  if (NULL == str || !(*str)) {
+  if (nullptr == str || !(*str)) {
     return str;
   }
 

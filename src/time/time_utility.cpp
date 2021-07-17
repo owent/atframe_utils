@@ -15,7 +15,7 @@ time_utility::~time_utility() {}
 
 LIBATFRAME_UTILS_API void time_utility::update(raw_time_t *t) {
   // raw_time_t prev_tp = now_;
-  if (NULL != t) {
+  if (nullptr != t) {
     now_ = *t + global_now_offset_;
   } else {
     now_ = std::chrono::system_clock::now() + global_now_offset_;
@@ -66,7 +66,7 @@ LIBATFRAME_UTILS_API void time_utility::reset_global_now_offset() {
 // ====================== 后面的函数都和时区相关 ======================
 LIBATFRAME_UTILS_API time_t time_utility::get_sys_zone_offset() {
   time_t ret = 0;
-  struct tm t;
+  std::tm t;
   memset(&t, 0, sizeof(t));
   t.tm_year = 70;
   t.tm_mon = 0;
@@ -147,7 +147,7 @@ LIBATFRAME_UTILS_API time_utility::raw_time_desc_t time_utility::get_local_tm(ti
 }
 
 LIBATFRAME_UTILS_API time_utility::raw_time_desc_t time_utility::get_gmt_tm(time_t t) {
-  struct tm ttm;
+  std::tm ttm;
   UTIL_STRFUNC_GMTIME_S(&t, &ttm);  // lgtm [cpp/potentially-dangerous-function]
   return ttm;
 }

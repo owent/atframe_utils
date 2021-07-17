@@ -1,6 +1,12 @@
 ﻿
 #include <mem_pool/lru_object_pool.h>
 
+#include <assert.h>
+#include <stdint.h>
+#include <cstddef>
+#include <ctime>
+#include <memory>
+
 namespace util {
 namespace mempool {
 LIBATFRAME_UTILS_API lru_pool_base::list_type_base::list_type_base() {}

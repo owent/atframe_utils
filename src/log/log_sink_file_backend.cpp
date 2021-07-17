@@ -321,8 +321,8 @@ LIBATFRAME_UTILS_API std::shared_ptr<std::ofstream> log_sink_file_backend::open_
 #  ifdef UTIL_FS_WINDOWS_API
       std::cerr
           << "    you can use FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM"
-          << " | FORMAT_MESSAGE_IGNORE_INSERTS, NULL, " << res << ", MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), "
-          << "(LPTSTR) &lpMsgBuf, 0, NULL) to get the error message, see "
+          << " | FORMAT_MESSAGE_IGNORE_INSERTS, nullptr, " << res << ", MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), "
+          << "(LPTSTR) &lpMsgBuf, 0, nullptr) to get the error message, see "
           << "https://docs.microsoft.com/en-us/windows/desktop/api/WinBase/nf-winbase-formatmessage and "
           << "https://docs.microsoft.com/en-us/windows/desktop/Debug/retrieving-the-last-error-code for more details"
           << std::endl;

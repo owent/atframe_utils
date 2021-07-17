@@ -53,10 +53,10 @@ class time_utility {
     YEAR_SECONDS = DAY_SECONDS * 365,
   };
 
-  typedef std::chrono::system_clock::time_point raw_time_t;
-  typedef std::chrono::system_clock::duration raw_duration_t;
-  typedef std::chrono::system_clock::period raw_period_t;
-  typedef struct tm raw_time_desc_t;
+  using raw_time_t = std::chrono::system_clock::time_point;
+  using raw_duration_t = std::chrono::system_clock::duration;
+  using raw_period_t = std::chrono::system_clock::period;
+  using raw_time_desc_t = std::tm;
 
  private:
   time_utility();
@@ -67,7 +67,7 @@ class time_utility {
    * @brief 更新时间
    * @param t 可以指定时间对象
    */
-  static LIBATFRAME_UTILS_API void update(raw_time_t *t = NULL);
+  static LIBATFRAME_UTILS_API void update(raw_time_t *t = nullptr);
 
   /**
    * @brief 获取原始系统时间对象

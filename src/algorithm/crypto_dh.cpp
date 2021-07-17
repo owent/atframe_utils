@@ -1,4 +1,8 @@
-﻿#include <cstring>
+﻿// Copyright 2021 atframework
+// Create by owent
+
+#include <assert.h>
+#include <cstring>
 #include <iostream>
 
 #include <common/file_system.h>
@@ -68,7 +72,7 @@ struct tls_curve_info {
  * table: the index of each entry is one less than the TLS curve id.
  * @see t1_lib.c in openssl source tree for more details
  */
-static const tls_curve_info nid_list[] = {
+static constexpr const tls_curve_info nid_list[] = {
     {
 #    ifdef NID_sect163k1
         NID_sect163k1
@@ -339,34 +343,34 @@ static int tls1_nid2group_id(int nid) {
  * @see crypto/dh/dh_lib.c in openssl 1.1.x
  */
 static inline void DH_get0_pqg(const DH *dh, const BIGNUM **p, const BIGNUM **q, const BIGNUM **g) {
-  if (p != NULL) *p = dh->p;
-  if (q != NULL) *q = dh->q;
-  if (g != NULL) *g = dh->g;
+  if (p != nullptr) *p = dh->p;
+  if (q != nullptr) *q = dh->q;
+  if (g != nullptr) *g = dh->g;
 }
 
 /**
  * @see crypto/dh/dh_lib.c in openssl 1.1.x
  */
 static inline int DH_set0_pqg(DH *dh, BIGNUM *p, BIGNUM *q, BIGNUM *g) {
-  /* If the fields p and g in d are NULL, the corresponding input
-   * parameters MUST be non-NULL.  q may remain NULL.
+  /* If the fields p and g in d are nullptr, the corresponding input
+   * parameters MUST be non-nullptr.  q may remain nullptr.
    */
-  if ((dh->p == NULL && p == NULL) || (dh->g == NULL && g == NULL)) return 0;
+  if ((dh->p == nullptr && p == nullptr) || (dh->g == nullptr && g == nullptr)) return 0;
 
-  if (p != NULL) {
+  if (p != nullptr) {
     BN_free(dh->p);
     dh->p = p;
   }
-  if (q != NULL) {
+  if (q != nullptr) {
     BN_free(dh->q);
     dh->q = q;
   }
-  if (g != NULL) {
+  if (g != nullptr) {
     BN_free(dh->g);
     dh->g = g;
   }
 
-  if (q != NULL) {
+  if (q != nullptr) {
     dh->length = BN_num_bits(q);
   }
 
@@ -377,13 +381,13 @@ static inline int DH_set0_pqg(DH *dh, BIGNUM *p, BIGNUM *q, BIGNUM *g) {
  * @see crypto/dh/dh_lib.c in openssl 1.1.x or upper
  */
 static inline void DH_get0_key(const DH *dh, const BIGNUM **pub_key, const BIGNUM **priv_key) {
-  if (pub_key != NULL) *pub_key = dh->pub_key;
-  if (priv_key != NULL) *priv_key = dh->priv_key;
+  if (pub_key != nullptr) *pub_key = dh->pub_key;
+  if (priv_key != nullptr) *priv_key = dh->priv_key;
 }
 
 static DH *EVP_PKEY_get0_DH(EVP_PKEY *pkey) {
   DH *ret = EVP_PKEY_get1_DH(pkey);
-  if (NULL != ret) {
+  if (nullptr != ret) {
     DH_free(ret);
   }
   return ret;
@@ -393,17 +397,17 @@ static DH *EVP_PKEY_get0_DH(EVP_PKEY *pkey) {
  * @see crypto/dh/dh_lib.c in openssl 1.1.x or upper
  */
 EXPLICIT_UNUSED_ATTR static inline int DH_set0_key(DH *dh, BIGNUM *pub_key, BIGNUM *priv_key) {
-  /* If the field pub_key in dh is NULL, the corresponding input
-   * parameters MUST be non-NULL.  The priv_key field may
-   * be left NULL.
+  /* If the field pub_key in dh is nullptr, the corresponding input
+   * parameters MUST be non-nullptr.  The priv_key field may
+   * be left nullptr.
    */
-  if (dh->pub_key == NULL && pub_key == NULL) return 0;
+  if (dh->pub_key == nullptr && pub_key == nullptr) return 0;
 
-  if (pub_key != NULL) {
+  if (pub_key != nullptr) {
     BN_free(dh->pub_key);
     dh->pub_key = pub_key;
   }
-  if (priv_key != NULL) {
+  if (priv_key != nullptr) {
     BN_free(dh->priv_key);
     dh->priv_key = priv_key;
   }
@@ -424,11 +428,11 @@ EXPLICIT_UNUSED_ATTR static inline int DH_set0_key(DH *dh, BIGNUM *pub_key, BIGN
 #      endif
 
 static int EC_KEY_oct2key(EC_KEY *key, const unsigned char *buf, size_t len, BN_CTX *ctx) {
-  if (key == NULL) return 0;
+  if (key == nullptr) return 0;
   const EC_GROUP *group = EC_KEY_get0_group(key);
-  if (group == NULL) return 0;
+  if (group == nullptr) return 0;
   EC_POINT *point = EC_POINT_new(group);
-  if (NULL == point) {
+  if (nullptr == point) {
     return 0;
   }
   if (EC_POINT_oct2point(group, point, buf, len, ctx) <= 0) {
@@ -446,9 +450,9 @@ static size_t EC_POINT_point2buf(const EC_GROUP *group, const EC_POINT *point, p
   size_t len;
   unsigned char *buf;
 
-  len = EC_POINT_point2oct(group, point, form, NULL, 0, NULL);
+  len = EC_POINT_point2oct(group, point, form, nullptr, 0, nullptr);
   if (len == 0) return 0;
-  if ((buf = (unsigned char *)OPENSSL_malloc(len)) == NULL) {
+  if ((buf = (unsigned char *)OPENSSL_malloc(len)) == nullptr) {
     ECerr(281 /*EC_F_EC_POINT_POINT2BUF*/, ERR_R_MALLOC_FAILURE);
     return 0;
   }
@@ -462,29 +466,29 @@ static size_t EC_POINT_point2buf(const EC_GROUP *group, const EC_POINT *point, p
 }
 
 static size_t EC_KEY_key2buf(const EC_KEY *key, point_conversion_form_t form, unsigned char **pbuf, BN_CTX *ctx) {
-  if (key == NULL || EC_KEY_get0_public_key(key) == NULL || EC_KEY_get0_group(key) == NULL) return 0;
+  if (key == nullptr || EC_KEY_get0_public_key(key) == nullptr || EC_KEY_get0_group(key) == nullptr) return 0;
   return EC_POINT_point2buf(EC_KEY_get0_group(key), EC_KEY_get0_public_key(key), form, pbuf, ctx);
 }
 
 // Just like crypto/ec/ec_ameth.c, openssl < 1.1.0 do not support x25519/x448 and ECX_KEY, just skip it
 static int evp_pkey_asn1_ctrl(EVP_PKEY *pkey, int op, int arg1, void *arg2) {
-  if (EVP_PKEY_get0_asn1(pkey) == NULL) return -2;
+  if (EVP_PKEY_get0_asn1(pkey) == nullptr) return -2;
   // openssl < 1.1.0 do not has API of EVP_PKEY_get0_EC_KEY(key)
   // So we can only use EVP_PKEY_get1_EC_KEY and free it later
   EC_KEY *ec_key = EVP_PKEY_get1_EC_KEY(pkey);
   int ret;
   switch (op) {
     case ASN1_PKEY_CTRL_SET1_TLS_ENCPT:
-      ret = EC_KEY_oct2key(ec_key, (const unsigned char *)arg2, (size_t)arg1, NULL);
+      ret = EC_KEY_oct2key(ec_key, (const unsigned char *)arg2, (size_t)arg1, nullptr);
       break;
     case ASN1_PKEY_CTRL_GET1_TLS_ENCPT:
-      ret = (int)EC_KEY_key2buf(ec_key, POINT_CONVERSION_UNCOMPRESSED, (unsigned char **)arg2, NULL);
+      ret = (int)EC_KEY_key2buf(ec_key, POINT_CONVERSION_UNCOMPRESSED, (unsigned char **)arg2, nullptr);
       break;
     default:
       ret = -2;
       break;
   }
-  if (NULL != ec_key) {
+  if (nullptr != ec_key) {
     EC_KEY_free(ec_key);
   }
   return ret;
@@ -518,7 +522,7 @@ static inline dh::error_code_t::type setup_errorno(dh &ci, int err, dh::error_co
   return ret;
 }
 
-static const char *supported_dh_curves[] = {
+static constexpr const char *supported_dh_curves[] = {
     "",
     "x25519",           // see ecp_supported_curves in ecp.c of mbedtls
     "x448",             // mbedtls don't support right now but maybe support it in the future
@@ -533,7 +537,7 @@ static const char *supported_dh_curves[] = {
     "brainpoolP512r1",  // see ecp_supported_curves in ecp.c of mbedtls
     "brainpoolP384r1",  // see ecp_supported_curves in ecp.c of mbedtls
     "brainpoolP256r1",  // see ecp_supported_curves in ecp.c of mbedtls
-    NULL,               // end
+    nullptr,            // end
 };
 
 #  if defined(CRYPTO_USE_OPENSSL) || defined(CRYPTO_USE_LIBRESSL) || defined(CRYPTO_USE_BORINGSSL)
@@ -550,18 +554,18 @@ static inline void openssl_set_net_2(unsigned char *data, unsigned int length) {
 }
 
 static inline BIGNUM *openssl_get_dh_point(const unsigned char *&input, size_t &left_size) {
-  if (NULL == input || left_size < 2) {
-    return NULL;
+  if (nullptr == input || left_size < 2) {
+    return nullptr;
   }
 
   unsigned int point_size;
   openssl_peek_net_2(input, point_size);
   if (left_size < point_size + 2) {
-    return NULL;
+    return nullptr;
   }
 
-  BIGNUM *ret = BN_bin2bn(input + 2, point_size, NULL);
-  if (NULL != ret) {
+  BIGNUM *ret = BN_bin2bn(input + 2, point_size, nullptr);
+  if (nullptr != ret) {
     input += 2 + point_size;
     left_size -= 2 + point_size;
   }
@@ -570,7 +574,7 @@ static inline BIGNUM *openssl_get_dh_point(const unsigned char *&input, size_t &
 }
 
 static inline bool openssl_put_dh_point(const BIGNUM *input, unsigned char *&output, size_t &left_size) {
-  if (NULL == output || NULL == input) {
+  if (nullptr == output || nullptr == input) {
     return false;
   }
 
@@ -590,7 +594,7 @@ static inline bool openssl_put_dh_point(const BIGNUM *input, unsigned char *&out
 }
 
 // see ec_list_element in ec_curve.c of openssl
-static const int supported_dh_curves_openssl[] = {
+static constexpr const int supported_dh_curves_openssl[] = {
     0,
 #    ifdef NID_X25519
     NID_X25519,
@@ -632,68 +636,68 @@ STD_STATIC_ASSERT(sizeof(supported_dh_curves) / sizeof(supported_dh_curves[0]) =
                   sizeof(supported_dh_curves_openssl) / sizeof(supported_dh_curves_openssl[0]));
 
 static inline void reset(EVP_PKEY *&pkey) {
-  if (NULL == pkey) {
+  if (nullptr == pkey) {
     return;
   }
 
   EVP_PKEY_free(pkey);
-  pkey = NULL;
+  pkey = nullptr;
 }
 
 static inline void reset(EVP_PKEY_CTX *&ctx) {
-  if (NULL == ctx) {
+  if (nullptr == ctx) {
     return;
   }
 
   EVP_PKEY_CTX_free(ctx);
-  ctx = NULL;
+  ctx = nullptr;
 }
 
 static inline void reset(DH *&dh) {
-  if (NULL == dh) {
+  if (nullptr == dh) {
     return;
   }
 
   DH_free(dh);
-  dh = NULL;
+  dh = nullptr;
 }
 
 /*
 static inline void reset(EC_KEY *&ec_key) {
-    if (NULL == ec_key) {
+    if (nullptr == ec_key) {
         return;
     }
 
     EC_KEY_free(ec_key);
-    ec_key = NULL;
+    ec_key = nullptr;
 }
 
 static inline void reset(EC_POINT *&point) {
-    if (NULL == point) {
+    if (nullptr == point) {
         return;
     }
 
     EC_POINT_free(point);
-    point = NULL;
+    point = nullptr;
 }
 
 static inline void reset(BN_CTX *&bn) {
-    if (NULL == bn) {
+    if (nullptr == bn) {
         return;
     }
 
     BN_CTX_free(bn);
-    bn = NULL;
+    bn = nullptr;
 }
 */
 
 static inline void reset(BIO *&bio) {
-  if (NULL == bio) {
+  if (nullptr == bio) {
     return;
   }
 
   BIO_free(bio);
-  bio = NULL;
+  bio = nullptr;
 }
 
 template <class TPTR>
@@ -720,17 +724,17 @@ class openssl_raii {
 };
 
 static EVP_PKEY_CTX *initialize_pkey_ctx_by_group_id(int group_id, bool init_keygen, bool init_paramgen) {
-  EVP_PKEY_CTX *ret = NULL;
+  EVP_PKEY_CTX *ret = nullptr;
   unsigned int gtype = 0;
   int curve_nid = tls1_ec_group_id2nid(group_id, &gtype);
   if (TLS_CURVE_CUSTOM == gtype) {
-    ret = EVP_PKEY_CTX_new_id(curve_nid, NULL);
+    ret = EVP_PKEY_CTX_new_id(curve_nid, nullptr);
   } else {
-    ret = EVP_PKEY_CTX_new_id(EVP_PKEY_EC, NULL);
+    ret = EVP_PKEY_CTX_new_id(EVP_PKEY_EC, nullptr);
   }
 
-  if (NULL == ret) {
-    return NULL;
+  if (nullptr == ret) {
+    return nullptr;
   }
 
   if (init_keygen && EVP_PKEY_keygen_init(ret) <= 0) {
@@ -754,13 +758,13 @@ static EVP_PKEY_CTX *initialize_pkey_ctx_by_group_id(int group_id, bool init_key
 }
 
 static EVP_PKEY_CTX *initialize_pkey_ctx_by_pkey(EVP_PKEY *params_key, bool init_keygen, bool init_paramgen) {
-  if (NULL == params_key) {
-    return NULL;
+  if (nullptr == params_key) {
+    return nullptr;
   }
 
-  EVP_PKEY_CTX *ret = EVP_PKEY_CTX_new(params_key, NULL);
-  if (NULL == ret) {
-    return NULL;
+  EVP_PKEY_CTX *ret = EVP_PKEY_CTX_new(params_key, nullptr);
+  if (nullptr == ret) {
+    return nullptr;
   }
 
   if (init_keygen && EVP_PKEY_keygen_init(ret) <= 0) {
@@ -781,11 +785,11 @@ static EVP_PKEY_CTX *initialize_pkey_ctx_by_pkey(EVP_PKEY *params_key, bool init
 // =============== shared context ===============
 LIBATFRAME_UTILS_API dh::shared_context::shared_context() : flags_(flags_t::NONE), method_(method_t::EN_CDT_INVALID) {
 #  if defined(CRYPTO_USE_OPENSSL) || defined(CRYPTO_USE_LIBRESSL) || defined(CRYPTO_USE_BORINGSSL)
-  dh_param_.param = NULL;
+  dh_param_.param = nullptr;
   dh_param_.group_id = 0;
-  dh_param_.paramgen_ctx = NULL;
-  dh_param_.params_key = NULL;
-  dh_param_.keygen_ctx = NULL;
+  dh_param_.paramgen_ctx = nullptr;
+  dh_param_.params_key = nullptr;
+  dh_param_.keygen_ctx = nullptr;
 #  elif defined(CRYPTO_USE_MBEDTLS)
   dh_param_.group_id = MBEDTLS_ECP_DP_NONE;
 #  endif
@@ -805,11 +809,11 @@ LIBATFRAME_UTILS_API dh::shared_context::shared_context() : flags_(flags_t::NONE
 LIBATFRAME_UTILS_API dh::shared_context::shared_context(creator_helper &)
     : flags_(flags_t::NONE), method_(method_t::EN_CDT_INVALID) {
 #  if defined(CRYPTO_USE_OPENSSL) || defined(CRYPTO_USE_LIBRESSL) || defined(CRYPTO_USE_BORINGSSL)
-  dh_param_.param = NULL;
+  dh_param_.param = nullptr;
   dh_param_.group_id = 0;
-  dh_param_.paramgen_ctx = NULL;
-  dh_param_.params_key = NULL;
-  dh_param_.keygen_ctx = NULL;
+  dh_param_.paramgen_ctx = nullptr;
+  dh_param_.params_key = nullptr;
+  dh_param_.keygen_ctx = nullptr;
 #  elif defined(CRYPTO_USE_MBEDTLS)
   dh_param_.group_id = MBEDTLS_ECP_DP_NONE;
 #  endif
@@ -833,7 +837,7 @@ LIBATFRAME_UTILS_API dh::shared_context::ptr_t dh::shared_context::create() {
 }
 
 LIBATFRAME_UTILS_API int dh::shared_context::init(const char *name) {
-  if (NULL == name) {
+  if (nullptr == name) {
     return error_code_t::INVALID_PARAM;
   }
 
@@ -842,14 +846,14 @@ LIBATFRAME_UTILS_API int dh::shared_context::init(const char *name) {
   if (0 == UTIL_STRFUNC_STRNCASE_CMP("ecdh:", name, 5)) {
     method = method_t::EN_CDT_ECDH;
 
-    while (NULL != details::supported_dh_curves[ecp_idx]) {
+    while (nullptr != details::supported_dh_curves[ecp_idx]) {
       if (0 == UTIL_STRFUNC_STRCASE_CMP(name + 5, details::supported_dh_curves[ecp_idx])) {
         break;
       }
       ++ecp_idx;
     }
 
-    if (NULL == details::supported_dh_curves[ecp_idx]) {
+    if (nullptr == details::supported_dh_curves[ecp_idx]) {
       return error_code_t::NOT_SUPPORT;
     }
 
@@ -870,10 +874,10 @@ LIBATFRAME_UTILS_API int dh::shared_context::init(const char *name) {
   switch (method) {
     case method_t::EN_CDT_DH: {
       // do nothing in client mode
-      FILE *pem = NULL;
+      FILE *pem = nullptr;
       UTIL_FS_OPEN(pem_file_e, pem, name, "r");
       COMPILER_UNUSED(pem_file_e);
-      if (NULL == pem) {
+      if (nullptr == pem) {
         ret = error_code_t::READ_DHPARAM_FILE;
         break;
       }
@@ -899,16 +903,16 @@ LIBATFRAME_UTILS_API int dh::shared_context::init(const char *name) {
         dh_param_.param = BIO_new_mem_buf(&dh_param_.param_buffer[0], static_cast<int>(pem_sz));
 
         // check
-        details::openssl_raii<DH> test_dh_ctx(PEM_read_bio_DHparams(dh_param_.param, NULL, NULL, NULL));
+        details::openssl_raii<DH> test_dh_ctx(PEM_read_bio_DHparams(dh_param_.param, nullptr, nullptr, nullptr));
         if (!test_dh_ctx) {
           ret = error_code_t::READ_DHPARAM_FILE;
           break;
         }
 
-        if (NULL == dh_param_.params_key) {
+        if (nullptr == dh_param_.params_key) {
           dh_param_.params_key = EVP_PKEY_new();
         }
-        if (NULL == dh_param_.params_key) {
+        if (nullptr == dh_param_.params_key) {
           ret = error_code_t::MALLOC;
           break;
         }
@@ -923,7 +927,7 @@ LIBATFRAME_UTILS_API int dh::shared_context::init(const char *name) {
 
         details::reset(dh_param_.paramgen_ctx);
         dh_param_.paramgen_ctx = details::initialize_pkey_ctx_by_pkey(dh_param_.params_key, false, true);
-        if (NULL == dh_param_.paramgen_ctx) {
+        if (nullptr == dh_param_.paramgen_ctx) {
           ret = error_code_t::NOT_SUPPORT;
           break;
         }
@@ -984,7 +988,7 @@ LIBATFRAME_UTILS_API int dh::shared_context::init(const char *name) {
       dh_param_.group_id = tls1_nid2group_id(details::supported_dh_curves_openssl[ecp_idx]);
       details::reset(dh_param_.paramgen_ctx);
       dh_param_.paramgen_ctx = details::initialize_pkey_ctx_by_group_id(dh_param_.group_id, false, true);
-      if (NULL == dh_param_.paramgen_ctx) {
+      if (nullptr == dh_param_.paramgen_ctx) {
         dh_param_.group_id = 0;
         ret = error_code_t::NOT_SUPPORT;
         break;
@@ -994,12 +998,12 @@ LIBATFRAME_UTILS_API int dh::shared_context::init(const char *name) {
         details::reset(dh_param_.params_key);
         EVP_PKEY_paramgen(dh_param_.paramgen_ctx, &dh_param_.params_key);
         // openssl 1.1.1 will report EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE for x25519 and x448
-        if (NULL == dh_param_.params_key &&
+        if (nullptr == dh_param_.params_key &&
             EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE != ERR_GET_REASON(ERR_peek_error())) {
           break;
         }
         details::reset(dh_param_.keygen_ctx);
-        if (NULL == dh_param_.params_key) {
+        if (nullptr == dh_param_.params_key) {
           dh_param_.keygen_ctx = details::initialize_pkey_ctx_by_group_id(dh_param_.group_id, true, false);
         } else {
           dh_param_.keygen_ctx = details::initialize_pkey_ctx_by_pkey(dh_param_.params_key, true, false);
@@ -1013,7 +1017,7 @@ LIBATFRAME_UTILS_API int dh::shared_context::init(const char *name) {
 
 #  elif defined(CRYPTO_USE_MBEDTLS)
       const mbedtls_ecp_curve_info *curve = mbedtls_ecp_curve_info_from_name(details::supported_dh_curves[ecp_idx]);
-      if (NULL == curve) {
+      if (nullptr == curve) {
         ret = error_code_t::NOT_SUPPORT;
         break;
       }
@@ -1050,7 +1054,7 @@ LIBATFRAME_UTILS_API int dh::shared_context::init(method_t::type method) {
   mbedtls_ctr_drbg_init(&random_engine_.ctr_drbg);
   mbedtls_entropy_init(&random_engine_.entropy);
 
-  int res = mbedtls_ctr_drbg_seed(&random_engine_.ctr_drbg, mbedtls_entropy_func, &random_engine_.entropy, NULL, 0);
+  int res = mbedtls_ctr_drbg_seed(&random_engine_.ctr_drbg, mbedtls_entropy_func, &random_engine_.entropy, nullptr, 0);
   if (0 != res) {
     // clear DH or ECDH data
     dh_param_.param.clear();
@@ -1075,7 +1079,7 @@ LIBATFRAME_UTILS_API void dh::shared_context::reset() {
 // clear pem file buffer
 #  if defined(CRYPTO_USE_OPENSSL) || defined(CRYPTO_USE_LIBRESSL) || defined(CRYPTO_USE_BORINGSSL)
       // clear dh pem buffer
-      if (NULL != dh_param_.param) {
+      if (nullptr != dh_param_.param) {
         details::reset(dh_param_.param);
         dh_param_.param_buffer.clear();
       }
@@ -1113,7 +1117,7 @@ LIBATFRAME_UTILS_API int dh::shared_context::random(void *output, size_t output_
     return error_code_t::NOT_INITED;
   }
 
-  if (NULL == output || output_sz <= 0) {
+  if (nullptr == output || output_sz <= 0) {
     return error_code_t::INVALID_PARAM;
   }
 
@@ -1150,23 +1154,23 @@ LIBATFRAME_UTILS_API int dh::shared_context::try_reset_ecp_id(int group_id) {
 
   dh_param_.group_id = group_id;
   details::reset(dh_param_.paramgen_ctx);
-  if (NULL == dh_param_.paramgen_ctx) {
+  if (nullptr == dh_param_.paramgen_ctx) {
     dh_param_.paramgen_ctx = details::initialize_pkey_ctx_by_group_id(dh_param_.group_id, false, true);
-    if (NULL == dh_param_.paramgen_ctx) {
+    if (nullptr == dh_param_.paramgen_ctx) {
       dh_param_.group_id = 0;
       return error_code_t::NOT_SUPPORT;
     }
   }
 
-  if (NULL == dh_param_.params_key) {
+  if (nullptr == dh_param_.params_key) {
     EVP_PKEY_paramgen(dh_param_.paramgen_ctx, &dh_param_.params_key);
     // openssl 1.1.1 will report EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE for x25519 and x448
-    if (NULL == dh_param_.params_key &&
+    if (nullptr == dh_param_.params_key &&
         EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE != ERR_GET_REASON(ERR_peek_error())) {
       return error_code_t::MALLOC;
     }
     details::reset(dh_param_.keygen_ctx);
-    if (NULL == dh_param_.params_key) {
+    if (nullptr == dh_param_.params_key) {
       dh_param_.keygen_ctx = details::initialize_pkey_ctx_by_group_id(dh_param_.group_id, true, false);
     } else {
       dh_param_.keygen_ctx = details::initialize_pkey_ctx_by_pkey(dh_param_.params_key, true, false);
@@ -1177,20 +1181,20 @@ LIBATFRAME_UTILS_API int dh::shared_context::try_reset_ecp_id(int group_id) {
 }
 
 LIBATFRAME_UTILS_API int dh::shared_context::try_reset_dh_params(BIGNUM *&DH_p, BIGNUM *&DH_g) {
-  if (NULL == DH_p || NULL == DH_g) {
+  if (nullptr == DH_p || nullptr == DH_g) {
     return error_code_t::INVALID_PARAM;
   }
 
-  if (NULL != dh_param_.params_key) {
+  if (nullptr != dh_param_.params_key) {
     DH *old_dh = EVP_PKEY_get0_DH(dh_param_.params_key);
-    if (NULL == old_dh) {
+    if (nullptr == old_dh) {
       return error_code_t::ALGORITHM_MISMATCH;
     }
 
-    const BIGNUM *old_p = NULL;
-    const BIGNUM *old_g = NULL;
-    DH_get0_pqg(old_dh, &old_p, NULL, &old_g);
-    if (NULL == old_p || NULL == old_g) {
+    const BIGNUM *old_p = nullptr;
+    const BIGNUM *old_g = nullptr;
+    DH_get0_pqg(old_dh, &old_p, nullptr, &old_g);
+    if (nullptr == old_p || nullptr == old_g) {
       return error_code_t::ALGORITHM_MISMATCH;
     }
 
@@ -1200,23 +1204,23 @@ LIBATFRAME_UTILS_API int dh::shared_context::try_reset_dh_params(BIGNUM *&DH_p, 
     }
   } else {
     dh_param_.params_key = EVP_PKEY_new();
-    if (NULL == dh_param_.params_key) {
+    if (nullptr == dh_param_.params_key) {
       return error_code_t::MALLOC;
     }
 
     DH *dh = DH_new();
-    if (NULL == dh) {
+    if (nullptr == dh) {
       details::reset(dh_param_.params_key);
       return error_code_t::MALLOC;
     }
-    if (!DH_set0_pqg(dh, DH_p, NULL, DH_g)) {
+    if (!DH_set0_pqg(dh, DH_p, nullptr, DH_g)) {
       details::reset(dh);
       details::reset(dh_param_.params_key);
       return error_code_t::INIT_DH_READ_PARAM;
     }
     // Move into DH object after call DH_set0_pqg successfully.
-    DH_p = NULL;
-    DH_g = NULL;
+    DH_p = nullptr;
+    DH_g = nullptr;
 
     // Maybe use EVP_PKEY_assign and DH_up_ref instead of EVP_PKEY_set1_DH, there is a BUG on openssl 1.1.1 and fixed
     // in 1.1.1f
@@ -1269,7 +1273,7 @@ LIBATFRAME_UTILS_API int dh::init(shared_context::ptr_t shared_context) {
 // init DH param file
 #  if defined(CRYPTO_USE_OPENSSL) || defined(CRYPTO_USE_LIBRESSL) || defined(CRYPTO_USE_BORINGSSL)
       if (false == shared_context->is_client_mode()) {
-        if (NULL == shared_context->get_dh_parameter().keygen_ctx) {
+        if (nullptr == shared_context->get_dh_parameter().keygen_ctx) {
           ret = error_code_t::NOT_SERVER_MODE;
           break;
         }
@@ -1302,7 +1306,7 @@ LIBATFRAME_UTILS_API int dh::init(shared_context::ptr_t shared_context) {
 // init DH param file
 #  if defined(CRYPTO_USE_OPENSSL) || defined(CRYPTO_USE_LIBRESSL) || defined(CRYPTO_USE_BORINGSSL)
       if (false == shared_context->is_client_mode()) {
-        if (NULL == shared_context->get_dh_parameter().keygen_ctx) {
+        if (nullptr == shared_context->get_dh_parameter().keygen_ctx) {
           ret = error_code_t::NOT_SERVER_MODE;
           break;
         }
@@ -1395,7 +1399,7 @@ LIBATFRAME_UTILS_API int dh::make_params(std::vector<unsigned char> &param) {
     case method_t::EN_CDT_DH: {
 #  if defined(CRYPTO_USE_OPENSSL) || defined(CRYPTO_USE_LIBRESSL) || defined(CRYPTO_USE_BORINGSSL)
       do {
-        if (NULL == shared_context_->get_dh_parameter().keygen_ctx) {
+        if (nullptr == shared_context_->get_dh_parameter().keygen_ctx) {
           ret = details::setup_errorno(*this, 0, error_code_t::INIT_DHPARAM);
           break;
         }
@@ -1405,7 +1409,7 @@ LIBATFRAME_UTILS_API int dh::make_params(std::vector<unsigned char> &param) {
           ret = details::setup_errorno(*this, static_cast<int>(ERR_peek_error()), error_code_t::INIT_DHPARAM);
         }
 
-        if (NULL == dh_context_.openssl_dh_pkey_) {
+        if (nullptr == dh_context_.openssl_dh_pkey_) {
           ret = details::setup_errorno(*this, static_cast<int>(ERR_peek_error()), error_code_t::INIT_DHPARAM);
           break;
         }
@@ -1416,20 +1420,20 @@ LIBATFRAME_UTILS_API int dh::make_params(std::vector<unsigned char> &param) {
         break;
       }
 
-      if (NULL == dh_context_.openssl_dh_pkey_) {
+      if (nullptr == dh_context_.openssl_dh_pkey_) {
         ret = details::setup_errorno(*this, 0, error_code_t::NOT_SUPPORT);
         break;
       }
 
       DH *dh = EVP_PKEY_get0_DH(dh_context_.openssl_dh_pkey_);
-      if (NULL == dh) {
+      if (nullptr == dh) {
         ret = details::setup_errorno(*this, static_cast<int>(ERR_peek_error()), error_code_t::INIT_DH_GENERATE_KEY);
         break;
       }
 
-      const BIGNUM *self_pubkey = NULL;
-      DH_get0_key(dh, &self_pubkey, NULL);
-      if (NULL == self_pubkey) {
+      const BIGNUM *self_pubkey = nullptr;
+      DH_get0_key(dh, &self_pubkey, nullptr);
+      if (nullptr == self_pubkey) {
         ret = details::setup_errorno(*this, static_cast<int>(ERR_peek_error()), error_code_t::INIT_DH_GENERATE_KEY);
         break;
       }
@@ -1440,13 +1444,13 @@ LIBATFRAME_UTILS_API int dh::make_params(std::vector<unsigned char> &param) {
       // @see int ssl3_send_server_key_exchange(SSL *s) in s3_srvr.c          -- openssl 1.0.x
       // @see int tls_construct_server_key_exchange(SSL *s) in statem_srvr.c  -- openssl 1.1.x/3.0.0
       {
-        const BIGNUM *r[4] = {NULL, NULL, NULL, NULL};
-        DH_get0_pqg(dh, &r[0], NULL, &r[1]);
-        DH_get0_key(dh, &r[2], NULL);
+        const BIGNUM *r[4] = {nullptr, nullptr, nullptr, nullptr};
+        DH_get0_pqg(dh, &r[0], nullptr, &r[1]);
+        DH_get0_key(dh, &r[2], nullptr);
 
         size_t olen = 0;
         unsigned int nr[4] = {0};
-        for (int i = 0; i < 4 && r[i] != NULL; i++) {
+        for (int i = 0; i < 4 && r[i] != nullptr; i++) {
           nr[i] = BN_num_bytes(r[i]);
           // DHM_MPI_EXPORT in mbedtls/polarssl use 2 byte to store length, so openssl/libressl/boringssl should use
           // OPENSSL_NO_SRP
@@ -1455,7 +1459,7 @@ LIBATFRAME_UTILS_API int dh::make_params(std::vector<unsigned char> &param) {
 
         param.resize(olen, 0);
         unsigned char *p = &param[0];
-        for (int i = 0; i < 4 && r[i] != NULL; i++) {
+        for (int i = 0; i < 4 && r[i] != nullptr; i++) {
           details::openssl_put_dh_point(r[i], p, olen);
         }
       }
@@ -1487,7 +1491,7 @@ LIBATFRAME_UTILS_API int dh::make_params(std::vector<unsigned char> &param) {
     case method_t::EN_CDT_ECDH: {
 #  if defined(CRYPTO_USE_OPENSSL) || defined(CRYPTO_USE_LIBRESSL) || defined(CRYPTO_USE_BORINGSSL)
       do {
-        if (NULL == shared_context_->get_dh_parameter().keygen_ctx) {
+        if (nullptr == shared_context_->get_dh_parameter().keygen_ctx) {
           ret = details::setup_errorno(*this, 0, error_code_t::INIT_DHPARAM);
           break;
         }
@@ -1497,7 +1501,7 @@ LIBATFRAME_UTILS_API int dh::make_params(std::vector<unsigned char> &param) {
           ret = details::setup_errorno(*this, static_cast<int>(ERR_peek_error()), error_code_t::INIT_DHPARAM);
         }
 
-        if (NULL == dh_context_.openssl_ecdh_pkey_) {
+        if (nullptr == dh_context_.openssl_ecdh_pkey_) {
           ret = details::setup_errorno(*this, static_cast<int>(ERR_peek_error()), error_code_t::INIT_DHPARAM);
           break;
         }
@@ -1508,7 +1512,7 @@ LIBATFRAME_UTILS_API int dh::make_params(std::vector<unsigned char> &param) {
         break;
       }
 
-      if (NULL == dh_context_.openssl_ecdh_pkey_) {
+      if (nullptr == dh_context_.openssl_ecdh_pkey_) {
         ret = details::setup_errorno(*this, 0, error_code_t::NOT_SUPPORT);
         break;
       }
@@ -1521,7 +1525,7 @@ LIBATFRAME_UTILS_API int dh::make_params(std::vector<unsigned char> &param) {
       //   pkey_set_type()
       //   EVP_PKEY_print_params()
       //   EVP_PKEY_print_params()
-      unsigned char *point_data = NULL;
+      unsigned char *point_data = nullptr;
 #    if (defined(OPENSSL_API_COMPAT) && OPENSSL_API_COMPAT >= 0x30000000L) ||    \
         (defined(OPENSSL_API_LEVEL) && OPENSSL_API_LEVEL >= 30000) ||            \
         (!defined(LIBRESSL_VERSION_NUMBER) && defined(OPENSSL_VERSION_NUMBER) && \
@@ -1530,7 +1534,7 @@ LIBATFRAME_UTILS_API int dh::make_params(std::vector<unsigned char> &param) {
 #    else
       size_t encode_len = EVP_PKEY_get1_tls_encodedpoint(dh_context_.openssl_ecdh_pkey_, &point_data);
 #    endif
-      if (NULL == point_data) {
+      if (nullptr == point_data) {
         ret = details::setup_errorno(*this, static_cast<int>(ERR_peek_error()), error_code_t::INIT_DH_GENERATE_KEY);
         break;
       }
@@ -1581,7 +1585,7 @@ LIBATFRAME_UTILS_API int dh::read_params(const unsigned char *input, size_t ilen
     return details::setup_errorno(*this, 0, error_code_t::NOT_INITED);
   }
 
-  if (NULL == input || ilen == 0) {
+  if (nullptr == input || ilen == 0) {
     return details::setup_errorno(*this, 0, error_code_t::INVALID_PARAM);
   }
 
@@ -1595,7 +1599,7 @@ LIBATFRAME_UTILS_API int dh::read_params(const unsigned char *input, size_t ilen
         break;
       }
 
-      if (NULL == shared_context_->get_dh_parameter().keygen_ctx) {
+      if (nullptr == shared_context_->get_dh_parameter().keygen_ctx) {
         ret = details::setup_errorno(*this, 0, error_code_t::NOT_CLIENT_MODE);
         break;
       }
@@ -1607,43 +1611,43 @@ LIBATFRAME_UTILS_API int dh::read_params(const unsigned char *input, size_t ilen
         break;
       }
 
-      BIGNUM *DH_gy = NULL;
+      BIGNUM *DH_gy = nullptr;
       do {
         // import GY
         // @see int ssl3_get_key_exchange(SSL *s) in s3_clnt.c                                          -- openssl 1.0.x
         // @see int tls_process_ske_dhe(SSL *s, PACKET *pkt, EVP_PKEY **pkey, int *al) in statem_clnt.c --
         // openssl 1.1.x/3.x.x
-        if (NULL == dh_context_.openssl_dh_peer_key_) {
+        if (nullptr == dh_context_.openssl_dh_peer_key_) {
           EVP_PKEY_keygen(shared_context_->get_dh_parameter().keygen_ctx, &dh_context_.openssl_dh_peer_key_);
         }
 
         DH *peer_dh = EVP_PKEY_get0_DH(dh_context_.openssl_dh_peer_key_);
-        if (NULL == peer_dh) {
+        if (nullptr == peer_dh) {
           ret = details::setup_errorno(*this, 0, error_code_t::INIT_DH_GENERATE_KEY);
           break;
         }
 
         // GY is optional
         DH_gy = details::openssl_get_dh_point(input, ilen);
-        if (NULL == DH_gy) {
+        if (nullptr == DH_gy) {
           ret = details::setup_errorno(*this, 0, error_code_t::INIT_DH_READ_KEY);
           break;
         }
 
-        if (!DH_set0_key(peer_dh, DH_gy, NULL)) {
+        if (!DH_set0_key(peer_dh, DH_gy, nullptr)) {
           ret = details::setup_errorno(*this, 0, error_code_t::INIT_DH_READ_KEY);
           break;
         }
-        DH_gy = NULL;
+        DH_gy = nullptr;
       } while (false);
 
       if (0 != ret) {
         details::reset(dh_context_.openssl_dh_peer_key_);
       }
 
-      if (NULL != DH_gy) {
+      if (nullptr != DH_gy) {
         BN_free(DH_gy);
-        DH_gy = NULL;
+        DH_gy = nullptr;
       }
 
 #  elif defined(CRYPTO_USE_MBEDTLS)
@@ -1683,7 +1687,7 @@ LIBATFRAME_UTILS_API int dh::read_params(const unsigned char *input, size_t ilen
         break;
       }
 
-      if (NULL == shared_context_->get_dh_parameter().keygen_ctx) {
+      if (nullptr == shared_context_->get_dh_parameter().keygen_ctx) {
         ret = details::setup_errorno(*this, 0, error_code_t::NOT_CLIENT_MODE);
         break;
       }
@@ -1694,15 +1698,15 @@ LIBATFRAME_UTILS_API int dh::read_params(const unsigned char *input, size_t ilen
         ret = details::setup_errorno(*this, static_cast<int>(ERR_peek_error()), error_code_t::INIT_DH_GENERATE_KEY);
         break;
       }
-      if (NULL == dh_context_.openssl_ecdh_pkey_) {
+      if (nullptr == dh_context_.openssl_ecdh_pkey_) {
         ret = details::setup_errorno(*this, static_cast<int>(ERR_peek_error()), error_code_t::INIT_DH_GENERATE_KEY);
         break;
       }
 
-      if (NULL == dh_context_.openssl_ecdh_peer_key_) {
+      if (nullptr == dh_context_.openssl_ecdh_peer_key_) {
         EVP_PKEY_keygen(shared_context_->get_dh_parameter().keygen_ctx, &dh_context_.openssl_ecdh_peer_key_);
       }
-      if (NULL == dh_context_.openssl_ecdh_peer_key_) {
+      if (nullptr == dh_context_.openssl_ecdh_peer_key_) {
         ret = details::setup_errorno(*this, 0, error_code_t::MALLOC);
         break;
       }
@@ -1757,21 +1761,21 @@ LIBATFRAME_UTILS_API int dh::make_public(std::vector<unsigned char> &param) {
   switch (shared_context_->get_method()) {
     case method_t::EN_CDT_DH: {
 #  if defined(CRYPTO_USE_OPENSSL) || defined(CRYPTO_USE_LIBRESSL) || defined(CRYPTO_USE_BORINGSSL)
-      if (NULL == dh_context_.openssl_dh_pkey_) {
+      if (nullptr == dh_context_.openssl_dh_pkey_) {
         ret = details::setup_errorno(*this, 0, error_code_t::INIT_DH_READ_PARAM);
         break;
       }
 
       DH *dh = EVP_PKEY_get0_DH(dh_context_.openssl_dh_pkey_);
-      if (NULL == dh) {
+      if (nullptr == dh) {
         ret = details::setup_errorno(*this, static_cast<int>(ERR_peek_error()), error_code_t::INIT_DH_READ_PARAM);
         break;
       }
 
       int errcode = 0;
-      const BIGNUM *self_pubkey = NULL;
-      DH_get0_key(dh, &self_pubkey, NULL);
-      if (NULL == self_pubkey) {
+      const BIGNUM *self_pubkey = nullptr;
+      DH_get0_key(dh, &self_pubkey, nullptr);
+      if (nullptr == self_pubkey) {
         ret = details::setup_errorno(*this, errcode, error_code_t::INIT_DH_GENERATE_KEY);
         break;
       }
@@ -1797,12 +1801,12 @@ LIBATFRAME_UTILS_API int dh::make_public(std::vector<unsigned char> &param) {
     }
     case method_t::EN_CDT_ECDH: {
 #  if defined(CRYPTO_USE_OPENSSL) || defined(CRYPTO_USE_LIBRESSL) || defined(CRYPTO_USE_BORINGSSL)
-      if (NULL == dh_context_.openssl_ecdh_pkey_) {
+      if (nullptr == dh_context_.openssl_ecdh_pkey_) {
         ret = details::setup_errorno(*this, 0, error_code_t::INIT_DH_READ_PARAM);
         break;
       }
 
-      unsigned char *point_data = NULL;
+      unsigned char *point_data = nullptr;
 #    if (defined(OPENSSL_API_COMPAT) && OPENSSL_API_COMPAT >= 0x30000000L) ||    \
         (defined(OPENSSL_API_LEVEL) && OPENSSL_API_LEVEL >= 30000) ||            \
         (!defined(LIBRESSL_VERSION_NUMBER) && defined(OPENSSL_VERSION_NUMBER) && \
@@ -1811,7 +1815,7 @@ LIBATFRAME_UTILS_API int dh::make_public(std::vector<unsigned char> &param) {
 #    else
       size_t encode_len = EVP_PKEY_get1_tls_encodedpoint(dh_context_.openssl_ecdh_pkey_, &point_data);
 #    endif
-      if (NULL == point_data) {
+      if (nullptr == point_data) {
         ret = details::setup_errorno(*this, static_cast<int>(ERR_peek_error()), error_code_t::INIT_DH_GENERATE_KEY);
         break;
       }
@@ -1852,12 +1856,12 @@ LIBATFRAME_UTILS_API int dh::read_public(const unsigned char *input, size_t ilen
   }
 
 #  if defined(CRYPTO_USE_OPENSSL) || defined(CRYPTO_USE_LIBRESSL) || defined(CRYPTO_USE_BORINGSSL)
-  if (NULL == shared_context_->get_dh_parameter().keygen_ctx) {
+  if (nullptr == shared_context_->get_dh_parameter().keygen_ctx) {
     return details::setup_errorno(*this, 0, error_code_t::NOT_INITED);
   }
 #  endif
 
-  if (NULL == input || ilen == 0) {
+  if (nullptr == input || ilen == 0) {
     return details::setup_errorno(*this, 0, error_code_t::INVALID_PARAM);
   }
 
@@ -1865,31 +1869,31 @@ LIBATFRAME_UTILS_API int dh::read_public(const unsigned char *input, size_t ilen
   switch (shared_context_->get_method()) {
     case method_t::EN_CDT_DH: {
 #  if defined(CRYPTO_USE_OPENSSL) || defined(CRYPTO_USE_LIBRESSL) || defined(CRYPTO_USE_BORINGSSL)
-      if (NULL == dh_context_.openssl_dh_pkey_) {
+      if (nullptr == dh_context_.openssl_dh_pkey_) {
         ret = details::setup_errorno(*this, 0, error_code_t::INIT_DH_READ_KEY);
         break;
       }
 
-      if (NULL == dh_context_.openssl_dh_peer_key_) {
+      if (nullptr == dh_context_.openssl_dh_peer_key_) {
         EVP_PKEY_keygen(shared_context_->get_dh_parameter().keygen_ctx, &dh_context_.openssl_dh_peer_key_);
       }
-      if (NULL == dh_context_.openssl_dh_peer_key_) {
+      if (nullptr == dh_context_.openssl_dh_peer_key_) {
         ret = details::setup_errorno(*this, 0, error_code_t::MALLOC);
         break;
       }
 
       DH *dh = EVP_PKEY_get0_DH(dh_context_.openssl_dh_peer_key_);
-      if (NULL == dh) {
+      if (nullptr == dh) {
         ret = details::setup_errorno(*this, static_cast<int>(ERR_peek_error()), error_code_t::INIT_DH_GENERATE_KEY);
         break;
       }
 
-      BIGNUM *pub_key = BN_bin2bn(input, static_cast<int>(ilen), NULL);
-      if (NULL == pub_key) {
+      BIGNUM *pub_key = BN_bin2bn(input, static_cast<int>(ilen), nullptr);
+      if (nullptr == pub_key) {
         ret = details::setup_errorno(*this, 0, error_code_t::INIT_DH_READ_KEY);
         break;
       }
-      DH_set0_key(dh, pub_key, NULL);
+      DH_set0_key(dh, pub_key, nullptr);
 
 #  elif defined(CRYPTO_USE_MBEDTLS)
       int res = mbedtls_dhm_read_public(&dh_context_.mbedtls_dh_ctx_, input, ilen);
@@ -1902,7 +1906,7 @@ LIBATFRAME_UTILS_API int dh::read_public(const unsigned char *input, size_t ilen
     }
     case method_t::EN_CDT_ECDH: {
 #  if defined(CRYPTO_USE_OPENSSL) || defined(CRYPTO_USE_LIBRESSL) || defined(CRYPTO_USE_BORINGSSL)
-      if (NULL == dh_context_.openssl_ecdh_pkey_) {
+      if (nullptr == dh_context_.openssl_ecdh_pkey_) {
         ret = details::setup_errorno(*this, 0, error_code_t::INIT_DH_READ_KEY);
         break;
       }
@@ -1914,10 +1918,10 @@ LIBATFRAME_UTILS_API int dh::read_public(const unsigned char *input, size_t ilen
         break;
       }
 
-      if (NULL == dh_context_.openssl_ecdh_peer_key_) {
+      if (nullptr == dh_context_.openssl_ecdh_peer_key_) {
         EVP_PKEY_keygen(shared_context_->get_dh_parameter().keygen_ctx, &dh_context_.openssl_ecdh_peer_key_);
       }
-      if (NULL == dh_context_.openssl_ecdh_peer_key_) {
+      if (nullptr == dh_context_.openssl_ecdh_peer_key_) {
         ret = details::setup_errorno(*this, 0, error_code_t::MALLOC);
         break;
       }
@@ -1961,25 +1965,25 @@ LIBATFRAME_UTILS_API int dh::calc_secret(std::vector<unsigned char> &output) {
   switch (shared_context_->get_method()) {
     case method_t::EN_CDT_DH: {
 #  if defined(CRYPTO_USE_OPENSSL) || defined(CRYPTO_USE_LIBRESSL) || defined(CRYPTO_USE_BORINGSSL)
-      if (NULL == dh_context_.openssl_dh_pkey_) {
+      if (nullptr == dh_context_.openssl_dh_pkey_) {
         ret = details::setup_errorno(*this, 0, error_code_t::NOT_INITED);
         break;
       }
 
-      if (NULL == dh_context_.openssl_dh_peer_key_) {
+      if (nullptr == dh_context_.openssl_dh_peer_key_) {
         ret = details::setup_errorno(*this, 0, error_code_t::NOT_INITED);
         break;
       }
 
-      if (NULL != dh_context_.openssl_pkey_ctx_) {
+      if (nullptr != dh_context_.openssl_pkey_ctx_) {
         if (dh_context_.openssl_dh_pkey_ != EVP_PKEY_CTX_get0_pkey(dh_context_.openssl_pkey_ctx_)) {
           details::reset(dh_context_.openssl_pkey_ctx_);
         }
       }
 
-      if (NULL == dh_context_.openssl_pkey_ctx_) {
-        dh_context_.openssl_pkey_ctx_ = EVP_PKEY_CTX_new(dh_context_.openssl_dh_pkey_, NULL);
-        if (NULL != dh_context_.openssl_pkey_ctx_) {
+      if (nullptr == dh_context_.openssl_pkey_ctx_) {
+        dh_context_.openssl_pkey_ctx_ = EVP_PKEY_CTX_new(dh_context_.openssl_dh_pkey_, nullptr);
+        if (nullptr != dh_context_.openssl_pkey_ctx_) {
           if (EVP_PKEY_derive_init(dh_context_.openssl_pkey_ctx_) <= 0) {
             ret =
                 details::setup_errorno(*this, static_cast<int>(ERR_get_error()), error_code_t::INIT_DH_GENERATE_SECRET);
@@ -1987,7 +1991,7 @@ LIBATFRAME_UTILS_API int dh::calc_secret(std::vector<unsigned char> &output) {
           }
         }
       }
-      if (NULL == dh_context_.openssl_pkey_ctx_) {
+      if (nullptr == dh_context_.openssl_pkey_ctx_) {
         ret = details::setup_errorno(*this, static_cast<int>(ERR_get_error()), error_code_t::INIT_DH_GENERATE_SECRET);
         break;
       }
@@ -2001,7 +2005,7 @@ LIBATFRAME_UTILS_API int dh::calc_secret(std::vector<unsigned char> &output) {
       }
 
       size_t secret_len = 0;
-      if (EVP_PKEY_derive(dh_context_.openssl_pkey_ctx_, NULL, &secret_len) <= 0) {
+      if (EVP_PKEY_derive(dh_context_.openssl_pkey_ctx_, nullptr, &secret_len) <= 0) {
         ret = details::setup_errorno(*this, static_cast<int>(ERR_peek_error()), error_code_t::INIT_DH_GENERATE_SECRET);
         break;
       }
@@ -2030,25 +2034,25 @@ LIBATFRAME_UTILS_API int dh::calc_secret(std::vector<unsigned char> &output) {
     }
     case method_t::EN_CDT_ECDH: {
 #  if defined(CRYPTO_USE_OPENSSL) || defined(CRYPTO_USE_LIBRESSL) || defined(CRYPTO_USE_BORINGSSL)
-      if (NULL == dh_context_.openssl_ecdh_pkey_) {
+      if (nullptr == dh_context_.openssl_ecdh_pkey_) {
         ret = details::setup_errorno(*this, 0, error_code_t::NOT_INITED);
         break;
       }
 
-      if (NULL == dh_context_.openssl_ecdh_peer_key_) {
+      if (nullptr == dh_context_.openssl_ecdh_peer_key_) {
         ret = details::setup_errorno(*this, 0, error_code_t::NOT_INITED);
         break;
       }
 
-      if (NULL != dh_context_.openssl_pkey_ctx_) {
+      if (nullptr != dh_context_.openssl_pkey_ctx_) {
         if (dh_context_.openssl_ecdh_pkey_ != EVP_PKEY_CTX_get0_pkey(dh_context_.openssl_pkey_ctx_)) {
           details::reset(dh_context_.openssl_pkey_ctx_);
         }
       }
 
-      if (NULL == dh_context_.openssl_pkey_ctx_) {
-        dh_context_.openssl_pkey_ctx_ = EVP_PKEY_CTX_new(dh_context_.openssl_ecdh_pkey_, NULL);
-        if (NULL != dh_context_.openssl_pkey_ctx_) {
+      if (nullptr == dh_context_.openssl_pkey_ctx_) {
+        dh_context_.openssl_pkey_ctx_ = EVP_PKEY_CTX_new(dh_context_.openssl_ecdh_pkey_, nullptr);
+        if (nullptr != dh_context_.openssl_pkey_ctx_) {
           if (EVP_PKEY_derive_init(dh_context_.openssl_pkey_ctx_) <= 0) {
             ret =
                 details::setup_errorno(*this, static_cast<int>(ERR_get_error()), error_code_t::INIT_DH_GENERATE_SECRET);
@@ -2057,7 +2061,7 @@ LIBATFRAME_UTILS_API int dh::calc_secret(std::vector<unsigned char> &output) {
         }
       }
 
-      if (NULL == dh_context_.openssl_pkey_ctx_) {
+      if (nullptr == dh_context_.openssl_pkey_ctx_) {
         ret = details::setup_errorno(*this, static_cast<int>(ERR_get_error()), error_code_t::INIT_DH_GENERATE_SECRET);
         break;
       }
@@ -2071,7 +2075,7 @@ LIBATFRAME_UTILS_API int dh::calc_secret(std::vector<unsigned char> &output) {
       }
 
       size_t secret_len = 0;
-      if (EVP_PKEY_derive(dh_context_.openssl_pkey_ctx_, NULL, &secret_len) <= 0) {
+      if (EVP_PKEY_derive(dh_context_.openssl_pkey_ctx_, nullptr, &secret_len) <= 0) {
         ret = details::setup_errorno(*this, static_cast<int>(ERR_peek_error()), error_code_t::INIT_DH_GENERATE_SECRET);
         break;
       }
@@ -2110,7 +2114,7 @@ LIBATFRAME_UTILS_API int dh::calc_secret(std::vector<unsigned char> &output) {
 LIBATFRAME_UTILS_API const std::vector<std::string> &dh::get_all_curve_names() {
   static std::vector<std::string> ret;
   if (ret.empty()) {
-    for (int i = 1; details::supported_dh_curves[i] != NULL; ++i) {
+    for (int i = 1; details::supported_dh_curves[i] != nullptr; ++i) {
       if (0 == strlen(details::supported_dh_curves[i])) {
         continue;
       }
@@ -2124,7 +2128,7 @@ LIBATFRAME_UTILS_API const std::vector<std::string> &dh::get_all_curve_names() {
         int nid = tls1_ec_group_id2nid(group_id, &gtype);
 
         if (gtype == TLS_CURVE_CUSTOM) {
-          details::openssl_raii<EVP_PKEY_CTX> pctx(EVP_PKEY_CTX_new_id(nid, NULL));
+          details::openssl_raii<EVP_PKEY_CTX> pctx(EVP_PKEY_CTX_new_id(nid, nullptr));
           if (!pctx) {
             continue;
           }
@@ -2133,7 +2137,7 @@ LIBATFRAME_UTILS_API const std::vector<std::string> &dh::get_all_curve_names() {
             continue;
           }
         } else {
-          details::openssl_raii<EVP_PKEY_CTX> pctx(EVP_PKEY_CTX_new_id(EVP_PKEY_EC, NULL));
+          details::openssl_raii<EVP_PKEY_CTX> pctx(EVP_PKEY_CTX_new_id(EVP_PKEY_EC, nullptr));
           if (!pctx) {
             continue;
           }
@@ -2149,7 +2153,7 @@ LIBATFRAME_UTILS_API const std::vector<std::string> &dh::get_all_curve_names() {
         ret.push_back(std::string("ecdh:") + details::supported_dh_curves[i]);
       }
 #  else
-      if (NULL != mbedtls_ecp_curve_info_from_name(details::supported_dh_curves[i])) {
+      if (nullptr != mbedtls_ecp_curve_info_from_name(details::supported_dh_curves[i])) {
         ret.push_back(std::string("ecdh:") + details::supported_dh_curves[i]);
       }
 #  endif
@@ -2170,11 +2174,11 @@ int dh::check_or_setup_ecp_id(int group_id) {
     return details::setup_errorno(*this, static_cast<int>(ERR_peek_error()), static_cast<error_code_t::type>(ret));
   }
 
-  if (NULL == shared_context_->get_dh_parameter().paramgen_ctx) {
+  if (nullptr == shared_context_->get_dh_parameter().paramgen_ctx) {
     return error_code_t::MALLOC;
   }
 
-  if (NULL == shared_context_->get_dh_parameter().keygen_ctx) {
+  if (nullptr == shared_context_->get_dh_parameter().keygen_ctx) {
     return details::setup_errorno(*this, static_cast<int>(ERR_peek_error()), error_code_t::INIT_DH_GENERATE_KEY);
   }
 
@@ -2186,12 +2190,12 @@ int dh::check_or_setup_dh_pg(const unsigned char *&input, size_t &left_size) {
     return details::setup_errorno(*this, 0, error_code_t::NOT_INITED);
   }
 
-  if (NULL != dh_context_.openssl_pkey_ctx_) {
+  if (nullptr != dh_context_.openssl_pkey_ctx_) {
     return error_code_t::ALREADY_INITED;
   }
 
   // First point length take 2 bytes
-  if (NULL == input || left_size < 2) {
+  if (nullptr == input || left_size < 2) {
     return error_code_t::INIT_DH_READ_PARAM;
   }
 
@@ -2199,20 +2203,20 @@ int dh::check_or_setup_dh_pg(const unsigned char *&input, size_t &left_size) {
   // @see int ssl3_get_key_exchange(SSL *s) in s3_clnt.c                                          -- openssl 1.0.x
   // @see int tls_process_ske_dhe(SSL *s, PACKET *pkt, EVP_PKEY **pkey, int *al) in statem_clnt.c -- openssl 1.1.x/3.x.x
 
-  BIGNUM *DH_p = NULL;
-  BIGNUM *DH_g = NULL;
+  BIGNUM *DH_p = nullptr;
+  BIGNUM *DH_g = nullptr;
   int ret = error_code_t::OK;
   do {
     // Point P
     DH_p = details::openssl_get_dh_point(input, left_size);
-    if (NULL == DH_p || BN_is_zero(DH_p)) {
+    if (nullptr == DH_p || BN_is_zero(DH_p)) {
       ret = error_code_t::INIT_DH_READ_PARAM;
       break;
     }
 
     // Point G
     DH_g = details::openssl_get_dh_point(input, left_size);
-    if (NULL == DH_g || BN_is_zero(DH_g)) {
+    if (nullptr == DH_g || BN_is_zero(DH_g)) {
       ret = error_code_t::INIT_DH_READ_PARAM;
       break;
     }
@@ -2222,25 +2226,25 @@ int dh::check_or_setup_dh_pg(const unsigned char *&input, size_t &left_size) {
       break;
     }
 
-    if (NULL == shared_context_->get_dh_parameter().params_key) {
+    if (nullptr == shared_context_->get_dh_parameter().params_key) {
       ret = error_code_t::MALLOC;
       break;
     }
 
-    if (NULL == shared_context_->get_dh_parameter().keygen_ctx) {
+    if (nullptr == shared_context_->get_dh_parameter().keygen_ctx) {
       ret = error_code_t::INIT_DH_GENERATE_KEY;
       break;
     }
   } while (false);
 
-  if (NULL != DH_p) {
+  if (nullptr != DH_p) {
     BN_free(DH_p);
-    DH_p = NULL;
+    DH_p = nullptr;
   }
 
-  if (NULL != DH_g) {
+  if (nullptr != DH_g) {
     BN_free(DH_g);
-    DH_g = NULL;
+    DH_g = nullptr;
   }
 
   return details::setup_errorno(*this, static_cast<int>(ERR_peek_error()), static_cast<error_code_t::type>(ret));

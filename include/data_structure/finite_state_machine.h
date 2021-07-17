@@ -8,12 +8,12 @@
  */
 #pragma once
 
+#include <config/atframe_utils_build_feature.h>
+
 #include <functional>
 #include <list>
 #include <map>
-#include "std/smart_ptr.h"
-
-#include <config/atframe_utils_build_feature.h>
+#include <memory>
 
 namespace util {
 namespace ds {
@@ -25,10 +25,10 @@ namespace ds {
 template <typename T, typename... TParams>
 class LIBATFRAME_UTILS_API_HEAD_ONLY finite_state_machine {
  public:
-  typedef T key_type;
-  typedef std::function<void(key_type, key_type, TParams...)> value_type;
-  typedef std::list<value_type> listener_list_type;
-  typedef std::map<key_type, listener_list_type> listener_set_type;
+  using key_type = T;
+  using value_type = std::function<void(key_type, key_type, TParams...)>;
+  using listener_list_type = std::list<value_type>;
+  using listener_set_type = std::map<key_type, listener_list_type>;
 
   struct init_ele_type {
     std::list<key_type> from;

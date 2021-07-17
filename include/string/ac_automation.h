@@ -16,13 +16,14 @@
 
 #pragma once
 
+#include <assert.h>
 #include <algorithm>
 #include <list>
 #include <map>
 #include <set>
 #include <vector>
 
-#include "utf8_char_t.h"
+#include "string/utf8_char_t.h"
 
 #include <config/atframe_utils_build_feature.h>
 
@@ -87,7 +88,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY actrie_skip_charset;
 template <typename CH>
 class LIBATFRAME_UTILS_API_HEAD_ONLY actrie_skip_charset<CH, 1> {
  public:
-  typedef actrie_skip_charset<CH, 1> self_t;
+  using self_t = actrie_skip_charset<CH, 1>;
   actrie_skip_charset() { memset(skip_code_, 0, sizeof(skip_code_)); }
 
   void set(CH c) {
@@ -131,7 +132,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY actrie_skip_charset<CH, 1> {
 template <typename CH, size_t CHSZ>
 class LIBATFRAME_UTILS_API_HEAD_ONLY actrie_skip_charset {
  public:
-  typedef actrie_skip_charset<CH, CHSZ> self_t;
+  using self_t = actrie_skip_charset<CH, CHSZ>;
   actrie_skip_charset() {}
 
   void set(CH c) { skip_code_.insert(c); }
@@ -182,11 +183,11 @@ LIBATFRAME_UTILS_API_HEAD_ONLY size_t actrie_get_length(const utf8_char_t &c) { 
 template <typename CH = char>
 class LIBATFRAME_UTILS_API_HEAD_ONLY actrie {
  public:
-  typedef CH char_t;
-  typedef std::string string_t;
-  typedef actrie<char_t> self_t;
-  typedef std::shared_ptr<self_t> ptr_type;
-  typedef std::vector<ptr_type> storage_t;
+  using char_t = CH;
+  using string_t = std::string;
+  using self_t = actrie<char_t>;
+  using ptr_type = std::shared_ptr<self_t>;
+  using storage_t = std::vector<ptr_type>;
 
   struct match_result_t {
     size_t start;
@@ -224,7 +225,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY actrie {
    */
   void _init_failed(storage_t &storage, uint32_t pre_failed, const char_t &ch) {
     assert(pre_failed < storage.size());
-    typedef typename std::map<char_t, uint32_t>::iterator iter_type;
+    using iter_type = typename std::map<char_t, uint32_t>::iterator;
 
     // 设置自身的失败节点ID
     iter_type iter;
@@ -248,7 +249,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY actrie {
    * @param ls 填充目标
    */
   void _fill_children(storage_t &storage, std::list<std::pair<char_t, uint32_t> > &ls) {
-    typedef typename std::map<char_t, uint32_t>::iterator iter_type;
+    using iter_type = typename std::map<char_t, uint32_t>::iterator;
     for (iter_type iter = next_.begin(); iter != next_.end(); ++iter) {
       assert(iter->second < storage.size());
       storage[iter->second]->failed_ = failed_;  // 临时用于记录父节点的失败节点ID
@@ -337,7 +338,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY actrie {
     }
 
     write_varint(os, static_cast<uint32_t>(next_.size()));
-    typedef typename std::map<char_t, uint32_t>::const_iterator iter_type;
+    using iter_type = typename std::map<char_t, uint32_t>::const_iterator;
     for (iter_type iter = next_.begin(); iter != next_.end(); ++iter) {
       os << iter->first;
       write_varint(os, iter->second);
@@ -399,7 +400,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY actrie {
       os << " [color=red];" << std::endl;
     }
 
-    typedef typename std::map<char_t, uint32_t>::const_iterator iter_type;
+    using iter_type = typename std::map<char_t, uint32_t>::const_iterator;
     for (iter_type iter = next_.begin(); iter != next_.end(); ++iter) {
       if (iter->second > 0) {
         dump_dot_node_name(os, get_idx());
@@ -431,7 +432,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY actrie {
     failed_ = 0;
     std::list<std::pair<char_t, uint32_t> > ls;
 
-    typedef typename std::map<char_t, uint32_t>::iterator iter_type;
+    using iter_type = typename std::map<char_t, uint32_t>::iterator;
 
     // 第一层节点
     for (iter_type iter = next_.begin(); iter != next_.end(); ++iter) {
@@ -493,7 +494,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY actrie {
     }
     left_sz -= csz;
 
-    typedef typename std::map<char_t, uint32_t>::iterator iter_type;
+    using iter_type = typename std::map<char_t, uint32_t>::iterator;
     iter_type iter = next_.find(c);
     if (iter != next_.end() && iter->second < storage.size()) {
       storage[iter->second]->insert(storage, str + csz, left_sz, origin_val);
@@ -528,7 +529,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY actrie {
 
     // 已到目标串目末尾，无匹配
     if (left_sz <= 0) {
-      out.keyword = NULL;
+      out.keyword = nullptr;
       return left_sz;
     }
 
@@ -539,7 +540,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY actrie {
     }
 
     // 匹配下一项
-    typedef typename std::map<char_t, uint32_t>::const_iterator iter_type;
+    using iter_type = typename std::map<char_t, uint32_t>::const_iterator;
     iter_type iter = next_.find(c);
     // 如果是root节点或者无效节点，放弃匹配
     if (iter != next_.end() && 0 != iter->second && iter->second < storage.size()) {
@@ -547,7 +548,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY actrie {
     }
 
     // 忽略字符，直接往后匹配
-    if (NULL != skip && (*skip)[c]) {
+    if (nullptr != skip && (*skip)[c]) {
       out.has_skip = true;
       return match(storage, out, chp + csz, left_sz - csz, skip);
     }
@@ -575,7 +576,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY actrie {
    * @param end_sz 字符串结束位置
    */
   size_t find_start(const char *str, size_t end_sz) const {
-    if (end_sz <= 0 || NULL == str) {
+    if (end_sz <= 0 || nullptr == str) {
       return 0;
     }
 
@@ -605,18 +606,18 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY actrie {
 template <typename CH = char, typename TSKIP = detail::actrie_skip_charset<CH, sizeof(CH)> >
 class LIBATFRAME_UTILS_API_HEAD_ONLY ac_automation {
  public:
-  typedef CH char_t;
-  typedef typename detail::actrie<char_t> trie_type;
-  typedef typename trie_type::string_t string_t;
-  typedef typename trie_type::storage_t storage_t;
-  typedef TSKIP skip_set_t;
+  using char_t = CH;
+  using trie_type = typename detail::actrie<char_t>;
+  using string_t = typename trie_type::string_t;
+  using storage_t = typename trie_type::storage_t;
+  using skip_set_t = TSKIP;
 
   struct match_t {
     size_t start;
     size_t length;
     const string_t *keyword;
   };
-  typedef std::vector<match_t> value_type;
+  using value_type = std::vector<match_t>;
 
  private:
   /**
@@ -700,11 +701,11 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY ac_automation {
       typename trie_type::match_result_t mres;
       mres.start = 0;
       mres.length = 0;
-      mres.keyword = NULL;
+      mres.keyword = nullptr;
       mres.has_skip = false;
 
       size_t res = storage_[0]->match(storage_, mres, end - left, left, &skip_charset_);
-      if (NULL != mres.keyword && mres.keyword->is_leaf()) {
+      if (nullptr != mres.keyword && mres.keyword->is_leaf()) {
         ret.push_back(match_t());
         match_t &item = ret.back();
         item.keyword = &mres.keyword->get_leaf();
@@ -760,8 +761,9 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY ac_automation {
    * @param edge_options 边绘制选项(最后跟一个NULL表示结束)
    */
   template <typename TC, typename TCTT>
-  LIBATFRAME_UTILS_API_HEAD_ONLY void dump_dot(std::basic_ostream<TC, TCTT> &os, const char *options[] = NULL,
-                                               const char *node_options[] = NULL, const char *edge_options[] = NULL) {
+  LIBATFRAME_UTILS_API_HEAD_ONLY void dump_dot(std::basic_ostream<TC, TCTT> &os, const char *options[] = nullptr,
+                                               const char *node_options[] = nullptr,
+                                               const char *edge_options[] = nullptr) {
     init();
 
     os << "digraph \"ac_automation";

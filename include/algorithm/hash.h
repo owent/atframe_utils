@@ -29,26 +29,26 @@ namespace hash {
 namespace core {
 template <typename Ty, size_t s>
 struct LIBATFRAME_UTILS_API_HEAD_ONLY fnv_magic_prime_number {
-  static const Ty value = 0x01000193U;
+  static constexpr const Ty value = 0x01000193U;
 };
 
 template <typename Ty>
 struct LIBATFRAME_UTILS_API_HEAD_ONLY fnv_magic_prime_number<Ty, 8> {
-  static const Ty value = 0x100000001b3ULL;
+  static constexpr const Ty value = 0x100000001b3ULL;
 };
 
 template <typename Ty, size_t s>
 struct LIBATFRAME_UTILS_API_HEAD_ONLY fnv_magic_offset_basis {
-  static const Ty value = 0x811C9DC5U;
+  static constexpr const Ty value = 0x811C9DC5U;
 
-  static Ty fix(Ty hval) { return hval; }
+  static constexpr Ty fix(Ty hval) { return hval; }
 };
 
 template <typename Ty>
 struct LIBATFRAME_UTILS_API_HEAD_ONLY fnv_magic_offset_basis<Ty, 8> {
-  static const Ty value = 0xCBF29CE484222325ULL;
+  static constexpr const Ty value = 0xCBF29CE484222325ULL;
 
-  static Ty fix(Ty hval) { return hval ^ (hval >> 32); }
+  static constexpr Ty fix(Ty hval) { return hval ^ (hval >> 32); }
 };
 
 /**

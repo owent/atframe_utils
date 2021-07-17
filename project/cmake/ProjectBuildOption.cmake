@@ -18,6 +18,7 @@ set(LOG_WRAPPER_CATEGORIZE_SIZE
     "16"
     CACHE STRING "Default log categorize number.")
 option(ENABLE_NETWORK "Enable network support." ON)
+option(ENABLE_CXX_GSL "Enable C++ Core Guideline: The Guideline Support Library." ON)
 
 # Check pthread
 find_package(Threads)
@@ -368,3 +369,7 @@ else()
 endif()
 
 option(ATFRAMEWORK_USE_DYNAMIC_LIBRARY "Build and linking with dynamic libraries." OFF)
+
+if(ENABLE_CXX_GSL)
+  include("${CMAKE_CURRENT_LIST_DIR}/GSLSupport.cmake")
+endif()
