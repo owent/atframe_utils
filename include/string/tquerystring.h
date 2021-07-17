@@ -154,7 +154,7 @@ class LIBATFRAME_UTILS_API item_impl {
   /**
    * @brief 对应数据类型的智能指针类型
    */
-  typedef std::shared_ptr<item_impl> ptr_type;
+  using ptr_type = std::shared_ptr<item_impl>;
 
   virtual ~item_impl();
 
@@ -212,7 +212,7 @@ class item_string : public item_impl {
   /**
    * @brief 对应数据类型的智能指针类型
    */
-  typedef std::shared_ptr<item_string> ptr_type;
+  using ptr_type = std::shared_ptr<item_string>;
 
   LIBATFRAME_UTILS_API item_string();
 
@@ -284,7 +284,7 @@ class item_array : public item_impl {
   /**
    * @brief 对应数据类型的智能指针类型
    */
-  typedef std::shared_ptr<item_array> ptr_type;
+  using ptr_type = std::shared_ptr<item_array>;
 
   LIBATFRAME_UTILS_API item_array();
 
@@ -368,16 +368,12 @@ class item_array : public item_impl {
  */
 class item_object : public item_impl {
  public:
-  typedef LIBATFRAME_UTILS_AUTO_SELETC_MAP(std::string, std::shared_ptr<item_impl>) data_map_t;
-  data_map_t data_;
-  typedef data_map_t::iterator data_iterator;
-  typedef data_map_t::const_iterator data_const_iterator;
+  using data_map_t = LIBATFRAME_UTILS_AUTO_SELETC_MAP(std::string, std::shared_ptr<item_impl>);
+  using data_iterator = data_map_t::iterator;
+  using data_const_iterator = data_map_t::const_iterator;
+  using ptr_type = std::shared_ptr<item_object>;
 
- public:
-  /**
-   * @brief 对应数据类型的智能指针类型
-   */
-  typedef std::shared_ptr<item_object> ptr_type;
+  data_map_t data_;
 
   /**
    * @brief 创建自身类型的实例
@@ -449,9 +445,9 @@ class item_object : public item_impl {
 
 class tquerystring : public types::item_object {
  public:
-  typedef types::item_object::data_map_t data_map_t;
-  typedef types::item_object::data_iterator data_iterator;
-  typedef types::item_object::data_const_iterator data_const_iterator;
+  using data_map_t = types::item_object::data_map_t;
+  using data_iterator = types::item_object::data_iterator;
+  using data_const_iterator = types::item_object::data_const_iterator;
 
  protected:
   std::string spliter_;
@@ -462,7 +458,7 @@ class tquerystring : public types::item_object {
   /**
    * @brief 对应数据类型的智能指针类型
    */
-  typedef std::shared_ptr<tquerystring> ptr_type;
+  using ptr_type = std::shared_ptr<tquerystring>;
 
   LIBATFRAME_UTILS_API tquerystring();
 

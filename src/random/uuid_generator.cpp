@@ -177,7 +177,7 @@ static int getuid(void) { return 1; }
  * use glibc pseudo-random functions.
  */
 static void random_get_bytes(unsigned char *buf, size_t nbytes) {
-  typedef util::random::mt19937_64 uuid_generator_rand_engine;
+  using uuid_generator_rand_engine = util::random::mt19937_64;
   static util::lock::spin_lock random_generator_lock;
   static uuid_generator_rand_engine random_generator;
   static bool uuid_generator_rand_engine_inited = false;

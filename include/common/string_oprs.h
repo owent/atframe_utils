@@ -243,8 +243,8 @@ LIBATFRAME_UTILS_API_HEAD_ONLY size_t int2str_signed(char *str, size_t strsz, T 
 
 template <typename T>
 struct LIBATFRAME_UTILS_API_HEAD_ONLY int2str_helper {
-  typedef T value_type_s;
-  typedef typename std::make_unsigned<T>::type value_type_u;
+  using value_type_s = T;
+  using value_type_u = typename std::make_unsigned<T>::type;
 
   static inline size_t call(char *str, size_t strsz, value_type_s in) { return int2str_signed(str, strsz, in); }
 

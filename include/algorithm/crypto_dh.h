@@ -143,7 +143,7 @@ class dh {
     };
 #  endif
 
-    typedef std::shared_ptr<shared_context> ptr_t;
+    using ptr_t = std::shared_ptr<shared_context>;
 
    private:
     struct LIBATFRAME_UTILS_API creator_helper {};

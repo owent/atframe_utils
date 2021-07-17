@@ -49,7 +49,7 @@ namespace cli {
 // void function_name (callback_param, [参数]); // 函数参数可选
 
 // 值类型
-typedef std::shared_ptr<cli::cmd_option_value> value_type;
+using value_type = std::shared_ptr<cli::cmd_option_value>;
 
 /**
  * 命令处理函数
@@ -67,12 +67,12 @@ typedef std::shared_ptr<cli::cmd_option_value> value_type;
 template <typename TCmdStr>
 class LIBATFRAME_UTILS_API_HEAD_ONLY cmd_option_bind : public binder::cmd_option_bind_base {
  public:
-  typedef unsigned char uc_t;
-  typedef cmd_option_bind<TCmdStr> self_type;
-  typedef binder::cmd_option_bind_base::help_msg_t help_msg_t;
-  typedef binder::cmd_option_bind_base::help_list_t help_list_t;
-  typedef std::shared_ptr<binder::cmd_option_bind_base> func_ptr_t;
-  typedef std::map<TCmdStr, func_ptr_t> funmap_type;
+  using uc_t = unsigned char;
+  using self_type = cmd_option_bind<TCmdStr>;
+  using help_msg_t = binder::cmd_option_bind_base::help_msg_t;
+  using help_list_t = binder::cmd_option_bind_base::help_list_t;
+  using func_ptr_t = std::shared_ptr<binder::cmd_option_bind_base>;
+  using funmap_type = std::map<TCmdStr, func_ptr_t>;
 
  protected:
   static short map_value_[256];   // 记录不同字符的映射关系
@@ -332,7 +332,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY cmd_option_bind : public binder::cmd_option
   }
 
  public:
-  typedef std::shared_ptr<cmd_option_bind> ptr_type;
+  using ptr_type = std::shared_ptr<cmd_option_bind>;
   static ptr_type create() { return ptr_type(new cmd_option_bind()); }
 
   /**
@@ -448,7 +448,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY cmd_option_bind : public binder::cmd_option
    * @param ext_param 透传参数
    */
   inline void start(int argv, char *argc[], bool is_single_cmd = false, void *ext_param = nullptr) const {
-    typedef const char *conv_char_t;
+    using conv_char_t = const char *;
 
     start(argv, const_cast<conv_char_t *>(argc), is_single_cmd, ext_param);
   }
@@ -519,12 +519,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY cmd_option_bind : public binder::cmd_option
    */
   inline std::shared_ptr<binder::cmd_option_bindt<
       typename binder::maybe_wrap_member_pointer<void (cmd_option_bind<TCmdStr>::*)(callback_param)>::caller_type,
-#if defined(UTIL_CONFIG_COMPILER_CXX_VARIADIC_TEMPLATES) && UTIL_CONFIG_COMPILER_CXX_VARIADIC_TEMPLATES
-      binder::cmd_option_bind_param_list<cmd_option_bind<TCmdStr> *>
-#else
-      binder::cmd_option_bind_param_list1<cmd_option_bind<TCmdStr> *>
-#endif
-      > >
+      binder::cmd_option_bind_param_list<cmd_option_bind<TCmdStr> *> > >
   bind_help_cmd(const char *help_cmd_content) {
     return bind_cmd(help_cmd_content, &cmd_option_bind<TCmdStr>::on_help, this);
   }
@@ -567,32 +562,31 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY cmd_option_bind : public binder::cmd_option
     return help_msg_content;
   }
 
-/**
- * 增加指令处理函数 (相同命令会被覆盖)
- * 支持普通函数和类成员函数
- * 注意：所有传入的类为引用，请确保在执行start时类对象未被释放（特别注意指针和局部变量）
- * 注意：参数的复制发生在执行bind_cmd函数时
- */
+  /**
+   * 增加指令处理函数 (相同命令会被覆盖)
+   * 支持普通函数和类成员函数
+   * 注意：所有传入的类为引用，请确保在执行start时类对象未被释放（特别注意指针和局部变量）
+   * 注意：参数的复制发生在执行bind_cmd函数时
+   */
 
-/**
- * 绑定函数对象/函数/成员函数(自适应)
- * 注意：默认会复制函数对象和传入参数
- *
- * bind_cmd: 绑定参数[注意值的复制发生在本函数执行时]
- * example:
- *      *.bind_cmd(命令名称, 函数对象/函数/成员函数, 参数)                           // 默认类型推断是传值而非引用
- *      *.bind_cmd<传入类型>(命令名称, 函数对象/函数/成员函数, 参数)
- *      *.bind_cmd<传入类型, 参数类型>(命令名称, 函数对象/函数/成员函数, 参数)
- */
-#if defined(UTIL_CONFIG_COMPILER_CXX_VARIADIC_TEMPLATES) && UTIL_CONFIG_COMPILER_CXX_VARIADIC_TEMPLATES
+  /**
+   * 绑定函数对象/函数/成员函数(自适应)
+   * 注意：默认会复制函数对象和传入参数
+   *
+   * bind_cmd: 绑定参数[注意值的复制发生在本函数执行时]
+   * example:
+   *      *.bind_cmd(命令名称, 函数对象/函数/成员函数, 参数)                           // 默认类型推断是传值而非引用
+   *      *.bind_cmd<传入类型>(命令名称, 函数对象/函数/成员函数, 参数)
+   *      *.bind_cmd<传入类型, 参数类型>(命令名称, 函数对象/函数/成员函数, 参数)
+   */
   template <typename _F,
             typename... _Args>  // 绑定函数(_Arg:参数[注意值的复制发生在本函数执行时], _R: 绑定函数返回值类型)
   LIBATFRAME_UTILS_API_HEAD_ONLY std::shared_ptr<binder::cmd_option_bindt<
       typename binder::maybe_wrap_member_pointer<_F>::caller_type, binder::cmd_option_bind_param_list<_Args...> > >
   bind_cmd(const std::string &cmd_content, _F raw_fn, _Args... args) {
-    typedef binder::cmd_option_bind_param_list<_Args...> list_type;
-    typedef typename binder::maybe_wrap_member_pointer<_F>::caller_type caller_type;
-    typedef std::shared_ptr<binder::cmd_option_bindt<caller_type, list_type> > obj_type;
+    using list_type = binder::cmd_option_bind_param_list<_Args...>;
+    using caller_type = typename binder::maybe_wrap_member_pointer<_F>::caller_type;
+    using obj_type = std::shared_ptr<binder::cmd_option_bindt<caller_type, list_type> >;
 
     obj_type fn =
         obj_type(new binder::cmd_option_bindt<caller_type, list_type>(caller_type(raw_fn), list_type(args...)));
@@ -605,110 +599,6 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY cmd_option_bind : public binder::cmd_option
 
     return fn;
   }
-#else
-  template <typename _F>  // 绑定函数(_F: 函数对象类型)
-  LIBATFRAME_UTILS_API_HEAD_ONLY std::shared_ptr<binder::cmd_option_bindt<
-      typename binder::maybe_wrap_member_pointer<_F>::caller_type, binder::cmd_option_bind_param_list0> >
-  bind_cmd(const std::string &cmd_content, _F raw_fn) {
-    typedef binder::cmd_option_bind_param_list0 list_type;
-    typedef typename binder::maybe_wrap_member_pointer<_F>::caller_type caller_type;
-    typedef std::shared_ptr<binder::cmd_option_bindt<caller_type, list_type> > obj_type;
-
-    obj_type fn = obj_type(new binder::cmd_option_bindt<caller_type, list_type>(caller_type(raw_fn), list_type()));
-
-    std::vector<std::string> cmds = split_cmd(cmd_content.c_str());
-    for (std::vector<std::string>::size_type index = 0; index < cmds.size(); ++index) {
-      TCmdStr cmd_obj = TCmdStr(cmds[index].c_str(), cmds[index].size());
-      callback_funcs_[cmd_obj] = fn;
-    }
-
-    return fn;
-  }
-
-  template <typename _F, typename _Arg0>  // 绑定函数(_Arg:参数[注意值的复制发生在本函数执行时], _R: 绑定函数返回值类型)
-  LIBATFRAME_UTILS_API_HEAD_ONLY std::shared_ptr<binder::cmd_option_bindt<
-      typename binder::maybe_wrap_member_pointer<_F>::caller_type, binder::cmd_option_bind_param_list1<_Arg0> > >
-  bind_cmd(const std::string &cmd_content, _F raw_fn, _Arg0 arg0) {
-    typedef binder::cmd_option_bind_param_list1<_Arg0> list_type;
-    typedef typename binder::maybe_wrap_member_pointer<_F>::caller_type caller_type;
-    typedef std::shared_ptr<binder::cmd_option_bindt<caller_type, list_type> > obj_type;
-
-    obj_type fn = obj_type(new binder::cmd_option_bindt<caller_type, list_type>(caller_type(raw_fn), list_type(arg0)));
-
-    std::vector<std::string> cmds = split_cmd(cmd_content.c_str());
-    for (std::vector<std::string>::size_type index = 0; index < cmds.size(); ++index) {
-      TCmdStr cmd_obj = TCmdStr(cmds[index].c_str(), cmds[index].size());
-      callback_funcs_[cmd_obj] = fn;
-    }
-
-    return fn;
-  }
-
-  template <typename _F, typename _Arg0,
-            typename _Arg1>  // 绑定函数(_Arg:参数[注意值的复制发生在本函数执行时], _R: 绑定函数返回值类型)
-  LIBATFRAME_UTILS_API_HEAD_ONLY std::shared_ptr<binder::cmd_option_bindt<
-      typename binder::maybe_wrap_member_pointer<_F>::caller_type, binder::cmd_option_bind_param_list2<_Arg0, _Arg1> > >
-  bind_cmd(const std::string &cmd_content, _F raw_fn, _Arg0 arg0, _Arg1 arg1) {
-    typedef binder::cmd_option_bind_param_list2<_Arg0, _Arg1> list_type;
-    typedef typename binder::maybe_wrap_member_pointer<_F>::caller_type caller_type;
-    typedef std::shared_ptr<binder::cmd_option_bindt<caller_type, list_type> > obj_type;
-
-    obj_type fn =
-        obj_type(new binder::cmd_option_bindt<caller_type, list_type>(caller_type(raw_fn), list_type(arg0, arg1)));
-
-    std::vector<std::string> cmds = split_cmd(cmd_content.c_str());
-    for (std::vector<std::string>::size_type index = 0; index < cmds.size(); ++index) {
-      TCmdStr cmd_obj = TCmdStr(cmds[index].c_str(), cmds[index].size());
-      callback_funcs_[cmd_obj] = fn;
-    }
-
-    return fn;
-  }
-
-  template <typename _F, typename _Arg0, typename _Arg1,
-            typename _Arg2>  // 绑定函数(_Arg:参数[注意值的复制发生在本函数执行时], _R: 绑定函数返回值类型)
-  LIBATFRAME_UTILS_API_HEAD_ONLY
-      std::shared_ptr<binder::cmd_option_bindt<typename binder::maybe_wrap_member_pointer<_F>::caller_type,
-                                               binder::cmd_option_bind_param_list3<_Arg0, _Arg1, _Arg2> > >
-      bind_cmd(const std::string &cmd_content, _F raw_fn, _Arg0 arg0, _Arg1 arg1, _Arg2 arg2) {
-    typedef binder::cmd_option_bind_param_list3<_Arg0, _Arg1, _Arg2> list_type;
-    typedef typename binder::maybe_wrap_member_pointer<_F>::caller_type caller_type;
-    typedef std::shared_ptr<binder::cmd_option_bindt<caller_type, list_type> > obj_type;
-
-    obj_type fn = obj_type(
-        new binder::cmd_option_bindt<caller_type, list_type>(caller_type(raw_fn), list_type(arg0, arg1, arg2)));
-
-    std::vector<std::string> cmds = split_cmd(cmd_content.c_str());
-    for (std::vector<std::string>::size_type index = 0; index < cmds.size(); ++index) {
-      TCmdStr cmd_obj = TCmdStr(cmds[index].c_str(), cmds[index].size());
-      callback_funcs_[cmd_obj] = fn;
-    }
-
-    return fn;
-  }
-
-  template <typename _F, typename _Arg0, typename _Arg1, typename _Arg2,
-            typename _Arg3>  // 绑定函数(_Arg:参数[注意值的复制发生在本函数执行时], _R: 绑定函数返回值类型)
-  LIBATFRAME_UTILS_API_HEAD_ONLY
-      std::shared_ptr<binder::cmd_option_bindt<typename binder::maybe_wrap_member_pointer<_F>::caller_type,
-                                               binder::cmd_option_bind_param_list4<_Arg0, _Arg1, _Arg2, _Arg3> > >
-      bind_cmd(const std::string &cmd_content, _F raw_fn, _Arg0 arg0, _Arg1 arg1, _Arg2 arg2, _Arg3 arg3) {
-    typedef binder::cmd_option_bind_param_list4<_Arg0, _Arg1, _Arg2, _Arg3> list_type;
-    typedef typename binder::maybe_wrap_member_pointer<_F>::caller_type caller_type;
-    typedef std::shared_ptr<binder::cmd_option_bindt<caller_type, list_type> > obj_type;
-
-    obj_type fn = obj_type(
-        new binder::cmd_option_bindt<caller_type, list_type>(caller_type(raw_fn), list_type(arg0, arg1, arg2, arg3)));
-
-    std::vector<std::string> cmds = split_cmd(cmd_content.c_str());
-    for (std::vector<std::string>::size_type index = 0; index < cmds.size(); ++index) {
-      TCmdStr cmd_obj = TCmdStr(cmds[index].c_str(), cmds[index].size());
-      callback_funcs_[cmd_obj] = fn;
-    }
-
-    return fn;
-  }
-#endif
 
   /**
    * 绑定指令(通用)
@@ -756,8 +646,8 @@ template <typename Ty>
 LIBATFRAME_UTILS_API_HEAD_ONLY char cmd_option_bind<Ty>::trans_value_[256] = {0};
 
 // 类型重定义
-typedef cmd_option_bind<std::string> cmd_option;
-typedef cmd_option_bind<cmd_option_ci_string> cmd_option_ci;
+using cmd_option = cmd_option_bind<std::string>;
+using cmd_option_ci = cmd_option_bind<cmd_option_ci_string>;
 }  // namespace cli
 }  // namespace util
 

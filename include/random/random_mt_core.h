@@ -49,7 +49,7 @@ template <typename UIntType, std::size_t MAX_STATUS_N_SIZE, std::size_t RD_M, st
           std::size_t RD_L, UIntType INIT_SEED_F>
 class LIBATFRAME_UTILS_API_HEAD_ONLY mersenne_twister {
  public:
-  typedef UIntType result_type;
+  using result_type = UIntType;
 
  private:
   UIntType mt_status[MAX_STATUS_N_SIZE];

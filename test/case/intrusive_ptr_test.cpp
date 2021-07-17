@@ -34,7 +34,7 @@ struct intrusive_ptr_test_clazz {
 };
 
 CASE_TEST(smart_ptr, intrusive_ptr_int) {
-  typedef std::intrusive_ptr<intrusive_ptr_test_clazz> ptr_t;
+  using ptr_t = std::intrusive_ptr<intrusive_ptr_test_clazz>;
   int delete_count = 0;
   {
     ptr_t p = ptr_t(new intrusive_ptr_test_clazz(&delete_count));
@@ -53,7 +53,6 @@ CASE_TEST(smart_ptr, intrusive_ptr_int) {
     }
 
     CASE_EXPECT_EQ(p->ref_count, 1);
-#if defined(UTIL_CONFIG_COMPILER_CXX_RVALUE_REFERENCES) && UTIL_CONFIG_COMPILER_CXX_RVALUE_REFERENCES
     {
       ptr_t p2(p);
       CASE_EXPECT_EQ(p->ref_count, 2);
@@ -74,7 +73,6 @@ CASE_TEST(smart_ptr, intrusive_ptr_int) {
       CASE_EXPECT_EQ(p2.get(), nullptr);
       CASE_EXPECT_NE(prv.get(), nullptr);
     }
-#endif
 
     {
       ptr_t p2(p);

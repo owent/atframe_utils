@@ -155,10 +155,10 @@ class LIBATFRAME_UTILS_API shell_font {
 
 class UTIL_SYMBOL_VISIBLE shell_stream {
  public:
-  typedef std::ostream stream_t;
+  using stream_t = std::ostream;
   class UTIL_SYMBOL_VISIBLE shell_stream_opr {
    public:
-    typedef shell_stream_opr self_t;
+    using self_t = shell_stream_opr;
 
    private:
     stream_t *pOs;

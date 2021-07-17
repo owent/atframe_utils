@@ -38,8 +38,8 @@ namespace core {
 template <class UIntType, bool is_plus, int iidx, int n1, int n2>
 class LIBATFRAME_UTILS_API_HEAD_ONLY xoshiro_engine {
  public:
-  typedef UIntType result_type;
-  typedef result_type seed_type[4];
+  using result_type = UIntType;
+  using seed_type = result_type[4];
 
  private:
   /// \endcond
@@ -176,9 +176,9 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY xoshiro_engine {
 template <bool is_plus>
 class LIBATFRAME_UTILS_API_HEAD_ONLY xoshiro_engine_128 : public xoshiro_engine<uint32_t, is_plus, 0, 9, 11> {
  public:
-  typedef xoshiro_engine<uint32_t, is_plus, 0, 9, 11> base_type;
-  typedef typename base_type::result_type result_type;
-  typedef typename base_type::seed_type seed_type;
+  using base_type = xoshiro_engine<uint32_t, is_plus, 0, 9, 11>;
+  using result_type = typename base_type::result_type;
+  using seed_type = typename base_type::seed_type;
 
  public:
   xoshiro_engine_128() {}
@@ -198,9 +198,9 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY xoshiro_engine_128 : public xoshiro_engine<
 template <bool is_plus>
 class LIBATFRAME_UTILS_API_HEAD_ONLY xoshiro_engine_256 : public xoshiro_engine<uint64_t, is_plus, 1, 17, 45> {
  public:
-  typedef xoshiro_engine<uint64_t, is_plus, 1, 17, 45> base_type;
-  typedef typename base_type::result_type result_type;
-  typedef typename base_type::seed_type seed_type;
+  using base_type = xoshiro_engine<uint64_t, is_plus, 1, 17, 45>;
+  using result_type = typename base_type::result_type;
+  using seed_type = typename base_type::seed_type;
 
  public:
   xoshiro_engine_256() {}

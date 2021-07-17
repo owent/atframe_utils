@@ -13,8 +13,8 @@
 namespace util {
 
 namespace detail {
-typedef const unsigned char base_enc_map_t[64];
-typedef const unsigned char base_dec_map_t[128];
+using base_enc_map_t = const unsigned char[64];
+using base_dec_map_t = const unsigned char[128];
 static base_enc_map_t base64_enc_map_basic = {
     'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V',
     'W', 'X', 'Y', 'Z', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r',

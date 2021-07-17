@@ -42,7 +42,7 @@ struct ci_char_traits : public std::char_traits<Tc> {
 };
 
 // 类型重定义
-typedef std::basic_string<char, ci_char_traits<char> > cmd_option_ci_string;
+using cmd_option_ci_string = std::basic_string<char, ci_char_traits<char> >;
 }  // namespace cli
 }  // namespace util
 #endif

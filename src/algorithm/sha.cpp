@@ -1017,15 +1017,14 @@ static void inner_sha512_finish(sha512_context_t &ctx, unsigned char output[64])
 LIBATFRAME_UTILS_API sha::sha() : hash_type_(EN_ALGORITHM_UNINITED), private_raw_data_(nullptr) {}
 LIBATFRAME_UTILS_API sha::~sha() { close(); }
 
-#if defined(UTIL_CONFIG_COMPILER_CXX_RVALUE_REFERENCES) && UTIL_CONFIG_COMPILER_CXX_RVALUE_REFERENCES
 LIBATFRAME_UTILS_API sha::sha(sha &&other) : hash_type_(EN_ALGORITHM_UNINITED), private_raw_data_(nullptr) {
   swap(other);
 }
+
 LIBATFRAME_UTILS_API sha &sha::operator=(sha &&other) {
   swap(other);
   return *this;
 }
-#endif
 
 LIBATFRAME_UTILS_API bool sha::init(type t) {
   close();

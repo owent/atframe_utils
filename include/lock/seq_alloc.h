@@ -32,7 +32,7 @@ namespace lock {
 template <typename Ty>
 class LIBATFRAME_UTILS_API_HEAD_ONLY seq_alloc {
  public:
-  typedef Ty value_type;
+  using value_type = Ty;
 
  private:
   ::util::lock::atomic_int_type<value_type> data_;
@@ -63,14 +63,14 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY seq_alloc {
   value_type dec() { return --data_; }
 };
 
-typedef seq_alloc<uint8_t> seq_alloc_u8;
-typedef seq_alloc<uint16_t> seq_alloc_u16;
-typedef seq_alloc<uint32_t> seq_alloc_u32;
-typedef seq_alloc<uint64_t> seq_alloc_u64;
-typedef seq_alloc<int8_t> seq_alloc_i8;
-typedef seq_alloc<int16_t> seq_alloc_i16;
-typedef seq_alloc<int32_t> seq_alloc_i32;
-typedef seq_alloc<int64_t> seq_alloc_i64;
+using seq_alloc_u8 = seq_alloc<uint8_t>;
+using seq_alloc_u16 = seq_alloc<uint16_t>;
+using seq_alloc_u32 = seq_alloc<uint32_t>;
+using seq_alloc_u64 = seq_alloc<uint64_t>;
+using seq_alloc_i8 = seq_alloc<int8_t>;
+using seq_alloc_i16 = seq_alloc<int16_t>;
+using seq_alloc_i32 = seq_alloc<int32_t>;
+using seq_alloc_i64 = seq_alloc<int64_t>;
 }  // namespace lock
 }  // namespace util
 

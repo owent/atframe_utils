@@ -25,18 +25,16 @@ namespace ds {
 template <typename T, size_t SIZE, typename TContainer = std::array<T, SIZE + 1> >
 class LIBATFRAME_UTILS_API_HEAD_ONLY lock_free_array {
  public:
-  typedef T value_type;
-  typedef value_type *pointer_type;
-  typedef value_type &reference_type;
-  typedef TContainer container_type;
+  using value_type = T;
+  using pointer_type = value_type *;
+  using reference_type = value_type &;
+  using container_type = TContainer;
+  using iterator = pointer_type;
+  using const_iterator = const iterator;
 
  private:
   lock_free_array(const lock_free_array &) = delete;
   lock_free_array &operator=(const lock_free_array &) = delete;
-
- public:
-  typedef pointer_type iterator;
-  typedef const iterator const_iterator;
 
  public:
   lock_free_array() {

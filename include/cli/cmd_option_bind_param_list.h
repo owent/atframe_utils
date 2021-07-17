@@ -12,13 +12,11 @@
  * 绑定器参数列表类
  */
 
+#include <tuple>
+
 #include "cli/cmd_option_bindt_cc.h"
 #include "cli/cmd_option_bindt_mf_cc.h"
 #include "cli/cmd_option_list.h"
-
-#if defined(UTIL_CONFIG_COMPILER_CXX_VARIADIC_TEMPLATES) && UTIL_CONFIG_COMPILER_CXX_VARIADIC_TEMPLATES
-#  include "std/tuple.h"
-#endif
 
 namespace util {
 namespace cli {
@@ -30,8 +28,8 @@ namespace binder {
  */
 template <typename _Tp>
 struct LIBATFRAME_UTILS_API_HEAD_ONLY maybe_wrap_member_pointer {
-  typedef _Tp type;
-  typedef cmd_option_bindt_cc_caller<_Tp> caller_type;
+  using type = _Tp;
+  using caller_type = cmd_option_bindt_cc_caller<_Tp>;
 
   static constexpr const _Tp &do_wrap(const _Tp &__x) { return __x; }
 
@@ -44,8 +42,8 @@ struct LIBATFRAME_UTILS_API_HEAD_ONLY maybe_wrap_member_pointer {
  */
 template <typename _Tp, typename _Class>
 struct LIBATFRAME_UTILS_API_HEAD_ONLY maybe_wrap_member_pointer<_Tp _Class::*> {
-  typedef _Tp _Class::*type;
-  typedef cmd_option_bindt_mf_cc_caller<_Class, type> caller_type;
+  using type = _Tp _Class::*;
+  using caller_type = cmd_option_bindt_mf_cc_caller<_Class, type>;
 
   static type do_wrap(_Tp _Class::*__pm) { return type(__pm); }
 };
@@ -53,7 +51,6 @@ struct LIBATFRAME_UTILS_API_HEAD_ONLY maybe_wrap_member_pointer<_Tp _Class::*> {
 // ============================
 // ===       参数列表       ===
 // ============================
-#if defined(UTIL_CONFIG_COMPILER_CXX_VARIADIC_TEMPLATES) && UTIL_CONFIG_COMPILER_CXX_VARIADIC_TEMPLATES
 template <typename... _Args>
 class LIBATFRAME_UTILS_API_HEAD_ONLY cmd_option_bind_param_list {
  private:
@@ -68,7 +65,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY cmd_option_bind_param_list {
 
   template <int... _Index>
   struct build_args_index<0, _Index...> {
-    typedef index_args_var_list<_Index...> type;
+    using type = index_args_var_list<_Index...>;
   };
 
  private:
@@ -85,85 +82,11 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY cmd_option_bind_param_list {
 
   template <class _F>
   void operator()(_F &f, callback_param args, int) {
-    typedef typename build_args_index<sizeof...(_Args)>::type _index_type;
+    using _index_type = typename build_args_index<sizeof...(_Args)>::type;
     _do_call(f, args, _index_type());
   }
 };
 
-#else
-
-class LIBATFRAME_UTILS_API_HEAD_ONLY cmd_option_bind_param_list0 {
- public:
-  template <class _F>
-  void operator()(_F &f, callback_param args, int) {
-    f(args);
-  }
-};
-
-template <typename _Arg0>
-class LIBATFRAME_UTILS_API_HEAD_ONLY cmd_option_bind_param_list1 {
- private:
-  _Arg0 arg0_;
-
- public:
-  cmd_option_bind_param_list1(_Arg0 arg0) : arg0_(arg0) {}
-
-  template <class _F>
-  void operator()(_F &f, callback_param args, int) {
-    f(args, arg0_);
-  }
-};
-
-template <typename _Arg0, typename _Arg1>
-class LIBATFRAME_UTILS_API_HEAD_ONLY cmd_option_bind_param_list2 {
- private:
-  _Arg0 arg0_;
-  _Arg1 arg1_;
-
- public:
-  cmd_option_bind_param_list2(_Arg0 arg0, _Arg1 arg1) : arg0_(arg0), arg1_(arg1) {}
-
-  template <class _F>
-  void operator()(_F &f, callback_param args, int) {
-    f(args, arg0_, arg1_);
-  }
-};
-
-template <typename _Arg0, typename _Arg1, typename _Arg2>
-class LIBATFRAME_UTILS_API_HEAD_ONLY cmd_option_bind_param_list3 {
- private:
-  _Arg0 arg0_;
-  _Arg1 arg1_;
-  _Arg2 arg2_;
-
- public:
-  cmd_option_bind_param_list3(_Arg0 arg0, _Arg1 arg1, _Arg2 arg2) : arg0_(arg0), arg1_(arg1), arg2_(arg2) {}
-
-  template <class _F>
-  void operator()(_F &f, callback_param args, int) {
-    f(args, arg0_, arg1_, arg2_);
-  }
-};
-
-template <typename _Arg0, typename _Arg1, typename _Arg2, typename _Arg3>
-class LIBATFRAME_UTILS_API_HEAD_ONLY cmd_option_bind_param_list4 {
- private:
-  _Arg0 arg0_;
-  _Arg1 arg1_;
-  _Arg2 arg2_;
-  _Arg2 arg3_;
-
- public:
-  cmd_option_bind_param_list4(_Arg0 arg0, _Arg1 arg1, _Arg2 arg2, _Arg2 arg3)
-      : arg0_(arg0), arg1_(arg1), arg2_(arg2), arg3_(arg3) {}
-
-  template <class _F>
-  void operator()(_F &f, callback_param args, int) {
-    f(args, arg0_, arg1_, arg2_, arg3_);
-  }
-};
-
-#endif
 }  // namespace binder
 }  // namespace cli
 }  // namespace util

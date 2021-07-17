@@ -40,8 +40,8 @@ LIBATFRAME_UTILS_API std::shared_ptr<binder::cmd_option_bind_base> binder::cmd_o
 }
 
 LIBATFRAME_UTILS_API void cmd_option_list::init_key_value_map() {
-  typedef std::map<std::string, value_type> key_map_type;
-  typedef std::vector<value_type> keys_type;
+  using key_map_type = std::map<std::string, value_type>;
+  using keys_type = std::vector<value_type>;
   // 已经初始化，跳过
   if (key_value_.get() != nullptr) return;
 

@@ -50,8 +50,8 @@ namespace std {
 template <typename T>
 class intrusive_ptr {
  public:
-  typedef intrusive_ptr<T> self_type;
-  typedef T element_type;
+  using self_type = intrusive_ptr<T>;
+  using element_type = T;
 
   constexpr intrusive_ptr() noexcept : px(nullptr) {}
 
@@ -92,9 +92,6 @@ class intrusive_ptr {
   }
 
   // Move support
-
-#if defined(UTIL_CONFIG_COMPILER_CXX_RVALUE_REFERENCES) && UTIL_CONFIG_COMPILER_CXX_RVALUE_REFERENCES
-
   intrusive_ptr(self_type &&rhs) noexcept : px(rhs.px) { rhs.px = nullptr; }
 
   self_type &operator=(self_type &&rhs) noexcept {
@@ -114,7 +111,6 @@ class intrusive_ptr {
     self_type(rhs.release()).swap(*this);
     return *this;
   }
-#endif
 
   self_type &operator=(self_type const &rhs) {
     self_type(rhs).swap(*this);

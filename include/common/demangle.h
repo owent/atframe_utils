@@ -67,7 +67,6 @@ class scoped_demangled_name {
     }
   }
 
-#if defined(UTIL_CONFIG_COMPILER_CXX_RVALUE_REFERENCES) && UTIL_CONFIG_COMPILER_CXX_RVALUE_REFERENCES
   scoped_demangled_name(scoped_demangled_name &&other) : m_p(other.m_p) { other.m_p = nullptr; }
   scoped_demangled_name &operator=(scoped_demangled_name &&other) {
     const char *tmp = m_p;
@@ -75,7 +74,6 @@ class scoped_demangled_name {
     other.m_p = tmp;
     return *this;
   }
-#endif
 
   const char *get() const noexcept { return m_p; }
 };

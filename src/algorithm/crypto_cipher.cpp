@@ -15,7 +15,7 @@
 #    include <sodium.h>
 
 #    define LIBSODIUM_BLOCK_SIZE 64
-typedef uint64_t libsodium_counter_t;
+using libsodium_counter_t = uint64_t;
 #    define LIBSODIUM_COUNTER_SIZE sizeof(libsodium_counter_t)
 
 static inline libsodium_counter_t libsodium_get_block(const unsigned char *p) {

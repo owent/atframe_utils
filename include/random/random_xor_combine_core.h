@@ -28,7 +28,7 @@ namespace core {
 template <class UIntType, int w, int k, int q, int s>
 class LIBATFRAME_UTILS_API_HEAD_ONLY linear_feedback_shift_engine {
  public:
-  typedef UIntType result_type;
+  using result_type = UIntType;
 
  private:
   /// \endcond
@@ -83,9 +83,9 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY linear_feedback_shift_engine {
 template <class URNG1, int s1, class URNG2, int s2>
 class LIBATFRAME_UTILS_API_HEAD_ONLY xor_combine_engine {
  public:
-  typedef URNG1 base_left_type;
-  typedef URNG2 base_right_type;
-  typedef typename base_left_type::result_type result_type;
+  using base_left_type = URNG1;
+  using base_right_type = URNG2;
+  using result_type = typename base_left_type::result_type;
 
  private:
   base_left_type xor_c_rng_left_;

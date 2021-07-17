@@ -45,8 +45,8 @@ class http_request : public std::enable_shared_from_this<http_request>, public :
   /**
    * @brief types
    */
-  typedef http_request self_type;
-  typedef std::shared_ptr<self_type> ptr_t;
+  using self_type = http_request;
+  using ptr_t = std::shared_ptr<self_type>;
 
   struct LIBATFRAME_UTILS_API method_t {
     enum type { EN_MT_GET = 0, EN_MT_POST, EN_MT_PUT, EN_MT_DELETE, EN_MT_TRACE };
@@ -126,7 +126,7 @@ class http_request : public std::enable_shared_from_this<http_request>, public :
     LIBATFRAME_UTILS_API curl_m_bind_t();
     std::shared_ptr<curl_m_bind_t> self_holder;
   };
-  typedef std::shared_ptr<curl_m_bind_t> curl_m_bind_ptr_t;
+  using curl_m_bind_ptr_t = std::shared_ptr<curl_m_bind_t>;
 
   struct LIBATFRAME_UTILS_API curl_poll_context_t {
     curl_m_bind_t *bind_multi;
@@ -135,9 +135,9 @@ class http_request : public std::enable_shared_from_this<http_request>, public :
     bool is_removed;
   };
 
-  typedef std::function<int(http_request &)> on_error_fn_t;
-  typedef std::function<int(http_request &)> on_success_fn_t;
-  typedef std::function<int(http_request &)> on_complete_fn_t;
+  using on_error_fn_t = std::function<int(http_request &)>;
+  using on_success_fn_t = std::function<int(http_request &)>;
+  using on_complete_fn_t = std::function<int(http_request &)>;
 
   struct LIBATFRAME_UTILS_API progress_t {
     size_t dltotal; /** total download size **/
@@ -145,19 +145,19 @@ class http_request : public std::enable_shared_from_this<http_request>, public :
     size_t ultotal; /** total upload size **/
     size_t ulnow;   /** already uploaded size **/
   };
-  typedef std::function<int(http_request &, const progress_t &)> on_progress_fn_t;
+
+  using on_progress_fn_t = std::function<int(http_request &, const progress_t &)>;
   /** parameters: http_request, key, key length, value, value length **/
-  typedef std::function<int(http_request &, const char *, size_t, const char *, size_t)> on_header_fn_t;
+  using on_header_fn_t = std::function<int(http_request &, const char *, size_t, const char *, size_t)>;
   /**
    * parameters: http_request, origin write data address, origin write data size, real write data address, real write
    * data size
    */
-  typedef std::function<int(http_request &, const char *, size_t, const char *&, size_t &)>
-      on_write_fn_t;  // it's useful if header is Transfer-Encoding: chunked
+  using on_write_fn_t = std::function<int(http_request &, const char *, size_t, const char *&,
+                                          size_t &)>;  // it's useful if header is Transfer-Encoding: chunked
 
-  typedef std::function<int(http_request &, curl_infotype type, char *data,
-                            size_t size)>
-      on_verbose_fn_t;  // it's useful if we want to debug and show verbose info
+  using on_verbose_fn_t = std::function<int(http_request &, curl_infotype type, char *data,
+                                            size_t size)>;  // it's useful if we want to debug and show verbose info
 
  public:
   LIBATFRAME_UTILS_API static ptr_t create(curl_m_bind_t *, const std::string &url);

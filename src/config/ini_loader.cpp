@@ -37,7 +37,7 @@ struct identify {
 
 // key
 struct key {
-  typedef std::list<std::string> list_type;
+  using list_type = std::list<std::string>;
   list_type _keys;
 
   bool test(const char *begin, const char *end);
@@ -46,7 +46,7 @@ struct key {
 
 // section
 struct section {
-  typedef std::list<std::string> list_type;
+  using list_type = std::list<std::string>;
   list_type _keys;
 
   bool test(const char *begin, const char *end);
@@ -93,7 +93,7 @@ struct sentence {
 // ----------------- 词法状态机 -----------------
 
 namespace detail {
-typedef const char *const_cstring;
+using const_cstring = const char *;
 template <typename T>
 T tolower(T c) {
   if (c >= 'A' && c <= 'Z') {

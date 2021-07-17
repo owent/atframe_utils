@@ -38,7 +38,7 @@
 
 class test_case_base {
  public:
-  typedef void (*test_func)();
+  using test_func = void (*)();
 
  public:
   test_case_base(const std::string& test_name, const std::string& case_name, test_func func);
@@ -54,11 +54,10 @@ class test_case_base {
 
 class test_on_start_base {
  public:
-  typedef UTIL_UNIT_TEST_MACRO_AUTO_SET(std::string) after_set_t;
-  typedef void (*on_start_func)();
+  using after_set_t = UTIL_UNIT_TEST_MACRO_AUTO_SET(std::string);
+  using on_start_func = void (*)();
 
  public:
-#if defined(UTIL_CONFIG_COMPILER_CXX_VARIADIC_TEMPLATES) && UTIL_CONFIG_COMPILER_CXX_VARIADIC_TEMPLATES
   template <typename... T>
   test_on_start_base(const std::string& n, on_start_func func, T&&... deps) : name(n), func_(func) {
     after.reserve(sizeof...(T));
@@ -68,51 +67,6 @@ class test_on_start_base {
 
   template <typename... T>
   void expand(T&&...) {}
-#else
-  test_on_start_base(const std::string& n, on_start_func func) : name(n), func_(func) { register_self(); }
-  test_on_start_base(const std::string& n, on_start_func func, const std::string& dep1) : name(n), func_(func) {
-    after.insert(dep1);
-
-    register_self();
-  }
-  test_on_start_base(const std::string& n, on_start_func func, const std::string& dep1, const std::string& dep2)
-      : name(n), func_(func) {
-    after.insert(dep1);
-    after.insert(dep2);
-
-    register_self();
-  }
-  test_on_start_base(const std::string& n, on_start_func func, const std::string& dep1, const std::string& dep2,
-                     const std::string& dep3)
-      : name(n), func_(func) {
-    after.insert(dep1);
-    after.insert(dep2);
-    after.insert(dep3);
-
-    register_self();
-  }
-  test_on_start_base(const std::string& n, on_start_func func, const std::string& dep1, const std::string& dep2,
-                     const std::string& dep3, const std::string& dep4)
-      : name(n), func_(func) {
-    after.insert(dep1);
-    after.insert(dep2);
-    after.insert(dep3);
-    after.insert(dep4);
-
-    register_self();
-  }
-  test_on_start_base(const std::string& n, on_start_func func, const std::string& dep1, const std::string& dep2,
-                     const std::string& dep3, const std::string& dep4, const std::string& dep5)
-      : name(n), func_(func) {
-    after.insert(dep1);
-    after.insert(dep2);
-    after.insert(dep3);
-    after.insert(dep4);
-    after.insert(dep5);
-
-    register_self();
-  }
-#endif
   virtual ~test_on_start_base();
 
   virtual int run();
@@ -127,11 +81,10 @@ class test_on_start_base {
 
 class test_on_exit_base {
  public:
-  typedef UTIL_UNIT_TEST_MACRO_AUTO_SET(std::string) before_set_t;
-  typedef void (*on_exit_func)();
+  using before_set_t = UTIL_UNIT_TEST_MACRO_AUTO_SET(std::string);
+  using on_exit_func = void (*)();
 
  public:
-#if defined(UTIL_CONFIG_COMPILER_CXX_VARIADIC_TEMPLATES) && UTIL_CONFIG_COMPILER_CXX_VARIADIC_TEMPLATES
   template <typename... T>
   test_on_exit_base(const std::string& n, on_exit_func func, T&&... deps) : name(n), func_(func) {
     before.reserve(sizeof...(T));
@@ -141,50 +94,6 @@ class test_on_exit_base {
 
   template <typename... T>
   void expand(T&&...) {}
-#else
-  test_on_exit_base(const std::string& n, on_exit_func func) : name(n), func_(func) { register_self(); }
-  test_on_exit_base(const std::string& n, on_exit_func func, const std::string& dep1) : name(n), func_(func) {
-    before.insert(dep1);
-
-    register_self();
-  }
-  test_on_exit_base(const std::string& n, on_exit_func func, const std::string& dep1, const std::string& dep2)
-      : name(n), func_(func) {
-    before.insert(dep1);
-    before.insert(dep2);
-
-    register_self();
-  }
-  test_on_exit_base(const std::string& n, on_exit_func func, const std::string& dep1, const std::string& dep2,
-                    const std::string& dep3)
-      : name(n), func_(func) {
-    before.insert(dep1);
-    before.insert(dep2);
-    before.insert(dep3);
-
-    register_self();
-  }
-  test_on_exit_base(const std::string& n, on_exit_func func, const std::string& dep1, const std::string& dep2,
-                    const std::string& dep3, const std::string& dep4)
-      : name(n), func_(func) {
-    before.insert(dep1);
-    before.insert(dep2);
-    before.insert(dep3);
-    before.insert(dep4);
-    register_self();
-  }
-  test_on_exit_base(const std::string& n, on_exit_func func, const std::string& dep1, const std::string& dep2,
-                    const std::string& dep3, const std::string& dep4, const std::string& dep5)
-      : name(n), func_(func) {
-    before.insert(dep1);
-    before.insert(dep2);
-    before.insert(dep3);
-    before.insert(dep4);
-    before.insert(dep5);
-
-    register_self();
-  }
-#endif
   virtual ~test_on_exit_base();
 
   virtual int run();

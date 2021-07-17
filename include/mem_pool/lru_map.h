@@ -35,15 +35,15 @@ namespace util {
 namespace mempool {
 template <class TKEY, class TVALUE>
 struct LIBATFRAME_UTILS_API_HEAD_ONLY lru_map_type_traits {
-  typedef TKEY key_type;
-  typedef TVALUE mapped_type;
-  typedef std::shared_ptr<TVALUE> store_type;
-  typedef std::pair<const TKEY, store_type> value_type;
-  typedef size_t size_type;
+  using key_type = TKEY;
+  using mapped_type = TVALUE;
+  using store_type = std::shared_ptr<TVALUE>;
+  using value_type = std::pair<const TKEY, store_type>;
+  using size_type = size_t;
 
-  typedef std::list<value_type> list_type;
-  typedef typename list_type::iterator iterator;
-  typedef typename list_type::const_iterator const_iterator;
+  using list_type = std::list<value_type>;
+  using iterator = typename list_type::iterator;
+  using const_iterator = typename list_type::const_iterator;
 };
 
 #if defined(LIBATFRAME_UTILS_ENABLE_UNORDERED_MAP_SET) && LIBATFRAME_UTILS_ENABLE_UNORDERED_MAP_SET
@@ -55,27 +55,26 @@ template <typename TKEY, typename TVALUE, class TLESSCMP = std::less<TKEY>,
 #endif
 class LIBATFRAME_UTILS_API_HEAD_ONLY lru_map {
  public:
-  typedef typename lru_map_type_traits<TKEY, TVALUE>::key_type key_type;
-  typedef typename lru_map_type_traits<TKEY, TVALUE>::mapped_type mapped_type;
-  typedef typename lru_map_type_traits<TKEY, TVALUE>::value_type value_type;
-  typedef typename lru_map_type_traits<TKEY, TVALUE>::size_type size_type;
-  typedef typename lru_map_type_traits<TKEY, TVALUE>::store_type store_type;
-  typedef TAlloc allocator_type;
-  typedef value_type &reference;
-  typedef const value_type &const_reference;
-  typedef value_type *pointer;
-  typedef const value_type *const_pointer;
-
-  typedef typename lru_map_type_traits<TKEY, TVALUE>::list_type lru_history_list_type;
-  typedef typename lru_map_type_traits<TKEY, TVALUE>::iterator iterator;
-  typedef typename lru_map_type_traits<TKEY, TVALUE>::const_iterator const_iterator;
+  using key_type = typename lru_map_type_traits<TKEY, TVALUE>::key_type;
+  using mapped_type = typename lru_map_type_traits<TKEY, TVALUE>::mapped_type;
+  using value_type = typename lru_map_type_traits<TKEY, TVALUE>::value_type;
+  using size_type = typename lru_map_type_traits<TKEY, TVALUE>::size_type;
+  using store_type = typename lru_map_type_traits<TKEY, TVALUE>::store_type;
+  using allocator_type = TAlloc;
+  using reference = value_type &;
+  using const_reference = const value_type &;
+  using pointer = value_type *;
+  using const_pointer = const value_type *;
+  using lru_history_list_type = typename lru_map_type_traits<TKEY, TVALUE>::list_type;
+  using iterator = typename lru_map_type_traits<TKEY, TVALUE>::iterator;
+  using const_iterator = typename lru_map_type_traits<TKEY, TVALUE>::const_iterator;
 
 #if defined(LIBATFRAME_UTILS_ENABLE_UNORDERED_MAP_SET) && LIBATFRAME_UTILS_ENABLE_UNORDERED_MAP_SET
-  typedef std::unordered_map<TKEY, iterator, THasher, TKeyEQ, TAlloc> lru_key_value_map_type;
-  typedef lru_map<TKEY, TVALUE, THasher, TKeyEQ, TAlloc> self_type;
+  using lru_key_value_map_type = std::unordered_map<TKEY, iterator, THasher, TKeyEQ, TAlloc>;
+  using self_type = lru_map<TKEY, TVALUE, THasher, TKeyEQ, TAlloc>;
 #else
-  typedef std::map<TKEY, iterator, TLESSCMP, TAlloc> lru_key_value_map_type;
-  typedef lru_map<TKEY, TVALUE, TLESSCMP, TAlloc> self_type;
+  using lru_key_value_map_type = std::map<TKEY, iterator, TLESSCMP, TAlloc>;
+  using self_type = lru_map<TKEY, TVALUE, TLESSCMP, TAlloc>;
 #endif
 
   lru_map() {}
@@ -86,9 +85,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY lru_map {
     insert(other.begin(), other.end());
   }
 
-#if UTIL_CONFIG_COMPILER_CXX_RVALUE_REFERENCES
   lru_map(lru_map &&other) { swap(other); }
-#endif
 
   inline iterator begin() { return visit_history_.begin(); }
   inline const_iterator cbegin() const { return visit_history_.cbegin(); }
@@ -162,7 +159,6 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY lru_map {
     return insert_key_value(value.first, value.second);
   }
 
-#if UTIL_CONFIG_COMPILER_CXX_RVALUE_REFERENCES
   std::pair<iterator, bool> insert(value_type &&value) {
     key_type key = value.first;
     typename lru_key_value_map_type::iterator it = kv_data_.find(key);
@@ -195,7 +191,6 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY lru_map {
     return insert(
         value_type(std::forward<TPARAMKEY>(key), std::make_shared<mapped_type>(std::forward<TPARAMVALUE>(copy_value))));
   }
-#endif
 
   template <class InputIt>
   LIBATFRAME_UTILS_API_HEAD_ONLY void insert(InputIt first, InputIt last) {

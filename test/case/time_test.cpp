@@ -360,7 +360,7 @@ CASE_TEST(time_test, get_month_start_time) {
   CASE_EXPECT_TRUE(::util::time::time_utility::is_same_month(lt, rt - 1));
 }
 
-typedef util::time::jiffies_timer<6, 3, 4> short_timer_t;
+using short_timer_t = util::time::jiffies_timer<6, 3, 4>;
 struct jiffies_timer_fn {
   void *check_priv_data;
   jiffies_timer_fn(void *pd) : check_priv_data(pd) {}
