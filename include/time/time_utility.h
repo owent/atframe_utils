@@ -56,7 +56,7 @@ class time_utility {
   using raw_time_t = std::chrono::system_clock::time_point;
   using raw_duration_t = std::chrono::system_clock::duration;
   using raw_period_t = std::chrono::system_clock::period;
-  using raw_time_desc_t = struct tm;
+  using raw_time_desc_t = std::tm;
 
  private:
   time_utility();
