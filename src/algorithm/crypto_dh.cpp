@@ -1,4 +1,8 @@
-﻿#include <cstring>
+﻿// Copyright 2021 atframework
+// Create by owent
+
+#include <assert.h>
+#include <cstring>
 #include <iostream>
 
 #include <common/file_system.h>

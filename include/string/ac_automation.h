@@ -16,13 +16,14 @@
 
 #pragma once
 
+#include <assert.h>
 #include <algorithm>
 #include <list>
 #include <map>
 #include <set>
 #include <vector>
 
-#include "utf8_char_t.h"
+#include "string/utf8_char_t.h"
 
 #include <config/atframe_utils_build_feature.h>
 
