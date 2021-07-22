@@ -22,6 +22,22 @@
 #  undef max
 #endif
 
+#if (defined(__GNUC__) && !defined(__clang__))
+#  define UTIL_NOSTD_INTERNAL_STRING_VIEW_MEMCMP __builtin_memcmp
+#elif defined(__clang__) && __has_builtin(__builtin_memcmp)
+#  define UTIL_NOSTD_INTERNAL_STRING_VIEW_MEMCMP __builtin_memcmp
+#else
+#  define UTIL_NOSTD_INTERNAL_STRING_VIEW_MEMCMP memcmp
+#endif
+
+#if defined(__cplusplus) && __cplusplus >= 201402L
+#  define UTIL_NOSTD_STRING_VIEW_CXX14_CONSTEXPR constexpr
+#elif defined(_MSVC_LANG) && _MSVC_LANG >= 201402L
+#  define UTIL_NOSTD_STRING_VIEW_CXX14_CONSTEXPR constexpr
+#else
+#  define UTIL_NOSTD_STRING_VIEW_CXX14_CONSTEXPR
+#endif
+
 namespace util {
 namespace nostd {
 
@@ -180,7 +196,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY basic_string_view {
   //
   // Removes the first `n` characters from the `basic_string_view`. Note that the
   // underlying string is not changed, only the view.
-  constexpr void remove_prefix(size_type n) {
+  UTIL_NOSTD_STRING_VIEW_CXX14_CONSTEXPR void remove_prefix(size_type n) {
     if (n <= length_) {
       ptr_ += n;
       length_ -= n;
@@ -194,7 +210,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY basic_string_view {
   //
   // Removes the last `n` characters from the `basic_string_view`. Note that the
   // underlying string is not changed, only the view.
-  constexpr void remove_suffix(size_type n) {
+  UTIL_NOSTD_STRING_VIEW_CXX14_CONSTEXPR void remove_suffix(size_type n) {
     if (n <= length_) {
       length_ -= n;
     } else {
@@ -205,7 +221,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY basic_string_view {
   // basic_string_view::swap()
   //
   // Swaps this `basic_string_view` with another `basic_string_view`.
-  constexpr void swap(basic_string_view& s) noexcept {
+  UTIL_NOSTD_STRING_VIEW_CXX14_CONSTEXPR void swap(basic_string_view& s) noexcept {
     auto t = *this;
     *this = s;
     s = t;
@@ -255,7 +271,9 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY basic_string_view {
   // is greater than `x`.
   constexpr int compare(basic_string_view x) const noexcept {
     return _compare_impl(length_, x.length_,
-                         Min(length_, x.length_) == 0 ? 0 : memcmp(ptr_, x.ptr_, Min(length_, x.length_)));
+                         Min(length_, x.length_) == 0
+                             ? 0
+                             : UTIL_NOSTD_INTERNAL_STRING_VIEW_MEMCMP(ptr_, x.ptr_, Min(length_, x.length_)));
   }
 
   // Overload of `basic_string_view::compare()` for comparing a substring of the
@@ -404,7 +422,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY basic_string_view {
     // A static cast is used here to work around the fact that memchr returns
     // a void* on Posix-compliant systems and const void* on Windows.
     while ((match = static_cast<const unsigned char*>(memchr(phaystack, pneedle[0], hayend - phaystack)))) {
-      if (memcmp(match, pneedle, neelen) == 0)
+      if (UTIL_NOSTD_INTERNAL_STRING_VIEW_MEMCMP(match, pneedle, neelen) == 0)
         return match;
       else
         phaystack = match + 1;
@@ -423,7 +441,8 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY basic_string_view {
 template <class CharT, class Traits>
 LIBATFRAME_UTILS_API_HEAD_ONLY constexpr bool operator==(basic_string_view<CharT, Traits> x,
                                                          basic_string_view<CharT, Traits> y) noexcept {
-  return x.size() == y.size() && (x.empty() || memcmp(x.data(), y.data(), x.size()) == 0);
+  return x.size() == y.size() &&
+         (x.empty() || UTIL_NOSTD_INTERNAL_STRING_VIEW_MEMCMP(x.data(), y.data(), x.size()) == 0);
 }
 
 template <class CharT, class Traits>
@@ -513,3 +532,6 @@ using string_view = basic_string_view<char>;
 using wstring_view = basic_string_view<wchar_t>;
 }  // namespace nostd
 }  // namespace util
+
+#undef UTIL_NOSTD_STRING_VIEW_CXX14_CONSTEXPR
+#undef UTIL_NOSTD_INTERNAL_STRING_VIEW_MEMCMP
