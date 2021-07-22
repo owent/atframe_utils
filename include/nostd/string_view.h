@@ -70,7 +70,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY basic_string_view {
   using size_type = size_t;
   using difference_type = std::ptrdiff_t;
 
-  static constexpr size_type npos = static_cast<size_type>(-1);
+  static constexpr const size_type npos = static_cast<size_type>(-1);
 
  public:
   // Null `basic_string_view` constructor
