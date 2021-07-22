@@ -1,4 +1,4 @@
-﻿/**
+/**
  * @file hash.h
  * @brief 常用Hash算法
  * Licensed under the MIT licenses.

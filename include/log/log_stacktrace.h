@@ -1,4 +1,4 @@
-﻿/**
+/**
  * @file log_stacktrace.h
  * @brief 日志的导出执行栈封装
  * Licensed under the MIT licenses.

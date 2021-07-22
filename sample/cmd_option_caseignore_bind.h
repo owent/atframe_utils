@@ -1,4 +1,4 @@
-﻿#ifndef TEST_CASEIGNORE_BIND_H
+#ifndef TEST_CASEIGNORE_BIND_H
 #define TEST_CASEIGNORE_BIND_H
 
 #pragma once

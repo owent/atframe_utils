@@ -1,4 +1,4 @@
-﻿/**
+/**
  * @file xxtea.h
  * @brief XXTEA加密算法
  * Licensed under the MIT licenses.

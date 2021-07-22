@@ -1,4 +1,4 @@
-﻿// Copyright 2021 atframework
+// Copyright 2021 atframework
 // Created by owent
 
 #include "config/ini_loader.h"

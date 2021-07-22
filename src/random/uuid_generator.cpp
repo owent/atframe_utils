@@ -1,4 +1,4 @@
-﻿#include <config/compile_optimize.h>
+#include <config/compile_optimize.h>
 #include <config/compiler_features.h>
 
 #include <lock/lock_holder.h>

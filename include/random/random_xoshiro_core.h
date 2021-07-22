@@ -1,4 +1,4 @@
-﻿/**
+/**
  * @file random_xor_combine_core.h
  * @brief 伪随机数生成器  - xoshiro算法核心
  * @see http://xoshiro.di.unimi.it

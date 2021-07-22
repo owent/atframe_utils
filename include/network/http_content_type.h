@@ -1,4 +1,4 @@
-﻿/**
+/**
  * @file http_content_type.h
  * @brief HTTP Content Type的规范定义和辅助函数的简化实现
  *

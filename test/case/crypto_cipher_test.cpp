@@ -1,4 +1,4 @@
-﻿#include <chrono>
+#include <chrono>
 #include <cstdlib>
 #include <cstring>
 #include <fstream>

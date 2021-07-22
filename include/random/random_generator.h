@@ -1,4 +1,4 @@
-﻿/**
+/**
  * @file random_generator.h
  * @brief 伪随机数生成器
  *

@@ -1,4 +1,4 @@
-﻿/**
+/**
  * @file atomic.h
  * @brief 导入atomic,在不存在的时候可以使用boost作为备选
  * Licensed under the MIT licenses.

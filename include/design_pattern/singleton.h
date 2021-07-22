@@ -1,4 +1,4 @@
-﻿/**
+/**
  * @file singleton.h
  * @brief 单件模式基类, 参考 boost::serialization::singleton,去除了Debug锁操作 <br />
  *        实例的初始化会在模块载入（如果是动态链接库则是载入动态链接库）时启动 <br />

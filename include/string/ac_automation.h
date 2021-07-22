@@ -1,4 +1,4 @@
-﻿/**
+/**
  * @file ac_automation.h
  * @brief AC 自动机算法实现
  * Licensed under the MIT licenses.

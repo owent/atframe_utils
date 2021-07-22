@@ -1,4 +1,4 @@
-﻿/**
+/**
  * @file mixed_int.h
  * @brief 混淆整数类型
  * Licensed under the MIT licenses.

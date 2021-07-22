@@ -1,4 +1,4 @@
-﻿#include <stdint.h>
+#include <stdint.h>
 
 #include "frame/test_macros.h"
 

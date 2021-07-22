@@ -1,4 +1,4 @@
-﻿/**
+/**
  * @file static_assert.h
  * @brief 导入静态断言（STD_STATIC_ASSERT）<br />
  * Licensed under the MIT licenses.

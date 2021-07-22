@@ -1,4 +1,4 @@
-﻿#include "log/log_wrapper.h"
+#include "log/log_wrapper.h"
 
 #include "log/lua_log_adaptor.h"
 

@@ -1,4 +1,4 @@
-﻿#ifndef TEST_DELAYBIND_H
+#ifndef TEST_DELAYBIND_H
 #define TEST_DELAYBIND_H
 
 #pragma once

@@ -1,4 +1,4 @@
-﻿#include "algorithm/crypto_dh.h"
+#include "algorithm/crypto_dh.h"
 #include <cstring>
 #include "algorithm/crypto_cipher.h"
 #include "common/file_system.h"

@@ -1,4 +1,4 @@
-﻿#include <cstdlib>
+#include <cstdlib>
 #include <cstring>
 
 #include <common/string_oprs.h>

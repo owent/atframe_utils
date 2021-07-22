@@ -1,4 +1,4 @@
-﻿/**
+/**
  *
  * @file chrono.h
  * @brief 导入高精度时间库

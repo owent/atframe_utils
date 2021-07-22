@@ -1,4 +1,4 @@
-﻿/**
+/**
  * @file random_xor_combine_core.h
  * @brief 伪随机数生成器  - 线性回归核心
  *

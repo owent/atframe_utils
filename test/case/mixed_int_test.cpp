@@ -1,4 +1,4 @@
-﻿#include <typeinfo>
+#include <typeinfo>
 #include "frame/test_macros.h"
 
 #define ENABLE_MIXEDINT_MAGIC_MASK 3

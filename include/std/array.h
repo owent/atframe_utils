@@ -1,4 +1,4 @@
-﻿/**
+/**
  * @file array.h
  * @brief 导入支持STL的数组类型
  * Licensed under the MIT licenses.

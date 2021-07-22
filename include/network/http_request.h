@@ -1,4 +1,4 @@
-﻿/**
+/**
  * @file http_request.h
  * @brief 对CURL的封装
  *

@@ -1,4 +1,4 @@
-﻿/**
+/**
  * @file utf8_char_t.h
  * @brief utf8字符和相关算法
  * Licensed under the MIT licenses.

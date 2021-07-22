@@ -1,4 +1,4 @@
-﻿/**
+/**
  * @file lru_object_pool.h
  * @brief lru 算法的对象池<br />
  * Licensed under the MIT licenses.

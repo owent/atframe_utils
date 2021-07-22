@@ -1,4 +1,4 @@
-﻿/**
+/**
  * @file tquerystring.h
  * @brief 支持嵌套结构的Web Querystring类，生成和解析方式类似PHP <br />
  *        依赖智能指针库 <br />

@@ -1,4 +1,4 @@
-﻿/**
+/**
  * @file sha.h
  * @brief sha算法适配,如果没有openssl和mbedtls则使用内置的软实现
  * Licensed under the MIT licenses.

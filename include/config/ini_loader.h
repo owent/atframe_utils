@@ -1,4 +1,4 @@
-﻿/**
+/**
  * @file config/ini_loader.h
  * @brief ini解析器
  * Licensed under the MIT licenses.

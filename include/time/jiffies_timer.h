@@ -1,4 +1,4 @@
-﻿/**
+/**
  * @file jiffies_timer.h
  * @brief O(1)复杂度定时器，设计参考linux kernel(4.9.10)的jiffies timer
  * @see https://git.kernel.org/cgit/linux/kernel/git/stable/linux-stable.git/tree/kernel/time/timer.c

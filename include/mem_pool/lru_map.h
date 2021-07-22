@@ -1,4 +1,4 @@
-﻿/**
+/**
  * @file lru_map.h
  * @brief lru 算法的map<br />
  *        对于单一简单类型的数据结构，不需要使用多对象管理的 lru_object_pool.h ， 直接用这个即可

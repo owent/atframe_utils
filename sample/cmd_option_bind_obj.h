@@ -1,4 +1,4 @@
-﻿#ifndef TEST_BINDOBJ_H
+#ifndef TEST_BINDOBJ_H
 #define TEST_BINDOBJ_H
 
 #pragma once

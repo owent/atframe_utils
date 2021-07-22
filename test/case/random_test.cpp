@@ -1,4 +1,4 @@
-﻿#include <time.h>
+#include <time.h>
 #include <algorithm>
 
 #include <config/compiler_features.h>

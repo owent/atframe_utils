@@ -1,4 +1,4 @@
-﻿/**
+/**
  * @file atomic_int_type.h
  * @brief 整数类型的原子操作跨平台适配
  * Licensed under the MIT licenses.

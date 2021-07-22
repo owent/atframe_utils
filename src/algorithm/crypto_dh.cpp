@@ -1,4 +1,4 @@
-﻿// Copyright 2021 atframework
+// Copyright 2021 atframework
 // Create by owent
 
 #include <assert.h>

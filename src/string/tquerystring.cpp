@@ -1,4 +1,4 @@
-﻿// Licensed under the MIT licenses.
+// Licensed under the MIT licenses.
 
 #include <algorithm>
 #include <cstring>

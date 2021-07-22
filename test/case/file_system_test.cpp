@@ -1,4 +1,4 @@
-﻿#include <stdio.h>
+#include <stdio.h>
 
 #include "common/file_system.h"
 #include "frame/test_macros.h"

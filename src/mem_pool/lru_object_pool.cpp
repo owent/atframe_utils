@@ -1,4 +1,4 @@
-﻿
+
 #include <mem_pool/lru_object_pool.h>
 
 #include <assert.h>

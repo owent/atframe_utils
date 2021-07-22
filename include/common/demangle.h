@@ -1,4 +1,4 @@
-﻿/**
+/**
  * @file demangle.h
  * @brief demangle symbol
  * Licensed under the MIT licenses.

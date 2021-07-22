@@ -1,4 +1,4 @@
-﻿/**
+/**
  * @file spin_rw_lock.h
  * @brief 基于自旋锁技术的读写锁(乐观读写锁)
  * Licensed under the MIT licenses.
