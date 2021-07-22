@@ -47,6 +47,18 @@
 
 #if defined(LIBATFRAME_UTILS_GSL_TEST_STL_STRING_VIEW) && LIBATFRAME_UTILS_GSL_TEST_STL_STRING_VIEW
 #  include <string_view>
+namespace gsl {
+using std::basic_string_view;
+using std::string_view;
+using std::wstring_view;
+}  // namespace gsl
+#else
+#  include <nostd/string_view.h>
+namespace gsl {
+using util::nostd::basic_string_view;
+using util::nostd::string_view;
+using util::nostd::wstring_view;
+}  // namespace gsl
 #endif
 
 #if defined(LIBATFRAME_UTILS_ENABLE_GSL_WITH_MS_GSL) && LIBATFRAME_UTILS_ENABLE_GSL_WITH_MS_GSL
@@ -61,64 +73,11 @@ EXPLICIT_NODISCARD_ATTR unique_ptr<T> make_unique(Args &&...args) {
   return unique_ptr<T>(new T(std::forward<Args>(args)...));
 }
 #  endif
-#  if defined(LIBATFRAME_UTILS_GSL_TEST_STL_STRING_VIEW) && LIBATFRAME_UTILS_GSL_TEST_STL_STRING_VIEW
-using std::basic_string_view;
-using std::string_view;
-using std::wstring_view;
-#  else
-template <class CharT, class Traits = std::char_traits<CharT> >
-using basic_string_view = span<CharT>;
-using string_view = basic_string_view<const char>;
-using wstring_view = basic_string_view<const wchar_t>;
-
-template <class CharT, class Traits = std::char_traits<CharT> >
-std::basic_ostream<CharT, Traits> &operator<<(std::basic_ostream<CharT, Traits> &os,
-                                              basic_string_view<CharT, Traits> const &spn) {
-  typename std::basic_ostream<CharT, Traits>::sentry sentry(os);
-
-  if (!os) return os;
-
-  const std::streamsize length = gsl::narrow_cast<std::streamsize>(spn.size());
-
-  // Write span characters
-  os.rdbuf()->sputn(spn.begin(), length);
-
-  return os;
-}
-#  endif
 }  // namespace gsl
 
 #elif defined(LIBATFRAME_UTILS_ENABLE_GSL_WITH_GSL_LITE) && LIBATFRAME_UTILS_ENABLE_GSL_WITH_GSL_LITE
 #  include <gsl-lite/gsl-lite.hpp>
-namespace gsl {
-#  if defined(LIBATFRAME_UTILS_GSL_TEST_STL_STRING_VIEW) && LIBATFRAME_UTILS_GSL_TEST_STL_STRING_VIEW
-using std::basic_string_view;
-using std::string_view;
-using std::wstring_view;
-#  else
-template <class CharT, class Traits = std::char_traits<CharT> >
-using basic_string_view = span<CharT>;
-using string_view = basic_string_view<const char>;
-using wstring_view = basic_string_view<const wchar_t>;
-
-template <class CharT, class Traits = std::char_traits<CharT> >
-std::basic_ostream<CharT, Traits> &operator<<(std::basic_ostream<CharT, Traits> &os,
-                                              basic_string_view<CharT, Traits> const &spn) {
-  typename std::basic_ostream<CharT, Traits>::sentry sentry(os);
-
-  if (!os) return os;
-
-  const std::streamsize length = gsl::narrow_cast<std::streamsize>(spn.size());
-
-  // Write span characters
-  os.rdbuf()->sputn(spn.begin(), length);
-
-  return os;
-}
-#  endif
-}  // namespace gsl
 #elif defined(LIBATFRAME_UTILS_ENABLE_GSL_WITH_FALLBACK_STL) && LIBATFRAME_UTILS_ENABLE_GSL_WITH_FALLBACK_STL
-
 #  include <array>
 #  include <cstddef>
 #  include <iostream>
@@ -134,6 +93,14 @@ namespace gsl {
 using std::make_shared;
 using std::shared_ptr;
 using std::unique_ptr;
+#  if (defined(__cplusplus) && __cplusplus >= 201402L) || (defined(_MSVC_LANG) && _MSVC_LANG >= 201402L)
+using std::make_unique;
+#  else
+template <class T, class... Args>
+EXPLICIT_NODISCARD_ATTR unique_ptr<T> make_unique(Args&&... args) {
+  return unique_ptr<T>(new T(std::forward<Args>(args)...));
+}
+#  endif
 
 template <class T, size_t N>
 EXPLICIT_NODISCARD_ATTR LIBATFRAME_UTILS_API_HEAD_ONLY inline constexpr T& at(T (&arr)[N], size_t pos) {
@@ -218,33 +185,6 @@ EXPLICIT_NODISCARD_ATTR inline constexpr span<const typename Container::value_ty
   return span<const typename Container::value_type>(with_container, cont);
 }
 
-#  endif
-
-#  if defined(LIBATFRAME_UTILS_GSL_TEST_STL_STRING_VIEW) && LIBATFRAME_UTILS_GSL_TEST_STL_STRING_VIEW
-using std::basic_string_view;
-using std::string_view;
-using std::wstring_view;
-#  elif defined(LIBATFRAME_UTILS_ENABLE_GSL_WITH_FALLBACK_STL_SPAN) && \
-      LIBATFRAME_UTILS_ENABLE_GSL_WITH_FALLBACK_STL_SPAN
-template <class CharT, class Traits = std::char_traits<CharT> >
-using basic_string_view = span<CharT>;
-using string_view = basic_string_view<const char>;
-using wstring_view = basic_string_view<const wchar_t>;
-
-template <class CharT, class Traits = std::char_traits<CharT> >
-std::basic_ostream<CharT, Traits>& operator<<(std::basic_ostream<CharT, Traits>& os,
-                                              basic_string_view<CharT, Traits> const& spn) {
-  typename std::basic_ostream<CharT, Traits>::sentry sentry(os);
-
-  if (!os) return os;
-
-  const std::streamsize length = gsl::narrow_cast<std::streamsize>(spn.size());
-
-  // Write span characters
-  os.rdbuf()->sputn(spn.begin(), length);
-
-  return os;
-}
 #  endif
 
 using zstring = char*;

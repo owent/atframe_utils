@@ -40,9 +40,116 @@ set(CMAKE_INSTALL_RPATH_USE_LINK_PATH YES)
 set(CMAKE_BUILD_WITH_INSTALL_RPATH NO)
 set(CMAKE_BUILD_RPATH_USE_ORIGIN YES)
 
+set(LIBATFRAME_UTILS_VERSION_MAJOR "${PROJECT_VERSION_MAJOR}")
+set(LIBATFRAME_UTILS_VERSION_MINOR "${PROJECT_VERSION_MINOR}")
+set(LIBATFRAME_UTILS_VERSION_PATCH "${PROJECT_VERSION_PATCH}")
+set(LIBATFRAME_UTILS_VERSION "${PROJECT_VERSION}")
+configure_file("${PROJECT_ATFRAME_UTILS_INCLUDE_DIR}/config/atframe_utils_build_feature.h.in"
+               "${PROJECT_ATFRAME_UTILS_INCLUDE_DIR}/config/atframe_utils_build_feature.h" @ONLY)
+
 # 源码
-file(GLOB_RECURSE SRC_LIST "${PROJECT_ATFRAME_UTILS_SOURCE_DIR}/*.c" "${PROJECT_ATFRAME_UTILS_SOURCE_DIR}/*.cpp")
-file(GLOB_RECURSE HEADER_LIST "${PROJECT_ATFRAME_UTILS_INCLUDE_DIR}/*.h" "${PROJECT_ATFRAME_UTILS_INCLUDE_DIR}/*.hpp")
+set(SRC_LIST
+    src/algorithm/base64.cpp
+    src/algorithm/crc.cpp
+    src/algorithm/crypto_cipher.cpp
+    src/algorithm/crypto_dh.cpp
+    src/algorithm/murmur_hash.cpp
+    src/algorithm/sha.cpp
+    src/algorithm/xxtea.cpp
+    src/cli/cmd_option_list.cpp
+    src/cli/cmd_option_value.cpp
+    src/cli/shell_font.cpp
+    src/common/file_system.cpp
+    src/common/string_oprs.cpp
+    src/config/ini_loader.cpp
+    src/log/log_formatter.cpp
+    src/log/log_sink_file_backend.cpp
+    src/log/log_stacktrace.cpp
+    src/log/log_wrapper.cpp
+    src/log/lua_log_adaptor.cpp
+    src/mem_pool/lru_object_pool.cpp
+    src/network/http_content_type.cpp
+    src/network/http_request.cpp
+    src/random/uuid_generator.cpp
+    src/string/tquerystring.cpp
+    src/time/time_utility.cpp)
+set(HEADER_LIST
+    include/algorithm/base64.h
+    include/algorithm/crc.h
+    include/algorithm/crypto_cipher.h
+    include/algorithm/crypto_dh.h
+    include/algorithm/hash.h
+    include/algorithm/mixed_int.h
+    include/algorithm/murmur_hash.h
+    include/algorithm/sha.h
+    include/algorithm/xxtea.h
+    include/cli/cmd_option.h
+    include/cli/cmd_option_bind.h
+    include/cli/cmd_option_bindt_base.h
+    include/cli/cmd_option_bindt_cc.h
+    include/cli/cmd_option_bindt_mf_cc.h
+    include/cli/cmd_option_bind_param_list.h
+    include/cli/cmd_option_list.h
+    include/cli/cmd_option_phoenix.h
+    include/cli/cmd_option_string.h
+    include/cli/cmd_option_value.h
+    include/cli/shell_font.h
+    include/common/compiler_message.h
+    include/common/demangle.h
+    include/common/file_system.h
+    include/common/string_oprs.h
+    include/config/atframe_utils_build_feature.h
+    include/config/compiler/migrate_prefix.h
+    include/config/compiler/migrate_suffix.h
+    include/config/compiler/protobuf_prefix.h
+    include/config/compiler/protobuf_suffix.h
+    include/config/compiler/template_prefix.h
+    include/config/compiler/template_suffix.h
+    include/config/compiler_features.h
+    include/config/compile_optimize.h
+    include/config/ini_loader.h
+    include/data_structure/finite_state_machine.h
+    include/data_structure/lock_free_array.h
+    include/design_pattern/nomovable.h
+    include/design_pattern/noncopyable.h
+    include/design_pattern/singleton.h
+    include/gsl/select-gsl.h
+    include/lock/atomic_int_type.h
+    include/lock/lock_holder.h
+    include/lock/seq_alloc.h
+    include/lock/spin_lock.h
+    include/lock/spin_rw_lock.h
+    include/log/log_formatter.h
+    include/log/log_sink_file_backend.h
+    include/log/log_stacktrace.h
+    include/log/log_wrapper.h
+    include/log/lua_log_adaptor.h
+    include/mem_pool/lru_map.h
+    include/mem_pool/lru_object_pool.h
+    include/network/http_content_type.h
+    include/network/http_request.h
+    include/random/random_generator.h
+    include/random/random_mt_core.h
+    include/random/random_xor_combine_core.h
+    include/random/random_xoshiro_core.h
+    include/random/uuid_generator.h
+    include/std/array.h
+    include/std/atomic.h
+    include/std/chrono.h
+    include/std/explicit_declare.h
+    include/std/functional.h
+    include/std/intrusive_ptr.h
+    include/std/ref.h
+    include/std/smart_ptr.h
+    include/std/static_assert.h
+    include/std/thread.h
+    include/std/tuple.h
+    include/std/utility.h
+    include/string/ac_automation.h
+    include/string/tquerystring.h
+    include/string/utf8_char_t.h
+    include/time/jiffies_timer.h
+    include/time/time_utility.h)
 
 # lib名称
 set(PROJECT_LIB_EXPORT_NAME "${PROJECT_NAME}-target")
@@ -157,13 +264,6 @@ target_link_libraries(
 if(PROJECT_ATFRAME_UTILS_PRIVATE_LINK_NAMES)
   target_link_libraries(${PROJECT_NAME} PRIVATE ${PROJECT_ATFRAME_UTILS_PRIVATE_LINK_NAMES})
 endif()
-
-set(LIBATFRAME_UTILS_VERSION_MAJOR "${PROJECT_VERSION_MAJOR}")
-set(LIBATFRAME_UTILS_VERSION_MINOR "${PROJECT_VERSION_MINOR}")
-set(LIBATFRAME_UTILS_VERSION_PATCH "${PROJECT_VERSION_PATCH}")
-set(LIBATFRAME_UTILS_VERSION "${PROJECT_VERSION}")
-configure_file("${PROJECT_ATFRAME_UTILS_INCLUDE_DIR}/config/atframe_utils_build_feature.h.in"
-               "${PROJECT_ATFRAME_UTILS_INCLUDE_DIR}/config/atframe_utils_build_feature.h" @ONLY)
 
 if(PROJECT_ENABLE_TOOLS)
   add_subdirectory("${CMAKE_CURRENT_LIST_DIR}/tools")

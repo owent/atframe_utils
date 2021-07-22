@@ -43,6 +43,8 @@
 
 #endif
 
+#include "nostd/string_view.h"
+
 /**
  *
  */
@@ -78,64 +80,69 @@ class test_manager {
   static boost::unit_test::test_suite *&test_suit();
 #endif
 
-  struct pick_param_str_t {
-    const char *str_;
-    pick_param_str_t(const char *in);
-    pick_param_str_t(const std::string &in);
-
-    bool operator==(const pick_param_str_t &other) const;
-#ifdef __cpp_impl_three_way_comparison
-    std::strong_ordering operator<=>(const pick_param_str_t &other) const;
-#else
-    bool operator!=(const pick_param_str_t &other) const;
-    bool operator>=(const pick_param_str_t &other) const;
-    bool operator>(const pick_param_str_t &other) const;
-    bool operator<=(const pick_param_str_t &other) const;
-    bool operator<(const pick_param_str_t &other) const;
-#endif
-  };
-
-  template <typename TL, typename TR, bool has_pointer, bool has_integer, bool all_integer>
+  template <class TL, class TR,
+            bool has_pointer = std::is_pointer<typename std::decay<TL>::type>::value ||
+                               std::is_pointer<typename std::decay<TR>::type>::value,
+            bool has_integer = std::is_integral<typename std::decay<TL>::type>::value ||
+                               std::is_integral<typename std::decay<TR>::type>::value,
+            bool all_integer = std::is_integral<typename std::decay<TL>::type>::value
+                &&std::is_integral<typename std::decay<TR>::type>::value>
   struct pick_param;
 
   // compare pointer with integer
-  template <typename TL, typename TR>
+  template <class TL, class TR>
   struct pick_param<TL, TR, true, true, false> {
-    template <typename T>
-    uintptr_t operator()(const T &t) {
-      return (uintptr_t)(t);
+    using value_type = uintptr_t;
+
+    template <class T>
+    value_type operator()(T &&t) {
+      return (value_type)(std::forward<T>(t));
     }
   };
 
   // compare integer with integer, all converted to int64_t or uint64_t
-  template <typename TL, typename TR>
+  template <class TL, class TR>
   struct pick_param<TL, TR, false, true, true> {
-    // uint64_t operator()(const uint64_t &t) { return static_cast<uint64_t>(t); }
+    using value_type = typename std::conditional<std::is_unsigned<typename std::decay<TL>::type>::value &&
+                                                     std::is_unsigned<typename std::decay<TR>::type>::value,
+                                                 uint64_t, int64_t>::type;
 
-    template <typename T>
-    int64_t operator()(const T &t) {
-      return static_cast<int64_t>(t);
+    template <class T>
+    value_type operator()(T &&t) {
+      return static_cast<value_type>(std::forward<T>(t));
     }
   };
 
-  template <typename TL, typename TR, bool has_pointer, bool has_integer, bool all_integer>
-  struct pick_param {
-    pick_param_str_t operator()(const char *t) { return pick_param_str_t(t); }
-    pick_param_str_t operator()(const std::string &t) { return pick_param_str_t(t); }
+  template <class TVAL, bool>
+  struct try_convert_to_string_view;
 
-    template <typename T>
-    const T &operator()(const T &t) {
-      return t;
+  template <class TVAL>
+  struct try_convert_to_string_view<TVAL, true> {
+    using value_type = typename std::conditional<std::is_same<std::nullptr_t, typename std::decay<TVAL>::type>::value,
+                                                 std::nullptr_t, util::nostd::string_view>::type;
+    static inline value_type pick(TVAL v) { return value_type(v); }
+  };
+
+  template <class TVAL>
+  struct try_convert_to_string_view<TVAL, false> {
+    using value_type = TVAL;
+    static inline value_type pick(TVAL v) { return v; }
+  };
+
+  template <class TL, class TR, bool has_pointer, bool has_integer, bool all_integer>
+  struct pick_param {
+    template <class T>
+    typename try_convert_to_string_view<T, std::is_convertible<T, util::nostd::string_view>::value>::value_type
+    operator()(T &&t) {
+      return try_convert_to_string_view<T, std::is_convertible<T, util::nostd::string_view>::value>::pick(
+          std::forward<T>(t));
     }
   };
 
   // expect functions
-  template <typename TL, typename TR>
+  template <class TL, class TR>
   bool expect_eq(const TL &l, const TR &r, const char *lexpr, const char *rexpr, const char *file, size_t line) {
-    pick_param<TL, TR, std::is_pointer<TL>::value || std::is_pointer<TR>::value,
-               std::is_integral<TL>::value || std::is_integral<TR>::value,
-               std::is_integral<TL>::value && std::is_integral<TR>::value>
-        pp;
+    pick_param<TL, TR> pp;
     if (pp(l) == pp(r)) {
       inc_success_counter();
       return true;
@@ -151,12 +158,9 @@ class test_manager {
     }
   }
 
-  template <typename TL, typename TR>
+  template <class TL, class TR>
   bool expect_ne(const TL &l, const TR &r, const char *lexpr, const char *rexpr, const char *file, size_t line) {
-    pick_param<TL, TR, std::is_pointer<TL>::value || std::is_pointer<TR>::value,
-               std::is_integral<TL>::value || std::is_integral<TR>::value,
-               std::is_integral<TL>::value && std::is_integral<TR>::value>
-        pp;
+    pick_param<TL, TR> pp;
 
     if (pp(l) != pp(r)) {
       inc_success_counter();
@@ -173,12 +177,9 @@ class test_manager {
     }
   }
 
-  template <typename TL, typename TR>
+  template <class TL, class TR>
   bool expect_lt(const TL &l, const TR &r, const char *lexpr, const char *rexpr, const char *file, size_t line) {
-    pick_param<TL, TR, std::is_pointer<TL>::value || std::is_pointer<TR>::value,
-               std::is_integral<TL>::value || std::is_integral<TR>::value,
-               std::is_integral<TL>::value && std::is_integral<TR>::value>
-        pp;
+    pick_param<TL, TR> pp;
 
     if (pp(l) < pp(r)) {
       inc_success_counter();
@@ -195,12 +196,9 @@ class test_manager {
     }
   }
 
-  template <typename TL, typename TR>
+  template <class TL, class TR>
   bool expect_le(const TL &l, const TR &r, const char *lexpr, const char *rexpr, const char *file, size_t line) {
-    pick_param<TL, TR, std::is_pointer<TL>::value || std::is_pointer<TR>::value,
-               std::is_integral<TL>::value || std::is_integral<TR>::value,
-               std::is_integral<TL>::value && std::is_integral<TR>::value>
-        pp;
+    pick_param<TL, TR> pp;
 
     if (pp(l) <= pp(r)) {
       inc_success_counter();
@@ -217,12 +215,9 @@ class test_manager {
     }
   }
 
-  template <typename TL, typename TR>
+  template <class TL, class TR>
   bool expect_gt(const TL &l, const TR &r, const char *lexpr, const char *rexpr, const char *file, size_t line) {
-    pick_param<TL, TR, std::is_pointer<TL>::value || std::is_pointer<TR>::value,
-               std::is_integral<TL>::value || std::is_integral<TR>::value,
-               std::is_integral<TL>::value && std::is_integral<TR>::value>
-        pp;
+    pick_param<TL, TR> pp;
 
     if (pp(l) > pp(r)) {
       inc_success_counter();
@@ -239,12 +234,9 @@ class test_manager {
     }
   }
 
-  template <typename TL, typename TR>
+  template <class TL, class TR>
   bool expect_ge(const TL &l, const TR &r, const char *lexpr, const char *rexpr, const char *file, size_t line) {
-    pick_param<TL, TR, std::is_pointer<TL>::value || std::is_pointer<TR>::value,
-               std::is_integral<TL>::value || std::is_integral<TR>::value,
-               std::is_integral<TL>::value && std::is_integral<TR>::value>
-        pp;
+    pick_param<TL, TR> pp;
 
     if (pp(l) >= pp(r)) {
       inc_success_counter();
@@ -261,7 +253,7 @@ class test_manager {
     }
   }
 
-  template <typename TL>
+  template <class TL>
   bool expect_true(const TL &l, const char *expr, const char *file, size_t line) {
     if (!!(l)) {
       inc_success_counter();
@@ -277,7 +269,7 @@ class test_manager {
     }
   }
 
-  template <typename TL>
+  template <class TL>
   bool expect_false(const TL &l, const char *expr, const char *file, size_t line) {
     if (!(l)) {
       inc_success_counter();

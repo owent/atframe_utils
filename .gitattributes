@@ -1,8 +1,8 @@
-# *.h         text working-tree-encoding=UTF-8-BOM eol=crlf
-# *.hpp       text working-tree-encoding=UTF-8-BOM eol=crlf
-# *.cpp       text working-tree-encoding=UTF-8-BOM eol=crlf
-# *.cxx       text working-tree-encoding=UTF-8-BOM eol=crlf
-# *.cc        text working-tree-encoding=UTF-8-BOM eol=crlf
+*.h text working-tree-encoding=UTF-8 eol=crlf
+*.hpp text working-tree-encoding=UTF-8 eol=crlf
+*.cpp text working-tree-encoding=UTF-8 eol=crlf
+*.cxx text working-tree-encoding=UTF-8 eol=crlf
+*.cc text working-tree-encoding=UTF-8 eol=crlf
 *.sh text eol=lf
 *.sh.mako text eol=lf
 *.sh.template text eol=lf
