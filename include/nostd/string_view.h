@@ -44,6 +44,16 @@
 namespace util {
 namespace nostd {
 
+#ifdef __cpp_impl_three_way_comparison
+namespace details {
+LIBATFRAME_UTILS_API_HEAD_ONLY constexpr inline std::strong_ordering string_view_compare_to_strong_ordering(
+    int result) noexcept {
+  return result < 0 ? std::strong_ordering::less
+                    : (result > 0 ? std::strong_ordering::greater : std::strong_ordering::equal);
+}
+}  // namespace details
+#endif
+
 template <class CharT, class Traits = std::char_traits<CharT> >
 class LIBATFRAME_UTILS_API_HEAD_ONLY basic_string_view {
  public:
@@ -259,11 +269,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY basic_string_view {
   // `n`) as another basic_string_view. This function throws `std::out_of_bounds` if
   // `pos > size`.
   constexpr basic_string_view substr(size_type pos = 0, size_type n = npos) const {
-    if (pos > length_) {
-      return basic_string_view();
-    }
-
-    return basic_string_view(ptr_ + pos, Min(n, length_ - pos));
+    return pos > length_ ? basic_string_view() : basic_string_view(ptr_ + pos, Min(n, length_ - pos));
   }
 
   // basic_string_view::compare()
@@ -472,13 +478,7 @@ LIBATFRAME_UTILS_API_HEAD_ONLY constexpr bool operator==(basic_string_view<CharT
 template <class CharT, class Traits>
 LIBATFRAME_UTILS_API_HEAD_ONLY constexpr std::strong_ordering operator<=>(basic_string_view<CharT, Traits> x,
                                                                           basic_string_view<CharT, Traits> y) noexcept {
-  auto result = x.compare(y);
-  if (result < 0) {
-    return std::strong_ordering::less;
-  } else if (result > 0) {
-    return std::strong_ordering::greater;
-  }
-  return std::strong_ordering::equal;
+  return details::string_view_compare_to_strong_ordering(x.compare(y));
 }
 
 template <class CharT, class Traits>
