@@ -428,12 +428,18 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY basic_string_view {
     const unsigned char* hayend = phaystack + haylen - neelen + 1;
     // A static cast is used here to work around the fact that memchr returns
     // a void* on Posix-compliant systems and const void* on Windows.
-    while ((match = static_cast<const unsigned char*>(memchr(phaystack, pneedle[0], hayend - phaystack)))) {
+    do {
+      match = static_cast<const unsigned char*>(memchr(phaystack, pneedle[0], hayend - phaystack));
+      if (nullptr == match) {
+        break;
+      }
+
       if (UTIL_NOSTD_INTERNAL_STRING_VIEW_MEMCMP(match, pneedle, neelen) == 0)
         return match;
       else
         phaystack = match + 1;
-    }
+    } while (true);
+
     return nullptr;
   }
 
