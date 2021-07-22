@@ -596,17 +596,14 @@ CASE_TEST(nostd_string_view, explicit_conversion_operator) {
   CASE_EXPECT_EQ(sp, std::string(sp));
 }
 
-static constexpr char ConstexprMethodsHelper() {
 #if defined(__cplusplus) && __cplusplus >= 201402L
+static constexpr char ConstexprMethodsHelper() {
   util::nostd::string_view str("123", 3);
   str.remove_prefix(1);
   str.remove_suffix(1);
   util::nostd::string_view bar;
   str.swap(bar);
   return bar.front();
-#else
-  return '2';
-#endif
 }
 
 CASE_TEST(nostd_string_view, constexpr_methods) {
@@ -620,6 +617,7 @@ CASE_TEST(nostd_string_view, constexpr_methods) {
   CASE_EXPECT_EQ(foo, "foo");
   CASE_EXPECT_EQ(bar, "bar");
 }
+#endif
 
 CASE_TEST(nostd_string_view, with_noexcept) {
   CASE_EXPECT_TRUE((std::is_nothrow_constructible<util::nostd::string_view, const std::string&>::value));
