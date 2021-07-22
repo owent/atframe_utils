@@ -141,7 +141,7 @@ class test_manager {
 
   // expect functions
   template <class TL, class TR>
-  bool expect_eq(const TL &l, const TR &r, const char *lexpr, const char *rexpr, const char *file, size_t line) {
+  bool expect_eq(TL &&l, TR &&r, const char *lexpr, const char *rexpr, const char *file, size_t line) {
     pick_param<TL, TR> pp;
     if (pp(l) == pp(r)) {
       inc_success_counter();
@@ -159,7 +159,7 @@ class test_manager {
   }
 
   template <class TL, class TR>
-  bool expect_ne(const TL &l, const TR &r, const char *lexpr, const char *rexpr, const char *file, size_t line) {
+  bool expect_ne(TL &&l, TR &&r, const char *lexpr, const char *rexpr, const char *file, size_t line) {
     pick_param<TL, TR> pp;
 
     if (pp(l) != pp(r)) {
@@ -178,7 +178,7 @@ class test_manager {
   }
 
   template <class TL, class TR>
-  bool expect_lt(const TL &l, const TR &r, const char *lexpr, const char *rexpr, const char *file, size_t line) {
+  bool expect_lt(TL &&l, TR &&r, const char *lexpr, const char *rexpr, const char *file, size_t line) {
     pick_param<TL, TR> pp;
 
     if (pp(l) < pp(r)) {
@@ -197,7 +197,7 @@ class test_manager {
   }
 
   template <class TL, class TR>
-  bool expect_le(const TL &l, const TR &r, const char *lexpr, const char *rexpr, const char *file, size_t line) {
+  bool expect_le(TL &&l, TR &&r, const char *lexpr, const char *rexpr, const char *file, size_t line) {
     pick_param<TL, TR> pp;
 
     if (pp(l) <= pp(r)) {
@@ -216,7 +216,7 @@ class test_manager {
   }
 
   template <class TL, class TR>
-  bool expect_gt(const TL &l, const TR &r, const char *lexpr, const char *rexpr, const char *file, size_t line) {
+  bool expect_gt(TL &&l, TR &&r, const char *lexpr, const char *rexpr, const char *file, size_t line) {
     pick_param<TL, TR> pp;
 
     if (pp(l) > pp(r)) {
@@ -235,7 +235,7 @@ class test_manager {
   }
 
   template <class TL, class TR>
-  bool expect_ge(const TL &l, const TR &r, const char *lexpr, const char *rexpr, const char *file, size_t line) {
+  bool expect_ge(TL &&l, TR &&r, const char *lexpr, const char *rexpr, const char *file, size_t line) {
     pick_param<TL, TR> pp;
 
     if (pp(l) >= pp(r)) {
@@ -254,7 +254,7 @@ class test_manager {
   }
 
   template <class TL>
-  bool expect_true(const TL &l, const char *expr, const char *file, size_t line) {
+  bool expect_true(TL &&l, const char *expr, const char *file, size_t line) {
     if (!!(l)) {
       inc_success_counter();
       return true;
@@ -270,7 +270,7 @@ class test_manager {
   }
 
   template <class TL>
-  bool expect_false(const TL &l, const char *expr, const char *file, size_t line) {
+  bool expect_false(TL &&l, const char *expr, const char *file, size_t line) {
     if (!(l)) {
       inc_success_counter();
       return true;

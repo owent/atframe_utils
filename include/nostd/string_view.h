@@ -70,7 +70,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY basic_string_view {
   using size_type = size_t;
   using difference_type = std::ptrdiff_t;
 
-  static constexpr const size_type npos = static_cast<size_type>(-1);
+  static constexpr const size_type npos = std::basic_string<CharT, Traits>::npos;
 
  public:
   // Null `basic_string_view` constructor
@@ -453,6 +453,12 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY basic_string_view {
   const_pointer ptr_;
   size_type length_;
 };
+
+#if !((defined(__cplusplus) && __cplusplus >= 201402L) || (defined(_MSVC_LANG) && _MSVC_LANG >= 201402L))
+template <class CharT, class Traits>
+LIBATFRAME_UTILS_API_HEAD_ONLY constexpr const typename basic_string_view<CharT, Traits>::size_type
+    basic_string_view<CharT, Traits>::npos;
+#endif
 
 // This large function is defined inline so that in a fairly common case where
 // one of the arguments is a literal, the compiler can elide a lot of the
