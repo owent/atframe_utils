@@ -24,9 +24,12 @@
 
 #if (defined(__GNUC__) && !defined(__clang__))
 #  define UTIL_NOSTD_INTERNAL_STRING_VIEW_MEMCMP __builtin_memcmp
-#elif defined(__clang__) && __has_builtin(__builtin_memcmp)
-#  define UTIL_NOSTD_INTERNAL_STRING_VIEW_MEMCMP __builtin_memcmp
-#else
+#elif defined(__clang__)
+#  if __has_builtin(__builtin_memcmp)
+#    define UTIL_NOSTD_INTERNAL_STRING_VIEW_MEMCMP __builtin_memcmp
+#  endif
+#endif
+#if !defined(UTIL_NOSTD_INTERNAL_STRING_VIEW_MEMCMP)
 #  define UTIL_NOSTD_INTERNAL_STRING_VIEW_MEMCMP memcmp
 #endif
 
@@ -394,8 +397,12 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY basic_string_view {
     // GCC has __builtin_strlen according to
     // https://gcc.gnu.org/onlinedocs/gcc-4.7.0/gcc/Other-Builtins.html
     return __builtin_strlen(str);
-#elif defined(__clang__) && __has_builtin(__builtin_strlen)
+#elif defined(__clang__)
+#  if __has_builtin(__builtin_strlen)
     return __builtin_strlen(str);
+#  else
+    return str ? strlen(str) : 0;
+#  endif
 #else
     return str ? strlen(str) : 0;
 #endif
