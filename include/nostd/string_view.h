@@ -18,6 +18,10 @@
 
 #include "config/atframe_utils_build_feature.h"
 
+#if defined(LIBATFRAME_UTILS_GSL_TEST_STL_STRING_VIEW) && LIBATFRAME_UTILS_GSL_TEST_STL_STRING_VIEW
+#  include <string_view>
+#endif
+
 #ifdef max
 #  undef max
 #endif
@@ -78,7 +82,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY basic_string_view {
 
   template <typename Allocator>
   basic_string_view(  // NOLINT(runtime/explicit)
-      const std::basic_string<CharT, std::char_traits<CharT>, Allocator>& str) noexcept
+      const std::basic_string<CharT, Traits, Allocator>& str) noexcept
       // This is implemented in terms of `basic_string_view(p, n)` so `str.size()`
       // doesn't need to be reevaluated after `ptr_` is set.
       : basic_string_view(str.data(), str.size()) {}
@@ -90,6 +94,14 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY basic_string_view {
 
   // Implicit constructor of a `basic_string_view` from a `const_pointer` and length.
   constexpr basic_string_view(const_pointer data, size_type len) : ptr_(data), length_(len) {}
+
+#if defined(LIBATFRAME_UTILS_GSL_TEST_STL_STRING_VIEW) && LIBATFRAME_UTILS_GSL_TEST_STL_STRING_VIEW
+  constexpr basic_string_view(  // NOLINT(runtime/explicit)
+      const std::basic_string_view<CharT, Traits>& stl_string_view) noexcept
+      // This is implemented in terms of `basic_string_view(p, n)` so `str.size()`
+      // doesn't need to be reevaluated after `ptr_` is set.
+      : basic_string_view(stl_string_view.data(), stl_string_view.size()) {}
+#endif
 
   // NOTE: Harmlessly omitted to work around gdb bug.
   //   constexpr basic_string_view(const basic_string_view&) noexcept = default;
@@ -246,6 +258,13 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY basic_string_view {
     if (!data()) return {};
     return std::basic_string<value_type, traits_type, A>(data(), size());
   }
+
+#if defined(LIBATFRAME_UTILS_GSL_TEST_STL_STRING_VIEW) && LIBATFRAME_UTILS_GSL_TEST_STL_STRING_VIEW
+  explicit operator std::basic_string_view<CharT, Traits>() const {
+    if (!data()) return {};
+    return std::basic_string_view<CharT, Traits>(data(), size());
+  }
+#endif
 
   // basic_string_view::copy()
   //
