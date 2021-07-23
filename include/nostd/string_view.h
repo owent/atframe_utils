@@ -489,9 +489,8 @@ LIBATFRAME_UTILS_API_HEAD_ONLY constexpr const typename basic_string_view<CharT,
     basic_string_view<CharT, Traits>::npos;
 #endif
 
-// This large function is defined inline so that in a fairly common case where
-// one of the arguments is a literal, the compiler can elide a lot of the
-// following comparisons.
+// !_HAS_CXX20
+#if !((defined(__cplusplus) && __cplusplus > 201703L) || (defined(_MSVC_LANG) && _MSVC_LANG > 201703L))
 template <class CharT, class Traits>
 LIBATFRAME_UTILS_API_HEAD_ONLY constexpr bool operator==(basic_string_view<CharT, Traits> x,
                                                          basic_string_view<CharT, Traits> y) noexcept {
@@ -505,6 +504,7 @@ LIBATFRAME_UTILS_API_HEAD_ONLY constexpr bool operator==(
   return x.size() == y.size() &&
          (x.empty() || UTIL_NOSTD_INTERNAL_STRING_VIEW_MEMCMP(x.data(), y.data(), x.size()) == 0);
 }
+#endif
 
 template <class CharT, class Traits>
 LIBATFRAME_UTILS_API_HEAD_ONLY constexpr bool operator==(
@@ -524,9 +524,24 @@ LIBATFRAME_UTILS_API_HEAD_ONLY constexpr bool operator==(basic_string_view<CharT
 }
 
 #ifdef __cpp_impl_three_way_comparison
+// !_HAS_CXX20
+#  if !((defined(__cplusplus) && __cplusplus > 201703L) || (defined(_MSVC_LANG) && _MSVC_LANG > 201703L))
 template <class CharT, class Traits>
 LIBATFRAME_UTILS_API_HEAD_ONLY constexpr std::strong_ordering operator<=>(basic_string_view<CharT, Traits> x,
                                                                           basic_string_view<CharT, Traits> y) noexcept {
+  return details::string_view_compare_to_strong_ordering(x.compare(y));
+}
+
+template <class CharT, class Traits>
+LIBATFRAME_UTILS_API_HEAD_ONLY constexpr std::strong_ordering operator<=>(
+    typename std::common_type<basic_string_view<CharT, Traits> >::type x, basic_string_view<CharT, Traits> y) noexcept {
+  return details::string_view_compare_to_strong_ordering(x.compare(y));
+}
+#  endif
+
+template <class CharT, class Traits>
+LIBATFRAME_UTILS_API_HEAD_ONLY constexpr std::strong_ordering operator<=>(
+    basic_string_view<CharT, Traits> x, typename std::common_type<basic_string_view<CharT, Traits> >::type y) noexcept {
   return details::string_view_compare_to_strong_ordering(x.compare(y));
 }
 
@@ -542,19 +557,10 @@ LIBATFRAME_UTILS_API_HEAD_ONLY constexpr std::strong_ordering operator<=>(basic_
   return x <=> basic_string_view<CharT, Traits>();
 }
 
-template <class CharT, class Traits>
-LIBATFRAME_UTILS_API_HEAD_ONLY constexpr std::strong_ordering operator<=>(
-    typename std::common_type<basic_string_view<CharT, Traits> >::type x, basic_string_view<CharT, Traits> y) noexcept {
-  return details::string_view_compare_to_strong_ordering(x.compare(y));
-}
-
-template <class CharT, class Traits>
-LIBATFRAME_UTILS_API_HEAD_ONLY constexpr std::strong_ordering operator<=>(
-    basic_string_view<CharT, Traits> x, typename std::common_type<basic_string_view<CharT, Traits> >::type y) noexcept {
-  return details::string_view_compare_to_strong_ordering(x.compare(y));
-}
-
 #else
+
+// !_HAS_CXX20
+#  if !((defined(__cplusplus) && __cplusplus > 201703L) || (defined(_MSVC_LANG) && _MSVC_LANG > 201703L))
 template <class CharT, class Traits>
 LIBATFRAME_UTILS_API_HEAD_ONLY constexpr bool operator!=(basic_string_view<CharT, Traits> x,
                                                          basic_string_view<CharT, Traits> y) noexcept {
@@ -566,6 +572,7 @@ LIBATFRAME_UTILS_API_HEAD_ONLY constexpr bool operator!=(
     typename std::common_type<basic_string_view<CharT, Traits> >::type x, basic_string_view<CharT, Traits> y) noexcept {
   return !(x == y);
 }
+#  endif
 
 template <class CharT, class Traits>
 LIBATFRAME_UTILS_API_HEAD_ONLY constexpr bool operator!=(
@@ -583,21 +590,24 @@ LIBATFRAME_UTILS_API_HEAD_ONLY constexpr bool operator!=(std::nullptr_t, basic_s
   return !(basic_string_view<CharT, Traits>() == y);
 }
 
+// !_HAS_CXX20
+#  if !((defined(__cplusplus) && __cplusplus > 201703L) || (defined(_MSVC_LANG) && _MSVC_LANG > 201703L))
+template <class CharT, class Traits>
+LIBATFRAME_UTILS_API_HEAD_ONLY constexpr bool operator<(basic_string_view<CharT, Traits> x,
+                                                        basic_string_view<CharT, Traits> y) noexcept {
+  return x.compare(y) < 0;
+}
+
 template <class CharT, class Traits>
 LIBATFRAME_UTILS_API_HEAD_ONLY constexpr bool operator<(
     typename std::common_type<basic_string_view<CharT, Traits> >::type x, basic_string_view<CharT, Traits> y) noexcept {
   return x.compare(y) < 0;
 }
+#  endif
 
 template <class CharT, class Traits>
 LIBATFRAME_UTILS_API_HEAD_ONLY constexpr bool operator<(
     basic_string_view<CharT, Traits> x, typename std::common_type<basic_string_view<CharT, Traits> >::type y) noexcept {
-  return x.compare(y) < 0;
-}
-
-template <class CharT, class Traits>
-LIBATFRAME_UTILS_API_HEAD_ONLY constexpr bool operator<(basic_string_view<CharT, Traits> x,
-                                                        basic_string_view<CharT, Traits> y) noexcept {
   return x.compare(y) < 0;
 }
 
@@ -611,6 +621,8 @@ LIBATFRAME_UTILS_API_HEAD_ONLY constexpr bool operator<(basic_string_view<CharT,
   return x.compare(basic_string_view<CharT, Traits>()) < 0;
 }
 
+// !_HAS_CXX20
+#  if !((defined(__cplusplus) && __cplusplus > 201703L) || (defined(_MSVC_LANG) && _MSVC_LANG > 201703L))
 template <class CharT, class Traits>
 LIBATFRAME_UTILS_API_HEAD_ONLY constexpr bool operator>(basic_string_view<CharT, Traits> x,
                                                         basic_string_view<CharT, Traits> y) noexcept {
@@ -622,6 +634,7 @@ LIBATFRAME_UTILS_API_HEAD_ONLY constexpr bool operator>(
     typename std::common_type<basic_string_view<CharT, Traits> >::type x, basic_string_view<CharT, Traits> y) noexcept {
   return y < x;
 }
+#  endif
 
 template <class CharT, class Traits>
 LIBATFRAME_UTILS_API_HEAD_ONLY constexpr bool operator>(
@@ -639,6 +652,8 @@ LIBATFRAME_UTILS_API_HEAD_ONLY constexpr bool operator>(basic_string_view<CharT,
   return y < x;
 }
 
+// !_HAS_CXX20
+#  if !((defined(__cplusplus) && __cplusplus > 201703L) || (defined(_MSVC_LANG) && _MSVC_LANG > 201703L))
 template <class CharT, class Traits>
 LIBATFRAME_UTILS_API_HEAD_ONLY constexpr bool operator<=(basic_string_view<CharT, Traits> x,
                                                          basic_string_view<CharT, Traits> y) noexcept {
@@ -650,6 +665,7 @@ LIBATFRAME_UTILS_API_HEAD_ONLY constexpr bool operator<=(
     typename std::common_type<basic_string_view<CharT, Traits> >::type x, basic_string_view<CharT, Traits> y) noexcept {
   return !(y < x);
 }
+#  endif
 
 template <class CharT, class Traits>
 LIBATFRAME_UTILS_API_HEAD_ONLY constexpr bool operator<=(
@@ -669,6 +685,8 @@ LIBATFRAME_UTILS_API_HEAD_ONLY constexpr bool operator<=(basic_string_view<CharT
   return !(y < x);
 }
 
+// !_HAS_CXX20
+#  if !((defined(__cplusplus) && __cplusplus > 201703L) || (defined(_MSVC_LANG) && _MSVC_LANG > 201703L))
 template <class CharT, class Traits>
 LIBATFRAME_UTILS_API_HEAD_ONLY constexpr bool operator>=(basic_string_view<CharT, Traits> x,
                                                          basic_string_view<CharT, Traits> y) noexcept {
@@ -680,6 +698,7 @@ LIBATFRAME_UTILS_API_HEAD_ONLY constexpr bool operator>=(
     typename std::common_type<basic_string_view<CharT, Traits> >::type x, basic_string_view<CharT, Traits> y) noexcept {
   return !(x < y);
 }
+#  endif
 
 template <class CharT, class Traits>
 LIBATFRAME_UTILS_API_HEAD_ONLY constexpr bool operator>=(

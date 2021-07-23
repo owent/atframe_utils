@@ -80,6 +80,10 @@ CASE_TEST(nostd_string_view, stl_comparator) {
   CASE_EXPECT_EQ(map.size(), 3);
   CASE_EXPECT_TRUE(p1 == s1);
   CASE_EXPECT_FALSE(p1 != s1);
+  CASE_EXPECT_TRUE(p1 != nullptr);
+  CASE_EXPECT_FALSE(p1 == nullptr);
+  CASE_EXPECT_TRUE(nullptr != p1);
+  CASE_EXPECT_FALSE(nullptr == p1);
 
   TestMap::const_iterator iter = map.begin();
   CASE_EXPECT_EQ(iter->second, 1);

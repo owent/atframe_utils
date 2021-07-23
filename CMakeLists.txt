@@ -16,7 +16,7 @@ enable_testing()
 
 project(
   atframe_utils
-  VERSION "2.2.2"
+  VERSION "2.2.3"
   HOMEPAGE_URL "https://github.com/atframework/atframe_utils"
   LANGUAGES C CXX)
 
@@ -128,6 +128,7 @@ set(HEADER_LIST
     "${CMAKE_CURRENT_LIST_DIR}/include/mem_pool/lru_object_pool.h"
     "${CMAKE_CURRENT_LIST_DIR}/include/network/http_content_type.h"
     "${CMAKE_CURRENT_LIST_DIR}/include/network/http_request.h"
+    "${CMAKE_CURRENT_LIST_DIR}/include/nostd/string_view.h"
     "${CMAKE_CURRENT_LIST_DIR}/include/random/random_generator.h"
     "${CMAKE_CURRENT_LIST_DIR}/include/random/random_mt_core.h"
     "${CMAKE_CURRENT_LIST_DIR}/include/random/random_xor_combine_core.h"
