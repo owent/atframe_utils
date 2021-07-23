@@ -78,6 +78,8 @@ CASE_TEST(nostd_string_view, stl_comparator) {
   map.insert(std::make_pair(p2, 1));
   map.insert(std::make_pair(p3, 2));
   CASE_EXPECT_EQ(map.size(), 3);
+  CASE_EXPECT_TRUE(p1 == s1);
+  CASE_EXPECT_FALSE(p1 != s1);
 
   TestMap::const_iterator iter = map.begin();
   CASE_EXPECT_EQ(iter->second, 1);
@@ -531,12 +533,6 @@ CASE_TEST(nostd_string_view, null_input) {
   CASE_EXPECT_EQ(s.data(), nullptr);
   CASE_EXPECT_EQ(s.size(), 0);
 
-  s = util::nostd::string_view(nullptr);
-  CASE_EXPECT_EQ(s.data(), nullptr);
-  CASE_EXPECT_EQ(s.size(), 0);
-
-  // .ToString() on a util::nostd::string_view with nullptr should produce the empty
-  // string.
   CASE_EXPECT_EQ("", std::string(s));
 }
 
