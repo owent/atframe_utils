@@ -14,6 +14,10 @@
 
 #pragma once
 
+#include <config/atframe_utils_build_feature.h>
+
+#include <nostd/string_view.h>
+
 #include <inttypes.h>
 #include <stdint.h>
 #include <cstdio>
@@ -23,8 +27,6 @@
 #include <iterator>
 #include <string>
 #include <type_traits>
-
-#include <config/atframe_utils_build_feature.h>
 
 #if defined(LIBATFRAME_UTILS_ENABLE_STD_FORMAT) && LIBATFRAME_UTILS_ENABLE_STD_FORMAT
 #  include <format>
@@ -219,11 +221,11 @@ class log_formatter {
 #    define LOG_WRAPPER_FWAPI_DECL_NAMESPACE() namespace std
 #    define LOG_WRAPPER_FWAPI_FORMAT_AS(Type, Base)                                 \
       LOG_WRAPPER_FWAPI_DECL_NAMESPACE() {                                          \
-        template <typename Char>                                                    \
-        struct formatter<Type, Char> : formatter<Base, Char> {                      \
-          template <typename FormatContext>                                         \
+        template <class CharT>                                                      \
+        struct formatter<Type, CharT> : formatter<Base, CharT> {                    \
+          template <class FormatContext>                                            \
           auto format(Type const &val, FormatContext &ctx) -> decltype(ctx.out()) { \
-            return formatter<Base, Char>::format(val, ctx);                         \
+            return formatter<Base, CharT>::format(val, ctx);                        \
           }                                                                         \
         };                                                                          \
       }
@@ -235,6 +237,18 @@ class log_formatter {
 
 LOG_WRAPPER_FWAPI_FORMAT_AS(typename ::util::log::log_formatter::flag_t::type, int);
 LOG_WRAPPER_FWAPI_FORMAT_AS(typename ::util::log::log_formatter::level_t::type, int);
+
+LOG_WRAPPER_FWAPI_DECL_NAMESPACE() {
+  template <class CharT, class Traits>
+  struct formatter<::util::nostd::basic_string_view<CharT, Traits>, CharT>
+      : formatter<LOG_WRAPPER_FWAPI_NAMESPACE basic_string_view<CharT>, CharT> {
+    template <class FormatContext>
+    auto format(::util::nostd::basic_string_view<CharT, Traits> const &val, FormatContext &ctx) -> decltype(ctx.out()) {
+      return formatter<LOG_WRAPPER_FWAPI_NAMESPACE basic_string_view<CharT>, CharT>::format(
+          LOG_WRAPPER_FWAPI_NAMESPACE basic_string_view<CharT>{val.data(), val.size()}, ctx);
+    }
+  };
+}
 
 #endif
 
