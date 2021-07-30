@@ -7,6 +7,7 @@
 #include <cassert>
 #include <cstddef>
 #include <cstring>
+#include <ios>
 #include <iosfwd>
 #include <iterator>
 #include <limits>
