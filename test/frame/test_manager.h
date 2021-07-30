@@ -83,10 +83,10 @@ class test_manager {
   template <class TL, class TR,
             bool has_pointer = std::is_pointer<typename std::decay<TL>::type>::value ||
                                std::is_pointer<typename std::decay<TR>::type>::value,
-            bool has_integer = std::is_integral<typename std::decay<TL>::type>::value ||
-                               std::is_integral<typename std::decay<TR>::type>::value,
-            bool all_integer = std::is_integral<typename std::decay<TL>::type>::value
-                &&std::is_integral<typename std::decay<TR>::type>::value>
+            bool has_number = std::is_arithmetic<typename std::decay<TL>::type>::value ||
+                              std::is_arithmetic<typename std::decay<TR>::type>::value,
+            bool all_number = std::is_arithmetic<typename std::decay<TL>::type>::value
+                &&std::is_arithmetic<typename std::decay<TR>::type>::value>
   struct pick_param;
 
   // compare pointer with integer
@@ -100,12 +100,16 @@ class test_manager {
     }
   };
 
-  // compare integer with integer, all converted to int64_t or uint64_t
+  // compare integer with integer, all converted to double/int64_t/uint64_t
   template <class TL, class TR>
   struct pick_param<TL, TR, false, true, true> {
-    using value_type = typename std::conditional<std::is_unsigned<typename std::decay<TL>::type>::value &&
-                                                     std::is_unsigned<typename std::decay<TR>::type>::value,
-                                                 uint64_t, int64_t>::type;
+    using value_type =
+        typename std::conditional<std::is_floating_point<typename std::decay<TL>::type>::value ||
+                                      std::is_floating_point<typename std::decay<TR>::type>::value,
+                                  double,
+                                  typename std::conditional<std::is_unsigned<typename std::decay<TL>::type>::value &&
+                                                                std::is_unsigned<typename std::decay<TR>::type>::value,
+                                                            uint64_t, int64_t>::type>::type;
 
     template <class T>
     value_type operator()(T &&t) {
