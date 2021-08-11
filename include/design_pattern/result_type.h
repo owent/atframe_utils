@@ -72,8 +72,8 @@ template <class T>
 struct LIBATFRAME_UTILS_API_HEAD_ONLY
     compact_storage_type<T, std::unique_ptr<T, small_object_optimize_storage_deleter<T> > > : public std::true_type {
   using value_type = T;
-  using pointer = std::unique_ptr<T, small_object_optimize_storage_deleter<T> >;
-  using storage_type = std::pair<T, pointer>;
+  using pointer = std::unique_ptr<value_type, small_object_optimize_storage_deleter<value_type> >;
+  using storage_type = std::pair<value_type, pointer>;
 
   static UTIL_FORCEINLINE void destroy_storage(storage_type &out) {
     out.second.release();
@@ -83,7 +83,7 @@ struct LIBATFRAME_UTILS_API_HEAD_ONLY
   template <class... TARGS>
   static UTIL_FORCEINLINE void construct_storage(storage_type &out, TARGS &&...in) {
     // Placement new
-    new (reinterpret_cast<void *>(&out)) storage_type({std::forward<TARGS>(in)...}, nullptr);
+    new (reinterpret_cast<void *>(&out)) storage_type(value_type{std::forward<TARGS>(in)...}, nullptr);
     out.second.reset(&out.first);
   }
 
@@ -94,7 +94,7 @@ struct LIBATFRAME_UTILS_API_HEAD_ONLY
   static UTIL_FORCEINLINE void construct_storage(storage_type &out, std::unique_ptr<U, UDELETOR> &&in) noexcept {
     if (in) {
       // Placement new
-      new (reinterpret_cast<void *>(&out)) storage_type({std::move(*in)}, nullptr);
+      new (reinterpret_cast<void *>(&out)) storage_type(value_type{std::move(*in)}, nullptr);
     } else {
       // Placement new
       new (reinterpret_cast<void *>(&out)) storage_type();
