@@ -322,19 +322,19 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY result_base_type {
 
  private:
   inline typename success_storage_type::storage_type &success_data_arena() noexcept {
-    return *reinterpret_cast<success_storage_type::storage_type *>(data_);
+    return *reinterpret_cast<typename success_storage_type::storage_type *>(data_);
   }
 
   inline const typename success_storage_type::storage_type &success_data_arena() const noexcept {
-    return *reinterpret_cast<const success_storage_type::storage_type *>(data_);
+    return *reinterpret_cast<const typename success_storage_type::storage_type *>(data_);
   }
 
   inline typename error_storage_type::storage_type &error_data_arena() noexcept {
-    return *reinterpret_cast<error_storage_type::storage_type *>(data_);
+    return *reinterpret_cast<typename error_storage_type::storage_type *>(data_);
   }
 
   inline const typename error_storage_type::storage_type &error_data_arena() const noexcept {
-    return *reinterpret_cast<const error_storage_type::storage_type *>(data_);
+    return *reinterpret_cast<const typename error_storage_type::storage_type *>(data_);
   }
 
   unsigned char data_[max_storage_size_helper<
