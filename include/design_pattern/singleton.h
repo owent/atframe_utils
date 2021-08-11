@@ -1,14 +1,13 @@
+// Copyright 2021 atframework
+// Created by owent on 2012-02-13
+
 /**
- * @file singleton.h
  * @brief 单件模式基类, 参考 boost::serialization::singleton,去除了Debug锁操作 <br />
  *        实例的初始化会在模块载入（如果是动态链接库则是载入动态链接库）时启动 <br />
  *        在模块卸载时会自动析构 <br />
  *
  * Note that this singleton class is thread-safe.
  *
- * @version 1.0
- * @author owent
- * @date 2012.02.13
  *
  * @history
  *   2012.07.20 为线程安全而改进实现方式

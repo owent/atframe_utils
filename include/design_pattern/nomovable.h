@@ -1,18 +1,5 @@
-/**
- * @file nomovable.h
- * @brief 禁止移动基类和宏,继承禁止移动基类的子类不允许移动构造
- *
- *
- * @version 1.0
- * @author owent
- * @date 2019.12.05
- *
- * @history
- *      2019-12-05: created
- */
-
-#ifndef UTILS_DESIGNPATTERN_NONMOVABLE_H
-#define UTILS_DESIGNPATTERN_NONMOVABLE_H
+// Copyright 2021 atframework
+// Created by owent on 2019-12-05
 
 #pragma once
 
@@ -42,5 +29,3 @@ class UTIL_SYMBOL_VISIBLE nomovable {
  private:                                    \
   CLAZZ(CLAZZ &&) = delete;                  \
   CLAZZ &operator=(CLAZZ &&) = delete;
-
-#endif
