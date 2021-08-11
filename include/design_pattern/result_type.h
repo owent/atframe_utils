@@ -47,7 +47,7 @@ struct LIBATFRAME_UTILS_API_HEAD_ONLY compact_storage_select_type;
 
 template <>
 struct LIBATFRAME_UTILS_API_HEAD_ONLY compact_storage_select_type<void> {
-  typedef std::unique_ptr<void, small_object_optimize_storage_deleter<void> > type;
+  typedef std::unique_ptr<void, small_object_optimize_storage_deleter<void>> type;
 };
 
 template <class T>
@@ -61,18 +61,49 @@ struct LIBATFRAME_UTILS_API_HEAD_ONLY compact_storage_select_type {
       std::is_pod<T>::value
 #endif
           && sizeof(T) < (sizeof(size_t) << 2),
-      std::unique_ptr<T, small_object_optimize_storage_deleter<T> >, typename std::unique_ptr<T>::deleter_type>::type
+      std::unique_ptr<T, small_object_optimize_storage_deleter<T>>, typename std::unique_ptr<T>::deleter_type>::type
       type;
 };
 
 template <class T, class DeleterT>
 struct LIBATFRAME_UTILS_API_HEAD_ONLY compact_storage_type;
 
+template </**void**/>
+struct LIBATFRAME_UTILS_API_HEAD_ONLY
+    compact_storage_type<void, std::unique_ptr<void, small_object_optimize_storage_deleter<void>>>
+    : public std::true_type {
+  using value_type = void *;
+  using pointer = std::unique_ptr<void, small_object_optimize_storage_deleter<void>>;
+  using storage_type = pointer;
+
+  static UTIL_FORCEINLINE void destroy_storage(storage_type &out) {
+    out.release();
+    out.~storage_type();
+  }
+
+  static UTIL_FORCEINLINE void construct_storage(storage_type &out) {
+    // Placement new
+    new (reinterpret_cast<void *>(&out)) storage_type(reinterpret_cast<void *>(&out));
+  }
+
+  static UTIL_FORCEINLINE void move_storage(storage_type &out, storage_type &&in) noexcept { out = std::move(in); }
+
+  static UTIL_FORCEINLINE void swap(storage_type &l, storage_type &r) noexcept { l.swap(r); }
+
+  static UTIL_FORCEINLINE pointer &unref(storage_type &storage) noexcept { return storage; }
+  static UTIL_FORCEINLINE const pointer &unref(const storage_type &storage) noexcept { return storage; }
+
+  static UTIL_FORCEINLINE pointer &default_instance() noexcept {
+    static pointer empty;
+    return empty;
+  }
+};
+
 template <class T>
 struct LIBATFRAME_UTILS_API_HEAD_ONLY
-    compact_storage_type<T, std::unique_ptr<T, small_object_optimize_storage_deleter<T> > > : public std::true_type {
+    compact_storage_type<T, std::unique_ptr<T, small_object_optimize_storage_deleter<T>>> : public std::true_type {
   using value_type = T;
-  using pointer = std::unique_ptr<value_type, small_object_optimize_storage_deleter<value_type> >;
+  using pointer = std::unique_ptr<value_type, small_object_optimize_storage_deleter<value_type>>;
   using storage_type = std::pair<value_type, pointer>;
 
   static UTIL_FORCEINLINE void destroy_storage(storage_type &out) {
