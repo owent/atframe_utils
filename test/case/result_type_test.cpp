@@ -14,7 +14,11 @@ CASE_TEST(result_type, all_triviall) {
   using test_type = util::design_pattern::result_type<int, uint64_t>;
   auto success_obj = test_type::make_success(123);
   auto error_obj = test_type::make_error(456U);
+  static_assert(
+      sizeof(std::aligned_storage<sizeof(test_type::error_storage_type)>::type) + sizeof(int32_t) >= sizeof(test_type),
+      "size invalid for trivial result_type");
 
+  CASE_MSG_INFO() << "sizeof(result_type<int, uint64_t>): " << sizeof(test_type) << std::endl;
   CASE_EXPECT_TRUE(success_obj.is_success());
   CASE_EXPECT_FALSE(success_obj.is_error());
   CASE_EXPECT_FALSE(success_obj.is_none());
