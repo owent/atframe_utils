@@ -40,12 +40,22 @@ LIBATFRAME_UTILS_API_HEAD_ONLY auto make_format_args(TARGS &&...args) {
   return LOG_WRAPPER_FWAPI_NAMESPACE make_format_args<TCONTEXT>(std::forward<TARGS>(args)...);
 }
 
+#  ifdef LOG_WRAPPER_FWAPI_USING_FORMAT_STRING
+template <class... TARGS>
+LIBATFRAME_UTILS_API_HEAD_ONLY std::string format(LOG_WRAPPER_FWAPI_USING_FORMAT_STRING(TARGS...) fmt_text,
+                                                  TARGS &&...args) {
+#  else
 template <class TFMT, class... TARGS>
 LIBATFRAME_UTILS_API_HEAD_ONLY std::string format(TFMT &&fmt_text, TARGS &&...args) {
+#  endif
 #  if defined(LIBATFRAME_UTILS_ENABLE_EXCEPTION) && LIBATFRAME_UTILS_ENABLE_EXCEPTION
   try {
 #  endif
-    return LOG_WRAPPER_FWAPI_NAMESPACE format(std::forward<TFMT>(fmt_text), std::forward<TARGS>(args)...);
+#  ifdef LOG_WRAPPER_FWAPI_USING_FORMAT_STRING
+    return LOG_WRAPPER_FWAPI_NAMESPACE format(fmt_text, std::forward<TARGS>(args)...);
+#  else
+  return LOG_WRAPPER_FWAPI_NAMESPACE format(std::forward<TFMT>(fmt_text), std::forward<TARGS>(args)...);
+#  endif
 #  if defined(LIBATFRAME_UTILS_ENABLE_EXCEPTION) && LIBATFRAME_UTILS_ENABLE_EXCEPTION
   } catch (const LOG_WRAPPER_FWAPI_NAMESPACE format_error &e) {
     return e.what();
@@ -57,12 +67,22 @@ LIBATFRAME_UTILS_API_HEAD_ONLY std::string format(TFMT &&fmt_text, TARGS &&...ar
 #  endif
 }
 
+#  ifdef LOG_WRAPPER_FWAPI_USING_FORMAT_STRING
+template <class OutputIt, class... TARGS>
+LIBATFRAME_UTILS_API_HEAD_ONLY auto format_to(OutputIt out, LOG_WRAPPER_FWAPI_USING_FORMAT_STRING(TARGS...) fmt_text,
+                                              TARGS &&...args) {
+#  else
 template <class OutputIt, class TFMT, class... TARGS>
 LIBATFRAME_UTILS_API_HEAD_ONLY auto format_to(OutputIt out, TFMT &&fmt_text, TARGS &&...args) {
+#  endif
 #  if defined(LIBATFRAME_UTILS_ENABLE_EXCEPTION) && LIBATFRAME_UTILS_ENABLE_EXCEPTION
   try {
 #  endif
-    return LOG_WRAPPER_FWAPI_NAMESPACE format_to(out, std::forward<TFMT>(fmt_text), std::forward<TARGS>(args)...);
+#  ifdef LOG_WRAPPER_FWAPI_USING_FORMAT_STRING
+    return LOG_WRAPPER_FWAPI_NAMESPACE format_to(out, fmt_text, std::forward<TARGS>(args)...);
+#  else
+  return LOG_WRAPPER_FWAPI_NAMESPACE format_to(out, std::forward<TFMT>(fmt_text), std::forward<TARGS>(args)...);
+#  endif
 #  if defined(LIBATFRAME_UTILS_ENABLE_EXCEPTION) && LIBATFRAME_UTILS_ENABLE_EXCEPTION
   } catch (const LOG_WRAPPER_FWAPI_NAMESPACE format_error &e) {
     const char *input_begin = e.what();
@@ -95,16 +115,27 @@ LIBATFRAME_UTILS_API_HEAD_ONLY auto format_to(OutputIt out, TFMT &&fmt_text, TAR
 #  endif
 }
 
+#  ifdef LOG_WRAPPER_FWAPI_USING_FORMAT_STRING
+template <class OutputIt, class... TARGS>
+LIBATFRAME_UTILS_API_HEAD_ONLY LOG_WRAPPER_FWAPI_NAMESPACE format_to_n_result<OutputIt> format_to_n(
+    OutputIt out, size_t n, LOG_WRAPPER_FWAPI_USING_FORMAT_STRING(TARGS...) fmt_text, TARGS &&...args) {
+#  else
 template <class OutputIt, class TFMT, class... TARGS>
 LIBATFRAME_UTILS_API_HEAD_ONLY LOG_WRAPPER_FWAPI_NAMESPACE format_to_n_result<OutputIt> format_to_n(OutputIt out,
                                                                                                     size_t n,
                                                                                                     TFMT &&fmt_text,
                                                                                                     TARGS &&...args) {
+#  endif
 #  if defined(LIBATFRAME_UTILS_ENABLE_EXCEPTION) && LIBATFRAME_UTILS_ENABLE_EXCEPTION
   try {
 #  endif
     return LOG_WRAPPER_FWAPI_NAMESPACE format_to_n(
-        out, static_cast<typename details::truncating_iterator<OutputIt>::size_type>(n), std::forward<TFMT>(fmt_text),
+        out, static_cast<typename details::truncating_iterator<OutputIt>::size_type>(n),
+#  ifdef LOG_WRAPPER_FWAPI_USING_FORMAT_STRING
+        fmt_text,
+#  else
+      std::forward<TFMT>(fmt_text),
+#  endif
         std::forward<TARGS>(args)...);
 #  if defined(LIBATFRAME_UTILS_ENABLE_EXCEPTION) && LIBATFRAME_UTILS_ENABLE_EXCEPTION
   } catch (const LOG_WRAPPER_FWAPI_NAMESPACE format_error &e) {
