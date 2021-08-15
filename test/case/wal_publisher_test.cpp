@@ -69,7 +69,7 @@ struct test_wal_publisher_stats {
 };
 
 namespace details {
-test_wal_publisher_stats g_test_wal_object_stats{1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+test_wal_publisher_stats g_test_wal_publisher_stats{1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, test_wal_publisher_log_type(), nullptr};
 }
 
 static test_wal_publisher_type::vtable_pointer create_vtable() {
@@ -105,7 +105,7 @@ static test_wal_publisher_type::vtable_pointer create_vtable() {
 
   ret->merge_log = [](const wal_object_type&, wal_object_type::callback_param_type, wal_object_type::log_type& to,
                       const wal_object_type::log_type& from) {
-    ++details::g_test_wal_object_stats.merge_count;
+    ++details::g_test_wal_publisher_stats.merge_count;
     to.data = from.data;
   };
 
@@ -115,24 +115,24 @@ static test_wal_publisher_type::vtable_pointer create_vtable() {
 
   ret->alloc_log_key = [](wal_object_type&,
                           wal_object_type::callback_param_type) -> wal_object_type::log_key_result_type {
-    return wal_object_type::log_key_result_type::make_success(++details::g_test_wal_object_stats.key_alloc);
+    return wal_object_type::log_key_result_type::make_success(++details::g_test_wal_publisher_stats.key_alloc);
   };
 
   ret->on_log_added = [](wal_object_type&, const wal_object_type::log_pointer&) {
-    ++details::g_test_wal_object_stats.event_on_log_added;
+    ++details::g_test_wal_publisher_stats.event_on_log_added;
   };
 
   ret->on_log_removed = [](wal_object_type&, const wal_object_type::log_pointer&) {
-    ++details::g_test_wal_object_stats.event_on_log_removed;
+    ++details::g_test_wal_publisher_stats.event_on_log_removed;
   };
 
   ret->delegate_action[test_wal_publisher_log_action::kDoNothing] =
       [](wal_object_type&, const wal_object_type::log_type& log,
          wal_object_type::callback_param_type) -> wal_result_code {
-    ++details::g_test_wal_object_stats.delegate_action_count;
-    details::g_test_wal_object_stats.last_log = log;
-    details::g_test_wal_object_stats.last_event_subscriber_count = 0;
-    details::g_test_wal_object_stats.last_event_log_count = 1;
+    ++details::g_test_wal_publisher_stats.delegate_action_count;
+    details::g_test_wal_publisher_stats.last_log = log;
+    details::g_test_wal_publisher_stats.last_event_subscriber_count = 0;
+    details::g_test_wal_publisher_stats.last_event_log_count = 1;
 
     return wal_result_code::kOk;
   };
@@ -140,10 +140,10 @@ static test_wal_publisher_type::vtable_pointer create_vtable() {
   ret->delegate_action[test_wal_publisher_log_action::kRecursivePushBack] =
       [](wal_object_type& wal, const wal_object_type::log_type& log,
          wal_object_type::callback_param_type param) -> wal_result_code {
-    ++details::g_test_wal_object_stats.delegate_action_count;
-    details::g_test_wal_object_stats.last_log = log;
-    details::g_test_wal_object_stats.last_event_subscriber_count = 0;
-    details::g_test_wal_object_stats.last_event_log_count = 1;
+    ++details::g_test_wal_publisher_stats.delegate_action_count;
+    details::g_test_wal_publisher_stats.last_log = log;
+    details::g_test_wal_publisher_stats.last_event_subscriber_count = 0;
+    details::g_test_wal_publisher_stats.last_event_log_count = 1;
 
     auto new_log = wal.allocate_log(log.timepoint, test_wal_publisher_log_action::kDoNothing, param);
     new_log->data = log.data + 1;
@@ -154,10 +154,10 @@ static test_wal_publisher_type::vtable_pointer create_vtable() {
 
   ret->default_action = [](wal_object_type&, const wal_object_type::log_type& log,
                            wal_object_type::callback_param_type) -> wal_result_code {
-    ++details::g_test_wal_object_stats.default_action_count;
-    details::g_test_wal_object_stats.last_log = log;
-    details::g_test_wal_object_stats.last_event_subscriber_count = 0;
-    details::g_test_wal_object_stats.last_event_log_count = 1;
+    ++details::g_test_wal_publisher_stats.default_action_count;
+    details::g_test_wal_publisher_stats.last_log = log;
+    details::g_test_wal_publisher_stats.last_event_subscriber_count = 0;
+    details::g_test_wal_publisher_stats.last_event_log_count = 1;
 
     return wal_result_code::kOk;
   };
@@ -166,16 +166,16 @@ static test_wal_publisher_type::vtable_pointer create_vtable() {
   ret->send_snapshot = [](wal_publisher_type& publisher, wal_publisher_type::subscriber_iterator begin,
                           wal_publisher_type::subscriber_iterator end,
                           wal_publisher_type::callback_param_type) -> wal_result_code {
-    ++details::g_test_wal_object_stats.default_action_count;
+    ++details::g_test_wal_publisher_stats.default_action_count;
 
-    details::g_test_wal_object_stats.last_event_subscriber_count = 0;
+    details::g_test_wal_publisher_stats.last_event_subscriber_count = 0;
     while (begin != end) {
       ++begin;
-      ++details::g_test_wal_object_stats.last_event_subscriber_count;
+      ++details::g_test_wal_publisher_stats.last_event_subscriber_count;
     }
-    details::g_test_wal_object_stats.last_event_log_count = publisher.get_private_data().storage->logs.size();
+    details::g_test_wal_publisher_stats.last_event_log_count = publisher.get_private_data().storage->logs.size();
     if (!publisher.get_private_data().storage->logs.empty()) {
-      details::g_test_wal_object_stats.last_log = *publisher.get_private_data().storage->logs.rbegin();
+      details::g_test_wal_publisher_stats.last_log = *publisher.get_private_data().storage->logs.rbegin();
     }
 
     return wal_result_code::kOk;
@@ -186,20 +186,20 @@ static test_wal_publisher_type::vtable_pointer create_vtable() {
                       wal_publisher_type::subscriber_iterator subscriber_begin,
                       wal_publisher_type::subscriber_iterator subscriber_end,
                       wal_publisher_type::callback_param_type) -> wal_result_code {
-    ++details::g_test_wal_object_stats.default_action_count;
+    ++details::g_test_wal_publisher_stats.default_action_count;
 
-    details::g_test_wal_object_stats.last_event_subscriber_count = 0;
+    details::g_test_wal_publisher_stats.last_event_subscriber_count = 0;
     while (subscriber_begin != subscriber_end) {
-      details::g_test_wal_object_stats.last_subscriber = subscriber_begin->second;
+      details::g_test_wal_publisher_stats.last_subscriber = subscriber_begin->second;
       ++subscriber_begin;
-      ++details::g_test_wal_object_stats.last_event_subscriber_count;
+      ++details::g_test_wal_publisher_stats.last_event_subscriber_count;
     }
 
-    details::g_test_wal_object_stats.last_event_log_count = 0;
+    details::g_test_wal_publisher_stats.last_event_log_count = 0;
     while (log_begin != log_end) {
-      details::g_test_wal_object_stats.last_log = **log_begin;
+      details::g_test_wal_publisher_stats.last_log = **log_begin;
       ++log_begin;
-      ++details::g_test_wal_object_stats.last_event_log_count;
+      ++details::g_test_wal_publisher_stats.last_event_log_count;
     }
 
     return wal_result_code::kOk;
@@ -207,20 +207,20 @@ static test_wal_publisher_type::vtable_pointer create_vtable() {
 
   ret->subscribe_response = [](wal_publisher_type&, const wal_publisher_type::subscriber_pointer&, wal_result_code,
                                wal_publisher_type::callback_param_type) -> wal_result_code {
-    ++details::g_test_wal_object_stats.send_subscribe_response;
+    ++details::g_test_wal_publisher_stats.send_subscribe_response;
     return wal_result_code::kOk;
   };
 
   ret->check_subscriber = [](wal_publisher_type&, const wal_publisher_type::subscriber_pointer& subscriber,
                              wal_publisher_type::callback_param_type) -> bool {
-    details::g_test_wal_object_stats.last_subscriber = subscriber;
+    details::g_test_wal_publisher_stats.last_subscriber = subscriber;
     return true;
   };
 
   ret->on_subscriber_added = [](wal_publisher_type&, const wal_publisher_type::subscriber_pointer& subscriber,
                                 wal_publisher_type::callback_param_type) {
-    ++details::g_test_wal_object_stats.event_on_subscribe_added;
-    details::g_test_wal_object_stats.last_subscriber = subscriber;
+    ++details::g_test_wal_publisher_stats.event_on_subscribe_added;
+    details::g_test_wal_publisher_stats.last_subscriber = subscriber;
 
     return wal_result_code::kOk;
   };
@@ -228,8 +228,8 @@ static test_wal_publisher_type::vtable_pointer create_vtable() {
   ret->on_subscriber_removed = [](wal_publisher_type&, const wal_publisher_type::subscriber_pointer& subscriber,
                                   util::distributed_system::wal_unsubscribe_reason,
                                   wal_publisher_type::callback_param_type) {
-    ++details::g_test_wal_object_stats.event_on_subscribe_removed;
-    details::g_test_wal_object_stats.last_subscriber = subscriber;
+    ++details::g_test_wal_publisher_stats.event_on_subscribe_removed;
+    details::g_test_wal_publisher_stats.last_subscriber = subscriber;
 
     return wal_result_code::kOk;
   };

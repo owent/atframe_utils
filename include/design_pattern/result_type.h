@@ -135,7 +135,6 @@ struct LIBATFRAME_UTILS_API_HEAD_ONLY
 
   static UTIL_FORCEINLINE void move_storage(storage_type &out, storage_type &&in) noexcept {
     out.first = in.first;
-    memset(&in.first, 0, sizeof(in.first));
   }
 
   static UTIL_FORCEINLINE void swap(storage_type &l, storage_type &r) noexcept {

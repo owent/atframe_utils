@@ -41,11 +41,11 @@ LIBATFRAME_UTILS_API_HEAD_ONLY auto make_format_args(TARGS &&...args) {
 }
 
 template <class TFMT, class... TARGS>
-LIBATFRAME_UTILS_API_HEAD_ONLY std::string format(TFMT &&fmt, TARGS &&...args) {
+LIBATFRAME_UTILS_API_HEAD_ONLY std::string format(TFMT &&fmt_text, TARGS &&...args) {
 #  if defined(LIBATFRAME_UTILS_ENABLE_EXCEPTION) && LIBATFRAME_UTILS_ENABLE_EXCEPTION
   try {
 #  endif
-    return LOG_WRAPPER_FWAPI_NAMESPACE format(std::forward<TFMT>(fmt), std::forward<TARGS>(args)...);
+    return LOG_WRAPPER_FWAPI_NAMESPACE format(std::forward<TFMT>(fmt_text), std::forward<TARGS>(args)...);
 #  if defined(LIBATFRAME_UTILS_ENABLE_EXCEPTION) && LIBATFRAME_UTILS_ENABLE_EXCEPTION
   } catch (const LOG_WRAPPER_FWAPI_NAMESPACE format_error &e) {
     return e.what();
@@ -58,11 +58,11 @@ LIBATFRAME_UTILS_API_HEAD_ONLY std::string format(TFMT &&fmt, TARGS &&...args) {
 }
 
 template <class OutputIt, class TFMT, class... TARGS>
-LIBATFRAME_UTILS_API_HEAD_ONLY auto format_to(OutputIt out, TFMT &&fmt, TARGS &&...args) {
+LIBATFRAME_UTILS_API_HEAD_ONLY auto format_to(OutputIt out, TFMT &&fmt_text, TARGS &&...args) {
 #  if defined(LIBATFRAME_UTILS_ENABLE_EXCEPTION) && LIBATFRAME_UTILS_ENABLE_EXCEPTION
   try {
 #  endif
-    return LOG_WRAPPER_FWAPI_NAMESPACE format_to(out, std::forward<TFMT>(fmt), std::forward<TARGS>(args)...);
+    return LOG_WRAPPER_FWAPI_NAMESPACE format_to(out, std::forward<TFMT>(fmt_text), std::forward<TARGS>(args)...);
 #  if defined(LIBATFRAME_UTILS_ENABLE_EXCEPTION) && LIBATFRAME_UTILS_ENABLE_EXCEPTION
   } catch (const LOG_WRAPPER_FWAPI_NAMESPACE format_error &e) {
     const char *input_begin = e.what();
@@ -98,13 +98,13 @@ LIBATFRAME_UTILS_API_HEAD_ONLY auto format_to(OutputIt out, TFMT &&fmt, TARGS &&
 template <class OutputIt, class TFMT, class... TARGS>
 LIBATFRAME_UTILS_API_HEAD_ONLY LOG_WRAPPER_FWAPI_NAMESPACE format_to_n_result<OutputIt> format_to_n(OutputIt out,
                                                                                                     size_t n,
-                                                                                                    TFMT &&fmt,
+                                                                                                    TFMT &&fmt_text,
                                                                                                     TARGS &&...args) {
 #  if defined(LIBATFRAME_UTILS_ENABLE_EXCEPTION) && LIBATFRAME_UTILS_ENABLE_EXCEPTION
   try {
 #  endif
     return LOG_WRAPPER_FWAPI_NAMESPACE format_to_n(
-        out, static_cast<typename details::truncating_iterator<OutputIt>::size_type>(n), std::forward<TFMT>(fmt),
+        out, static_cast<typename details::truncating_iterator<OutputIt>::size_type>(n), std::forward<TFMT>(fmt_text),
         std::forward<TARGS>(args)...);
 #  if defined(LIBATFRAME_UTILS_ENABLE_EXCEPTION) && LIBATFRAME_UTILS_ENABLE_EXCEPTION
   } catch (const LOG_WRAPPER_FWAPI_NAMESPACE format_error &e) {
@@ -130,11 +130,11 @@ LIBATFRAME_UTILS_API_HEAD_ONLY LOG_WRAPPER_FWAPI_NAMESPACE format_to_n_result<Ou
 }
 
 template <class TFMT, class TARGS>
-LIBATFRAME_UTILS_API_HEAD_ONLY std::string vformat(TFMT &&fmt, TARGS &&args) {
+LIBATFRAME_UTILS_API_HEAD_ONLY std::string vformat(TFMT &&fmt_text, TARGS &&args) {
 #  if defined(LIBATFRAME_UTILS_ENABLE_EXCEPTION) && LIBATFRAME_UTILS_ENABLE_EXCEPTION
   try {
 #  endif
-    return LOG_WRAPPER_FWAPI_NAMESPACE vformat(std::forward<TFMT>(fmt), std::forward<TARGS>(args));
+    return LOG_WRAPPER_FWAPI_NAMESPACE vformat(std::forward<TFMT>(fmt_text), std::forward<TARGS>(args));
 #  if defined(LIBATFRAME_UTILS_ENABLE_EXCEPTION) && LIBATFRAME_UTILS_ENABLE_EXCEPTION
   } catch (const LOG_WRAPPER_FWAPI_NAMESPACE format_error &e) {
     return e.what();
@@ -147,11 +147,11 @@ LIBATFRAME_UTILS_API_HEAD_ONLY std::string vformat(TFMT &&fmt, TARGS &&args) {
 }
 
 template <class OutputIt, class TFMT, class TARGS>
-LIBATFRAME_UTILS_API_HEAD_ONLY OutputIt vformat_to(OutputIt out, TFMT &&fmt, TARGS &&args) {
+LIBATFRAME_UTILS_API_HEAD_ONLY OutputIt vformat_to(OutputIt out, TFMT &&fmt_text, TARGS &&args) {
 #  if defined(LIBATFRAME_UTILS_ENABLE_EXCEPTION) && LIBATFRAME_UTILS_ENABLE_EXCEPTION
   try {
 #  endif
-    return LOG_WRAPPER_FWAPI_NAMESPACE vformat_to(out, std::forward<TFMT>(fmt), std::forward<TARGS>(args));
+    return LOG_WRAPPER_FWAPI_NAMESPACE vformat_to(out, std::forward<TFMT>(fmt_text), std::forward<TARGS>(args));
 #  if defined(LIBATFRAME_UTILS_ENABLE_EXCEPTION) && LIBATFRAME_UTILS_ENABLE_EXCEPTION
   } catch (const LOG_WRAPPER_FWAPI_NAMESPACE format_error &e) {
     const char *input_begin = e.what();
@@ -237,18 +237,18 @@ class log_wrapper {
 
   LIBATFRAME_UTILS_API void log(const caller_info_t &caller,
 #ifdef _MSC_VER
-                                _In_z_ _Printf_format_string_ const char *fmt, ...);
+                                _In_z_ _Printf_format_string_ const char *fmt_text, ...);
 #elif (defined(__clang__) && __clang_major__ >= 3)
-                                const char *fmt, ...) __attribute__((__format__(__printf__, 3, 4)));
+                                const char *fmt_text, ...) __attribute__((__format__(__printf__, 3, 4)));
 #elif (defined(__GNUC__) && __GNUC__ >= 4)
 // 格式检查(成员函数有个隐含的this参数)
 #  if defined(__MINGW32__) || defined(__MINGW64__)
-                                const char *fmt, ...) __attribute__((format(__MINGW_PRINTF_FORMAT, 3, 4)));
+                                const char *fmt_text, ...) __attribute__((format(__MINGW_PRINTF_FORMAT, 3, 4)));
 #  else
-                                const char *fmt, ...) __attribute__((format(printf, 3, 4)));
+                                const char *fmt_text, ...) __attribute__((format(printf, 3, 4)));
 #  endif
 #else
-                                const char *fmt, ...);
+                                const char *fmt_text, ...);
 #endif
 
 #if defined(LOG_WRAPPER_ENABLE_FWAPI) && LOG_WRAPPER_ENABLE_FWAPI
@@ -561,23 +561,23 @@ class log_wrapper {
 
 // 控制台输出工具
 #ifdef _MSC_VER
-#  define PSTDTERMCOLOR(os_ident, code, fmt, ...)                                    \
+#  define PSTDTERMCOLOR(os_ident, code, fmt_text, ...)                               \
                                                                                      \
     {                                                                                \
       util::cli::shell_stream::shell_stream_opr log_wrapper_pstd_ss(&std::os_ident); \
       log_wrapper_pstd_ss.open(code);                                                \
       log_wrapper_pstd_ss.close();                                                   \
-      printf(fmt, __VA_ARGS__);                                                      \
+      printf(fmt_text, __VA_ARGS__);                                                 \
     }
 
 #else
-#  define PSTDTERMCOLOR(os_ident, code, fmt, args...)                                \
+#  define PSTDTERMCOLOR(os_ident, code, fmt_text, args...)                           \
                                                                                      \
     {                                                                                \
       util::cli::shell_stream::shell_stream_opr log_wrapper_pstd_ss(&std::os_ident); \
       log_wrapper_pstd_ss.open(code);                                                \
       log_wrapper_pstd_ss.close();                                                   \
-      printf(fmt, ##args);                                                           \
+      printf(fmt_text, ##args);                                                      \
     }
 
 #endif

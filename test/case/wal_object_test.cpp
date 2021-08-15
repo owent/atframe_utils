@@ -55,7 +55,7 @@ struct test_wal_object_stats {
 };
 
 namespace details {
-test_wal_object_stats g_test_wal_object_stats{1, 0, 0, 0, 0, 0};
+test_wal_object_stats g_test_wal_object_stats{1, 0, 0, 0, 0, 0, test_wal_object_log_type()};
 }
 
 static test_wal_object_type::vtable_pointer create_vtable() {

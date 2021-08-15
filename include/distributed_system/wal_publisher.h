@@ -116,8 +116,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_publisher {
   };
 
  public:
-  template <class... ArgsT>
-  explicit wal_publisher(construct_helper& helper, ArgsT&&... args)
+  explicit wal_publisher(construct_helper& helper)
       : vtable_(helper.vt),
         configure_(helper.conf),
         wal_object_(helper.wal_object),
@@ -148,7 +147,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_publisher {
       return nullptr;
     }
 
-    return std::make_shared<wal_publisher>(helper, std::forward<ArgsT>(args)...);
+    return std::make_shared<wal_publisher>(helper);
   }
 
   static congfigure_pointer make_configure() {
@@ -184,7 +183,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_publisher {
       return nullptr;
     }
 
-    return wal_object_->allocate_log(now, action_case, param, std::forward<ArgsT>(args));
+    return wal_object_->allocate_log(now, action_case, param, std::forward<ArgsT>(args)...);
   }
 
   wal_result_code emplace_back_log(log_pointer&& log, callback_param_type param) {

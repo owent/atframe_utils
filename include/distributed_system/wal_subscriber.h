@@ -275,7 +275,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_subscriber {
   inline const private_data_type& get_private_data() const noexcept { return private_data_; }
   inline private_data_type& get_private_data() noexcept { return private_data_; }
 
-  inline duration get_heartbeat_timeout() const noexcept { return duration; }
+  inline duration get_heartbeat_timeout() const noexcept { return heartbeat_timeout_; }
   inline void set_heartbeat_timeout(duration timeout) noexcept { heartbeat_timeout_ = timeout; }
 
   inline time_point get_last_heartbeat_time_point() const noexcept { return last_heartbeat_timepoint_; }
