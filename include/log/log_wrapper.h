@@ -115,28 +115,23 @@ LIBATFRAME_UTILS_API_HEAD_ONLY auto format_to(OutputIt out, TFMT &&fmt_text, TAR
 #  endif
 }
 
-#  ifdef LOG_WRAPPER_FWAPI_USING_FORMAT_STRING
-template <class OutputIt, class... TARGS>
-LIBATFRAME_UTILS_API_HEAD_ONLY LOG_WRAPPER_FWAPI_NAMESPACE format_to_n_result<OutputIt> format_to_n(
-    OutputIt out, size_t n, LOG_WRAPPER_FWAPI_USING_FORMAT_STRING(TARGS...) fmt_text, TARGS &&...args) {
-#  else
 template <class OutputIt, class TFMT, class... TARGS>
 LIBATFRAME_UTILS_API_HEAD_ONLY LOG_WRAPPER_FWAPI_NAMESPACE format_to_n_result<OutputIt> format_to_n(OutputIt out,
                                                                                                     size_t n,
                                                                                                     TFMT &&fmt_text,
                                                                                                     TARGS &&...args) {
-#  endif
 #  if defined(LIBATFRAME_UTILS_ENABLE_EXCEPTION) && LIBATFRAME_UTILS_ENABLE_EXCEPTION
   try {
 #  endif
-    return LOG_WRAPPER_FWAPI_NAMESPACE format_to_n(
-        out, static_cast<typename details::truncating_iterator<OutputIt>::size_type>(n),
 #  ifdef LOG_WRAPPER_FWAPI_USING_FORMAT_STRING
-        fmt_text,
+    return LOG_WRAPPER_FWAPI_NAMESPACE vformat_to_n(
+        out, static_cast<typename details::truncating_iterator<OutputIt>::size_type>(n), std::forward<TFMT>(fmt_text),
+        LOG_WRAPPER_FWAPI_NAMESPACE make_format_args(std::forward<TARGS>(args)...));
 #  else
-      std::forward<TFMT>(fmt_text),
+  return LOG_WRAPPER_FWAPI_NAMESPACE format_to_n(
+      out, static_cast<typename details::truncating_iterator<OutputIt>::size_type>(n), std::forward<TFMT>(fmt_text),
+      std::forward<TARGS>(args)...);
 #  endif
-        std::forward<TARGS>(args)...);
 #  if defined(LIBATFRAME_UTILS_ENABLE_EXCEPTION) && LIBATFRAME_UTILS_ENABLE_EXCEPTION
   } catch (const LOG_WRAPPER_FWAPI_NAMESPACE format_error &e) {
     const char *input_begin = e.what();
@@ -283,8 +278,13 @@ class log_wrapper {
 #endif
 
 #if defined(LOG_WRAPPER_ENABLE_FWAPI) && LOG_WRAPPER_ENABLE_FWAPI
+#  ifdef LOG_WRAPPER_FWAPI_USING_FORMAT_STRING
+  template <class FMT, class... TARGS>
+  LIBATFRAME_UTILS_API_HEAD_ONLY void format_log(const caller_info_t &caller, FMT &&fmt_text, TARGS &&...args) {
+#  else
   template <class... TARGS>
   LIBATFRAME_UTILS_API_HEAD_ONLY void format_log(const caller_info_t &caller, TARGS &&...args) {
+#  endif
     log_operation_t writer;
     start_log(caller, writer);
     if (!log_sinks_.empty()) {
@@ -292,8 +292,16 @@ class log_wrapper {
       try {
 #  endif
         LOG_WRAPPER_FWAPI_NAMESPACE format_to_n_result<char *> result =
-            format_to_n<char *>(writer.buffer + writer.writen_size, writer.total_size - writer.writen_size - 1,
-                                std::forward<TARGS>(args)...);
+#  ifdef LOG_WRAPPER_FWAPI_USING_FORMAT_STRING
+            LOG_WRAPPER_FWAPI_NAMESPACE vformat_to_n<char *>(
+                writer.buffer + writer.writen_size, writer.total_size - writer.writen_size - 1,
+                std::forward<FMT>(fmt_text),
+                LOG_WRAPPER_FWAPI_NAMESPACE make_format_args(std::forward<TARGS>(args)...));
+#  else
+          LOG_WRAPPER_FWAPI_NAMESPACE format_to_n<char *>(writer.buffer + writer.writen_size,
+                                                          writer.total_size - writer.writen_size - 1,
+                                                          std::forward<TARGS>(args)...);
+#  endif
         if (result.size > 0) {
           writer.writen_size += static_cast<size_t>(result.size);
         }
@@ -651,3 +659,4 @@ LOG_WRAPPER_FWAPI_FORMAT_AS(typename ::util::log::log_wrapper::options_t::type, 
 #include "config/compiler/template_suffix.h"
 
 #endif  // _UTIL_LOG_LOG_WRAPPER_H_
+
