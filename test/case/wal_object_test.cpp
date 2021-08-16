@@ -1,10 +1,10 @@
 #include <algorithm>
+#include <chrono>
 #include <cstring>
 #include <ctime>
 #include <memory>
 #include <sstream>
 #include <vector>
-#include <chrono>
 
 #include <distributed_system/wal_object.h>
 
@@ -16,6 +16,15 @@ enum class test_wal_object_log_action {
   kIgnore,
   kFallbackDefault,
 };
+
+namespace std {
+template <>
+struct hash<test_wal_object_log_action> {
+  std::size_t operator()(test_wal_object_log_action const& s) const noexcept {
+    return std::hash<int>{}(static_cast<int>(s));
+  }
+};
+}  // namespace std
 
 struct test_wal_object_log_type {
   util::distributed_system::wal_time_point timepoint;
@@ -38,8 +47,8 @@ struct test_wal_object_context {};
 struct test_wal_object_private_type {
   test_wal_object_log_storage_type* storage;
 
-  inline test_wal_object_private_type(): storage(nullptr) {}
-  inline explicit test_wal_object_private_type(test_wal_object_log_storage_type* input): storage(input) {}
+  inline test_wal_object_private_type() : storage(nullptr) {}
+  inline explicit test_wal_object_private_type(test_wal_object_log_storage_type* input) : storage(input) {}
 };
 
 using test_wal_object_log_operator =
@@ -526,7 +535,6 @@ CASE_TEST(wal_object, gc) {
   CASE_EXPECT_EQ(old_remove_count + 8, details::g_test_wal_object_stats.event_on_log_removed);
 }
 
-
 CASE_TEST(wal_object, ignore) {
   test_wal_object_log_storage_type storage;
   test_wal_object_context ctx;
@@ -578,7 +586,6 @@ CASE_TEST(wal_object, ignore) {
   } while (false);
 }
 
-
 CASE_TEST(wal_object, reorder) {
   test_wal_object_log_storage_type storage;
   test_wal_object_context ctx;
@@ -622,6 +629,6 @@ CASE_TEST(wal_object, reorder) {
   auto iter = wal_obj->log_begin();
   CASE_EXPECT_EQ(log1.get(), (*iter).get());
 
-  ++ iter;
+  ++iter;
   CASE_EXPECT_EQ(log2.get(), (*iter).get());
 }

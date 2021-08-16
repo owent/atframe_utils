@@ -1,10 +1,10 @@
 #include <algorithm>
+#include <chrono>
 #include <cstring>
 #include <ctime>
 #include <memory>
 #include <sstream>
 #include <vector>
-#include <chrono>
 
 #include <distributed_system/wal_publisher.h>
 
@@ -15,6 +15,15 @@ enum class test_wal_publisher_log_action {
   kRecursivePushBack,
   kFallbackDefault,
 };
+
+namespace std {
+template <>
+struct hash<test_wal_publisher_log_action> {
+  std::size_t operator()(test_wal_publisher_log_action const& s) const noexcept {
+    return std::hash<int>{}(static_cast<int>(s));
+  }
+};
+}  // namespace std
 
 struct test_wal_publisher_log_type {
   util::distributed_system::wal_time_point timepoint;
@@ -37,8 +46,8 @@ struct test_wal_publisher_context {};
 struct test_wal_publisher_private_type {
   test_wal_publisher_storage_type* storage;
 
-  inline test_wal_publisher_private_type(): storage(nullptr) {}
-  inline explicit test_wal_publisher_private_type(test_wal_publisher_storage_type* input): storage(input) {}
+  inline test_wal_publisher_private_type() : storage(nullptr) {}
+  inline explicit test_wal_publisher_private_type(test_wal_publisher_storage_type* input) : storage(input) {}
 };
 
 using test_wal_publisher_log_operator =
@@ -73,7 +82,8 @@ struct test_wal_publisher_stats {
 };
 
 namespace details {
-test_wal_publisher_stats g_test_wal_publisher_stats{1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, test_wal_publisher_log_type(), nullptr};
+test_wal_publisher_stats g_test_wal_publisher_stats{1,      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, test_wal_publisher_log_type(),
+                                                    nullptr};
 }
 
 static test_wal_publisher_type::vtable_pointer create_vtable() {
