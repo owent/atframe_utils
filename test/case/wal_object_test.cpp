@@ -595,7 +595,7 @@ CASE_TEST(wal_object, reorder) {
   test_wal_object_type::log_pointer log1;
   test_wal_object_type::log_pointer log2;
   do {
-    auto log1 = wal_obj->allocate_log(now, test_wal_object_log_action::kDoNothing, ctx);
+    log1 = wal_obj->allocate_log(now, test_wal_object_log_action::kDoNothing, ctx);
     CASE_EXPECT_TRUE(!!log1);
     if (!log1) {
       break;
@@ -604,7 +604,7 @@ CASE_TEST(wal_object, reorder) {
   } while (false);
 
   do {
-    auto log2 = wal_obj->allocate_log(now, test_wal_object_log_action::kDoNothing, ctx);
+    log2 = wal_obj->allocate_log(now, test_wal_object_log_action::kDoNothing, ctx);
     CASE_EXPECT_TRUE(!!log2);
     if (!log2) {
       break;

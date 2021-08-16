@@ -59,7 +59,7 @@ struct LIBATFRAME_UTILS_API_HEAD_ONLY wal_log_action_getter_trait {
 #if defined(__cplusplus) && __cplusplus >= 201703L
   using type = std::invoke_result_t<ActionGetter, LogT>;
 #else
-  using type = typename std::result_of<ActionGetter, LogT>::type;
+  using type = typename std::result_of<ActionGetter(LogT)>::type;
 #endif
 };
 
