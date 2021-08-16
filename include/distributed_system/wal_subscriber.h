@@ -55,7 +55,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_subscriber {
     UTIL_DESIGN_PATTERN_NOMOVABLE(manager);
     UTIL_DESIGN_PATTERN_NOCOPYABLE(manager);
 
-    void remove_subscriber_timer(std::list<timer_type>::iterator& out) {
+    void remove_subscriber_timer(typename std::list<timer_type>::iterator& out) {
       if (out == subscribers_timer_.end()) {
         return;
       }
@@ -262,7 +262,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_subscriber {
  public:
   template <class... ArgsT>
   wal_subscriber(construct_helper&, manager& owner, const key_type& key, const time_point& now, const duration& timeout,
-                 std::list<timer_type>::iterator timer_iter, ArgsT&&... args)
+                 typename std::list<timer_type>::iterator timer_iter, ArgsT&&... args)
       : owner_(&owner),
         key_(key),
         last_heartbeat_timepoint_(now),
@@ -292,7 +292,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_subscriber {
   duration heartbeat_timeout_;
   private_data_type private_data_;
 
-  std::list<timer_type>::iterator timer_iter_;
+  typename std::list<timer_type>::iterator timer_iter_;
 };
 
 }  // namespace distributed_system

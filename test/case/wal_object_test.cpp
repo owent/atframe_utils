@@ -4,6 +4,7 @@
 #include <memory>
 #include <sstream>
 #include <vector>
+#include <chrono>
 
 #include <distributed_system/wal_object.h>
 
@@ -12,6 +13,7 @@
 enum class test_wal_object_log_action {
   kDoNothing = 0,
   kRecursivePushBack,
+  kIgnore,
   kFallbackDefault,
 };
 
@@ -35,6 +37,9 @@ struct test_wal_object_context {};
 
 struct test_wal_object_private_type {
   test_wal_object_log_storage_type* storage;
+
+  inline test_wal_object_private_type(): storage(nullptr) {}
+  inline explicit test_wal_object_private_type(test_wal_object_log_storage_type* input): storage(input) {}
 };
 
 using test_wal_object_log_operator =
@@ -68,6 +73,16 @@ static test_wal_object_type::vtable_pointer create_vtable() {
                  wal_object_type::callback_param_type) -> wal_result_code {
     *wal.get_private_data().storage = from;
     wal.set_global_ingore_key(from.global_ignore);
+
+    std::vector<wal_object_type::log_pointer> container;
+    for (auto& log : from.logs) {
+      container.emplace_back(std::make_shared<wal_object_type::log_type>(log));
+    }
+
+    wal.assign_logs(container.begin(), container.end());
+    if (!from.logs.empty()) {
+      wal.set_last_removed_key((*from.logs.rbegin()).log_key - 1);
+    }
     return wal_result_code::kOk;
   };
 
@@ -134,6 +149,15 @@ static test_wal_object_type::vtable_pointer create_vtable() {
     CASE_EXPECT_TRUE(wal_result_code::kPending == wal.emplace_back(std::move(new_log), param));
 
     return wal_result_code::kOk;
+  };
+
+  ret->delegate_action[test_wal_object_log_action::kIgnore] =
+      [](wal_object_type&, const wal_object_type::log_type& log,
+         wal_object_type::callback_param_type) -> wal_result_code {
+    ++details::g_test_wal_object_stats.delegate_action_count;
+    details::g_test_wal_object_stats.last_log = log;
+
+    return wal_result_code::kIgnore;
   };
 
   ret->default_action = [](wal_object_type&, const wal_object_type::log_type& log,
@@ -209,6 +233,10 @@ CASE_TEST(wal_object, load_and_dump) {
   CASE_EXPECT_EQ(3, storage.logs.size());
   CASE_EXPECT_EQ(124, storage.logs[0].data);
   CASE_EXPECT_TRUE(test_wal_object_log_action::kRecursivePushBack == storage.logs[2].action);
+
+  CASE_EXPECT_EQ(3, wal_obj->get_all_logs().size());
+  CASE_EXPECT_EQ(124, (*wal_obj->get_all_logs().begin())->data);
+  CASE_EXPECT_TRUE(test_wal_object_log_action::kRecursivePushBack == (*wal_obj->get_all_logs().rbegin())->action);
 
   // dump
   test_wal_object_log_storage_type dump_storege;
@@ -496,4 +524,104 @@ CASE_TEST(wal_object, gc) {
   CASE_EXPECT_EQ(1, wal_obj->gc(now, nullptr));
   CASE_EXPECT_EQ(4, wal_obj->get_all_logs().size());
   CASE_EXPECT_EQ(old_remove_count + 8, details::g_test_wal_object_stats.event_on_log_removed);
+}
+
+
+CASE_TEST(wal_object, ignore) {
+  test_wal_object_log_storage_type storage;
+  test_wal_object_context ctx;
+  util::distributed_system::wal_time_point now = std::chrono::system_clock::now();
+
+  auto conf = create_configure();
+  auto vtable = create_vtable();
+  auto wal_obj = test_wal_object_type::create(vtable, conf, &storage);
+  CASE_EXPECT_TRUE(!!wal_obj);
+  if (!wal_obj) {
+    return;
+  }
+
+  do {
+    auto old_default_action_count = details::g_test_wal_object_stats.default_action_count;
+    auto old_delegate_action_count = details::g_test_wal_object_stats.delegate_action_count;
+
+    auto log = wal_obj->allocate_log(now, test_wal_object_log_action::kDoNothing, ctx);
+    CASE_EXPECT_TRUE(!!log);
+    if (!log) {
+      break;
+    }
+    log->data = log->log_key + 100;
+    wal_obj->set_global_ingore_key(log->log_key);
+    auto push_back_result = wal_obj->push_back(log, ctx);
+    CASE_EXPECT_TRUE(util::distributed_system::wal_result_code::kIgnore == push_back_result);
+
+    CASE_EXPECT_EQ(0, wal_obj->get_all_logs().size());
+    CASE_EXPECT_EQ(old_default_action_count, details::g_test_wal_object_stats.default_action_count);
+    CASE_EXPECT_EQ(old_delegate_action_count, details::g_test_wal_object_stats.delegate_action_count);
+  } while (false);
+
+  do {
+    auto old_default_action_count = details::g_test_wal_object_stats.default_action_count;
+    auto old_delegate_action_count = details::g_test_wal_object_stats.delegate_action_count;
+
+    auto log = wal_obj->allocate_log(now, test_wal_object_log_action::kIgnore, ctx);
+    CASE_EXPECT_TRUE(!!log);
+    if (!log) {
+      break;
+    }
+    log->data = log->log_key + 100;
+    auto push_back_result = wal_obj->push_back(log, ctx);
+    CASE_EXPECT_TRUE(util::distributed_system::wal_result_code::kIgnore == push_back_result);
+
+    CASE_EXPECT_EQ(0, wal_obj->get_all_logs().size());
+    CASE_EXPECT_EQ(old_default_action_count, details::g_test_wal_object_stats.default_action_count);
+    CASE_EXPECT_EQ(old_delegate_action_count + 1, details::g_test_wal_object_stats.delegate_action_count);
+  } while (false);
+}
+
+
+CASE_TEST(wal_object, reorder) {
+  test_wal_object_log_storage_type storage;
+  test_wal_object_context ctx;
+  util::distributed_system::wal_time_point now = std::chrono::system_clock::now();
+
+  auto conf = create_configure();
+  auto vtable = create_vtable();
+  auto wal_obj = test_wal_object_type::create(vtable, conf, &storage);
+  CASE_EXPECT_TRUE(!!wal_obj);
+  if (!wal_obj) {
+    return;
+  }
+
+  test_wal_object_type::log_pointer log1;
+  test_wal_object_type::log_pointer log2;
+  do {
+    auto log1 = wal_obj->allocate_log(now, test_wal_object_log_action::kDoNothing, ctx);
+    CASE_EXPECT_TRUE(!!log1);
+    if (!log1) {
+      break;
+    }
+    log1->data = log1->log_key + 100;
+  } while (false);
+
+  do {
+    auto log2 = wal_obj->allocate_log(now, test_wal_object_log_action::kDoNothing, ctx);
+    CASE_EXPECT_TRUE(!!log2);
+    if (!log2) {
+      break;
+    }
+    log2->data = log2->log_key + 100;
+  } while (false);
+
+  if (!log1 || !log2) {
+    return;
+  }
+
+  wal_obj->push_back(log2, ctx);
+  wal_obj->push_back(log1, ctx);
+
+  auto iter = wal_obj->log_begin();
+  CASE_EXPECT_EQ(log1.get(), (*iter).get());
+
+  ++ iter;
+  CASE_EXPECT_EQ(log2.get(), (*iter).get());
 }

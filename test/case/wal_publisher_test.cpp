@@ -4,6 +4,7 @@
 #include <memory>
 #include <sstream>
 #include <vector>
+#include <chrono>
 
 #include <distributed_system/wal_publisher.h>
 
@@ -35,6 +36,9 @@ struct test_wal_publisher_context {};
 
 struct test_wal_publisher_private_type {
   test_wal_publisher_storage_type* storage;
+
+  inline test_wal_publisher_private_type(): storage(nullptr) {}
+  inline explicit test_wal_publisher_private_type(test_wal_publisher_storage_type* input): storage(input) {}
 };
 
 using test_wal_publisher_log_operator =
@@ -83,6 +87,16 @@ static test_wal_publisher_type::vtable_pointer create_vtable() {
   ret->load = [](wal_object_type& wal, const wal_object_type::storage_type& from,
                  wal_object_type::callback_param_type) -> wal_result_code {
     *wal.get_private_data().storage = from;
+
+    wal_publisher_type::log_container_type container;
+    for (auto& log : from.logs) {
+      container.emplace_back(std::make_shared<wal_object_type::log_type>(log));
+    }
+
+    wal.assign_logs(container);
+    if (!from.logs.empty()) {
+      wal.set_last_removed_key((*from.logs.rbegin()).log_key - 1);
+    }
     return wal_result_code::kOk;
   };
 

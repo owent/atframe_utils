@@ -42,7 +42,7 @@ enum class LIBATFRAME_UTILS_API_HEAD_ONLY wal_result_code : int32_t {
 
   kOk = 0,
 
-  kIgnored = 101,
+  kIgnore = 101,
   kPending = 102,
   kMerge = 103,
 };

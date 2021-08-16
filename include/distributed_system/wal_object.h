@@ -43,8 +43,9 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_object {
   using action_case_type = typename log_operator_type::action_case_type;
   using log_key_result_type = typename log_operator_type::log_key_result_type;
 
-  using log_iterator = typename std::deque<log_pointer>::iterator;
-  using log_const_iterator = typename std::deque<log_pointer>::const_iterator;
+  using log_container_type = std::deque<log_pointer>;
+  using log_iterator = typename log_container_type::iterator;
+  using log_const_iterator = typename log_container_type::const_iterator;
   using callback_param_type = CallbackParamT;
   using time_point = wal_time_point;
   using duration = wal_duration;
@@ -149,7 +150,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_object {
   }
 
   static void default_configure(congfigure_type& out) {
-    out.gc_expire_duration = std::chrono::duration_cast<duration>(std::chrono::days{7});
+    out.gc_expire_duration = std::chrono::duration_cast<duration>(std::chrono::hours(7 * 24));
     out.max_log_size = 512;
     out.gc_log_size = 128;
   }
@@ -176,6 +177,37 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_object {
     }
 
     return vtable_->dump(*this, storage, param);
+  }
+
+  /**
+   * @brief clear and assign all logs
+   * @note this function is useful when loading data and will not trigger event and action callback
+   * 
+   * @tparam IteratorT iterator type
+   * @param begin
+   * @param end 
+   */
+  template<class IteratorT>
+  void assign_logs(IteratorT&& begin, IteratorT&& end) {
+    logs_.clear();
+    logs_.assign(std::forward<IteratorT>(begin), std::forward<IteratorT>(end));
+  }
+
+  /**
+   * @brief clear and assign all logs
+   * @note this function is useful when loading data and will not trigger event and action callback
+   * 
+   * @tparam ContainerT container type
+   * @param source
+   */
+  template<class ContainerT>
+  void assign_logs(const ContainerT& source) {
+    logs_.assign(source.begin(), source.end());
+  }
+
+  void assign_logs(log_container_type&& source) {
+    logs_.swap(source);
+    source.clear();
   }
 
   template <class... ArgsT>
@@ -221,8 +253,8 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_object {
       ret = pusk_back_inner(std::move(log), param);
     } else {
       log_key_type this_key = vtable_->get_log_key(*this, *log);
-      if (global_ingore_ && log_key_compare_(this_key, *global_ingore_)) {
-        ret = wal_result_code::kIgnored;
+      if (global_ingore_ && !log_key_compare_(*global_ingore_, this_key)) {
+        ret = wal_result_code::kIgnore;
       } else {
         ret = pusk_back_inner(std::move(log), param);
       }
@@ -285,7 +317,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_object {
    * @return size_t Log count removed
    */
   size_t gc(time_point now, const log_key_type* hold = nullptr, size_t max_count = std::numeric_limits<size_t>::max()) {
-    duration gc_expire_duration = std::chrono::duration_cast<duration>(std::chrono::days{7});
+    duration gc_expire_duration = std::chrono::duration_cast<duration>(std::chrono::hours(7 * 24));
     size_t max_log_size = 512;
     size_t gc_log_size = 128;
     if (configure_) {
@@ -357,7 +389,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_object {
     }
   }
 
-  inline const std::deque<log_pointer>& get_all_logs() const noexcept { return logs_; }
+  inline const log_container_type& get_all_logs() const noexcept { return logs_; }
 
   inline const private_data_type& get_private_data() const noexcept { return private_data_; }
   inline private_data_type& get_private_data() noexcept { return private_data_; }
@@ -629,7 +661,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_object {
   std::unique_ptr<log_key_type> global_ingore_;        // ignore all log lower than this key
 
   // logs(libstdc++ is 512Byte for each block and maintain block index just like std::vector)
-  std::deque<log_pointer> logs_;
+  log_container_type logs_;
   std::list<std::pair<log_pointer, callback_param_type> > pending_logs_;
 };
 
