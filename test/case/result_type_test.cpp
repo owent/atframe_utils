@@ -14,7 +14,17 @@ CASE_TEST(result_type, all_triviall) {
   using test_type = util::design_pattern::result_type<int, uint64_t>;
   auto success_obj = test_type::make_success(123);
   auto error_obj = test_type::make_error(456U);
+  static_assert(
+      sizeof(std::aligned_storage<sizeof(test_type::error_storage_type::storage_type)>::type) + sizeof(int32_t) >=
+          sizeof(test_type),
+      "size invalid for trivial result_type");
 
+  CASE_MSG_INFO() << "sizeof(test_type::error_storage_type): " << sizeof(test_type::error_storage_type::storage_type)
+                  << std::endl;
+  CASE_MSG_INFO() << "sizeof(std::aligned_storage<sizeof(test_type::error_storage_type)>::type): "
+                  << sizeof(std::aligned_storage<sizeof(test_type::error_storage_type::storage_type)>::type)
+                  << std::endl;
+  CASE_MSG_INFO() << "sizeof(result_type<int, uint64_t>): " << sizeof(test_type) << std::endl;
   CASE_EXPECT_TRUE(success_obj.is_success());
   CASE_EXPECT_FALSE(success_obj.is_error());
   CASE_EXPECT_FALSE(success_obj.is_none());
@@ -457,4 +467,104 @@ CASE_TEST(result_type, non_triviall) {
 
   CASE_EXPECT_EQ(*success_obj.get_success(), "123");
   CASE_EXPECT_EQ(*error_obj.get_error(), "456");
+}
+
+CASE_TEST(result_type, has_void) {
+  using test_type = util::design_pattern::result_type<void, uint64_t>;
+  auto success_obj = test_type::make_success();
+  auto error_obj = test_type::make_error(456U);
+
+  CASE_EXPECT_TRUE(success_obj.is_success());
+  CASE_EXPECT_FALSE(success_obj.is_error());
+  CASE_EXPECT_FALSE(success_obj.is_none());
+
+  CASE_EXPECT_FALSE(error_obj.is_success());
+  CASE_EXPECT_TRUE(error_obj.is_error());
+  CASE_EXPECT_FALSE(error_obj.is_none());
+
+  CASE_EXPECT_NE(success_obj.get_success().get(), nullptr);
+  CASE_EXPECT_EQ(success_obj.get_error().get(), nullptr);
+
+  CASE_EXPECT_EQ(error_obj.get_success().get(), nullptr);
+  CASE_EXPECT_NE(error_obj.get_error().get(), nullptr);
+
+  CASE_EXPECT_NE(success_obj.get_success().get(), nullptr);
+  CASE_EXPECT_EQ(*error_obj.get_error(), 456);
+
+  {
+    test_type empty_obj;
+    CASE_EXPECT_FALSE(empty_obj.is_success());
+    CASE_EXPECT_FALSE(empty_obj.is_error());
+    CASE_EXPECT_TRUE(empty_obj.is_none());
+  }
+
+  // Swap success and empty
+  {
+    test_type empty_obj;
+    success_obj.swap(empty_obj);
+
+    CASE_EXPECT_TRUE(empty_obj.is_success());
+    CASE_EXPECT_TRUE(success_obj.is_none());
+    CASE_EXPECT_NE(empty_obj.get_success().get(), nullptr);
+    success_obj.swap(empty_obj);
+
+    CASE_EXPECT_TRUE(success_obj.is_success());
+    CASE_EXPECT_FALSE(success_obj.is_error());
+    CASE_EXPECT_FALSE(success_obj.is_none());
+  }
+
+  // Swap empty and success
+  {
+    test_type empty_obj;
+    empty_obj.swap(success_obj);
+
+    CASE_EXPECT_TRUE(empty_obj.is_success());
+    CASE_EXPECT_TRUE(success_obj.is_none());
+    CASE_EXPECT_NE(empty_obj.get_success().get(), nullptr);
+    empty_obj.swap(success_obj);
+
+    CASE_EXPECT_TRUE(success_obj.is_success());
+    CASE_EXPECT_FALSE(success_obj.is_error());
+    CASE_EXPECT_FALSE(success_obj.is_none());
+  }
+
+  // Swap success and error
+  success_obj.swap(error_obj);
+
+  CASE_EXPECT_TRUE(error_obj.is_success());
+  CASE_EXPECT_FALSE(error_obj.is_error());
+  CASE_EXPECT_FALSE(error_obj.is_none());
+
+  CASE_EXPECT_FALSE(success_obj.is_success());
+  CASE_EXPECT_TRUE(success_obj.is_error());
+  CASE_EXPECT_FALSE(success_obj.is_none());
+
+  CASE_EXPECT_NE(error_obj.get_success().get(), nullptr);
+  CASE_EXPECT_EQ(error_obj.get_error().get(), nullptr);
+
+  CASE_EXPECT_EQ(success_obj.get_success().get(), nullptr);
+  CASE_EXPECT_NE(success_obj.get_error().get(), nullptr);
+
+  CASE_EXPECT_NE(error_obj.get_success().get(), nullptr);
+  CASE_EXPECT_EQ(*success_obj.get_error(), 456);
+
+  // Swap error and success
+  success_obj.swap(error_obj);
+
+  CASE_EXPECT_TRUE(success_obj.is_success());
+  CASE_EXPECT_FALSE(success_obj.is_error());
+  CASE_EXPECT_FALSE(success_obj.is_none());
+
+  CASE_EXPECT_FALSE(error_obj.is_success());
+  CASE_EXPECT_TRUE(error_obj.is_error());
+  CASE_EXPECT_FALSE(error_obj.is_none());
+
+  CASE_EXPECT_NE(success_obj.get_success().get(), nullptr);
+  CASE_EXPECT_EQ(success_obj.get_error().get(), nullptr);
+
+  CASE_EXPECT_EQ(error_obj.get_success().get(), nullptr);
+  CASE_EXPECT_NE(error_obj.get_error().get(), nullptr);
+
+  CASE_EXPECT_NE(success_obj.get_success().get(), nullptr);
+  CASE_EXPECT_EQ(*error_obj.get_error(), 456);
 }

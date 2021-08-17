@@ -38,6 +38,9 @@
 #  ifndef LOG_WRAPPER_FWAPI_FMT_STRING
 #    define LOG_WRAPPER_FWAPI_FMT_STRING(S) FMT_STRING(S)
 #  endif
+#  if FMT_VERSION >= 80000
+#    define LOG_WRAPPER_FWAPI_USING_FORMAT_STRING(...) fmt::format_string<__VA_ARGS__>
+#  endif
 #endif
 
 namespace util {

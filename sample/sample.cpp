@@ -268,13 +268,17 @@ void log_sample_func7() {
   custom_obj.x = 123;
   custom_obj.y = __FUNCTION__;
   std::cout << "---------------- catch exception of log format APIs --------------" << std::endl;
+#    ifndef LOG_WRAPPER_FWAPI_USING_FORMAT_STRING
   std::cout << "format: " << util::log::format("{},{},{},{}", 1, 2, 3) << std::endl;
+#    endif
   std::cout << "format: " << util::log::format("{},{}", 1, test_exception_for_log_formatter(true, true)) << std::endl;
   std::cout << "format: " << util::log::format("{},{}", 1, test_exception_for_log_formatter(false, true)) << std::endl;
 
   char string_buffer[256] = {0};
+#    ifndef LOG_WRAPPER_FWAPI_USING_FORMAT_STRING
   util::log::format_to(string_buffer, "{},{},{},{}", 1, 2, 3);
   std::cout << "format_to: " << string_buffer << std::endl;
+#    endif
   memset(string_buffer, 0, sizeof(string_buffer));
   util::log::format_to(string_buffer, "{},{}", 1, test_exception_for_log_formatter(true, true));
   std::cout << "format_to: " << string_buffer << std::endl;
@@ -283,8 +287,10 @@ void log_sample_func7() {
   std::cout << "format_to: " << string_buffer << std::endl;
   memset(string_buffer, 0, sizeof(string_buffer));
 
+#    ifndef LOG_WRAPPER_FWAPI_USING_FORMAT_STRING
   util::log::format_to_n(string_buffer, 100, "{},{},{},{}", 1, 2, 3);
   std::cout << "format_to_n: " << string_buffer << std::endl;
+#    endif
   memset(string_buffer, 0, sizeof(string_buffer));
   util::log::format_to_n(string_buffer, 100, "{},{}", 1, test_exception_for_log_formatter(true, true));
   std::cout << "format_to_n: " << string_buffer << std::endl;
