@@ -164,7 +164,11 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_object {
       return wal_result_code::kActionNotSet;
     }
 
-    return vtable_->load(*this, storage, param);
+    wal_result_code ret = vtable_->load(*this, storage, param);
+    if (wal_result_code::kOk == ret && internal_event_on_loaded_) {
+      internal_event_on_loaded_(*this, storage, param);
+    }
+    return ret;
   }
 
   wal_result_code dump(storage_type& storage, callback_param_type param) {
@@ -176,38 +180,50 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_object {
       return wal_result_code::kActionNotSet;
     }
 
-    return vtable_->dump(*this, storage, param);
+    wal_result_code ret = vtable_->dump(*this, storage, param);
+    if (wal_result_code::kOk == ret && internal_event_on_dumped_) {
+      internal_event_on_dumped_(*this, storage, param);
+    }
+    return ret;
   }
 
   /**
    * @brief clear and assign all logs
    * @note this function is useful when loading data and will not trigger event and action callback
-   * 
+   *
    * @tparam IteratorT iterator type
    * @param begin
-   * @param end 
+   * @param end
    */
-  template<class IteratorT>
+  template <class IteratorT>
   void assign_logs(IteratorT&& begin, IteratorT&& end) {
     logs_.clear();
     logs_.assign(std::forward<IteratorT>(begin), std::forward<IteratorT>(end));
+
+    if (internal_event_on_assign_) {
+      internal_event_on_assign_(*this);
+    }
   }
 
   /**
    * @brief clear and assign all logs
    * @note this function is useful when loading data and will not trigger event and action callback
-   * 
+   *
    * @tparam ContainerT container type
    * @param source
    */
-  template<class ContainerT>
+  template <class ContainerT>
   void assign_logs(const ContainerT& source) {
-    logs_.assign(source.begin(), source.end());
+    assign_logs(source.begin(), source.end());
   }
 
   void assign_logs(log_container_type&& source) {
     logs_.swap(source);
     source.clear();
+
+    if (internal_event_on_assign_) {
+      internal_event_on_assign_(*this);
+    }
   }
 
   template <class... ArgsT>
@@ -650,6 +666,17 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_object {
   }
 
  private:
+  template <class, class, class, class, class>
+  friend class wal_publisher;
+  using callback_log_event_on_assign_fn_t = std::function<void(wal_object&)>;
+
+  void set_internal_event_on_assign_logs(callback_log_event_on_assign_fn_t fn) { internal_event_on_assign_ = fn; }
+
+  void set_internal_event_on_loaded(callback_load_fn_t fn) { internal_event_on_loaded_ = fn; }
+
+  void set_internal_event_on_dumped(callback_dump_fn_t fn) { internal_event_on_dumped_ = fn; }
+
+ private:
   bool in_log_action_callback_;
   vtable_pointer vtable_;
   congfigure_pointer configure_;
@@ -663,6 +690,11 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_object {
   // logs(libstdc++ is 512Byte for each block and maintain block index just like std::vector)
   log_container_type logs_;
   std::list<std::pair<log_pointer, callback_param_type> > pending_logs_;
+
+  // internal events
+  callback_log_event_on_assign_fn_t internal_event_on_assign_;
+  callback_load_fn_t internal_event_on_loaded_;
+  callback_dump_fn_t internal_event_on_dumped_;
 };
 
 }  // namespace distributed_system
