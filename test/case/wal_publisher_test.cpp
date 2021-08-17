@@ -29,7 +29,7 @@ struct test_wal_publisher_log_type {
   util::distributed_system::wal_time_point timepoint;
   int64_t log_key;
   test_wal_publisher_log_action action;
-  int data;
+  int64_t data;
 };
 
 struct test_wal_publisher_storage_type {
