@@ -133,9 +133,7 @@ struct LIBATFRAME_UTILS_API_HEAD_ONLY
     out.second.reset(&out.first);
   }
 
-  static UTIL_FORCEINLINE void move_storage(storage_type &out, storage_type &&in) noexcept {
-    out.first = in.first;
-  }
+  static UTIL_FORCEINLINE void move_storage(storage_type &out, storage_type &&in) noexcept { out.first = in.first; }
 
   static UTIL_FORCEINLINE void swap(storage_type &l, storage_type &r) noexcept {
     value_type lv = l.first;

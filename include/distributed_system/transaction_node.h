@@ -20,7 +20,5 @@
 
 // TODO(owentou): 等稳定后移入atframe_utils
 namespace util {
-namespace distributed_system {
-
-}  // namespace distributed_system
+namespace distributed_system {}  // namespace distributed_system
 }  // namespace util

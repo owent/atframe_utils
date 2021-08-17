@@ -31,13 +31,22 @@ struct LIBATFRAME_UTILS_API_HEAD_ONLY wal_meta_type {
   ActionCaseT action_case;
 
   inline wal_meta_type() = default;
-  template<class ToTimepointT, class ToLogKeyT, class ToActionCaseT>
-  inline wal_meta_type(ToTimepointT&& t, ToLogKeyT&& k, ToActionCaseT&& act): 
-    timepoint(std::forward<ToTimepointT>(t)), log_key(std::forward<ToLogKeyT>(k)), 
-    action_case(std::forward<ToActionCaseT>(act)) {}
+<<<<<<< HEAD
+  template <class ToTimepointT, class ToLogKeyT, class ToActionCaseT>
+  inline wal_meta_type(ToTimepointT&& t, ToLogKeyT&& k, ToActionCaseT&& act)
+      : timepoint(std::forward<ToTimepointT>(t)),
+        log_key(std::forward<ToLogKeyT>(k)),
+        action_case(std::forward<ToActionCaseT>(act)) {}
+=======
+  template <class ToTimepointT, class ToLogKeyT, class ToActionCaseT>
+  inline wal_meta_type(ToTimepointT&& t, ToLogKeyT&& k, ToActionCaseT&& act)
+      : timepoint(std::forward<ToTimepointT>(t)),
+        log_key(std::forward<ToLogKeyT>(k)),
+        action_case(std::forward<ToActionCaseT>(act)) {}
+>>>>>>> 213d4f0856b4f57e293736b99b4cafb30f438b72
 };
 
-enum class LIBATFRAME_UTILS_API_HEAD_ONLY wal_result_code : int32_t {
+enum class wal_result_code : int32_t {
   kSubscriberNotFound = -201,
 
   kInitlization = -105,
@@ -53,7 +62,7 @@ enum class LIBATFRAME_UTILS_API_HEAD_ONLY wal_result_code : int32_t {
   kMerge = 103,
 };
 
-enum class LIBATFRAME_UTILS_API_HEAD_ONLY wal_unsubscribe_reason : int32_t {
+enum class wal_unsubscribe_reason : int32_t {
   kNone = 0,
   kTimeout = 1,
   kClientRequest = 2,

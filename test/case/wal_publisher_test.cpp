@@ -84,8 +84,8 @@ struct test_wal_publisher_stats {
 };
 
 namespace details {
-test_wal_publisher_stats g_test_wal_publisher_stats{1,      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, test_wal_publisher_log_type(),
-                                                    nullptr};
+test_wal_publisher_stats g_test_wal_publisher_stats{
+    1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, test_wal_publisher_log_type(), nullptr};
 }
 
 static test_wal_publisher_type::vtable_pointer create_vtable() {
@@ -204,7 +204,7 @@ static test_wal_publisher_type::vtable_pointer create_vtable() {
       details::g_test_wal_publisher_stats.last_log = *publisher.get_private_data().storage->logs.rbegin();
     }
 
-    ++ details::g_test_wal_publisher_stats.send_snapshot_count;
+    ++details::g_test_wal_publisher_stats.send_snapshot_count;
     return wal_result_code::kOk;
   };
 
@@ -229,7 +229,7 @@ static test_wal_publisher_type::vtable_pointer create_vtable() {
       ++details::g_test_wal_publisher_stats.last_event_log_count;
     }
 
-    ++ details::g_test_wal_publisher_stats.send_logs_count;
+    ++details::g_test_wal_publisher_stats.send_logs_count;
     return wal_result_code::kOk;
   };
 
@@ -307,15 +307,17 @@ CASE_TEST(wal_publisher, create_failed) {
 }
 
 CASE_TEST(wal_publisher, load_and_dump) {
-  auto old_action_count =
-      details::g_test_wal_publisher_stats.default_action_count + details::g_test_wal_publisher_stats.delegate_action_count;
+  auto old_action_count = details::g_test_wal_publisher_stats.default_action_count +
+                          details::g_test_wal_publisher_stats.delegate_action_count;
 
   test_wal_publisher_storage_type load_storege;
   util::distributed_system::wal_time_point now = std::chrono::system_clock::now();
   load_storege.global_ignore = 123;
   load_storege.logs.push_back(test_wal_publisher_log_type{now, 124, test_wal_publisher_log_action::kDoNothing, 124});
-  load_storege.logs.push_back(test_wal_publisher_log_type{now, 125, test_wal_publisher_log_action::kFallbackDefault, 125});
-  load_storege.logs.push_back(test_wal_publisher_log_type{now, 126, test_wal_publisher_log_action::kRecursivePushBack, 126});
+  load_storege.logs.push_back(
+      test_wal_publisher_log_type{now, 125, test_wal_publisher_log_action::kFallbackDefault, 125});
+  load_storege.logs.push_back(
+      test_wal_publisher_log_type{now, 126, test_wal_publisher_log_action::kRecursivePushBack, 126});
 
   test_wal_publisher_storage_type storage;
   test_wal_publisher_context ctx;
@@ -340,7 +342,8 @@ CASE_TEST(wal_publisher, load_and_dump) {
 
   CASE_EXPECT_EQ(3, publisher->get_log_manager().get_all_logs().size());
   CASE_EXPECT_EQ(124, (*publisher->get_log_manager().get_all_logs().begin())->data);
-  CASE_EXPECT_TRUE(test_wal_publisher_log_action::kRecursivePushBack == (*publisher->get_log_manager().get_all_logs().rbegin())->action);
+  CASE_EXPECT_TRUE(test_wal_publisher_log_action::kRecursivePushBack ==
+                   (*publisher->get_log_manager().get_all_logs().rbegin())->action);
 
   // dump
   test_wal_publisher_storage_type dump_storege;
@@ -391,10 +394,10 @@ CASE_TEST(wal_publisher, subscriber_basic_operation) {
   CASE_EXPECT_EQ(subscriber.get(), find_result.get());
 }
 
-static void test_wal_publisher_add_logs(test_wal_publisher_type::object_type& wal_obj,
-  test_wal_publisher_context ctx,
-  util::distributed_system::wal_time_point t1, util::distributed_system::wal_time_point t2,
-  util::distributed_system::wal_time_point t3) {
+static void test_wal_publisher_add_logs(test_wal_publisher_type::object_type& wal_obj, test_wal_publisher_context ctx,
+                                        util::distributed_system::wal_time_point t1,
+                                        util::distributed_system::wal_time_point t2,
+                                        util::distributed_system::wal_time_point t3) {
   do {
     auto old_default_action_count = details::g_test_wal_publisher_stats.default_action_count;
     auto old_delegate_action_count = details::g_test_wal_publisher_stats.delegate_action_count;
@@ -458,8 +461,10 @@ static void test_wal_publisher_add_logs(test_wal_publisher_type::object_type& wa
 
 CASE_TEST(wal_publisher, subscriber_heartbeat) {
   util::distributed_system::wal_time_point t1 = std::chrono::system_clock::now();
-  util::distributed_system::wal_time_point t2 = t1 + std::chrono::duration_cast<test_wal_publisher_type::duration>(std::chrono::seconds{3});
-  util::distributed_system::wal_time_point t3 = t1 + std::chrono::duration_cast<test_wal_publisher_type::duration>(std::chrono::seconds{6});
+  util::distributed_system::wal_time_point t2 =
+      t1 + std::chrono::duration_cast<test_wal_publisher_type::duration>(std::chrono::seconds{3});
+  util::distributed_system::wal_time_point t3 =
+      t1 + std::chrono::duration_cast<test_wal_publisher_type::duration>(std::chrono::seconds{6});
   test_wal_publisher_storage_type storage;
   test_wal_publisher_context ctx;
 
@@ -502,8 +507,8 @@ CASE_TEST(wal_publisher, subscriber_heartbeat) {
   size_t count = 0;
   while (all_iter.first != all_iter.second) {
     CASE_EXPECT_TRUE(all_iter.first != all_iter.second || count == 2);
-    ++ all_iter.first;
-    ++ count;
+    ++all_iter.first;
+    ++count;
   }
 
   publisher->remove_subscriber(subscriber_key_1, util::distributed_system::wal_unsubscribe_reason::kClientRequest, ctx);
@@ -511,8 +516,8 @@ CASE_TEST(wal_publisher, subscriber_heartbeat) {
   count = 0;
   while (all_iter.first != all_iter.second) {
     CASE_EXPECT_TRUE(all_iter.first != all_iter.second || count == 2);
-    ++ all_iter.first;
-    ++ count;
+    ++all_iter.first;
+    ++count;
   }
   CASE_EXPECT_EQ(event_subscribe_removed + 1, details::g_test_wal_publisher_stats.event_on_subscribe_removed);
 
@@ -521,16 +526,18 @@ CASE_TEST(wal_publisher, subscriber_heartbeat) {
   count = 0;
   while (all_iter.first != all_iter.second) {
     CASE_EXPECT_TRUE(all_iter.first != all_iter.second || count == 2);
-    ++ all_iter.first;
-    ++ count;
+    ++all_iter.first;
+    ++count;
   }
   CASE_EXPECT_EQ(event_subscribe_removed + 2, details::g_test_wal_publisher_stats.event_on_subscribe_removed);
 }
 
 CASE_TEST(wal_publisher, subscriber_send_snapshot) {
   util::distributed_system::wal_time_point t1 = std::chrono::system_clock::now();
-  util::distributed_system::wal_time_point t2 = t1 + std::chrono::duration_cast<test_wal_publisher_type::duration>(std::chrono::seconds{3});
-  util::distributed_system::wal_time_point t3 = t1 + std::chrono::duration_cast<test_wal_publisher_type::duration>(std::chrono::seconds{6});
+  util::distributed_system::wal_time_point t2 =
+      t1 + std::chrono::duration_cast<test_wal_publisher_type::duration>(std::chrono::seconds{3});
+  util::distributed_system::wal_time_point t3 =
+      t1 + std::chrono::duration_cast<test_wal_publisher_type::duration>(std::chrono::seconds{6});
   test_wal_publisher_storage_type storage;
   test_wal_publisher_context ctx;
 
@@ -555,7 +562,7 @@ CASE_TEST(wal_publisher, subscriber_send_snapshot) {
   auto send_snapshot_count = details::g_test_wal_publisher_stats.send_snapshot_count;
 
   auto subscriber_1 = publisher->create_subscriber(subscriber_key_1, t1, ctx, &storage);
-  
+
   CASE_EXPECT_EQ(event_subscribe_added + 1, details::g_test_wal_publisher_stats.event_on_subscribe_added);
   CASE_EXPECT_EQ(event_subscribe_removed, details::g_test_wal_publisher_stats.event_on_subscribe_removed);
   CASE_EXPECT_EQ(send_logs_count, details::g_test_wal_publisher_stats.send_logs_count);
@@ -578,8 +585,10 @@ CASE_TEST(wal_publisher, subscriber_send_snapshot) {
 
 CASE_TEST(wal_publisher, subscriber_send_logs) {
   util::distributed_system::wal_time_point t1 = std::chrono::system_clock::now();
-  util::distributed_system::wal_time_point t2 = t1 + std::chrono::duration_cast<test_wal_publisher_type::duration>(std::chrono::seconds{3});
-  util::distributed_system::wal_time_point t3 = t1 + std::chrono::duration_cast<test_wal_publisher_type::duration>(std::chrono::seconds{6});
+  util::distributed_system::wal_time_point t2 =
+      t1 + std::chrono::duration_cast<test_wal_publisher_type::duration>(std::chrono::seconds{3});
+  util::distributed_system::wal_time_point t3 =
+      t1 + std::chrono::duration_cast<test_wal_publisher_type::duration>(std::chrono::seconds{6});
   test_wal_publisher_storage_type storage;
   test_wal_publisher_context ctx;
 
@@ -604,7 +613,7 @@ CASE_TEST(wal_publisher, subscriber_send_logs) {
   auto send_snapshot_count = details::g_test_wal_publisher_stats.send_snapshot_count;
 
   auto subscriber_1 = publisher->create_subscriber(subscriber_key_1, t3, ctx, &storage);
-  
+
   CASE_EXPECT_EQ(event_subscribe_added + 1, details::g_test_wal_publisher_stats.event_on_subscribe_added);
   CASE_EXPECT_EQ(event_subscribe_removed, details::g_test_wal_publisher_stats.event_on_subscribe_removed);
   CASE_EXPECT_EQ(send_logs_count, details::g_test_wal_publisher_stats.send_logs_count);
@@ -621,8 +630,10 @@ CASE_TEST(wal_publisher, subscriber_send_logs) {
 
 CASE_TEST(wal_publisher, remove_subscriber_by_check_callback) {
   util::distributed_system::wal_time_point t1 = std::chrono::system_clock::now();
-  util::distributed_system::wal_time_point t2 = t1 + std::chrono::duration_cast<test_wal_publisher_type::duration>(std::chrono::seconds{3});
-  util::distributed_system::wal_time_point t3 = t1 + std::chrono::duration_cast<test_wal_publisher_type::duration>(std::chrono::seconds{6});
+  util::distributed_system::wal_time_point t2 =
+      t1 + std::chrono::duration_cast<test_wal_publisher_type::duration>(std::chrono::seconds{3});
+  util::distributed_system::wal_time_point t3 =
+      t1 + std::chrono::duration_cast<test_wal_publisher_type::duration>(std::chrono::seconds{6});
   test_wal_publisher_storage_type storage;
   test_wal_publisher_context ctx;
 
@@ -633,8 +644,9 @@ CASE_TEST(wal_publisher, remove_subscriber_by_check_callback) {
 
   int keep_times = 1;
   auto vtable = create_vtable();
-  vtable->check_subscriber = [&keep_times](test_wal_publisher_type&, const test_wal_publisher_type::subscriber_pointer&, test_wal_publisher_type::callback_param_type) -> bool {
-    -- keep_times;
+  vtable->check_subscriber = [&keep_times](test_wal_publisher_type&, const test_wal_publisher_type::subscriber_pointer&,
+                                           test_wal_publisher_type::callback_param_type) -> bool {
+    --keep_times;
     return keep_times >= 0;
   };
 
@@ -657,7 +669,7 @@ CASE_TEST(wal_publisher, remove_subscriber_by_check_callback) {
 
   CASE_EXPECT_EQ(event_subscribe_added + 2, details::g_test_wal_publisher_stats.event_on_subscribe_added);
   CASE_EXPECT_EQ(event_subscribe_removed, details::g_test_wal_publisher_stats.event_on_subscribe_removed);
-  
+
   CASE_EXPECT_NE(nullptr, publisher->find_subscriber(subscriber_key_1, ctx).get());
   CASE_EXPECT_EQ(event_subscribe_added + 2, details::g_test_wal_publisher_stats.event_on_subscribe_added);
   CASE_EXPECT_EQ(event_subscribe_removed, details::g_test_wal_publisher_stats.event_on_subscribe_removed);

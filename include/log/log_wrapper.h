@@ -659,4 +659,3 @@ LOG_WRAPPER_FWAPI_FORMAT_AS(typename ::util::log::log_wrapper::options_t::type, 
 #include "config/compiler/template_suffix.h"
 
 #endif  // _UTIL_LOG_LOG_WRAPPER_H_
-

@@ -355,7 +355,8 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_publisher {
       // GC logs
       size_t res;
       if (broadcast_key_bound_) {
-        res = wal_object_->gc(now, broadcast_key_bound_.get(), round);;
+        res = wal_object_->gc(now, broadcast_key_bound_.get(), round);
+        ;
       } else {
         res = wal_object_->gc(now, nullptr, round);
       }
