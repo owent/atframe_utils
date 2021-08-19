@@ -345,7 +345,7 @@ LIBATFRAME_UTILS_API bool file_system::generate_tmp_file_name(std::string &inout
 #if (defined(LIBATFRAME_UTILS_ENABLE_WINDOWS_MKTEMP) && LIBATFRAME_UTILS_ENABLE_WINDOWS_MKTEMP) || \
     (defined(LIBATFRAME_UTILS_ENABLE_POSIX_MKSTEMP) && LIBATFRAME_UTILS_ENABLE_POSIX_MKSTEMP)
   if (inout.empty()) {
-#  if WIN32
+#  ifdef WIN32
     inout = file_system::getenv("TMP");
     if (inout.empty()) {
       inout = file_system::getenv("TEMP");
