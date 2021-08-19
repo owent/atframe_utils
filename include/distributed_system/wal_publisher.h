@@ -1,5 +1,5 @@
-// Copyright 2021 Tencent
-// Created by owentou
+// Copyright 2021 atframework
+// Created by owent
 // Stanards operations for Write Ahead Log publisher
 
 #pragma once
@@ -352,11 +352,18 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_publisher {
         round = max_event / 16;
       }
 
-      // GC logs
       size_t res;
+
+      // broadcast logs
+      res = broadcast(param);
+      if (res > 0) {
+        has_event = true;
+        ret += res;
+      }
+
+      // GC logs
       if (broadcast_key_bound_) {
         res = wal_object_->gc(now, broadcast_key_bound_.get(), round);
-        ;
       } else {
         res = wal_object_->gc(now, nullptr, round);
       }
@@ -376,13 +383,6 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_publisher {
         } else {
           break;
         }
-      }
-
-      // broadcast logs
-      res = broadcast(param);
-      if (res > 0) {
-        has_event = true;
-        ret += res;
       }
     }
 
