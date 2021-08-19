@@ -1,5 +1,5 @@
-// Copyright 2021 Tencent
-// Created by owentou on 2021-08-12
+// Copyright 2021 atframework
+// Created by owent on 2021-08-12
 // Common definitions for Write Ahead Log
 
 #pragma once

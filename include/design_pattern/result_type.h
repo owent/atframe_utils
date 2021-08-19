@@ -81,12 +81,18 @@ struct LIBATFRAME_UTILS_API_HEAD_ONLY
     out.~storage_type();
   }
 
-  static UTIL_FORCEINLINE void construct_storage(storage_type &out) {
+  static UTIL_FORCEINLINE void construct_storage(void *out) {
     // Placement new
-    new (reinterpret_cast<void *>(&out)) storage_type(reinterpret_cast<void *>(&out));
+    new (out) storage_type(out);
   }
 
-  static UTIL_FORCEINLINE void move_storage(storage_type &out, storage_type &&in) noexcept { out = std::move(in); }
+  static UTIL_FORCEINLINE void move_storage(storage_type &out, storage_type &&in) noexcept {
+    if (&out == &in) {
+      return;
+    }
+
+    out = std::move(in);
+  }
 
   static UTIL_FORCEINLINE void swap(storage_type &l, storage_type &r) noexcept { l.swap(r); }
 
@@ -112,28 +118,35 @@ struct LIBATFRAME_UTILS_API_HEAD_ONLY
   }
 
   template <class... TARGS>
-  static UTIL_FORCEINLINE void construct_storage(storage_type &out, TARGS &&...in) {
+  static UTIL_FORCEINLINE void construct_storage(void *out, TARGS &&...in) {
     // Placement new
-    new (reinterpret_cast<void *>(&out)) storage_type(value_type{std::forward<TARGS>(in)...}, nullptr);
-    out.second.reset(&out.first);
+    storage_type *ptr = new (out) storage_type(value_type{std::forward<TARGS>(in)...}, nullptr);
+    ptr->second.reset(&ptr->first);
   }
 
   template <class U, class UDELETOR,
             typename std::enable_if<std::is_base_of<T, typename std::decay<U>::type>::value ||
                                         std::is_convertible<typename std::decay<U>::type, T>::value,
                                     bool>::type = false>
-  static UTIL_FORCEINLINE void construct_storage(storage_type &out, std::unique_ptr<U, UDELETOR> &&in) noexcept {
+  static UTIL_FORCEINLINE void construct_storage(void *out, std::unique_ptr<U, UDELETOR> &&in) noexcept {
+    storage_type *ptr;
     if (in) {
       // Placement new
-      new (reinterpret_cast<void *>(&out)) storage_type(value_type{std::move(*in)}, nullptr);
+      ptr = new (out) storage_type(value_type{std::move(*in)}, nullptr);
     } else {
       // Placement new
-      new (reinterpret_cast<void *>(&out)) storage_type();
+      ptr = new (out) storage_type();
     }
-    out.second.reset(&out.first);
+    ptr->second.reset(ptr->first);
   }
 
-  static UTIL_FORCEINLINE void move_storage(storage_type &out, storage_type &&in) noexcept { out.first = in.first; }
+  static UTIL_FORCEINLINE void move_storage(storage_type &out, storage_type &&in) noexcept {
+    if (&out == &in) {
+      return;
+    }
+
+    out.first = in.first;
+  }
 
   static UTIL_FORCEINLINE void swap(storage_type &l, storage_type &r) noexcept {
     value_type lv = l.first;
@@ -161,18 +174,22 @@ struct LIBATFRAME_UTILS_API_HEAD_ONLY compact_storage_type<T, typename std::uniq
 
   template <class U, typename std::enable_if<std::is_convertible<typename std::decay<U>::type, pointer>::value,
                                              bool>::type = false>
-  static UTIL_FORCEINLINE void construct_storage(storage_type &out, U &&in) {
+  static UTIL_FORCEINLINE void construct_storage(void *out, U &&in) {
     // Placement new
-    new (reinterpret_cast<void *>(&out)) pointer{std::move(in)};
+    new (out) pointer{std::move(in)};
   }
 
   template <class... TARGS>
-  static UTIL_FORCEINLINE void construct_storage(storage_type &out, TARGS &&...in) {
+  static UTIL_FORCEINLINE void construct_storage(void *out, TARGS &&...in) {
     // Placement new
-    new (reinterpret_cast<void *>(&out)) pointer{new T(std::forward<TARGS>(in)...)};
+    new (out) pointer{new T(std::forward<TARGS>(in)...)};
   }
 
   static UTIL_FORCEINLINE void move_storage(storage_type &out, storage_type &&in) noexcept {
+    if (&out == &in) {
+      return;
+    }
+
     out.swap(in);
     in.reset();
   }
@@ -197,12 +214,16 @@ struct LIBATFRAME_UTILS_API_HEAD_ONLY compact_storage_type : public std::false_t
   static UTIL_FORCEINLINE void destroy_storage(storage_type &out) { out.~storage_type(); }
 
   template <class... TARGS>
-  static UTIL_FORCEINLINE void construct_storage(storage_type &out, TARGS &&...in) {
+  static UTIL_FORCEINLINE void construct_storage(void *out, TARGS &&...in) {
     // Placement new
-    new (reinterpret_cast<void *>(&out)) pointer{std::forward<TARGS>(in)...};
+    new (out) pointer{std::forward<TARGS>(in)...};
   }
 
   static UTIL_FORCEINLINE void move_storage(storage_type &out, storage_type &&in) noexcept {
+    if (&out == &in) {
+      return;
+    }
+
     out.swap(in);
     in.reset();
   }
@@ -244,16 +265,24 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY result_base_type {
   UTIL_FORCEINLINE bool is_none() const noexcept { return mode_ == mode::kNone; }
 
   UTIL_FORCEINLINE const success_pointer &get_success() const noexcept {
-    return is_success() ? success_storage_type::unref(success_data_arena()) : success_storage_type::default_instance();
+    return is_success() ? success_storage_type::unref(
+                              *reinterpret_cast<typename success_storage_type::storage_type *>(success_data_arena()))
+                        : success_storage_type::default_instance();
   }
   UTIL_FORCEINLINE success_pointer &get_success() noexcept {
-    return is_success() ? success_storage_type::unref(success_data_arena()) : success_storage_type::default_instance();
+    return is_success() ? success_storage_type::unref(
+                              *reinterpret_cast<typename success_storage_type::storage_type *>(success_data_arena()))
+                        : success_storage_type::default_instance();
   }
   UTIL_FORCEINLINE const error_pointer &get_error() const noexcept {
-    return is_error() ? error_storage_type::unref(error_data_arena()) : error_storage_type::default_instance();
+    return is_error() ? error_storage_type::unref(
+                            *reinterpret_cast<typename error_storage_type::storage_type *>(error_data_arena()))
+                      : error_storage_type::default_instance();
   }
   UTIL_FORCEINLINE error_pointer &get_error() noexcept {
-    return is_error() ? error_storage_type::unref(error_data_arena()) : error_storage_type::default_instance();
+    return is_error() ? error_storage_type::unref(
+                            *reinterpret_cast<typename error_storage_type::storage_type *>(error_data_arena()))
+                      : error_storage_type::default_instance();
   }
 
   result_base_type() : mode_(mode::kNone) {}
@@ -262,6 +291,10 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY result_base_type {
   explicit result_base_type(result_base_type &&other) : mode_(mode::kNone) { swap(other); }
 
   result_base_type &operator=(result_base_type &&other) noexcept {
+    if (this == &other) {
+      return *this;
+    }
+
     swap(other);
     other.reset();
     return *this;
@@ -269,29 +302,45 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY result_base_type {
 
   inline void swap(result_base_type &other) noexcept {
     using std::swap;
+    if (this == &other) {
+      return;
+    }
+
     if (mode_ == other.mode_) {
       if (mode::kSuccess == mode_) {
-        success_storage_type::swap(success_data_arena(), other.success_data_arena());
+        success_storage_type::swap(
+            *reinterpret_cast<typename success_storage_type::storage_type *>(success_data_arena()),
+            *reinterpret_cast<typename success_storage_type::storage_type *>(other.success_data_arena()));
       } else if (mode::kError == mode_) {
-        error_storage_type::swap(error_data_arena(), other.error_data_arena());
+        error_storage_type::swap(
+            *reinterpret_cast<typename error_storage_type::storage_type *>(error_data_arena()),
+            *reinterpret_cast<typename error_storage_type::storage_type *>(other.error_data_arena()));
       }
     } else if (mode::kNone == mode_) {
       if (mode::kSuccess == other.mode_) {
         construct_success();
-        success_storage_type::move_storage(success_data_arena(), std::move(other.success_data_arena()));
+        success_storage_type::move_storage(
+            *reinterpret_cast<typename success_storage_type::storage_type *>(success_data_arena()),
+            std::move(*reinterpret_cast<typename success_storage_type::storage_type *>(other.success_data_arena())));
       } else if (mode::kError == other.mode_) {
         construct_error();
-        error_storage_type::move_storage(error_data_arena(), std::move(other.error_data_arena()));
+        error_storage_type::move_storage(
+            *reinterpret_cast<typename error_storage_type::storage_type *>(error_data_arena()),
+            std::move(*reinterpret_cast<typename error_storage_type::storage_type *>(other.error_data_arena())));
       }
 
       other.reset();
     } else if (mode::kNone == other.mode_) {
       if (mode::kSuccess == mode_) {
         other.construct_success();
-        success_storage_type::move_storage(other.success_data_arena(), std::move(success_data_arena()));
+        success_storage_type::move_storage(
+            *reinterpret_cast<typename success_storage_type::storage_type *>(other.success_data_arena()),
+            std::move(*reinterpret_cast<typename success_storage_type::storage_type *>(success_data_arena())));
       } else if (mode::kError == mode_) {
         other.construct_error();
-        error_storage_type::move_storage(other.error_data_arena(), std::move(error_data_arena()));
+        error_storage_type::move_storage(
+            *reinterpret_cast<typename error_storage_type::storage_type *>(other.error_data_arena()),
+            std::move(*reinterpret_cast<typename error_storage_type::storage_type *>(error_data_arena())));
       }
 
       reset();
@@ -299,23 +348,31 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY result_base_type {
       if (mode::kSuccess == mode_) {
         // tempory data
         typename success_storage_type::storage_type t;
-        success_storage_type::move_storage(t, std::move(success_data_arena()));
+        success_storage_type::move_storage(
+            t, std::move(*reinterpret_cast<typename success_storage_type::storage_type *>(success_data_arena())));
         // self
         construct_error();
-        error_storage_type::move_storage(error_data_arena(), std::move(other.error_data_arena()));
+        error_storage_type::move_storage(
+            *reinterpret_cast<typename error_storage_type::storage_type *>(error_data_arena()),
+            std::move(*reinterpret_cast<typename error_storage_type::storage_type *>(other.error_data_arena())));
         // other
         other.construct_success();
-        success_storage_type::move_storage(other.success_data_arena(), std::move(t));
+        success_storage_type::move_storage(
+            *reinterpret_cast<typename success_storage_type::storage_type *>(other.success_data_arena()), std::move(t));
       } else {
         // tempory data
         typename error_storage_type::storage_type t;
-        error_storage_type::move_storage(t, std::move(error_data_arena()));
+        error_storage_type::move_storage(
+            t, std::move(*reinterpret_cast<typename error_storage_type::storage_type *>(error_data_arena())));
         // self
         construct_success();
-        success_storage_type::move_storage(success_data_arena(), std::move(other.success_data_arena()));
+        success_storage_type::move_storage(
+            *reinterpret_cast<typename success_storage_type::storage_type *>(success_data_arena()),
+            std::move(*reinterpret_cast<typename success_storage_type::storage_type *>(other.success_data_arena())));
         // other
         other.construct_error();
-        error_storage_type::move_storage(other.error_data_arena(), std::move(t));
+        error_storage_type::move_storage(
+            *reinterpret_cast<typename error_storage_type::storage_type *>(other.error_data_arena()), std::move(t));
       }
     }
   }
@@ -340,34 +397,29 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY result_base_type {
 
   void reset() {
     if (mode::kSuccess == mode_) {
-      success_storage_type::destroy_storage(success_data_arena());
+      success_storage_type::destroy_storage(
+          *reinterpret_cast<typename success_storage_type::storage_type *>(success_data_arena()));
     } else if (mode::kError == mode_) {
-      error_storage_type::destroy_storage(error_data_arena());
+      error_storage_type::destroy_storage(
+          *reinterpret_cast<typename error_storage_type::storage_type *>(error_data_arena()));
     }
 
     mode_ = mode::kNone;
   }
 
  private:
-  inline typename success_storage_type::storage_type &success_data_arena() noexcept {
-    return *reinterpret_cast<typename success_storage_type::storage_type *>(data_);
-  }
+  inline void *success_data_arena() noexcept { return reinterpret_cast<void *>(&data_[0]); }
 
-  inline const typename success_storage_type::storage_type &success_data_arena() const noexcept {
-    return *reinterpret_cast<const typename success_storage_type::storage_type *>(data_);
-  }
+  inline const void *success_data_arena() const noexcept { return reinterpret_cast<const void *>(&data_[0]); }
 
-  inline typename error_storage_type::storage_type &error_data_arena() noexcept {
-    return *reinterpret_cast<typename error_storage_type::storage_type *>(data_);
-  }
+  inline void *error_data_arena() noexcept { return reinterpret_cast<void *>(&data_[0]); }
 
-  inline const typename error_storage_type::storage_type &error_data_arena() const noexcept {
-    return *reinterpret_cast<const typename error_storage_type::storage_type *>(data_);
-  }
+  inline const void *error_data_arena() const noexcept { return reinterpret_cast<const void *>(&data_[0]); }
 
-  unsigned char data_[max_storage_size_helper<
+  using data_buffer_type = EXPLICIT_MAY_ALIAS unsigned char[max_storage_size_helper<
       typename success_storage_type::storage_type, typename error_storage_type::storage_type,
       sizeof(typename success_storage_type::storage_type) < sizeof(typename error_storage_type::storage_type)>::value];
+  data_buffer_type data_;
   mode mode_;
 };
 

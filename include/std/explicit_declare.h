@@ -163,4 +163,18 @@
 #  define EXPLICIT_FALLTHROUGH
 #endif
 
+/**
+ * @brief may_alias, 标记允许类型别名(strict-aliasing)
+ * usage:
+ *   using target_type = EXPLICIT_MAY_ALIAS unsigned char[N];
+ *   target_type a;
+ */
+#if defined(__clang__)
+#  define EXPLICIT_MAY_ALIAS __attribute__((__may_alias__))
+#elif defined(__GNUC__) && (__GNUC__ >= 4)
+#  define EXPLICIT_MAY_ALIAS __attribute__((__may_alias__))
+#else
+#  define EXPLICIT_MAY_ALIAS
+#endif
+
 #endif

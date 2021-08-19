@@ -1,5 +1,5 @@
-// Copyright 2021 Tencent
-// Created by owentou
+// Copyright 2021 atframework
+// Created by owent
 // Stanards operations for Transaction node
 
 #pragma once
