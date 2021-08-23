@@ -37,6 +37,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_object {
 
   using log_type = typename log_operator_type::log_type;
   using log_pointer = typename log_operator_type::log_pointer;
+  using log_const_pointer = typename log_operator_type::log_const_pointer;
   using log_key_type = typename log_operator_type::log_key_type;
   using log_key_compare_type = typename log_operator_type::log_key_compare_type;
   using action_getter_type = typename log_operator_type::action_getter_type;
@@ -61,6 +62,9 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_object {
   // Run log action
   using callback_log_action_fn_t = std::function<wal_result_code(wal_object&, const log_type&, callback_param_type)>;
 
+  // Patch log
+  using callback_log_patch_fn_t = std::function<wal_result_code(wal_object&, log_type&, callback_param_type)>;
+
   // Log event callback
   using callback_log_event_fn_t = std::function<void(wal_object&, const log_pointer&)>;
 
@@ -84,6 +88,10 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_object {
       std::unordered_map<action_case_type, callback_log_action_fn_t, typename log_operator_type::action_case_hash,
                          typename log_operator_type::action_case_equal>;
 
+  using patch_map_type =
+      std::unordered_map<action_case_type, callback_log_patch_fn_t, typename log_operator_type::action_case_hash,
+                         typename log_operator_type::action_case_equal>;
+
   struct vtable_type {
     callback_load_fn_t load;
     callback_dump_fn_t dump;
@@ -96,6 +104,8 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_object {
     callback_log_event_fn_t on_log_removed;
     action_map_type delegate_action;
     callback_log_action_fn_t default_action;
+    patch_map_type delegate_patcher;
+    callback_log_patch_fn_t default_patcher;
   };
   using vtable_pointer = std::shared_ptr<vtable_type>;
 
@@ -437,7 +447,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_object {
     return nullptr;
   }
 
-  log_const_iterator find_log(const log_key_type& key) const noexcept {
+  log_const_pointer find_log(const log_key_type& key) const noexcept {
     log_const_iterator iter = log_lower_bound(key);
     if (iter == logs_.end()) {
       return nullptr;
@@ -445,7 +455,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_object {
 
     log_key_type found_key = vtable_->get_log_key(*this, **iter);
     if (!log_key_compare_(key, found_key) && !log_key_compare_(found_key, key)) {
-      return *iter;
+      return std::const_pointer_cast<const log_type>(*iter);
     }
 
     return nullptr;
@@ -569,14 +579,30 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_object {
       return wal_result_code::kCallbackError;
     }
 
-    auto iter = vtable_->delegate_action.find(meta.get_success()->action_case);
-    if (iter != vtable_->delegate_action.end()) {
-      return iter->second(*this, *log, param);
-    } else if (vtable_->default_action) {
-      return vtable_->default_action(*this, *log, param);
-    } else {
-      return wal_result_code::kActionNotSet;
+    wal_result_code ret = wal_result_code::kActionNotSet;
+    {
+      auto iter = vtable_->delegate_patcher.find(meta.get_success()->action_case);
+      if (iter != vtable_->delegate_patcher.end()) {
+        ret = iter->second(*this, *log, param);
+        if (ret != wal_result_code::kOk) {
+          return ret;
+        }
+      } else if (vtable_->default_patcher) {
+        ret = vtable_->default_patcher(*this, *log, param);
+        if (ret != wal_result_code::kOk) {
+          return ret;
+        }
+      }
     }
+    {
+      auto iter = vtable_->delegate_action.find(meta.get_success()->action_case);
+      if (iter != vtable_->delegate_action.end()) {
+        ret = iter->second(*this, *log, param);
+      } else if (vtable_->default_action) {
+        ret = vtable_->default_action(*this, *log, param);
+      }
+    }
+    return ret;
   }
 
   wal_result_code pusk_back_inner_uncheck(log_pointer&& log, callback_param_type param) {

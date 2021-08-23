@@ -139,6 +139,10 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_subscriber {
     }
 
     pointer unsubscribe(const pointer& subscriber, wal_unsubscribe_reason) {
+      if (!subscriber) {
+        return nullptr;
+      }
+
       auto iter = subscribers_.find(subscriber->get_key());
       if (iter == subscribers_.end()) {
         return nullptr;

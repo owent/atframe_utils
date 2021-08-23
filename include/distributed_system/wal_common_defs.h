@@ -85,6 +85,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_log_operator {
   using action_case_equal = EqualActionCaseT;
 
   using log_pointer = std::shared_ptr<log_type>;
+  using log_const_pointer = std::shared_ptr<const log_type>;
   using log_key_result_type = util::design_pattern::result_type<log_key_type, wal_result_code>;
 };
 

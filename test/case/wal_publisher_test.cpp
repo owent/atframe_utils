@@ -73,6 +73,7 @@ struct test_wal_publisher_stats {
   size_t send_logs_count;
   size_t send_snapshot_count;
   size_t send_subscribe_response;
+  size_t event_on_subscribe_heartbeat;
   size_t event_on_subscribe_added;
   size_t event_on_subscribe_removed;
 
@@ -85,7 +86,7 @@ struct test_wal_publisher_stats {
 
 namespace details {
 test_wal_publisher_stats g_test_wal_publisher_stats{
-    1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, test_wal_publisher_log_type(), nullptr};
+    1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, test_wal_publisher_log_type(), nullptr};
 }
 
 static test_wal_publisher_type::vtable_pointer create_vtable() {
@@ -245,6 +246,14 @@ static test_wal_publisher_type::vtable_pointer create_vtable() {
     return true;
   };
 
+  ret->on_subscriber_heartbeat = [](wal_publisher_type&, const wal_publisher_type::subscriber_pointer& subscriber,
+                                    wal_publisher_type::callback_param_type) {
+    ++details::g_test_wal_publisher_stats.event_on_subscribe_heartbeat;
+    details::g_test_wal_publisher_stats.last_subscriber = subscriber;
+
+    return wal_result_code::kOk;
+  };
+
   ret->on_subscriber_added = [](wal_publisher_type&, const wal_publisher_type::subscriber_pointer& subscriber,
                                 wal_publisher_type::callback_param_type) {
     ++details::g_test_wal_publisher_stats.event_on_subscribe_added;
@@ -379,16 +388,16 @@ CASE_TEST(wal_publisher, subscriber_basic_operation) {
   uint64_t subscriber_key_3 = 3;
 
   CASE_EXPECT_EQ(nullptr, publisher->find_subscriber(subscriber_key_1, ctx).get());
-  auto subscriber = publisher->create_subscriber(subscriber_key_1, now, ctx, &storage);
+  auto subscriber = publisher->create_subscriber(subscriber_key_1, now, 0, ctx, &storage);
   CASE_EXPECT_NE(nullptr, subscriber.get());
   CASE_EXPECT_TRUE(now == subscriber->get_last_heartbeat_time_point());
   now += std::chrono::seconds(1);
-  auto subscriber_copy = publisher->create_subscriber(subscriber_key_1, now, ctx, &storage);
+  auto subscriber_copy = publisher->create_subscriber(subscriber_key_1, now, 0, ctx, &storage);
   CASE_EXPECT_EQ(subscriber.get(), subscriber_copy.get());
   CASE_EXPECT_TRUE(now == subscriber->get_last_heartbeat_time_point());
 
-  publisher->create_subscriber(subscriber_key_2, now, ctx, &storage);
-  publisher->create_subscriber(subscriber_key_3, now, ctx, &storage);
+  publisher->create_subscriber(subscriber_key_2, now, 0, ctx, &storage);
+  publisher->create_subscriber(subscriber_key_3, now, 0, ctx, &storage);
 
   auto find_result = publisher->find_subscriber(subscriber_key_1, ctx);
   CASE_EXPECT_EQ(subscriber.get(), find_result.get());
@@ -483,17 +492,20 @@ CASE_TEST(wal_publisher, subscriber_heartbeat) {
   uint64_t subscriber_key_2 = 2;
   uint64_t subscriber_key_3 = 3;
 
+  publisher->get_log_manager().set_last_removed_key(details::g_test_wal_publisher_stats.key_alloc);
   test_wal_publisher_add_logs(publisher->get_log_manager(), ctx, t1, t2, t3);
 
+  auto event_on_subscribe_heartbeat = details::g_test_wal_publisher_stats.event_on_subscribe_heartbeat;
   auto event_subscribe_added = details::g_test_wal_publisher_stats.event_on_subscribe_added;
   auto event_subscribe_removed = details::g_test_wal_publisher_stats.event_on_subscribe_removed;
   auto send_logs_count = details::g_test_wal_publisher_stats.send_logs_count;
   auto send_snapshot_count = details::g_test_wal_publisher_stats.send_snapshot_count;
 
-  auto subscriber_1 = publisher->create_subscriber(subscriber_key_1, t1, ctx, &storage);
-  auto subscriber_2 = publisher->create_subscriber(subscriber_key_2, t2, ctx, &storage);
-  auto subscriber_3 = publisher->create_subscriber(subscriber_key_3, t3, ctx, &storage);
+  auto subscriber_1 = publisher->create_subscriber(subscriber_key_1, t1, 0, ctx, &storage);
+  auto subscriber_2 = publisher->create_subscriber(subscriber_key_2, t2, 0, ctx, &storage);
+  auto subscriber_3 = publisher->create_subscriber(subscriber_key_3, t3, 0, ctx, &storage);
 
+  CASE_EXPECT_EQ(event_on_subscribe_heartbeat + 3, details::g_test_wal_publisher_stats.event_on_subscribe_heartbeat);
   CASE_EXPECT_EQ(event_subscribe_added + 3, details::g_test_wal_publisher_stats.event_on_subscribe_added);
   CASE_EXPECT_EQ(event_subscribe_removed, details::g_test_wal_publisher_stats.event_on_subscribe_removed);
   CASE_EXPECT_EQ(send_logs_count, details::g_test_wal_publisher_stats.send_logs_count);
@@ -554,15 +566,18 @@ CASE_TEST(wal_publisher, subscriber_send_snapshot) {
 
   uint64_t subscriber_key_1 = 1;
 
+  publisher->get_log_manager().set_last_removed_key(details::g_test_wal_publisher_stats.key_alloc);
   test_wal_publisher_add_logs(publisher->get_log_manager(), ctx, t1, t2, t3);
 
+  auto event_on_subscribe_heartbeat = details::g_test_wal_publisher_stats.event_on_subscribe_heartbeat;
   auto event_subscribe_added = details::g_test_wal_publisher_stats.event_on_subscribe_added;
   auto event_subscribe_removed = details::g_test_wal_publisher_stats.event_on_subscribe_removed;
   auto send_logs_count = details::g_test_wal_publisher_stats.send_logs_count;
   auto send_snapshot_count = details::g_test_wal_publisher_stats.send_snapshot_count;
 
-  auto subscriber_1 = publisher->create_subscriber(subscriber_key_1, t1, ctx, &storage);
+  auto subscriber_1 = publisher->create_subscriber(subscriber_key_1, t1, 0, ctx, &storage);
 
+  CASE_EXPECT_EQ(event_on_subscribe_heartbeat + 1, details::g_test_wal_publisher_stats.event_on_subscribe_heartbeat);
   CASE_EXPECT_EQ(event_subscribe_added + 1, details::g_test_wal_publisher_stats.event_on_subscribe_added);
   CASE_EXPECT_EQ(event_subscribe_removed, details::g_test_wal_publisher_stats.event_on_subscribe_removed);
   CASE_EXPECT_EQ(send_logs_count, details::g_test_wal_publisher_stats.send_logs_count);
@@ -573,11 +588,16 @@ CASE_TEST(wal_publisher, subscriber_send_snapshot) {
 
   publisher->receive_subscribe(subscriber_key_1, last_removed_key, t3, ctx);
 
+  CASE_EXPECT_EQ(event_on_subscribe_heartbeat + 2, details::g_test_wal_publisher_stats.event_on_subscribe_heartbeat);
+
   CASE_EXPECT_EQ(4, details::g_test_wal_publisher_stats.last_event_log_count);
   CASE_EXPECT_EQ(send_logs_count + 1, details::g_test_wal_publisher_stats.send_logs_count);
   CASE_EXPECT_EQ(send_snapshot_count + 1, details::g_test_wal_publisher_stats.send_snapshot_count);
 
   publisher->receive_subscribe(subscriber_key_1, last_removed_key - 1, t3, ctx);
+
+  CASE_EXPECT_EQ(event_on_subscribe_heartbeat + 3, details::g_test_wal_publisher_stats.event_on_subscribe_heartbeat);
+
   CASE_EXPECT_EQ(0, details::g_test_wal_publisher_stats.last_event_log_count);
   CASE_EXPECT_EQ(send_logs_count + 1, details::g_test_wal_publisher_stats.send_logs_count);
   CASE_EXPECT_EQ(send_snapshot_count + 2, details::g_test_wal_publisher_stats.send_snapshot_count);
@@ -605,6 +625,7 @@ CASE_TEST(wal_publisher, subscriber_send_logs) {
 
   uint64_t subscriber_key_1 = 1;
 
+  publisher->get_log_manager().set_last_removed_key(details::g_test_wal_publisher_stats.key_alloc);
   test_wal_publisher_add_logs(publisher->get_log_manager(), ctx, t1, t2, t3);
 
   auto event_subscribe_added = details::g_test_wal_publisher_stats.event_on_subscribe_added;
@@ -612,7 +633,7 @@ CASE_TEST(wal_publisher, subscriber_send_logs) {
   auto send_logs_count = details::g_test_wal_publisher_stats.send_logs_count;
   auto send_snapshot_count = details::g_test_wal_publisher_stats.send_snapshot_count;
 
-  auto subscriber_1 = publisher->create_subscriber(subscriber_key_1, t3, ctx, &storage);
+  auto subscriber_1 = publisher->create_subscriber(subscriber_key_1, t3, 0, ctx, &storage);
 
   CASE_EXPECT_EQ(event_subscribe_added + 1, details::g_test_wal_publisher_stats.event_on_subscribe_added);
   CASE_EXPECT_EQ(event_subscribe_removed, details::g_test_wal_publisher_stats.event_on_subscribe_removed);
@@ -642,13 +663,11 @@ CASE_TEST(wal_publisher, remove_subscriber_by_check_callback) {
     conf->subscriber_timeout = std::chrono::duration_cast<test_wal_publisher_type::duration>(std::chrono::seconds{5});
   }
 
-  int keep_times = 1;
+  std::shared_ptr<bool> check_result = std::make_shared<bool>(true);
   auto vtable = create_vtable();
-  vtable->check_subscriber = [&keep_times](test_wal_publisher_type&, const test_wal_publisher_type::subscriber_pointer&,
-                                           test_wal_publisher_type::callback_param_type) -> bool {
-    --keep_times;
-    return keep_times >= 0;
-  };
+  vtable->check_subscriber = [check_result](
+                                 test_wal_publisher_type&, const test_wal_publisher_type::subscriber_pointer&,
+                                 test_wal_publisher_type::callback_param_type) -> bool { return *check_result; };
 
   auto publisher = test_wal_publisher_type::create(vtable, conf, &storage);
   CASE_EXPECT_TRUE(!!publisher);
@@ -659,13 +678,14 @@ CASE_TEST(wal_publisher, remove_subscriber_by_check_callback) {
   uint64_t subscriber_key_1 = 1;
   uint64_t subscriber_key_2 = 2;
 
+  publisher->get_log_manager().set_last_removed_key(details::g_test_wal_publisher_stats.key_alloc);
   test_wal_publisher_add_logs(publisher->get_log_manager(), ctx, t1, t2, t3);
 
   auto event_subscribe_added = details::g_test_wal_publisher_stats.event_on_subscribe_added;
   auto event_subscribe_removed = details::g_test_wal_publisher_stats.event_on_subscribe_removed;
 
-  auto subscriber_1 = publisher->create_subscriber(subscriber_key_1, t2, ctx, &storage);
-  auto subscriber_2 = publisher->create_subscriber(subscriber_key_2, t3, ctx, &storage);
+  auto subscriber_1 = publisher->create_subscriber(subscriber_key_1, t2, 0, ctx, &storage);
+  auto subscriber_2 = publisher->create_subscriber(subscriber_key_2, t3, 0, ctx, &storage);
 
   CASE_EXPECT_EQ(event_subscribe_added + 2, details::g_test_wal_publisher_stats.event_on_subscribe_added);
   CASE_EXPECT_EQ(event_subscribe_removed, details::g_test_wal_publisher_stats.event_on_subscribe_removed);
@@ -674,6 +694,7 @@ CASE_TEST(wal_publisher, remove_subscriber_by_check_callback) {
   CASE_EXPECT_EQ(event_subscribe_added + 2, details::g_test_wal_publisher_stats.event_on_subscribe_added);
   CASE_EXPECT_EQ(event_subscribe_removed, details::g_test_wal_publisher_stats.event_on_subscribe_removed);
 
+  *check_result = false;
   CASE_EXPECT_EQ(nullptr, publisher->find_subscriber(subscriber_key_1, ctx).get());
   CASE_EXPECT_EQ(event_subscribe_added + 2, details::g_test_wal_publisher_stats.event_on_subscribe_added);
   CASE_EXPECT_EQ(event_subscribe_removed + 1, details::g_test_wal_publisher_stats.event_on_subscribe_removed);
