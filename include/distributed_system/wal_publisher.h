@@ -67,8 +67,8 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_publisher {
   using callback_get_log_key_fn_t = typename object_type::callback_get_log_key_fn_t;
   using callback_alloc_log_key_fn_t = typename object_type::callback_alloc_log_key_fn_t;
 
-  using action_map_type = typename object_type::action_map_type;
-  using patch_map_type = typename object_type::patch_map_type;
+  using callback_log_fn_group_t = typename object_type::callback_log_fn_group_t;
+  using callback_log_group_map_t = typename object_type::callback_log_group_map_t;
 
   // Send snapshot to a subscriber clients
   using callback_send_snapshot_fn_t =
@@ -87,8 +87,8 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_publisher {
   using callback_check_subscriber_fn_t =
       std::function<bool(wal_publisher&, const subscriber_pointer&, callback_param_type)>;
 
-  // On subscriber heartbeat
-  using callback_on_subscriber_heartbeat_fn_t =
+  // On subscriber request
+  using callback_on_subscriber_request_fn_t =
       std::function<void(wal_publisher&, const subscriber_pointer&, callback_param_type)>;
 
   // On subscriber added
@@ -105,7 +105,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_publisher {
     callback_send_subscribe_response_fn_t subscribe_response;
 
     callback_check_subscriber_fn_t check_subscriber;
-    callback_on_subscriber_heartbeat_fn_t on_subscriber_heartbeat;
+    callback_on_subscriber_request_fn_t on_subscriber_request;
     callback_on_subscriber_added_fn_t on_subscriber_added;
     callback_on_subscriber_removed_fn_t on_subscriber_removed;
   };
@@ -148,7 +148,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_publisher {
       return nullptr;
     }
 
-    if (!vt->get_meta || !vt->get_log_key || !vt->alloc_log_key) {
+    if (!vt->get_meta || !vt->get_log_key || !vt->allocate_log_key) {
       return nullptr;
     }
 
@@ -325,7 +325,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_publisher {
         vtable_->on_subscriber_added(*this, subscriber, param);
       }
 
-      _receive_subscribe(key, last_checkpoint, now, param, false);
+      _receive_subscribe_request(key, last_checkpoint, now, param, false);
     }
 
     return subscriber;
@@ -397,8 +397,8 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_publisher {
   }
 
  private:
-  wal_result_code _receive_subscribe(const subscriber_key_type& key, log_key_type last_checkpoint,
-                                     const time_point& now, callback_param_type param, bool reset_timer) {
+  wal_result_code _receive_subscribe_request(const subscriber_key_type& key, log_key_type last_checkpoint,
+                                             const time_point& now, callback_param_type param, bool reset_timer) {
     subscriber_pointer subscriber = subscriber_manager_->find(key);
     if (!subscriber) {
       return wal_result_code::kSubscriberNotFound;
@@ -413,8 +413,8 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_publisher {
       return wal_result_code::kSubscriberNotFound;
     }
 
-    if (vtable_ && vtable_->on_subscriber_heartbeat) {
-      vtable_->on_subscriber_heartbeat(*this, subscriber, param);
+    if (vtable_ && vtable_->on_subscriber_request) {
+      vtable_->on_subscriber_request(*this, subscriber, param);
     }
 
     if (wal_object_->get_last_removed_key()) {
@@ -437,9 +437,9 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_publisher {
   }
 
  public:
-  wal_result_code receive_subscribe(const subscriber_key_type& key, log_key_type last_checkpoint, const time_point& now,
-                                    callback_param_type param) {
-    return _receive_subscribe(key, last_checkpoint, now, param, true);
+  wal_result_code receive_subscribe_request(const subscriber_key_type& key, log_key_type last_checkpoint,
+                                            const time_point& now, callback_param_type param) {
+    return _receive_subscribe_request(key, last_checkpoint, now, param, true);
   }
 
   template <class... ArgsT>

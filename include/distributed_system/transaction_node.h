@@ -18,7 +18,12 @@
 
 #include "distributed_system/transaction_common_defs.h"
 
-// TODO(owentou): 等稳定后移入atframe_utils
 namespace util {
-namespace distributed_system {}  // namespace distributed_system
+namespace distributed_system {
+// Event: prepare(check conditions)
+// Event: merge(check running[Wound Wait: lock])
+// Event: commit
+// Event: cancle
+// Event: redo
+}  // namespace distributed_system
 }  // namespace util

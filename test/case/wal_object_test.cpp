@@ -129,8 +129,8 @@ static test_wal_object_type::vtable_pointer create_vtable() {
     return log.log_key;
   };
 
-  ret->alloc_log_key = [](wal_object_type&,
-                          wal_object_type::callback_param_type) -> wal_object_type::log_key_result_type {
+  ret->allocate_log_key = [](wal_object_type&, const wal_object_type::log_type&,
+                             wal_object_type::callback_param_type) -> wal_object_type::log_key_result_type {
     return wal_object_type::log_key_result_type::make_success(++details::g_test_wal_object_stats.key_alloc);
   };
 
@@ -142,7 +142,7 @@ static test_wal_object_type::vtable_pointer create_vtable() {
     ++details::g_test_wal_object_stats.event_on_log_removed;
   };
 
-  ret->delegate_action[test_wal_object_log_action::kDoNothing] =
+  ret->log_action_delegate[test_wal_object_log_action::kDoNothing].action =
       [](wal_object_type&, const wal_object_type::log_type& log,
          wal_object_type::callback_param_type) -> wal_result_code {
     ++details::g_test_wal_object_stats.delegate_action_count;
@@ -151,7 +151,7 @@ static test_wal_object_type::vtable_pointer create_vtable() {
     return wal_result_code::kOk;
   };
 
-  ret->delegate_action[test_wal_object_log_action::kRecursivePushBack] =
+  ret->log_action_delegate[test_wal_object_log_action::kRecursivePushBack].action =
       [](wal_object_type& wal, const wal_object_type::log_type& log,
          wal_object_type::callback_param_type param) -> wal_result_code {
     ++details::g_test_wal_object_stats.delegate_action_count;
@@ -164,7 +164,7 @@ static test_wal_object_type::vtable_pointer create_vtable() {
     return wal_result_code::kOk;
   };
 
-  ret->delegate_action[test_wal_object_log_action::kIgnore] =
+  ret->log_action_delegate[test_wal_object_log_action::kIgnore].action =
       [](wal_object_type&, const wal_object_type::log_type& log,
          wal_object_type::callback_param_type) -> wal_result_code {
     ++details::g_test_wal_object_stats.delegate_action_count;
@@ -173,28 +173,28 @@ static test_wal_object_type::vtable_pointer create_vtable() {
     return wal_result_code::kIgnore;
   };
 
-  ret->default_action = [](wal_object_type&, const wal_object_type::log_type& log,
-                           wal_object_type::callback_param_type) -> wal_result_code {
+  ret->log_action_delegate[test_wal_object_log_action::kFallbackDefault].patch =
+      [](wal_object_type&, wal_object_type::log_type&, wal_object_type::callback_param_type) -> wal_result_code {
+    ++details::g_test_wal_object_stats.delegate_patcher_count;
+    return wal_result_code::kOk;
+  };
+
+  ret->log_action_delegate[test_wal_object_log_action::kBreakOnDelegatePatcher].patch =
+      [](wal_object_type&, wal_object_type::log_type&, wal_object_type::callback_param_type) -> wal_result_code {
+    ++details::g_test_wal_object_stats.delegate_patcher_count;
+    return wal_result_code::kIgnore;
+  };
+
+  ret->default_delegate.action = [](wal_object_type&, const wal_object_type::log_type& log,
+                                    wal_object_type::callback_param_type) -> wal_result_code {
     ++details::g_test_wal_object_stats.default_action_count;
     details::g_test_wal_object_stats.last_log = log;
 
     return wal_result_code::kOk;
   };
 
-  ret->delegate_patcher[test_wal_object_log_action::kFallbackDefault] =
-      [](wal_object_type&, wal_object_type::log_type&, wal_object_type::callback_param_type) -> wal_result_code {
-    ++details::g_test_wal_object_stats.delegate_patcher_count;
-    return wal_result_code::kOk;
-  };
-
-  ret->delegate_patcher[test_wal_object_log_action::kBreakOnDelegatePatcher] =
-      [](wal_object_type&, wal_object_type::log_type&, wal_object_type::callback_param_type) -> wal_result_code {
-    ++details::g_test_wal_object_stats.delegate_patcher_count;
-    return wal_result_code::kIgnore;
-  };
-
-  ret->default_patcher = [](wal_object_type&, wal_object_type::log_type& log,
-                            wal_object_type::callback_param_type) -> wal_result_code {
+  ret->default_delegate.patch = [](wal_object_type&, wal_object_type::log_type& log,
+                                   wal_object_type::callback_param_type) -> wal_result_code {
     ++details::g_test_wal_object_stats.default_patcher_count;
     if (log.action == test_wal_object_log_action::kBreakOnDefaultPatcher) {
       return wal_result_code::kActionNotSet;
@@ -235,7 +235,7 @@ CASE_TEST(wal_object, create_failed) {
   CASE_EXPECT_EQ(nullptr, test_wal_object_type::create(vtable_2, conf, &storage));
 
   auto vtable_3 = vtable;
-  vtable_3->alloc_log_key = nullptr;
+  vtable_3->allocate_log_key = nullptr;
   CASE_EXPECT_EQ(nullptr, test_wal_object_type::create(vtable_3, conf, &storage));
 }
 

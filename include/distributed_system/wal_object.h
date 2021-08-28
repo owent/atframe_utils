@@ -82,14 +82,15 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_object {
   using callback_get_log_key_fn_t = std::function<log_key_type(const wal_object&, const log_type&)>;
 
   // Allocate a log id
-  using callback_alloc_log_key_fn_t = std::function<log_key_result_type(wal_object&, callback_param_type)>;
+  using callback_alloc_log_key_fn_t =
+      std::function<log_key_result_type(wal_object&, const log_type&, callback_param_type)>;
 
-  using action_map_type =
-      std::unordered_map<action_case_type, callback_log_action_fn_t, typename log_operator_type::action_case_hash,
-                         typename log_operator_type::action_case_equal>;
-
-  using patch_map_type =
-      std::unordered_map<action_case_type, callback_log_patch_fn_t, typename log_operator_type::action_case_hash,
+  struct callback_log_fn_group_t {
+    callback_log_patch_fn_t patch;
+    callback_log_action_fn_t action;
+  };
+  using callback_log_group_map_t =
+      std::unordered_map<action_case_type, callback_log_fn_group_t, typename log_operator_type::action_case_hash,
                          typename log_operator_type::action_case_equal>;
 
   struct vtable_type {
@@ -99,13 +100,11 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_object {
     callback_log_set_meta_fn_t set_meta;
     callback_log_merge_fn_t merge_log;
     callback_get_log_key_fn_t get_log_key;
-    callback_alloc_log_key_fn_t alloc_log_key;
+    callback_alloc_log_key_fn_t allocate_log_key;
     callback_log_event_fn_t on_log_added;
     callback_log_event_fn_t on_log_removed;
-    action_map_type delegate_action;
-    callback_log_action_fn_t default_action;
-    patch_map_type delegate_patcher;
-    callback_log_patch_fn_t default_patcher;
+    callback_log_group_map_t log_action_delegate;
+    callback_log_fn_group_t default_delegate;
   };
   using vtable_pointer = std::shared_ptr<vtable_type>;
 
@@ -149,7 +148,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_object {
       return nullptr;
     }
 
-    if (!vt->get_meta || !vt->get_log_key || !vt->alloc_log_key) {
+    if (!vt->get_meta || !vt->get_log_key) {
       return nullptr;
     }
 
@@ -238,18 +237,18 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_object {
 
   template <class... ArgsT>
   log_pointer allocate_log(time_point now, action_case_type action_case, callback_param_type param, ArgsT&&... args) {
-    if (!configure_ || !vtable_ || !vtable_->alloc_log_key || !vtable_->set_meta) {
-      return nullptr;
-    }
-
-    log_key_result_type new_key = vtable_->alloc_log_key(*this, param);
-    if (!new_key.is_success()) {
+    if (!configure_ || !vtable_ || !vtable_->allocate_log_key || !vtable_->set_meta) {
       return nullptr;
     }
 
     log_pointer ret = std::make_shared<log_type>(std::forward<ArgsT>(args)...);
     if (!ret) {
       return ret;
+    }
+
+    log_key_result_type new_key = vtable_->allocate_log_key(*this, *ret, param);
+    if (!new_key.is_success()) {
+      return nullptr;
     }
 
     meta_type meta;
@@ -580,28 +579,32 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_object {
     }
 
     wal_result_code ret = wal_result_code::kActionNotSet;
-    {
-      auto iter = vtable_->delegate_patcher.find(meta.get_success()->action_case);
-      if (iter != vtable_->delegate_patcher.end()) {
-        ret = iter->second(*this, *log, param);
-        if (ret != wal_result_code::kOk) {
-          return ret;
+    do {
+      auto iter = vtable_->log_action_delegate.find(meta.get_success()->action_case);
+      if (iter != vtable_->log_action_delegate.end() && (iter->second.patch || iter->second.action)) {
+        if (iter->second.patch) {
+          ret = iter->second.patch(*this, *log, param);
+          if (ret != wal_result_code::kOk) {
+            break;
+          }
         }
-      } else if (vtable_->default_patcher) {
-        ret = vtable_->default_patcher(*this, *log, param);
+        if (iter->second.action) {
+          ret = iter->second.action(*this, *log, param);
+        }
+        break;
+      }
+
+      if (vtable_->default_delegate.patch) {
+        ret = vtable_->default_delegate.patch(*this, *log, param);
         if (ret != wal_result_code::kOk) {
-          return ret;
+          break;
         }
       }
-    }
-    {
-      auto iter = vtable_->delegate_action.find(meta.get_success()->action_case);
-      if (iter != vtable_->delegate_action.end()) {
-        ret = iter->second(*this, *log, param);
-      } else if (vtable_->default_action) {
-        ret = vtable_->default_action(*this, *log, param);
+
+      if (vtable_->default_delegate.action) {
+        ret = vtable_->default_delegate.action(*this, *log, param);
       }
-    }
+    } while (false);
     return ret;
   }
 

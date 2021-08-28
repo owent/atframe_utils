@@ -73,20 +73,20 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_subscriber {
         return;
       }
 
-      if (subscriber->timer_iter_ != subscribers_timer_.end()) {
-        remove_subscriber_timer(subscriber->timer_iter_);
+      if (subscriber->timer_handle_ != subscribers_timer_.end()) {
+        remove_subscriber_timer(subscriber->timer_handle_);
       }
 
       timer_type timer;
       timer.timeout = now + subscriber->get_heartbeat_timeout();
       timer.subscriber = subscriber;
 
-      subscriber->timer_iter_ = subscribers_timer_.insert(subscribers_timer_.end(), timer);
+      subscriber->timer_handle_ = subscribers_timer_.insert(subscribers_timer_.end(), timer);
     }
 
     void unbind_owner(wal_subscriber& subscriber) {
       if (nullptr != subscriber.owner_) {
-        subscriber.owner_->remove_subscriber_timer(subscriber.timer_iter_);
+        subscriber.owner_->remove_subscriber_timer(subscriber.timer_handle_);
         subscriber.owner_ = nullptr;
       }
     }
@@ -103,7 +103,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_subscriber {
         return;
       }
 
-      remove_subscriber_timer(subscriber->timer_iter_);
+      remove_subscriber_timer(subscriber->timer_handle_);
       insert_subscriber_timer(now, subscriber);
     }
 
@@ -247,7 +247,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_subscriber {
         }
 
         // duplicated iterator
-        if (subscriber->timer_iter_ != begin) {
+        if (subscriber->timer_handle_ != begin) {
           subscribers_timer_.erase(begin);
           continue;
         }
@@ -272,7 +272,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_subscriber {
         last_heartbeat_timepoint_(now),
         heartbeat_timeout_(timeout),
         private_data_{std::forward<ArgsT>(args)...},
-        timer_iter_(timer_iter) {}
+        timer_handle_(timer_iter) {}
 
   inline const key_type& get_key() const noexcept { return key_; }
 
@@ -296,7 +296,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_subscriber {
   duration heartbeat_timeout_;
   private_data_type private_data_;
 
-  typename std::list<timer_type>::iterator timer_iter_;
+  typename std::list<timer_type>::iterator timer_handle_;
 };
 
 }  // namespace distributed_system

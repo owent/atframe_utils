@@ -140,8 +140,8 @@ static test_wal_publisher_type::vtable_pointer create_vtable() {
     return log.log_key;
   };
 
-  ret->alloc_log_key = [](wal_object_type&,
-                          wal_object_type::callback_param_type) -> wal_object_type::log_key_result_type {
+  ret->allocate_log_key = [](wal_object_type&, const wal_object_type::log_type&,
+                             wal_object_type::callback_param_type) -> wal_object_type::log_key_result_type {
     return wal_object_type::log_key_result_type::make_success(++details::g_test_wal_publisher_stats.key_alloc);
   };
 
@@ -153,7 +153,7 @@ static test_wal_publisher_type::vtable_pointer create_vtable() {
     ++details::g_test_wal_publisher_stats.event_on_log_removed;
   };
 
-  ret->delegate_action[test_wal_publisher_log_action::kDoNothing] =
+  ret->log_action_delegate[test_wal_publisher_log_action::kDoNothing].action =
       [](wal_object_type&, const wal_object_type::log_type& log,
          wal_object_type::callback_param_type) -> wal_result_code {
     ++details::g_test_wal_publisher_stats.delegate_action_count;
@@ -164,7 +164,7 @@ static test_wal_publisher_type::vtable_pointer create_vtable() {
     return wal_result_code::kOk;
   };
 
-  ret->delegate_action[test_wal_publisher_log_action::kRecursivePushBack] =
+  ret->log_action_delegate[test_wal_publisher_log_action::kRecursivePushBack].action =
       [](wal_object_type& wal, const wal_object_type::log_type& log,
          wal_object_type::callback_param_type param) -> wal_result_code {
     ++details::g_test_wal_publisher_stats.delegate_action_count;
@@ -179,8 +179,8 @@ static test_wal_publisher_type::vtable_pointer create_vtable() {
     return wal_result_code::kOk;
   };
 
-  ret->default_action = [](wal_object_type&, const wal_object_type::log_type& log,
-                           wal_object_type::callback_param_type) -> wal_result_code {
+  ret->default_delegate.action = [](wal_object_type&, const wal_object_type::log_type& log,
+                                    wal_object_type::callback_param_type) -> wal_result_code {
     ++details::g_test_wal_publisher_stats.default_action_count;
     details::g_test_wal_publisher_stats.last_log = log;
     details::g_test_wal_publisher_stats.last_event_subscriber_count = 0;
@@ -246,8 +246,8 @@ static test_wal_publisher_type::vtable_pointer create_vtable() {
     return true;
   };
 
-  ret->on_subscriber_heartbeat = [](wal_publisher_type&, const wal_publisher_type::subscriber_pointer& subscriber,
-                                    wal_publisher_type::callback_param_type) {
+  ret->on_subscriber_request = [](wal_publisher_type&, const wal_publisher_type::subscriber_pointer& subscriber,
+                                  wal_publisher_type::callback_param_type) {
     ++details::g_test_wal_publisher_stats.event_on_subscribe_heartbeat;
     details::g_test_wal_publisher_stats.last_subscriber = subscriber;
 
@@ -303,7 +303,7 @@ CASE_TEST(wal_publisher, create_failed) {
   CASE_EXPECT_EQ(nullptr, test_wal_publisher_type::create(vtable_2, conf, &storage));
 
   auto vtable_3 = vtable;
-  vtable_3->alloc_log_key = nullptr;
+  vtable_3->allocate_log_key = nullptr;
   CASE_EXPECT_EQ(nullptr, test_wal_publisher_type::create(vtable_3, conf, &storage));
 
   auto vtable_4 = vtable;
@@ -586,7 +586,7 @@ CASE_TEST(wal_publisher, subscriber_send_snapshot) {
   auto last_removed_key = (*publisher->get_log_manager().log_cbegin())->log_key - 1;
   publisher->get_log_manager().set_last_removed_key(last_removed_key);
 
-  publisher->receive_subscribe(subscriber_key_1, last_removed_key, t3, ctx);
+  publisher->receive_subscribe_request(subscriber_key_1, last_removed_key, t3, ctx);
 
   CASE_EXPECT_EQ(event_on_subscribe_heartbeat + 2, details::g_test_wal_publisher_stats.event_on_subscribe_heartbeat);
 
@@ -594,7 +594,7 @@ CASE_TEST(wal_publisher, subscriber_send_snapshot) {
   CASE_EXPECT_EQ(send_logs_count + 1, details::g_test_wal_publisher_stats.send_logs_count);
   CASE_EXPECT_EQ(send_snapshot_count + 1, details::g_test_wal_publisher_stats.send_snapshot_count);
 
-  publisher->receive_subscribe(subscriber_key_1, last_removed_key - 1, t3, ctx);
+  publisher->receive_subscribe_request(subscriber_key_1, last_removed_key - 1, t3, ctx);
 
   CASE_EXPECT_EQ(event_on_subscribe_heartbeat + 3, details::g_test_wal_publisher_stats.event_on_subscribe_heartbeat);
 
@@ -642,7 +642,7 @@ CASE_TEST(wal_publisher, subscriber_send_logs) {
 
   auto from_key = (*publisher->get_log_manager().log_cbegin())->log_key + 1;
 
-  publisher->receive_subscribe(subscriber_key_1, from_key, t3, ctx);
+  publisher->receive_subscribe_request(subscriber_key_1, from_key, t3, ctx);
 
   CASE_EXPECT_EQ(2, details::g_test_wal_publisher_stats.last_event_log_count);
   CASE_EXPECT_EQ(send_logs_count + 1, details::g_test_wal_publisher_stats.send_logs_count);
