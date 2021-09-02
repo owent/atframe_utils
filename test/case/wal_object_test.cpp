@@ -15,6 +15,8 @@ enum class test_wal_object_log_action {
   kRecursivePushBack,
   kIgnore,
   kFallbackDefault,
+  kBreakOnDelegatePatcher,
+  kBreakOnDefaultPatcher,
 };
 
 namespace std {
@@ -62,6 +64,8 @@ struct test_wal_object_stats {
   size_t merge_count;
   size_t delegate_action_count;
   size_t default_action_count;
+  size_t delegate_patcher_count;
+  size_t default_patcher_count;
   size_t event_on_log_added;
   size_t event_on_log_removed;
 
@@ -69,7 +73,7 @@ struct test_wal_object_stats {
 };
 
 namespace details {
-test_wal_object_stats g_test_wal_object_stats{1, 0, 0, 0, 0, 0, test_wal_object_log_type()};
+test_wal_object_stats g_test_wal_object_stats{1, 0, 0, 0, 0, 0, 0, 0, test_wal_object_log_type()};
 }
 
 static test_wal_object_type::vtable_pointer create_vtable() {
@@ -125,8 +129,8 @@ static test_wal_object_type::vtable_pointer create_vtable() {
     return log.log_key;
   };
 
-  ret->alloc_log_key = [](wal_object_type&,
-                          wal_object_type::callback_param_type) -> wal_object_type::log_key_result_type {
+  ret->allocate_log_key = [](wal_object_type&, const wal_object_type::log_type&,
+                             wal_object_type::callback_param_type) -> wal_object_type::log_key_result_type {
     return wal_object_type::log_key_result_type::make_success(++details::g_test_wal_object_stats.key_alloc);
   };
 
@@ -138,7 +142,7 @@ static test_wal_object_type::vtable_pointer create_vtable() {
     ++details::g_test_wal_object_stats.event_on_log_removed;
   };
 
-  ret->delegate_action[test_wal_object_log_action::kDoNothing] =
+  ret->log_action_delegate[test_wal_object_log_action::kDoNothing].action =
       [](wal_object_type&, const wal_object_type::log_type& log,
          wal_object_type::callback_param_type) -> wal_result_code {
     ++details::g_test_wal_object_stats.delegate_action_count;
@@ -147,7 +151,7 @@ static test_wal_object_type::vtable_pointer create_vtable() {
     return wal_result_code::kOk;
   };
 
-  ret->delegate_action[test_wal_object_log_action::kRecursivePushBack] =
+  ret->log_action_delegate[test_wal_object_log_action::kRecursivePushBack].action =
       [](wal_object_type& wal, const wal_object_type::log_type& log,
          wal_object_type::callback_param_type param) -> wal_result_code {
     ++details::g_test_wal_object_stats.delegate_action_count;
@@ -160,7 +164,7 @@ static test_wal_object_type::vtable_pointer create_vtable() {
     return wal_result_code::kOk;
   };
 
-  ret->delegate_action[test_wal_object_log_action::kIgnore] =
+  ret->log_action_delegate[test_wal_object_log_action::kIgnore].action =
       [](wal_object_type&, const wal_object_type::log_type& log,
          wal_object_type::callback_param_type) -> wal_result_code {
     ++details::g_test_wal_object_stats.delegate_action_count;
@@ -169,10 +173,26 @@ static test_wal_object_type::vtable_pointer create_vtable() {
     return wal_result_code::kIgnore;
   };
 
-  ret->default_action = [](wal_object_type&, const wal_object_type::log_type& log,
-                           wal_object_type::callback_param_type) -> wal_result_code {
+  ret->log_action_delegate[test_wal_object_log_action::kBreakOnDelegatePatcher].patch =
+      [](wal_object_type&, wal_object_type::log_type&, wal_object_type::callback_param_type) -> wal_result_code {
+    ++details::g_test_wal_object_stats.delegate_patcher_count;
+    return wal_result_code::kIgnore;
+  };
+
+  ret->default_delegate.action = [](wal_object_type&, const wal_object_type::log_type& log,
+                                    wal_object_type::callback_param_type) -> wal_result_code {
     ++details::g_test_wal_object_stats.default_action_count;
     details::g_test_wal_object_stats.last_log = log;
+
+    return wal_result_code::kOk;
+  };
+
+  ret->default_delegate.patch = [](wal_object_type&, wal_object_type::log_type& log,
+                                   wal_object_type::callback_param_type) -> wal_result_code {
+    ++details::g_test_wal_object_stats.default_patcher_count;
+    if (log.action == test_wal_object_log_action::kBreakOnDefaultPatcher) {
+      return wal_result_code::kActionNotSet;
+    }
 
     return wal_result_code::kOk;
   };
@@ -209,7 +229,7 @@ CASE_TEST(wal_object, create_failed) {
   CASE_EXPECT_EQ(nullptr, test_wal_object_type::create(vtable_2, conf, &storage));
 
   auto vtable_3 = vtable;
-  vtable_3->alloc_log_key = nullptr;
+  vtable_3->allocate_log_key = nullptr;
   CASE_EXPECT_EQ(nullptr, test_wal_object_type::create(vtable_3, conf, &storage));
 }
 
@@ -273,6 +293,8 @@ CASE_TEST(wal_object, add_action) {
   do {
     auto old_default_action_count = details::g_test_wal_object_stats.default_action_count;
     auto old_delegate_action_count = details::g_test_wal_object_stats.delegate_action_count;
+    auto old_default_patcher_count = details::g_test_wal_object_stats.default_patcher_count;
+    auto old_delegate_patcher_count = details::g_test_wal_object_stats.delegate_patcher_count;
 
     auto previous_key = details::g_test_wal_object_stats.key_alloc;
     auto log = wal_obj->allocate_log(now, test_wal_object_log_action::kDoNothing, ctx);
@@ -289,12 +311,16 @@ CASE_TEST(wal_object, add_action) {
     CASE_EXPECT_EQ(1, wal_obj->get_all_logs().size());
     CASE_EXPECT_EQ(old_default_action_count, details::g_test_wal_object_stats.default_action_count);
     CASE_EXPECT_EQ(old_delegate_action_count + 1, details::g_test_wal_object_stats.delegate_action_count);
+    CASE_EXPECT_EQ(old_default_patcher_count, details::g_test_wal_object_stats.default_patcher_count);
+    CASE_EXPECT_EQ(old_delegate_patcher_count, details::g_test_wal_object_stats.delegate_patcher_count);
   } while (false);
 
   int64_t find_key = 0;
   do {
     auto old_default_action_count = details::g_test_wal_object_stats.default_action_count;
     auto old_delegate_action_count = details::g_test_wal_object_stats.delegate_action_count;
+    auto old_default_patcher_count = details::g_test_wal_object_stats.default_patcher_count;
+    auto old_delegate_patcher_count = details::g_test_wal_object_stats.delegate_patcher_count;
 
     auto previous_key = details::g_test_wal_object_stats.key_alloc;
     auto log = wal_obj->allocate_log(now, test_wal_object_log_action::kRecursivePushBack, ctx);
@@ -312,11 +338,15 @@ CASE_TEST(wal_object, add_action) {
     CASE_EXPECT_EQ(3, wal_obj->get_all_logs().size());
     CASE_EXPECT_EQ(old_default_action_count, details::g_test_wal_object_stats.default_action_count);
     CASE_EXPECT_EQ(old_delegate_action_count + 2, details::g_test_wal_object_stats.delegate_action_count);
+    CASE_EXPECT_EQ(old_default_patcher_count, details::g_test_wal_object_stats.default_patcher_count);
+    CASE_EXPECT_EQ(old_delegate_patcher_count, details::g_test_wal_object_stats.delegate_patcher_count);
   } while (false);
 
   do {
     auto old_default_action_count = details::g_test_wal_object_stats.default_action_count;
     auto old_delegate_action_count = details::g_test_wal_object_stats.delegate_action_count;
+    auto old_default_patcher_count = details::g_test_wal_object_stats.default_patcher_count;
+    auto old_delegate_patcher_count = details::g_test_wal_object_stats.delegate_patcher_count;
 
     auto previous_key = details::g_test_wal_object_stats.key_alloc;
     auto log = wal_obj->allocate_log(now, test_wal_object_log_action::kFallbackDefault, ctx);
@@ -333,11 +363,71 @@ CASE_TEST(wal_object, add_action) {
     CASE_EXPECT_EQ(4, wal_obj->get_all_logs().size());
     CASE_EXPECT_EQ(old_default_action_count + 1, details::g_test_wal_object_stats.default_action_count);
     CASE_EXPECT_EQ(old_delegate_action_count, details::g_test_wal_object_stats.delegate_action_count);
+    CASE_EXPECT_EQ(old_default_patcher_count + 1, details::g_test_wal_object_stats.default_patcher_count);
+    CASE_EXPECT_EQ(old_delegate_patcher_count, details::g_test_wal_object_stats.delegate_patcher_count);
+  } while (false);
+
+  do {
+    auto old_default_action_count = details::g_test_wal_object_stats.default_action_count;
+    auto old_delegate_action_count = details::g_test_wal_object_stats.delegate_action_count;
+    auto old_default_patcher_count = details::g_test_wal_object_stats.default_patcher_count;
+    auto old_delegate_patcher_count = details::g_test_wal_object_stats.delegate_patcher_count;
+
+    auto previous_key = details::g_test_wal_object_stats.key_alloc;
+    auto log = wal_obj->allocate_log(now, test_wal_object_log_action::kBreakOnDelegatePatcher, ctx);
+    CASE_EXPECT_TRUE(!!log);
+    if (!log) {
+      break;
+    }
+    log->data = log->log_key + 100;
+    CASE_EXPECT_EQ(previous_key + 1, log->log_key);
+    CASE_EXPECT_TRUE(test_wal_object_log_action::kBreakOnDelegatePatcher == log->action);
+    CASE_EXPECT_TRUE(now == log->timepoint);
+
+    wal_obj->push_back(log, ctx);
+    CASE_EXPECT_EQ(4, wal_obj->get_all_logs().size());
+    CASE_EXPECT_EQ(old_default_action_count, details::g_test_wal_object_stats.default_action_count);
+    CASE_EXPECT_EQ(old_delegate_action_count, details::g_test_wal_object_stats.delegate_action_count);
+    CASE_EXPECT_EQ(old_default_patcher_count, details::g_test_wal_object_stats.default_patcher_count);
+    CASE_EXPECT_EQ(old_delegate_patcher_count + 1, details::g_test_wal_object_stats.delegate_patcher_count);
+  } while (false);
+
+  do {
+    auto old_default_action_count = details::g_test_wal_object_stats.default_action_count;
+    auto old_delegate_action_count = details::g_test_wal_object_stats.delegate_action_count;
+    auto old_default_patcher_count = details::g_test_wal_object_stats.default_patcher_count;
+    auto old_delegate_patcher_count = details::g_test_wal_object_stats.delegate_patcher_count;
+
+    auto previous_key = details::g_test_wal_object_stats.key_alloc;
+    auto log = wal_obj->allocate_log(now, test_wal_object_log_action::kBreakOnDefaultPatcher, ctx);
+    CASE_EXPECT_TRUE(!!log);
+    if (!log) {
+      break;
+    }
+    log->data = log->log_key + 100;
+    CASE_EXPECT_EQ(previous_key + 1, log->log_key);
+    CASE_EXPECT_TRUE(test_wal_object_log_action::kBreakOnDefaultPatcher == log->action);
+    CASE_EXPECT_TRUE(now == log->timepoint);
+
+    wal_obj->push_back(log, ctx);
+    CASE_EXPECT_EQ(4, wal_obj->get_all_logs().size());
+    CASE_EXPECT_EQ(old_default_action_count, details::g_test_wal_object_stats.default_action_count);
+    CASE_EXPECT_EQ(old_delegate_action_count, details::g_test_wal_object_stats.delegate_action_count);
+    CASE_EXPECT_EQ(old_default_patcher_count + 1, details::g_test_wal_object_stats.default_patcher_count);
+    CASE_EXPECT_EQ(old_delegate_patcher_count, details::g_test_wal_object_stats.delegate_patcher_count);
   } while (false);
 
   // ============ iterators ============
   {
     auto find_ptr = wal_obj->find_log(find_key);
+    CASE_EXPECT_TRUE(!!find_ptr);
+    CASE_EXPECT_EQ(find_key + 100, find_ptr->data);
+    CASE_EXPECT_TRUE(test_wal_object_log_action::kRecursivePushBack == find_ptr->action);
+  }
+
+  {
+    const auto& wal_cobj = *wal_obj;
+    auto find_ptr = wal_cobj.find_log(find_key);
     CASE_EXPECT_TRUE(!!find_ptr);
     CASE_EXPECT_EQ(find_key + 100, find_ptr->data);
     CASE_EXPECT_TRUE(test_wal_object_log_action::kRecursivePushBack == find_ptr->action);
