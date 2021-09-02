@@ -697,6 +697,9 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_object {
  private:
   template <class, class, class, class, class>
   friend class wal_publisher;
+  template <class, class, class, class, class>
+  friend class wal_client;
+
   using callback_log_event_on_assign_fn_t = std::function<void(wal_object&)>;
 
   void set_internal_event_on_assign_logs(callback_log_event_on_assign_fn_t fn) { internal_event_on_assign_ = fn; }

@@ -14,6 +14,7 @@
 #include <utility>
 
 #include "distributed_system/wal_common_defs.h"
+#include "distributed_system/wal_object.h"
 
 namespace util {
 namespace distributed_system {
@@ -101,7 +102,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_client {
         next_heartbeat_timepoint_(helper.next_heartbeat) {
     if (wal_object_) {
       wal_object_->set_internal_event_on_assign_logs([this](object_type& wal) {
-        // reset broadcast
+        // reset finished key
         if (!wal.get_all_logs().empty() && this->vtable_ && this->vtable_->get_log_key) {
           auto log_key = this->vtable_->get_log_key(wal, **wal.get_all_logs().rbegin());
           if (!this->get_last_finished_log_key()) {
@@ -301,7 +302,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_client {
 
   template <class... LogCtorArgsT>
   wal_result_code receive_log(callback_param_type param, LogCtorArgsT&&... args) {
-    return receive_log(std::make_shared<log_type>{std::formawd<LogCtorArgsT>(args)...}, param);
+    return receive_log(std::make_shared<log_type>(std::forward<LogCtorArgsT>(args)...), param);
   }
 
   template <class IteratorT>

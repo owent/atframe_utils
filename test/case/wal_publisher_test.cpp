@@ -14,6 +14,7 @@ enum class test_wal_publisher_log_action {
   kDoNothing = 0,
   kRecursivePushBack,
   kFallbackDefault,
+  kRemoveOneSubscriber,
 };
 
 namespace std {
@@ -29,7 +30,11 @@ struct test_wal_publisher_log_type {
   util::distributed_system::wal_time_point timepoint;
   int64_t log_key;
   test_wal_publisher_log_action action;
-  int64_t data;
+
+  union {
+    int64_t data;
+    void* publisher;
+  };
 };
 
 struct test_wal_publisher_storage_type {
@@ -93,6 +98,7 @@ static test_wal_publisher_type::vtable_pointer create_vtable() {
   using wal_object_type = test_wal_publisher_type::object_type;
   using wal_publisher_type = test_wal_publisher_type;
   using wal_result_code = util::distributed_system::wal_result_code;
+  using wal_unsubscribe_reason = util::distributed_system::wal_unsubscribe_reason;
 
   wal_publisher_type::vtable_pointer ret = std::make_shared<wal_publisher_type::vtable_type>();
 
@@ -175,6 +181,21 @@ static test_wal_publisher_type::vtable_pointer create_vtable() {
     auto new_log = wal.allocate_log(log.timepoint, test_wal_publisher_log_action::kDoNothing, param);
     new_log->data = log.data + 1;
     wal.emplace_back(std::move(new_log), param);
+
+    return wal_result_code::kOk;
+  };
+
+  ret->log_action_delegate[test_wal_publisher_log_action::kRemoveOneSubscriber].action =
+      [](wal_object_type& wal, const wal_object_type::log_type& log,
+         wal_object_type::callback_param_type param) -> wal_result_code {
+    ++details::g_test_wal_publisher_stats.delegate_action_count;
+    details::g_test_wal_publisher_stats.last_log = log;
+    details::g_test_wal_publisher_stats.last_event_subscriber_count = 1;
+    details::g_test_wal_publisher_stats.last_event_log_count = 1;
+
+    test_wal_publisher_type* publisher = reinterpret_cast<test_wal_publisher_type*>(log.publisher);
+    publisher->remove_subscriber(publisher->subscriber_all_range().first->first, wal_unsubscribe_reason::kClientRequest,
+                                 param);
 
     return wal_result_code::kOk;
   };
@@ -700,4 +721,131 @@ CASE_TEST(wal_publisher, remove_subscriber_by_check_callback) {
   CASE_EXPECT_EQ(event_subscribe_removed + 1, details::g_test_wal_publisher_stats.event_on_subscribe_removed);
 
   CASE_EXPECT_EQ(subscriber_key_2, publisher->get_subscribe_manager().all_range().first->second->get_key());
+}
+
+CASE_TEST(wal_publisher, broadcast) {
+  util::distributed_system::wal_time_point t1 = std::chrono::system_clock::now();
+  util::distributed_system::wal_time_point t2 =
+      t1 + std::chrono::duration_cast<test_wal_publisher_type::duration>(std::chrono::seconds{3});
+  util::distributed_system::wal_time_point t3 =
+      t1 + std::chrono::duration_cast<test_wal_publisher_type::duration>(std::chrono::seconds{6});
+  test_wal_publisher_storage_type storage;
+  test_wal_publisher_context ctx;
+
+  auto conf = create_configure();
+  auto vtable = create_vtable();
+  auto publisher = test_wal_publisher_type::create(vtable, conf, &storage);
+  CASE_EXPECT_TRUE(!!publisher);
+  if (!publisher) {
+    return;
+  }
+
+  uint64_t subscriber_key_1 = 1;
+  uint64_t subscriber_key_2 = 2;
+  uint64_t subscriber_key_3 = 3;
+
+  publisher->get_log_manager().set_last_removed_key(details::g_test_wal_publisher_stats.key_alloc);
+  test_wal_publisher_add_logs(publisher->get_log_manager(), ctx, t1, t2, t3);
+
+  auto event_subscribe_added = details::g_test_wal_publisher_stats.event_on_subscribe_added;
+  auto event_subscribe_removed = details::g_test_wal_publisher_stats.event_on_subscribe_removed;
+  auto send_logs_count = details::g_test_wal_publisher_stats.send_logs_count;
+
+  auto subscriber_1 = publisher->create_subscriber(subscriber_key_1, t1, 0, ctx, &storage);
+  auto subscriber_2 = publisher->create_subscriber(subscriber_key_2, t2, 0, ctx, &storage);
+  auto subscriber_3 = publisher->create_subscriber(subscriber_key_3, t3, 0, ctx, &storage);
+
+  CASE_EXPECT_EQ(event_subscribe_added + 3, details::g_test_wal_publisher_stats.event_on_subscribe_added);
+  CASE_EXPECT_EQ(event_subscribe_removed, details::g_test_wal_publisher_stats.event_on_subscribe_removed);
+  CASE_EXPECT_EQ(send_logs_count, details::g_test_wal_publisher_stats.send_logs_count);
+
+  CASE_EXPECT_EQ(publisher->broadcast(ctx), 4);
+
+  CASE_EXPECT_EQ(event_subscribe_removed, details::g_test_wal_publisher_stats.event_on_subscribe_removed);
+  CASE_EXPECT_EQ(send_logs_count + 1, details::g_test_wal_publisher_stats.send_logs_count);
+  CASE_EXPECT_EQ(3, details::g_test_wal_publisher_stats.last_event_subscriber_count);
+  CASE_EXPECT_EQ(4, details::g_test_wal_publisher_stats.last_event_log_count);
+
+  do {
+    auto log = publisher->allocate_log(t1, test_wal_publisher_log_action::kRemoveOneSubscriber, ctx);
+    CASE_EXPECT_TRUE(!!log);
+    if (!log) {
+      break;
+    }
+    log->publisher = reinterpret_cast<void*>(publisher.get());
+    publisher->emplace_back_log(std::move(log), ctx);
+
+    CASE_EXPECT_EQ(event_subscribe_removed + 1, details::g_test_wal_publisher_stats.event_on_subscribe_removed);
+  } while (false);
+
+  CASE_EXPECT_EQ(publisher->broadcast(ctx), 1);
+
+  CASE_EXPECT_EQ(send_logs_count + 2, details::g_test_wal_publisher_stats.send_logs_count);
+  CASE_EXPECT_EQ(2, details::g_test_wal_publisher_stats.last_event_subscriber_count);
+  CASE_EXPECT_EQ(1, details::g_test_wal_publisher_stats.last_event_log_count);
+}
+
+CASE_TEST(wal_publisher, enable_last_broadcast_for_removed_subscriber) {
+  util::distributed_system::wal_time_point t1 = std::chrono::system_clock::now();
+  util::distributed_system::wal_time_point t2 =
+      t1 + std::chrono::duration_cast<test_wal_publisher_type::duration>(std::chrono::seconds{3});
+  util::distributed_system::wal_time_point t3 =
+      t1 + std::chrono::duration_cast<test_wal_publisher_type::duration>(std::chrono::seconds{6});
+  test_wal_publisher_storage_type storage;
+  test_wal_publisher_context ctx;
+
+  auto conf = create_configure();
+  conf->enable_last_broadcast_for_removed_subscriber = true;
+
+  auto vtable = create_vtable();
+  auto publisher = test_wal_publisher_type::create(vtable, conf, &storage);
+  CASE_EXPECT_TRUE(!!publisher);
+  if (!publisher) {
+    return;
+  }
+
+  uint64_t subscriber_key_1 = 1;
+  uint64_t subscriber_key_2 = 2;
+  uint64_t subscriber_key_3 = 3;
+
+  publisher->get_log_manager().set_last_removed_key(details::g_test_wal_publisher_stats.key_alloc);
+  test_wal_publisher_add_logs(publisher->get_log_manager(), ctx, t1, t2, t3);
+
+  auto event_subscribe_added = details::g_test_wal_publisher_stats.event_on_subscribe_added;
+  auto event_subscribe_removed = details::g_test_wal_publisher_stats.event_on_subscribe_removed;
+  auto send_logs_count = details::g_test_wal_publisher_stats.send_logs_count;
+
+  auto subscriber_1 = publisher->create_subscriber(subscriber_key_1, t1, 0, ctx, &storage);
+  auto subscriber_2 = publisher->create_subscriber(subscriber_key_2, t2, 0, ctx, &storage);
+  auto subscriber_3 = publisher->create_subscriber(subscriber_key_3, t3, 0, ctx, &storage);
+
+  CASE_EXPECT_EQ(event_subscribe_added + 3, details::g_test_wal_publisher_stats.event_on_subscribe_added);
+  CASE_EXPECT_EQ(event_subscribe_removed, details::g_test_wal_publisher_stats.event_on_subscribe_removed);
+  CASE_EXPECT_EQ(send_logs_count, details::g_test_wal_publisher_stats.send_logs_count);
+
+  CASE_EXPECT_EQ(publisher->broadcast(ctx), 4);
+
+  CASE_EXPECT_EQ(event_subscribe_removed, details::g_test_wal_publisher_stats.event_on_subscribe_removed);
+  CASE_EXPECT_EQ(send_logs_count + 1, details::g_test_wal_publisher_stats.send_logs_count);
+  CASE_EXPECT_EQ(3, details::g_test_wal_publisher_stats.last_event_subscriber_count);
+  CASE_EXPECT_EQ(4, details::g_test_wal_publisher_stats.last_event_log_count);
+
+  do {
+    auto log = publisher->allocate_log(t1, test_wal_publisher_log_action::kRemoveOneSubscriber, ctx);
+    CASE_EXPECT_TRUE(!!log);
+    if (!log) {
+      break;
+    }
+    log->publisher = reinterpret_cast<void*>(publisher.get());
+    publisher->emplace_back_log(std::move(log), ctx);
+
+    CASE_EXPECT_EQ(event_subscribe_removed + 1, details::g_test_wal_publisher_stats.event_on_subscribe_removed);
+    CASE_EXPECT_EQ(1, publisher->get_subscribe_gc_pool().size());
+  } while (false);
+
+  CASE_EXPECT_EQ(publisher->broadcast(ctx), 1);
+
+  CASE_EXPECT_EQ(send_logs_count + 3, details::g_test_wal_publisher_stats.send_logs_count);
+  CASE_EXPECT_EQ(1, details::g_test_wal_publisher_stats.last_event_subscriber_count);
+  CASE_EXPECT_EQ(1, details::g_test_wal_publisher_stats.last_event_log_count);
 }
