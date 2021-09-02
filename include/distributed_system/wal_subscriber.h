@@ -19,8 +19,8 @@
 namespace util {
 namespace distributed_system {
 
-template <class PrivateDataT, class KeyT, class HashActionCaseT = std::hash<KeyT>,
-          class EqualActionCaseT = std::equal_to<KeyT> >
+template <class PrivateDataT, class KeyT, class HashSubscriberKeyT = std::hash<KeyT>,
+          class EqualSubscriberKeyT = std::equal_to<KeyT> >
 class LIBATFRAME_UTILS_API_HEAD_ONLY wal_subscriber {
  public:
   using pointer = std::shared_ptr<wal_subscriber>;
@@ -28,8 +28,8 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_subscriber {
   using private_data_type = PrivateDataT;
 
   using key_type = KeyT;
-  using key_hash = HashActionCaseT;
-  using key_equal = EqualActionCaseT;
+  using key_hash = HashSubscriberKeyT;
+  using key_equal = EqualSubscriberKeyT;
   using time_point = wal_time_point;
   using duration = wal_duration;
 

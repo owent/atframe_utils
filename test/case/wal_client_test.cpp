@@ -32,6 +32,15 @@ struct test_wal_client_log_type {
   union {
     int64_t data;
   };
+
+  inline explicit test_wal_client_log_type(util::distributed_system::wal_time_point t, int64_t k,
+                                           test_wal_publisher_log_action act, int64_t d)
+      : timepoint(t), log_key(k), action(act), data(d) {}
+  inline test_wal_client_log_type()
+      : timepoint(std::chrono::system_clock::from_time_t(0)),
+        log_key(0),
+        action(test_wal_publisher_log_action::kDoNothing),
+        data(0) {}
 };
 
 struct test_wal_client_storage_type {

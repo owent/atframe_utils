@@ -35,6 +35,15 @@ struct test_wal_publisher_log_type {
     int64_t data;
     void* publisher;
   };
+
+  inline explicit test_wal_publisher_log_type(util::distributed_system::wal_time_point t, int64_t k,
+                                              test_wal_publisher_log_action act, int64_t d)
+      : timepoint(t), log_key(k), action(act), data(d) {}
+  inline test_wal_publisher_log_type()
+      : timepoint(std::chrono::system_clock::from_time_t(0)),
+        log_key(0),
+        action(test_wal_publisher_log_action::kDoNothing),
+        data(0) {}
 };
 
 struct test_wal_publisher_storage_type {
@@ -843,7 +852,9 @@ CASE_TEST(wal_publisher, enable_last_broadcast_for_removed_subscriber) {
     CASE_EXPECT_EQ(1, publisher->get_subscribe_gc_pool().size());
   } while (false);
 
+  CASE_EXPECT_EQ(1, publisher->get_subscribe_gc_pool().size());
   CASE_EXPECT_EQ(publisher->broadcast(ctx), 1);
+  CASE_EXPECT_EQ(0, publisher->get_subscribe_gc_pool().size());
 
   CASE_EXPECT_EQ(send_logs_count + 3, details::g_test_wal_publisher_stats.send_logs_count);
   CASE_EXPECT_EQ(1, details::g_test_wal_publisher_stats.last_event_subscriber_count);
