@@ -186,7 +186,7 @@ static test_wal_publisher_type::vtable_pointer create_vtable() {
   };
 
   ret->log_action_delegate[test_wal_publisher_log_action::kRemoveOneSubscriber].action =
-      [](wal_object_type& wal, const wal_object_type::log_type& log,
+      [](wal_object_type&, const wal_object_type::log_type& log,
          wal_object_type::callback_param_type param) -> wal_result_code {
     ++details::g_test_wal_publisher_stats.delegate_action_count;
     details::g_test_wal_publisher_stats.last_log = log;
