@@ -173,12 +173,6 @@ static test_wal_object_type::vtable_pointer create_vtable() {
     return wal_result_code::kIgnore;
   };
 
-  ret->log_action_delegate[test_wal_object_log_action::kFallbackDefault].patch =
-      [](wal_object_type&, wal_object_type::log_type&, wal_object_type::callback_param_type) -> wal_result_code {
-    ++details::g_test_wal_object_stats.delegate_patcher_count;
-    return wal_result_code::kOk;
-  };
-
   ret->log_action_delegate[test_wal_object_log_action::kBreakOnDelegatePatcher].patch =
       [](wal_object_type&, wal_object_type::log_type&, wal_object_type::callback_param_type) -> wal_result_code {
     ++details::g_test_wal_object_stats.delegate_patcher_count;
@@ -317,7 +311,7 @@ CASE_TEST(wal_object, add_action) {
     CASE_EXPECT_EQ(1, wal_obj->get_all_logs().size());
     CASE_EXPECT_EQ(old_default_action_count, details::g_test_wal_object_stats.default_action_count);
     CASE_EXPECT_EQ(old_delegate_action_count + 1, details::g_test_wal_object_stats.delegate_action_count);
-    CASE_EXPECT_EQ(old_default_patcher_count + 1, details::g_test_wal_object_stats.default_patcher_count);
+    CASE_EXPECT_EQ(old_default_patcher_count, details::g_test_wal_object_stats.default_patcher_count);
     CASE_EXPECT_EQ(old_delegate_patcher_count, details::g_test_wal_object_stats.delegate_patcher_count);
   } while (false);
 
@@ -344,7 +338,7 @@ CASE_TEST(wal_object, add_action) {
     CASE_EXPECT_EQ(3, wal_obj->get_all_logs().size());
     CASE_EXPECT_EQ(old_default_action_count, details::g_test_wal_object_stats.default_action_count);
     CASE_EXPECT_EQ(old_delegate_action_count + 2, details::g_test_wal_object_stats.delegate_action_count);
-    CASE_EXPECT_EQ(old_default_patcher_count + 2, details::g_test_wal_object_stats.default_patcher_count);
+    CASE_EXPECT_EQ(old_default_patcher_count, details::g_test_wal_object_stats.default_patcher_count);
     CASE_EXPECT_EQ(old_delegate_patcher_count, details::g_test_wal_object_stats.delegate_patcher_count);
   } while (false);
 
@@ -369,8 +363,8 @@ CASE_TEST(wal_object, add_action) {
     CASE_EXPECT_EQ(4, wal_obj->get_all_logs().size());
     CASE_EXPECT_EQ(old_default_action_count + 1, details::g_test_wal_object_stats.default_action_count);
     CASE_EXPECT_EQ(old_delegate_action_count, details::g_test_wal_object_stats.delegate_action_count);
-    CASE_EXPECT_EQ(old_default_patcher_count, details::g_test_wal_object_stats.default_patcher_count);
-    CASE_EXPECT_EQ(old_delegate_patcher_count + 1, details::g_test_wal_object_stats.delegate_patcher_count);
+    CASE_EXPECT_EQ(old_default_patcher_count + 1, details::g_test_wal_object_stats.default_patcher_count);
+    CASE_EXPECT_EQ(old_delegate_patcher_count, details::g_test_wal_object_stats.delegate_patcher_count);
   } while (false);
 
   do {
