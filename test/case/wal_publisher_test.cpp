@@ -617,6 +617,17 @@ CASE_TEST(wal_publisher, subscriber_send_snapshot) {
   publisher->get_log_manager().set_last_removed_key(last_removed_key);
 
   publisher->receive_subscribe_request(subscriber_key_1, last_removed_key, t3, ctx);
+  {
+    auto subscriber = publisher->find_subscriber(subscriber_key_1, ctx);
+    CASE_EXPECT_TRUE(!!subscriber);
+    if (subscriber) {
+      CASE_EXPECT_FALSE(subscriber->is_offline(t3 + std::chrono::seconds{4}));
+      CASE_EXPECT_TRUE(subscriber->is_offline(t3 + std::chrono::seconds{5}));
+      CASE_EXPECT_EQ(t3.time_since_epoch().count(),
+                     subscriber->get_last_heartbeat_time_point().time_since_epoch().count());
+      CASE_EXPECT_EQ(5, std::chrono::duration_cast<std::chrono::seconds>(subscriber->get_heartbeat_timeout()).count());
+    }
+  }
 
   CASE_EXPECT_EQ(event_on_subscribe_heartbeat + 2, details::g_test_wal_publisher_stats.event_on_subscribe_heartbeat);
 

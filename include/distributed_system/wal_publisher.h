@@ -435,6 +435,8 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_publisher {
       return wal_result_code::kSubscriberNotFound;
     }
 
+    subscriber->update_heartbeat_time_point(now);
+
     if (vtable_ && vtable_->on_subscriber_request) {
       vtable_->on_subscriber_request(*this, subscriber, param);
     }
