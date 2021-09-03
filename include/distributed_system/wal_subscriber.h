@@ -286,7 +286,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_subscriber {
   inline void update_heartbeat_time_point(time_point tp) noexcept { last_heartbeat_timepoint_ = tp; }
 
   inline bool is_offline(const time_point& now) const noexcept {
-    return last_heartbeat_timepoint_ + heartbeat_timeout_ >= now;
+    return last_heartbeat_timepoint_ + heartbeat_timeout_ <= now;
   }
 
  private:
