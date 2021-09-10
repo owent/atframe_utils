@@ -392,7 +392,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_object {
     return ret;
   }
 
-  const std::unique_ptr<log_key_type>& get_global_ingore_key() const noexcept { return global_ingore_; }
+  const log_key_type* get_global_ingore_key() const noexcept { return global_ingore_.get(); }
 
   template <class ToKey>
   void set_global_ingore_key(ToKey&& key) {
@@ -403,7 +403,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_object {
     }
   }
 
-  const std::unique_ptr<log_key_type>& get_last_removed_key() const noexcept { return global_last_removed_; }
+  const log_key_type* get_last_removed_key() const noexcept { return global_last_removed_.get(); }
 
   template <class ToKey>
   void set_last_removed_key(ToKey&& key) {

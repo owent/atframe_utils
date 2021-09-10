@@ -94,7 +94,7 @@ static test_wal_object_type::vtable_pointer create_vtable() {
 
     wal.assign_logs(container.begin(), container.end());
     if (!from.logs.empty()) {
-      wal.set_last_removed_key((*from.logs.rbegin()).log_key - 1);
+      wal.set_last_removed_key((*from.logs.begin()).log_key - 1);
     }
     return wal_result_code::kOk;
   };
@@ -102,7 +102,7 @@ static test_wal_object_type::vtable_pointer create_vtable() {
   ret->dump = [](const wal_object_type& wal, wal_object_type::storage_type& to,
                  wal_object_type::callback_param_type) -> wal_result_code {
     to = *wal.get_private_data().storage;
-    if (wal.get_global_ingore_key()) {
+    if (nullptr != wal.get_global_ingore_key()) {
       to.global_ignore = *wal.get_global_ingore_key();
     }
     return wal_result_code::kOk;

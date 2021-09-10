@@ -45,7 +45,6 @@ struct test_wal_client_log_type {
 
 struct test_wal_client_storage_type {
   std::vector<test_wal_client_log_type> logs;
-  int64_t global_ignore;
 };
 
 struct test_wal_client_log_action_getter {
@@ -107,7 +106,7 @@ static test_wal_client_type::vtable_pointer create_vtable() {
 
     wal.assign_logs(container);
     if (!from.logs.empty()) {
-      wal.set_last_removed_key((*from.logs.rbegin()).log_key - 1);
+      wal.set_last_removed_key((*from.logs.begin()).log_key - 1);
     }
     return wal_result_code::kOk;
   };
@@ -184,7 +183,7 @@ static test_wal_client_type::vtable_pointer create_vtable() {
 
     client.get_log_manager().assign_logs(container);
     if (!from.logs.empty()) {
-      client.get_log_manager().set_last_removed_key((*from.logs.rbegin()).log_key - 1);
+      client.get_log_manager().set_last_removed_key((*from.logs.begin()).log_key - 1);
     }
     return wal_result_code::kOk;
   };
@@ -249,7 +248,6 @@ CASE_TEST(wal_client, load_and_dump) {
 
   test_wal_client_storage_type load_storege;
   util::distributed_system::wal_time_point now = std::chrono::system_clock::now();
-  load_storege.global_ignore = 123;
   load_storege.logs.push_back(test_wal_client_log_type{now, 124, test_wal_client_log_action::kDoNothing, 124});
   load_storege.logs.push_back(test_wal_client_log_type{now, 125, test_wal_client_log_action::kFallbackDefault, 125});
 
@@ -269,7 +267,6 @@ CASE_TEST(wal_client, load_and_dump) {
   CASE_EXPECT_EQ(4, client->get_configure().gc_log_size);
   CASE_EXPECT_EQ(&client->get_log_manager().get_configure(), &client->get_configure());
 
-  CASE_EXPECT_EQ(123, storage.global_ignore);
   CASE_EXPECT_EQ(2, storage.logs.size());
   CASE_EXPECT_EQ(124, storage.logs[0].data);
   CASE_EXPECT_TRUE(test_wal_client_log_action::kFallbackDefault == storage.logs[1].action);
@@ -283,7 +280,6 @@ CASE_TEST(wal_client, load_and_dump) {
   test_wal_client_storage_type dump_storege;
   CASE_EXPECT_TRUE(util::distributed_system::wal_result_code::kOk == client->dump(dump_storege, ctx));
 
-  CASE_EXPECT_EQ(123, dump_storege.global_ignore);
   CASE_EXPECT_EQ(2, dump_storege.logs.size());
   CASE_EXPECT_EQ(124, dump_storege.logs[0].data);
   CASE_EXPECT_TRUE(test_wal_client_log_action::kFallbackDefault == dump_storege.logs[1].action);
@@ -295,9 +291,179 @@ CASE_TEST(wal_client, load_and_dump) {
   }
 }
 
-// TODO: heartbeat
-// TODO: retry heartbeat
-// TODO: receive_snapshot
-// TODO: receive_logs : get_last_finished_log_key()
-// TODO: ignore logs that already received
-// TODO: subscribe_request
+// heartbeat,subscribe_request
+CASE_TEST(wal_client, heartbeat) {
+  util::distributed_system::wal_time_point now = std::chrono::system_clock::now();
+  test_wal_client_storage_type storage;
+  test_wal_client_context ctx;
+
+  auto conf = create_configure();
+  auto heartbeat = std::chrono::duration_cast<test_wal_client_type::duration>(std::chrono::seconds{5});
+  auto retry_heartbeat = std::chrono::duration_cast<test_wal_client_type::duration>(std::chrono::seconds{1});
+  conf->subscriber_heartbeat_interval = heartbeat;
+  conf->subscriber_heartbeat_retry_interval = retry_heartbeat;
+  auto vtable = create_vtable();
+  auto client = test_wal_client_type::create(now, vtable, conf, &storage);
+  CASE_EXPECT_TRUE(!!client);
+  if (!client) {
+    return;
+  }
+
+  auto subscribe_request_count = details::g_test_wal_client_stats.subscribe_request_count;
+  auto receive_subscribe_response_count = details::g_test_wal_client_stats.receive_subscribe_response_count;
+
+  now += retry_heartbeat;
+  CASE_EXPECT_EQ(1, client->tick(now, ctx));
+  now += retry_heartbeat;
+  CASE_EXPECT_EQ(0, client->tick(now, ctx));
+  now += retry_heartbeat;
+  CASE_EXPECT_EQ(0, client->tick(now, ctx));
+  now += retry_heartbeat;
+  CASE_EXPECT_EQ(0, client->tick(now, ctx));
+  now += retry_heartbeat;
+  CASE_EXPECT_EQ(0, client->tick(now, ctx));
+  now += retry_heartbeat;
+  CASE_EXPECT_EQ(1, client->tick(now, ctx));
+
+  CASE_EXPECT_EQ(subscribe_request_count + 2, details::g_test_wal_client_stats.subscribe_request_count);
+  CASE_EXPECT_EQ(receive_subscribe_response_count, details::g_test_wal_client_stats.receive_subscribe_response_count);
+
+  CASE_EXPECT_TRUE(util::distributed_system::wal_result_code::kOk == client->receive_subscribe_response(ctx));
+
+  CASE_EXPECT_EQ(subscribe_request_count + 2, details::g_test_wal_client_stats.subscribe_request_count);
+  CASE_EXPECT_EQ(receive_subscribe_response_count + 1,
+                 details::g_test_wal_client_stats.receive_subscribe_response_count);
+}
+
+// retry heartbeat
+CASE_TEST(wal_client, retry_heartbeat) {
+  util::distributed_system::wal_time_point now = std::chrono::system_clock::now();
+  test_wal_client_storage_type storage;
+  test_wal_client_context ctx;
+
+  auto conf = create_configure();
+  auto heartbeat = std::chrono::duration_cast<test_wal_client_type::duration>(std::chrono::seconds{5});
+  auto retry_heartbeat = std::chrono::duration_cast<test_wal_client_type::duration>(std::chrono::seconds{1});
+  conf->subscriber_heartbeat_interval = heartbeat;
+  conf->subscriber_heartbeat_retry_interval = retry_heartbeat;
+  auto vtable = create_vtable();
+
+  vtable->subscribe_request =
+      [](test_wal_client_type&,
+         test_wal_client_type::object_type::callback_param_type) -> util::distributed_system::wal_result_code {
+    ++details::g_test_wal_client_stats.subscribe_request_count;
+    return util::distributed_system::wal_result_code::kCallbackError;
+  };
+
+  auto client = test_wal_client_type::create(now, vtable, conf, &storage);
+  CASE_EXPECT_TRUE(!!client);
+  if (!client) {
+    return;
+  }
+
+  auto subscribe_request_count = details::g_test_wal_client_stats.subscribe_request_count;
+  auto receive_subscribe_response_count = details::g_test_wal_client_stats.receive_subscribe_response_count;
+
+  now += retry_heartbeat;
+  CASE_EXPECT_EQ(1, client->tick(now, ctx));
+  now += retry_heartbeat;
+  CASE_EXPECT_EQ(1, client->tick(now, ctx));
+  now += retry_heartbeat;
+  CASE_EXPECT_EQ(1, client->tick(now, ctx));
+  now += retry_heartbeat;
+  CASE_EXPECT_EQ(1, client->tick(now, ctx));
+  now += retry_heartbeat;
+  CASE_EXPECT_EQ(1, client->tick(now, ctx));
+
+  CASE_EXPECT_EQ(subscribe_request_count + 5, details::g_test_wal_client_stats.subscribe_request_count);
+  CASE_EXPECT_EQ(receive_subscribe_response_count, details::g_test_wal_client_stats.receive_subscribe_response_count);
+}
+
+// receive_snapshot
+CASE_TEST(wal_client, receive_snapshot) {
+  auto old_action_count =
+      details::g_test_wal_client_stats.default_action_count + details::g_test_wal_client_stats.delegate_action_count;
+
+  test_wal_client_storage_type load_storege;
+  util::distributed_system::wal_time_point now = std::chrono::system_clock::now();
+  load_storege.logs.push_back(test_wal_client_log_type{now, 124, test_wal_client_log_action::kDoNothing, 124});
+  load_storege.logs.push_back(test_wal_client_log_type{now, 125, test_wal_client_log_action::kFallbackDefault, 125});
+
+  test_wal_client_storage_type storage;
+  test_wal_client_context ctx;
+
+  auto conf = create_configure();
+  auto vtable = create_vtable();
+  auto client = test_wal_client_type::create(now, vtable, conf, &storage);
+  CASE_EXPECT_TRUE(!!client);
+  if (!client) {
+    return;
+  }
+  auto receive_snapshot_count = details::g_test_wal_client_stats.receive_snapshot_count;
+  CASE_EXPECT_TRUE(util::distributed_system::wal_result_code::kOk == client->receive_snapshot(load_storege, ctx));
+  CASE_EXPECT_EQ(receive_snapshot_count + 1, details::g_test_wal_client_stats.receive_snapshot_count);
+  CASE_EXPECT_EQ(old_action_count, details::g_test_wal_client_stats.default_action_count +
+                                       details::g_test_wal_client_stats.delegate_action_count);
+  CASE_EXPECT_EQ(4, client->get_configure().gc_log_size);
+  CASE_EXPECT_EQ(&client->get_log_manager().get_configure(), &client->get_configure());
+
+  CASE_EXPECT_EQ(2, storage.logs.size());
+  CASE_EXPECT_EQ(124, storage.logs[0].data);
+  CASE_EXPECT_TRUE(test_wal_client_log_action::kFallbackDefault == storage.logs[1].action);
+
+  CASE_EXPECT_EQ(2, client->get_log_manager().get_all_logs().size());
+  CASE_EXPECT_EQ(124, (*client->get_log_manager().get_all_logs().begin())->data);
+  CASE_EXPECT_TRUE(test_wal_client_log_action::kFallbackDefault ==
+                   (*client->get_log_manager().get_all_logs().rbegin())->action);
+
+  // dump
+  test_wal_client_storage_type dump_storege;
+  CASE_EXPECT_TRUE(util::distributed_system::wal_result_code::kOk == client->dump(dump_storege, ctx));
+
+  CASE_EXPECT_EQ(2, dump_storege.logs.size());
+  CASE_EXPECT_EQ(124, dump_storege.logs[0].data);
+  CASE_EXPECT_TRUE(test_wal_client_log_action::kFallbackDefault == dump_storege.logs[1].action);
+
+  // check last finished key
+  CASE_EXPECT_TRUE(!!client->get_last_finished_log_key());
+  if (client->get_last_finished_log_key()) {
+    CASE_EXPECT_EQ(125, *client->get_last_finished_log_key());
+  }
+}
+
+CASE_TEST(wal_client, receive_logs) {
+  util::distributed_system::wal_time_point now = std::chrono::system_clock::now();
+  test_wal_client_storage_type storage;
+  test_wal_client_context ctx;
+
+  auto conf = create_configure();
+  auto vtable = create_vtable();
+  auto client = test_wal_client_type::create(now, vtable, conf, &storage);
+  CASE_EXPECT_TRUE(!!client);
+  if (!client) {
+    return;
+  }
+
+  std::vector<test_wal_client_log_type> logs;
+  logs.push_back(test_wal_client_log_type{now, 124, test_wal_client_log_action::kDoNothing, 124});
+  logs.push_back(test_wal_client_log_type{now, 125, test_wal_client_log_action::kFallbackDefault, 125});
+
+  auto event_on_log_added = details::g_test_wal_client_stats.event_on_log_added;
+
+  CASE_EXPECT_EQ(2, client->receive_logs(ctx, logs.begin(), logs.end()));
+
+  CASE_EXPECT_EQ(event_on_log_added + 2, details::g_test_wal_client_stats.event_on_log_added);
+  CASE_EXPECT_TRUE(!!client->get_last_finished_log_key());
+  if (client->get_last_finished_log_key()) {
+    CASE_EXPECT_EQ(125, *client->get_last_finished_log_key());
+  }
+
+  // ignore logs that already received
+  logs.push_back(test_wal_client_log_type{now, 126, test_wal_client_log_action::kFallbackDefault, 126});
+
+  CASE_EXPECT_EQ(1, client->receive_logs(ctx, logs.begin(), logs.end()));
+  CASE_EXPECT_TRUE(!!client->get_last_finished_log_key());
+  if (client->get_last_finished_log_key()) {
+    CASE_EXPECT_EQ(126, *client->get_last_finished_log_key());
+  }
+}

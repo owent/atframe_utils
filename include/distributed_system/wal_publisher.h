@@ -233,7 +233,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_publisher {
     return wal_object_->emplace_back(std::move(log), param);
   }
 
-  const std::unique_ptr<log_key_type>& get_global_log_ingore_key() const noexcept {
+  const log_key_type* get_global_log_ingore_key() const noexcept {
     if (!wal_object_) {
       return nullptr;
     }
@@ -441,7 +441,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_publisher {
       vtable_->on_subscriber_request(*this, subscriber, param);
     }
 
-    if (wal_object_->get_last_removed_key()) {
+    if (nullptr != wal_object_->get_last_removed_key()) {
       // Some log can not be resend, send snapshot
       if (wal_object_->get_log_key_compare()(last_checkpoint, *wal_object_->get_last_removed_key())) {
         auto iters = subscriber_manager_->find_iterator(key);
@@ -475,7 +475,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_publisher {
     }
   }
 
-  const std::unique_ptr<log_key_type>& get_broadcast_key_bound() const { return broadcast_key_bound_; }
+  const log_key_type* get_broadcast_key_bound() const { return broadcast_key_bound_.get(); }
 
   size_t broadcast(callback_param_type param) {
     if (!vtable_ || !vtable_->get_log_key) {
@@ -499,11 +499,22 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_publisher {
       send_logs(logs.first, logs.second, subscribers.first, subscribers.second, param);
     }
 
-    if (!gc_subscribers_.empty()) {
-      if (wal_result_code::kOk ==
-          send_logs(logs.first, logs.second, gc_subscribers_.begin(), gc_subscribers_.end(), param)) {
-        gc_subscribers_.clear();
+    size_t retry_last_broadcast = 3;
+    while (!gc_subscribers_.empty() && retry_last_broadcast > 0) {
+      --retry_last_broadcast;
+      subscriber_collector_type cache;
+      cache.swap(gc_subscribers_);
+      if (wal_result_code::kOk == send_logs(logs.first, logs.second, cache.begin(), cache.end(), param)) {
+        retry_last_broadcast = 0;
+      } else {
+        for (auto& new_removed_subscriber : gc_subscribers_) {
+          cache[new_removed_subscriber.first] = new_removed_subscriber.second;
+        }
+        cache.swap(gc_subscribers_);
       }
+    }
+    if (!gc_subscribers_.empty()) {
+      gc_subscribers_.clear();
     }
 
     int ret = 0;
