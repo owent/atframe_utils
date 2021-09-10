@@ -150,21 +150,23 @@ LIBATFRAME_UTILS_API int http_request::start(method_t::type method, bool wait) {
     set_opt_long(CURLOPT_TIMEOUT_MS, timeout_ms_);
   }
 
+  int perform_result;
   if (wait) {
     SET_FLAG(flags_, flag_t::EN_FT_RUNNING);
-    last_error_code_ = curl_easy_perform(req);
+    perform_result = curl_easy_perform(req);
     UNSET_FLAG(flags_, flag_t::EN_FT_RUNNING);
     finish_req_rsp();
   } else {
     SET_FLAG(flags_, flag_t::EN_FT_RUNNING);
     SET_FLAG(flags_, flag_t::EN_FT_CURL_MULTI_HANDLE);
-    last_error_code_ = curl_multi_add_handle(bind_m_->curl_multi, req);
-    if (last_error_code_ != CURLM_OK) {
+    perform_result = curl_multi_add_handle(bind_m_->curl_multi, req);
+    if (perform_result != CURLM_OK) {
       UNSET_FLAG(flags_, flag_t::EN_FT_RUNNING);
       cleanup();
     }
   }
 
+  last_error_code_ = perform_result;
   return last_error_code_;
 }
 

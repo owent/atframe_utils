@@ -123,7 +123,7 @@ static test_wal_publisher_type::vtable_pointer create_vtable() {
 
     wal.assign_logs(container);
     if (!from.logs.empty()) {
-      wal.set_last_removed_key((*from.logs.rbegin()).log_key - 1);
+      wal.set_last_removed_key((*from.logs.begin()).log_key - 1);
     }
     return wal_result_code::kOk;
   };
@@ -394,8 +394,8 @@ CASE_TEST(wal_publisher, load_and_dump) {
   CASE_EXPECT_TRUE(test_wal_publisher_log_action::kRecursivePushBack == dump_storege.logs[2].action);
 
   // check broadcast key
-  CASE_EXPECT_TRUE(!!publisher->get_broadcast_key_bound());
-  if (publisher->get_broadcast_key_bound()) {
+  CASE_EXPECT_TRUE(nullptr != publisher->get_broadcast_key_bound());
+  if (nullptr != publisher->get_broadcast_key_bound()) {
     CASE_EXPECT_EQ(126, *publisher->get_broadcast_key_bound());
   }
 }

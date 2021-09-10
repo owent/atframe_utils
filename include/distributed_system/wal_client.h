@@ -66,7 +66,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_client {
       std::function<wal_result_code(wal_client&, const snapshot_type&, callback_param_type)>;
 
   // Receive subscribe heartbeat response
-  using callback_on_receive_subscribe_response_fn_t = std::function<void(wal_client&, callback_param_type)>;
+  using callback_on_receive_subscribe_response_fn_t = std::function<wal_result_code(wal_client&, callback_param_type)>;
 
   // Send subscribe request
   using callback_send_subscribe_request_fn_t = std::function<wal_result_code(wal_client&, callback_param_type)>;
@@ -180,7 +180,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_client {
     wal_object_->assign_logs(std::forward<ArgsT>(args)...);
   }
 
-  const std::unique_ptr<log_key_type>& get_global_log_ingore_key() const noexcept {
+  const log_key_type* get_global_log_ingore_key() const noexcept {
     if (!wal_object_) {
       return nullptr;
     }
@@ -285,7 +285,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_client {
     }
 
     if (vtable_ && vtable_->get_log_key) {
-      auto log_key = vtable_->get_log_key(*this, *log);
+      auto log_key = vtable_->get_log_key(*wal_object_, *log);
       if (get_last_finished_log_key() && !get_log_key_compare()(*this->get_last_finished_log_key(), log_key)) {
         return wal_result_code::kIgnore;
       }
@@ -302,11 +302,11 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_client {
 
   template <class... LogCtorArgsT>
   wal_result_code receive_log(callback_param_type param, LogCtorArgsT&&... args) {
-    return receive_log(std::make_shared<log_type>(std::forward<LogCtorArgsT>(args)...), param);
+    return receive_log(param, std::make_shared<log_type>(std::forward<LogCtorArgsT>(args)...));
   }
 
   template <class IteratorT>
-  size_t receive_logs(IteratorT begin, IteratorT end, callback_param_type param) {
+  size_t receive_logs(callback_param_type param, IteratorT begin, IteratorT end) {
     size_t ret = 0;
     while (begin != end) {
       if (wal_result_code::kOk == receive_log(param, *begin)) {
@@ -343,7 +343,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_client {
     }
   }
 
-  const std::unique_ptr<log_key_type>& get_last_finished_log_key() const { return last_finished_log_key_; }
+  const log_key_type* get_last_finished_log_key() const { return last_finished_log_key_.get(); }
 
  private:
   vtable_pointer vtable_;
