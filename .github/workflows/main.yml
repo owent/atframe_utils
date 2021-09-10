@@ -119,7 +119,7 @@ jobs:
         env:
           CMAKE_GENERATOR: ${{ matrix.generator }}
           BUILD_SHARED_LIBS: ${{ matrix.build_shared_libs }}
-          CONFIGURATION: RelWithDebInfo
+          CONFIGURATION: Debug
         run: |
           pwsh ci/do_ci.ps1 msvc.2017.test ;
       - name: Cache packages
