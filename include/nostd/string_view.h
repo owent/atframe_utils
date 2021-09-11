@@ -490,8 +490,14 @@ LIBATFRAME_UTILS_API_HEAD_ONLY constexpr const typename basic_string_view<CharT,
     basic_string_view<CharT, Traits>::npos;
 #endif
 
+#if ((defined(__cplusplus) && __cplusplus >= 201703L) || (defined(_MSVC_LANG) && _MSVC_LANG >= 201703L))
+#  define UTIL_NOSTD_INTERNAL_STRING_VIEW_USE_COMMON_TYPE 1
+#else
+#  define UTIL_NOSTD_INTERNAL_STRING_VIEW_USE_COMMON_TYPE 0
+#endif
+
 // !_HAS_CXX20
-#if !((defined(__cplusplus) && __cplusplus > 201703L) || (defined(_MSVC_LANG) && _MSVC_LANG > 201703L))
+#if UTIL_NOSTD_INTERNAL_STRING_VIEW_USE_COMMON_TYPE
 template <class CharT, class Traits>
 LIBATFRAME_UTILS_API_HEAD_ONLY constexpr bool operator==(basic_string_view<CharT, Traits> x,
                                                          basic_string_view<CharT, Traits> y) noexcept {
@@ -526,7 +532,7 @@ LIBATFRAME_UTILS_API_HEAD_ONLY constexpr bool operator==(basic_string_view<CharT
 
 #ifdef __cpp_impl_three_way_comparison
 // !_HAS_CXX20
-#  if !((defined(__cplusplus) && __cplusplus > 201703L) || (defined(_MSVC_LANG) && _MSVC_LANG > 201703L))
+#  if UTIL_NOSTD_INTERNAL_STRING_VIEW_USE_COMMON_TYPE
 template <class CharT, class Traits>
 LIBATFRAME_UTILS_API_HEAD_ONLY constexpr std::strong_ordering operator<=>(basic_string_view<CharT, Traits> x,
                                                                           basic_string_view<CharT, Traits> y) noexcept {
@@ -561,7 +567,7 @@ LIBATFRAME_UTILS_API_HEAD_ONLY constexpr std::strong_ordering operator<=>(basic_
 #else
 
 // !_HAS_CXX20
-#  if !((defined(__cplusplus) && __cplusplus > 201703L) || (defined(_MSVC_LANG) && _MSVC_LANG > 201703L))
+#  if UTIL_NOSTD_INTERNAL_STRING_VIEW_USE_COMMON_TYPE
 template <class CharT, class Traits>
 LIBATFRAME_UTILS_API_HEAD_ONLY constexpr bool operator!=(basic_string_view<CharT, Traits> x,
                                                          basic_string_view<CharT, Traits> y) noexcept {
@@ -592,7 +598,7 @@ LIBATFRAME_UTILS_API_HEAD_ONLY constexpr bool operator!=(std::nullptr_t, basic_s
 }
 
 // !_HAS_CXX20
-#  if !((defined(__cplusplus) && __cplusplus > 201703L) || (defined(_MSVC_LANG) && _MSVC_LANG > 201703L))
+#  if UTIL_NOSTD_INTERNAL_STRING_VIEW_USE_COMMON_TYPE
 template <class CharT, class Traits>
 LIBATFRAME_UTILS_API_HEAD_ONLY constexpr bool operator<(basic_string_view<CharT, Traits> x,
                                                         basic_string_view<CharT, Traits> y) noexcept {
@@ -623,7 +629,7 @@ LIBATFRAME_UTILS_API_HEAD_ONLY constexpr bool operator<(basic_string_view<CharT,
 }
 
 // !_HAS_CXX20
-#  if !((defined(__cplusplus) && __cplusplus > 201703L) || (defined(_MSVC_LANG) && _MSVC_LANG > 201703L))
+#  if UTIL_NOSTD_INTERNAL_STRING_VIEW_USE_COMMON_TYPE
 template <class CharT, class Traits>
 LIBATFRAME_UTILS_API_HEAD_ONLY constexpr bool operator>(basic_string_view<CharT, Traits> x,
                                                         basic_string_view<CharT, Traits> y) noexcept {
@@ -654,7 +660,7 @@ LIBATFRAME_UTILS_API_HEAD_ONLY constexpr bool operator>(basic_string_view<CharT,
 }
 
 // !_HAS_CXX20
-#  if !((defined(__cplusplus) && __cplusplus > 201703L) || (defined(_MSVC_LANG) && _MSVC_LANG > 201703L))
+#  if UTIL_NOSTD_INTERNAL_STRING_VIEW_USE_COMMON_TYPE
 template <class CharT, class Traits>
 LIBATFRAME_UTILS_API_HEAD_ONLY constexpr bool operator<=(basic_string_view<CharT, Traits> x,
                                                          basic_string_view<CharT, Traits> y) noexcept {
@@ -687,7 +693,7 @@ LIBATFRAME_UTILS_API_HEAD_ONLY constexpr bool operator<=(basic_string_view<CharT
 }
 
 // !_HAS_CXX20
-#  if !((defined(__cplusplus) && __cplusplus > 201703L) || (defined(_MSVC_LANG) && _MSVC_LANG > 201703L))
+#  if UTIL_NOSTD_INTERNAL_STRING_VIEW_USE_COMMON_TYPE
 template <class CharT, class Traits>
 LIBATFRAME_UTILS_API_HEAD_ONLY constexpr bool operator>=(basic_string_view<CharT, Traits> x,
                                                          basic_string_view<CharT, Traits> y) noexcept {
@@ -744,3 +750,4 @@ using wstring_view = basic_string_view<wchar_t>;
 
 #undef UTIL_NOSTD_STRING_VIEW_CXX14_CONSTEXPR
 #undef UTIL_NOSTD_INTERNAL_STRING_VIEW_MEMCMP
+#undef UTIL_NOSTD_INTERNAL_STRING_VIEW_USE_COMMON_TYPE
