@@ -48,17 +48,6 @@
 
 namespace util {
 namespace nostd {
-
-#ifdef __cpp_impl_three_way_comparison
-namespace details {
-LIBATFRAME_UTILS_API_HEAD_ONLY constexpr inline std::strong_ordering string_view_compare_to_strong_ordering(
-    int result) noexcept {
-  return result < 0 ? std::strong_ordering::less
-                    : (result > 0 ? std::strong_ordering::greater : std::strong_ordering::equal);
-}
-}  // namespace details
-#endif
-
 template <class CharT, class Traits = std::char_traits<CharT> >
 class LIBATFRAME_UTILS_API_HEAD_ONLY basic_string_view {
  public:
@@ -500,7 +489,17 @@ LIBATFRAME_UTILS_API_HEAD_ONLY constexpr const typename basic_string_view<CharT,
 #  define UTIL_NOSTD_INTERNAL_STRING_VIEW_USE_COMMON_TYPE 0
 #endif
 
-// !_HAS_CXX20
+#if defined(_MSC_VER)
+#  if ((defined(__cplusplus) && __cplusplus >= 202002L) || (defined(_MSVC_LANG) && _MSVC_LANG >= 202002L))
+// _HAS_CXX20
+#    define UTIL_NOSTD_INTERNAL_STRING_VIEW_USE_COMMON_TYPE_TRANSITION_LEFT 0
+#  else
+#    define UTIL_NOSTD_INTERNAL_STRING_VIEW_USE_COMMON_TYPE_TRANSITION_LEFT 1
+#  endif
+#else
+#  define UTIL_NOSTD_INTERNAL_STRING_VIEW_USE_COMMON_TYPE_TRANSITION_LEFT 1
+#endif
+
 #if UTIL_NOSTD_INTERNAL_STRING_VIEW_USE_COMMON_TYPE
 template <class CharT, class Traits>
 LIBATFRAME_UTILS_API_HEAD_ONLY constexpr bool operator==(basic_string_view<CharT, Traits> x,
@@ -509,15 +508,25 @@ LIBATFRAME_UTILS_API_HEAD_ONLY constexpr bool operator==(basic_string_view<CharT
          (x.empty() || UTIL_NOSTD_INTERNAL_STRING_VIEW_MEMCMP(x.data(), y.data(), x.size()) == 0);
 }
 
+#  if UTIL_NOSTD_INTERNAL_STRING_VIEW_USE_COMMON_TYPE_TRANSITION_LEFT
+#    if defined(_MSC_VER)
+template <class CharT, class Traits, int = 1>  // TRANSITION, VSO-409326
+#    else
 template <class CharT, class Traits>
+#    endif
 LIBATFRAME_UTILS_API_HEAD_ONLY constexpr bool operator==(
     typename std::common_type<basic_string_view<CharT, Traits> >::type x, basic_string_view<CharT, Traits> y) noexcept {
   return x.size() == y.size() &&
          (x.empty() || UTIL_NOSTD_INTERNAL_STRING_VIEW_MEMCMP(x.data(), y.data(), x.size()) == 0);
 }
+#  endif
 #endif
 
+#if defined(_MSC_VER)
+template <class CharT, class Traits, int = 2>  // TRANSITION, VSO-409326
+#else
 template <class CharT, class Traits>
+#endif
 LIBATFRAME_UTILS_API_HEAD_ONLY constexpr bool operator==(
     basic_string_view<CharT, Traits> x, typename std::common_type<basic_string_view<CharT, Traits> >::type y) noexcept {
   return x.size() == y.size() &&
@@ -535,25 +544,40 @@ LIBATFRAME_UTILS_API_HEAD_ONLY constexpr bool operator==(basic_string_view<CharT
 }
 
 #ifdef __cpp_impl_three_way_comparison
-// !_HAS_CXX20
 #  if UTIL_NOSTD_INTERNAL_STRING_VIEW_USE_COMMON_TYPE
 template <class CharT, class Traits>
 LIBATFRAME_UTILS_API_HEAD_ONLY constexpr std::strong_ordering operator<=>(basic_string_view<CharT, Traits> x,
                                                                           basic_string_view<CharT, Traits> y) noexcept {
-  return details::string_view_compare_to_strong_ordering(x.compare(y));
+  auto result = x.compare(y);
+  return result < 0 ? std::strong_ordering::less
+                    : (result > 0 ? std::strong_ordering::greater : std::strong_ordering::equal);
 }
 
+#    if UTIL_NOSTD_INTERNAL_STRING_VIEW_USE_COMMON_TYPE_TRANSITION_LEFT
+#      if defined(_MSC_VER)
+template <class CharT, class Traits, int = 1>  // TRANSITION, VSO-409326
+#      else
 template <class CharT, class Traits>
+#      endif
 LIBATFRAME_UTILS_API_HEAD_ONLY constexpr std::strong_ordering operator<=>(
     typename std::common_type<basic_string_view<CharT, Traits> >::type x, basic_string_view<CharT, Traits> y) noexcept {
-  return details::string_view_compare_to_strong_ordering(x.compare(y));
+  auto result = x.compare(y);
+  return result < 0 ? std::strong_ordering::less
+                    : (result > 0 ? std::strong_ordering::greater : std::strong_ordering::equal);
 }
+#    endif
 #  endif
 
+#  if defined(_MSC_VER)
+template <class CharT, class Traits, int = 2>  // TRANSITION, VSO-409326
+#  else
 template <class CharT, class Traits>
+#  endif
 LIBATFRAME_UTILS_API_HEAD_ONLY constexpr std::strong_ordering operator<=>(
     basic_string_view<CharT, Traits> x, typename std::common_type<basic_string_view<CharT, Traits> >::type y) noexcept {
-  return details::string_view_compare_to_strong_ordering(x.compare(y));
+  auto result = x.compare(y);
+  return result < 0 ? std::strong_ordering::less
+                    : (result > 0 ? std::strong_ordering::greater : std::strong_ordering::equal);
 }
 
 template <class CharT, class Traits>
@@ -570,7 +594,6 @@ LIBATFRAME_UTILS_API_HEAD_ONLY constexpr std::strong_ordering operator<=>(basic_
 
 #else
 
-// !_HAS_CXX20
 #  if UTIL_NOSTD_INTERNAL_STRING_VIEW_USE_COMMON_TYPE
 template <class CharT, class Traits>
 LIBATFRAME_UTILS_API_HEAD_ONLY constexpr bool operator!=(basic_string_view<CharT, Traits> x,
@@ -578,14 +601,24 @@ LIBATFRAME_UTILS_API_HEAD_ONLY constexpr bool operator!=(basic_string_view<CharT
   return !(x == y);
 }
 
+#    if UTIL_NOSTD_INTERNAL_STRING_VIEW_USE_COMMON_TYPE_TRANSITION_LEFT
+#      if defined(_MSC_VER)
+template <class CharT, class Traits, int = 1>  // TRANSITION, VSO-409326
+#      else
 template <class CharT, class Traits>
+#      endif
 LIBATFRAME_UTILS_API_HEAD_ONLY constexpr bool operator!=(
     typename std::common_type<basic_string_view<CharT, Traits> >::type x, basic_string_view<CharT, Traits> y) noexcept {
   return !(x == y);
 }
+#    endif
 #  endif
 
+#  if defined(_MSC_VER)
+template <class CharT, class Traits, int = 2>  // TRANSITION, VSO-409326
+#  else
 template <class CharT, class Traits>
+#  endif
 LIBATFRAME_UTILS_API_HEAD_ONLY constexpr bool operator!=(
     basic_string_view<CharT, Traits> x, typename std::common_type<basic_string_view<CharT, Traits> >::type y) noexcept {
   return !(x == y);
@@ -601,7 +634,6 @@ LIBATFRAME_UTILS_API_HEAD_ONLY constexpr bool operator!=(std::nullptr_t, basic_s
   return !(basic_string_view<CharT, Traits>() == y);
 }
 
-// !_HAS_CXX20
 #  if UTIL_NOSTD_INTERNAL_STRING_VIEW_USE_COMMON_TYPE
 template <class CharT, class Traits>
 LIBATFRAME_UTILS_API_HEAD_ONLY constexpr bool operator<(basic_string_view<CharT, Traits> x,
@@ -609,14 +641,24 @@ LIBATFRAME_UTILS_API_HEAD_ONLY constexpr bool operator<(basic_string_view<CharT,
   return x.compare(y) < 0;
 }
 
+#    if UTIL_NOSTD_INTERNAL_STRING_VIEW_USE_COMMON_TYPE_TRANSITION_LEFT
+#      if defined(_MSC_VER)
+template <class CharT, class Traits, int = 1>  // TRANSITION, VSO-409326
+#      else
 template <class CharT, class Traits>
+#      endif
 LIBATFRAME_UTILS_API_HEAD_ONLY constexpr bool operator<(
     typename std::common_type<basic_string_view<CharT, Traits> >::type x, basic_string_view<CharT, Traits> y) noexcept {
   return x.compare(y) < 0;
 }
+#    endif
 #  endif
 
+#  if defined(_MSC_VER)
+template <class CharT, class Traits, int = 2>  // TRANSITION, VSO-409326
+#  else
 template <class CharT, class Traits>
+#  endif
 LIBATFRAME_UTILS_API_HEAD_ONLY constexpr bool operator<(
     basic_string_view<CharT, Traits> x, typename std::common_type<basic_string_view<CharT, Traits> >::type y) noexcept {
   return x.compare(y) < 0;
@@ -632,7 +674,6 @@ LIBATFRAME_UTILS_API_HEAD_ONLY constexpr bool operator<(basic_string_view<CharT,
   return x.compare(basic_string_view<CharT, Traits>()) < 0;
 }
 
-// !_HAS_CXX20
 #  if UTIL_NOSTD_INTERNAL_STRING_VIEW_USE_COMMON_TYPE
 template <class CharT, class Traits>
 LIBATFRAME_UTILS_API_HEAD_ONLY constexpr bool operator>(basic_string_view<CharT, Traits> x,
@@ -640,14 +681,24 @@ LIBATFRAME_UTILS_API_HEAD_ONLY constexpr bool operator>(basic_string_view<CharT,
   return y < x;
 }
 
+#    if UTIL_NOSTD_INTERNAL_STRING_VIEW_USE_COMMON_TYPE_TRANSITION_LEFT
+#      if defined(_MSC_VER)
+template <class CharT, class Traits, int = 1>  // TRANSITION, VSO-409326
+#      else
 template <class CharT, class Traits>
+#      endif
 LIBATFRAME_UTILS_API_HEAD_ONLY constexpr bool operator>(
     typename std::common_type<basic_string_view<CharT, Traits> >::type x, basic_string_view<CharT, Traits> y) noexcept {
   return y < x;
 }
+#    endif
 #  endif
 
+#  if defined(_MSC_VER)
+template <class CharT, class Traits, int = 2>  // TRANSITION, VSO-409326
+#  else
 template <class CharT, class Traits>
+#  endif
 LIBATFRAME_UTILS_API_HEAD_ONLY constexpr bool operator>(
     basic_string_view<CharT, Traits> x, typename std::common_type<basic_string_view<CharT, Traits> >::type y) noexcept {
   return y < x;
@@ -663,7 +714,6 @@ LIBATFRAME_UTILS_API_HEAD_ONLY constexpr bool operator>(basic_string_view<CharT,
   return y < x;
 }
 
-// !_HAS_CXX20
 #  if UTIL_NOSTD_INTERNAL_STRING_VIEW_USE_COMMON_TYPE
 template <class CharT, class Traits>
 LIBATFRAME_UTILS_API_HEAD_ONLY constexpr bool operator<=(basic_string_view<CharT, Traits> x,
@@ -671,14 +721,24 @@ LIBATFRAME_UTILS_API_HEAD_ONLY constexpr bool operator<=(basic_string_view<CharT
   return !(y < x);
 }
 
+#    if UTIL_NOSTD_INTERNAL_STRING_VIEW_USE_COMMON_TYPE_TRANSITION_LEFT
+#      if defined(_MSC_VER)
+template <class CharT, class Traits, int = 1>  // TRANSITION, VSO-409326
+#      else
 template <class CharT, class Traits>
+#      endif
 LIBATFRAME_UTILS_API_HEAD_ONLY constexpr bool operator<=(
     typename std::common_type<basic_string_view<CharT, Traits> >::type x, basic_string_view<CharT, Traits> y) noexcept {
   return !(y < x);
 }
+#    endif
 #  endif
 
+#  if defined(_MSC_VER)
+template <class CharT, class Traits, int = 2>  // TRANSITION, VSO-409326
+#  else
 template <class CharT, class Traits>
+#  endif
 LIBATFRAME_UTILS_API_HEAD_ONLY constexpr bool operator<=(
     basic_string_view<CharT, Traits> x, typename std::common_type<basic_string_view<CharT, Traits> >::type y) noexcept {
   return !(y < x);
@@ -696,7 +756,6 @@ LIBATFRAME_UTILS_API_HEAD_ONLY constexpr bool operator<=(basic_string_view<CharT
   return !(y < x);
 }
 
-// !_HAS_CXX20
 #  if UTIL_NOSTD_INTERNAL_STRING_VIEW_USE_COMMON_TYPE
 template <class CharT, class Traits>
 LIBATFRAME_UTILS_API_HEAD_ONLY constexpr bool operator>=(basic_string_view<CharT, Traits> x,
@@ -704,14 +763,24 @@ LIBATFRAME_UTILS_API_HEAD_ONLY constexpr bool operator>=(basic_string_view<CharT
   return !(x < y);
 }
 
+#    if UTIL_NOSTD_INTERNAL_STRING_VIEW_USE_COMMON_TYPE_TRANSITION_LEFT
+#      if defined(_MSC_VER)
+template <class CharT, class Traits, int = 1>  // TRANSITION, VSO-409326
+#      else
 template <class CharT, class Traits>
+#      endif
 LIBATFRAME_UTILS_API_HEAD_ONLY constexpr bool operator>=(
     typename std::common_type<basic_string_view<CharT, Traits> >::type x, basic_string_view<CharT, Traits> y) noexcept {
   return !(x < y);
 }
+#    endif
 #  endif
 
+#  if defined(_MSC_VER)
+template <class CharT, class Traits, int = 2>  // TRANSITION, VSO-409326
+#  else
 template <class CharT, class Traits>
+#  endif
 LIBATFRAME_UTILS_API_HEAD_ONLY constexpr bool operator>=(
     basic_string_view<CharT, Traits> x, typename std::common_type<basic_string_view<CharT, Traits> >::type y) noexcept {
   return !(x < y);
@@ -755,3 +824,4 @@ using wstring_view = basic_string_view<wchar_t>;
 #undef UTIL_NOSTD_STRING_VIEW_CXX14_CONSTEXPR
 #undef UTIL_NOSTD_INTERNAL_STRING_VIEW_MEMCMP
 #undef UTIL_NOSTD_INTERNAL_STRING_VIEW_USE_COMMON_TYPE
+#undef UTIL_NOSTD_INTERNAL_STRING_VIEW_USE_COMMON_TYPE_TRANSITION_LEFT
