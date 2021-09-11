@@ -491,7 +491,11 @@ LIBATFRAME_UTILS_API_HEAD_ONLY constexpr const typename basic_string_view<CharT,
 #endif
 
 #if ((defined(__cplusplus) && __cplusplus >= 201703L) || (defined(_MSVC_LANG) && _MSVC_LANG >= 201703L))
-#  define UTIL_NOSTD_INTERNAL_STRING_VIEW_USE_COMMON_TYPE 1
+#  if defined(_MSC_VER) && _MSC_VER < 1920
+#    define UTIL_NOSTD_INTERNAL_STRING_VIEW_USE_COMMON_TYPE 0
+#  else
+#    define UTIL_NOSTD_INTERNAL_STRING_VIEW_USE_COMMON_TYPE 1
+#  endif
 #else
 #  define UTIL_NOSTD_INTERNAL_STRING_VIEW_USE_COMMON_TYPE 0
 #endif
