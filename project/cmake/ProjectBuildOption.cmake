@@ -32,6 +32,7 @@ endif()
 # Check mkstemp/_mktemp/_mktemp_s for file system
 include(CheckCXXSourceCompiles)
 include(CheckCSourceCompiles)
+include(CMakeDependentOption)
 
 if(WIN32)
   check_cxx_source_compiles(
@@ -102,6 +103,23 @@ if(LOG_WRAPPER_ENABLE_STACKTRACE)
       include("${ATFRAMEWORK_CMAKE_TOOLSET_DIR}/ports/libunwind/libunwind.cmake")
     endif()
   endif()
+endif()
+
+if(NOT CMAKE_CROSSCOMPILING AND UNIX)
+  check_cxx_source_compiles(
+    "
+  #include <syslog.h>
+  int main() {
+      openlog(\"test\", LOG_NDELAY | LOG_PID, LOG_USER);
+      syslog(LOG_INFO, \"%s\", \"Hello World!\");
+      return 0;
+  }
+  "
+    LIBATFRAME_UTILS_TEST_SYSLOG)
+  cmake_dependent_option(LOG_SINK_ENABLE_SYSLOG_SUPPORT "Enable syslog sink for log." ON "LIBATFRAME_UTILS_TEST_SYSLOG"
+                         OFF)
+else()
+  option(LOG_SINK_ENABLE_SYSLOG_SUPPORT "Enable syslog sink for log." OFF)
 endif()
 
 if(NOT ATFRAMEWORK_CMAKE_TOOLSET_THIRD_PARTY_CRYPTO_DISABLED)

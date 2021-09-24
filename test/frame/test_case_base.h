@@ -1,11 +1,4 @@
-/*
- * test_case_base.h
- *
- *  Created on: 2014年3月11日
- *      Author: owent
- *
- *  Released under the MIT license
- */
+// Copyright 2021 atframework
 
 #ifndef TEST_CASE_BASE_H_
 #define TEST_CASE_BASE_H_

@@ -1,3 +1,5 @@
+// Copyright 2021 atframework
+
 #include <typeinfo>
 #include "frame/test_macros.h"
 

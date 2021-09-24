@@ -1,11 +1,4 @@
-/*
- * test_manager.h
- *
- *  Created on: 2014年3月11日
- *      Author: owent
- *
- *  Released under the MIT license
- */
+// Copyright 2021 atframework
 
 #ifndef TEST_MANAGER_H_
 #define TEST_MANAGER_H_

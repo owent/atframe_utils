@@ -1,3 +1,5 @@
+// Copyright 2021 atframework
+
 #include "frame/test_macros.h"
 
 static int g_unit_test_event_on_start_status = 0;

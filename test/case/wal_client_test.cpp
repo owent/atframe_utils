@@ -1,3 +1,5 @@
+// Copyright 2021 atframework
+
 #include <algorithm>
 #include <chrono>
 #include <cstring>
