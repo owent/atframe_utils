@@ -1,8 +1,8 @@
 #.rst:
-# libatframe_utils-config.cmake
+# atframe_utils-config.cmake
 # --------
 #
-# Find the native libatframe_utils includes and library.
+# Find the native atframe_utils includes and library.
 #
 #
 # Result Variables
@@ -14,9 +14,9 @@
 #
 #   Libatframe_utils_INCLUDE_DIRS       - where to find config/atframe_utils_build_feature.h , etc.
 #   Libatframe_utils_LIBRARY_DIRS       - where to find (lib)atframe_utils.(a/so/lib/dll/dylib), etc.
-#   Libatframe_utils_LIBRARIES          - List of static libraries when using libatframe_utils.
-#   Libatframe_utils_FOUND              - True if libatframe_utils found.
-#   Libatframe_utils_VERSION            - Full version of libatframe_utils
+#   Libatframe_utils_LIBRARIES          - List of static libraries when using atframe_utils.
+#   Libatframe_utils_FOUND              - True if atframe_utils found.
+#   Libatframe_utils_VERSION            - Full version of atframe_utils
 #
 # ::
 #   atframework::atframe_utils          - Imported target of atframe_utils

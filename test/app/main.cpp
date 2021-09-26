@@ -1,11 +1,4 @@
-/*
- * main.cpp
- *
- *  Created on: 2014年3月11日
- *      Author: owent
- *
- *  Released under the MIT license
- */
+// Copyright 2021 atframework
 
 #include "frame/test_macros.h"
 
