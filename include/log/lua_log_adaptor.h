@@ -1,13 +1,6 @@
-/**
- * @file lua_log_adaptor.h
- * @brief 日志lua封装
- * Licensed under the MIT licenses.
- *
- * @version 1.0
- * @author owent
- * @date 2015-06-29
- * @history
- */
+// Copyright 2021 atframework
+// Licensed under the MIT licenses.
+// Created by owent on 2015-06-29
 
 #ifndef UTIL_LOG_LUA_LOG_ADAPTER_H
 #define UTIL_LOG_LUA_LOG_ADAPTER_H

@@ -1,3 +1,7 @@
+// Copyright 2021 atframework
+// Licensed under the MIT licenses.
+// Created by owent on 2016-03-31
+
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>

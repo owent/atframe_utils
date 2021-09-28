@@ -1,8 +1,8 @@
+// Copyright 2021 atframework
+// Licensed under the MIT licenses.
+// Created by owent on 2015-06-29
+
 /**
- * @file log_stacktrace.h
- * @brief 日志的导出执行栈封装
- * Licensed under the MIT licenses.
- *
  * @version 1.0
  * @author owent
  * @date 2018-01-09

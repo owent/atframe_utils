@@ -64,6 +64,7 @@ set(SRC_LIST
     "${CMAKE_CURRENT_LIST_DIR}/src/config/ini_loader.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/src/log/log_formatter.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/src/log/log_sink_file_backend.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/src/log/log_sink_syslog_backend.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/src/log/log_stacktrace.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/src/log/log_wrapper.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/src/log/lua_log_adaptor.cpp"

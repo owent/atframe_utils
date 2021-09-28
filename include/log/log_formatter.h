@@ -1,13 +1,6 @@
-/**
- * @file log_wrapper.h
- * @brief 日志包装器
- * Licensed under the MIT licenses.
- *
- * @version 1.0
- * @author owent
- * @date 2015-06-29
- * @history
- */
+// Copyright 2021 atframework
+// Licensed under the MIT licenses.
+// Created by owent on 2015-06-29
 
 #ifndef UTIL_LOG_LOG_FORMATTER_H
 #define UTIL_LOG_LOG_FORMATTER_H
