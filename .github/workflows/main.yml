@@ -60,6 +60,10 @@ jobs:
             bash ci/do_ci.sh gcc.legacy.test ;
           elif [[ "x$USE_SSL" == "xmbedtls" ]]; then
             bash ci/do_ci.sh ssl.mbedtls ;
+          elif [[ "x$USE_SSL" == "xlibressl" ]]; then
+            bash ci/do_ci.sh ssl.libressl ;
+          elif [[ "x$USE_SSL" == "xboringssl" ]]; then
+            bash ci/do_ci.sh ssl.boringssl ;
           else
             bash ci/do_ci.sh ssl.openssl ;
           fi
