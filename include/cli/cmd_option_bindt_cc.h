@@ -31,7 +31,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY cmd_option_bindt_cc_caller {
   cmd_option_bindt_cc_caller(_TF f) : func_(f) {}
 
   template <typename _TCBP, typename... _Args>
-  void operator()(_TCBP &param, _Args &...args) {
+  void operator()(_TCBP &param, _Args &... args) {
     func_(param, args...);
   }
 };

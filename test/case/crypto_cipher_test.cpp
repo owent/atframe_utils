@@ -746,4 +746,3 @@ CASE_TEST(crypto_cipher, evp_test) {
 }
 
 #endif
-

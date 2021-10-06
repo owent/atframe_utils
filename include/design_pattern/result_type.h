@@ -118,7 +118,7 @@ struct LIBATFRAME_UTILS_API_HEAD_ONLY
   }
 
   template <class... TARGS>
-  static UTIL_FORCEINLINE void construct_storage(void *out, TARGS &&...in) {
+  static UTIL_FORCEINLINE void construct_storage(void *out, TARGS &&... in) {
     // Placement new
     storage_type *ptr = new (out) storage_type(value_type{std::forward<TARGS>(in)...}, nullptr);
     ptr->second.reset(&ptr->first);
@@ -180,7 +180,7 @@ struct LIBATFRAME_UTILS_API_HEAD_ONLY compact_storage_type<T, typename std::uniq
   }
 
   template <class... TARGS>
-  static UTIL_FORCEINLINE void construct_storage(void *out, TARGS &&...in) {
+  static UTIL_FORCEINLINE void construct_storage(void *out, TARGS &&... in) {
     // Placement new
     new (out) pointer{new T(std::forward<TARGS>(in)...)};
   }
@@ -214,7 +214,7 @@ struct LIBATFRAME_UTILS_API_HEAD_ONLY compact_storage_type : public std::false_t
   static UTIL_FORCEINLINE void destroy_storage(storage_type &out) { out.~storage_type(); }
 
   template <class... TARGS>
-  static UTIL_FORCEINLINE void construct_storage(void *out, TARGS &&...in) {
+  static UTIL_FORCEINLINE void construct_storage(void *out, TARGS &&... in) {
     // Placement new
     new (out) pointer{std::forward<TARGS>(in)...};
   }
@@ -382,14 +382,14 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY result_base_type {
   friend class result_type;
 
   template <class... TARGS>
-  inline void construct_success(TARGS &&...args) {
+  inline void construct_success(TARGS &&... args) {
     reset();
     success_storage_type::construct_storage(success_data_arena(), std::forward<TARGS>(args)...);
     mode_ = mode::kSuccess;
   }
 
   template <class... TARGS>
-  inline void construct_error(TARGS &&...args) {
+  inline void construct_error(TARGS &&... args) {
     reset();
     error_storage_type::construct_storage(error_data_arena(), std::forward<TARGS>(args)...);
     mode_ = mode::kError;
@@ -431,14 +431,14 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY result_type : public result_base_type<TOK, 
 
  public:
   template <class... TARGS>
-  static inline self_type make_success(TARGS &&...args) {
+  static inline self_type make_success(TARGS &&... args) {
     self_type ret;
     ret.construct_success(std::forward<TARGS>(args)...);
     return ret;
   }
 
   template <class... TARGS>
-  static inline self_type make_error(TARGS &&...args) {
+  static inline self_type make_error(TARGS &&... args) {
     self_type ret;
     ret.construct_error(std::forward<TARGS>(args)...);
     return ret;

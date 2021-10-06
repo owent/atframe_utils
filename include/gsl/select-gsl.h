@@ -69,7 +69,7 @@ using std::make_shared;
 using std::make_unique;
 #  else
 template <class T, class... Args>
-EXPLICIT_NODISCARD_ATTR unique_ptr<T> make_unique(Args &&...args) {
+EXPLICIT_NODISCARD_ATTR unique_ptr<T> make_unique(Args &&... args) {
   return unique_ptr<T>(new T(std::forward<Args>(args)...));
 }
 #  endif

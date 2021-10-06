@@ -29,17 +29,17 @@ namespace log {
 
 #if defined(LOG_WRAPPER_ENABLE_FWAPI) && LOG_WRAPPER_ENABLE_FWAPI
 template <class TCONTEXT = LOG_WRAPPER_FWAPI_NAMESPACE format_context, class... TARGS>
-LIBATFRAME_UTILS_API_HEAD_ONLY auto make_format_args(TARGS &&...args) {
+LIBATFRAME_UTILS_API_HEAD_ONLY auto make_format_args(TARGS &&... args) {
   return LOG_WRAPPER_FWAPI_NAMESPACE make_format_args<TCONTEXT>(std::forward<TARGS>(args)...);
 }
 
 #  ifdef LOG_WRAPPER_FWAPI_USING_FORMAT_STRING
 template <class... TARGS>
 LIBATFRAME_UTILS_API_HEAD_ONLY std::string format(LOG_WRAPPER_FWAPI_USING_FORMAT_STRING(TARGS...) fmt_text,
-                                                  TARGS &&...args) {
+                                                  TARGS &&... args) {
 #  else
 template <class TFMT, class... TARGS>
-LIBATFRAME_UTILS_API_HEAD_ONLY std::string format(TFMT &&fmt_text, TARGS &&...args) {
+LIBATFRAME_UTILS_API_HEAD_ONLY std::string format(TFMT &&fmt_text, TARGS &&... args) {
 #  endif
 #  if defined(LIBATFRAME_UTILS_ENABLE_EXCEPTION) && LIBATFRAME_UTILS_ENABLE_EXCEPTION
   try {
@@ -63,10 +63,10 @@ LIBATFRAME_UTILS_API_HEAD_ONLY std::string format(TFMT &&fmt_text, TARGS &&...ar
 #  ifdef LOG_WRAPPER_FWAPI_USING_FORMAT_STRING
 template <class OutputIt, class... TARGS>
 LIBATFRAME_UTILS_API_HEAD_ONLY auto format_to(OutputIt out, LOG_WRAPPER_FWAPI_USING_FORMAT_STRING(TARGS...) fmt_text,
-                                              TARGS &&...args) {
+                                              TARGS &&... args) {
 #  else
 template <class OutputIt, class TFMT, class... TARGS>
-LIBATFRAME_UTILS_API_HEAD_ONLY auto format_to(OutputIt out, TFMT &&fmt_text, TARGS &&...args) {
+LIBATFRAME_UTILS_API_HEAD_ONLY auto format_to(OutputIt out, TFMT &&fmt_text, TARGS &&... args) {
 #  endif
 #  if defined(LIBATFRAME_UTILS_ENABLE_EXCEPTION) && LIBATFRAME_UTILS_ENABLE_EXCEPTION
   try {
@@ -112,7 +112,7 @@ template <class OutputIt, class TFMT, class... TARGS>
 LIBATFRAME_UTILS_API_HEAD_ONLY LOG_WRAPPER_FWAPI_NAMESPACE format_to_n_result<OutputIt> format_to_n(OutputIt out,
                                                                                                     size_t n,
                                                                                                     TFMT &&fmt_text,
-                                                                                                    TARGS &&...args) {
+                                                                                                    TARGS &&... args) {
 #  if defined(LIBATFRAME_UTILS_ENABLE_EXCEPTION) && LIBATFRAME_UTILS_ENABLE_EXCEPTION
   try {
 #  endif
@@ -273,10 +273,10 @@ class log_wrapper {
 #if defined(LOG_WRAPPER_ENABLE_FWAPI) && LOG_WRAPPER_ENABLE_FWAPI
 #  ifdef LOG_WRAPPER_FWAPI_USING_FORMAT_STRING
   template <class FMT, class... TARGS>
-  LIBATFRAME_UTILS_API_HEAD_ONLY void format_log(const caller_info_t &caller, FMT &&fmt_text, TARGS &&...args) {
+  LIBATFRAME_UTILS_API_HEAD_ONLY void format_log(const caller_info_t &caller, FMT &&fmt_text, TARGS &&... args) {
 #  else
   template <class... TARGS>
-  LIBATFRAME_UTILS_API_HEAD_ONLY void format_log(const caller_info_t &caller, TARGS &&...args) {
+  LIBATFRAME_UTILS_API_HEAD_ONLY void format_log(const caller_info_t &caller, TARGS &&... args) {
 #  endif
     log_operation_t writer;
     start_log(caller, writer);

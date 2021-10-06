@@ -237,4 +237,3 @@ CASE_TEST(crypto_dh, ecdh) {
 }
 
 #endif
-

@@ -32,12 +32,12 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY cmd_option_bindt_mf_cc_caller {
   cmd_option_bindt_mf_cc_caller(_F f) : mem_func_(f) {}
 
   template <typename _TCBP, typename... _Args>
-  void operator()(_TCBP &param, _T *arg0, _Args &...args) {
+  void operator()(_TCBP &param, _T *arg0, _Args &... args) {
     (arg0->*mem_func_)(param, args...);
   }
 
   template <typename _TCBP, typename... _Args>
-  void operator()(_TCBP &param, _T &arg0, _Args &...args) {
+  void operator()(_TCBP &param, _T &arg0, _Args &... args) {
     (arg0.*mem_func_)(param, args...);
   }
 };
