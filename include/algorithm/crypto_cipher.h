@@ -24,6 +24,7 @@
 
 #if defined(CRYPTO_USE_OPENSSL) || defined(CRYPTO_USE_LIBRESSL) || defined(CRYPTO_USE_BORINGSSL)
 
+#  include <openssl/crypto.h>
 #  include <openssl/err.h>
 #  include <openssl/evp.h>
 

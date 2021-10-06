@@ -47,12 +47,13 @@ CASE_TEST(crypto_dh, get_all_curve_names) {
 #  endif
 }
 
+#  if !defined(CRYPTO_USE_BORINGSSL)
 CASE_TEST(crypto_dh, dh) {
-#  if defined(CRYPTO_USE_OPENSSL) || defined(CRYPTO_USE_LIBRESSL) || defined(CRYPTO_USE_BORINGSSL)
+#    if defined(CRYPTO_USE_OPENSSL) || defined(CRYPTO_USE_LIBRESSL)
   if (!openssl_test_inited_for_dh) {
     openssl_test_inited_for_dh = std::make_shared<openssl_test_init_wrapper_for_dh>();
   }
-#  endif
+#    endif
 
   int test_times = 32;
   int left_times = test_times;
@@ -123,6 +124,7 @@ CASE_TEST(crypto_dh, dh) {
 
   CASE_MSG_INFO() << "Test DH algorithm " << test_times << " times, key len " << key_bits << " bits. " << std::endl;
 }
+#  endif
 
 CASE_TEST(crypto_dh, ecdh) {
 #  if defined(CRYPTO_USE_OPENSSL) || defined(CRYPTO_USE_LIBRESSL) || defined(CRYPTO_USE_BORINGSSL)
@@ -235,3 +237,4 @@ CASE_TEST(crypto_dh, ecdh) {
 }
 
 #endif
+

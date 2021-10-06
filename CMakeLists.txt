@@ -16,7 +16,7 @@ enable_testing()
 
 project(
   atframe_utils
-  VERSION "2.3.7"
+  VERSION "2.3.8"
   HOMEPAGE_URL "https://github.com/atframework/atframe_utils"
   LANGUAGES C CXX)
 
