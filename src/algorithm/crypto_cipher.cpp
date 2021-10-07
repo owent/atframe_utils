@@ -1,13 +1,17 @@
-#include <cstring>
+// Copyright 2021 atframework
+// Create by owent
+
+#include "algorithm/crypto_cipher.h"
 
 #include <common/compiler_message.h>
 #include <common/string_oprs.h>
 #include <config/compiler_features.h>
 
-#include <algorithm/crypto_cipher.h>
 #include <std/static_assert.h>
 
 #include <lock/atomic_int_type.h>
+
+#include <cstring>
 
 #ifdef CRYPTO_CIPHER_ENABLED
 
@@ -1401,11 +1405,11 @@ LIBATFRAME_UTILS_API int cipher::init_global_algorithm() {
 #  if defined(CRYPTO_USE_OPENSSL) || defined(CRYPTO_USE_LIBRESSL) || defined(CRYPTO_USE_BORINGSSL)
   size_t counter = details::g_global_init_counter_++;
   if (0 == counter) {
-    ERR_load_ERR_strings();
-// OPENSSL_API_LEVEL only support openssl 1.0.0 or upper
+// No explicit initialisation or de-initialisation is necessary from openssl 1.1.0.
 #    if (defined(OPENSSL_API_COMPAT) && OPENSSL_API_COMPAT < 0x10100000L) || \
         (defined(OPENSSL_API_LEVEL) && OPENSSL_API_LEVEL < 10100) ||         \
         (defined(OPENSSL_VERSION_NUMBER) && OPENSSL_VERSION_NUMBER < 0x10100000L)
+    ERR_load_ERR_strings();
     ERR_load_crypto_strings();
     OpenSSL_add_all_algorithms();
 #    else
