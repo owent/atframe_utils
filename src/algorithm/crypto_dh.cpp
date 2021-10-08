@@ -1971,6 +1971,57 @@ LIBATFRAME_UTILS_API int dh::read_public(const unsigned char *input, size_t ilen
         break;
       }
 
+#      ifdef CRYPTO_USE_OPENSSL_WITH_OSSL_APIS
+      details::openssl_raii<BIGNUM> DH_p{nullptr};
+      details::openssl_raii<BIGNUM> DH_g{nullptr};
+      if (!EVP_PKEY_get_bn_param(dh_context_.openssl_dh_pkey_, OSSL_PKEY_PARAM_FFC_P, &DH_p.ref()) ||
+          !EVP_PKEY_get_bn_param(dh_context_.openssl_dh_pkey_, OSSL_PKEY_PARAM_FFC_G, &DH_g.ref())) {
+        ret = details::setup_errorno(*this, 0, error_code_t::INIT_DH_READ_PARAM);
+        break;
+      }
+      if (nullptr == DH_p.get() || nullptr == DH_g.get()) {
+        ret = details::setup_errorno(*this, 0, error_code_t::INIT_DH_READ_PARAM);
+        break;
+      }
+
+      details::openssl_raii<OSSL_PARAM_BLD> ossl_param_bld{OSSL_PARAM_BLD_new()};
+      if (nullptr == ossl_param_bld.get() ||
+          !OSSL_PARAM_BLD_push_BN(ossl_param_bld.get(), OSSL_PKEY_PARAM_FFC_P, DH_p.get()) ||
+          !OSSL_PARAM_BLD_push_BN(ossl_param_bld.get(), OSSL_PKEY_PARAM_FFC_G, DH_g.get()) ||
+          !OSSL_PARAM_BLD_push_BN(ossl_param_bld.get(), OSSL_PKEY_PARAM_PUB_KEY, pub_key.get())) {
+        ret = error_code_t::INIT_DH_READ_KEY;
+        break;
+      }
+
+      details::openssl_raii<OSSL_PARAM> ossl_params{OSSL_PARAM_BLD_to_param(ossl_param_bld.get())};
+      if (ossl_params.get() == nullptr) {
+        ret = error_code_t::INIT_DH_READ_KEY;
+        break;
+      }
+
+      details::reset(dh_context_.openssl_dh_peer_key_);
+      if (!EVP_PKEY_fromdata_init(shared_context_->get_dh_parameter().keygen_ctx) ||
+          !EVP_PKEY_fromdata(shared_context_->get_dh_parameter().keygen_ctx, &dh_context_.openssl_dh_peer_key_,
+                             EVP_PKEY_KEYPAIR, ossl_params.get())) {
+        ret = error_code_t::INIT_DH_READ_KEY;
+        break;
+      }
+
+      // @see test_fromdata_dh_named_group in <openssl-3.0.0>/test/evp_pkey_provided_test.c
+      // printf("\nbefore pubkey: ");
+      // BN_print_fp(stdout, pub_key.get());
+      // if (!EVP_PKEY_set_bn_param(dh_context_.openssl_dh_peer_key_, OSSL_PKEY_PARAM_PUB_KEY, pub_key.get())) {
+      //   ret = details::setup_errorno(*this, static_cast<int>(ERR_peek_error()), error_code_t::INIT_DH_GENERATE_KEY);
+      //   break;
+      // }
+      // {
+      //   BIGNUM *debug_bn = nullptr;
+      //   EVP_PKEY_get_bn_param(dh_context_.openssl_dh_peer_key_, OSSL_PKEY_PARAM_PUB_KEY, &debug_bn);
+      //   printf("\nbefore pubkey: ");
+      //   BN_print_fp(stdout, debug_bn);
+      //   BN_free(debug_bn);
+      // }
+#      else
       if (nullptr == dh_context_.openssl_dh_peer_key_) {
         EVP_PKEY_keygen(shared_context_->get_dh_parameter().keygen_ctx, &dh_context_.openssl_dh_peer_key_);
       }
@@ -1979,12 +2030,6 @@ LIBATFRAME_UTILS_API int dh::read_public(const unsigned char *input, size_t ilen
         break;
       }
 
-#      ifdef CRYPTO_USE_OPENSSL_WITH_OSSL_APIS
-      if (!EVP_PKEY_set_bn_param(dh_context_.openssl_dh_peer_key_, OSSL_PKEY_PARAM_PUB_KEY, pub_key.get())) {
-        ret = details::setup_errorno(*this, static_cast<int>(ERR_peek_error()), error_code_t::INIT_DH_GENERATE_KEY);
-        break;
-      }
-#      else
       DH *dh = EVP_PKEY_get0_DH(dh_context_.openssl_dh_peer_key_);
       if (nullptr == dh) {
         ret = details::setup_errorno(*this, static_cast<int>(ERR_peek_error()), error_code_t::INIT_DH_GENERATE_KEY);
@@ -2395,27 +2440,27 @@ int dh::check_or_setup_dh_pg_gy(BIGNUM *&DH_p, BIGNUM *&DH_g, BIGNUM *&DH_gy) {
       // }
 
       // @see test_fromdata_dh_named_group in <openssl-3.0.0>/test/evp_pkey_provided_test.c
-      printf("\nbefore P: ");
-      BN_print_fp(stdout, DH_p);
-      printf("\nbefore G: ");
-      BN_print_fp(stdout, DH_g);
-      printf("\nbefore pubkey: ");
-      BN_print_fp(stdout, DH_gy);
-      {
-        BIGNUM *debug_bn[3] = {nullptr, nullptr, nullptr};
-        EVP_PKEY_get_bn_param(dh_context_.openssl_dh_peer_key_, OSSL_PKEY_PARAM_FFC_P, &debug_bn[0]);
-        EVP_PKEY_get_bn_param(dh_context_.openssl_dh_peer_key_, OSSL_PKEY_PARAM_FFC_G, &debug_bn[1]);
-        EVP_PKEY_get_bn_param(dh_context_.openssl_dh_peer_key_, OSSL_PKEY_PARAM_PUB_KEY, &debug_bn[2]);
-        printf("\n after P: ");
-        BN_print_fp(stdout, debug_bn[0]);
-        printf("\n after G: ");
-        BN_print_fp(stdout, debug_bn[1]);
-        printf("\n after pubkey: ");
-        BN_print_fp(stdout, debug_bn[2]);
-        BN_free(debug_bn[0]);
-        BN_free(debug_bn[1]);
-        BN_free(debug_bn[2]);
-      }
+      // printf("\nbefore P: ");
+      // BN_print_fp(stdout, DH_p);
+      // printf("\nbefore G: ");
+      // BN_print_fp(stdout, DH_g);
+      // printf("\nbefore pubkey: ");
+      // BN_print_fp(stdout, DH_gy);
+      // {
+      //   BIGNUM *debug_bn[3] = {nullptr, nullptr, nullptr};
+      //   EVP_PKEY_get_bn_param(dh_context_.openssl_dh_peer_key_, OSSL_PKEY_PARAM_FFC_P, &debug_bn[0]);
+      //   EVP_PKEY_get_bn_param(dh_context_.openssl_dh_peer_key_, OSSL_PKEY_PARAM_FFC_G, &debug_bn[1]);
+      //   EVP_PKEY_get_bn_param(dh_context_.openssl_dh_peer_key_, OSSL_PKEY_PARAM_PUB_KEY, &debug_bn[2]);
+      //   printf("\n after P: ");
+      //   BN_print_fp(stdout, debug_bn[0]);
+      //   printf("\n after G: ");
+      //   BN_print_fp(stdout, debug_bn[1]);
+      //   printf("\n after pubkey: ");
+      //   BN_print_fp(stdout, debug_bn[2]);
+      //   BN_free(debug_bn[0]);
+      //   BN_free(debug_bn[1]);
+      //   BN_free(debug_bn[2]);
+      // }
 
 #      else
       if (nullptr == dh_context_.openssl_dh_peer_key_) {
