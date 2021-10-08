@@ -7,6 +7,7 @@
 #include <vector>
 
 #include "log/log_sink_file_backend.h"
+#include "log/log_sink_syslog_backend.h"
 #include "log/log_stacktrace.h"
 #include "log/log_wrapper.h"
 #include "std/thread.h"
@@ -148,6 +149,10 @@ void log_sample_func1(int times) {
   filed_backend.set_writing_alias_pattern("%Y-%m-%d/%S/current.log");
 
   WLOG_GETCAT(util::log::log_wrapper::categorize_t::DEFAULT)->add_sink(filed_backend);
+#if defined(LOG_SINK_ENABLE_SYSLOG_SUPPORT) && LOG_SINK_ENABLE_SYSLOG_SUPPORT
+  WLOG_GETCAT(util::log::log_wrapper::categorize_t::DEFAULT)
+      ->add_sink(util::log::log_sink_syslog_backend{"atframe_utils-sample"});
+#endif
   std::cout << "----------------setup file system log sink done--------------" << std::endl;
 
   for (int i = 0; i < 16; ++i) {

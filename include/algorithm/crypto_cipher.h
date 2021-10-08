@@ -1,17 +1,6 @@
-/**
- * @file crypto_cipher.h
- * @brief 加密算法库适配
- * Licensed under the MIT licenses.
- *
- * @version 1.0
- * @author OWenT
- * @date 2017.07.25
- *
- * @see https://en.wikipedia.org/wiki/XXTEA
- * @history
- *
- *
- */
+// Copyright 2021 atframework
+// Create by owent on 2017.07.25
+// @see https://en.wikipedia.org/wiki/XXTEA
 
 #ifndef UTIL_ALGORITHM_CRYPTO_CIPHER_H
 #define UTIL_ALGORITHM_CRYPTO_CIPHER_H
@@ -24,6 +13,7 @@
 
 #if defined(CRYPTO_USE_OPENSSL) || defined(CRYPTO_USE_LIBRESSL) || defined(CRYPTO_USE_BORINGSSL)
 
+#  include <openssl/crypto.h>
 #  include <openssl/err.h>
 #  include <openssl/evp.h>
 

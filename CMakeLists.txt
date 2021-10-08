@@ -16,7 +16,7 @@ enable_testing()
 
 project(
   atframe_utils
-  VERSION "2.3.7"
+  VERSION "2.3.8"
   HOMEPAGE_URL "https://github.com/atframework/atframe_utils"
   LANGUAGES C CXX)
 
@@ -64,6 +64,7 @@ set(SRC_LIST
     "${CMAKE_CURRENT_LIST_DIR}/src/config/ini_loader.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/src/log/log_formatter.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/src/log/log_sink_file_backend.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/src/log/log_sink_syslog_backend.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/src/log/log_stacktrace.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/src/log/log_wrapper.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/src/log/lua_log_adaptor.cpp"

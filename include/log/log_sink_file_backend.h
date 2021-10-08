@@ -1,13 +1,6 @@
-/**
- * @file log_sink_file_backend.h
- * @brief 日志文件后端
- * Licensed under the MIT licenses.
- *
- * @version 1.0
- * @author owent
- * @date 2016-03-31
- * @history
- */
+// Copyright 2021 atframework
+// Licensed under the MIT licenses.
+// Created by owent on 2016-03-31
 
 #ifndef UTIL_LOG_LOG_SINK_FILE_BACKEND_H
 #define UTIL_LOG_LOG_SINK_FILE_BACKEND_H

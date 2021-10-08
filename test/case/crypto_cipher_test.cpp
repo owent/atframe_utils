@@ -105,6 +105,21 @@ CASE_TEST(crypto_cipher, aes_cfb) {
   }
 #  endif
 
+  if (nullptr == util::crypto::cipher::get_cipher_by_name("AES-128-CFB")) {
+    CASE_MSG_INFO() << "Current crypto suite do not support AES-128-CFB, just skip the test." << std::endl;
+    return;
+  }
+
+  if (nullptr == util::crypto::cipher::get_cipher_by_name("AES-192-CFB")) {
+    CASE_MSG_INFO() << "Current crypto suite do not support AES-192-CFB, just skip the test." << std::endl;
+    return;
+  }
+
+  if (nullptr == util::crypto::cipher::get_cipher_by_name("AES-256-CFB")) {
+    CASE_MSG_INFO() << "Current crypto suite do not support AES-256-CFB, just skip the test." << std::endl;
+    return;
+  }
+
   for (int i = 0; i < 6; ++i) {
     int u = i >> 1;
     int v = i & 1;
@@ -158,6 +173,11 @@ CASE_TEST(crypto_cipher, aes_cfb_nopadding_encrypt) {
     openssl_test_inited = std::make_shared<openssl_test_init_wrapper>();
   }
 #  endif
+
+  if (nullptr == util::crypto::cipher::get_cipher_by_name("AES-256-CFB")) {
+    CASE_MSG_INFO() << "Current crypto suite do not support AES-256-CFB, just skip the test." << std::endl;
+    return;
+  }
 
   {
     util::crypto::cipher ci;

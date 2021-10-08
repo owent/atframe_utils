@@ -1,16 +1,5 @@
-/**
- * @file crypto_dh.h
- * @brief DH/ECDH算法适配,大数随机算法适配
- * Licensed under the MIT licenses.
- *
- * @version 1.0
- * @author OWenT
- * @date 2017.09.19
- *
- * @history
- *
- *
- */
+// Copyright 2021 atframework
+// Create by owent on 2017.09.19
 
 #ifndef UTIL_ALGORITHM_CRYPTO_DH_H
 #define UTIL_ALGORITHM_CRYPTO_DH_H
@@ -29,6 +18,11 @@
 #  include <openssl/ecdh.h>
 #  include <openssl/err.h>
 #  include <openssl/pem.h>
+
+#  if (defined(OPENSSL_API_LEVEL) && OPENSSL_API_LEVEL >= 30000) || \
+      (!defined(LIBRESSL_VERSION_NUMBER) && defined(OPENSSL_VERSION_NUMBER) && OPENSSL_VERSION_NUMBER >= 0x30000000L)
+#    define CRYPTO_USE_OPENSSL_WITH_OSSL_APIS 1
+#  endif
 
 #  define CRYPTO_DH_ENABLED 1
 
@@ -123,8 +117,6 @@ class dh {
       BIO *param;
       std::vector<unsigned char> param_buffer;
       int group_id;
-      EVP_PKEY_CTX *paramgen_ctx;
-      EVP_PKEY *params_key;
       EVP_PKEY_CTX *keygen_ctx;
     };
 
@@ -297,7 +289,7 @@ class dh {
 
 #  if defined(CRYPTO_USE_OPENSSL) || defined(CRYPTO_USE_LIBRESSL) || defined(CRYPTO_USE_BORINGSSL)
   int check_or_setup_ecp_id(int group_id);
-  int check_or_setup_dh_pg(const unsigned char *&input, size_t &left_size);
+  int check_or_setup_dh_pg_gy(BIGNUM *&DH_p, BIGNUM *&DH_g, BIGNUM *&DH_gy);
 #  endif
 
  private:

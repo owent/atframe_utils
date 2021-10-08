@@ -1,3 +1,7 @@
+// Copyright 2021 atframework
+// Licensed under the MIT licenses.
+// Created by owent on 2015-06-29
+
 #include "log/log_wrapper.h"
 
 #include "log/lua_log_adaptor.h"
