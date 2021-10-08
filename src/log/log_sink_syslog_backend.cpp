@@ -29,7 +29,7 @@ class log_sink_syslog_backend_handle {
       ident_ = ident;
     }
 
-    openlog(ident, option, facility);
+    openlog(ident_.empty() ? nullptr : ident_.c_str(), option_, facility_);
   }
   ~log_sink_syslog_backend_handle() { closelog(); }
 
