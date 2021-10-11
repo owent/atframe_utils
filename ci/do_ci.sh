@@ -114,8 +114,20 @@ elif [[ "$1" == "ssl.mbedtls" ]]; then
   cd build_jobs_ci
   cmake --build . -j
   ctest . -V
+elif [[ "$1" == "gcc.no-rtti.test" ]]; then
+  bash cmake_dev.sh -lus -b RelWithDebInfo -r build_jobs_ci -c $USE_CC -- "-DATFRAMEWORK_CMAKE_TOOLSET_THIRD_PARTY_LOW_MEMORY_MODE=ON" \
+    "-DCOMPILER_OPTION_DEFAULT_ENABLE_RTTI=OFF"
+  cd build_jobs_ci
+  cmake --build . -j
+  ctest . -V
+elif [[ "$1" == "gcc.no-exceptions.test" ]]; then
+  bash cmake_dev.sh -lus -b RelWithDebInfo -r build_jobs_ci -c $USE_CC -- "-DATFRAMEWORK_CMAKE_TOOLSET_THIRD_PARTY_LOW_MEMORY_MODE=ON" \
+    "-DCOMPILER_OPTION_DEFAULT_ENABLE_EXCEPTION=OFF"
+  cd build_jobs_ci
+  cmake --build . -j
+  ctest . -V
 elif [[ "$1" == "gcc.legacy.test" ]]; then
-  bash cmake_dev.sh -lus -b RelWithDebInfo -r build_jobs_ci -c $USE_CC
+  bash cmake_dev.sh -lus -b RelWithDebInfo -r build_jobs_ci -c $USE_CC -- "-DATFRAMEWORK_CMAKE_TOOLSET_THIRD_PARTY_LOW_MEMORY_MODE=ON"
   cd build_jobs_ci
   cmake --build . -j
   ctest . -V

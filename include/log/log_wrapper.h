@@ -365,7 +365,7 @@ class log_wrapper {
 
   UTIL_FORCEINLINE level_t::type get_level() const { return log_level_; }
 
-  UTIL_FORCEINLINE const std::string &set_prefix_format() const { return prefix_format_; }
+  UTIL_FORCEINLINE const std::string &get_prefix_format() const { return prefix_format_; }
 
   UTIL_FORCEINLINE void set_prefix_format(const std::string &prefix) { prefix_format_ = prefix; }
 
@@ -444,23 +444,23 @@ class log_wrapper {
 
 /** 对指定log_wrapper的日志输出工具 - snprintf **/
 
-#  define WINSTLOGDEFLV(lv, lv_name, inst, ...) \
-    if ((inst).check_level(lv)) (inst).log(WDTLOGFILENF(lv, lv_name), __VA_ARGS__);
+#  define WINSTLOGDEFLV(lv, lv_name, __inst, ...) \
+    if ((__inst).check_level(lv)) (__inst).log(WDTLOGFILENF(lv, lv_name), __VA_ARGS__);
 
-#  define WINSTLOGTRACE(inst, ...) \
-    WINSTLOGDEFLV(util::log::log_wrapper::level_t::LOG_LW_TRACE, nullptr, inst, __VA_ARGS__)
-#  define WINSTLOGDEBUG(inst, ...) \
-    WINSTLOGDEFLV(util::log::log_wrapper::level_t::LOG_LW_DEBUG, nullptr, inst, __VA_ARGS__)
-#  define WINSTLOGNOTICE(inst, ...) \
-    WINSTLOGDEFLV(util::log::log_wrapper::level_t::LOG_LW_NOTICE, nullptr, inst, __VA_ARGS__)
-#  define WINSTLOGINFO(inst, ...) \
-    WINSTLOGDEFLV(util::log::log_wrapper::level_t::LOG_LW_INFO, nullptr, inst, __VA_ARGS__)
-#  define WINSTLOGWARNING(inst, ...) \
-    WINSTLOGDEFLV(util::log::log_wrapper::level_t::LOG_LW_WARNING, nullptr, inst, __VA_ARGS__)
-#  define WINSTLOGERROR(inst, ...) \
-    WINSTLOGDEFLV(util::log::log_wrapper::level_t::LOG_LW_ERROR, nullptr, inst, __VA_ARGS__)
-#  define WINSTLOGFATAL(inst, ...) \
-    WINSTLOGDEFLV(util::log::log_wrapper::level_t::LOG_LW_FATAL, nullptr, inst, __VA_ARGS__)
+#  define WINSTLOGTRACE(__inst, ...) \
+    WINSTLOGDEFLV(util::log::log_wrapper::level_t::LOG_LW_TRACE, nullptr, __inst, __VA_ARGS__)
+#  define WINSTLOGDEBUG(__inst, ...) \
+    WINSTLOGDEFLV(util::log::log_wrapper::level_t::LOG_LW_DEBUG, nullptr, __inst, __VA_ARGS__)
+#  define WINSTLOGNOTICE(__inst, ...) \
+    WINSTLOGDEFLV(util::log::log_wrapper::level_t::LOG_LW_NOTICE, nullptr, __inst, __VA_ARGS__)
+#  define WINSTLOGINFO(__inst, ...) \
+    WINSTLOGDEFLV(util::log::log_wrapper::level_t::LOG_LW_INFO, nullptr, __inst, __VA_ARGS__)
+#  define WINSTLOGWARNING(__inst, ...) \
+    WINSTLOGDEFLV(util::log::log_wrapper::level_t::LOG_LW_WARNING, nullptr, __inst, __VA_ARGS__)
+#  define WINSTLOGERROR(__inst, ...) \
+    WINSTLOGDEFLV(util::log::log_wrapper::level_t::LOG_LW_ERROR, nullptr, __inst, __VA_ARGS__)
+#  define WINSTLOGFATAL(__inst, ...) \
+    WINSTLOGDEFLV(util::log::log_wrapper::level_t::LOG_LW_FATAL, nullptr, __inst, __VA_ARGS__)
 
 #  if defined(LOG_WRAPPER_ENABLE_FWAPI) && LOG_WRAPPER_ENABLE_FWAPI
 /** 全局日志输出工具 - std::format **/
@@ -479,23 +479,23 @@ class log_wrapper {
 #    define FWCLOGFATAL(cat, ...) FWCLOGDEFLV(util::log::log_wrapper::level_t::LOG_LW_FATAL, nullptr, cat, __VA_ARGS__)
 
 /** 对指定log_wrapper的日志输出工具 - std::format **/
-#    define FWINSTLOGDEFLV(lv, lv_name, inst, ...) \
-      if ((inst).check_level(lv)) (inst).format_log(WDTLOGFILENF(lv, lv_name), __VA_ARGS__);
+#    define FWINSTLOGDEFLV(lv, lv_name, __inst, ...) \
+      if ((__inst).check_level(lv)) (__inst).format_log(WDTLOGFILENF(lv, lv_name), __VA_ARGS__);
 
-#    define FWINSTLOGTRACE(inst, ...) \
-      FWINSTLOGDEFLV(util::log::log_wrapper::level_t::LOG_LW_TRACE, nullptr, inst, __VA_ARGS__)
-#    define FWINSTLOGDEBUG(inst, ...) \
-      FWINSTLOGDEFLV(util::log::log_wrapper::level_t::LOG_LW_DEBUG, nullptr, inst, __VA_ARGS__)
-#    define FWINSTLOGNOTICE(inst, ...) \
-      FWINSTLOGDEFLV(util::log::log_wrapper::level_t::LOG_LW_NOTICE, nullptr, inst, __VA_ARGS__)
-#    define FWINSTLOGINFO(inst, ...) \
-      FWINSTLOGDEFLV(util::log::log_wrapper::level_t::LOG_LW_INFO, nullptr, inst, __VA_ARGS__)
-#    define FWINSTLOGWARNING(inst, ...) \
-      FWINSTLOGDEFLV(util::log::log_wrapper::level_t::LOG_LW_WARNING, nullptr, inst, __VA_ARGS__)
-#    define FWINSTLOGERROR(inst, ...) \
-      FWINSTLOGDEFLV(util::log::log_wrapper::level_t::LOG_LW_ERROR, nullptr, inst, __VA_ARGS__)
-#    define FWINSTLOGFATAL(inst, ...) \
-      FWINSTLOGDEFLV(util::log::log_wrapper::level_t::LOG_LW_FATAL, nullptr, inst, __VA_ARGS__)
+#    define FWINSTLOGTRACE(__inst, ...) \
+      FWINSTLOGDEFLV(util::log::log_wrapper::level_t::LOG_LW_TRACE, nullptr, __inst, __VA_ARGS__)
+#    define FWINSTLOGDEBUG(__inst, ...) \
+      FWINSTLOGDEFLV(util::log::log_wrapper::level_t::LOG_LW_DEBUG, nullptr, __inst, __VA_ARGS__)
+#    define FWINSTLOGNOTICE(__inst, ...) \
+      FWINSTLOGDEFLV(util::log::log_wrapper::level_t::LOG_LW_NOTICE, nullptr, __inst, __VA_ARGS__)
+#    define FWINSTLOGINFO(__inst, ...) \
+      FWINSTLOGDEFLV(util::log::log_wrapper::level_t::LOG_LW_INFO, nullptr, __inst, __VA_ARGS__)
+#    define FWINSTLOGWARNING(__inst, ...) \
+      FWINSTLOGDEFLV(util::log::log_wrapper::level_t::LOG_LW_WARNING, nullptr, __inst, __VA_ARGS__)
+#    define FWINSTLOGERROR(__inst, ...) \
+      FWINSTLOGDEFLV(util::log::log_wrapper::level_t::LOG_LW_ERROR, nullptr, __inst, __VA_ARGS__)
+#    define FWINSTLOGFATAL(__inst, ...) \
+      FWINSTLOGDEFLV(util::log::log_wrapper::level_t::LOG_LW_FATAL, nullptr, __inst, __VA_ARGS__)
 
 #    define LOG_WRAPPER_FWAPI_FORMAT(...) ::util::log::format(__VA_ARGS__)
 #    define LOG_WRAPPER_FWAPI_FORMAT_TO(...) ::util::log::format_to(__VA_ARGS__)
@@ -521,8 +521,8 @@ class log_wrapper {
 #  define WCLOGFATAL(...) WCLOGDEFLV(util::log::log_wrapper::level_t::LOG_LW_FATAL, nullptr, __VA_ARGS__)
 
 /** 对指定log_wrapper的日志输出工具 - snprintf **/
-#  define WINSTLOGDEFLV(lv, lv_name, inst, args...) \
-    if ((inst).check_level(lv)) (inst).log(WDTLOGFILENF(lv, lv_name), ##args);
+#  define WINSTLOGDEFLV(lv, lv_name, __inst, args...) \
+    if ((__inst).check_level(lv)) (__inst).log(WDTLOGFILENF(lv, lv_name), ##args);
 
 #  define WINSTLOGTRACE(...) WINSTLOGDEFLV(util::log::log_wrapper::level_t::LOG_LW_TRACE, nullptr, __VA_ARGS__)
 #  define WINSTLOGDEBUG(...) WINSTLOGDEFLV(util::log::log_wrapper::level_t::LOG_LW_DEBUG, nullptr, __VA_ARGS__)
@@ -547,9 +547,9 @@ class log_wrapper {
 #    define FWCLOGFATAL(...) FWCLOGDEFLV(util::log::log_wrapper::level_t::LOG_LW_FATAL, nullptr, __VA_ARGS__)
 
 /** 对指定log_wrapper的日志输出工具 - std::format **/
-#    define FWINSTLOGDEFLV(lv, lv_name, inst, FMT, args...) \
-      if ((inst).check_level(lv))                           \
-        (inst).format_log(WDTLOGFILENF(lv, lv_name), LOG_WRAPPER_FWAPI_FMT_STRING(FMT), ##args);
+#    define FWINSTLOGDEFLV(lv, lv_name, __inst, FMT, args...) \
+      if ((__inst).check_level(lv))                           \
+        (__inst).format_log(WDTLOGFILENF(lv, lv_name), LOG_WRAPPER_FWAPI_FMT_STRING(FMT), ##args);
 
 #    define FWINSTLOGTRACE(...) FWINSTLOGDEFLV(util::log::log_wrapper::level_t::LOG_LW_TRACE, nullptr, __VA_ARGS__)
 #    define FWINSTLOGDEBUG(...) FWINSTLOGDEFLV(util::log::log_wrapper::level_t::LOG_LW_DEBUG, nullptr, __VA_ARGS__)

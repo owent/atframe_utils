@@ -30,19 +30,27 @@ jobs:
           - os: ubuntu-latest
             triplet: x64-linux
             cc: gcc
-            ssl: mbedtls
+            ci_mode: mbedtls
           - os: ubuntu-latest
             triplet: x64-linux
             cc: gcc
-            ssl: libressl
+            ci_mode: libressl
           - os: ubuntu-latest
             triplet: x64-linux
             cc: gcc
-            ssl: boringssl
+            ci_mode: boringssl
           - os: ubuntu-latest
             triplet: x64-linux
             cc: gcc
-            ssl: openssl-1.1.1
+            ci_mode: openssl-1.1.1
+          - os: ubuntu-latest
+            triplet: x64-linux
+            cc: gcc
+            ci_mode: no-rtti
+          - os: ubuntu-latest
+            triplet: x64-linux
+            cc: gcc
+            ci_mode: no-exceptions
           - os: ubuntu-latest
             triplet: x64-linux
             cc: gcc-latest
@@ -64,19 +72,23 @@ jobs:
         env:
           USE_CC: ${{ matrix.cc }}
           VCPKG_TARGET_TRIPLET: ${{ matrix.triplet }}
-          USE_SSL: ${{ matrix.ssl }}
+          CI_MODE: ${{ matrix.ci_mode }}
         run: |
           if [[ "xgcc-4.8" == "x$USE_CC" ]]; then
             sudo apt-get update ;
             sudo apt-get install --no-install-recommends --no-install-suggests -y g++-4.8 ;
             bash ci/do_ci.sh gcc.legacy.test ;
-          elif [[ "x$USE_SSL" == "xmbedtls" ]]; then
+          elif [[ "x$CI_MODE" == "xno-rtti" ]]; then
+            bash ci/do_ci.sh gcc.no-rtti.test ;
+          elif [[ "x$CI_MODE" == "xno-exceptions" ]]; then
+            bash ci/do_ci.sh gcc.no-exceptions.test ;
+          elif [[ "x$CI_MODE" == "xmbedtls" ]]; then
             bash ci/do_ci.sh ssl.mbedtls ;
-          elif [[ "x$USE_SSL" == "xlibressl" ]]; then
+          elif [[ "x$CI_MODE" == "xlibressl" ]]; then
             bash ci/do_ci.sh ssl.libressl ;
-          elif [[ "x$USE_SSL" == "xboringssl" ]]; then
+          elif [[ "x$CI_MODE" == "xboringssl" ]]; then
             bash ci/do_ci.sh ssl.boringssl ;
-          elif [[ "x$USE_SSL" == "xopenssl-1.1.1" ]]; then
+          elif [[ "x$CI_MODE" == "xopenssl-1.1.1" ]]; then
             bash ci/do_ci.sh ssl.openssl-1.1.1 ;
           else
             bash ci/do_ci.sh ssl.openssl ;
@@ -99,6 +111,16 @@ jobs:
             platform: x64
           - os: windows-latest
             generator: "Visual Studio 16 2019"
+            build_shared_libs: "ON"
+            platform: x64
+            ci_mode: no-rtti
+          - os: windows-latest
+            generator: "Visual Studio 16 2019"
+            build_shared_libs: "ON"
+            platform: x64
+            ci_mode: no-exceptions
+          - os: windows-latest
+            generator: "Visual Studio 16 2019"
             build_shared_libs: "OFF"
             platform: x64
     runs-on: ${{ matrix.os }}
@@ -112,8 +134,15 @@ jobs:
           CMAKE_PLATFORM: ${{ matrix.platform }}
           BUILD_SHARED_LIBS: ${{ matrix.build_shared_libs }}
           CONFIGURATION: RelWithDebInfo
+          CI_MODE: ${{ matrix.ci_mode }}
         run: |
-          pwsh ci/do_ci.ps1 msvc.2019.test ;
+          if ($ENV:CI_MODE -eq "no-rtti") {
+            pwsh ci/do_ci.ps1 msvc.no-rtti.test ;
+          } else if($ENV:CI_MODE -eq "no-exceptions") {
+            pwsh ci/do_ci.ps1 msvc.no-exceptions.test ;
+          } else {
+            pwsh ci/do_ci.ps1 msvc.2019.test ;
+          }
       - name: Cache packages
         uses: actions/cache@v2
         with:
