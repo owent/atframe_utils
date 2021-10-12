@@ -59,6 +59,7 @@ LIBATFRAME_UTILS_API int http_request::get_status_code_group(int code) { return 
 
 LIBATFRAME_UTILS_API http_request::http_request(curl_m_bind_t *curl_multi)
     : timeout_ms_(0),
+      connect_timeout_ms_(0),
       bind_m_(curl_multi),
       request_(nullptr),
       flags_(0),
@@ -146,8 +147,14 @@ LIBATFRAME_UTILS_API int http_request::start(method_t::type method, bool wait) {
   }
 
   if (timeout_ms_ > 0) {
-    set_opt_long(CURLOPT_CONNECTTIMEOUT_MS, timeout_ms_);
+    if (connect_timeout_ms_ > 0 && connect_timeout_ms_ < timeout_ms_) {
+      set_opt_long(CURLOPT_CONNECTTIMEOUT_MS, connect_timeout_ms_);
+    } else {
+      set_opt_long(CURLOPT_CONNECTTIMEOUT_MS, timeout_ms_);
+    }
     set_opt_long(CURLOPT_TIMEOUT_MS, timeout_ms_);
+  } else if (connect_timeout_ms_ > 0) {
+    set_opt_long(CURLOPT_CONNECTTIMEOUT_MS, connect_timeout_ms_);
   }
 
   int perform_result;
@@ -422,6 +429,8 @@ LIBATFRAME_UTILS_API void http_request::set_opt_timeout(time_t timeout_ms) {
   // set_opt_connect_timeout(timeout_ms);
   // set_opt_request_timeout(timeout_ms);
 }
+
+LIBATFRAME_UTILS_API void http_request::set_opt_connect_timeout(time_t timeout_ms) { connect_timeout_ms_ = timeout_ms; }
 
 LIBATFRAME_UTILS_API void http_request::set_libcurl_no_expect() {
   if (http_form_.flags & form_list_t::EN_FLFT_LIBCURL_NO_EXPECT) {

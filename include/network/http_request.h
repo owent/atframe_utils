@@ -266,6 +266,8 @@ class http_request : public std::enable_shared_from_this<http_request>, public :
 
   LIBATFRAME_UTILS_API void set_opt_timeout(time_t timeout_ms);
 
+  LIBATFRAME_UTILS_API void set_opt_connect_timeout(time_t timeout_ms);
+
   LIBATFRAME_UTILS_API void set_opt_reuse_connection(bool v);
 
   LIBATFRAME_UTILS_API void set_libcurl_no_expect();
@@ -336,6 +338,7 @@ class http_request : public std::enable_shared_from_this<http_request>, public :
  private:
   // event dispatcher
   time_t timeout_ms_;
+  time_t connect_timeout_ms_;
 
   // curl resource
   curl_m_bind_t *bind_m_;
