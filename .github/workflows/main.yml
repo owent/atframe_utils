@@ -138,7 +138,7 @@ jobs:
         run: |
           if ($ENV:CI_MODE -eq "no-rtti") {
             pwsh ci/do_ci.ps1 msvc.no-rtti.test ;
-          } else if($ENV:CI_MODE -eq "no-exceptions") {
+          } elseif($ENV:CI_MODE -eq "no-exceptions") {
             pwsh ci/do_ci.ps1 msvc.no-exceptions.test ;
           } else {
             pwsh ci/do_ci.ps1 msvc.2019.test ;
