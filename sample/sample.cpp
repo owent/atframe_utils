@@ -258,9 +258,6 @@ void log_sample_func6() {
 #  if defined(LOG_WRAPPER_ENABLE_FWAPI) && LOG_WRAPPER_ENABLE_FWAPI
   FWLOGINFO("{} {}: {} {}", "Hello", std::string("World"), 42,
             test_auto_enum_conversation_for_log_formatter::EN_TAECFLF_NONE);
-#    if defined(_MSC_VER)
-  FWLOGINFO("{:d}", "foo");  // This will cause compile error when using fmtlib and gcc/clang
-#    endif
 #  endif
   WLOG_GETCAT(util::log::log_wrapper::categorize_t::DEFAULT)->pop_sink();
   FWLOGERROR("No log sink now");
