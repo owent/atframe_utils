@@ -18,19 +18,23 @@
 // 目测主流编译器都支持且有优化， gcc 3.4 and upper, vc, clang, c++ builder xe3, intel c++ and etc.
 #pragma once
 
+#include <config/atframe_utils_build_feature.h>
+
+#include <gsl/select-gsl.h>
+#include <nostd/string_view.h>
+
 #include <stdint.h>
 
 #include <algorithm>
 #include <cctype>
 #include <cstdlib>
 #include <cstring>
+#include <memory>
 #include <ostream>
 #include <string>
 #include <utility>
 
 #include <type_traits>
-
-#include <config/atframe_utils_build_feature.h>
 
 #if defined(_MSC_VER) && _MSC_VER >= 1600
 #  define UTIL_STRFUNC_STRCASE_CMP(l, r) _stricmp(l, r)
@@ -330,26 +334,33 @@ LIBATFRAME_UTILS_API_HEAD_ONLY const TCHAR *str2int(T &out, const TCHAR *str, si
   return str + cur;
 }
 
-/**
- * @brief 字符串转整数
- * @param str 被转换的字符串
- * @return 输出的整数
- */
-template <typename T>
-LIBATFRAME_UTILS_API_HEAD_ONLY inline T to_int(const char *str) {
-  T ret = 0;
-  str2int(ret, str);
-  return ret;
+template <typename T, typename TCHAR>
+LIBATFRAME_UTILS_API_HEAD_ONLY const TCHAR *str2int(T &out, const std::basic_string<TCHAR> &str) {
+  return str2int(out, str.c_str(), str.size());
 }
+
+template <typename T, typename TCHAR>
+LIBATFRAME_UTILS_API_HEAD_ONLY const TCHAR *str2int(T &out, nostd::basic_string_view<TCHAR> str) {
+  return str2int(out, str.data(), str.size());
+}
+
+#if defined(LIBATFRAME_UTILS_GSL_TEST_STL_STRING_VIEW) && LIBATFRAME_UTILS_GSL_TEST_STL_STRING_VIEW
+template <typename T, typename TCHAR>
+LIBATFRAME_UTILS_API_HEAD_ONLY const TCHAR *str2int(T &out, std::basic_string_view<TCHAR> str) {
+  return str2int(out, str.data(), str.size());
+}
+#endif
 
 /**
  * @brief 字符串转整数
  * @param str 被转换的字符串
  * @return 输出的整数
  */
-template <typename T>
-UTIL_FORCEINLINE T to_int(const std::string &str) {
-  return to_int<T>(str.c_str());
+template <class T, class TINPUT>
+LIBATFRAME_UTILS_API_HEAD_ONLY inline T to_int(TINPUT &&input) {
+  T ret = 0;
+  str2int(ret, std::forward<TINPUT>(input));
+  return ret;
 }
 
 /**
