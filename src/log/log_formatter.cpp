@@ -276,18 +276,25 @@ LIBATFRAME_UTILS_API size_t log_formatter::format(char *buff, size_t bufz, const
       }
 
       case 'f': {
-        if (bufz - ret < 3) {
+        if (bufz - ret < 1) {
           running = false;
         } else {
-          time_t ms = ::util::time::time_utility::get_now_usec() / 1000;
-          buff[ret++] = static_cast<char>(ms / 100 + '0');
-          buff[ret++] = static_cast<char>((ms / 10) % 10 + '0');
-          buff[ret++] = static_cast<char>(ms % 10 + '0');
-          // old version use clock() to get the data
-          // clock_t clk = (clock() / (CLOCKS_PER_SEC / 1000)) % 1000;
-          // buff[ret++] = static_cast<char>(clk / 100 + '0');
-          // buff[ret++] = static_cast<char>((clk / 10) % 10 + '0');
-          // buff[ret++] = static_cast<char>(clk % 10 + '0');
+          time_t ms = ::util::time::time_utility::get_now_usec() / 10;
+          if (bufz - ret >= 1) {
+            buff[ret++] = static_cast<char>(ms / 10000 + '0');
+          }
+          if (bufz - ret >= 1) {
+            buff[ret++] = static_cast<char>((ms / 1000) % 1000 + '0');
+          }
+          if (bufz - ret >= 1) {
+            buff[ret++] = static_cast<char>((ms / 100) % 100 + '0');
+          }
+          if (bufz - ret >= 1) {
+            buff[ret++] = static_cast<char>((ms / 10) % 10 + '0');
+          }
+          if (bufz - ret >= 1) {
+            buff[ret++] = static_cast<char>(ms % 10 + '0');
+          }
         }
 
         break;

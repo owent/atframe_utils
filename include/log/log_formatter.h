@@ -181,9 +181,13 @@ class log_formatter {
    *            %F:  	equivalent to "%Y-%m-%d" (the ISO 8601 date format)
    *            %T:  	equivalent to "%H:%M:%S" (the ISO 8601 time format)
    *            %R:  	equivalent to "%H:%M"
-   *            %f:  	小于秒的时间标识 TODO:
-   * 目前为了速度是clock中的单位为毫秒的部分，但不是真正的毫秒数，以后改成真正的毫秒数 %L:  	日志级别名称 %l:
-   * 日志级别ID %s:  	调用处源码文件路径 %k:  	调用处源码文件名 %n:  	调用处源码行号 %C:  	调用处函数名称
+   *            %f:  	小于秒的时间标识
+   *            %L:   日志级别名称
+   *            %l:   日志级别ID
+   *            %s:   调用文件名(尝试解析工程目录)
+   *            %k:   调用文件名
+   *            %n:   调用行号
+   *            %C:   调用函数名
    *            %N:   轮询序号(仅在内部接口有效)
    */
   LIBATFRAME_UTILS_API static size_t format(char *buff, size_t bufz, const char *fmt, size_t fmtz,
