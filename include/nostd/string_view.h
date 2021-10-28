@@ -473,9 +473,12 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY basic_string_view {
   size_type length_;
 };
 
+// https://en.cppreference.com/w/cpp/language/static
+#if !((defined(__cplusplus) && __cplusplus >= 201703L) || (defined(_MSVC_LANG) && _MSVC_LANG >= 201703L))
 template <class CharT, class Traits>
 LIBATFRAME_UTILS_API_HEAD_ONLY constexpr const typename basic_string_view<CharT, Traits>::size_type
     basic_string_view<CharT, Traits>::npos;
+#endif
 
 #if ((defined(__cplusplus) && __cplusplus >= 201703L) || (defined(_MSVC_LANG) && _MSVC_LANG >= 201703L))
 #  if defined(_MSC_VER) && _MSC_VER < 1920

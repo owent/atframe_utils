@@ -147,6 +147,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY jiffies_timer {
   struct timer_flag_t {
     enum type {
       EN_JTTF_DISABLED = 0x0001,
+      EN_JTTF_REMOVED = 0x0002,  // readonly flag
     };
   };
 
@@ -192,7 +193,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY jiffies_timer {
    */
   template <class TCALLBACK>
   inline int add_timer(time_t delta, TCALLBACK &&fn, void *priv_data, timer_wptr_t *watcher) {
-    return add_timer(delta, std::move(timer_callback_fn_t(std::forward<TCALLBACK>(fn))), priv_data, watcher);
+    return add_timer(delta, timer_callback_fn_t(std::forward<TCALLBACK>(fn)), priv_data, watcher);
   }
 
   int add_timer(time_t delta, timer_callback_fn_t &&fn, void *priv_data, timer_wptr_t *watcher) {
@@ -261,7 +262,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY jiffies_timer {
       return error_type_t::EN_JTET_NOT_INITED;
     }
 
-    if (expires < last_tick_) {
+    if (expires <= last_tick_) {
       return ret;
     }
 
@@ -273,11 +274,18 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY jiffies_timer {
         --list_sz;
 
         // 从高层级往低层级走，这样能保证定时器时序
-        for (typename std::list<timer_ptr_t>::iterator iter = timer_list[list_sz]->begin();
-             iter != timer_list[list_sz]->end();) {
+        if (timer_list[list_sz]->empty()) {
+          continue;
+        }
+
+        typename std::list<timer_ptr_t>::iterator last_iter = timer_list[list_sz]->end();
+        --last_iter;
+        bool consume_next = true;
+        for (typename std::list<timer_ptr_t>::iterator iter = timer_list[list_sz]->begin(); consume_next;) {
           // 在定时器回调函数中可能调用remove_timer来让当前迭代器失效
           // 所以这里必须保存定时器智能指针，然后直接滚动到下一个，因为当前迭代器可能失效
           timer_ptr_t timer_ptr = *iter;
+          consume_next = iter != last_iter;
           ++iter;
           if (timer_ptr) {
             if (timer_ptr->fn && !(timer_ptr->flags & timer_flag_t::EN_JTTF_DISABLED)) {
@@ -285,19 +293,9 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY jiffies_timer {
               ++ret;
             }
 
-            if (nullptr != timer_ptr->owner_round) {
-              timer_ptr->owner_iter = timer_ptr->owner_round->end();
-              timer_ptr->owner_round = nullptr;
-            }
-
-            if (nullptr != timer_ptr->owner) {
-              --timer_ptr->owner->size_;
-              timer_ptr->owner = nullptr;
-            }
+            remove_timer(*timer_ptr);
           }
         }
-
-        timer_list[list_sz]->clear();
       }
     }
 
@@ -377,6 +375,8 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY jiffies_timer {
       --timer.owner->size_;
       timer.owner = nullptr;
     }
+
+    set_timer_flags(timer, timer_flag_t::EN_JTTF_REMOVED);
   }
 
  private:

@@ -578,3 +578,48 @@ CASE_TEST(time_test, jiffies_timer_remove_in_callback) {
   // 重复调用remove_timer是安全的
   short_timer_t::remove_timer(*timer_ptr);
 }
+
+struct jiffies_timer_add_in_callback_fn {
+  jiffies_timer_add_in_callback_fn() {}
+
+  void operator()(time_t, const short_timer_t::timer_t &timer) {
+    CASE_MSG_INFO() << "jiffies_timer " << short_timer_t::get_timer_sequence(timer) << " add timer in callback"
+                    << std::endl;
+    short_timer_t *owner = reinterpret_cast<short_timer_t *>(short_timer_t::get_timer_private_data(timer));
+    CASE_EXPECT_EQ(short_timer_t::error_type_t::EN_JTET_SUCCESS,
+                   owner->add_timer(0, jiffies_timer_fn(nullptr), nullptr));
+    CASE_EXPECT_EQ(short_timer_t::error_type_t::EN_JTET_SUCCESS,
+                   owner->add_timer(short_timer_t::LVL_SIZE - 5 - 1, jiffies_timer_fn(nullptr), nullptr));
+    CASE_EXPECT_EQ(short_timer_t::error_type_t::EN_JTET_SUCCESS,
+                   owner->add_timer(short_timer_t::LVL_SIZE - 5, jiffies_timer_fn(nullptr), nullptr));
+    CASE_EXPECT_EQ(short_timer_t::error_type_t::EN_JTET_SUCCESS,
+                   owner->add_timer(short_timer_t::LVL_SIZE - 1, jiffies_timer_fn(nullptr), nullptr));
+    CASE_EXPECT_EQ(short_timer_t::error_type_t::EN_JTET_SUCCESS,
+                   owner->add_timer(short_timer_t::LVL_SIZE, jiffies_timer_fn(nullptr), nullptr));
+  }
+};
+
+CASE_TEST(time_test, jiffies_timer_add_in_callback) {
+  short_timer_t short_timer;
+  time_t max_tick = short_timer.get_max_tick_distance() + 1;
+  short_timer_t::timer_wptr_t timer_holer;
+  short_timer_t::timer_ptr_t timer_ptr;
+
+  CASE_EXPECT_EQ(short_timer_t::error_type_t::EN_JTET_SUCCESS, short_timer.init(max_tick));
+
+  CASE_EXPECT_EQ(short_timer_t::error_type_t::EN_JTET_SUCCESS,
+                 short_timer.add_timer(5, jiffies_timer_add_in_callback_fn(), &short_timer, &timer_holer));
+  CASE_EXPECT_EQ(1, static_cast<int>(short_timer.size()));
+
+  timer_ptr = timer_holer.lock();
+  CASE_EXPECT_EQ(&short_timer, short_timer_t::get_timer_private_data(*timer_ptr));
+
+  short_timer.tick(max_tick + 6);
+  CASE_EXPECT_EQ(5, static_cast<int>(short_timer.size()));
+
+  short_timer.tick(max_tick + 6 + short_timer_t::LVL_SIZE);
+  CASE_EXPECT_EQ(1, static_cast<int>(short_timer.size()));
+
+  short_timer.tick(max_tick + 6 + short_timer_t::LVL_SIZE + short_timer_t::LVL_CLK_DIV);
+  CASE_EXPECT_EQ(0, static_cast<int>(short_timer.size()));
+}
