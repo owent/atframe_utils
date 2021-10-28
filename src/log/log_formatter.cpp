@@ -284,10 +284,10 @@ LIBATFRAME_UTILS_API size_t log_formatter::format(char *buff, size_t bufz, const
             buff[ret++] = static_cast<char>(ms / 10000 + '0');
           }
           if (bufz - ret >= 1) {
-            buff[ret++] = static_cast<char>((ms / 1000) % 1000 + '0');
+            buff[ret++] = static_cast<char>((ms / 1000) % 10 + '0');
           }
           if (bufz - ret >= 1) {
-            buff[ret++] = static_cast<char>((ms / 100) % 100 + '0');
+            buff[ret++] = static_cast<char>((ms / 100) % 10 + '0');
           }
           if (bufz - ret >= 1) {
             buff[ret++] = static_cast<char>((ms / 10) % 10 + '0');
