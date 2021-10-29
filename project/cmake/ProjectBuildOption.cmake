@@ -1,5 +1,10 @@
 include_guard(GLOBAL)
 
+# Check mkstemp/_mktemp/_mktemp_s for file system
+include(CheckCXXSourceCompiles)
+include(CheckCSourceCompiles)
+include(CMakeDependentOption)
+
 include("${CMAKE_CURRENT_LIST_DIR}/FetchToolset.cmake")
 
 include("${ATFRAMEWORK_CMAKE_TOOLSET_DIR}/Import.cmake")
@@ -8,7 +13,7 @@ include(EchoWithColor)
 
 # 默认配置选项
 # ######################################################################################################################
-option(LIBUNWIND_ENABLED "Enable using libunwind." OFF)
+cmake_dependent_option(LIBUNWIND_ENABLED "Enable using libunwind." ON "NOT WIN32;NOT MINGW;NOT CYGWIN" OFF)
 option(LOG_WRAPPER_ENABLE_LUA_SUPPORT "Enable lua support." ON)
 option(LOG_WRAPPER_CHECK_LUA "Check lua support." ON)
 set(LOG_WRAPPER_MAX_SIZE_PER_LINE
@@ -28,11 +33,6 @@ if(CMAKE_USE_PTHREADS_INIT)
     list(APPEND PROJECT_ATFRAME_UTILS_PUBLIC_DEFINITIONS ${THREADS_PREFER_PTHREAD_FLAG})
   endif()
 endif()
-
-# Check mkstemp/_mktemp/_mktemp_s for file system
-include(CheckCXXSourceCompiles)
-include(CheckCSourceCompiles)
-include(CMakeDependentOption)
 
 if(WIN32)
   check_cxx_source_compiles(
@@ -99,7 +99,7 @@ endif()
 if(LOG_WRAPPER_ENABLE_STACKTRACE)
   if(NOT ANDROID AND NOT CMAKE_OSX_DEPLOYMENT_TARGET)
     # include("${ATFRAMEWORK_CMAKE_TOOLSET_DIR}/ports/jemalloc/jemalloc.cmake")
-    if(NOT WIN32 AND NOT MINGW)
+    if(LIBUNWIND_ENABLED)
       include("${ATFRAMEWORK_CMAKE_TOOLSET_DIR}/ports/libunwind/libunwind.cmake")
     endif()
   endif()
