@@ -146,6 +146,7 @@ set(HEADER_LIST
     "${CMAKE_CURRENT_LIST_DIR}/include/network/http_content_type.h"
     "${CMAKE_CURRENT_LIST_DIR}/include/network/http_request.h"
     "${CMAKE_CURRENT_LIST_DIR}/include/nostd/string_view.h"
+    "${CMAKE_CURRENT_LIST_DIR}/include/nostd/type_traits.h"
     "${CMAKE_CURRENT_LIST_DIR}/include/random/random_generator.h"
     "${CMAKE_CURRENT_LIST_DIR}/include/random/random_mt_core.h"
     "${CMAKE_CURRENT_LIST_DIR}/include/random/random_xor_combine_core.h"

@@ -8,6 +8,7 @@
 #include <config/atframe_utils_build_feature.h>
 #include <config/compile_optimize.h>
 
+#include <nostd/type_traits.h>
 #include <std/explicit_declare.h>
 
 #include <memory>
@@ -17,7 +18,6 @@
 
 namespace util {
 namespace design_pattern {
-
 template <class T>
 struct LIBATFRAME_UTILS_API_HEAD_ONLY small_object_optimize_storage_deleter {
   inline void operator()(T *) const noexcept {
@@ -408,17 +408,16 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY result_base_type {
   }
 
  private:
-  inline void *success_data_arena() noexcept { return reinterpret_cast<void *>(&data_[0]); }
+  inline void *success_data_arena() noexcept { return reinterpret_cast<void *>(&data_); }
 
-  inline const void *success_data_arena() const noexcept { return reinterpret_cast<const void *>(&data_[0]); }
+  inline const void *success_data_arena() const noexcept { return reinterpret_cast<const void *>(&data_); }
 
-  inline void *error_data_arena() noexcept { return reinterpret_cast<void *>(&data_[0]); }
+  inline void *error_data_arena() noexcept { return reinterpret_cast<void *>(&data_); }
 
-  inline const void *error_data_arena() const noexcept { return reinterpret_cast<const void *>(&data_[0]); }
+  inline const void *error_data_arena() const noexcept { return reinterpret_cast<const void *>(&data_); }
 
-  using data_buffer_type = EXPLICIT_MAY_ALIAS unsigned char[max_storage_size_helper<
-      typename success_storage_type::storage_type, typename error_storage_type::storage_type,
-      sizeof(typename success_storage_type::storage_type) < sizeof(typename error_storage_type::storage_type)>::value];
+  using data_buffer_type = typename nostd::aligned_union<0, typename success_storage_type::storage_type,
+                                                         typename error_storage_type::storage_type>::type;
   data_buffer_type data_;
   mode mode_;
 };
