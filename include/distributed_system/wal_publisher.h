@@ -445,19 +445,19 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_publisher {
       // Some log can not be resend, send snapshot
       if (wal_object_->get_log_key_compare()(last_checkpoint, *wal_object_->get_last_removed_key())) {
         auto iters = subscriber_manager_->find_iterator(key);
-        auto notify_result = send_snapshot(iters.first, iters.second, std::move(param));
-        return send_subscribe_response(subscriber, notify_result, param);
+        auto notify_result = send_snapshot(iters.first, iters.second, param);
+        return send_subscribe_response(subscriber, notify_result, std::move(param));
       }
     }
 
     log_const_iterator log_iter = wal_object_->log_upper_bound(last_checkpoint);
     if (log_iter != wal_object_->log_cend()) {
       auto iters = subscriber_manager_->find_iterator(key);
-      auto notify_result = send_logs(log_iter, wal_object_->log_cend(), iters.first, iters.second, std::move(param));
-      return send_subscribe_response(subscriber, notify_result, param);
+      auto notify_result = send_logs(log_iter, wal_object_->log_cend(), iters.first, iters.second, param);
+      return send_subscribe_response(subscriber, notify_result, std::move(param));
     }
 
-    return send_subscribe_response(subscriber, wal_result_code::kOk, param);
+    return send_subscribe_response(subscriber, wal_result_code::kOk, std::move(param));
   }
 
  public:

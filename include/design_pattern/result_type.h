@@ -8,6 +8,7 @@
 #include <config/atframe_utils_build_feature.h>
 #include <config/compile_optimize.h>
 
+#include <nostd/type_traits.h>
 #include <std/explicit_declare.h>
 
 #include <memory>
@@ -17,7 +18,6 @@
 
 namespace util {
 namespace design_pattern {
-
 template <class T>
 struct LIBATFRAME_UTILS_API_HEAD_ONLY small_object_optimize_storage_deleter {
   inline void operator()(T *) const noexcept {
@@ -265,23 +265,15 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY result_base_type {
   UTIL_FORCEINLINE bool is_none() const noexcept { return mode_ == mode::kNone; }
 
   UTIL_FORCEINLINE const success_pointer &get_success() const noexcept {
-    return is_success() ? success_storage_type::unref(
-                              *reinterpret_cast<typename success_storage_type::storage_type *>(success_data_arena()))
-                        : success_storage_type::default_instance();
+    return is_success()
+               ? success_storage_type::unref(
+                     *reinterpret_cast<const typename success_storage_type::storage_type *>(success_data_arena()))
+               : success_storage_type::default_instance();
   }
-  UTIL_FORCEINLINE success_pointer &get_success() noexcept {
-    return is_success() ? success_storage_type::unref(
-                              *reinterpret_cast<typename success_storage_type::storage_type *>(success_data_arena()))
-                        : success_storage_type::default_instance();
-  }
+
   UTIL_FORCEINLINE const error_pointer &get_error() const noexcept {
     return is_error() ? error_storage_type::unref(
-                            *reinterpret_cast<typename error_storage_type::storage_type *>(error_data_arena()))
-                      : error_storage_type::default_instance();
-  }
-  UTIL_FORCEINLINE error_pointer &get_error() noexcept {
-    return is_error() ? error_storage_type::unref(
-                            *reinterpret_cast<typename error_storage_type::storage_type *>(error_data_arena()))
+                            *reinterpret_cast<const typename error_storage_type::storage_type *>(error_data_arena()))
                       : error_storage_type::default_instance();
   }
 
@@ -408,17 +400,16 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY result_base_type {
   }
 
  private:
-  inline void *success_data_arena() noexcept { return reinterpret_cast<void *>(&data_[0]); }
+  inline void *success_data_arena() noexcept { return reinterpret_cast<void *>(&data_); }
 
-  inline const void *success_data_arena() const noexcept { return reinterpret_cast<const void *>(&data_[0]); }
+  inline const void *success_data_arena() const noexcept { return reinterpret_cast<const void *>(&data_); }
 
-  inline void *error_data_arena() noexcept { return reinterpret_cast<void *>(&data_[0]); }
+  inline void *error_data_arena() noexcept { return reinterpret_cast<void *>(&data_); }
 
-  inline const void *error_data_arena() const noexcept { return reinterpret_cast<const void *>(&data_[0]); }
+  inline const void *error_data_arena() const noexcept { return reinterpret_cast<const void *>(&data_); }
 
-  using data_buffer_type = EXPLICIT_MAY_ALIAS unsigned char[max_storage_size_helper<
-      typename success_storage_type::storage_type, typename error_storage_type::storage_type,
-      sizeof(typename success_storage_type::storage_type) < sizeof(typename error_storage_type::storage_type)>::value];
+  using data_buffer_type = typename nostd::aligned_union<0, typename success_storage_type::storage_type,
+                                                         typename error_storage_type::storage_type>::type;
   data_buffer_type data_;
   mode mode_;
 };

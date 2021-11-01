@@ -15,7 +15,7 @@ CASE_TEST(result_type, all_triviall) {
   auto success_obj = test_type::make_success(123);
   auto error_obj = test_type::make_error(456U);
   static_assert(
-      sizeof(std::aligned_storage<sizeof(test_type::error_storage_type::storage_type)>::type) + sizeof(int32_t) >=
+      sizeof(std::aligned_storage<sizeof(test_type::error_storage_type::storage_type)>::type) + sizeof(int64_t) >=
           sizeof(test_type),
       "size invalid for trivial result_type");
 
