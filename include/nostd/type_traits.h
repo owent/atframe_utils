@@ -37,7 +37,7 @@ struct max_sizeof_size_helper;
 
 template <std::size_t Len, class First, class... Types>
 struct max_sizeof_size_helper<Len, First, Types...> {
-  static constexpr const std::size_t value = alignof(First) > max_sizeof_size_helper<Len, Types...>::value
+  static constexpr const std::size_t value = sizeof(First) > max_sizeof_size_helper<Len, Types...>::value
                                                  ? sizeof(First)
                                                  : max_sizeof_size_helper<Len, Types...>::value;
 };

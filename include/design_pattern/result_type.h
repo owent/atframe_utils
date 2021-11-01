@@ -265,23 +265,15 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY result_base_type {
   UTIL_FORCEINLINE bool is_none() const noexcept { return mode_ == mode::kNone; }
 
   UTIL_FORCEINLINE const success_pointer &get_success() const noexcept {
-    return is_success() ? success_storage_type::unref(
-                              *reinterpret_cast<typename success_storage_type::storage_type *>(success_data_arena()))
-                        : success_storage_type::default_instance();
+    return is_success()
+               ? success_storage_type::unref(
+                     *reinterpret_cast<const typename success_storage_type::storage_type *>(success_data_arena()))
+               : success_storage_type::default_instance();
   }
-  UTIL_FORCEINLINE success_pointer &get_success() noexcept {
-    return is_success() ? success_storage_type::unref(
-                              *reinterpret_cast<typename success_storage_type::storage_type *>(success_data_arena()))
-                        : success_storage_type::default_instance();
-  }
+
   UTIL_FORCEINLINE const error_pointer &get_error() const noexcept {
     return is_error() ? error_storage_type::unref(
-                            *reinterpret_cast<typename error_storage_type::storage_type *>(error_data_arena()))
-                      : error_storage_type::default_instance();
-  }
-  UTIL_FORCEINLINE error_pointer &get_error() noexcept {
-    return is_error() ? error_storage_type::unref(
-                            *reinterpret_cast<typename error_storage_type::storage_type *>(error_data_arena()))
+                            *reinterpret_cast<const typename error_storage_type::storage_type *>(error_data_arena()))
                       : error_storage_type::default_instance();
   }
 
