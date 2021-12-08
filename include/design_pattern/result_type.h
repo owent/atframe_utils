@@ -55,7 +55,7 @@ struct LIBATFRAME_UTILS_API_HEAD_ONLY compact_storage_select_type {
   typedef typename std::conditional<
 #if ((defined(_MSVC_LANG) && _MSVC_LANG >= 201402L)) || \
     (defined(__cplusplus) && __cplusplus >= 201402L &&  \
-     !(defined(__GNUC_MAJOR__) && defined(__GNUC_MINOR__) && __GNUC_MAJOR__ * 100 + __GNUC_MINOR__ <= 409))
+     !(!defined(__clang__) && defined(__GNUC__) && defined(__GNUC_MINOR__) && __GNUC__ * 100 + __GNUC_MINOR__ <= 409))
       std::is_trivially_copyable<T>::value
 #elif (defined(__cplusplus) && __cplusplus >= 201103L) || ((defined(_MSVC_LANG) && _MSVC_LANG >= 201103L))
       std::is_trivial<T>::value

@@ -15,9 +15,10 @@
 
 #    if defined(UTIL_CONFIG_COMPILER_CXX_STATIC_ASSERT) && UTIL_CONFIG_COMPILER_CXX_STATIC_ASSERT
 #      include <type_traits>
-#      if ((defined(_MSVC_LANG) && _MSVC_LANG >= 201402L)) || \
-          (defined(__cplusplus) && __cplusplus >= 201402L &&  \
-           !(defined(__GNUC_MAJOR__) && defined(__GNUC_MINOR__) && __GNUC_MAJOR__ * 100 + __GNUC_MINOR__ <= 409))
+#      if ((defined(_MSVC_LANG) && _MSVC_LANG >= 201402L)) ||                       \
+          (defined(__cplusplus) && __cplusplus >= 201402L &&                        \
+           !(!defined(__clang__) && defined(__GNUC__) && defined(__GNUC_MINOR__) && \
+             __GNUC__ * 100 + __GNUC_MINOR__ <= 409))
 UTIL_CONFIG_STATIC_ASSERT(std::is_trivially_copyable<util::network::http_request::curl_poll_context_t>::value);
 #      elif (defined(__cplusplus) && __cplusplus >= 201103L) || ((defined(_MSVC_LANG) && _MSVC_LANG >= 201103L))
 UTIL_CONFIG_STATIC_ASSERT(std::is_trivial<util::network::http_request::curl_poll_context_t>::value);
