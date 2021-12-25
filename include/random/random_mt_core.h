@@ -23,7 +23,7 @@
 
 #include <config/atframe_utils_build_feature.h>
 
-namespace util {
+LIBATFRAME_UTILS_NAMESPACE_BEGIN
 namespace random {
 namespace core {
 /**
@@ -193,6 +193,6 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY mersenne_twister {
 };
 }  // namespace core
 }  // namespace random
-}  // namespace util
+LIBATFRAME_UTILS_NAMESPACE_END
 
 #endif /* RANDOMMTCORE_H_ */

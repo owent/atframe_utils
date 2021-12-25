@@ -12,7 +12,7 @@
 
 #include <config/atframe_utils_build_feature.h>
 
-namespace util {
+LIBATFRAME_UTILS_NAMESPACE_BEGIN
 namespace cli {
 /**
  * 功能受限的字符串类型处理类
@@ -44,5 +44,5 @@ struct ci_char_traits : public std::char_traits<Tc> {
 // 类型重定义
 using cmd_option_ci_string = std::basic_string<char, ci_char_traits<char> >;
 }  // namespace cli
-}  // namespace util
+LIBATFRAME_UTILS_NAMESPACE_END
 #endif

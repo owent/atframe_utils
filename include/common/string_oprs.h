@@ -68,7 +68,7 @@
 #  define UTIL_STRFUNC_VSNPRINTF(buffer, bufsz, fmt, arg) vsnprintf(buffer, static_cast<int>(bufsz), fmt, arg)
 #endif
 
-namespace util {
+LIBATFRAME_UTILS_NAMESPACE_BEGIN
 namespace string {
 /**
  * @brief 字符转小写
@@ -506,7 +506,7 @@ LIBATFRAME_UTILS_API int version_compare(const char *l, const char *r);
  */
 LIBATFRAME_UTILS_API std::string version_normalize(const char *v);
 }  // namespace string
-}  // namespace util
+LIBATFRAME_UTILS_NAMESPACE_END
 
 LIBATFRAME_UTILS_API_C(const char *) util_string_version_tok(const char *v, int64_t &out);
 LIBATFRAME_UTILS_API_C(int) util_string_version_compare(const char *l, const char *r);

@@ -42,7 +42,7 @@
 
 #include "shell_font.h"
 
-namespace util {
+LIBATFRAME_UTILS_NAMESPACE_BEGIN
 namespace cli {
 // 标准指令处理函数(无返回值，参数为选项的映射表)
 // void function_name (cmd_option_list&, [参数]); // 函数参数可选
@@ -649,7 +649,7 @@ LIBATFRAME_UTILS_API_HEAD_ONLY char cmd_option_bind<Ty>::trans_value_[256] = {0}
 using cmd_option = cmd_option_bind<std::string>;
 using cmd_option_ci = cmd_option_bind<cmd_option_ci_string>;
 }  // namespace cli
-}  // namespace util
+LIBATFRAME_UTILS_NAMESPACE_END
 
 #include <config/compiler/template_suffix.h>
 

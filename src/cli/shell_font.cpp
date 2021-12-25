@@ -15,7 +15,7 @@
 
 #define SHELL_FONT_SET_OPT_END "\033[0m"
 
-namespace util {
+LIBATFRAME_UTILS_NAMESPACE_BEGIN
 namespace cli {
 
 namespace detail {
@@ -354,4 +354,4 @@ LIBATFRAME_UTILS_API shell_stream::shell_stream(stream_t &stream) : m_pOs(&strea
 LIBATFRAME_UTILS_API shell_stream::shell_stream_opr shell_stream::operator()() const { return shell_stream_opr(m_pOs); }
 
 }  // namespace cli
-}  // namespace util
+LIBATFRAME_UTILS_NAMESPACE_END

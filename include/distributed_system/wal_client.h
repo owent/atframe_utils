@@ -16,7 +16,7 @@
 #include "distributed_system/wal_common_defs.h"
 #include "distributed_system/wal_object.h"
 
-namespace util {
+LIBATFRAME_UTILS_NAMESPACE_BEGIN
 namespace distributed_system {
 
 template <class StorageT, class LogOperatorT, class CallbackParamT, class PrivateDataT, class SnapshotT>
@@ -358,4 +358,4 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_client {
 };
 
 }  // namespace distributed_system
-}  // namespace util
+LIBATFRAME_UTILS_NAMESPACE_END

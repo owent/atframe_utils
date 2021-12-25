@@ -11,7 +11,7 @@
 #include "design_pattern/result_type.h"
 
 CASE_TEST(result_type, all_triviall) {
-  using test_type = util::design_pattern::result_type<int, uint64_t>;
+  using test_type = LIBATFRAME_UTILS_NAMESPACE_ID::design_pattern::result_type<int, uint64_t>;
   auto success_obj = test_type::make_success(123);
   auto error_obj = test_type::make_error(456U);
   static_assert(
@@ -170,7 +170,7 @@ CASE_TEST(result_type, all_triviall) {
 }
 
 CASE_TEST(result_type, one_triviall) {
-  using test_type = util::design_pattern::result_type<int, std::string>;
+  using test_type = LIBATFRAME_UTILS_NAMESPACE_ID::design_pattern::result_type<int, std::string>;
   auto success_obj = test_type::make_success(123);
   auto error_obj = test_type::make_error("456");
 
@@ -320,7 +320,7 @@ CASE_TEST(result_type, one_triviall) {
 }
 
 CASE_TEST(result_type, non_triviall) {
-  using test_type = util::design_pattern::result_type<std::string, std::string>;
+  using test_type = LIBATFRAME_UTILS_NAMESPACE_ID::design_pattern::result_type<std::string, std::string>;
   auto success_obj = test_type::make_success("123");
   auto error_obj = test_type::make_error("456");
 
@@ -470,7 +470,7 @@ CASE_TEST(result_type, non_triviall) {
 }
 
 CASE_TEST(result_type, has_void) {
-  using test_type = util::design_pattern::result_type<void, uint64_t>;
+  using test_type = LIBATFRAME_UTILS_NAMESPACE_ID::design_pattern::result_type<void, uint64_t>;
   auto success_obj = test_type::make_success();
   auto error_obj = test_type::make_error(456U);
 

@@ -31,7 +31,7 @@ struct hash<test_wal_object_log_action> {
 }  // namespace std
 
 struct test_wal_object_log_type {
-  util::distributed_system::wal_time_point timepoint;
+  LIBATFRAME_UTILS_NAMESPACE_ID::distributed_system::wal_time_point timepoint;
   int64_t log_key;
   test_wal_object_log_action action;
   int64_t data;
@@ -56,10 +56,12 @@ struct test_wal_object_private_type {
 };
 
 using test_wal_object_log_operator =
-    util::distributed_system::wal_log_operator<int64_t, test_wal_object_log_type, test_wal_object_log_action_getter>;
+    LIBATFRAME_UTILS_NAMESPACE_ID::distributed_system::wal_log_operator<int64_t, test_wal_object_log_type,
+                                                                        test_wal_object_log_action_getter>;
 using test_wal_object_type =
-    util::distributed_system::wal_object<test_wal_object_log_storage_type, test_wal_object_log_operator,
-                                         test_wal_object_context, test_wal_object_private_type>;
+    LIBATFRAME_UTILS_NAMESPACE_ID::distributed_system::wal_object<test_wal_object_log_storage_type,
+                                                                  test_wal_object_log_operator, test_wal_object_context,
+                                                                  test_wal_object_private_type>;
 
 struct test_wal_object_stats {
   int64_t key_alloc;
@@ -80,7 +82,7 @@ test_wal_object_stats g_test_wal_object_stats{1, 0, 0, 0, 0, 0, 0, 0, test_wal_o
 
 static test_wal_object_type::vtable_pointer create_vtable() {
   using wal_object_type = test_wal_object_type;
-  using wal_result_code = util::distributed_system::wal_result_code;
+  using wal_result_code = LIBATFRAME_UTILS_NAMESPACE_ID::distributed_system::wal_result_code;
 
   wal_object_type::vtable_pointer ret = std::make_shared<wal_object_type::vtable_type>();
 
@@ -240,7 +242,7 @@ CASE_TEST(wal_object, load_and_dump) {
       details::g_test_wal_object_stats.default_action_count + details::g_test_wal_object_stats.delegate_action_count;
 
   test_wal_object_log_storage_type load_storege;
-  util::distributed_system::wal_time_point now = std::chrono::system_clock::now();
+  LIBATFRAME_UTILS_NAMESPACE_ID::distributed_system::wal_time_point now = std::chrono::system_clock::now();
   load_storege.global_ignore = 123;
   load_storege.logs.push_back(test_wal_object_log_type{now, 124, test_wal_object_log_action::kDoNothing, 124});
   load_storege.logs.push_back(test_wal_object_log_type{now, 125, test_wal_object_log_action::kFallbackDefault, 125});
@@ -256,7 +258,8 @@ CASE_TEST(wal_object, load_and_dump) {
   if (!wal_obj) {
     return;
   }
-  CASE_EXPECT_TRUE(util::distributed_system::wal_result_code::kOk == wal_obj->load(load_storege, ctx));
+  CASE_EXPECT_TRUE(LIBATFRAME_UTILS_NAMESPACE_ID::distributed_system::wal_result_code::kOk ==
+                   wal_obj->load(load_storege, ctx));
   CASE_EXPECT_EQ(old_action_count, details::g_test_wal_object_stats.default_action_count +
                                        details::g_test_wal_object_stats.delegate_action_count);
 
@@ -271,7 +274,8 @@ CASE_TEST(wal_object, load_and_dump) {
 
   // dump
   test_wal_object_log_storage_type dump_storege;
-  CASE_EXPECT_TRUE(util::distributed_system::wal_result_code::kOk == wal_obj->dump(dump_storege, ctx));
+  CASE_EXPECT_TRUE(LIBATFRAME_UTILS_NAMESPACE_ID::distributed_system::wal_result_code::kOk ==
+                   wal_obj->dump(dump_storege, ctx));
 
   CASE_EXPECT_EQ(123, dump_storege.global_ignore);
   CASE_EXPECT_EQ(3, dump_storege.logs.size());
@@ -282,7 +286,7 @@ CASE_TEST(wal_object, load_and_dump) {
 CASE_TEST(wal_object, add_action) {
   test_wal_object_log_storage_type storage;
   test_wal_object_context ctx;
-  util::distributed_system::wal_time_point now = std::chrono::system_clock::now();
+  LIBATFRAME_UTILS_NAMESPACE_ID::distributed_system::wal_time_point now = std::chrono::system_clock::now();
 
   auto conf = create_configure();
   auto vtable = create_vtable();
@@ -514,7 +518,7 @@ CASE_TEST(wal_object, add_action) {
 CASE_TEST(wal_object, gc) {
   test_wal_object_log_storage_type storage;
   test_wal_object_context ctx;
-  util::distributed_system::wal_time_point now = std::chrono::system_clock::now();
+  LIBATFRAME_UTILS_NAMESPACE_ID::distributed_system::wal_time_point now = std::chrono::system_clock::now();
 
   auto conf = create_configure();
   auto vtable = create_vtable();
@@ -633,7 +637,7 @@ CASE_TEST(wal_object, gc) {
 CASE_TEST(wal_object, ignore) {
   test_wal_object_log_storage_type storage;
   test_wal_object_context ctx;
-  util::distributed_system::wal_time_point now = std::chrono::system_clock::now();
+  LIBATFRAME_UTILS_NAMESPACE_ID::distributed_system::wal_time_point now = std::chrono::system_clock::now();
 
   auto conf = create_configure();
   auto vtable = create_vtable();
@@ -655,7 +659,7 @@ CASE_TEST(wal_object, ignore) {
     log->data = log->log_key + 100;
     wal_obj->set_global_ingore_key(log->log_key);
     auto push_back_result = wal_obj->push_back(log, ctx);
-    CASE_EXPECT_TRUE(util::distributed_system::wal_result_code::kIgnore == push_back_result);
+    CASE_EXPECT_TRUE(LIBATFRAME_UTILS_NAMESPACE_ID::distributed_system::wal_result_code::kIgnore == push_back_result);
 
     CASE_EXPECT_EQ(0, wal_obj->get_all_logs().size());
     CASE_EXPECT_EQ(old_default_action_count, details::g_test_wal_object_stats.default_action_count);
@@ -673,7 +677,7 @@ CASE_TEST(wal_object, ignore) {
     }
     log->data = log->log_key + 100;
     auto push_back_result = wal_obj->push_back(log, ctx);
-    CASE_EXPECT_TRUE(util::distributed_system::wal_result_code::kIgnore == push_back_result);
+    CASE_EXPECT_TRUE(LIBATFRAME_UTILS_NAMESPACE_ID::distributed_system::wal_result_code::kIgnore == push_back_result);
 
     CASE_EXPECT_EQ(0, wal_obj->get_all_logs().size());
     CASE_EXPECT_EQ(old_default_action_count, details::g_test_wal_object_stats.default_action_count);
@@ -684,7 +688,7 @@ CASE_TEST(wal_object, ignore) {
 CASE_TEST(wal_object, reorder) {
   test_wal_object_log_storage_type storage;
   test_wal_object_context ctx;
-  util::distributed_system::wal_time_point now = std::chrono::system_clock::now();
+  LIBATFRAME_UTILS_NAMESPACE_ID::distributed_system::wal_time_point now = std::chrono::system_clock::now();
 
   auto conf = create_configure();
   auto vtable = create_vtable();

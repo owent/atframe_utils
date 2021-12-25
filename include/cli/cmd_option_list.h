@@ -20,7 +20,7 @@
 
 #include "cli/cmd_option_value.h"
 
-namespace util {
+LIBATFRAME_UTILS_NAMESPACE_BEGIN
 namespace cli {
 class cmd_option_list;
 using callback_param = cmd_option_list &;
@@ -136,6 +136,6 @@ class UTIL_SYMBOL_VISIBLE cmd_option_list {
   LIBATFRAME_UTILS_API void *get_ext_param() const;
 };
 }  // namespace cli
-}  // namespace util
+LIBATFRAME_UTILS_NAMESPACE_END
 
 #endif /* _CMDOPTIONLIST_H_ */

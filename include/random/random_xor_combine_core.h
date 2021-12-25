@@ -22,7 +22,7 @@
 
 #include <config/atframe_utils_build_feature.h>
 
-namespace util {
+LIBATFRAME_UTILS_NAMESPACE_BEGIN
 namespace random {
 namespace core {
 template <class UIntType, int w, int k, int q, int s>
@@ -146,6 +146,6 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY xor_combine_engine {
 };
 }  // namespace core
 }  // namespace random
-}  // namespace util
+LIBATFRAME_UTILS_NAMESPACE_END
 
 #endif /* _UTIL_RANDOM_RANDOMXORCOMBINECORE_H_ */

@@ -46,7 +46,7 @@
 #  define UTIL_NOSTD_STRING_VIEW_CXX14_CONSTEXPR
 #endif
 
-namespace util {
+LIBATFRAME_UTILS_NAMESPACE_BEGIN
 namespace nostd {
 template <class CharT, class Traits = std::char_traits<CharT> >
 class LIBATFRAME_UTILS_API_HEAD_ONLY basic_string_view {
@@ -820,7 +820,7 @@ LIBATFRAME_UTILS_API_HEAD_ONLY std::basic_ostream<CharT, Traits>& operator<<(
 using string_view = basic_string_view<char>;
 using wstring_view = basic_string_view<wchar_t>;
 }  // namespace nostd
-}  // namespace util
+LIBATFRAME_UTILS_NAMESPACE_END
 
 #undef UTIL_NOSTD_STRING_VIEW_CXX14_CONSTEXPR
 #undef UTIL_NOSTD_INTERNAL_STRING_VIEW_MEMCMP

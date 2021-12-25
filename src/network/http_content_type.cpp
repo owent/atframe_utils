@@ -5,7 +5,7 @@
 #include <config/compile_optimize.h>
 #include <network/http_content_type.h>
 
-namespace util {
+LIBATFRAME_UTILS_NAMESPACE_BEGIN
 namespace network {
 namespace http_content_type {
 LIBATFRAME_UTILS_API const char *get_type(main_type mt) {
@@ -145,4 +145,4 @@ LIBATFRAME_UTILS_API int make_content_type(char *dst, size_t dst_sz, easy_type e
 }
 }  // namespace http_content_type
 }  // namespace network
-}  // namespace util
+LIBATFRAME_UTILS_NAMESPACE_END

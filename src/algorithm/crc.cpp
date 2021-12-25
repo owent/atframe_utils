@@ -6,7 +6,7 @@
 
 #include "algorithm/crc.h"
 
-namespace util {
+LIBATFRAME_UTILS_NAMESPACE_BEGIN
 namespace detail {
 
 /* CRC16 implementation according to CCITT standards.
@@ -209,4 +209,4 @@ LIBATFRAME_UTILS_API uint64_t crc64(const unsigned char *s, size_t l, uint64_t i
 
   return init_val;
 }
-}  // namespace util
+LIBATFRAME_UTILS_NAMESPACE_END

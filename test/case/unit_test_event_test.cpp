@@ -20,7 +20,8 @@ CASE_TEST(unit_test, event_on_start) { CASE_EXPECT_EQ(2, g_unit_test_event_on_st
 
 CASE_TEST_EVENT_ON_EXIT(unit_test_event_on_exit_1) {
   if (3 == g_unit_test_event_on_start_status) {
-    util::cli::shell_stream(std::cout)() << "[ FINISH   ] unit_test_event_on_exit_1" << std::endl;
+    LIBATFRAME_UTILS_NAMESPACE_ID::cli::shell_stream(std::cout)()
+        << "[ FINISH   ] unit_test_event_on_exit_1" << std::endl;
   }
 }
 

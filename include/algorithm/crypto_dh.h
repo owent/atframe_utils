@@ -46,7 +46,7 @@
 #  include <string>
 #  include <vector>
 
-namespace util {
+LIBATFRAME_UTILS_NAMESPACE_BEGIN
 namespace crypto {
 class dh {
  public:
@@ -298,7 +298,7 @@ class dh {
   dh_context_t dh_context_;
 };
 }  // namespace crypto
-}  // namespace util
+LIBATFRAME_UTILS_NAMESPACE_END
 
 #endif
 

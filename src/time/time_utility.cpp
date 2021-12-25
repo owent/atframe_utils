@@ -1,7 +1,7 @@
 
 #include "time/time_utility.h"
 
-namespace util {
+LIBATFRAME_UTILS_NAMESPACE_BEGIN
 namespace time {
 LIBATFRAME_UTILS_API time_utility::raw_time_t time_utility::now_;
 LIBATFRAME_UTILS_API time_t time_utility::now_unix_;
@@ -25,10 +25,11 @@ LIBATFRAME_UTILS_API void time_utility::update(raw_time_t *t) {
   now_unix_ = std::chrono::system_clock::to_time_t(now_);
 
   // reset usec
-  ::util::time::time_utility::raw_time_t padding_time =
-      ::util::time::time_utility::raw_time_t::clock::from_time_t(now_unix_);
-  now_usec_ = static_cast<time_t>(
-      std::chrono::duration_cast<std::chrono::microseconds>(::util::time::time_utility::now() - padding_time).count());
+  LIBATFRAME_UTILS_NAMESPACE_ID::time::time_utility::raw_time_t padding_time =
+      LIBATFRAME_UTILS_NAMESPACE_ID::time::time_utility::raw_time_t::clock::from_time_t(now_unix_);
+  now_usec_ = static_cast<time_t>(std::chrono::duration_cast<std::chrono::microseconds>(
+                                      LIBATFRAME_UTILS_NAMESPACE_ID::time::time_utility::now() - padding_time)
+                                      .count());
   if (now_usec_ < 0) {
     now_usec_ = 0;
   }
@@ -251,4 +252,4 @@ LIBATFRAME_UTILS_API time_t time_utility::get_month_start_time(time_t t) {
   return mktime(&ttm) + local_offset;
 }
 }  // namespace time
-}  // namespace util
+LIBATFRAME_UTILS_NAMESPACE_END

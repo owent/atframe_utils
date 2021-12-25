@@ -46,7 +46,7 @@
 #  include <map>
 #endif
 
-namespace util {
+LIBATFRAME_UTILS_NAMESPACE_BEGIN
 namespace config {
 // ================= 错误码 =================
 enum EN_INILOADER_ERROR_CODE {
@@ -99,7 +99,7 @@ class ini_value : public std::enable_shared_from_this<ini_value> {
   LIBATFRAME_UTILS_API ini_value(const ini_value &other);
   LIBATFRAME_UTILS_API ini_value &operator=(const ini_value &other);
 
-  LIBATFRAME_UTILS_API void add(::util::nostd::string_view val);
+  LIBATFRAME_UTILS_API void add(LIBATFRAME_UTILS_NAMESPACE_ID::nostd::string_view val);
   LIBATFRAME_UTILS_API void add(const char *begin, const char *end);
 
   // 节点操作
@@ -107,11 +107,11 @@ class ini_value : public std::enable_shared_from_this<ini_value> {
   LIBATFRAME_UTILS_API bool has_data() const;  // like stl
   LIBATFRAME_UTILS_API size_t size() const;    // like stl
   LIBATFRAME_UTILS_API void clear();           // like stl
-  LIBATFRAME_UTILS_API ini_value &operator[](::util::nostd::string_view key);
+  LIBATFRAME_UTILS_API ini_value &operator[](LIBATFRAME_UTILS_NAMESPACE_ID::nostd::string_view key);
   LIBATFRAME_UTILS_API node_type &get_children();
   LIBATFRAME_UTILS_API const node_type &get_children() const;
 
-  LIBATFRAME_UTILS_API ptr_t get_child_by_path(::util::nostd::string_view path) const;
+  LIBATFRAME_UTILS_API ptr_t get_child_by_path(LIBATFRAME_UTILS_NAMESPACE_ID::nostd::string_view path) const;
 
   static LIBATFRAME_UTILS_API const std::string &get_empty_string();
 
@@ -120,8 +120,9 @@ class ini_value : public std::enable_shared_from_this<ini_value> {
   struct as_helper;
 
   template <typename _TVOID>
-  struct LIBATFRAME_UTILS_API_HEAD_ONLY as_helper< ::util::config::duration_value, _TVOID> {
-    UTIL_FORCEINLINE static ::util::config::duration_value convert(const ini_value &val, size_t index) {
+  struct LIBATFRAME_UTILS_API_HEAD_ONLY as_helper<LIBATFRAME_UTILS_NAMESPACE_ID::config::duration_value, _TVOID> {
+    UTIL_FORCEINLINE static LIBATFRAME_UTILS_NAMESPACE_ID::config::duration_value convert(const ini_value &val,
+                                                                                          size_t index) {
       return val.as_duration(index);
     }
   };
@@ -297,7 +298,7 @@ class ini_loader {
    * @brief 设置当前配置结构根节点路径
    * @param path 路径
    */
-  LIBATFRAME_UTILS_API void set_section(::util::nostd::string_view path);
+  LIBATFRAME_UTILS_API void set_section(LIBATFRAME_UTILS_NAMESPACE_ID::nostd::string_view path);
 
   /**
    * @brief 获取当前配置结构根节点
@@ -330,7 +331,8 @@ class ini_loader {
    * @return 子节点
    * @note 如果子节点不存在会创建空列表节点
    */
-  LIBATFRAME_UTILS_API ini_value &get_node(::util::nostd::string_view path, ini_value *father_ptr = nullptr);
+  LIBATFRAME_UTILS_API ini_value &get_node(LIBATFRAME_UTILS_NAMESPACE_ID::nostd::string_view path,
+                                           ini_value *father_ptr = nullptr);
 
   /**
    * @brief 根据子节点名称获取子节点
@@ -339,7 +341,8 @@ class ini_loader {
    * @return 子节点
    * @note 如果子节点不存在会创建空列表节点
    */
-  LIBATFRAME_UTILS_API ini_value &get_child_node(::util::nostd::string_view path, ini_value *father_ptr = nullptr);
+  LIBATFRAME_UTILS_API ini_value &get_child_node(LIBATFRAME_UTILS_NAMESPACE_ID::nostd::string_view path,
+                                                 ini_value *father_ptr = nullptr);
 
   // ========================= 单值容器转储 =========================
 
@@ -351,8 +354,8 @@ class ini_loader {
    * @param index 转储索引，默认是第一个值
    */
   template <typename Ty>
-  LIBATFRAME_UTILS_API_HEAD_ONLY void dump_to(::util::nostd::string_view path, Ty &val, bool is_force = false,
-                                              size_t index = 0) {
+  LIBATFRAME_UTILS_API_HEAD_ONLY void dump_to(LIBATFRAME_UTILS_NAMESPACE_ID::nostd::string_view path, Ty &val,
+                                              bool is_force = false, size_t index = 0) {
     ini_value &cur_node = get_node(path);
     if (cur_node.has_data() || is_force) {
       val = cur_node.as<Ty>(index);
@@ -366,8 +369,8 @@ class ini_loader {
    * @param is_force 是否是强制转储，强制在找不到路径对应的配置项时会尝试清空数据
    * @param index 转储索引，默认是第一个值
    */
-  LIBATFRAME_UTILS_API void dump_to(::util::nostd::string_view path, bool &val, bool is_force = false,
-                                    size_t index = 0);
+  LIBATFRAME_UTILS_API void dump_to(LIBATFRAME_UTILS_NAMESPACE_ID::nostd::string_view path, bool &val,
+                                    bool is_force = false, size_t index = 0);
 
   /**
    * @brief 配置转储
@@ -376,8 +379,8 @@ class ini_loader {
    * @param is_force 是否是强制转储，强制在找不到路径对应的配置项时会尝试清空数据
    * @param index 转储索引，默认是第一个值
    */
-  LIBATFRAME_UTILS_API void dump_to(::util::nostd::string_view path, std::string &val, bool is_force = false,
-                                    size_t index = 0);
+  LIBATFRAME_UTILS_API void dump_to(LIBATFRAME_UTILS_NAMESPACE_ID::nostd::string_view path, std::string &val,
+                                    bool is_force = false, size_t index = 0);
 
   /**
    * @brief 配置转储 - 字符串
@@ -387,8 +390,8 @@ class ini_loader {
    * @param is_force 是否是强制转储，强制在找不到路径对应的配置项时会尝试清空数据
    * @param index 转储索引，默认是第一个值
    */
-  LIBATFRAME_UTILS_API void dump_to(::util::nostd::string_view path, char *begin, char *end, bool is_force = false,
-                                    size_t index = 0);
+  LIBATFRAME_UTILS_API void dump_to(LIBATFRAME_UTILS_NAMESPACE_ID::nostd::string_view path, char *begin, char *end,
+                                    bool is_force = false, size_t index = 0);
 
   /**
    * @brief 配置转储 - 字符串
@@ -398,8 +401,8 @@ class ini_loader {
    * @param index 转储索引，默认是第一个值
    */
   template <size_t MAX_COUNT>
-  LIBATFRAME_UTILS_API_HEAD_ONLY void dump_to(::util::nostd::string_view path, char (&val)[MAX_COUNT],
-                                              bool is_force = false, size_t index = 0) {
+  LIBATFRAME_UTILS_API_HEAD_ONLY void dump_to(LIBATFRAME_UTILS_NAMESPACE_ID::nostd::string_view path,
+                                              char (&val)[MAX_COUNT], bool is_force = false, size_t index = 0) {
     dump_to(path, val, val + MAX_COUNT, is_force, index);
   }
 
@@ -412,8 +415,8 @@ class ini_loader {
    * @note 容器足够大时，会尝试转储所有配置
    */
   template <typename Ty>
-  LIBATFRAME_UTILS_API_HEAD_ONLY void dump_to(::util::nostd::string_view path, std::vector<Ty> &val,
-                                              bool is_force = false) {
+  LIBATFRAME_UTILS_API_HEAD_ONLY void dump_to(LIBATFRAME_UTILS_NAMESPACE_ID::nostd::string_view path,
+                                              std::vector<Ty> &val, bool is_force = false) {
     if (is_force) {
       val.clear();
     }
@@ -434,8 +437,8 @@ class ini_loader {
    * @note 容器足够大时，会尝试转储所有配置
    */
   template <typename Ty>
-  LIBATFRAME_UTILS_API_HEAD_ONLY void dump_to(::util::nostd::string_view path, std::list<Ty> &val,
-                                              bool is_force = false) {
+  LIBATFRAME_UTILS_API_HEAD_ONLY void dump_to(LIBATFRAME_UTILS_NAMESPACE_ID::nostd::string_view path,
+                                              std::list<Ty> &val, bool is_force = false) {
     if (is_force) {
       val.clear();
     }
@@ -456,8 +459,8 @@ class ini_loader {
    * @note 容器足够大时，会尝试转储所有配置
    */
   template <typename Ty, size_t MAX_COUNT>
-  LIBATFRAME_UTILS_API_HEAD_ONLY void dump_to(::util::nostd::string_view path, Ty (&val)[MAX_COUNT],
-                                              bool is_force = false) {
+  LIBATFRAME_UTILS_API_HEAD_ONLY void dump_to(LIBATFRAME_UTILS_NAMESPACE_ID::nostd::string_view path,
+                                              Ty (&val)[MAX_COUNT], bool is_force = false) {
     ini_value &cur_node = get_node(path);
     for (size_t i = 0; i < cur_node.size() && i < MAX_COUNT; ++i) {
       dump_to(path, val[i], is_force, i);
@@ -473,8 +476,8 @@ class ini_loader {
    * @note 容器足够大时，会尝试转储所有配置
    */
   template <typename TIter>
-  LIBATFRAME_UTILS_API_HEAD_ONLY void dump_to(::util::nostd::string_view path, TIter begin, TIter end,
-                                              bool is_force = false) {
+  LIBATFRAME_UTILS_API_HEAD_ONLY void dump_to(LIBATFRAME_UTILS_NAMESPACE_ID::nostd::string_view path, TIter begin,
+                                              TIter end, bool is_force = false) {
     size_t index = 0;
     ini_value &cur_node = get_node(path);
     for (TIter i = begin; i != end && index < cur_node.size(); ++index, ++i) {
@@ -483,6 +486,6 @@ class ini_loader {
   }
 };
 }  // namespace config
-}  // namespace util
+LIBATFRAME_UTILS_NAMESPACE_END
 
 #endif

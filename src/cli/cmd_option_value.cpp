@@ -11,7 +11,7 @@
 #include "cli/cmd_option_value.h"
 #include <algorithm>
 
-namespace util {
+LIBATFRAME_UTILS_NAMESPACE_BEGIN
 namespace cli {
 
 namespace detail {
@@ -116,4 +116,4 @@ LIBATFRAME_UTILS_API void cmd_option_value::split(char delim, std::vector<cmd_op
   }
 }
 }  // namespace cli
-}  // namespace util
+LIBATFRAME_UTILS_NAMESPACE_END

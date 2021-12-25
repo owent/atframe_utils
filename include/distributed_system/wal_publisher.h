@@ -18,7 +18,7 @@
 #include "distributed_system/wal_object.h"
 #include "distributed_system/wal_subscriber.h"
 
-namespace util {
+LIBATFRAME_UTILS_NAMESPACE_BEGIN
 namespace distributed_system {
 
 template <class StorageT, class LogOperatorT, class CallbackParamT, class PrivateDataT, class WalSubscriber>
@@ -584,4 +584,4 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_publisher {
 };
 
 }  // namespace distributed_system
-}  // namespace util
+LIBATFRAME_UTILS_NAMESPACE_END

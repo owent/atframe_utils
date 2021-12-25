@@ -82,7 +82,7 @@
 #include <list>
 #include <memory>
 
-namespace util {
+LIBATFRAME_UTILS_NAMESPACE_BEGIN
 namespace time {
 /**
  * @brief jiffies timer 定时器实现
@@ -407,6 +407,6 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY jiffies_timer {
   size_t size_;
 };
 }  // namespace time
-}  // namespace util
+LIBATFRAME_UTILS_NAMESPACE_END
 
 #endif  // _UTIL_TIME_TIME_UTILITY_H_

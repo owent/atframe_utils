@@ -34,7 +34,7 @@
 #  include <map>
 #endif
 
-namespace util {
+LIBATFRAME_UTILS_NAMESPACE_BEGIN
 namespace uri {
 /**
  * @brief 编码URI，类似Javascript的encodeURI函数
@@ -535,6 +535,6 @@ class tquerystring : public types::item_object {
    */
   LIBATFRAME_UTILS_API types::item_object::ptr_type create_object();
 };
-}  // namespace util
+LIBATFRAME_UTILS_NAMESPACE_END
 
 #endif

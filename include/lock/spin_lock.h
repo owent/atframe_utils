@@ -172,7 +172,7 @@
     }                                                             \
   }
 
-namespace util {
+LIBATFRAME_UTILS_NAMESPACE_BEGIN
 namespace lock {
 /**
  * @brief 自旋锁
@@ -182,9 +182,9 @@ namespace lock {
 class LIBATFRAME_UTILS_API_HEAD_ONLY spin_lock {
  private:
   enum lock_state_t { UNLOCKED = 0, LOCKED = 1 };
-  ::util::lock::atomic_int_type<
+  LIBATFRAME_UTILS_NAMESPACE_ID::lock::atomic_int_type<
 #if defined(LOCK_DISABLE_MT) && LOCK_DISABLE_MT
-      ::util::lock::unsafe_int_type<unsigned int>
+      LIBATFRAME_UTILS_NAMESPACE_ID::lock::unsafe_int_type<unsigned int>
 #else
       unsigned int
 #endif
@@ -196,23 +196,28 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY spin_lock {
 
   void lock() {
     unsigned char try_times = 0;
-    while (lock_status_.exchange(static_cast<unsigned int>(LOCKED), ::util::lock::memory_order_acq_rel) == LOCKED)
+    while (lock_status_.exchange(static_cast<unsigned int>(LOCKED),
+                                 LIBATFRAME_UTILS_NAMESPACE_ID::lock::memory_order_acq_rel) == LOCKED)
       __UTIL_LOCK_SPIN_LOCK_WAIT(try_times++); /* busy-wait */
   }
 
-  void unlock() { lock_status_.store(static_cast<unsigned int>(UNLOCKED), ::util::lock::memory_order_release); }
+  void unlock() {
+    lock_status_.store(static_cast<unsigned int>(UNLOCKED), LIBATFRAME_UTILS_NAMESPACE_ID::lock::memory_order_release);
+  }
 
-  bool is_locked() { return lock_status_.load(::util::lock::memory_order_acquire) == LOCKED; }
+  bool is_locked() { return lock_status_.load(LIBATFRAME_UTILS_NAMESPACE_ID::lock::memory_order_acquire) == LOCKED; }
 
   bool try_lock() {
-    return lock_status_.exchange(static_cast<unsigned int>(LOCKED), ::util::lock::memory_order_acq_rel) == UNLOCKED;
+    return lock_status_.exchange(static_cast<unsigned int>(LOCKED),
+                                 LIBATFRAME_UTILS_NAMESPACE_ID::lock::memory_order_acq_rel) == UNLOCKED;
   }
 
   bool try_unlock() {
-    return lock_status_.exchange(static_cast<unsigned int>(UNLOCKED), ::util::lock::memory_order_acq_rel) == LOCKED;
+    return lock_status_.exchange(static_cast<unsigned int>(UNLOCKED),
+                                 LIBATFRAME_UTILS_NAMESPACE_ID::lock::memory_order_acq_rel) == LOCKED;
   }
 };
 }  // namespace lock
-}  // namespace util
+LIBATFRAME_UTILS_NAMESPACE_END
 
 #endif /* SPINLOCK_H_ */

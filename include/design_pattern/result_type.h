@@ -16,7 +16,7 @@
 #include <type_traits>
 #include <utility>
 
-namespace util {
+LIBATFRAME_UTILS_NAMESPACE_BEGIN
 namespace design_pattern {
 template <class T>
 struct LIBATFRAME_UTILS_API_HEAD_ONLY small_object_optimize_storage_deleter {
@@ -438,4 +438,4 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY result_type : public result_base_type<TOK, 
   }
 };
 }  // namespace design_pattern
-}  // namespace util
+LIBATFRAME_UTILS_NAMESPACE_END

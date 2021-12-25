@@ -6,18 +6,21 @@
 #include <cstdio>
 #include "cli/cmd_option.h"
 
-void bind_ci_cmd_print(util::cli::callback_param) { puts("ci: do nothing! - free func without parameter\n"); }
+void bind_ci_cmd_print(LIBATFRAME_UTILS_NAMESPACE_ID::cli::callback_param) {
+  puts("ci: do nothing! - free func without parameter\n");
+}
 
-void bind_ci_cmd_print2(util::cli::callback_param par, double d) {
+void bind_ci_cmd_print2(LIBATFRAME_UTILS_NAMESPACE_ID::cli::callback_param par, double d) {
   printf("ci: Free Fun B2 Params Num: %d, d => %lf\n", static_cast<int>(par.get_params_number()), d);
 }
 
-void bind_ci_cmd_print3(util::cli::callback_param par, double d, int i) {
+void bind_ci_cmd_print3(LIBATFRAME_UTILS_NAMESPACE_ID::cli::callback_param par, double d, int i) {
   printf("ci: Free Fun B3 Params Num: %d, i => %d, d => %lf\n", static_cast<int>(par.get_params_number()), i, d);
 }
 
 void bind_ci_cmd_init() {
-  util::cli::cmd_option_ci::ptr_type stOpt = util::cli::cmd_option_ci::create();
+  LIBATFRAME_UTILS_NAMESPACE_ID::cli::cmd_option_ci::ptr_type stOpt =
+      LIBATFRAME_UTILS_NAMESPACE_ID::cli::cmd_option_ci::create();
 
   stOpt->bind_help_cmd("-h, --help")->set_help_msg("Help (CI):");
   stOpt->bind_cmd("p, print", bind_ci_cmd_print);

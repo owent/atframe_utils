@@ -36,7 +36,7 @@
 #  endif
 #endif
 
-namespace util {
+LIBATFRAME_UTILS_NAMESPACE_BEGIN
 namespace log {
 #if defined(LOG_WRAPPER_ENABLE_FWAPI) && LOG_WRAPPER_ENABLE_FWAPI
 namespace details {
@@ -214,7 +214,7 @@ class log_formatter {
   static std::string project_dir_;
 };
 }  // namespace log
-}  // namespace util
+LIBATFRAME_UTILS_NAMESPACE_END
 
 #if defined(LOG_WRAPPER_ENABLE_FWAPI) && LOG_WRAPPER_ENABLE_FWAPI
 #  if defined(LIBATFRAME_UTILS_ENABLE_STD_FORMAT) && LIBATFRAME_UTILS_ENABLE_STD_FORMAT
@@ -235,15 +235,16 @@ class log_formatter {
       LOG_WRAPPER_FWAPI_DECL_NAMESPACE() { FMT_FORMAT_AS(Type, Base); }
 #  endif
 
-LOG_WRAPPER_FWAPI_FORMAT_AS(typename ::util::log::log_formatter::flag_t::type, int);
-LOG_WRAPPER_FWAPI_FORMAT_AS(typename ::util::log::log_formatter::level_t::type, int);
+LOG_WRAPPER_FWAPI_FORMAT_AS(typename LIBATFRAME_UTILS_NAMESPACE_ID::log::log_formatter::flag_t::type, int);
+LOG_WRAPPER_FWAPI_FORMAT_AS(typename LIBATFRAME_UTILS_NAMESPACE_ID::log::log_formatter::level_t::type, int);
 
 LOG_WRAPPER_FWAPI_DECL_NAMESPACE() {
   template <class CharT, class Traits>
-  struct formatter<::util::nostd::basic_string_view<CharT, Traits>, CharT>
+  struct formatter<LIBATFRAME_UTILS_NAMESPACE_ID::nostd::basic_string_view<CharT, Traits>, CharT>
       : formatter<LOG_WRAPPER_FWAPI_NAMESPACE basic_string_view<CharT>, CharT> {
     template <class FormatContext>
-    auto format(::util::nostd::basic_string_view<CharT, Traits> const &val, FormatContext &ctx) -> decltype(ctx.out()) {
+    auto format(LIBATFRAME_UTILS_NAMESPACE_ID::nostd::basic_string_view<CharT, Traits> const &val, FormatContext &ctx)
+        -> decltype(ctx.out()) {
       return formatter<LOG_WRAPPER_FWAPI_NAMESPACE basic_string_view<CharT>, CharT>::format(
           LOG_WRAPPER_FWAPI_NAMESPACE basic_string_view<CharT>{val.data(), val.size()}, ctx);
     }

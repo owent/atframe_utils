@@ -30,7 +30,7 @@ void print_vec(const TOS &os, const std::vector<TVEC> &vec) {
 }
 
 CASE_TEST(random_test, random_gen_mt19937) {
-  util::random::mt19937 gen1;
+  LIBATFRAME_UTILS_NAMESPACE_ID::random::mt19937 gen1;
   gen1.init_seed(123);
 
   uint32_t a1 = gen1.random();
@@ -83,7 +83,7 @@ CASE_TEST(random_test, random_gen_mt19937) {
 }
 
 CASE_TEST(random_test, random_gen_mt19937_64) {
-  util::random::mt19937_64 gen1;
+  LIBATFRAME_UTILS_NAMESPACE_ID::random::mt19937_64 gen1;
   gen1.init_seed(321);
 
   uint64_t a1 = gen1.random();
@@ -135,7 +135,7 @@ CASE_TEST(random_test, random_gen_mt19937_64) {
 }
 
 CASE_TEST(random_test, random_gen_64_mt11213B) {
-  util::random::mt11213b gen1;
+  LIBATFRAME_UTILS_NAMESPACE_ID::random::mt11213b gen1;
   gen1.init_seed(789);
 
   uint64_t a1 = gen1.random();
@@ -187,7 +187,7 @@ CASE_TEST(random_test, random_gen_64_mt11213B) {
 }
 
 CASE_TEST(random_test, random_gen_taus88) {
-  util::random::taus88 gen1;
+  LIBATFRAME_UTILS_NAMESPACE_ID::random::taus88 gen1;
   gen1.init_seed(321);
 
   uint32_t a1 = gen1.random();
@@ -239,7 +239,7 @@ CASE_TEST(random_test, random_gen_taus88) {
 }
 
 CASE_TEST(random_test, xoroshiro128_starstar) {
-  util::random::xoroshiro128_starstar gen1;
+  LIBATFRAME_UTILS_NAMESPACE_ID::random::xoroshiro128_starstar gen1;
   gen1.init_seed(0x12345678);
 
   uint32_t checked1[] = {0x6baaab3a, 0x9385fdbb, 0x99ae85fe, 0x88e2358c, 0x6592b0ce,
@@ -317,7 +317,7 @@ CASE_TEST(random_test, xoroshiro128_starstar) {
 }
 
 CASE_TEST(random_test, xoroshiro128_plus) {
-  util::random::xoroshiro128_plus gen1;
+  LIBATFRAME_UTILS_NAMESPACE_ID::random::xoroshiro128_plus gen1;
   gen1.init_seed(0x12345678);
 
   uint32_t checked1[] = {0xf1c950fb, 0x3c9b4647, 0x212ab3fb, 0x9930ad20, 0xe891a595,
@@ -395,7 +395,7 @@ CASE_TEST(random_test, xoroshiro128_plus) {
 }
 
 CASE_TEST(random_test, xoshiro256_starstar) {
-  util::random::xoshiro256_starstar gen1;
+  LIBATFRAME_UTILS_NAMESPACE_ID::random::xoshiro256_starstar gen1;
   gen1.init_seed(0x12345678);
 
   uint64_t checked1[] = {0x83ea18ca6bf49f0c, 0xca24436623484287, 0xe7965c078396b9dc, 0xb9036864adb81725,
@@ -495,7 +495,7 @@ CASE_TEST(random_test, xoshiro256_starstar) {
 }
 
 CASE_TEST(random_test, xoshiro256_plus) {
-  util::random::xoshiro256_plus gen1;
+  LIBATFRAME_UTILS_NAMESPACE_ID::random::xoshiro256_plus gen1;
   gen1.init_seed(0x12345678);
 
   uint64_t checked1[] = {0xa6766515ded04cf7, 0x8b8ef459334146d2, 0xa5e132765ffaea1b, 0x42a32c7899960f6,
@@ -595,16 +595,18 @@ CASE_TEST(random_test, xoshiro256_plus) {
 }
 
 CASE_TEST(random_test, uuid_generator) {
-  CASE_MSG_INFO() << "generate_string(true): " << util::random::uuid_generator::generate_string(true) << std::endl;
-  CASE_MSG_INFO() << "generate_string(false): " << util::random::uuid_generator::generate_string(false) << std::endl;
-  CASE_MSG_INFO() << "generate_string_random(true): " << util::random::uuid_generator::generate_string_random(true)
-                  << std::endl;
-  CASE_MSG_INFO() << "generate_string_random(false): " << util::random::uuid_generator::generate_string_random(false)
-                  << std::endl;
+  CASE_MSG_INFO() << "generate_string(true): "
+                  << LIBATFRAME_UTILS_NAMESPACE_ID::random::uuid_generator::generate_string(true) << std::endl;
+  CASE_MSG_INFO() << "generate_string(false): "
+                  << LIBATFRAME_UTILS_NAMESPACE_ID::random::uuid_generator::generate_string(false) << std::endl;
+  CASE_MSG_INFO() << "generate_string_random(true): "
+                  << LIBATFRAME_UTILS_NAMESPACE_ID::random::uuid_generator::generate_string_random(true) << std::endl;
+  CASE_MSG_INFO() << "generate_string_random(false): "
+                  << LIBATFRAME_UTILS_NAMESPACE_ID::random::uuid_generator::generate_string_random(false) << std::endl;
 
   LIBATFRAME_UTILS_AUTO_SELETC_SET(std::string) uuids;
   for (int i = 0; i < 1000000; ++i) {
-    std::string val = util::random::uuid_generator::generate_string_random();
+    std::string val = LIBATFRAME_UTILS_NAMESPACE_ID::random::uuid_generator::generate_string_random();
     CASE_EXPECT_TRUE(uuids.end() == uuids.find(val));
     uuids.insert(val);
   }
@@ -612,14 +614,14 @@ CASE_TEST(random_test, uuid_generator) {
 }
 
 CASE_TEST(random_test, uuid_generator_time) {
-  CASE_MSG_INFO() << "generate_string_time(true): " << util::random::uuid_generator::generate_string_time(true)
-                  << std::endl;
-  CASE_MSG_INFO() << "generate_string_time(false): " << util::random::uuid_generator::generate_string_time(false)
-                  << std::endl;
+  CASE_MSG_INFO() << "generate_string_time(true): "
+                  << LIBATFRAME_UTILS_NAMESPACE_ID::random::uuid_generator::generate_string_time(true) << std::endl;
+  CASE_MSG_INFO() << "generate_string_time(false): "
+                  << LIBATFRAME_UTILS_NAMESPACE_ID::random::uuid_generator::generate_string_time(false) << std::endl;
 
   LIBATFRAME_UTILS_AUTO_SELETC_SET(std::string) uuids;
   for (int i = 0; i < 1000000; ++i) {
-    std::string val = util::random::uuid_generator::generate_string_time();
+    std::string val = LIBATFRAME_UTILS_NAMESPACE_ID::random::uuid_generator::generate_string_time();
     CASE_EXPECT_TRUE(uuids.end() == uuids.find(val));
     uuids.insert(val);
   }
@@ -629,7 +631,7 @@ CASE_TEST(random_test, uuid_generator_time) {
 CASE_TEST(random_test, uuid_generator_random_bechmark) {
   LIBATFRAME_UTILS_AUTO_SELETC_SET(std::string) uuids;
   for (int i = 0; i < 1000000; ++i) {
-    std::string val = util::random::uuid_generator::generate_string_random();
+    std::string val = LIBATFRAME_UTILS_NAMESPACE_ID::random::uuid_generator::generate_string_random();
     CASE_EXPECT_TRUE(uuids.end() == uuids.find(val));
     uuids.insert(val);
   }
@@ -638,7 +640,7 @@ CASE_TEST(random_test, uuid_generator_random_bechmark) {
 
 CASE_TEST(random_test, uuid_generator_time_bechmark) {
   for (int i = 0; i < 1000000; ++i) {
-    util::random::uuid_generator::generate_string_time();
+    LIBATFRAME_UTILS_NAMESPACE_ID::random::uuid_generator::generate_string_time();
   }
   CASE_MSG_INFO() << "allocate " << 1000000 << " finished" << std::endl;
 }

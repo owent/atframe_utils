@@ -23,7 +23,7 @@
 
 #include <common/string_oprs.h>
 
-namespace util {
+LIBATFRAME_UTILS_NAMESPACE_BEGIN
 namespace cli {
 template <typename Tt>
 struct string2any;
@@ -47,32 +47,44 @@ struct string2any<unsigned char> {
 
 template <>
 struct string2any<int16_t> {
-  UTIL_FORCEINLINE int16_t operator()(const std::string &s) const { return util::string::to_int<int16_t>(s.c_str()); }
+  UTIL_FORCEINLINE int16_t operator()(const std::string &s) const {
+    return LIBATFRAME_UTILS_NAMESPACE_ID::string::to_int<int16_t>(s.c_str());
+  }
 };
 
 template <>
 struct string2any<uint16_t> {
-  UTIL_FORCEINLINE uint16_t operator()(const std::string &s) const { return util::string::to_int<uint16_t>(s.c_str()); }
+  UTIL_FORCEINLINE uint16_t operator()(const std::string &s) const {
+    return LIBATFRAME_UTILS_NAMESPACE_ID::string::to_int<uint16_t>(s.c_str());
+  }
 };
 
 template <>
 struct string2any<int32_t> {
-  UTIL_FORCEINLINE int32_t operator()(const std::string &s) const { return util::string::to_int<int32_t>(s.c_str()); }
+  UTIL_FORCEINLINE int32_t operator()(const std::string &s) const {
+    return LIBATFRAME_UTILS_NAMESPACE_ID::string::to_int<int32_t>(s.c_str());
+  }
 };
 
 template <>
 struct string2any<uint32_t> {
-  UTIL_FORCEINLINE uint32_t operator()(const std::string &s) const { return util::string::to_int<uint32_t>(s.c_str()); }
+  UTIL_FORCEINLINE uint32_t operator()(const std::string &s) const {
+    return LIBATFRAME_UTILS_NAMESPACE_ID::string::to_int<uint32_t>(s.c_str());
+  }
 };
 
 template <>
 struct string2any<int64_t> {
-  UTIL_FORCEINLINE int64_t operator()(const std::string &s) const { return util::string::to_int<int64_t>(s.c_str()); }
+  UTIL_FORCEINLINE int64_t operator()(const std::string &s) const {
+    return LIBATFRAME_UTILS_NAMESPACE_ID::string::to_int<int64_t>(s.c_str());
+  }
 };
 
 template <>
 struct string2any<uint64_t> {
-  UTIL_FORCEINLINE uint64_t operator()(const std::string &s) const { return util::string::to_int<uint64_t>(s.c_str()); }
+  UTIL_FORCEINLINE uint64_t operator()(const std::string &s) const {
+    return LIBATFRAME_UTILS_NAMESPACE_ID::string::to_int<uint64_t>(s.c_str());
+  }
 };
 
 template <>
@@ -159,6 +171,6 @@ class cmd_option_value {
   LIBATFRAME_UTILS_API void split(char delim, std::vector<cmd_option_value> &out);
 };
 }  // namespace cli
-}  // namespace util
+LIBATFRAME_UTILS_NAMESPACE_END
 
 #endif /* _CMDOPTIONVALUE_H_ */

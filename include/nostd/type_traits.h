@@ -10,7 +10,7 @@
 #  undef max
 #endif
 
-namespace util {
+LIBATFRAME_UTILS_NAMESPACE_BEGIN
 namespace nostd {
 #if ((defined(__cplusplus) && __cplusplus >= 201703L) || (defined(_MSVC_LANG) && _MSVC_LANG >= 201703L))
 template <std::size_t Len, class... Types>
@@ -60,4 +60,4 @@ struct LIBATFRAME_UTILS_API_HEAD_ONLY aligned_union {
 #endif
 
 }  // namespace nostd
-}  // namespace util
+LIBATFRAME_UTILS_NAMESPACE_END

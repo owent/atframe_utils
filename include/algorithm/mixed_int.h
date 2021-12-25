@@ -42,7 +42,7 @@ COMPILER_MSG_ERROR("ENABLE_MIXEDINT_MAGIC_MASK must be less than 64");
 
 #endif
 
-namespace util {
+LIBATFRAME_UTILS_NAMESPACE_BEGIN
 namespace mixed_int {
 #if defined(ENABLE_MIXEDINT_MAGIC_MASK)
 namespace detail {
@@ -363,14 +363,14 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY mixed_int
 };
 }  // namespace detail
 
-using mixed_int8_t = util::mixed_int::detail::mixed_int<int8_t>;
-using mixed_int16_t = util::mixed_int::detail::mixed_int<int16_t>;
-using mixed_int32_t = util::mixed_int::detail::mixed_int<int32_t>;
-using mixed_int64_t = util::mixed_int::detail::mixed_int<int64_t>;
-using mixed_uint8_t = util::mixed_int::detail::mixed_int<uint8_t>;
-using mixed_uint16_t = util::mixed_int::detail::mixed_int<uint16_t>;
-using mixed_uint32_t = util::mixed_int::detail::mixed_int<uint32_t>;
-using mixed_uint64_t = util::mixed_int::detail::mixed_int<uint64_t>;
+using mixed_int8_t = LIBATFRAME_UTILS_NAMESPACE_ID::mixed_int::detail::mixed_int<int8_t>;
+using mixed_int16_t = LIBATFRAME_UTILS_NAMESPACE_ID::mixed_int::detail::mixed_int<int16_t>;
+using mixed_int32_t = LIBATFRAME_UTILS_NAMESPACE_ID::mixed_int::detail::mixed_int<int32_t>;
+using mixed_int64_t = LIBATFRAME_UTILS_NAMESPACE_ID::mixed_int::detail::mixed_int<int64_t>;
+using mixed_uint8_t = LIBATFRAME_UTILS_NAMESPACE_ID::mixed_int::detail::mixed_int<uint8_t>;
+using mixed_uint16_t = LIBATFRAME_UTILS_NAMESPACE_ID::mixed_int::detail::mixed_int<uint16_t>;
+using mixed_uint32_t = LIBATFRAME_UTILS_NAMESPACE_ID::mixed_int::detail::mixed_int<uint32_t>;
+using mixed_uint64_t = LIBATFRAME_UTILS_NAMESPACE_ID::mixed_int::detail::mixed_int<uint64_t>;
 
 #else
 using mixed_int8_t = int8_t;
@@ -383,15 +383,15 @@ using mixed_uint32_t = uint32_t;
 using mixed_uint64_t = uint64_t;
 #endif
 }  // namespace mixed_int
-}  // namespace util
+LIBATFRAME_UTILS_NAMESPACE_END
 
-using mixed_int8_t = util::mixed_int::mixed_int8_t;
-using mixed_int16_t = util::mixed_int::mixed_int16_t;
-using mixed_int32_t = util::mixed_int::mixed_int32_t;
-using mixed_int64_t = util::mixed_int::mixed_int64_t;
-using mixed_uint8_t = util::mixed_int::mixed_uint8_t;
-using mixed_uint16_t = util::mixed_int::mixed_uint16_t;
-using mixed_uint32_t = util::mixed_int::mixed_uint32_t;
-using mixed_uint64_t = util::mixed_int::mixed_uint64_t;
+using mixed_int8_t = LIBATFRAME_UTILS_NAMESPACE_ID::mixed_int::mixed_int8_t;
+using mixed_int16_t = LIBATFRAME_UTILS_NAMESPACE_ID::mixed_int::mixed_int16_t;
+using mixed_int32_t = LIBATFRAME_UTILS_NAMESPACE_ID::mixed_int::mixed_int32_t;
+using mixed_int64_t = LIBATFRAME_UTILS_NAMESPACE_ID::mixed_int::mixed_int64_t;
+using mixed_uint8_t = LIBATFRAME_UTILS_NAMESPACE_ID::mixed_int::mixed_uint8_t;
+using mixed_uint16_t = LIBATFRAME_UTILS_NAMESPACE_ID::mixed_int::mixed_uint16_t;
+using mixed_uint32_t = LIBATFRAME_UTILS_NAMESPACE_ID::mixed_int::mixed_uint32_t;
+using mixed_uint64_t = LIBATFRAME_UTILS_NAMESPACE_ID::mixed_int::mixed_uint64_t;
 
 #endif /* _UTIL_ALGORITHM_MIXEDINT_H_ */

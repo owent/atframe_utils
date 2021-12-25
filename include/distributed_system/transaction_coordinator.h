@@ -17,6 +17,6 @@
 #include <utility>
 
 // TODO(owentou): 等稳定后移入atframe_utils
-namespace util {
+LIBATFRAME_UTILS_NAMESPACE_BEGIN
 namespace distributed_system {}  // namespace distributed_system
-}  // namespace util
+LIBATFRAME_UTILS_NAMESPACE_END

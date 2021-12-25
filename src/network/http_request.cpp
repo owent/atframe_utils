@@ -21,9 +21,11 @@
              __GNUC__ * 100 + __GNUC_MINOR__ <= 409))
 UTIL_CONFIG_STATIC_ASSERT(std::is_trivially_copyable<util::network::http_request::curl_poll_context_t>::value);
 #      elif (defined(__cplusplus) && __cplusplus >= 201103L) || ((defined(_MSVC_LANG) && _MSVC_LANG >= 201103L))
-UTIL_CONFIG_STATIC_ASSERT(std::is_trivial<util::network::http_request::curl_poll_context_t>::value);
+UTIL_CONFIG_STATIC_ASSERT(
+    std::is_trivial<LIBATFRAME_UTILS_NAMESPACE_ID::network::http_request::curl_poll_context_t>::value);
 #      else
-UTIL_CONFIG_STATIC_ASSERT(std::is_pod<util::network::http_request::curl_poll_context_t>::value);
+UTIL_CONFIG_STATIC_ASSERT(
+    std::is_pod<LIBATFRAME_UTILS_NAMESPACE_ID::network::http_request::curl_poll_context_t>::value);
 #      endif
 #    endif
 
@@ -31,7 +33,7 @@ UTIL_CONFIG_STATIC_ASSERT(std::is_pod<util::network::http_request::curl_poll_con
 #    define SET_FLAG(f, v) (f) |= (v)
 #    define UNSET_FLAG(f, v) (f) &= (~(v))
 
-namespace util {
+LIBATFRAME_UTILS_NAMESPACE_BEGIN
 namespace network {
 namespace detail {
 /* initialize custom header list (stating that Expect: 100-continue is not wanted */
@@ -441,7 +443,7 @@ LIBATFRAME_UTILS_API void http_request::set_libcurl_no_expect() {
   }
   http_form_.flags |= form_list_t::EN_FLFT_LIBCURL_NO_EXPECT;
 
-  append_http_header(::util::network::detail::custom_no_expect_header);
+  append_http_header(LIBATFRAME_UTILS_NAMESPACE_ID::network::detail::custom_no_expect_header);
 }
 
 LIBATFRAME_UTILS_API void http_request::append_http_header(const char *http_header) {
@@ -645,7 +647,7 @@ LIBATFRAME_UTILS_API void http_request::build_http_form(method_t::type method) {
     // @see https://curl.haxx.se/libcurl/c/CURLOPT_INFILESIZE_LARGE.html
     if (!http_form_.qs_fields.empty()) {
       set_libcurl_no_expect();
-      append_http_header(::util::network::detail::content_type_multipart_post);
+      append_http_header(LIBATFRAME_UTILS_NAMESPACE_ID::network::detail::content_type_multipart_post);
       http_form_.qs_fields.to_string().swap(post_data_);
       http_form_.flags |= form_list_t::EN_FLFT_WRITE_FORM_USE_FUNC;
 
@@ -659,13 +661,15 @@ LIBATFRAME_UTILS_API void http_request::build_http_form(method_t::type method) {
   } else if (!http_form_.qs_fields.empty()) {
     set_libcurl_no_expect();
 
-    for (util::tquerystring::data_const_iterator iter = http_form_.qs_fields.data().begin();
+    for (LIBATFRAME_UTILS_NAMESPACE_ID::tquerystring::data_const_iterator iter = http_form_.qs_fields.data().begin();
          iter != http_form_.qs_fields.data().end(); ++iter) {
-      if (util::types::ITEM_TYPE_STRING == iter->second->type()) {
+      if (LIBATFRAME_UTILS_NAMESPACE_ID::types::ITEM_TYPE_STRING == iter->second->type()) {
 #    if defined(LIBATFRAME_UTILS_ENABLE_RTTI) && LIBATFRAME_UTILS_ENABLE_RTTI
-        util::types::item_string *val = dynamic_cast<util::types::item_string *>(iter->second.get());
+        LIBATFRAME_UTILS_NAMESPACE_ID::types::item_string *val =
+            dynamic_cast<LIBATFRAME_UTILS_NAMESPACE_ID::types::item_string *>(iter->second.get());
 #    else
-        util::types::item_string *val = static_cast<util::types::item_string *>(iter->second.get());
+        LIBATFRAME_UTILS_NAMESPACE_ID::types::item_string *val =
+            static_cast<LIBATFRAME_UTILS_NAMESPACE_ID::types::item_string *>(iter->second.get());
 #    endif
 
         if (nullptr != val) {
@@ -1074,7 +1078,7 @@ LIBATFRAME_UTILS_API int http_request::curl_callback_on_verbose(CURL *, curl_inf
   return 0;
 }
 }  // namespace network
-}  // namespace util
+LIBATFRAME_UTILS_NAMESPACE_END
 
 #  endif
 

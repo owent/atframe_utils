@@ -55,9 +55,9 @@ using std::wstring_view;
 #else
 #  include <nostd/string_view.h>
 namespace gsl {
-using util::nostd::basic_string_view;
-using util::nostd::string_view;
-using util::nostd::wstring_view;
+using LIBATFRAME_UTILS_NAMESPACE_ID::nostd::basic_string_view;
+using LIBATFRAME_UTILS_NAMESPACE_ID::nostd::string_view;
+using LIBATFRAME_UTILS_NAMESPACE_ID::nostd::wstring_view;
 }  // namespace gsl
 #endif
 

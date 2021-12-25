@@ -39,7 +39,7 @@
 #  undef min
 #endif
 
-namespace util {
+LIBATFRAME_UTILS_NAMESPACE_BEGIN
 namespace random {
 /**
  * 随机数包装类，用以提供高级功能
@@ -188,6 +188,6 @@ using xoshiro256_starstar = random_manager_wrapper<core::xoshiro_engine_256<fals
 // 循环节： 2^256 − 1，少一次旋转，更快一点点
 using xoshiro256_plus = random_manager_wrapper<core::xoshiro_engine_256<true> >;
 }  // namespace random
-}  // namespace util
+LIBATFRAME_UTILS_NAMESPACE_END
 
 #endif /* _UTIL_RANDOM_GENERATOR_H_ */

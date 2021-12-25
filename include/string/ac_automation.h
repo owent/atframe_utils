@@ -27,7 +27,7 @@
 
 #include <config/atframe_utils_build_feature.h>
 
-namespace util {
+LIBATFRAME_UTILS_NAMESPACE_BEGIN
 namespace string {
 namespace detail {
 template <typename TC, typename TCTT>
@@ -265,7 +265,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY actrie {
       os << l;
     } else {
       char hex_val[3] = {0};
-      util::string::hex(hex_val, l);
+      LIBATFRAME_UTILS_NAMESPACE_ID::string::hex(hex_val, l);
       os << "0x" << hex_val;
     }
   }
@@ -280,7 +280,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY actrie {
       os << l;
     } else {
       char hex_val[3] = {0};
-      util::string::hex(hex_val, l);
+      LIBATFRAME_UTILS_NAMESPACE_ID::string::hex(hex_val, l);
       os << "0x" << hex_val;
     }
   }
@@ -667,7 +667,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY ac_automation {
 
     if (is_no_case_) {
       string_t res = keyword;
-      std::transform(res.begin(), res.end(), res.begin(), util::string::tolower<char>);
+      std::transform(res.begin(), res.end(), res.begin(), LIBATFRAME_UTILS_NAMESPACE_ID::string::tolower<char>);
       storage_[0]->insert(storage_, res.c_str(), res.size(), keyword);
     } else {
       storage_[0]->insert(storage_, keyword.c_str(), keyword.size(), keyword);
@@ -688,7 +688,8 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY ac_automation {
     string_t nocase;
     if (is_no_case_) {
       nocase = content;
-      std::transform(nocase.begin(), nocase.end(), nocase.begin(), util::string::tolower<char>);
+      std::transform(nocase.begin(), nocase.end(), nocase.begin(),
+                     LIBATFRAME_UTILS_NAMESPACE_ID::string::tolower<char>);
       conv_content = &nocase;
     }
 
@@ -836,6 +837,6 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY ac_automation {
   }
 };
 }  // namespace string
-}  // namespace util
+LIBATFRAME_UTILS_NAMESPACE_END
 
 #endif

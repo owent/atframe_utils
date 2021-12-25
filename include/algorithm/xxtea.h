@@ -29,7 +29,7 @@
 
 #include <config/atframe_utils_build_feature.h>
 
-namespace util {
+LIBATFRAME_UTILS_NAMESPACE_BEGIN
 struct xxtea_key {
   uint32_t data[4];
 };
@@ -81,6 +81,6 @@ LIBATFRAME_UTILS_API void xxtea_decrypt(const xxtea_key *key, void *buffer, size
  */
 LIBATFRAME_UTILS_API void xxtea_decrypt(const xxtea_key *key, const void *input, size_t ilen, void *output,
                                         size_t *olen);
-}  // namespace util
+LIBATFRAME_UTILS_NAMESPACE_END
 
 #endif

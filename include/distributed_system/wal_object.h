@@ -26,7 +26,7 @@
 #  undef max
 #endif
 
-namespace util {
+LIBATFRAME_UTILS_NAMESPACE_BEGIN
 namespace distributed_system {
 
 template <class StorageT, class LogOperatorT, class CallbackParamT, class PrivateDataT>
@@ -55,7 +55,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_object {
   using time_point = wal_time_point;
   using duration = wal_duration;
   using meta_type = wal_meta_type<log_key_type, action_case_type>;
-  using meta_result_type = util::design_pattern::result_type<meta_type, wal_result_code>;
+  using meta_result_type = LIBATFRAME_UTILS_NAMESPACE_ID::design_pattern::result_type<meta_type, wal_result_code>;
 
   // Load data from storage into wal_object
   using callback_load_fn_t = std::function<wal_result_code(wal_object&, const storage_type&, callback_param_type)>;
@@ -735,4 +735,4 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_object {
 };
 
 }  // namespace distributed_system
-}  // namespace util
+LIBATFRAME_UTILS_NAMESPACE_END

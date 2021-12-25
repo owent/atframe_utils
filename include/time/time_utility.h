@@ -41,7 +41,7 @@
 
 #endif
 
-namespace util {
+LIBATFRAME_UTILS_NAMESPACE_BEGIN
 namespace time {
 class time_utility {
  public:
@@ -315,6 +315,6 @@ class time_utility {
   static LIBATFRAME_UTILS_API std::chrono::system_clock::duration global_now_offset_;
 };
 }  // namespace time
-}  // namespace util
+LIBATFRAME_UTILS_NAMESPACE_END
 
 #endif  // _UTIL_TIME_TIME_UTILITY_H_

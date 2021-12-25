@@ -32,7 +32,7 @@
 
 #include <config/atframe_utils_build_feature.h>
 
-namespace util {
+LIBATFRAME_UTILS_NAMESPACE_BEGIN
 
 // @see https://en.wikipedia.org/wiki/Base64
 struct base64_mode_t {
@@ -144,6 +144,6 @@ LIBATFRAME_UTILS_API int base64_decode(std::string &dst, const unsigned char *sr
  */
 LIBATFRAME_UTILS_API int base64_decode(std::string &dst, const std::string &in,
                                        base64_mode_t::type mode = base64_mode_t::EN_BMT_STANDARD);
-}  // namespace util
+LIBATFRAME_UTILS_NAMESPACE_END
 
 #endif

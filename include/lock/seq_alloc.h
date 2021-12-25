@@ -27,7 +27,7 @@
 
 #include "atomic_int_type.h"
 
-namespace util {
+LIBATFRAME_UTILS_NAMESPACE_BEGIN
 namespace lock {
 template <typename Ty>
 class LIBATFRAME_UTILS_API_HEAD_ONLY seq_alloc {
@@ -35,27 +35,39 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY seq_alloc {
   using value_type = Ty;
 
  private:
-  ::util::lock::atomic_int_type<value_type> data_;
+  LIBATFRAME_UTILS_NAMESPACE_ID::lock::atomic_int_type<value_type> data_;
 
  public:
   seq_alloc() { data_.store(static_cast<value_type>(0)); }
 
-  value_type get() const { return data_.load(util::lock::memory_order_acquire); }
+  value_type get() const { return data_.load(LIBATFRAME_UTILS_NAMESPACE_ID::lock::memory_order_acquire); }
 
-  value_type set(value_type val) { return data_.exchange(val, util::lock::memory_order_release); }
+  value_type set(value_type val) {
+    return data_.exchange(val, LIBATFRAME_UTILS_NAMESPACE_ID::lock::memory_order_release);
+  }
 
-  value_type add(value_type val) { return data_.fetch_add(val, util::lock::memory_order_release); }
+  value_type add(value_type val) {
+    return data_.fetch_add(val, LIBATFRAME_UTILS_NAMESPACE_ID::lock::memory_order_release);
+  }
 
-  value_type sub(value_type val) { return data_.fetch_sub(val, util::lock::memory_order_release); }
+  value_type sub(value_type val) {
+    return data_.fetch_sub(val, LIBATFRAME_UTILS_NAMESPACE_ID::lock::memory_order_release);
+  }
 
-  value_type band(value_type val) { return data_.fetch_and(val, util::lock::memory_order_release); }
+  value_type band(value_type val) {
+    return data_.fetch_and(val, LIBATFRAME_UTILS_NAMESPACE_ID::lock::memory_order_release);
+  }
 
-  value_type bor(value_type val) { return data_.fetch_or(val, util::lock::memory_order_release); }
+  value_type bor(value_type val) {
+    return data_.fetch_or(val, LIBATFRAME_UTILS_NAMESPACE_ID::lock::memory_order_release);
+  }
 
-  value_type bxor(value_type val) { return data_.fetch_xor(val, util::lock::memory_order_release); }
+  value_type bxor(value_type val) {
+    return data_.fetch_xor(val, LIBATFRAME_UTILS_NAMESPACE_ID::lock::memory_order_release);
+  }
 
   bool compare_exchange(value_type expected, value_type val) {
-    return data_.compare_exchange_strong(expected, val, util::lock::memory_order_acq_rel);
+    return data_.compare_exchange_strong(expected, val, LIBATFRAME_UTILS_NAMESPACE_ID::lock::memory_order_acq_rel);
   }
 
   value_type inc() { return ++data_; }
@@ -72,6 +84,6 @@ using seq_alloc_i16 = seq_alloc<int16_t>;
 using seq_alloc_i32 = seq_alloc<int32_t>;
 using seq_alloc_i64 = seq_alloc<int64_t>;
 }  // namespace lock
-}  // namespace util
+LIBATFRAME_UTILS_NAMESPACE_END
 
 #endif /* _UTIL_LOCK_SEQ_ALLOC_H_ */

@@ -9,7 +9,7 @@
 #include "lock/spin_rw_lock.h"
 
 CASE_TEST(lock_test, spin_lock) {
-  util::lock::spin_lock lock;
+  LIBATFRAME_UTILS_NAMESPACE_ID::lock::spin_lock lock;
   CASE_EXPECT_FALSE(lock.is_locked());
 
   lock.lock();
@@ -25,16 +25,19 @@ CASE_TEST(lock_test, spin_lock) {
 }
 
 CASE_TEST(lock_test, lock_holder) {
-  util::lock::spin_lock lock;
+  LIBATFRAME_UTILS_NAMESPACE_ID::lock::spin_lock lock;
   CASE_EXPECT_FALSE(lock.is_locked());
 
   {
-    util::lock::lock_holder<util::lock::spin_lock> holder1(lock);
+    LIBATFRAME_UTILS_NAMESPACE_ID::lock::lock_holder<LIBATFRAME_UTILS_NAMESPACE_ID::lock::spin_lock> holder1(lock);
 
     CASE_EXPECT_TRUE(lock.is_locked());
     CASE_EXPECT_TRUE(holder1.is_available());
 
-    util::lock::lock_holder<util::lock::spin_lock, util::lock::detail::default_try_lock_action<util::lock::spin_lock> >
+    LIBATFRAME_UTILS_NAMESPACE_ID::lock::lock_holder<
+        LIBATFRAME_UTILS_NAMESPACE_ID::lock::spin_lock,
+        LIBATFRAME_UTILS_NAMESPACE_ID::lock::detail::default_try_lock_action<
+            LIBATFRAME_UTILS_NAMESPACE_ID::lock::spin_lock> >
         holder2(lock);
 
     CASE_EXPECT_FALSE(holder2.is_available());
@@ -44,7 +47,7 @@ CASE_TEST(lock_test, lock_holder) {
 }
 
 CASE_TEST(lock_test, spin_rw_lock) {
-  util::lock::spin_rw_lock lock;
+  LIBATFRAME_UTILS_NAMESPACE_ID::lock::spin_rw_lock lock;
 
   CASE_EXPECT_FALSE(lock.is_read_locked());
   CASE_EXPECT_FALSE(lock.is_write_locked());
@@ -97,10 +100,11 @@ CASE_TEST(lock_test, spin_rw_lock) {
 }
 
 CASE_TEST(lock_test, spin_rw_lock_holder) {
-  util::lock::spin_rw_lock lock;
+  LIBATFRAME_UTILS_NAMESPACE_ID::lock::spin_rw_lock lock;
 
   {
-    util::lock::read_lock_holder<util::lock::spin_rw_lock> holder(lock);
+    LIBATFRAME_UTILS_NAMESPACE_ID::lock::read_lock_holder<LIBATFRAME_UTILS_NAMESPACE_ID::lock::spin_rw_lock> holder(
+        lock);
     CASE_EXPECT_TRUE(holder.is_available());
 
     CASE_EXPECT_TRUE(lock.is_read_locked());
@@ -111,7 +115,8 @@ CASE_TEST(lock_test, spin_rw_lock_holder) {
   CASE_EXPECT_FALSE(lock.is_write_locked());
 
   {
-    util::lock::write_lock_holder<util::lock::spin_rw_lock> holder(lock);
+    LIBATFRAME_UTILS_NAMESPACE_ID::lock::write_lock_holder<LIBATFRAME_UTILS_NAMESPACE_ID::lock::spin_rw_lock> holder(
+        lock);
     CASE_EXPECT_TRUE(holder.is_available());
 
     CASE_EXPECT_FALSE(lock.is_read_locked());
@@ -129,8 +134,8 @@ CASE_TEST(lock_test, spin_rw_lock_holder) {
 #  include <thread>
 
 CASE_TEST(lock_test, spin_rw_lock_mt) {
-  util::lock::spin_rw_lock lock;
-  ::util::lock::atomic_int_type<size_t> write_lock_count;
+  LIBATFRAME_UTILS_NAMESPACE_ID::lock::spin_rw_lock lock;
+  LIBATFRAME_UTILS_NAMESPACE_ID::lock::atomic_int_type<size_t> write_lock_count;
   write_lock_count.store(0);
 
   CASE_EXPECT_TRUE(lock.try_read_lock());

@@ -29,7 +29,7 @@ struct hash<test_wal_publisher_log_action> {
 }  // namespace std
 
 struct test_wal_publisher_log_type {
-  util::distributed_system::wal_time_point timepoint;
+  LIBATFRAME_UTILS_NAMESPACE_ID::distributed_system::wal_time_point timepoint;
   int64_t log_key;
   test_wal_publisher_log_action action;
 
@@ -38,8 +38,8 @@ struct test_wal_publisher_log_type {
     void* publisher;
   };
 
-  inline explicit test_wal_publisher_log_type(util::distributed_system::wal_time_point t, int64_t k,
-                                              test_wal_publisher_log_action act, int64_t d)
+  inline explicit test_wal_publisher_log_type(LIBATFRAME_UTILS_NAMESPACE_ID::distributed_system::wal_time_point t,
+                                              int64_t k, test_wal_publisher_log_action act, int64_t d)
       : timepoint(t), log_key(k), action(act), data(d) {}
   inline test_wal_publisher_log_type()
       : timepoint(std::chrono::system_clock::from_time_t(0)),
@@ -67,16 +67,15 @@ struct test_wal_publisher_private_type {
 };
 
 using test_wal_publisher_log_operator =
-    util::distributed_system::wal_log_operator<int64_t, test_wal_publisher_log_type,
-                                               test_wal_publisher_log_action_getter>;
+    LIBATFRAME_UTILS_NAMESPACE_ID::distributed_system::wal_log_operator<int64_t, test_wal_publisher_log_type,
+                                                                        test_wal_publisher_log_action_getter>;
 
 using test_wal_publisher_subscriber_type =
-    util::distributed_system::wal_subscriber<test_wal_publisher_private_type, uint64_t>;
+    LIBATFRAME_UTILS_NAMESPACE_ID::distributed_system::wal_subscriber<test_wal_publisher_private_type, uint64_t>;
 
-using test_wal_publisher_type =
-    util::distributed_system::wal_publisher<test_wal_publisher_storage_type, test_wal_publisher_log_operator,
-                                            test_wal_publisher_context, test_wal_publisher_private_type,
-                                            test_wal_publisher_subscriber_type>;
+using test_wal_publisher_type = LIBATFRAME_UTILS_NAMESPACE_ID::distributed_system::wal_publisher<
+    test_wal_publisher_storage_type, test_wal_publisher_log_operator, test_wal_publisher_context,
+    test_wal_publisher_private_type, test_wal_publisher_subscriber_type>;
 
 struct test_wal_publisher_stats {
   int64_t key_alloc;
@@ -108,8 +107,8 @@ test_wal_publisher_stats g_test_wal_publisher_stats{
 static test_wal_publisher_type::vtable_pointer create_vtable() {
   using wal_object_type = test_wal_publisher_type::object_type;
   using wal_publisher_type = test_wal_publisher_type;
-  using wal_result_code = util::distributed_system::wal_result_code;
-  using wal_unsubscribe_reason = util::distributed_system::wal_unsubscribe_reason;
+  using wal_result_code = LIBATFRAME_UTILS_NAMESPACE_ID::distributed_system::wal_result_code;
+  using wal_unsubscribe_reason = LIBATFRAME_UTILS_NAMESPACE_ID::distributed_system::wal_unsubscribe_reason;
 
   wal_publisher_type::vtable_pointer ret = std::make_shared<wal_publisher_type::vtable_type>();
 
@@ -295,7 +294,7 @@ static test_wal_publisher_type::vtable_pointer create_vtable() {
   };
 
   ret->on_subscriber_removed = [](wal_publisher_type&, const wal_publisher_type::subscriber_pointer& subscriber,
-                                  util::distributed_system::wal_unsubscribe_reason,
+                                  LIBATFRAME_UTILS_NAMESPACE_ID::distributed_system::wal_unsubscribe_reason,
                                   wal_publisher_type::callback_param_type) {
     ++details::g_test_wal_publisher_stats.event_on_subscribe_removed;
     details::g_test_wal_publisher_stats.last_subscriber = subscriber;
@@ -352,7 +351,7 @@ CASE_TEST(wal_publisher, load_and_dump) {
                           details::g_test_wal_publisher_stats.delegate_action_count;
 
   test_wal_publisher_storage_type load_storege;
-  util::distributed_system::wal_time_point now = std::chrono::system_clock::now();
+  LIBATFRAME_UTILS_NAMESPACE_ID::distributed_system::wal_time_point now = std::chrono::system_clock::now();
   load_storege.global_ignore = 123;
   load_storege.logs.push_back(test_wal_publisher_log_type{now, 124, test_wal_publisher_log_action::kDoNothing, 124});
   load_storege.logs.push_back(
@@ -370,7 +369,8 @@ CASE_TEST(wal_publisher, load_and_dump) {
   if (!publisher) {
     return;
   }
-  CASE_EXPECT_TRUE(util::distributed_system::wal_result_code::kOk == publisher->load(load_storege, ctx));
+  CASE_EXPECT_TRUE(LIBATFRAME_UTILS_NAMESPACE_ID::distributed_system::wal_result_code::kOk ==
+                   publisher->load(load_storege, ctx));
   CASE_EXPECT_EQ(old_action_count, details::g_test_wal_publisher_stats.default_action_count +
                                        details::g_test_wal_publisher_stats.delegate_action_count);
   CASE_EXPECT_EQ(4, publisher->get_configure().gc_log_size);
@@ -388,7 +388,8 @@ CASE_TEST(wal_publisher, load_and_dump) {
 
   // dump
   test_wal_publisher_storage_type dump_storege;
-  CASE_EXPECT_TRUE(util::distributed_system::wal_result_code::kOk == publisher->dump(dump_storege, ctx));
+  CASE_EXPECT_TRUE(LIBATFRAME_UTILS_NAMESPACE_ID::distributed_system::wal_result_code::kOk ==
+                   publisher->dump(dump_storege, ctx));
 
   CASE_EXPECT_EQ(123, dump_storege.global_ignore);
   CASE_EXPECT_EQ(3, dump_storege.logs.size());
@@ -403,7 +404,7 @@ CASE_TEST(wal_publisher, load_and_dump) {
 }
 
 CASE_TEST(wal_publisher, subscriber_basic_operation) {
-  util::distributed_system::wal_time_point now = std::chrono::system_clock::now();
+  LIBATFRAME_UTILS_NAMESPACE_ID::distributed_system::wal_time_point now = std::chrono::system_clock::now();
   test_wal_publisher_storage_type storage;
   test_wal_publisher_context ctx;
 
@@ -436,9 +437,9 @@ CASE_TEST(wal_publisher, subscriber_basic_operation) {
 }
 
 static void test_wal_publisher_add_logs(test_wal_publisher_type::object_type& wal_obj, test_wal_publisher_context ctx,
-                                        util::distributed_system::wal_time_point t1,
-                                        util::distributed_system::wal_time_point t2,
-                                        util::distributed_system::wal_time_point t3) {
+                                        LIBATFRAME_UTILS_NAMESPACE_ID::distributed_system::wal_time_point t1,
+                                        LIBATFRAME_UTILS_NAMESPACE_ID::distributed_system::wal_time_point t2,
+                                        LIBATFRAME_UTILS_NAMESPACE_ID::distributed_system::wal_time_point t3) {
   do {
     auto old_default_action_count = details::g_test_wal_publisher_stats.default_action_count;
     auto old_delegate_action_count = details::g_test_wal_publisher_stats.delegate_action_count;
@@ -501,10 +502,10 @@ static void test_wal_publisher_add_logs(test_wal_publisher_type::object_type& wa
 }
 
 CASE_TEST(wal_publisher, subscriber_heartbeat) {
-  util::distributed_system::wal_time_point t1 = std::chrono::system_clock::now();
-  util::distributed_system::wal_time_point t2 =
+  LIBATFRAME_UTILS_NAMESPACE_ID::distributed_system::wal_time_point t1 = std::chrono::system_clock::now();
+  LIBATFRAME_UTILS_NAMESPACE_ID::distributed_system::wal_time_point t2 =
       t1 + std::chrono::duration_cast<test_wal_publisher_type::duration>(std::chrono::seconds{3});
-  util::distributed_system::wal_time_point t3 =
+  LIBATFRAME_UTILS_NAMESPACE_ID::distributed_system::wal_time_point t3 =
       t1 + std::chrono::duration_cast<test_wal_publisher_type::duration>(std::chrono::seconds{6});
   test_wal_publisher_storage_type storage;
   test_wal_publisher_context ctx;
@@ -555,7 +556,8 @@ CASE_TEST(wal_publisher, subscriber_heartbeat) {
     ++count;
   }
 
-  publisher->remove_subscriber(subscriber_key_1, util::distributed_system::wal_unsubscribe_reason::kClientRequest, ctx);
+  publisher->remove_subscriber(
+      subscriber_key_1, LIBATFRAME_UTILS_NAMESPACE_ID::distributed_system::wal_unsubscribe_reason::kClientRequest, ctx);
   all_iter = publisher->get_subscribe_manager().all_range();
   count = 0;
   while (all_iter.first != all_iter.second) {
@@ -565,7 +567,8 @@ CASE_TEST(wal_publisher, subscriber_heartbeat) {
   }
   CASE_EXPECT_EQ(event_subscribe_removed + 1, details::g_test_wal_publisher_stats.event_on_subscribe_removed);
 
-  publisher->remove_subscriber(subscriber_key_3, util::distributed_system::wal_unsubscribe_reason::kClientRequest, ctx);
+  publisher->remove_subscriber(
+      subscriber_key_3, LIBATFRAME_UTILS_NAMESPACE_ID::distributed_system::wal_unsubscribe_reason::kClientRequest, ctx);
   all_iter = publisher->get_subscribe_manager().all_range();
   count = 0;
   while (all_iter.first != all_iter.second) {
@@ -577,10 +580,10 @@ CASE_TEST(wal_publisher, subscriber_heartbeat) {
 }
 
 CASE_TEST(wal_publisher, subscriber_send_snapshot) {
-  util::distributed_system::wal_time_point t1 = std::chrono::system_clock::now();
-  util::distributed_system::wal_time_point t2 =
+  LIBATFRAME_UTILS_NAMESPACE_ID::distributed_system::wal_time_point t1 = std::chrono::system_clock::now();
+  LIBATFRAME_UTILS_NAMESPACE_ID::distributed_system::wal_time_point t2 =
       t1 + std::chrono::duration_cast<test_wal_publisher_type::duration>(std::chrono::seconds{3});
-  util::distributed_system::wal_time_point t3 =
+  LIBATFRAME_UTILS_NAMESPACE_ID::distributed_system::wal_time_point t3 =
       t1 + std::chrono::duration_cast<test_wal_publisher_type::duration>(std::chrono::seconds{6});
   test_wal_publisher_storage_type storage;
   test_wal_publisher_context ctx;
@@ -647,10 +650,10 @@ CASE_TEST(wal_publisher, subscriber_send_snapshot) {
 }
 
 CASE_TEST(wal_publisher, subscriber_send_logs) {
-  util::distributed_system::wal_time_point t1 = std::chrono::system_clock::now();
-  util::distributed_system::wal_time_point t2 =
+  LIBATFRAME_UTILS_NAMESPACE_ID::distributed_system::wal_time_point t1 = std::chrono::system_clock::now();
+  LIBATFRAME_UTILS_NAMESPACE_ID::distributed_system::wal_time_point t2 =
       t1 + std::chrono::duration_cast<test_wal_publisher_type::duration>(std::chrono::seconds{3});
-  util::distributed_system::wal_time_point t3 =
+  LIBATFRAME_UTILS_NAMESPACE_ID::distributed_system::wal_time_point t3 =
       t1 + std::chrono::duration_cast<test_wal_publisher_type::duration>(std::chrono::seconds{6});
   test_wal_publisher_storage_type storage;
   test_wal_publisher_context ctx;
@@ -693,10 +696,10 @@ CASE_TEST(wal_publisher, subscriber_send_logs) {
 }
 
 CASE_TEST(wal_publisher, remove_subscriber_by_check_callback) {
-  util::distributed_system::wal_time_point t1 = std::chrono::system_clock::now();
-  util::distributed_system::wal_time_point t2 =
+  LIBATFRAME_UTILS_NAMESPACE_ID::distributed_system::wal_time_point t1 = std::chrono::system_clock::now();
+  LIBATFRAME_UTILS_NAMESPACE_ID::distributed_system::wal_time_point t2 =
       t1 + std::chrono::duration_cast<test_wal_publisher_type::duration>(std::chrono::seconds{3});
-  util::distributed_system::wal_time_point t3 =
+  LIBATFRAME_UTILS_NAMESPACE_ID::distributed_system::wal_time_point t3 =
       t1 + std::chrono::duration_cast<test_wal_publisher_type::duration>(std::chrono::seconds{6});
   test_wal_publisher_storage_type storage;
   test_wal_publisher_context ctx;
@@ -746,10 +749,10 @@ CASE_TEST(wal_publisher, remove_subscriber_by_check_callback) {
 }
 
 CASE_TEST(wal_publisher, broadcast) {
-  util::distributed_system::wal_time_point t1 = std::chrono::system_clock::now();
-  util::distributed_system::wal_time_point t2 =
+  LIBATFRAME_UTILS_NAMESPACE_ID::distributed_system::wal_time_point t1 = std::chrono::system_clock::now();
+  LIBATFRAME_UTILS_NAMESPACE_ID::distributed_system::wal_time_point t2 =
       t1 + std::chrono::duration_cast<test_wal_publisher_type::duration>(std::chrono::seconds{3});
-  util::distributed_system::wal_time_point t3 =
+  LIBATFRAME_UTILS_NAMESPACE_ID::distributed_system::wal_time_point t3 =
       t1 + std::chrono::duration_cast<test_wal_publisher_type::duration>(std::chrono::seconds{6});
   test_wal_publisher_storage_type storage;
   test_wal_publisher_context ctx;
@@ -808,10 +811,10 @@ CASE_TEST(wal_publisher, broadcast) {
 }
 
 CASE_TEST(wal_publisher, enable_last_broadcast_for_removed_subscriber) {
-  util::distributed_system::wal_time_point t1 = std::chrono::system_clock::now();
-  util::distributed_system::wal_time_point t2 =
+  LIBATFRAME_UTILS_NAMESPACE_ID::distributed_system::wal_time_point t1 = std::chrono::system_clock::now();
+  LIBATFRAME_UTILS_NAMESPACE_ID::distributed_system::wal_time_point t2 =
       t1 + std::chrono::duration_cast<test_wal_publisher_type::duration>(std::chrono::seconds{3});
-  util::distributed_system::wal_time_point t3 =
+  LIBATFRAME_UTILS_NAMESPACE_ID::distributed_system::wal_time_point t3 =
       t1 + std::chrono::duration_cast<test_wal_publisher_type::duration>(std::chrono::seconds{6});
   test_wal_publisher_storage_type storage;
   test_wal_publisher_context ctx;

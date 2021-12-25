@@ -575,7 +575,7 @@ static size_t crypto_dh_EVP_PKEY_set1_tls_encodedpoint(EVP_PKEY *pkey, const uns
 #    undef max
 #  endif
 
-namespace util {
+LIBATFRAME_UTILS_NAMESPACE_BEGIN
 namespace crypto {
 namespace details {
 static inline dh::error_code_t::type setup_errorno(dh &ci, int err, dh::error_code_t::type ret) {
@@ -809,7 +809,7 @@ class openssl_raii {
   inline openssl_raii(TPTR *in) : data_(in) {}
   inline ~openssl_raii() { reset(); }
 
-  inline void reset() { ::util::crypto::details::reset(data_); }
+  inline void reset() { LIBATFRAME_UTILS_NAMESPACE_ID::crypto::details::reset(data_); }
 
   inline operator bool() const { return !!data_; }
 
@@ -2103,7 +2103,7 @@ LIBATFRAME_UTILS_API int dh::read_public(const unsigned char *input, size_t ilen
   }
 
   return ret;
-}  // namespace util
+}
 
 LIBATFRAME_UTILS_API int dh::calc_secret(std::vector<unsigned char> &output) {
   if (!shared_context_) {
@@ -2387,7 +2387,8 @@ int dh::check_or_setup_dh_pg_gy(BIGNUM *&DH_p, BIGNUM *&DH_g, BIGNUM *&DH_gy) {
 
   // import P,G,GY
   // @see int ssl3_get_key_exchange(SSL *s) in s3_clnt.c                                          -- openssl 1.0.x
-  // @see int tls_process_ske_dhe(SSL *s, PACKET *pkt, EVP_PKEY **pkey, int *al) in statem_clnt.c -- openssl 1.1.x/3.x.x
+  // @see int tls_process_ske_dhe(SSL *s, PACKET *pkt, EVP_PKEY **pkey, int *al) in statem_clnt.c --
+  // openssl 1.1.x/3.x.x
 
   // puts("check_or_setup_dh_pg_gy");
   // BN_print_fp(stdout, DH_p);
@@ -2502,6 +2503,6 @@ int dh::check_or_setup_dh_pg_gy(BIGNUM *&DH_p, BIGNUM *&DH_g, BIGNUM *&DH_gy) {
 #  endif
 
 }  // namespace crypto
-}  // namespace util
+LIBATFRAME_UTILS_NAMESPACE_END
 
 #endif

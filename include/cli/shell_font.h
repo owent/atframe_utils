@@ -38,7 +38,7 @@
 
 #endif
 
-namespace util {
+LIBATFRAME_UTILS_NAMESPACE_BEGIN
 namespace cli {
 
 //下面是编码表
@@ -210,6 +210,6 @@ class UTIL_SYMBOL_VISIBLE shell_stream {
 };
 
 }  // namespace cli
-}  // namespace util
+LIBATFRAME_UTILS_NAMESPACE_END
 
 #endif /* SHELLFONT_H_ */

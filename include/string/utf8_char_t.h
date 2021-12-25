@@ -32,7 +32,7 @@
 
 #include "config/atframe_utils_build_feature.h"
 
-namespace util {
+LIBATFRAME_UTILS_NAMESPACE_BEGIN
 namespace string {
 struct LIBATFRAME_UTILS_API_HEAD_ONLY utf8_char_t {
   utf8_char_t(const char *str) {
@@ -188,6 +188,6 @@ struct LIBATFRAME_UTILS_API_HEAD_ONLY utf8_char_t {
   }
 };
 }  // namespace string
-}  // namespace util
+LIBATFRAME_UTILS_NAMESPACE_END
 
 #endif
