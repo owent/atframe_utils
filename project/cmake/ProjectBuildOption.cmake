@@ -35,16 +35,8 @@ else()
       "v0"
       CACHE STRING "ABI tag for libatframe_utils.")
 endif()
-set(LIBATFRAME_UTILS_NAMESPACE_BEGIN
-    "  \\
-namespace util { \\
-inline namespace ${LIBATFRAME_UTILS_ABI_TAG} {
-")
-set(LIBATFRAME_UTILS_NAMESPACE_END
-    "  \\
-}  /* ${LIBATFRAME_UTILS_ABI_TAG} */ \\
-}  /* util */
-")
+set(LIBATFRAME_UTILS_NAMESPACE_BEGIN "namespace util { inline namespace ${LIBATFRAME_UTILS_ABI_TAG} {")
+set(LIBATFRAME_UTILS_NAMESPACE_END "} }")
 
 cmake_dependent_option(LIBUNWIND_ENABLED "Enable using libunwind." ON "NOT WIN32;NOT MINGW;NOT CYGWIN" OFF)
 option(LOG_WRAPPER_ENABLE_LUA_SUPPORT "Enable lua support." ON)
