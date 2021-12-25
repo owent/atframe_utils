@@ -336,19 +336,32 @@ void log_sample_func7() {
       string_buffer, "{},{}", 1, test_exception_for_log_formatter(true, true)));
   // MSVC 1929(VS 16.10) has some problem on type detection and converting, so we speciffy OutputIt here
   LIBATFRAME_UTILS_NAMESPACE_ID::log::vformat_to<iterator_type>(
-      string_buffer, "{},{},{},{}", LIBATFRAME_UTILS_NAMESPACE_ID::log::make_format_args(1, 2, 3));
+      string_buffer, "{},{},{},{}",
+      LIBATFRAME_UTILS_NAMESPACE_ID::log::make_format_args
+#      if defined(_MSC_VER) && _MSC_VER < 1930  // Bug of MSVC 1929
+      <LOG_WRAPPER_FWAPI_NAMESPACE basic_format_context<iterator_type, char> >
+#      endif
+      (1, 2, 3));
   std::cout << "vformat_to: " << string_buffer << std::endl;
   memset(string_buffer, 0, sizeof(string_buffer));
 
   LIBATFRAME_UTILS_NAMESPACE_ID::log::vformat_to<iterator_type>(
       string_buffer, "{},{}",
-      LIBATFRAME_UTILS_NAMESPACE_ID::log::make_format_args(1, test_exception_for_log_formatter(true, true)));
+      LIBATFRAME_UTILS_NAMESPACE_ID::log::make_format_args
+#      if defined(_MSC_VER) && _MSC_VER < 1930  // Bug of MSVC 1929
+      <LOG_WRAPPER_FWAPI_NAMESPACE basic_format_context<iterator_type, char> >
+#      endif
+      (1, test_exception_for_log_formatter(true, true)));
   std::cout << "vformat_to: " << string_buffer << std::endl;
   memset(string_buffer, 0, sizeof(string_buffer));
 
   LIBATFRAME_UTILS_NAMESPACE_ID::log::vformat_to<iterator_type>(
       string_buffer, "{},{}",
-      LIBATFRAME_UTILS_NAMESPACE_ID::log::make_format_args(1, test_exception_for_log_formatter(false, true)));
+      LIBATFRAME_UTILS_NAMESPACE_ID::log::make_format_args
+#      if defined(_MSC_VER) && _MSC_VER < 1930  // Bug of MSVC 1929
+      <LOG_WRAPPER_FWAPI_NAMESPACE basic_format_context<iterator_type, char> >
+#      endif
+      (1, test_exception_for_log_formatter(false, true)));
   std::cout << "vformat_to: " << string_buffer << std::endl;
 #    else
   LIBATFRAME_UTILS_NAMESPACE_ID::log::vformat_to(string_buffer, "{},{},{},{}",
