@@ -1,3 +1,5 @@
+// Copyright 2022 atframework
+
 #include <assert.h>
 #include <inttypes.h>
 #include <stdint.h>
@@ -344,4 +346,5 @@ LIBATFRAME_UTILS_API int base64_decode(std::string &dst, const unsigned char *sr
 LIBATFRAME_UTILS_API int base64_decode(std::string &dst, const std::string &in, base64_mode_t::type mode) {
   return detail::base64_decode_inner(dst, in, detail::base64_get_dec_map(mode), detail::base64_get_padding_char(mode));
 }
+
 LIBATFRAME_UTILS_NAMESPACE_END

@@ -1,20 +1,13 @@
-/**
- * @file base64.h
- * @brief base64算法
- * Licensed under the MIT licenses.
- *
- * @version 1.0
- * @author OWenT
- * @date 2017.11.17
- *
- * @see https://en.wikipedia.org/wiki/Base64
- * @history
- *
- *
- */
-
-#ifndef UTIL_ALGORITHM_BASE64_H
-#define UTIL_ALGORITHM_BASE64_H
+// Copyright 2022 atframework
+// @file base64.h
+// @brief base64算法
+// Licensed under the MIT licenses.
+// 
+// @version 1.0
+// @author OWenT
+// @date 2017.11.17
+// 
+// @see https://en.wikipedia.org/wiki/Base64
 
 #pragma once
 
@@ -145,5 +138,3 @@ LIBATFRAME_UTILS_API int base64_decode(std::string &dst, const unsigned char *sr
 LIBATFRAME_UTILS_API int base64_decode(std::string &dst, const std::string &in,
                                        base64_mode_t::type mode = base64_mode_t::EN_BMT_STANDARD);
 LIBATFRAME_UTILS_NAMESPACE_END
-
-#endif
