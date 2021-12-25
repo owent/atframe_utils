@@ -18,7 +18,7 @@
 
 #include "cmd_option.h"
 
-namespace util {
+LIBATFRAME_UTILS_NAMESPACE_BEGIN
 namespace cli {
 namespace phoenix {
 /**
@@ -29,7 +29,7 @@ struct LIBATFRAME_UTILS_API_HEAD_ONLY assign_t {
   T &var;
   assign_t(T &t) : var(t) {}
 
-  void operator()(util::cli::callback_param params) {
+  void operator()(LIBATFRAME_UTILS_NAMESPACE_ID::cli::callback_param params) {
     if (params.get_params_number() > 0) {
       var = params[0]->to<T>();
     }
@@ -49,8 +49,8 @@ struct LIBATFRAME_UTILS_API_HEAD_ONLY push_back_t {
   T &var;
   push_back_t(T &t) : var(t) {}
 
-  void operator()(util::cli::callback_param params) {
-    for (util::cli::cmd_option_list::size_type i = 0; i < params.get_params_number(); ++i) {
+  void operator()(LIBATFRAME_UTILS_NAMESPACE_ID::cli::callback_param params) {
+    for (LIBATFRAME_UTILS_NAMESPACE_ID::cli::cmd_option_list::size_type i = 0; i < params.get_params_number(); ++i) {
       var.push_back(params[i]->to<typename T::value_type>());
     }
   }
@@ -69,8 +69,8 @@ struct LIBATFRAME_UTILS_API_HEAD_ONLY push_front_t {
   T &var;
   push_front_t(T &t) : var(t) {}
 
-  void operator()(util::cli::callback_param params) {
-    for (util::cli::cmd_option_list::size_type i = 0; i < params.get_params_number(); ++i) {
+  void operator()(LIBATFRAME_UTILS_NAMESPACE_ID::cli::callback_param params) {
+    for (LIBATFRAME_UTILS_NAMESPACE_ID::cli::cmd_option_list::size_type i = 0; i < params.get_params_number(); ++i) {
       var.push_front(params[i]->to<typename T::value_type>());
     }
   }
@@ -89,8 +89,8 @@ struct LIBATFRAME_UTILS_API_HEAD_ONLY insert_t {
   T &var;
   insert_t(T &t) : var(t) {}
 
-  void operator()(util::cli::callback_param params) {
-    for (util::cli::cmd_option_list::size_type i = 0; i < params.get_params_number(); ++i) {
+  void operator()(LIBATFRAME_UTILS_NAMESPACE_ID::cli::callback_param params) {
+    for (LIBATFRAME_UTILS_NAMESPACE_ID::cli::cmd_option_list::size_type i = 0; i < params.get_params_number(); ++i) {
       var.insert(params[i]->to<typename T::value_type>());
     }
   }
@@ -110,7 +110,7 @@ struct LIBATFRAME_UTILS_API_HEAD_ONLY set_const_t {
   T val;
   set_const_t(T &t, const T &v) : var(t), val(v) {}
 
-  void operator()(util::cli::callback_param) { var = val; }
+  void operator()(LIBATFRAME_UTILS_NAMESPACE_ID::cli::callback_param) { var = val; }
 };
 
 template <typename T>
@@ -127,7 +127,7 @@ struct LIBATFRAME_UTILS_API_HEAD_ONLY assign_logic_bool_t {
   T &var;
   assign_logic_bool_t(T &t) : var(t) {}
 
-  void operator()(util::cli::callback_param params) {
+  void operator()(LIBATFRAME_UTILS_NAMESPACE_ID::cli::callback_param params) {
     if (params.get_params_number() > 0) {
       var = params[0]->to_logic_bool();
     } else {
@@ -142,5 +142,5 @@ LIBATFRAME_UTILS_API_HEAD_ONLY assign_logic_bool_t<T> assign_logic_bool(T &t) {
 }
 }  // namespace phoenix
 }  // namespace cli
-}  // namespace util
+LIBATFRAME_UTILS_NAMESPACE_END
 #endif /* CMDOPTION_H_ */

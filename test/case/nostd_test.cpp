@@ -12,7 +12,7 @@
 CASE_TEST(nostd_string_view, ctor) {
   {
     // Null.
-    util::nostd::string_view s10;
+    LIBATFRAME_UTILS_NAMESPACE_ID::nostd::string_view s10;
     CASE_EXPECT_TRUE(s10.data() == nullptr);
     CASE_EXPECT_EQ(0, s10.length());
   }
@@ -20,17 +20,17 @@ CASE_TEST(nostd_string_view, ctor) {
   {
     // const char* without length.
     const char* hello = "hello";
-    util::nostd::string_view s20(hello);
+    LIBATFRAME_UTILS_NAMESPACE_ID::nostd::string_view s20(hello);
     CASE_EXPECT_TRUE(s20.data() == hello);
     CASE_EXPECT_EQ(5, s20.length());
 
     // const char* with length.
-    util::nostd::string_view s21(hello, 4);
+    LIBATFRAME_UTILS_NAMESPACE_ID::nostd::string_view s21(hello, 4);
     CASE_EXPECT_TRUE(s21.data() == hello);
     CASE_EXPECT_EQ(4, s21.length());
 
     // Not recommended, but valid C++
-    util::nostd::string_view s22(hello, 6);
+    LIBATFRAME_UTILS_NAMESPACE_ID::nostd::string_view s22(hello, 6);
     CASE_EXPECT_TRUE(s22.data() == hello);
     CASE_EXPECT_EQ(6, s22.length());
   }
@@ -38,7 +38,7 @@ CASE_TEST(nostd_string_view, ctor) {
   {
     // std::string.
     std::string hola = "hola";
-    util::nostd::string_view s30(hola);
+    LIBATFRAME_UTILS_NAMESPACE_ID::nostd::string_view s30(hola);
     CASE_EXPECT_TRUE(s30.data() == hola.data());
     CASE_EXPECT_EQ(4, s30.length());
 
@@ -46,15 +46,15 @@ CASE_TEST(nostd_string_view, ctor) {
     hola.push_back('\0');
     hola.append("h2");
     hola.push_back('\0');
-    util::nostd::string_view s31(hola);
+    LIBATFRAME_UTILS_NAMESPACE_ID::nostd::string_view s31(hola);
     CASE_EXPECT_TRUE(s31.data() == hola.data());
     CASE_EXPECT_EQ(8, s31.length());
   }
 }
 
 CASE_TEST(nostd_string_view, swap) {
-  util::nostd::string_view a("a");
-  util::nostd::string_view b("bbb");
+  LIBATFRAME_UTILS_NAMESPACE_ID::nostd::string_view a("a");
+  LIBATFRAME_UTILS_NAMESPACE_ID::nostd::string_view b("bbb");
   CASE_EXPECT_TRUE(noexcept(a.swap(b)));
   a.swap(b);
   CASE_EXPECT_EQ(a, "bbb");
@@ -69,11 +69,11 @@ CASE_TEST(nostd_string_view, stl_comparator) {
   std::string s2("bar");
   std::string s3("baz");
 
-  util::nostd::string_view p1(s1);
-  util::nostd::string_view p2(s2);
-  util::nostd::string_view p3(s3);
+  LIBATFRAME_UTILS_NAMESPACE_ID::nostd::string_view p1(s1);
+  LIBATFRAME_UTILS_NAMESPACE_ID::nostd::string_view p2(s2);
+  LIBATFRAME_UTILS_NAMESPACE_ID::nostd::string_view p3(s3);
 
-  typedef std::map<util::nostd::string_view, int> TestMap;
+  typedef std::map<LIBATFRAME_UTILS_NAMESPACE_ID::nostd::string_view, int> TestMap;
   TestMap map;
 
   map.insert(std::make_pair(p1, 0));
@@ -113,14 +113,16 @@ CASE_TEST(nostd_string_view, stl_comparator) {
   CASE_EXPECT_TRUE(iter == map.end());
 }
 
-#define COMPARE(result, op, x, y)                                                         \
-  CASE_EXPECT_EQ(result, util::nostd::string_view((x)) op util::nostd::string_view((y))); \
-  CASE_EXPECT_EQ(result, util::nostd::string_view((x)).compare(util::nostd::string_view((y))) op 0)
+#define COMPARE(result, op, x, y)                                                        \
+  CASE_EXPECT_EQ(result, LIBATFRAME_UTILS_NAMESPACE_ID::nostd::string_view((x))          \
+                             op LIBATFRAME_UTILS_NAMESPACE_ID::nostd::string_view((y))); \
+  CASE_EXPECT_EQ(result, LIBATFRAME_UTILS_NAMESPACE_ID::nostd::string_view((x)).compare( \
+                             LIBATFRAME_UTILS_NAMESPACE_ID::nostd::string_view((y))) op 0)
 
 CASE_TEST(nostd_string_view, comparison_operators) {
   COMPARE(true, ==, "", "");
-  COMPARE(true, ==, "", util::nostd::string_view());
-  COMPARE(true, ==, util::nostd::string_view(), "");
+  COMPARE(true, ==, "", LIBATFRAME_UTILS_NAMESPACE_ID::nostd::string_view());
+  COMPARE(true, ==, LIBATFRAME_UTILS_NAMESPACE_ID::nostd::string_view(), "");
   COMPARE(true, ==, "a", "a");
   COMPARE(true, ==, "aa", "aa");
   COMPARE(false, ==, "a", "");
@@ -207,7 +209,7 @@ CASE_TEST(nostd_string_view, comparison_operators_by_character_position) {
 #undef COMPARE
 
 // Sadly, our users often confuse std::string::npos with
-// util::nostd::string_view::npos; So much so that we test here that they are the same.
+// LIBATFRAME_UTILS_NAMESPACE_ID::nostd::string_view::npos; So much so that we test here that they are the same.
 // They need to both be unsigned, and both be the maximum-valued integer of
 // their type.
 
@@ -221,26 +223,26 @@ struct is_type {
 };
 
 CASE_TEST(nostd_string_view, npos_matches_std_string_view) {
-  CASE_EXPECT_EQ(util::nostd::string_view::npos, std::string::npos);
+  CASE_EXPECT_EQ(LIBATFRAME_UTILS_NAMESPACE_ID::nostd::string_view::npos, std::string::npos);
 
-  CASE_EXPECT_TRUE(is_type<size_t>::same(util::nostd::string_view::npos));
+  CASE_EXPECT_TRUE(is_type<size_t>::same(LIBATFRAME_UTILS_NAMESPACE_ID::nostd::string_view::npos));
   CASE_EXPECT_FALSE(is_type<size_t>::same(""));
 
-  // Make sure util::nostd::string_view::npos continues to be a header constant.
-  char test[util::nostd::string_view::npos & 1] = {0};
+  // Make sure LIBATFRAME_UTILS_NAMESPACE_ID::nostd::string_view::npos continues to be a header constant.
+  char test[LIBATFRAME_UTILS_NAMESPACE_ID::nostd::string_view::npos & 1] = {0};
   CASE_EXPECT_EQ(0, test[0]);
 }
 
 CASE_TEST(nostd_string_view, stl1) {
-  const util::nostd::string_view a("abcdefghijklmnopqrstuvwxyz");
-  const util::nostd::string_view b("abc");
-  const util::nostd::string_view c("xyz");
-  const util::nostd::string_view d("foobar");
-  const util::nostd::string_view e;
+  const LIBATFRAME_UTILS_NAMESPACE_ID::nostd::string_view a("abcdefghijklmnopqrstuvwxyz");
+  const LIBATFRAME_UTILS_NAMESPACE_ID::nostd::string_view b("abc");
+  const LIBATFRAME_UTILS_NAMESPACE_ID::nostd::string_view c("xyz");
+  const LIBATFRAME_UTILS_NAMESPACE_ID::nostd::string_view d("foobar");
+  const LIBATFRAME_UTILS_NAMESPACE_ID::nostd::string_view e;
   std::string temp("123");
   temp += '\0';
   temp += "456";
-  const util::nostd::string_view f(temp);
+  const LIBATFRAME_UTILS_NAMESPACE_ID::nostd::string_view f(temp);
 
   CASE_EXPECT_EQ(a[6], 'g');
   CASE_EXPECT_EQ(b[0], 'a');
@@ -296,41 +298,43 @@ CASE_TEST(nostd_string_view, stl1) {
 // Separated from STL1() because some compilers produce an overly
 // large stack frame for the combined function.
 CASE_TEST(nostd_string_view, stl2) {
-  const util::nostd::string_view a("abcdefghijklmnopqrstuvwxyz");
-  const util::nostd::string_view b("abc");
-  const util::nostd::string_view c("xyz");
-  util::nostd::string_view d("foobar");
-  const util::nostd::string_view e;
-  const util::nostd::string_view f(
+  const LIBATFRAME_UTILS_NAMESPACE_ID::nostd::string_view a("abcdefghijklmnopqrstuvwxyz");
+  const LIBATFRAME_UTILS_NAMESPACE_ID::nostd::string_view b("abc");
+  const LIBATFRAME_UTILS_NAMESPACE_ID::nostd::string_view c("xyz");
+  LIBATFRAME_UTILS_NAMESPACE_ID::nostd::string_view d("foobar");
+  const LIBATFRAME_UTILS_NAMESPACE_ID::nostd::string_view e;
+  const LIBATFRAME_UTILS_NAMESPACE_ID::nostd::string_view f(
       "123"
       "\0"
       "456",
       7);
 
-  d = util::nostd::string_view();
+  d = LIBATFRAME_UTILS_NAMESPACE_ID::nostd::string_view();
   CASE_EXPECT_EQ(d.size(), 0);
   CASE_EXPECT_TRUE(d.empty());
   CASE_EXPECT_TRUE(d.data() == nullptr);
   CASE_EXPECT_TRUE(d.begin() == d.end());
 
   CASE_EXPECT_EQ(a.find(b), 0);
-  CASE_EXPECT_EQ(a.find(b, 1), util::nostd::string_view::npos);
+  CASE_EXPECT_EQ(a.find(b, 1), LIBATFRAME_UTILS_NAMESPACE_ID::nostd::string_view::npos);
   CASE_EXPECT_EQ(a.find(c), 23);
   CASE_EXPECT_EQ(a.find(c, 9), 23);
-  CASE_EXPECT_EQ(a.find(c, util::nostd::string_view::npos), util::nostd::string_view::npos);
-  CASE_EXPECT_EQ(b.find(c), util::nostd::string_view::npos);
-  CASE_EXPECT_EQ(b.find(c, util::nostd::string_view::npos), util::nostd::string_view::npos);
+  CASE_EXPECT_EQ(a.find(c, LIBATFRAME_UTILS_NAMESPACE_ID::nostd::string_view::npos),
+                 LIBATFRAME_UTILS_NAMESPACE_ID::nostd::string_view::npos);
+  CASE_EXPECT_EQ(b.find(c), LIBATFRAME_UTILS_NAMESPACE_ID::nostd::string_view::npos);
+  CASE_EXPECT_EQ(b.find(c, LIBATFRAME_UTILS_NAMESPACE_ID::nostd::string_view::npos),
+                 LIBATFRAME_UTILS_NAMESPACE_ID::nostd::string_view::npos);
   CASE_EXPECT_EQ(a.find(d), 0);
   CASE_EXPECT_EQ(a.find(e), 0);
   CASE_EXPECT_EQ(a.find(d, 12), 12);
   CASE_EXPECT_EQ(a.find(e, 17), 17);
-  util::nostd::string_view g("xx not found bb");
-  CASE_EXPECT_EQ(a.find(g), util::nostd::string_view::npos);
+  LIBATFRAME_UTILS_NAMESPACE_ID::nostd::string_view g("xx not found bb");
+  CASE_EXPECT_EQ(a.find(g), LIBATFRAME_UTILS_NAMESPACE_ID::nostd::string_view::npos);
   // empty string nonsense
-  CASE_EXPECT_EQ(d.find(b), util::nostd::string_view::npos);
-  CASE_EXPECT_EQ(e.find(b), util::nostd::string_view::npos);
-  CASE_EXPECT_EQ(d.find(b, 4), util::nostd::string_view::npos);
-  CASE_EXPECT_EQ(e.find(b, 7), util::nostd::string_view::npos);
+  CASE_EXPECT_EQ(d.find(b), LIBATFRAME_UTILS_NAMESPACE_ID::nostd::string_view::npos);
+  CASE_EXPECT_EQ(e.find(b), LIBATFRAME_UTILS_NAMESPACE_ID::nostd::string_view::npos);
+  CASE_EXPECT_EQ(d.find(b, 4), LIBATFRAME_UTILS_NAMESPACE_ID::nostd::string_view::npos);
+  CASE_EXPECT_EQ(e.find(b, 7), LIBATFRAME_UTILS_NAMESPACE_ID::nostd::string_view::npos);
 
   size_t empty_search_pos = std::string().find(std::string());
   CASE_EXPECT_EQ(d.find(d), empty_search_pos);
@@ -345,58 +349,62 @@ CASE_TEST(nostd_string_view, stl2) {
   CASE_EXPECT_EQ(a.find('a'), 0);
   CASE_EXPECT_EQ(a.find('c'), 2);
   CASE_EXPECT_EQ(a.find('z'), 25);
-  CASE_EXPECT_EQ(a.find('$'), util::nostd::string_view::npos);
-  CASE_EXPECT_EQ(a.find('\0'), util::nostd::string_view::npos);
+  CASE_EXPECT_EQ(a.find('$'), LIBATFRAME_UTILS_NAMESPACE_ID::nostd::string_view::npos);
+  CASE_EXPECT_EQ(a.find('\0'), LIBATFRAME_UTILS_NAMESPACE_ID::nostd::string_view::npos);
   CASE_EXPECT_EQ(f.find('\0'), 3);
   CASE_EXPECT_EQ(f.find('3'), 2);
   CASE_EXPECT_EQ(f.find('5'), 5);
   CASE_EXPECT_EQ(g.find('o'), 4);
   CASE_EXPECT_EQ(g.find('o', 4), 4);
   CASE_EXPECT_EQ(g.find('o', 5), 8);
-  CASE_EXPECT_EQ(a.find('b', 5), util::nostd::string_view::npos);
+  CASE_EXPECT_EQ(a.find('b', 5), LIBATFRAME_UTILS_NAMESPACE_ID::nostd::string_view::npos);
   // empty string nonsense
-  CASE_EXPECT_EQ(d.find('\0'), util::nostd::string_view::npos);
-  CASE_EXPECT_EQ(e.find('\0'), util::nostd::string_view::npos);
-  CASE_EXPECT_EQ(d.find('\0', 4), util::nostd::string_view::npos);
-  CASE_EXPECT_EQ(e.find('\0', 7), util::nostd::string_view::npos);
-  CASE_EXPECT_EQ(d.find('x'), util::nostd::string_view::npos);
-  CASE_EXPECT_EQ(e.find('x'), util::nostd::string_view::npos);
-  CASE_EXPECT_EQ(d.find('x', 4), util::nostd::string_view::npos);
-  CASE_EXPECT_EQ(e.find('x', 7), util::nostd::string_view::npos);
+  CASE_EXPECT_EQ(d.find('\0'), LIBATFRAME_UTILS_NAMESPACE_ID::nostd::string_view::npos);
+  CASE_EXPECT_EQ(e.find('\0'), LIBATFRAME_UTILS_NAMESPACE_ID::nostd::string_view::npos);
+  CASE_EXPECT_EQ(d.find('\0', 4), LIBATFRAME_UTILS_NAMESPACE_ID::nostd::string_view::npos);
+  CASE_EXPECT_EQ(e.find('\0', 7), LIBATFRAME_UTILS_NAMESPACE_ID::nostd::string_view::npos);
+  CASE_EXPECT_EQ(d.find('x'), LIBATFRAME_UTILS_NAMESPACE_ID::nostd::string_view::npos);
+  CASE_EXPECT_EQ(e.find('x'), LIBATFRAME_UTILS_NAMESPACE_ID::nostd::string_view::npos);
+  CASE_EXPECT_EQ(d.find('x', 4), LIBATFRAME_UTILS_NAMESPACE_ID::nostd::string_view::npos);
+  CASE_EXPECT_EQ(e.find('x', 7), LIBATFRAME_UTILS_NAMESPACE_ID::nostd::string_view::npos);
 
   CASE_EXPECT_EQ(a.find(b.data(), 1, 0), 1);
   CASE_EXPECT_EQ(a.find(c.data(), 9, 0), 9);
-  CASE_EXPECT_EQ(a.find(c.data(), util::nostd::string_view::npos, 0), util::nostd::string_view::npos);
-  CASE_EXPECT_EQ(b.find(c.data(), util::nostd::string_view::npos, 0), util::nostd::string_view::npos);
+  CASE_EXPECT_EQ(a.find(c.data(), LIBATFRAME_UTILS_NAMESPACE_ID::nostd::string_view::npos, 0),
+                 LIBATFRAME_UTILS_NAMESPACE_ID::nostd::string_view::npos);
+  CASE_EXPECT_EQ(b.find(c.data(), LIBATFRAME_UTILS_NAMESPACE_ID::nostd::string_view::npos, 0),
+                 LIBATFRAME_UTILS_NAMESPACE_ID::nostd::string_view::npos);
   // empty string nonsense
-  CASE_EXPECT_EQ(d.find(b.data(), 4, 0), util::nostd::string_view::npos);
-  CASE_EXPECT_EQ(e.find(b.data(), 7, 0), util::nostd::string_view::npos);
+  CASE_EXPECT_EQ(d.find(b.data(), 4, 0), LIBATFRAME_UTILS_NAMESPACE_ID::nostd::string_view::npos);
+  CASE_EXPECT_EQ(e.find(b.data(), 7, 0), LIBATFRAME_UTILS_NAMESPACE_ID::nostd::string_view::npos);
 
-  CASE_EXPECT_EQ(a.find(b.data(), 1), util::nostd::string_view::npos);
+  CASE_EXPECT_EQ(a.find(b.data(), 1), LIBATFRAME_UTILS_NAMESPACE_ID::nostd::string_view::npos);
   CASE_EXPECT_EQ(a.find(c.data(), 9), 23);
-  CASE_EXPECT_EQ(a.find(c.data(), util::nostd::string_view::npos), util::nostd::string_view::npos);
-  CASE_EXPECT_EQ(b.find(c.data(), util::nostd::string_view::npos), util::nostd::string_view::npos);
+  CASE_EXPECT_EQ(a.find(c.data(), LIBATFRAME_UTILS_NAMESPACE_ID::nostd::string_view::npos),
+                 LIBATFRAME_UTILS_NAMESPACE_ID::nostd::string_view::npos);
+  CASE_EXPECT_EQ(b.find(c.data(), LIBATFRAME_UTILS_NAMESPACE_ID::nostd::string_view::npos),
+                 LIBATFRAME_UTILS_NAMESPACE_ID::nostd::string_view::npos);
   // empty string nonsense
-  CASE_EXPECT_EQ(d.find(b.data(), 4), util::nostd::string_view::npos);
-  CASE_EXPECT_EQ(e.find(b.data(), 7), util::nostd::string_view::npos);
+  CASE_EXPECT_EQ(d.find(b.data(), 4), LIBATFRAME_UTILS_NAMESPACE_ID::nostd::string_view::npos);
+  CASE_EXPECT_EQ(e.find(b.data(), 7), LIBATFRAME_UTILS_NAMESPACE_ID::nostd::string_view::npos);
 
   CASE_EXPECT_EQ(a.rfind(b), 0);
   CASE_EXPECT_EQ(a.rfind(b, 1), 0);
   CASE_EXPECT_EQ(a.rfind(c), 23);
-  CASE_EXPECT_EQ(a.rfind(c, 22), util::nostd::string_view::npos);
-  CASE_EXPECT_EQ(a.rfind(c, 1), util::nostd::string_view::npos);
-  CASE_EXPECT_EQ(a.rfind(c, 0), util::nostd::string_view::npos);
-  CASE_EXPECT_EQ(b.rfind(c), util::nostd::string_view::npos);
-  CASE_EXPECT_EQ(b.rfind(c, 0), util::nostd::string_view::npos);
+  CASE_EXPECT_EQ(a.rfind(c, 22), LIBATFRAME_UTILS_NAMESPACE_ID::nostd::string_view::npos);
+  CASE_EXPECT_EQ(a.rfind(c, 1), LIBATFRAME_UTILS_NAMESPACE_ID::nostd::string_view::npos);
+  CASE_EXPECT_EQ(a.rfind(c, 0), LIBATFRAME_UTILS_NAMESPACE_ID::nostd::string_view::npos);
+  CASE_EXPECT_EQ(b.rfind(c), LIBATFRAME_UTILS_NAMESPACE_ID::nostd::string_view::npos);
+  CASE_EXPECT_EQ(b.rfind(c, 0), LIBATFRAME_UTILS_NAMESPACE_ID::nostd::string_view::npos);
   CASE_EXPECT_EQ(a.rfind(d), std::string(a).rfind(std::string()));
   CASE_EXPECT_EQ(a.rfind(e), std::string(a).rfind(std::string()));
   CASE_EXPECT_EQ(a.rfind(d, 12), 12);
   CASE_EXPECT_EQ(a.rfind(e, 17), 17);
-  CASE_EXPECT_EQ(a.rfind(g), util::nostd::string_view::npos);
-  CASE_EXPECT_EQ(d.rfind(b), util::nostd::string_view::npos);
-  CASE_EXPECT_EQ(e.rfind(b), util::nostd::string_view::npos);
-  CASE_EXPECT_EQ(d.rfind(b, 4), util::nostd::string_view::npos);
-  CASE_EXPECT_EQ(e.rfind(b, 7), util::nostd::string_view::npos);
+  CASE_EXPECT_EQ(a.rfind(g), LIBATFRAME_UTILS_NAMESPACE_ID::nostd::string_view::npos);
+  CASE_EXPECT_EQ(d.rfind(b), LIBATFRAME_UTILS_NAMESPACE_ID::nostd::string_view::npos);
+  CASE_EXPECT_EQ(e.rfind(b), LIBATFRAME_UTILS_NAMESPACE_ID::nostd::string_view::npos);
+  CASE_EXPECT_EQ(d.rfind(b, 4), LIBATFRAME_UTILS_NAMESPACE_ID::nostd::string_view::npos);
+  CASE_EXPECT_EQ(e.rfind(b, 7), LIBATFRAME_UTILS_NAMESPACE_ID::nostd::string_view::npos);
   // empty string nonsense
   CASE_EXPECT_EQ(d.rfind(d, 4), std::string().rfind(std::string()));
   CASE_EXPECT_EQ(e.rfind(d, 7), std::string().rfind(std::string()));
@@ -408,19 +416,19 @@ CASE_TEST(nostd_string_view, stl2) {
   CASE_EXPECT_EQ(e.rfind(e), std::string().rfind(std::string()));
 
   CASE_EXPECT_EQ(g.rfind('o'), 8);
-  CASE_EXPECT_EQ(g.rfind('q'), util::nostd::string_view::npos);
+  CASE_EXPECT_EQ(g.rfind('q'), LIBATFRAME_UTILS_NAMESPACE_ID::nostd::string_view::npos);
   CASE_EXPECT_EQ(g.rfind('o', 8), 8);
   CASE_EXPECT_EQ(g.rfind('o', 7), 4);
-  CASE_EXPECT_EQ(g.rfind('o', 3), util::nostd::string_view::npos);
+  CASE_EXPECT_EQ(g.rfind('o', 3), LIBATFRAME_UTILS_NAMESPACE_ID::nostd::string_view::npos);
   CASE_EXPECT_EQ(f.rfind('\0'), 3);
   CASE_EXPECT_EQ(f.rfind('\0', 12), 3);
   CASE_EXPECT_EQ(f.rfind('3'), 2);
   CASE_EXPECT_EQ(f.rfind('5'), 5);
   // empty string nonsense
-  CASE_EXPECT_EQ(d.rfind('o'), util::nostd::string_view::npos);
-  CASE_EXPECT_EQ(e.rfind('o'), util::nostd::string_view::npos);
-  CASE_EXPECT_EQ(d.rfind('o', 4), util::nostd::string_view::npos);
-  CASE_EXPECT_EQ(e.rfind('o', 7), util::nostd::string_view::npos);
+  CASE_EXPECT_EQ(d.rfind('o'), LIBATFRAME_UTILS_NAMESPACE_ID::nostd::string_view::npos);
+  CASE_EXPECT_EQ(e.rfind('o'), LIBATFRAME_UTILS_NAMESPACE_ID::nostd::string_view::npos);
+  CASE_EXPECT_EQ(d.rfind('o', 4), LIBATFRAME_UTILS_NAMESPACE_ID::nostd::string_view::npos);
+  CASE_EXPECT_EQ(e.rfind('o', 7), LIBATFRAME_UTILS_NAMESPACE_ID::nostd::string_view::npos);
 
   CASE_EXPECT_EQ(a.rfind(b.data(), 1, 0), 1);
   CASE_EXPECT_EQ(a.rfind(c.data(), 22, 0), 22);
@@ -433,13 +441,13 @@ CASE_TEST(nostd_string_view, stl2) {
 
 // Continued from STL2
 CASE_TEST(nostd_string_view, stl2_substr) {
-  const util::nostd::string_view a("abcdefghijklmnopqrstuvwxyz");
-  const util::nostd::string_view b("abc");
-  const util::nostd::string_view c("xyz");
-  util::nostd::string_view d("foobar");
-  const util::nostd::string_view e;
+  const LIBATFRAME_UTILS_NAMESPACE_ID::nostd::string_view a("abcdefghijklmnopqrstuvwxyz");
+  const LIBATFRAME_UTILS_NAMESPACE_ID::nostd::string_view b("abc");
+  const LIBATFRAME_UTILS_NAMESPACE_ID::nostd::string_view c("xyz");
+  LIBATFRAME_UTILS_NAMESPACE_ID::nostd::string_view d("foobar");
+  const LIBATFRAME_UTILS_NAMESPACE_ID::nostd::string_view e;
 
-  d = util::nostd::string_view();
+  d = LIBATFRAME_UTILS_NAMESPACE_ID::nostd::string_view();
   CASE_EXPECT_EQ(a.substr(0, 3), b);
   CASE_EXPECT_EQ(a.substr(23), c);
   CASE_EXPECT_EQ(a.substr(23, 3), c);
@@ -450,8 +458,8 @@ CASE_TEST(nostd_string_view, stl2_substr) {
   // empty string nonsense
   CASE_EXPECT_EQ(d.substr(0, 99), e);
   // use of npos
-  CASE_EXPECT_EQ(a.substr(0, util::nostd::string_view::npos), a);
-  CASE_EXPECT_EQ(a.substr(23, util::nostd::string_view::npos), c);
+  CASE_EXPECT_EQ(a.substr(0, LIBATFRAME_UTILS_NAMESPACE_ID::nostd::string_view::npos), a);
+  CASE_EXPECT_EQ(a.substr(23, LIBATFRAME_UTILS_NAMESPACE_ID::nostd::string_view::npos), c);
 }
 
 CASE_TEST(nostd_string_view, find_conformance) {
@@ -465,9 +473,9 @@ CASE_TEST(nostd_string_view, find_conformance) {
   };
   for (const auto& s : specs) {
     std::string st = s.haystack;
-    util::nostd::string_view sp = s.haystack;
+    LIBATFRAME_UTILS_NAMESPACE_ID::nostd::string_view sp = s.haystack;
     for (size_t i = 0; i <= sp.size(); ++i) {
-      size_t pos = (i == sp.size()) ? util::nostd::string_view::npos : i;
+      size_t pos = (i == sp.size()) ? LIBATFRAME_UTILS_NAMESPACE_ID::nostd::string_view::npos : i;
       CASE_EXPECT_EQ(sp.find(s.needle, pos), st.find(s.needle, pos));
       CASE_EXPECT_EQ(sp.rfind(s.needle, pos), st.rfind(s.needle, pos));
     }
@@ -475,15 +483,15 @@ CASE_TEST(nostd_string_view, find_conformance) {
 }
 
 CASE_TEST(nostd_string_view, remove) {
-  util::nostd::string_view a("foobar");
+  LIBATFRAME_UTILS_NAMESPACE_ID::nostd::string_view a("foobar");
   std::string s1("123");
   s1 += '\0';
   s1 += "456";
-  util::nostd::string_view e;
+  LIBATFRAME_UTILS_NAMESPACE_ID::nostd::string_view e;
   std::string s2;
 
   // remove_prefix
-  util::nostd::string_view c(a);
+  LIBATFRAME_UTILS_NAMESPACE_ID::nostd::string_view c(a);
   c.remove_prefix(3);
   CASE_EXPECT_EQ(c, "bar");
   c = a;
@@ -504,38 +512,38 @@ CASE_TEST(nostd_string_view, remove) {
 }
 
 CASE_TEST(nostd_string_view, set) {
-  util::nostd::string_view a("foobar");
-  util::nostd::string_view empty;
-  util::nostd::string_view b;
+  LIBATFRAME_UTILS_NAMESPACE_ID::nostd::string_view a("foobar");
+  LIBATFRAME_UTILS_NAMESPACE_ID::nostd::string_view empty;
+  LIBATFRAME_UTILS_NAMESPACE_ID::nostd::string_view b;
 
   // set
-  b = util::nostd::string_view("foobar", 6);
+  b = LIBATFRAME_UTILS_NAMESPACE_ID::nostd::string_view("foobar", 6);
   CASE_EXPECT_EQ(b, a);
-  b = util::nostd::string_view("foobar", 0);
+  b = LIBATFRAME_UTILS_NAMESPACE_ID::nostd::string_view("foobar", 0);
   CASE_EXPECT_EQ(b, empty);
-  b = util::nostd::string_view("foobar", 7);
+  b = LIBATFRAME_UTILS_NAMESPACE_ID::nostd::string_view("foobar", 7);
   CASE_EXPECT_NE(b, a);
 
-  b = util::nostd::string_view("foobar");
+  b = LIBATFRAME_UTILS_NAMESPACE_ID::nostd::string_view("foobar");
   CASE_EXPECT_EQ(b, a);
 }
 
 CASE_TEST(nostd_string_view, front_back) {
   static const char arr[] = "abcd";
-  const util::nostd::string_view csp(arr, 4);
+  const LIBATFRAME_UTILS_NAMESPACE_ID::nostd::string_view csp(arr, 4);
   CASE_EXPECT_EQ(&arr[0], &csp.front());
   CASE_EXPECT_EQ(&arr[3], &csp.back());
 }
 
 CASE_TEST(nostd_string_view, front_back_single_char) {
   static const char c = 'a';
-  const util::nostd::string_view csp(&c, 1);
+  const LIBATFRAME_UTILS_NAMESPACE_ID::nostd::string_view csp(&c, 1);
   CASE_EXPECT_EQ(&c, &csp.front());
   CASE_EXPECT_EQ(&c, &csp.back());
 }
 
 CASE_TEST(nostd_string_view, null_input) {
-  util::nostd::string_view s;
+  LIBATFRAME_UTILS_NAMESPACE_ID::nostd::string_view s;
   CASE_EXPECT_EQ(s.data(), nullptr);
   CASE_EXPECT_EQ(s.size(), 0);
 
@@ -551,31 +559,31 @@ CASE_TEST(nostd_string_view, comparisons2) {
   //  (5) compare(pos1, count1, s)
   //  (6) compare(pos1, count1, s, count2)
 
-  util::nostd::string_view abc("abcdefghijklmnopqrstuvwxyz");
+  LIBATFRAME_UTILS_NAMESPACE_ID::nostd::string_view abc("abcdefghijklmnopqrstuvwxyz");
 
   // check comparison operations on strings longer than 4 bytes.
-  CASE_EXPECT_EQ(abc, util::nostd::string_view("abcdefghijklmnopqrstuvwxyz"));
-  CASE_EXPECT_EQ(abc.compare(util::nostd::string_view("abcdefghijklmnopqrstuvwxyz")), 0);
+  CASE_EXPECT_EQ(abc, LIBATFRAME_UTILS_NAMESPACE_ID::nostd::string_view("abcdefghijklmnopqrstuvwxyz"));
+  CASE_EXPECT_EQ(abc.compare(LIBATFRAME_UTILS_NAMESPACE_ID::nostd::string_view("abcdefghijklmnopqrstuvwxyz")), 0);
 
-  CASE_EXPECT_LT(abc, util::nostd::string_view("abcdefghijklmnopqrstuvwxzz"));
-  CASE_EXPECT_LT(abc.compare(util::nostd::string_view("abcdefghijklmnopqrstuvwxzz")), 0);
+  CASE_EXPECT_LT(abc, LIBATFRAME_UTILS_NAMESPACE_ID::nostd::string_view("abcdefghijklmnopqrstuvwxzz"));
+  CASE_EXPECT_LT(abc.compare(LIBATFRAME_UTILS_NAMESPACE_ID::nostd::string_view("abcdefghijklmnopqrstuvwxzz")), 0);
 
-  CASE_EXPECT_GT(abc, util::nostd::string_view("abcdefghijklmnopqrstuvwxyy"));
-  CASE_EXPECT_GT(abc.compare(util::nostd::string_view("abcdefghijklmnopqrstuvwxyy")), 0);
+  CASE_EXPECT_GT(abc, LIBATFRAME_UTILS_NAMESPACE_ID::nostd::string_view("abcdefghijklmnopqrstuvwxyy"));
+  CASE_EXPECT_GT(abc.compare(LIBATFRAME_UTILS_NAMESPACE_ID::nostd::string_view("abcdefghijklmnopqrstuvwxyy")), 0);
 
   // The "substr" variants of `compare`.
-  util::nostd::string_view digits("0123456789");
-  auto npos = util::nostd::string_view::npos;
+  LIBATFRAME_UTILS_NAMESPACE_ID::nostd::string_view digits("0123456789");
+  auto npos = LIBATFRAME_UTILS_NAMESPACE_ID::nostd::string_view::npos;
 
   // Taking string_view
-  CASE_EXPECT_EQ(digits.compare(3, npos, util::nostd::string_view("3456789")), 0);  // 2
-  CASE_EXPECT_EQ(digits.compare(3, 4, util::nostd::string_view("3456")), 0);        // 2
-  CASE_EXPECT_EQ(digits.compare(10, 0, util::nostd::string_view()), 0);             // 2
-  CASE_EXPECT_EQ(digits.compare(3, 4, util::nostd::string_view("0123456789"), 3, 4),
+  CASE_EXPECT_EQ(digits.compare(3, npos, LIBATFRAME_UTILS_NAMESPACE_ID::nostd::string_view("3456789")), 0);  // 2
+  CASE_EXPECT_EQ(digits.compare(3, 4, LIBATFRAME_UTILS_NAMESPACE_ID::nostd::string_view("3456")), 0);        // 2
+  CASE_EXPECT_EQ(digits.compare(10, 0, LIBATFRAME_UTILS_NAMESPACE_ID::nostd::string_view()), 0);             // 2
+  CASE_EXPECT_EQ(digits.compare(3, 4, LIBATFRAME_UTILS_NAMESPACE_ID::nostd::string_view("0123456789"), 3, 4),
                  0);  // 3
-  CASE_EXPECT_LT(digits.compare(3, 4, util::nostd::string_view("0123456789"), 3, 5),
+  CASE_EXPECT_LT(digits.compare(3, 4, LIBATFRAME_UTILS_NAMESPACE_ID::nostd::string_view("0123456789"), 3, 5),
                  0);  // 3
-  CASE_EXPECT_LT(digits.compare(0, npos, util::nostd::string_view("0123456789"), 3, 5),
+  CASE_EXPECT_LT(digits.compare(0, npos, LIBATFRAME_UTILS_NAMESPACE_ID::nostd::string_view("0123456789"), 3, 5),
                  0);  // 3
   // Taking const char*
   CASE_EXPECT_EQ(digits.compare(3, 4, "3456"), 0);                 // 5
@@ -587,23 +595,23 @@ CASE_TEST(nostd_string_view, comparisons2) {
 }
 
 CASE_TEST(nostd_string_view, at) {
-  util::nostd::string_view abc = "abc";
+  LIBATFRAME_UTILS_NAMESPACE_ID::nostd::string_view abc = "abc";
   CASE_EXPECT_EQ(abc.at(0), 'a');
   CASE_EXPECT_EQ(abc.at(1), 'b');
   CASE_EXPECT_EQ(abc.at(2), 'c');
 }
 
 CASE_TEST(nostd_string_view, explicit_conversion_operator) {
-  util::nostd::string_view sp = "hi";
+  LIBATFRAME_UTILS_NAMESPACE_ID::nostd::string_view sp = "hi";
   CASE_EXPECT_EQ(sp, std::string(sp));
 }
 
 #if defined(__cplusplus) && __cplusplus >= 201402L
 static constexpr char ConstexprMethodsHelper() {
-  util::nostd::string_view str("123", 3);
+  LIBATFRAME_UTILS_NAMESPACE_ID::nostd::string_view str("123", 3);
   str.remove_prefix(1);
   str.remove_suffix(1);
-  util::nostd::string_view bar;
+  LIBATFRAME_UTILS_NAMESPACE_ID::nostd::string_view bar;
   str.swap(bar);
   return bar.front();
 }
@@ -613,19 +621,21 @@ CASE_TEST(nostd_string_view, constexpr_methods) {
   static_assert(ConstexprMethodsHelper() == '2', "");
 
   // substr
-  constexpr util::nostd::string_view foobar("foobar", 6);
-  constexpr util::nostd::string_view foo = foobar.substr(0, 3);
-  constexpr util::nostd::string_view bar = foobar.substr(3);
+  constexpr LIBATFRAME_UTILS_NAMESPACE_ID::nostd::string_view foobar("foobar", 6);
+  constexpr LIBATFRAME_UTILS_NAMESPACE_ID::nostd::string_view foo = foobar.substr(0, 3);
+  constexpr LIBATFRAME_UTILS_NAMESPACE_ID::nostd::string_view bar = foobar.substr(3);
   CASE_EXPECT_EQ(foo, "foo");
   CASE_EXPECT_EQ(bar, "bar");
 }
 #endif
 
 CASE_TEST(nostd_string_view, with_noexcept) {
-  CASE_EXPECT_TRUE((std::is_nothrow_constructible<util::nostd::string_view, const std::string&>::value));
-  CASE_EXPECT_TRUE((std::is_nothrow_constructible<util::nostd::string_view, const std::string&>::value));
-  CASE_EXPECT_TRUE(std::is_nothrow_constructible<util::nostd::string_view>::value);
-  constexpr util::nostd::string_view sp;
+  CASE_EXPECT_TRUE(
+      (std::is_nothrow_constructible<LIBATFRAME_UTILS_NAMESPACE_ID::nostd::string_view, const std::string&>::value));
+  CASE_EXPECT_TRUE(
+      (std::is_nothrow_constructible<LIBATFRAME_UTILS_NAMESPACE_ID::nostd::string_view, const std::string&>::value));
+  CASE_EXPECT_TRUE(std::is_nothrow_constructible<LIBATFRAME_UTILS_NAMESPACE_ID::nostd::string_view>::value);
+  constexpr LIBATFRAME_UTILS_NAMESPACE_ID::nostd::string_view sp;
   CASE_EXPECT_TRUE(noexcept(sp.begin()));
   CASE_EXPECT_TRUE(noexcept(sp.end()));
   CASE_EXPECT_TRUE(noexcept(sp.cbegin()));
@@ -651,12 +661,12 @@ CASE_TEST(nostd_string_view, string_compare_not_ambiguous) {
 }
 
 CASE_TEST(nostd_string_view, heterogenous_string_view_equals) {
-  CASE_EXPECT_EQ(util::nostd::string_view("hello"), std::string("hello"));
-  CASE_EXPECT_EQ("hello", util::nostd::string_view("hello"));
+  CASE_EXPECT_EQ(LIBATFRAME_UTILS_NAMESPACE_ID::nostd::string_view("hello"), std::string("hello"));
+  CASE_EXPECT_EQ("hello", LIBATFRAME_UTILS_NAMESPACE_ID::nostd::string_view("hello"));
 }
 
 CASE_TEST(nostd_string_view, edge_cases) {
-  util::nostd::string_view a("xxyyyxx");
+  LIBATFRAME_UTILS_NAMESPACE_ID::nostd::string_view a("xxyyyxx");
 
   // Set a = "xyyyx".
   a.remove_prefix(1);
@@ -666,7 +676,7 @@ CASE_TEST(nostd_string_view, edge_cases) {
   CASE_EXPECT_EQ(0, a.find('x', 0));
   CASE_EXPECT_EQ(4, a.find('x', 1));
   CASE_EXPECT_EQ(4, a.find('x', 4));
-  CASE_EXPECT_EQ(util::nostd::string_view::npos, a.find('x', 5));
+  CASE_EXPECT_EQ(LIBATFRAME_UTILS_NAMESPACE_ID::nostd::string_view::npos, a.find('x', 5));
 
   CASE_EXPECT_EQ(4, a.rfind('x'));
   CASE_EXPECT_EQ(4, a.rfind('x', 5));
@@ -678,8 +688,8 @@ CASE_TEST(nostd_string_view, edge_cases) {
   a.remove_prefix(1);
   a.remove_suffix(1);
 
-  CASE_EXPECT_EQ(util::nostd::string_view::npos, a.find('x'));
-  CASE_EXPECT_EQ(util::nostd::string_view::npos, a.rfind('x'));
+  CASE_EXPECT_EQ(LIBATFRAME_UTILS_NAMESPACE_ID::nostd::string_view::npos, a.find('x'));
+  CASE_EXPECT_EQ(LIBATFRAME_UTILS_NAMESPACE_ID::nostd::string_view::npos, a.rfind('x'));
 }
 
 CASE_TEST(nostd_string_view, ostream) {

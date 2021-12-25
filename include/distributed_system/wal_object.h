@@ -16,6 +16,7 @@
 #include <limits>
 #include <list>
 #include <memory>
+#include <type_traits>
 #include <unordered_map>
 #include <utility>
 
@@ -25,7 +26,7 @@
 #  undef max
 #endif
 
-namespace util {
+LIBATFRAME_UTILS_NAMESPACE_BEGIN
 namespace distributed_system {
 
 template <class StorageT, class LogOperatorT, class CallbackParamT, class PrivateDataT>
@@ -48,10 +49,13 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_object {
   using log_iterator = typename log_container_type::iterator;
   using log_const_iterator = typename log_container_type::const_iterator;
   using callback_param_type = CallbackParamT;
+  using callback_param_storage_type = typename std::decay<callback_param_type>::type;
+  using callback_param_lvalue_reference_type = typename std::add_lvalue_reference<callback_param_type>::type;
+  using callback_param_rvalue_reference_type = typename std::add_rvalue_reference<callback_param_type>::type;
   using time_point = wal_time_point;
   using duration = wal_duration;
   using meta_type = wal_meta_type<log_key_type, action_case_type>;
-  using meta_result_type = util::design_pattern::result_type<meta_type, wal_result_code>;
+  using meta_result_type = LIBATFRAME_UTILS_NAMESPACE_ID::design_pattern::result_type<meta_type, wal_result_code>;
 
   // Load data from storage into wal_object
   using callback_load_fn_t = std::function<wal_result_code(wal_object&, const storage_type&, callback_param_type)>;
@@ -266,7 +270,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_object {
     }
 
     if (!pending_logs_.empty() || in_log_action_callback_) {
-      pending_logs_.emplace_back(std::pair<log_pointer, callback_param_type>{std::move(log), param});
+      pending_logs_.emplace_back(std::pair<log_pointer, callback_param_storage_type>{std::move(log), param});
       return wal_result_code::kPending;
     }
 
@@ -286,21 +290,22 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_object {
     }
 
     while (!pending_logs_.empty()) {
-      auto pending_log = pending_logs_.front();
-      pending_logs_.pop_front();
+      auto pending_log = pending_logs_.begin();
 
-      if (!pending_log.first) {
+      if (!(*pending_log).first) {
+        pending_logs_.erase(pending_log);
         continue;
       }
 
       if (vtable_ && vtable_->get_log_key) {
-        log_key_type this_key = vtable_->get_log_key(*this, *pending_log.first);
+        log_key_type this_key = vtable_->get_log_key(*this, *(*pending_log).first);
         if (global_ingore_ && log_key_compare_(this_key, *global_ingore_)) {
           continue;
         }
       }
 
-      pusk_back_inner(std::move(pending_log.first), pending_log.second);
+      pusk_back_inner(std::move((*pending_log).first), (*pending_log).second);
+      pending_logs_.erase(pending_log);
     }
 
     return ret;
@@ -608,7 +613,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_object {
     return ret;
   }
 
-  wal_result_code pusk_back_inner_uncheck(log_pointer&& log, callback_param_type param) {
+  wal_result_code pusk_back_inner_uncheck(log_pointer&& log, callback_param_lvalue_reference_type param) {
     wal_result_code ret = redo_log(log, param);
     if (wal_result_code::kOk != ret) {
       return ret;
@@ -621,7 +626,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_object {
     return ret;
   }
 
-  wal_result_code pusk_back_inner(log_pointer&& log, callback_param_type param) {
+  wal_result_code pusk_back_inner(log_pointer&& log, callback_param_lvalue_reference_type param) {
     if (!log) {
       return wal_result_code::kInvalidParam;
     }
@@ -721,7 +726,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_object {
 
   // logs(libstdc++ is 512Byte for each block and maintain block index just like std::vector)
   log_container_type logs_;
-  std::list<std::pair<log_pointer, callback_param_type> > pending_logs_;
+  std::list<std::pair<log_pointer, callback_param_storage_type> > pending_logs_;
 
   // internal events
   callback_log_event_on_assign_fn_t internal_event_on_assign_;
@@ -730,4 +735,4 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_object {
 };
 
 }  // namespace distributed_system
-}  // namespace util
+LIBATFRAME_UTILS_NAMESPACE_END

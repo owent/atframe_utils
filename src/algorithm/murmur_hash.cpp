@@ -70,7 +70,7 @@ FORCE_INLINE uint64_t fmix64(uint64_t k) {
 
 //-----------------------------------------------------------------------------
 
-namespace util {
+LIBATFRAME_UTILS_NAMESPACE_BEGIN
 namespace hash {
 
 // ===================== MurmurHash2 =====================
@@ -610,4 +610,4 @@ LIBATFRAME_UTILS_API void murmur_hash3_x64_128(const void *key, const int len, c
 
 //-----------------------------------------------------------------------------
 }  // namespace hash
-}  // namespace util
+LIBATFRAME_UTILS_NAMESPACE_END

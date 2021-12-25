@@ -104,8 +104,10 @@ struct formatter<test_custom_object_for_log_formatter, CharT> : public formatter
   template <class FormatContext>
   auto format(const test_custom_object_for_log_formatter &obj, FormatContext &ctx) {
     test_exception_for_log_formatter x(false, false);
-    std::cout << util::log::vformat("{}, {}", LOG_WRAPPER_FWAPI_MAKE_FORMAT_ARGS(obj.x, obj.y)) << std::endl;
-    return util::log::vformat_to(ctx.out(), "({}, {}, {})", util::log::make_format_args(obj.x, obj.y, x));
+    std::cout << LIBATFRAME_UTILS_NAMESPACE_ID::log::vformat("{}, {}", LOG_WRAPPER_FWAPI_MAKE_FORMAT_ARGS(obj.x, obj.y))
+              << std::endl;
+    return LIBATFRAME_UTILS_NAMESPACE_ID::log::vformat_to(
+        ctx.out(), "({}, {}, {})", LIBATFRAME_UTILS_NAMESPACE_ID::log::make_format_args(obj.x, obj.y, x));
   }
 };
 
@@ -119,19 +121,20 @@ void log_sample_func1(int times) {
     return;
   }
 
-  if (util::log::is_stacktrace_enabled()) {
+  if (LIBATFRAME_UTILS_NAMESPACE_ID::log::is_stacktrace_enabled()) {
     std::cout << "----------------test stacktrace begin--------------" << std::endl;
     char buffer[2048] = {0};
-    util::log::stacktrace_write(buffer, sizeof(buffer));
+    LIBATFRAME_UTILS_NAMESPACE_ID::log::stacktrace_write(buffer, sizeof(buffer));
     std::cout << buffer << std::endl;
     std::cout << "----------------test stacktrace end--------------" << std::endl;
   }
 
-  WLOG_INIT(util::log::log_wrapper::categorize_t::DEFAULT, util::log::log_wrapper::level_t::LOG_LW_DEBUG);
-  WLOG_GETCAT(util::log::log_wrapper::categorize_t::DEFAULT)
-      ->set_stacktrace_level(util::log::log_wrapper::level_t::LOG_LW_INFO);
+  WLOG_INIT(LIBATFRAME_UTILS_NAMESPACE_ID::log::log_wrapper::categorize_t::DEFAULT,
+            LIBATFRAME_UTILS_NAMESPACE_ID::log::log_wrapper::level_t::LOG_LW_DEBUG);
+  WLOG_GETCAT(LIBATFRAME_UTILS_NAMESPACE_ID::log::log_wrapper::categorize_t::DEFAULT)
+      ->set_stacktrace_level(LIBATFRAME_UTILS_NAMESPACE_ID::log::log_wrapper::level_t::LOG_LW_INFO);
 
-  WLOG_GETCAT(util::log::log_wrapper::categorize_t::DEFAULT)->clear_sinks();
+  WLOG_GETCAT(LIBATFRAME_UTILS_NAMESPACE_ID::log::log_wrapper::categorize_t::DEFAULT)->clear_sinks();
 
   std::cout << "----------------setup log_wrapper done--------------" << std::endl;
 
@@ -142,16 +145,16 @@ void log_sample_func1(int times) {
 
   WLOGNOTICE("notice log %d", 0);
 
-  util::log::log_sink_file_backend filed_backend;
+  LIBATFRAME_UTILS_NAMESPACE_ID::log::log_sink_file_backend filed_backend;
   filed_backend.set_max_file_size(256);
   filed_backend.set_rotate_size(3);
   filed_backend.set_file_pattern("%Y-%m-%d/%S/%N.log");
   filed_backend.set_writing_alias_pattern("%Y-%m-%d/%S/current.log");
 
-  WLOG_GETCAT(util::log::log_wrapper::categorize_t::DEFAULT)->add_sink(filed_backend);
+  WLOG_GETCAT(LIBATFRAME_UTILS_NAMESPACE_ID::log::log_wrapper::categorize_t::DEFAULT)->add_sink(filed_backend);
 #if defined(LOG_SINK_ENABLE_SYSLOG_SUPPORT) && LOG_SINK_ENABLE_SYSLOG_SUPPORT
-  WLOG_GETCAT(util::log::log_wrapper::categorize_t::DEFAULT)
-      ->add_sink(util::log::log_sink_syslog_backend{"atframe_utils-sample"});
+  WLOG_GETCAT(LIBATFRAME_UTILS_NAMESPACE_ID::log::log_wrapper::categorize_t::DEFAULT)
+      ->add_sink(LIBATFRAME_UTILS_NAMESPACE_ID::log::log_sink_syslog_backend{"atframe_utils-sample"});
 #endif
   std::cout << "----------------setup file system log sink done--------------" << std::endl;
 
@@ -181,7 +184,7 @@ void log_sample_func1(int times) {
 #endif
 
   THREAD_SLEEP_MS(1000);
-  util::time::time_utility::update();
+  LIBATFRAME_UTILS_NAMESPACE_ID::time::time_utility::update();
 
   for (int i = 0; i < 16; ++i) {
     WLOGDEBUG("second dir log: %d", i);
@@ -190,15 +193,16 @@ void log_sample_func1(int times) {
   unsigned long long ull_test_in_mingw = 64;
   WLOGINFO("%llu", ull_test_in_mingw);
 
-  WLOG_GETCAT(util::log::log_wrapper::categorize_t::DEFAULT)
-      ->set_sink(WLOG_GETCAT(util::log::log_wrapper::categorize_t::DEFAULT)->sink_size() - 1,
-                 util::log::log_wrapper::level_t::LOG_LW_DEBUG, util::log::log_wrapper::level_t::LOG_LW_DEBUG);
+  WLOG_GETCAT(LIBATFRAME_UTILS_NAMESPACE_ID::log::log_wrapper::categorize_t::DEFAULT)
+      ->set_sink(WLOG_GETCAT(LIBATFRAME_UTILS_NAMESPACE_ID::log::log_wrapper::categorize_t::DEFAULT)->sink_size() - 1,
+                 LIBATFRAME_UTILS_NAMESPACE_ID::log::log_wrapper::level_t::LOG_LW_DEBUG,
+                 LIBATFRAME_UTILS_NAMESPACE_ID::log::log_wrapper::level_t::LOG_LW_DEBUG);
   WLOGDEBUG("Debug still available %llu", ull_test_in_mingw);
   WLOGINFO("Info not available now %llu", ull_test_in_mingw);
 
-  std::cout << "log are located at " << util::file_system::get_cwd().c_str() << std::endl;
+  std::cout << "log are located at " << LIBATFRAME_UTILS_NAMESPACE_ID::file_system::get_cwd().c_str() << std::endl;
 
-  WLOG_GETCAT(util::log::log_wrapper::categorize_t::DEFAULT)->pop_sink();
+  WLOG_GETCAT(LIBATFRAME_UTILS_NAMESPACE_ID::log::log_wrapper::categorize_t::DEFAULT)->pop_sink();
   WLOGERROR("No log sink now");
 }
 
@@ -245,21 +249,24 @@ static void log_sample_func5(int times) {
 }
 
 #if defined(LOG_WRAPPER_ENABLE_FWAPI) && LOG_WRAPPER_ENABLE_FWAPI
-void log_sample_func6_stdout(const util::log::log_wrapper::caller_info_t &, const char *content, size_t content_size) {
+void log_sample_func6_stdout(const LIBATFRAME_UTILS_NAMESPACE_ID::log::log_wrapper::caller_info_t &,
+                             const char *content, size_t content_size) {
   std::cout.write(content, content_size);
   std::cout << std::endl;
 }
 
 void log_sample_func6() {
-  WLOG_INIT(util::log::log_wrapper::categorize_t::DEFAULT, util::log::log_wrapper::level_t::LOG_LW_DEBUG);
-  WLOG_GETCAT(util::log::log_wrapper::categorize_t::DEFAULT)->clear_sinks();
-  WLOG_GETCAT(util::log::log_wrapper::categorize_t::DEFAULT)->add_sink(log_sample_func6_stdout);
+  WLOG_INIT(LIBATFRAME_UTILS_NAMESPACE_ID::log::log_wrapper::categorize_t::DEFAULT,
+            LIBATFRAME_UTILS_NAMESPACE_ID::log::log_wrapper::level_t::LOG_LW_DEBUG);
+  WLOG_GETCAT(LIBATFRAME_UTILS_NAMESPACE_ID::log::log_wrapper::categorize_t::DEFAULT)->clear_sinks();
+  WLOG_GETCAT(LIBATFRAME_UTILS_NAMESPACE_ID::log::log_wrapper::categorize_t::DEFAULT)
+      ->add_sink(log_sample_func6_stdout);
   std::cout << "---------------- setup log sink for std::format done--------------" << std::endl;
 #  if defined(LOG_WRAPPER_ENABLE_FWAPI) && LOG_WRAPPER_ENABLE_FWAPI
   FWLOGINFO("{} {}: {} {}", "Hello", std::string("World"), 42,
             test_auto_enum_conversation_for_log_formatter::EN_TAECFLF_NONE);
 #  endif
-  WLOG_GETCAT(util::log::log_wrapper::categorize_t::DEFAULT)->pop_sink();
+  WLOG_GETCAT(LIBATFRAME_UTILS_NAMESPACE_ID::log::log_wrapper::categorize_t::DEFAULT)->pop_sink();
   FWLOGERROR("No log sink now");
 }
 
@@ -271,79 +278,106 @@ void log_sample_func7() {
   custom_obj.y = __FUNCTION__;
   std::cout << "---------------- catch exception of log format APIs --------------" << std::endl;
 #    ifndef LOG_WRAPPER_FWAPI_USING_FORMAT_STRING
-  std::cout << "format: " << util::log::format("{},{},{},{}", 1, 2, 3) << std::endl;
+  std::cout << "format: " << LIBATFRAME_UTILS_NAMESPACE_ID::log::format("{},{},{},{}", 1, 2, 3) << std::endl;
 #    endif
-  std::cout << "format: " << util::log::format("{},{}", 1, test_exception_for_log_formatter(true, true)) << std::endl;
-  std::cout << "format: " << util::log::format("{},{}", 1, test_exception_for_log_formatter(false, true)) << std::endl;
+  std::cout << "format: "
+            << LIBATFRAME_UTILS_NAMESPACE_ID::log::format("{},{}", 1, test_exception_for_log_formatter(true, true))
+            << std::endl;
+  std::cout << "format: "
+            << LIBATFRAME_UTILS_NAMESPACE_ID::log::format("{},{}", 1, test_exception_for_log_formatter(false, true))
+            << std::endl;
 
   char string_buffer[256] = {0};
 #    ifndef LOG_WRAPPER_FWAPI_USING_FORMAT_STRING
-  util::log::format_to(string_buffer, "{},{},{},{}", 1, 2, 3);
+  LIBATFRAME_UTILS_NAMESPACE_ID::log::format_to(string_buffer, "{},{},{},{}", 1, 2, 3);
   std::cout << "format_to: " << string_buffer << std::endl;
 #    endif
   memset(string_buffer, 0, sizeof(string_buffer));
-  util::log::format_to(string_buffer, "{},{}", 1, test_exception_for_log_formatter(true, true));
+  LIBATFRAME_UTILS_NAMESPACE_ID::log::format_to(string_buffer, "{},{}", 1,
+                                                test_exception_for_log_formatter(true, true));
   std::cout << "format_to: " << string_buffer << std::endl;
   memset(string_buffer, 0, sizeof(string_buffer));
-  util::log::format_to(string_buffer, "{},{}", 1, test_exception_for_log_formatter(false, true));
+  LIBATFRAME_UTILS_NAMESPACE_ID::log::format_to(string_buffer, "{},{}", 1,
+                                                test_exception_for_log_formatter(false, true));
   std::cout << "format_to: " << string_buffer << std::endl;
   memset(string_buffer, 0, sizeof(string_buffer));
 
 #    ifndef LOG_WRAPPER_FWAPI_USING_FORMAT_STRING
-  util::log::format_to_n(string_buffer, 100, "{},{},{},{}", 1, 2, 3);
+  LIBATFRAME_UTILS_NAMESPACE_ID::log::format_to_n(string_buffer, 100, "{},{},{},{}", 1, 2, 3);
   std::cout << "format_to_n: " << string_buffer << std::endl;
 #    endif
   memset(string_buffer, 0, sizeof(string_buffer));
-  util::log::format_to_n(string_buffer, 100, "{},{}", 1, test_exception_for_log_formatter(true, true));
+  LIBATFRAME_UTILS_NAMESPACE_ID::log::format_to_n(string_buffer, 100, "{},{}", 1,
+                                                  test_exception_for_log_formatter(true, true));
   std::cout << "format_to_n: " << string_buffer << std::endl;
   memset(string_buffer, 0, sizeof(string_buffer));
-  util::log::format_to_n(string_buffer, 100, "{},{}", 1, test_exception_for_log_formatter(false, true));
+  LIBATFRAME_UTILS_NAMESPACE_ID::log::format_to_n(string_buffer, 100, "{},{}", 1,
+                                                  test_exception_for_log_formatter(false, true));
   std::cout << "format_to_n: " << string_buffer << std::endl;
   memset(string_buffer, 0, sizeof(string_buffer));
 
-  std::cout << "vformat: " << util::log::vformat("{},{},{},{}", util::log::make_format_args(1, 2, 3)) << std::endl;
   std::cout << "vformat: "
-            << util::log::vformat("{},{}", util::log::make_format_args(1, test_exception_for_log_formatter(true, true)))
+            << LIBATFRAME_UTILS_NAMESPACE_ID::log::vformat(
+                   "{},{},{},{}", LIBATFRAME_UTILS_NAMESPACE_ID::log::make_format_args(1, 2, 3))
             << std::endl;
   std::cout << "vformat: "
-            << util::log::vformat("{},{}",
-                                  util::log::make_format_args(1, test_exception_for_log_formatter(false, true)))
+            << LIBATFRAME_UTILS_NAMESPACE_ID::log::vformat("{},{}",
+                                                           LIBATFRAME_UTILS_NAMESPACE_ID::log::make_format_args(
+                                                               1, test_exception_for_log_formatter(true, true)))
+            << std::endl;
+  std::cout << "vformat: "
+            << LIBATFRAME_UTILS_NAMESPACE_ID::log::vformat("{},{}",
+                                                           LIBATFRAME_UTILS_NAMESPACE_ID::log::make_format_args(
+                                                               1, test_exception_for_log_formatter(false, true)))
             << std::endl;
 
 #    if defined(LIBATFRAME_UTILS_ENABLE_STD_FORMAT) && LIBATFRAME_UTILS_ENABLE_STD_FORMAT
-  using iterator_type =
-      decltype(util::log::format_to(string_buffer, "{},{}", 1, test_exception_for_log_formatter(true, true)));
+  using iterator_type = decltype(LIBATFRAME_UTILS_NAMESPACE_ID::log::format_to(
+      string_buffer, "{},{}", 1, test_exception_for_log_formatter(true, true)));
   // MSVC 1929(VS 16.10) has some problem on type detection and converting, so we speciffy OutputIt here
-  util::log::vformat_to<iterator_type>(
+  LIBATFRAME_UTILS_NAMESPACE_ID::log::vformat_to<iterator_type>(
       string_buffer, "{},{},{},{}",
-      util::log::make_format_args<LOG_WRAPPER_FWAPI_NAMESPACE basic_format_context<iterator_type, char> >(1, 2, 3));
+      LIBATFRAME_UTILS_NAMESPACE_ID::log::make_format_args
+#      if defined(_MSC_VER) && _MSC_VER < 1930  // Bug of MSVC 1929
+      <LOG_WRAPPER_FWAPI_NAMESPACE basic_format_context<iterator_type, char> >
+#      endif
+      (1, 2, 3));
   std::cout << "vformat_to: " << string_buffer << std::endl;
   memset(string_buffer, 0, sizeof(string_buffer));
 
-  util::log::vformat_to<iterator_type>(
+  LIBATFRAME_UTILS_NAMESPACE_ID::log::vformat_to<iterator_type>(
       string_buffer, "{},{}",
-      util::log::make_format_args<LOG_WRAPPER_FWAPI_NAMESPACE basic_format_context<iterator_type, char> >(
-          1, test_exception_for_log_formatter(true, true)));
+      LIBATFRAME_UTILS_NAMESPACE_ID::log::make_format_args
+#      if defined(_MSC_VER) && _MSC_VER < 1930  // Bug of MSVC 1929
+      <LOG_WRAPPER_FWAPI_NAMESPACE basic_format_context<iterator_type, char> >
+#      endif
+      (1, test_exception_for_log_formatter(true, true)));
   std::cout << "vformat_to: " << string_buffer << std::endl;
   memset(string_buffer, 0, sizeof(string_buffer));
 
-  util::log::vformat_to<iterator_type>(
+  LIBATFRAME_UTILS_NAMESPACE_ID::log::vformat_to<iterator_type>(
       string_buffer, "{},{}",
-      util::log::make_format_args<LOG_WRAPPER_FWAPI_NAMESPACE basic_format_context<iterator_type, char> >(
-          1, test_exception_for_log_formatter(false, true)));
+      LIBATFRAME_UTILS_NAMESPACE_ID::log::make_format_args
+#      if defined(_MSC_VER) && _MSC_VER < 1930  // Bug of MSVC 1929
+      <LOG_WRAPPER_FWAPI_NAMESPACE basic_format_context<iterator_type, char> >
+#      endif
+      (1, test_exception_for_log_formatter(false, true)));
   std::cout << "vformat_to: " << string_buffer << std::endl;
 #    else
-  util::log::vformat_to(string_buffer, "{},{},{},{}", util::log::make_format_args(1, 2, 3));
+  LIBATFRAME_UTILS_NAMESPACE_ID::log::vformat_to(string_buffer, "{},{},{},{}",
+                                                 LIBATFRAME_UTILS_NAMESPACE_ID::log::make_format_args(1, 2, 3));
   std::cout << "vformat_to: " << string_buffer << std::endl;
   memset(string_buffer, 0, sizeof(string_buffer));
 
-  util::log::vformat_to(string_buffer, "{},{}",
-                        util::log::make_format_args(1, test_exception_for_log_formatter(true, true)));
+  LIBATFRAME_UTILS_NAMESPACE_ID::log::vformat_to(
+      string_buffer, "{},{}",
+      LIBATFRAME_UTILS_NAMESPACE_ID::log::make_format_args(1, test_exception_for_log_formatter(true, true)));
   std::cout << "vformat_to: " << string_buffer << std::endl;
   memset(string_buffer, 0, sizeof(string_buffer));
 
-  util::log::vformat_to(string_buffer, "{},{}",
-                        util::log::make_format_args(1, test_exception_for_log_formatter(false, true)));
+  LIBATFRAME_UTILS_NAMESPACE_ID::log::vformat_to(
+      string_buffer, "{},{}",
+      LIBATFRAME_UTILS_NAMESPACE_ID::log::make_format_args(1, test_exception_for_log_formatter(false, true)));
   std::cout << "vformat_to: " << string_buffer << std::endl;
 #    endif
 }
@@ -364,7 +398,7 @@ void log_sample() {
 
 //=======================================================================================================
 void random_sample() {
-  util::random::mt19937 gen1;
+  LIBATFRAME_UTILS_NAMESPACE_ID::random::mt19937 gen1;
   gen1.init_seed(123);
 
   std::cout << "Random - mt19937: " << gen1.random() << std::endl;
@@ -376,7 +410,7 @@ void random_sample() {
 
 //=======================================================================================================
 void tquerystring_sample() {
-  util::tquerystring encode, decode;
+  LIBATFRAME_UTILS_NAMESPACE_ID::tquerystring encode, decode;
 
   encode.set("a", "wulala");
   encode.set("page", "ok!");
@@ -384,11 +418,11 @@ void tquerystring_sample() {
   std::string output;
   encode.encode(output);
 
-  util::types::item_array::ptr_type arr = encode.create_array();
+  LIBATFRAME_UTILS_NAMESPACE_ID::types::item_array::ptr_type arr = encode.create_array();
 
   arr->append("blablabla...");
   arr->append("a and b is ab");
-  util::types::item_object::ptr_type obj = encode.create_object();
+  LIBATFRAME_UTILS_NAMESPACE_ID::types::item_object::ptr_type obj = encode.create_object();
   obj->set("so", "");
   arr->append(obj);
 
@@ -408,16 +442,26 @@ void tquerystring_sample() {
 void hash_sample() {
   char str_buff[] = "Hello World!\nI'm OWenT\n";
   std::cout << "Hashed String: " << std::endl << str_buff << std::endl;
-  std::cout << "FNV-1:   " << util::hash::hash_fnv1<uint32_t>(str_buff, strlen(str_buff)) << std::endl;
-  std::cout << "FNV-1A:  " << util::hash::hash_fnv1a<uint32_t>(str_buff, strlen(str_buff)) << std::endl;
-  std::cout << "SDBM:    " << util::hash::hash_sdbm<uint32_t>(str_buff, strlen(str_buff)) << std::endl;
-  std::cout << "RS:      " << util::hash::hash_rs<uint32_t>(str_buff, strlen(str_buff)) << std::endl;
-  std::cout << "JS:      " << util::hash::hash_js<uint32_t>(str_buff, strlen(str_buff)) << std::endl;
-  std::cout << "PJW:     " << util::hash::hash_pjw<uint32_t>(str_buff, strlen(str_buff)) << std::endl;
-  std::cout << "ELF:     " << util::hash::hash_elf<uint32_t>(str_buff, strlen(str_buff)) << std::endl;
-  std::cout << "BKDR:    " << util::hash::hash_bkdr<uint32_t>(str_buff, strlen(str_buff)) << std::endl;
-  std::cout << "DJB:     " << util::hash::hash_djb<uint32_t>(str_buff, strlen(str_buff)) << std::endl;
-  std::cout << "AP:      " << util::hash::hash_ap<uint32_t>(str_buff, strlen(str_buff)) << std::endl;
+  std::cout << "FNV-1:   " << LIBATFRAME_UTILS_NAMESPACE_ID::hash::hash_fnv1<uint32_t>(str_buff, strlen(str_buff))
+            << std::endl;
+  std::cout << "FNV-1A:  " << LIBATFRAME_UTILS_NAMESPACE_ID::hash::hash_fnv1a<uint32_t>(str_buff, strlen(str_buff))
+            << std::endl;
+  std::cout << "SDBM:    " << LIBATFRAME_UTILS_NAMESPACE_ID::hash::hash_sdbm<uint32_t>(str_buff, strlen(str_buff))
+            << std::endl;
+  std::cout << "RS:      " << LIBATFRAME_UTILS_NAMESPACE_ID::hash::hash_rs<uint32_t>(str_buff, strlen(str_buff))
+            << std::endl;
+  std::cout << "JS:      " << LIBATFRAME_UTILS_NAMESPACE_ID::hash::hash_js<uint32_t>(str_buff, strlen(str_buff))
+            << std::endl;
+  std::cout << "PJW:     " << LIBATFRAME_UTILS_NAMESPACE_ID::hash::hash_pjw<uint32_t>(str_buff, strlen(str_buff))
+            << std::endl;
+  std::cout << "ELF:     " << LIBATFRAME_UTILS_NAMESPACE_ID::hash::hash_elf<uint32_t>(str_buff, strlen(str_buff))
+            << std::endl;
+  std::cout << "BKDR:    " << LIBATFRAME_UTILS_NAMESPACE_ID::hash::hash_bkdr<uint32_t>(str_buff, strlen(str_buff))
+            << std::endl;
+  std::cout << "DJB:     " << LIBATFRAME_UTILS_NAMESPACE_ID::hash::hash_djb<uint32_t>(str_buff, strlen(str_buff))
+            << std::endl;
+  std::cout << "AP:      " << LIBATFRAME_UTILS_NAMESPACE_ID::hash::hash_ap<uint32_t>(str_buff, strlen(str_buff))
+            << std::endl;
 }
 //=======================================================================================================
 
@@ -474,7 +518,7 @@ struct GameConf {
 GameConf::GameConf() {}
 
 bool GameConf::init() {
-  util::config::ini_loader conf_loader;
+  LIBATFRAME_UTILS_NAMESPACE_ID::config::ini_loader conf_loader;
 
   conf_loader.load_file((g_exec_dir + "/config.ini").c_str());
 
@@ -532,7 +576,7 @@ bool GameConf::init() {
 
   // 转储时间周期
   {
-    util::config::duration_value dur;
+    LIBATFRAME_UTILS_NAMESPACE_ID::config::duration_value dur;
     conf_loader.dump_to("system.interval_ns", dur, true);
     printf("system.interval_ns: sec %lld, nsec: %lld\n", static_cast<long long>(dur.sec),
            static_cast<long long>(dur.nsec));
@@ -577,7 +621,7 @@ void iniloader_sample1() {
 }
 
 void iniloader_sample2() {
-  util::config::ini_loader cfg_loader;
+  LIBATFRAME_UTILS_NAMESPACE_ID::config::ini_loader cfg_loader;
   cfg_loader.load_file((g_exec_dir + "/test.ini").c_str());
 
   // 转储整数
@@ -634,7 +678,7 @@ void iniloader_sample2() {
 
   // 转储时间周期
   {
-    util::config::duration_value dur;
+    LIBATFRAME_UTILS_NAMESPACE_ID::config::duration_value dur;
     cfg_loader.dump_to("system.interval_ns", dur, true);
     printf("system.interval_ns: sec %lld, nsec: %lld\n", static_cast<long long>(dur.sec),
            static_cast<long long>(dur.nsec));
@@ -669,9 +713,9 @@ void iniloader_sample() {
 //=======================================================================================================
 
 int main(int, char *argv[]) {
-  util::time::time_utility::update();
+  LIBATFRAME_UTILS_NAMESPACE_ID::time::time_utility::update();
 
-  util::file_system::dirname(argv[0], 0, g_exec_dir);
+  LIBATFRAME_UTILS_NAMESPACE_ID::file_system::dirname(argv[0], 0, g_exec_dir);
 
   CALL_SAMPLE(tquerystring_sample);
   CALL_SAMPLE(hash_sample);

@@ -11,7 +11,7 @@
 #include "cli/cmd_option_list.h"
 #include "cli/cmd_option.h"
 
-namespace util {
+LIBATFRAME_UTILS_NAMESPACE_BEGIN
 namespace cli {
 LIBATFRAME_UTILS_API const char *binder::cmd_option_bind_base::ROOT_NODE_CMD = "@Root";
 
@@ -137,4 +137,4 @@ LIBATFRAME_UTILS_API void cmd_option_list::set_ext_param(void *param) { ext_para
 
 LIBATFRAME_UTILS_API void *cmd_option_list::get_ext_param() const { return ext_param_; }
 }  // namespace cli
-}  // namespace util
+LIBATFRAME_UTILS_NAMESPACE_END

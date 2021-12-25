@@ -40,7 +40,7 @@
     (defined(LIBATFRAME_UTILS_ENABLE_UUID_WINRPC) && LIBATFRAME_UTILS_ENABLE_UUID_WINRPC) || \
     (defined(LIBATFRAME_UTILS_ENABLE_UUID_INTERNAL_IMPLEMENT) && LIBATFRAME_UTILS_ENABLE_UUID_INTERNAL_IMPLEMENT)
 
-namespace util {
+LIBATFRAME_UTILS_NAMESPACE_BEGIN
 namespace random {
 /**
  * @brief UUID generator
@@ -132,7 +132,7 @@ class uuid_generator {
   static LIBATFRAME_UTILS_API std::string generate_string_time(bool remove_minus = false);
 };
 }  // namespace random
-}  // namespace util
+LIBATFRAME_UTILS_NAMESPACE_END
 
 #endif
 

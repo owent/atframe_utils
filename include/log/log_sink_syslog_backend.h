@@ -16,7 +16,7 @@
 
 #if defined(LOG_SINK_ENABLE_SYSLOG_SUPPORT) && LOG_SINK_ENABLE_SYSLOG_SUPPORT
 
-namespace util {
+LIBATFRAME_UTILS_NAMESPACE_BEGIN
 namespace log {
 
 class log_sink_syslog_backend_handle;
@@ -44,7 +44,7 @@ class log_sink_syslog_backend {
   int facility_;
 };
 }  // namespace log
-}  // namespace util
+LIBATFRAME_UTILS_NAMESPACE_END
 
 #endif
 

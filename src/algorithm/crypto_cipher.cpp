@@ -91,7 +91,7 @@ static inline libsodium_counter_t libsodium_get_counter(const unsigned char *iv)
 
 #  endif
 
-namespace util {
+LIBATFRAME_UTILS_NAMESPACE_BEGIN
 namespace crypto {
 enum cipher_interface_method_t {
   EN_CIMT_INVALID = 0,  // inner
@@ -129,7 +129,7 @@ struct cipher_interface_info_t {
 
 namespace details {
 #  if defined(CRYPTO_USE_OPENSSL) || defined(CRYPTO_USE_LIBRESSL) || defined(CRYPTO_USE_BORINGSSL)
-util::lock::atomic_int_type<size_t> g_global_init_counter_(0);
+LIBATFRAME_UTILS_NAMESPACE_ID::lock::atomic_int_type<size_t> g_global_init_counter_(0);
 #  endif
 static inline cipher::error_code_t::type setup_errorno(cipher &ci, int64_t err, cipher::error_code_t::type ret) {
   ci.set_last_errno(err);
@@ -551,7 +551,7 @@ LIBATFRAME_UTILS_API uint32_t cipher::get_key_bits() const {
     case EN_CIMT_INVALID:
       return 0;
     case EN_CIMT_XXTEA:
-      return sizeof(::util::xxtea_key) * 8;
+      return sizeof(LIBATFRAME_UTILS_NAMESPACE_ID::xxtea_key) * 8;
     case EN_CIMT_CIPHER:
       if (nullptr != cipher_context_.enc) {
 #  if defined(CRYPTO_USE_OPENSSL) || defined(CRYPTO_USE_LIBRESSL) || defined(CRYPTO_USE_BORINGSSL)
@@ -666,7 +666,7 @@ LIBATFRAME_UTILS_API int cipher::set_key(const unsigned char *key, uint32_t key_
       } else {
         memcpy(secret, key, key_bitlen / 8);
       }
-      util::xxtea_setup(&xxtea_context_.key, secret);
+      LIBATFRAME_UTILS_NAMESPACE_ID::xxtea_setup(&xxtea_context_.key, secret);
       return details::setup_errorno(*this, 0, error_code_t::OK);
     }
     case EN_CIMT_CIPHER: {
@@ -798,8 +798,8 @@ LIBATFRAME_UTILS_API int cipher::encrypt(const unsigned char *input, size_t ilen
     case EN_CIMT_INVALID:
       return details::setup_errorno(*this, -1, error_code_t::NOT_INITED);
     case EN_CIMT_XXTEA: {
-      util::xxtea_encrypt(&xxtea_context_.key, reinterpret_cast<const void *>(input), ilen,
-                          reinterpret_cast<void *>(output), olen);
+      LIBATFRAME_UTILS_NAMESPACE_ID::xxtea_encrypt(&xxtea_context_.key, reinterpret_cast<const void *>(input), ilen,
+                                                   reinterpret_cast<void *>(output), olen);
       return details::setup_errorno(*this, 0, error_code_t::OK);
     }
     case EN_CIMT_CIPHER: {
@@ -921,8 +921,8 @@ LIBATFRAME_UTILS_API int cipher::decrypt(const unsigned char *input, size_t ilen
     case EN_CIMT_INVALID:
       return details::setup_errorno(*this, -1, error_code_t::NOT_INITED);
     case EN_CIMT_XXTEA: {
-      util::xxtea_decrypt(&xxtea_context_.key, reinterpret_cast<const void *>(input), ilen,
-                          reinterpret_cast<void *>(output), olen);
+      LIBATFRAME_UTILS_NAMESPACE_ID::xxtea_decrypt(&xxtea_context_.key, reinterpret_cast<const void *>(input), ilen,
+                                                   reinterpret_cast<void *>(output), olen);
       return details::setup_errorno(*this, 0, error_code_t::OK);
     }
     case EN_CIMT_CIPHER: {
@@ -1199,8 +1199,8 @@ LIBATFRAME_UTILS_API int cipher::decrypt_aead(const unsigned char *input, size_t
     case EN_CIMT_INVALID:
       return details::setup_errorno(*this, -1, error_code_t::NOT_INITED);
     case EN_CIMT_XXTEA: {
-      util::xxtea_decrypt(&xxtea_context_.key, reinterpret_cast<const void *>(input), ilen,
-                          reinterpret_cast<void *>(output), olen);
+      LIBATFRAME_UTILS_NAMESPACE_ID::xxtea_decrypt(&xxtea_context_.key, reinterpret_cast<const void *>(input), ilen,
+                                                   reinterpret_cast<void *>(output), olen);
       return details::setup_errorno(*this, 0, error_code_t::OK);
     }
     case EN_CIMT_CIPHER: {
@@ -1452,6 +1452,6 @@ LIBATFRAME_UTILS_API int cipher::cleanup_global_algorithm() {
   return 0;
 }
 }  // namespace crypto
-}  // namespace util
+LIBATFRAME_UTILS_NAMESPACE_END
 
 #endif

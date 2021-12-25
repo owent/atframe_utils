@@ -48,7 +48,7 @@
 #  endif
 #endif
 
-namespace util {
+LIBATFRAME_UTILS_NAMESPACE_BEGIN
 
 inline const char *demangle_alloc(const char *name) noexcept;
 inline void demangle_free(const char *name) noexcept;
@@ -108,7 +108,7 @@ inline std::string demangle(const char *name) { return name; }
 
 #endif
 
-}  // namespace util
+LIBATFRAME_UTILS_NAMESPACE_END
 
 #undef UTIL_COMMON_DEMANGLE_USING_CXX_ABI
 

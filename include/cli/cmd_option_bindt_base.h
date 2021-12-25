@@ -15,7 +15,7 @@
 #include "cli/cmd_option_bind_param_list.h"
 #include "cli/cmd_option_list.h"
 
-namespace util {
+LIBATFRAME_UTILS_NAMESPACE_BEGIN
 namespace cli {
 // 标准指令处理函数参数类型
 
@@ -41,5 +41,5 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY cmd_option_bindt : public cmd_option_bind_b
 };
 }  // namespace binder
 }  // namespace cli
-}  // namespace util
+LIBATFRAME_UTILS_NAMESPACE_END
 #endif /* _CMDOPTIONBINDTBASE_H_ */

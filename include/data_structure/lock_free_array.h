@@ -19,7 +19,7 @@
 
 #include <config/atframe_utils_build_feature.h>
 
-namespace util {
+LIBATFRAME_UTILS_NAMESPACE_BEGIN
 namespace ds {
 
 template <typename T, size_t SIZE, typename TContainer = std::array<T, SIZE + 1> >
@@ -144,4 +144,4 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY lock_free_array {
   container_type data_;
 };
 }  // namespace ds
-}  // namespace util
+LIBATFRAME_UTILS_NAMESPACE_END

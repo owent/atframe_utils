@@ -22,7 +22,7 @@
 #include "config/atframe_utils_build_feature.h"
 #include "config/compiler_features.h"
 
-namespace util {
+LIBATFRAME_UTILS_NAMESPACE_BEGIN
 namespace lock {
 namespace detail {
 template <typename TLock>
@@ -120,6 +120,6 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY write_lock_holder
             lock) {}
 };
 }  // namespace lock
-}  // namespace util
+LIBATFRAME_UTILS_NAMESPACE_END
 
 #endif /* _UTIL_LOCK_LOCK_HOLDER_H_ */

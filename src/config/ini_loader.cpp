@@ -9,7 +9,7 @@
 #include <fstream>
 #include <string>
 
-namespace util {
+LIBATFRAME_UTILS_NAMESPACE_BEGIN
 namespace config {
 // ================= 词法状态机 =================
 namespace analysis {
@@ -178,7 +178,7 @@ LIBATFRAME_UTILS_API ini_value &ini_value::operator=(const ini_value &other) {
   return (*this);
 }
 
-LIBATFRAME_UTILS_API void ini_value::add(::util::nostd::string_view val) {
+LIBATFRAME_UTILS_API void ini_value::add(LIBATFRAME_UTILS_NAMESPACE_ID::nostd::string_view val) {
   data_.push_back(std::string{val.data(), val.size()});
 }
 
@@ -197,7 +197,7 @@ LIBATFRAME_UTILS_API void ini_value::clear() {
   children_nodes_.clear();
 }
 
-LIBATFRAME_UTILS_API ini_value &ini_value::operator[](::util::nostd::string_view key) {
+LIBATFRAME_UTILS_API ini_value &ini_value::operator[](LIBATFRAME_UTILS_NAMESPACE_ID::nostd::string_view key) {
   ptr_t &ret = children_nodes_[std::string{key.data(), key.size()}];
   if (!ret) {
     ret = std::make_shared<ini_value>();
@@ -209,7 +209,8 @@ LIBATFRAME_UTILS_API ini_value::node_type &ini_value::get_children() { return ch
 
 LIBATFRAME_UTILS_API const ini_value::node_type &ini_value::get_children() const { return children_nodes_; }
 
-LIBATFRAME_UTILS_API ini_value::ptr_t ini_value::get_child_by_path(::util::nostd::string_view path) const {
+LIBATFRAME_UTILS_API ini_value::ptr_t ini_value::get_child_by_path(
+    LIBATFRAME_UTILS_NAMESPACE_ID::nostd::string_view path) const {
   const ini_value *ret = this;
 
   analysis::key _keys;
@@ -833,7 +834,7 @@ LIBATFRAME_UTILS_API void ini_loader::clear() {
   root_node_->clear();
 }
 
-LIBATFRAME_UTILS_API void ini_loader::set_section(::util::nostd::string_view path) {
+LIBATFRAME_UTILS_API void ini_loader::set_section(LIBATFRAME_UTILS_NAMESPACE_ID::nostd::string_view path) {
   current_node_ptr_ = &get_node(path, &get_root_node());
 }
 
@@ -845,7 +846,8 @@ LIBATFRAME_UTILS_API ini_value &ini_loader::get_root_node() { return *root_node_
 
 LIBATFRAME_UTILS_API const ini_value &ini_loader::get_root_node() const { return *root_node_; }
 
-LIBATFRAME_UTILS_API ini_value &ini_loader::get_node(::util::nostd::string_view path, ini_value *father_ptr) {
+LIBATFRAME_UTILS_API ini_value &ini_loader::get_node(LIBATFRAME_UTILS_NAMESPACE_ID::nostd::string_view path,
+                                                     ini_value *father_ptr) {
   if (nullptr == father_ptr) {
     father_ptr = root_node_.get();
   }
@@ -866,7 +868,8 @@ LIBATFRAME_UTILS_API ini_value &ini_loader::get_node(::util::nostd::string_view 
   return *father_ptr;
 }
 
-LIBATFRAME_UTILS_API ini_value &ini_loader::get_child_node(::util::nostd::string_view path, ini_value *father_ptr) {
+LIBATFRAME_UTILS_API ini_value &ini_loader::get_child_node(LIBATFRAME_UTILS_NAMESPACE_ID::nostd::string_view path,
+                                                           ini_value *father_ptr) {
   if (nullptr == father_ptr) {
     father_ptr = root_node_.get();
   }
@@ -874,7 +877,8 @@ LIBATFRAME_UTILS_API ini_value &ini_loader::get_child_node(::util::nostd::string
   return (*father_ptr)[std::string{path.data(), path.size()}];
 }
 
-LIBATFRAME_UTILS_API void ini_loader::dump_to(::util::nostd::string_view path, bool &val, bool is_force, size_t index) {
+LIBATFRAME_UTILS_API void ini_loader::dump_to(LIBATFRAME_UTILS_NAMESPACE_ID::nostd::string_view path, bool &val,
+                                              bool is_force, size_t index) {
   ini_value &cur_node = get_node(path);
 
   if (false == cur_node.has_data() && false == is_force) {
@@ -896,16 +900,16 @@ LIBATFRAME_UTILS_API void ini_loader::dump_to(::util::nostd::string_view path, b
   }
 }
 
-LIBATFRAME_UTILS_API void ini_loader::dump_to(::util::nostd::string_view path, std::string &val, bool is_force,
-                                              size_t index) {
+LIBATFRAME_UTILS_API void ini_loader::dump_to(LIBATFRAME_UTILS_NAMESPACE_ID::nostd::string_view path, std::string &val,
+                                              bool is_force, size_t index) {
   ini_value &cur_node = get_node(path);
   if (cur_node.has_data() || is_force) {
     val = cur_node.as_cpp_string(index);
   }
 }
 
-LIBATFRAME_UTILS_API void ini_loader::dump_to(::util::nostd::string_view path, char *begin, char *end, bool is_force,
-                                              size_t index) {
+LIBATFRAME_UTILS_API void ini_loader::dump_to(LIBATFRAME_UTILS_NAMESPACE_ID::nostd::string_view path, char *begin,
+                                              char *end, bool is_force, size_t index) {
   ini_value &cur_node = get_node(path);
   if (cur_node.has_data() || is_force) {
     const std::string &val = cur_node.as_cpp_string(index);
@@ -916,4 +920,4 @@ LIBATFRAME_UTILS_API void ini_loader::dump_to(::util::nostd::string_view path, c
   }
 }
 }  // namespace config
-}  // namespace util
+LIBATFRAME_UTILS_NAMESPACE_END

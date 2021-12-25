@@ -18,7 +18,7 @@
 #include "cli/cmd_option_bindt_mf_cc.h"
 #include "cli/cmd_option_list.h"
 
-namespace util {
+LIBATFRAME_UTILS_NAMESPACE_BEGIN
 namespace cli {
 namespace binder {
 
@@ -89,5 +89,5 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY cmd_option_bind_param_list {
 
 }  // namespace binder
 }  // namespace cli
-}  // namespace util
+LIBATFRAME_UTILS_NAMESPACE_END
 #endif /* _CMDOPTIONBINDPARAMLIST_H_ */

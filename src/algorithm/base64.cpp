@@ -1,3 +1,5 @@
+// Copyright 2022 atframework
+
 #include <assert.h>
 #include <inttypes.h>
 #include <stdint.h>
@@ -10,7 +12,7 @@
 #define BASE64_SIZE_T_MAX ((size_t)-1)   /* SIZE_T_MAX is not standard */
 #define BASE64_INVALID_CHARACTER -0x002C /**< Invalid character in input. */
 
-namespace util {
+LIBATFRAME_UTILS_NAMESPACE_BEGIN
 
 namespace detail {
 using base_enc_map_t = const unsigned char[64];
@@ -344,4 +346,5 @@ LIBATFRAME_UTILS_API int base64_decode(std::string &dst, const unsigned char *sr
 LIBATFRAME_UTILS_API int base64_decode(std::string &dst, const std::string &in, base64_mode_t::type mode) {
   return detail::base64_decode_inner(dst, in, detail::base64_get_dec_map(mode), detail::base64_get_padding_char(mode));
 }
-}  // namespace util
+
+LIBATFRAME_UTILS_NAMESPACE_END

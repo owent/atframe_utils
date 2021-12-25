@@ -18,7 +18,7 @@
 #include <unordered_map>
 #include <utility>
 
-namespace util {
+LIBATFRAME_UTILS_NAMESPACE_BEGIN
 namespace distributed_system {
 
 using wal_time_point = std::chrono::system_clock::time_point;
@@ -86,8 +86,8 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_log_operator {
 
   using log_pointer = std::shared_ptr<log_type>;
   using log_const_pointer = std::shared_ptr<const log_type>;
-  using log_key_result_type = util::design_pattern::result_type<log_key_type, wal_result_code>;
+  using log_key_result_type = LIBATFRAME_UTILS_NAMESPACE_ID::design_pattern::result_type<log_key_type, wal_result_code>;
 };
 
 }  // namespace distributed_system
-}  // namespace util
+LIBATFRAME_UTILS_NAMESPACE_END

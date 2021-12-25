@@ -23,21 +23,24 @@ CASE_TEST(sha, sha1) {
                                               {0xda, 0x39, 0xa3, 0xee, 0x5e, 0x6b, 0x4b, 0x0d, 0x32, 0x55,
                                                0xbf, 0xef, 0x95, 0x60, 0x18, 0x90, 0xaf, 0xd8, 0x07, 0x09}};
 
-  const size_t output_length = util::hash::sha::get_output_length(util::hash::sha::EN_ALGORITHM_SHA1);
+  const size_t output_length = LIBATFRAME_UTILS_NAMESPACE_ID::hash::sha::get_output_length(
+      LIBATFRAME_UTILS_NAMESPACE_ID::hash::sha::EN_ALGORITHM_SHA1);
   for (int i = 0; i < 3; ++i) {
-    std::string hash =
-        util::hash::sha::hash_to_binary(util::hash::sha::EN_ALGORITHM_SHA1, sha1_test_buf[i], sha1_test_buflen[i]);
+    std::string hash = LIBATFRAME_UTILS_NAMESPACE_ID::hash::sha::hash_to_binary(
+        LIBATFRAME_UTILS_NAMESPACE_ID::hash::sha::EN_ALGORITHM_SHA1, sha1_test_buf[i], sha1_test_buflen[i]);
     CASE_EXPECT_EQ(hash, std::string(reinterpret_cast<const char*>(sha1_test_sum[i]), output_length));
 
-    hash = util::hash::sha::hash_to_hex(util::hash::sha::EN_ALGORITHM_SHA1, sha1_test_buf[i], sha1_test_buflen[i]);
+    hash = LIBATFRAME_UTILS_NAMESPACE_ID::hash::sha::hash_to_hex(
+        LIBATFRAME_UTILS_NAMESPACE_ID::hash::sha::EN_ALGORITHM_SHA1, sha1_test_buf[i], sha1_test_buflen[i]);
     std::string serialize_str;
     serialize_str.resize(output_length * 2, 0);
-    util::string::dumphex(sha1_test_sum[i], output_length, &serialize_str[0]);
+    LIBATFRAME_UTILS_NAMESPACE_ID::string::dumphex(sha1_test_sum[i], output_length, &serialize_str[0]);
     CASE_EXPECT_EQ(hash, serialize_str);
 
-    hash = util::hash::sha::hash_to_base64(util::hash::sha::EN_ALGORITHM_SHA1, sha1_test_buf[i], sha1_test_buflen[i]);
+    hash = LIBATFRAME_UTILS_NAMESPACE_ID::hash::sha::hash_to_base64(
+        LIBATFRAME_UTILS_NAMESPACE_ID::hash::sha::EN_ALGORITHM_SHA1, sha1_test_buf[i], sha1_test_buflen[i]);
     serialize_str.clear();
-    util::base64_encode(serialize_str, sha1_test_sum[i], output_length);
+    LIBATFRAME_UTILS_NAMESPACE_ID::base64_encode(serialize_str, sha1_test_sum[i], output_length);
     CASE_EXPECT_EQ(hash, serialize_str);
   }
 }
@@ -56,21 +59,24 @@ CASE_TEST(sha, sha224) {
       {0xd1, 0x4a, 0x02, 0x8c, 0x2a, 0x3a, 0x2b, 0xc9, 0x47, 0x61, 0x02, 0xbb, 0x28, 0x82,
        0x34, 0xc4, 0x15, 0xa2, 0xb0, 0x1f, 0x82, 0x8e, 0xa6, 0x2a, 0xc5, 0xb3, 0xe4, 0x2f}};
 
-  const size_t output_length = util::hash::sha::get_output_length(util::hash::sha::EN_ALGORITHM_SHA224);
+  const size_t output_length = LIBATFRAME_UTILS_NAMESPACE_ID::hash::sha::get_output_length(
+      LIBATFRAME_UTILS_NAMESPACE_ID::hash::sha::EN_ALGORITHM_SHA224);
   for (int i = 0; i < 3; ++i) {
-    std::string hash =
-        util::hash::sha::hash_to_binary(util::hash::sha::EN_ALGORITHM_SHA224, sha1_test_buf[i], sha1_test_buflen[i]);
+    std::string hash = LIBATFRAME_UTILS_NAMESPACE_ID::hash::sha::hash_to_binary(
+        LIBATFRAME_UTILS_NAMESPACE_ID::hash::sha::EN_ALGORITHM_SHA224, sha1_test_buf[i], sha1_test_buflen[i]);
     CASE_EXPECT_EQ(hash, std::string(reinterpret_cast<const char*>(sha1_test_sum[i]), output_length));
 
-    hash = util::hash::sha::hash_to_hex(util::hash::sha::EN_ALGORITHM_SHA224, sha1_test_buf[i], sha1_test_buflen[i]);
+    hash = LIBATFRAME_UTILS_NAMESPACE_ID::hash::sha::hash_to_hex(
+        LIBATFRAME_UTILS_NAMESPACE_ID::hash::sha::EN_ALGORITHM_SHA224, sha1_test_buf[i], sha1_test_buflen[i]);
     std::string serialize_str;
     serialize_str.resize(output_length * 2, 0);
-    util::string::dumphex(sha1_test_sum[i], output_length, &serialize_str[0]);
+    LIBATFRAME_UTILS_NAMESPACE_ID::string::dumphex(sha1_test_sum[i], output_length, &serialize_str[0]);
     CASE_EXPECT_EQ(hash, serialize_str);
 
-    hash = util::hash::sha::hash_to_base64(util::hash::sha::EN_ALGORITHM_SHA224, sha1_test_buf[i], sha1_test_buflen[i]);
+    hash = LIBATFRAME_UTILS_NAMESPACE_ID::hash::sha::hash_to_base64(
+        LIBATFRAME_UTILS_NAMESPACE_ID::hash::sha::EN_ALGORITHM_SHA224, sha1_test_buf[i], sha1_test_buflen[i]);
     serialize_str.clear();
-    util::base64_encode(serialize_str, sha1_test_sum[i], output_length);
+    LIBATFRAME_UTILS_NAMESPACE_ID::base64_encode(serialize_str, sha1_test_sum[i], output_length);
     CASE_EXPECT_EQ(hash, serialize_str);
   }
 }
@@ -89,21 +95,24 @@ CASE_TEST(sha, sha256) {
       {0xe3, 0xb0, 0xc4, 0x42, 0x98, 0xfc, 0x1c, 0x14, 0x9a, 0xfb, 0xf4, 0xc8, 0x99, 0x6f, 0xb9, 0x24,
        0x27, 0xae, 0x41, 0xe4, 0x64, 0x9b, 0x93, 0x4c, 0xa4, 0x95, 0x99, 0x1b, 0x78, 0x52, 0xb8, 0x55}};
 
-  const size_t output_length = util::hash::sha::get_output_length(util::hash::sha::EN_ALGORITHM_SHA256);
+  const size_t output_length = LIBATFRAME_UTILS_NAMESPACE_ID::hash::sha::get_output_length(
+      LIBATFRAME_UTILS_NAMESPACE_ID::hash::sha::EN_ALGORITHM_SHA256);
   for (int i = 0; i < 3; ++i) {
-    std::string hash =
-        util::hash::sha::hash_to_binary(util::hash::sha::EN_ALGORITHM_SHA256, sha1_test_buf[i], sha1_test_buflen[i]);
+    std::string hash = LIBATFRAME_UTILS_NAMESPACE_ID::hash::sha::hash_to_binary(
+        LIBATFRAME_UTILS_NAMESPACE_ID::hash::sha::EN_ALGORITHM_SHA256, sha1_test_buf[i], sha1_test_buflen[i]);
     CASE_EXPECT_EQ(hash, std::string(reinterpret_cast<const char*>(sha1_test_sum[i]), output_length));
 
-    hash = util::hash::sha::hash_to_hex(util::hash::sha::EN_ALGORITHM_SHA256, sha1_test_buf[i], sha1_test_buflen[i]);
+    hash = LIBATFRAME_UTILS_NAMESPACE_ID::hash::sha::hash_to_hex(
+        LIBATFRAME_UTILS_NAMESPACE_ID::hash::sha::EN_ALGORITHM_SHA256, sha1_test_buf[i], sha1_test_buflen[i]);
     std::string serialize_str;
     serialize_str.resize(output_length * 2, 0);
-    util::string::dumphex(sha1_test_sum[i], output_length, &serialize_str[0]);
+    LIBATFRAME_UTILS_NAMESPACE_ID::string::dumphex(sha1_test_sum[i], output_length, &serialize_str[0]);
     CASE_EXPECT_EQ(hash, serialize_str);
 
-    hash = util::hash::sha::hash_to_base64(util::hash::sha::EN_ALGORITHM_SHA256, sha1_test_buf[i], sha1_test_buflen[i]);
+    hash = LIBATFRAME_UTILS_NAMESPACE_ID::hash::sha::hash_to_base64(
+        LIBATFRAME_UTILS_NAMESPACE_ID::hash::sha::EN_ALGORITHM_SHA256, sha1_test_buf[i], sha1_test_buflen[i]);
     serialize_str.clear();
-    util::base64_encode(serialize_str, sha1_test_sum[i], output_length);
+    LIBATFRAME_UTILS_NAMESPACE_ID::base64_encode(serialize_str, sha1_test_sum[i], output_length);
     CASE_EXPECT_EQ(hash, serialize_str);
   }
 }
@@ -127,21 +136,24 @@ CASE_TEST(sha, sha384) {
        0x21, 0xfd, 0xb7, 0x11, 0x14, 0xbe, 0x07, 0x43, 0x4c, 0x0c, 0xc7, 0xbf, 0x63, 0xf6, 0xe1, 0xda,
        0x27, 0x4e, 0xde, 0xbf, 0xe7, 0x6f, 0x65, 0xfb, 0xd5, 0x1a, 0xd2, 0xf1, 0x48, 0x98, 0xb9, 0x5b}};
 
-  const size_t output_length = util::hash::sha::get_output_length(util::hash::sha::EN_ALGORITHM_SHA384);
+  const size_t output_length = LIBATFRAME_UTILS_NAMESPACE_ID::hash::sha::get_output_length(
+      LIBATFRAME_UTILS_NAMESPACE_ID::hash::sha::EN_ALGORITHM_SHA384);
   for (int i = 0; i < 3; ++i) {
-    std::string hash =
-        util::hash::sha::hash_to_binary(util::hash::sha::EN_ALGORITHM_SHA384, sha1_test_buf[i], sha1_test_buflen[i]);
+    std::string hash = LIBATFRAME_UTILS_NAMESPACE_ID::hash::sha::hash_to_binary(
+        LIBATFRAME_UTILS_NAMESPACE_ID::hash::sha::EN_ALGORITHM_SHA384, sha1_test_buf[i], sha1_test_buflen[i]);
     CASE_EXPECT_EQ(hash, std::string(reinterpret_cast<const char*>(sha1_test_sum[i]), output_length));
 
-    hash = util::hash::sha::hash_to_hex(util::hash::sha::EN_ALGORITHM_SHA384, sha1_test_buf[i], sha1_test_buflen[i]);
+    hash = LIBATFRAME_UTILS_NAMESPACE_ID::hash::sha::hash_to_hex(
+        LIBATFRAME_UTILS_NAMESPACE_ID::hash::sha::EN_ALGORITHM_SHA384, sha1_test_buf[i], sha1_test_buflen[i]);
     std::string serialize_str;
     serialize_str.resize(output_length * 2, 0);
-    util::string::dumphex(sha1_test_sum[i], output_length, &serialize_str[0]);
+    LIBATFRAME_UTILS_NAMESPACE_ID::string::dumphex(sha1_test_sum[i], output_length, &serialize_str[0]);
     CASE_EXPECT_EQ(hash, serialize_str);
 
-    hash = util::hash::sha::hash_to_base64(util::hash::sha::EN_ALGORITHM_SHA384, sha1_test_buf[i], sha1_test_buflen[i]);
+    hash = LIBATFRAME_UTILS_NAMESPACE_ID::hash::sha::hash_to_base64(
+        LIBATFRAME_UTILS_NAMESPACE_ID::hash::sha::EN_ALGORITHM_SHA384, sha1_test_buf[i], sha1_test_buflen[i]);
     serialize_str.clear();
-    util::base64_encode(serialize_str, sha1_test_sum[i], output_length);
+    LIBATFRAME_UTILS_NAMESPACE_ID::base64_encode(serialize_str, sha1_test_sum[i], output_length);
     CASE_EXPECT_EQ(hash, serialize_str);
   }
 }
@@ -168,21 +180,24 @@ CASE_TEST(sha, sha512) {
        0x47, 0xd0, 0xd1, 0x3c, 0x5d, 0x85, 0xf2, 0xb0, 0xff, 0x83, 0x18, 0xd2, 0x87, 0x7e, 0xec, 0x2f,
        0x63, 0xb9, 0x31, 0xbd, 0x47, 0x41, 0x7a, 0x81, 0xa5, 0x38, 0x32, 0x7a, 0xf9, 0x27, 0xda, 0x3e}};
 
-  const size_t output_length = util::hash::sha::get_output_length(util::hash::sha::EN_ALGORITHM_SHA512);
+  const size_t output_length = LIBATFRAME_UTILS_NAMESPACE_ID::hash::sha::get_output_length(
+      LIBATFRAME_UTILS_NAMESPACE_ID::hash::sha::EN_ALGORITHM_SHA512);
   for (int i = 0; i < 3; ++i) {
-    std::string hash =
-        util::hash::sha::hash_to_binary(util::hash::sha::EN_ALGORITHM_SHA512, sha1_test_buf[i], sha1_test_buflen[i]);
+    std::string hash = LIBATFRAME_UTILS_NAMESPACE_ID::hash::sha::hash_to_binary(
+        LIBATFRAME_UTILS_NAMESPACE_ID::hash::sha::EN_ALGORITHM_SHA512, sha1_test_buf[i], sha1_test_buflen[i]);
     CASE_EXPECT_EQ(hash, std::string(reinterpret_cast<const char*>(sha1_test_sum[i]), output_length));
 
-    hash = util::hash::sha::hash_to_hex(util::hash::sha::EN_ALGORITHM_SHA512, sha1_test_buf[i], sha1_test_buflen[i]);
+    hash = LIBATFRAME_UTILS_NAMESPACE_ID::hash::sha::hash_to_hex(
+        LIBATFRAME_UTILS_NAMESPACE_ID::hash::sha::EN_ALGORITHM_SHA512, sha1_test_buf[i], sha1_test_buflen[i]);
     std::string serialize_str;
     serialize_str.resize(output_length * 2, 0);
-    util::string::dumphex(sha1_test_sum[i], output_length, &serialize_str[0]);
+    LIBATFRAME_UTILS_NAMESPACE_ID::string::dumphex(sha1_test_sum[i], output_length, &serialize_str[0]);
     CASE_EXPECT_EQ(hash, serialize_str);
 
-    hash = util::hash::sha::hash_to_base64(util::hash::sha::EN_ALGORITHM_SHA512, sha1_test_buf[i], sha1_test_buflen[i]);
+    hash = LIBATFRAME_UTILS_NAMESPACE_ID::hash::sha::hash_to_base64(
+        LIBATFRAME_UTILS_NAMESPACE_ID::hash::sha::EN_ALGORITHM_SHA512, sha1_test_buf[i], sha1_test_buflen[i]);
     serialize_str.clear();
-    util::base64_encode(serialize_str, sha1_test_sum[i], output_length);
+    LIBATFRAME_UTILS_NAMESPACE_ID::base64_encode(serialize_str, sha1_test_sum[i], output_length);
     CASE_EXPECT_EQ(hash, serialize_str);
   }
 }

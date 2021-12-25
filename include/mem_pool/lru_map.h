@@ -31,7 +31,7 @@
 #  include <map>
 #endif
 
-namespace util {
+LIBATFRAME_UTILS_NAMESPACE_BEGIN
 namespace mempool {
 template <class TKEY, class TVALUE>
 struct LIBATFRAME_UTILS_API_HEAD_ONLY lru_map_type_traits {
@@ -263,6 +263,6 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY lru_map {
   lru_key_value_map_type kv_data_;
 };
 }  // namespace mempool
-}  // namespace util
+LIBATFRAME_UTILS_NAMESPACE_END
 
 #endif /* _UTIL_MEMPOOL_LRUOBJECTPOOL_H_ */

@@ -20,7 +20,7 @@
 
 #if !(defined(THREAD_TLS_USE_PTHREAD) && THREAD_TLS_USE_PTHREAD) && defined(THREAD_TLS_ENABLED) && \
     1 == THREAD_TLS_ENABLED
-namespace util {
+LIBATFRAME_UTILS_NAMESPACE_BEGIN
 namespace log {
 namespace detail {
 char *get_log_tls_buffer() {
@@ -29,11 +29,11 @@ char *get_log_tls_buffer() {
 }
 }  // namespace detail
 }  // namespace log
-}  // namespace util
+LIBATFRAME_UTILS_NAMESPACE_END
 #else
 
 #  include <pthread.h>
-namespace util {
+LIBATFRAME_UTILS_NAMESPACE_BEGIN
 namespace log {
 namespace detail {
 static pthread_once_t gt_get_log_tls_once = PTHREAD_ONCE_INIT;
@@ -70,11 +70,11 @@ struct gt_get_log_tls_buffer_main_thread_dtor_t {
 static gt_get_log_tls_buffer_main_thread_dtor_t gt_get_log_tls_buffer_main_thread_dtor;
 }  // namespace detail
 }  // namespace log
-}  // namespace util
+LIBATFRAME_UTILS_NAMESPACE_END
 
 #endif
 
-namespace util {
+LIBATFRAME_UTILS_NAMESPACE_BEGIN
 namespace log {
 namespace detail {
 static bool log_wrapper_global_destroyed_ = false;
@@ -111,7 +111,8 @@ LIBATFRAME_UTILS_API int32_t log_wrapper::init(level_t::type level) {
 }
 
 LIBATFRAME_UTILS_API size_t log_wrapper::sink_size() const {
-  util::lock::read_lock_holder<util::lock::spin_rw_lock> holder(log_sinks_lock_);
+  LIBATFRAME_UTILS_NAMESPACE_ID::lock::read_lock_holder<LIBATFRAME_UTILS_NAMESPACE_ID::lock::spin_rw_lock> holder(
+      log_sinks_lock_);
 
   return log_sinks_.size();
 }
@@ -123,13 +124,15 @@ LIBATFRAME_UTILS_API void log_wrapper::add_sink(log_handler_t h, level_t::type l
     router.level_min = level_min;
     router.level_max = level_max;
 
-    util::lock::write_lock_holder<util::lock::spin_rw_lock> holder(log_sinks_lock_);
+    LIBATFRAME_UTILS_NAMESPACE_ID::lock::write_lock_holder<LIBATFRAME_UTILS_NAMESPACE_ID::lock::spin_rw_lock> holder(
+        log_sinks_lock_);
     log_sinks_.push_back(router);
   };
 }
 
 LIBATFRAME_UTILS_API void log_wrapper::pop_sink() {
-  util::lock::write_lock_holder<util::lock::spin_rw_lock> holder(log_sinks_lock_);
+  LIBATFRAME_UTILS_NAMESPACE_ID::lock::write_lock_holder<LIBATFRAME_UTILS_NAMESPACE_ID::lock::spin_rw_lock> holder(
+      log_sinks_lock_);
 
   if (log_sinks_.empty()) {
     return;
@@ -139,7 +142,8 @@ LIBATFRAME_UTILS_API void log_wrapper::pop_sink() {
 }
 
 LIBATFRAME_UTILS_API bool log_wrapper::set_sink(size_t idx, level_t::type level_min, level_t::type level_max) {
-  util::lock::write_lock_holder<util::lock::spin_rw_lock> holder(log_sinks_lock_);
+  LIBATFRAME_UTILS_NAMESPACE_ID::lock::write_lock_holder<LIBATFRAME_UTILS_NAMESPACE_ID::lock::spin_rw_lock> holder(
+      log_sinks_lock_);
 
   if (log_sinks_.size() <= idx) {
     return false;
@@ -156,7 +160,8 @@ LIBATFRAME_UTILS_API bool log_wrapper::set_sink(size_t idx, level_t::type level_
 }
 
 LIBATFRAME_UTILS_API void log_wrapper::clear_sinks() {
-  util::lock::write_lock_holder<util::lock::spin_rw_lock> holder(log_sinks_lock_);
+  LIBATFRAME_UTILS_NAMESPACE_ID::lock::write_lock_holder<LIBATFRAME_UTILS_NAMESPACE_ID::lock::spin_rw_lock> holder(
+      log_sinks_lock_);
   log_sinks_.clear();
 }
 
@@ -172,7 +177,7 @@ LIBATFRAME_UTILS_API void log_wrapper::set_stacktrace_level(level_t::type level_
   }
 }
 
-LIBATFRAME_UTILS_API void log_wrapper::update() { util::time::time_utility::update(); }
+LIBATFRAME_UTILS_API void log_wrapper::update() { LIBATFRAME_UTILS_NAMESPACE_ID::time::time_utility::update(); }
 
 LIBATFRAME_UTILS_API void log_wrapper::log(const caller_info_t &caller,
 #ifdef _MSC_VER
@@ -210,7 +215,8 @@ LIBATFRAME_UTILS_API void log_wrapper::log(const caller_info_t &caller,
 
 LIBATFRAME_UTILS_API void log_wrapper::write_log(const caller_info_t &caller, const char *content,
                                                  size_t content_size) {
-  util::lock::read_lock_holder<util::lock::spin_rw_lock> holder(log_sinks_lock_);
+  LIBATFRAME_UTILS_NAMESPACE_ID::lock::read_lock_holder<LIBATFRAME_UTILS_NAMESPACE_ID::lock::spin_rw_lock> holder(
+      log_sinks_lock_);
 
   for (std::list<log_router_t>::iterator iter = log_sinks_.begin(); iter != log_sinks_.end(); ++iter) {
     if (caller.level_id >= iter->level_min && caller.level_id <= iter->level_max) {
@@ -316,4 +322,4 @@ LIBATFRAME_UTILS_API void log_wrapper::append_log(log_operation_t &writer, const
 }
 
 }  // namespace log
-}  // namespace util
+LIBATFRAME_UTILS_NAMESPACE_END

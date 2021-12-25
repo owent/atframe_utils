@@ -12,15 +12,15 @@
 
 CASE_TEST(ini_loader, number) {
   std::string conf_path;
-  util::file_system::dirname(__FILE__, 0, conf_path, 3);
+  LIBATFRAME_UTILS_NAMESPACE_ID::file_system::dirname(__FILE__, 0, conf_path, 3);
   conf_path += "/sample/test.ini";
 
-  if (!util::file_system::is_exist(conf_path.c_str())) {
+  if (!LIBATFRAME_UTILS_NAMESPACE_ID::file_system::is_exist(conf_path.c_str())) {
     CASE_MSG_INFO() << CASE_MSG_FCOLOR(YELLOW) << conf_path << " not found, skip ini_loader.vector" << std::endl;
     return;
   }
 
-  util::config::ini_loader cfg_loader;
+  LIBATFRAME_UTILS_NAMESPACE_ID::config::ini_loader cfg_loader;
   cfg_loader.load_file(conf_path);
 
   int t1 = 9999, t2 = 9999;
@@ -36,15 +36,15 @@ CASE_TEST(ini_loader, number) {
 
 CASE_TEST(ini_loader, string) {
   std::string conf_path;
-  util::file_system::dirname(__FILE__, 0, conf_path, 3);
+  LIBATFRAME_UTILS_NAMESPACE_ID::file_system::dirname(__FILE__, 0, conf_path, 3);
   conf_path += "/sample/test.ini";
 
-  if (!util::file_system::is_exist(conf_path.c_str())) {
+  if (!LIBATFRAME_UTILS_NAMESPACE_ID::file_system::is_exist(conf_path.c_str())) {
     CASE_MSG_INFO() << CASE_MSG_FCOLOR(YELLOW) << conf_path << " not found, skip ini_loader.vector" << std::endl;
     return;
   }
 
-  util::config::ini_loader cfg_loader;
+  LIBATFRAME_UTILS_NAMESPACE_ID::config::ini_loader cfg_loader;
   cfg_loader.load_file(conf_path);
 
   char t1[32] = {0};
@@ -62,15 +62,15 @@ CASE_TEST(ini_loader, string) {
 
 CASE_TEST(ini_loader, vector) {
   std::string conf_path;
-  util::file_system::dirname(__FILE__, 0, conf_path, 3);
+  LIBATFRAME_UTILS_NAMESPACE_ID::file_system::dirname(__FILE__, 0, conf_path, 3);
   conf_path += "/sample/test.ini";
 
-  if (!util::file_system::is_exist(conf_path.c_str())) {
+  if (!LIBATFRAME_UTILS_NAMESPACE_ID::file_system::is_exist(conf_path.c_str())) {
     CASE_MSG_INFO() << CASE_MSG_FCOLOR(YELLOW) << conf_path << " not found, skip ini_loader.vector" << std::endl;
     return;
   }
 
-  util::config::ini_loader cfg_loader;
+  LIBATFRAME_UTILS_NAMESPACE_ID::config::ini_loader cfg_loader;
   cfg_loader.load_file(conf_path);
 
   std::vector<std::string> t1;
@@ -97,19 +97,19 @@ CASE_TEST(ini_loader, vector) {
 
 CASE_TEST(ini_loader, duration_value) {
   std::string conf_path;
-  util::file_system::dirname(__FILE__, 0, conf_path, 3);
+  LIBATFRAME_UTILS_NAMESPACE_ID::file_system::dirname(__FILE__, 0, conf_path, 3);
   conf_path += "/sample/test.ini";
 
-  if (!util::file_system::is_exist(conf_path.c_str())) {
+  if (!LIBATFRAME_UTILS_NAMESPACE_ID::file_system::is_exist(conf_path.c_str())) {
     CASE_MSG_INFO() << CASE_MSG_FCOLOR(YELLOW) << conf_path << " not found, skip ini_loader.duration_value"
                     << std::endl;
     return;
   }
 
-  util::config::ini_loader cfg_loader;
+  LIBATFRAME_UTILS_NAMESPACE_ID::config::ini_loader cfg_loader;
   cfg_loader.load_file(conf_path);
 
-  util::config::duration_value dur;
+  LIBATFRAME_UTILS_NAMESPACE_ID::config::duration_value dur;
   cfg_loader.dump_to("system.interval_ns", dur, true);
   CASE_EXPECT_EQ(0, dur.sec);
   CASE_EXPECT_EQ(123, dur.nsec);
@@ -145,18 +145,18 @@ CASE_TEST(ini_loader, duration_value) {
 
 CASE_TEST(ini_loader, map) {
   std::string conf_path;
-  util::file_system::dirname(__FILE__, 0, conf_path, 3);
+  LIBATFRAME_UTILS_NAMESPACE_ID::file_system::dirname(__FILE__, 0, conf_path, 3);
   conf_path += "/sample/test.ini";
 
-  if (!util::file_system::is_exist(conf_path.c_str())) {
+  if (!LIBATFRAME_UTILS_NAMESPACE_ID::file_system::is_exist(conf_path.c_str())) {
     CASE_MSG_INFO() << CASE_MSG_FCOLOR(YELLOW) << conf_path << " not found, skip ini_loader.vector" << std::endl;
     return;
   }
 
-  util::config::ini_loader cfg_loader;
+  LIBATFRAME_UTILS_NAMESPACE_ID::config::ini_loader cfg_loader;
   cfg_loader.load_file(conf_path);
 
-  util::config::ini_value& map_value = cfg_loader.get_node("system.test");
+  LIBATFRAME_UTILS_NAMESPACE_ID::config::ini_value& map_value = cfg_loader.get_node("system.test");
   auto iter = map_value.get_children().find("map.string");
   CASE_EXPECT_TRUE(iter != map_value.get_children().end());
   if (iter != map_value.get_children().end()) {

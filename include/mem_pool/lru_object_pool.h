@@ -51,7 +51,7 @@
 #  include <set>
 #endif
 
-namespace util {
+LIBATFRAME_UTILS_NAMESPACE_BEGIN
 namespace mempool {
 
 class LIBATFRAME_UTILS_API lru_pool_base {
@@ -115,7 +115,7 @@ class lru_pool_manager {
    * @brief 获取实例缓存数量
    * @note 如果不是非常了解这个数值的作用，请不要修改它
    */
-  LIBATFRAME_UTILS_API const util::lock::seq_alloc_u64 &item_count() const;
+  LIBATFRAME_UTILS_API const LIBATFRAME_UTILS_NAMESPACE_ID::lock::seq_alloc_u64 &item_count() const;
 
   /**
    * @brief 主动GC，会触发阈值自适应
@@ -155,7 +155,7 @@ class lru_pool_manager {
  private:
   size_t item_min_bound_;
   size_t item_max_bound_;
-  util::lock::seq_alloc_u64 item_count_;
+  LIBATFRAME_UTILS_NAMESPACE_ID::lock::seq_alloc_u64 item_count_;
   size_t proc_item_count_;
   size_t gc_item_;
   check_list_t checked_list_;
@@ -488,6 +488,6 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY lru_pool : public lru_pool_base {
 #endif
 };
 }  // namespace mempool
-}  // namespace util
+LIBATFRAME_UTILS_NAMESPACE_END
 
 #endif /* _UTIL_MEMPOOL_LRUOBJECTPOOL_H_ */

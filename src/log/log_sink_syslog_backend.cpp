@@ -16,7 +16,7 @@
 #  include "lock/lock_holder.h"
 #  include "lock/spin_rw_lock.h"
 
-namespace util {
+LIBATFRAME_UTILS_NAMESPACE_BEGIN
 namespace log {
 
 class log_sink_syslog_backend_handle {
@@ -35,16 +35,18 @@ class log_sink_syslog_backend_handle {
 
   static std::shared_ptr<log_sink_syslog_backend_handle> mutable_instance(const char *ident, int option, int facility) {
     static std::shared_ptr<log_sink_syslog_backend_handle> syslog_handle;
-    static util::lock::spin_rw_lock syslog_lock;
+    static LIBATFRAME_UTILS_NAMESPACE_ID::lock::spin_rw_lock syslog_lock;
 
     {
-      util::lock::read_lock_holder<util::lock::spin_rw_lock> guard{syslog_lock};
+      LIBATFRAME_UTILS_NAMESPACE_ID::lock::read_lock_holder<LIBATFRAME_UTILS_NAMESPACE_ID::lock::spin_rw_lock> guard{
+          syslog_lock};
       if (syslog_handle) {
         return syslog_handle;
       }
     }
 
-    util::lock::write_lock_holder<util::lock::spin_rw_lock> guard{syslog_lock};
+    LIBATFRAME_UTILS_NAMESPACE_ID::lock::write_lock_holder<LIBATFRAME_UTILS_NAMESPACE_ID::lock::spin_rw_lock> guard{
+        syslog_lock};
     syslog_handle = std::make_shared<log_sink_syslog_backend_handle>(ident, option, facility);
     return syslog_handle;
   };
@@ -115,6 +117,6 @@ LIBATFRAME_UTILS_API void log_sink_syslog_backend::operator()(const log_formatte
 }
 
 }  // namespace log
-}  // namespace util
+LIBATFRAME_UTILS_NAMESPACE_END
 
 #endif

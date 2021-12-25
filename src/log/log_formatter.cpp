@@ -11,7 +11,7 @@
 
 #include "log/log_formatter.h"
 
-namespace util {
+LIBATFRAME_UTILS_NAMESPACE_BEGIN
 namespace log {
 namespace detail {
 static const char *log_formatter_get_level_name(int l) {
@@ -72,8 +72,8 @@ LIBATFRAME_UTILS_API bool log_formatter::check_flag(int32_t flags, int32_t check
 LIBATFRAME_UTILS_API struct tm *log_formatter::get_iso_tm() {
   static time_t tm_tp = 0;
   static struct tm tm_obj;
-  if (tm_tp != util::time::time_utility::get_sys_now()) {
-    tm_tp = util::time::time_utility::get_sys_now();
+  if (tm_tp != LIBATFRAME_UTILS_NAMESPACE_ID::time::time_utility::get_sys_now()) {
+    tm_tp = LIBATFRAME_UTILS_NAMESPACE_ID::time::time_utility::get_sys_now();
     UTIL_STRFUNC_LOCALTIME_S(&tm_tp, &tm_obj);  // lgtm [cpp/potentially-dangerous-function]
   }
 
@@ -279,7 +279,7 @@ LIBATFRAME_UTILS_API size_t log_formatter::format(char *buff, size_t bufz, const
         if (bufz - ret < 1) {
           running = false;
         } else {
-          time_t ms = ::util::time::time_utility::get_now_usec() / 10;
+          time_t ms = LIBATFRAME_UTILS_NAMESPACE_ID::time::time_utility::get_now_usec() / 10;
           if (bufz - ret >= 1) {
             buff[ret++] = static_cast<char>(ms / 10000 + '0');
           }
@@ -451,7 +451,7 @@ LIBATFRAME_UTILS_API log_formatter::level_t::type log_formatter::get_level_by_na
 
   // number, directly convert it
   if (name && (name[0] == '\\' || (name[0] >= '0' && name[0] <= '9'))) {
-    int l = util::string::to_int<int>(name);
+    int l = LIBATFRAME_UTILS_NAMESPACE_ID::string::to_int<int>(name);
     if (l >= 0 && l <= level_t::LOG_LW_DEBUG) {
       return static_cast<level_t::type>(l);
     }
@@ -497,4 +497,4 @@ LIBATFRAME_UTILS_API log_formatter::level_t::type log_formatter::get_level_by_na
 }
 
 }  // namespace log
-}  // namespace util
+LIBATFRAME_UTILS_NAMESPACE_END

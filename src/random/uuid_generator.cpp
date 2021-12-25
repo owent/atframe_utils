@@ -91,21 +91,24 @@
 
 #  if defined(LIBATFRAME_UTILS_ENABLE_LIBUUID) && LIBATFRAME_UTILS_ENABLE_LIBUUID
 #    if defined(UTIL_CONFIG_COMPILER_CXX_STATIC_ASSERT) && UTIL_CONFIG_COMPILER_CXX_STATIC_ASSERT
-#      if (defined(__cplusplus) && __cplusplus >= 201402L) || ((defined(_MSVC_LANG) && _MSVC_LANG >= 201402L))
+#      if ((defined(_MSVC_LANG) && _MSVC_LANG >= 201402L)) ||                       \
+          (defined(__cplusplus) && __cplusplus >= 201402L &&                        \
+           !(!defined(__clang__) && defined(__GNUC__) && defined(__GNUC_MINOR__) && \
+             __GNUC__ * 100 + __GNUC_MINOR__ <= 409))
 UTIL_CONFIG_STATIC_ASSERT(std::is_trivially_copyable<uuid_t>::value);
-UTIL_CONFIG_STATIC_ASSERT(std::is_trivially_copyable<util::random::uuid>::value);
+UTIL_CONFIG_STATIC_ASSERT(std::is_trivially_copyable<LIBATFRAME_UTILS_NAMESPACE_ID::random::uuid>::value);
 #      elif (defined(__cplusplus) && __cplusplus >= 201103L) || ((defined(_MSVC_LANG) && _MSVC_LANG >= 201103L))
 UTIL_CONFIG_STATIC_ASSERT(std::is_trivial<uuid_t>::value);
-UTIL_CONFIG_STATIC_ASSERT(std::is_trivial<util::random::uuid>::value);
+UTIL_CONFIG_STATIC_ASSERT(std::is_trivial<LIBATFRAME_UTILS_NAMESPACE_ID::random::uuid>::value);
 #      else
 UTIL_CONFIG_STATIC_ASSERT(std::is_pod<uuid_t>::value);
-UTIL_CONFIG_STATIC_ASSERT(std::is_pod<util::random::uuid>::value);
+UTIL_CONFIG_STATIC_ASSERT(std::is_pod<LIBATFRAME_UTILS_NAMESPACE_ID::random::uuid>::value);
 #      endif
-UTIL_CONFIG_STATIC_ASSERT(sizeof(uuid_t) == sizeof(util::random::uuid));
+UTIL_CONFIG_STATIC_ASSERT(sizeof(uuid_t) == sizeof(LIBATFRAME_UTILS_NAMESPACE_ID::random::uuid));
 #    endif
 #  endif
 
-namespace util {
+LIBATFRAME_UTILS_NAMESPACE_BEGIN
 namespace random {
 
 #  if defined(LIBATFRAME_UTILS_ENABLE_UUID_INTERNAL_IMPLEMENT) && LIBATFRAME_UTILS_ENABLE_UUID_INTERNAL_IMPLEMENT
@@ -177,12 +180,13 @@ static int getuid(void) { return 1; }
  * use glibc pseudo-random functions.
  */
 static void random_get_bytes(unsigned char *buf, size_t nbytes) {
-  using uuid_generator_rand_engine = util::random::mt19937_64;
-  static util::lock::spin_lock random_generator_lock;
+  using uuid_generator_rand_engine = LIBATFRAME_UTILS_NAMESPACE_ID::random::mt19937_64;
+  static LIBATFRAME_UTILS_NAMESPACE_ID::lock::spin_lock random_generator_lock;
   static uuid_generator_rand_engine random_generator;
   static bool uuid_generator_rand_engine_inited = false;
 
-  util::lock::lock_holder<util::lock::spin_lock> lock_guard(random_generator_lock);
+  LIBATFRAME_UTILS_NAMESPACE_ID::lock::lock_holder<LIBATFRAME_UTILS_NAMESPACE_ID::lock::spin_lock> lock_guard(
+      random_generator_lock);
 
   if (unlikely(!uuid_generator_rand_engine_inited)) {
     struct timeval tv;
@@ -426,7 +430,7 @@ try_again:
   return ret;
 }
 
-static int __uuid_generate_time(util::random::uuid &out) {
+static int __uuid_generate_time(LIBATFRAME_UTILS_NAMESPACE_ID::random::uuid &out) {
   static unsigned char node_id[6];
   static int has_init = 0;
   uint32_t clock_mid;
@@ -452,7 +456,7 @@ static int __uuid_generate_time(util::random::uuid &out) {
   return ret;
 }
 
-static void __uuid_generate_random(util::random::uuid &out) {
+static void __uuid_generate_random(LIBATFRAME_UTILS_NAMESPACE_ID::random::uuid &out) {
   random_get_bytes(reinterpret_cast<unsigned char *>(&out), sizeof(out));
   // Set version
   out.clock_seq = (out.clock_seq & 0x3FFF) | 0x8000;
@@ -474,7 +478,7 @@ static void __uuid_generate_random(util::random::uuid &out) {
  * /dev/urandom is available, since otherwise we won't have
  * high-quality randomness.
  */
-// static void uuid_generate(util::random::uuid& out) {
+// static void uuid_generate(LIBATFRAME_UTILS_NAMESPACE_ID::random::uuid& out) {
 //     if (have_random_source()) {
 //         __uuid_generate_random(out);
 //     } else {
@@ -629,6 +633,6 @@ LIBATFRAME_UTILS_API std::string uuid_generator::generate_string_time(bool remov
   return uuid_to_string(generate_time(), remove_minus);
 }
 }  // namespace random
-}  // namespace util
+LIBATFRAME_UTILS_NAMESPACE_END
 
 #endif

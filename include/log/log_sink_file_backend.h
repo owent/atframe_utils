@@ -18,7 +18,7 @@
 #include "lock/spin_lock.h"
 #include "log_formatter.h"
 
-namespace util {
+LIBATFRAME_UTILS_NAMESPACE_BEGIN
 namespace log {
 /**
  * @brief 文件日志后端
@@ -134,6 +134,6 @@ class log_sink_file_backend {
   file_impl_t log_file_;
 };
 }  // namespace log
-}  // namespace util
+LIBATFRAME_UTILS_NAMESPACE_END
 
 #endif

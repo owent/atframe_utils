@@ -35,7 +35,7 @@
 
 #  include "xxtea.h"
 
-namespace util {
+LIBATFRAME_UTILS_NAMESPACE_BEGIN
 namespace crypto {
 struct cipher_interface_info_t;
 
@@ -238,7 +238,7 @@ class cipher {
   const cipher_kt_t *cipher_kt_;
   std::vector<unsigned char> iv_;
   struct xxtea_context_t {
-    ::util::xxtea_key key;
+    LIBATFRAME_UTILS_NAMESPACE_ID::xxtea_key key;
   };
   struct libsodium_context_t {
     unsigned char key[32];
@@ -254,7 +254,7 @@ class cipher {
   };
 };
 }  // namespace crypto
-}  // namespace util
+LIBATFRAME_UTILS_NAMESPACE_END
 
 #endif
 

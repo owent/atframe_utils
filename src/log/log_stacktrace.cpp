@@ -146,7 +146,7 @@ class log_stacktrace_com_holder {
 #  define USING_LIBCXX_ABI 1
 #endif
 
-namespace util {
+LIBATFRAME_UTILS_NAMESPACE_BEGIN
 namespace log {
 namespace details {
 const stacktrace_options &default_stacktrace_options() {
@@ -754,4 +754,4 @@ LIBATFRAME_UTILS_API size_t stacktrace_write(char *buf, size_t bufsz, const stac
 }
 #endif
 }  // namespace log
-}  // namespace util
+LIBATFRAME_UTILS_NAMESPACE_END

@@ -7,7 +7,7 @@
 #include <ctime>
 #include <memory>
 
-namespace util {
+LIBATFRAME_UTILS_NAMESPACE_BEGIN
 namespace mempool {
 LIBATFRAME_UTILS_API lru_pool_base::list_type_base::list_type_base() {}
 LIBATFRAME_UTILS_API lru_pool_base::list_type_base::~list_type_base() {}
@@ -49,7 +49,9 @@ LIBATFRAME_UTILS_API size_t lru_pool_manager::get_item_adjust_max() const { retu
  * @brief 获取实例缓存数量
  * @note 如果不是非常了解这个数值的作用，请不要修改它
  */
-LIBATFRAME_UTILS_API const util::lock::seq_alloc_u64 &lru_pool_manager::item_count() const { return item_count_; }
+LIBATFRAME_UTILS_API const LIBATFRAME_UTILS_NAMESPACE_ID::lock::seq_alloc_u64 &lru_pool_manager::item_count() const {
+  return item_count_;
+}
 
 /**
  * @brief 主动GC，会触发阈值自适应
@@ -228,4 +230,4 @@ LIBATFRAME_UTILS_API bool lru_pool_manager::check_tick(time_t tp) {
 }
 
 }  // namespace mempool
-}  // namespace util
+LIBATFRAME_UTILS_NAMESPACE_END

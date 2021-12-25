@@ -24,7 +24,7 @@
 #  undef max
 #endif
 
-namespace util {
+LIBATFRAME_UTILS_NAMESPACE_BEGIN
 
 namespace detail {
 template <bool CHECK_ENABLE>
@@ -114,7 +114,7 @@ LIBATFRAME_UTILS_API void xxtea_encrypt(const xxtea_key *key, const void *input,
     }
 
     *olen = real_olen;
-    util::xxtea_encrypt(key, output, *olen);
+    LIBATFRAME_UTILS_NAMESPACE_ID::xxtea_encrypt(key, output, *olen);
 
     is_success = true;
   } while (false);
@@ -180,7 +180,7 @@ LIBATFRAME_UTILS_API void xxtea_decrypt(const xxtea_key *key, const void *input,
     }
 
     *olen = real_olen;
-    util::xxtea_decrypt(key, output, *olen);
+    LIBATFRAME_UTILS_NAMESPACE_ID::xxtea_decrypt(key, output, *olen);
 
     is_success = true;
   } while (false);
@@ -189,4 +189,4 @@ LIBATFRAME_UTILS_API void xxtea_decrypt(const xxtea_key *key, const void *input,
     *olen = 0;
   }
 }
-}  // namespace util
+LIBATFRAME_UTILS_NAMESPACE_END

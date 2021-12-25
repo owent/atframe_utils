@@ -115,8 +115,9 @@ class test_manager {
 
   template <class TVAL>
   struct try_convert_to_string_view<TVAL, true> {
-    using value_type = typename std::conditional<std::is_same<std::nullptr_t, typename std::decay<TVAL>::type>::value,
-                                                 std::nullptr_t, util::nostd::string_view>::type;
+    using value_type =
+        typename std::conditional<std::is_same<std::nullptr_t, typename std::decay<TVAL>::type>::value, std::nullptr_t,
+                                  LIBATFRAME_UTILS_NAMESPACE_ID::nostd::string_view>::type;
     static inline value_type pick(TVAL v) { return value_type(v); }
   };
 
@@ -129,10 +130,12 @@ class test_manager {
   template <class TL, class TR, bool has_pointer, bool has_integer, bool all_integer>
   struct pick_param {
     template <class T>
-    typename try_convert_to_string_view<T, std::is_convertible<T, util::nostd::string_view>::value>::value_type
+    typename try_convert_to_string_view<
+        T, std::is_convertible<T, LIBATFRAME_UTILS_NAMESPACE_ID::nostd::string_view>::value>::value_type
     operator()(T &&t) {
-      return try_convert_to_string_view<T, std::is_convertible<T, util::nostd::string_view>::value>::pick(
-          std::forward<T>(t));
+      return try_convert_to_string_view<
+          T,
+          std::is_convertible<T, LIBATFRAME_UTILS_NAMESPACE_ID::nostd::string_view>::value>::pick(std::forward<T>(t));
     }
   };
 
@@ -145,8 +148,9 @@ class test_manager {
       return true;
     } else {
       inc_failed_counter();
-      util::cli::shell_stream ss(std::cout);
-      ss() << util::cli::shell_font_style::SHELL_FONT_COLOR_RED << "FAILED => " << file << ":" << line << std::endl
+      LIBATFRAME_UTILS_NAMESPACE_ID::cli::shell_stream ss(std::cout);
+      ss() << LIBATFRAME_UTILS_NAMESPACE_ID::cli::shell_font_style::SHELL_FONT_COLOR_RED << "FAILED => " << file << ":"
+           << line << std::endl
            << "Expected: " << lexpr << " == " << rexpr << std::endl
            << lexpr << ": " << l << std::endl
            << rexpr << ": " << r << std::endl;
@@ -164,8 +168,9 @@ class test_manager {
       return true;
     } else {
       inc_failed_counter();
-      util::cli::shell_stream ss(std::cout);
-      ss() << util::cli::shell_font_style::SHELL_FONT_COLOR_RED << "FAILED => " << file << ":" << line << std::endl
+      LIBATFRAME_UTILS_NAMESPACE_ID::cli::shell_stream ss(std::cout);
+      ss() << LIBATFRAME_UTILS_NAMESPACE_ID::cli::shell_font_style::SHELL_FONT_COLOR_RED << "FAILED => " << file << ":"
+           << line << std::endl
            << "Expected: " << lexpr << " ！= " << rexpr << std::endl
            << lexpr << ": " << l << std::endl
            << rexpr << ": " << r << std::endl;
@@ -183,8 +188,9 @@ class test_manager {
       return true;
     } else {
       inc_failed_counter();
-      util::cli::shell_stream ss(std::cout);
-      ss() << util::cli::shell_font_style::SHELL_FONT_COLOR_RED << "FAILED => " << file << ":" << line << std::endl
+      LIBATFRAME_UTILS_NAMESPACE_ID::cli::shell_stream ss(std::cout);
+      ss() << LIBATFRAME_UTILS_NAMESPACE_ID::cli::shell_font_style::SHELL_FONT_COLOR_RED << "FAILED => " << file << ":"
+           << line << std::endl
            << "Expected: " << lexpr << " < " << rexpr << std::endl
            << lexpr << ": " << l << std::endl
            << rexpr << ": " << r << std::endl;
@@ -202,8 +208,9 @@ class test_manager {
       return true;
     } else {
       inc_failed_counter();
-      util::cli::shell_stream ss(std::cout);
-      ss() << util::cli::shell_font_style::SHELL_FONT_COLOR_RED << "FAILED => " << file << ":" << line << std::endl
+      LIBATFRAME_UTILS_NAMESPACE_ID::cli::shell_stream ss(std::cout);
+      ss() << LIBATFRAME_UTILS_NAMESPACE_ID::cli::shell_font_style::SHELL_FONT_COLOR_RED << "FAILED => " << file << ":"
+           << line << std::endl
            << "Expected: " << lexpr << " <= " << rexpr << std::endl
            << lexpr << ": " << l << std::endl
            << rexpr << ": " << r << std::endl;
@@ -221,8 +228,9 @@ class test_manager {
       return true;
     } else {
       inc_failed_counter();
-      util::cli::shell_stream ss(std::cout);
-      ss() << util::cli::shell_font_style::SHELL_FONT_COLOR_RED << "FAILED => " << file << ":" << line << std::endl
+      LIBATFRAME_UTILS_NAMESPACE_ID::cli::shell_stream ss(std::cout);
+      ss() << LIBATFRAME_UTILS_NAMESPACE_ID::cli::shell_font_style::SHELL_FONT_COLOR_RED << "FAILED => " << file << ":"
+           << line << std::endl
            << "Expected: " << lexpr << " > " << rexpr << std::endl
            << lexpr << ": " << l << std::endl
            << rexpr << ": " << r << std::endl;
@@ -240,8 +248,9 @@ class test_manager {
       return true;
     } else {
       inc_failed_counter();
-      util::cli::shell_stream ss(std::cout);
-      ss() << util::cli::shell_font_style::SHELL_FONT_COLOR_RED << "FAILED => " << file << ":" << line << std::endl
+      LIBATFRAME_UTILS_NAMESPACE_ID::cli::shell_stream ss(std::cout);
+      ss() << LIBATFRAME_UTILS_NAMESPACE_ID::cli::shell_font_style::SHELL_FONT_COLOR_RED << "FAILED => " << file << ":"
+           << line << std::endl
            << "Expected: " << lexpr << " >= " << rexpr << std::endl
            << lexpr << ": " << l << std::endl
            << rexpr << ": " << r << std::endl;
@@ -257,8 +266,9 @@ class test_manager {
       return true;
     } else {
       inc_failed_counter();
-      util::cli::shell_stream ss(std::cout);
-      ss() << util::cli::shell_font_style::SHELL_FONT_COLOR_RED << "FAILED => " << file << ":" << line << std::endl
+      LIBATFRAME_UTILS_NAMESPACE_ID::cli::shell_stream ss(std::cout);
+      ss() << LIBATFRAME_UTILS_NAMESPACE_ID::cli::shell_font_style::SHELL_FONT_COLOR_RED << "FAILED => " << file << ":"
+           << line << std::endl
            << "Expected true: " << expr << std::endl
            << expr << ": " << l << std::endl;
 
@@ -273,8 +283,9 @@ class test_manager {
       return true;
     } else {
       inc_failed_counter();
-      util::cli::shell_stream ss(std::cout);
-      ss() << util::cli::shell_font_style::SHELL_FONT_COLOR_RED << "FAILED => " << file << ":" << line << std::endl
+      LIBATFRAME_UTILS_NAMESPACE_ID::cli::shell_stream ss(std::cout);
+      ss() << LIBATFRAME_UTILS_NAMESPACE_ID::cli::shell_font_style::SHELL_FONT_COLOR_RED << "FAILED => " << file << ":"
+           << line << std::endl
            << "Expected false: " << expr << std::endl
            << expr << ": " << l << std::endl;
 

@@ -1,7 +1,7 @@
 #include <common/string_oprs.h>
 #include <sstream>
 
-namespace util {
+LIBATFRAME_UTILS_NAMESPACE_BEGIN
 namespace string {
 LIBATFRAME_UTILS_API const char *version_tok(const char *v, int64_t &out) {
   if (nullptr == v) {
@@ -82,16 +82,16 @@ LIBATFRAME_UTILS_API std::string version_normalize(const char *v) {
 }
 
 }  // namespace string
-}  // namespace util
+LIBATFRAME_UTILS_NAMESPACE_END
 
 LIBATFRAME_UTILS_API_C(const char *) util_string_version_tok(const char *v, int64_t &out) {
-  return util::string::version_tok(v, out);
+  return LIBATFRAME_UTILS_NAMESPACE_ID::string::version_tok(v, out);
 }
 
 LIBATFRAME_UTILS_API_C(int) util_string_version_compare(const char *l, const char *r) {
-  return util::string::version_compare(l, r);
+  return LIBATFRAME_UTILS_NAMESPACE_ID::string::version_compare(l, r);
 }
 
 LIBATFRAME_UTILS_API std::string util_string_version_normalize(const char *v) {
-  return util::string::version_normalize(v);
+  return LIBATFRAME_UTILS_NAMESPACE_ID::string::version_normalize(v);
 }

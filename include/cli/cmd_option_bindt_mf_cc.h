@@ -15,7 +15,7 @@
  * 成员函数绑定器
  */
 
-namespace util {
+LIBATFRAME_UTILS_NAMESPACE_BEGIN
 namespace cli {
 // 绑定器集合
 namespace binder {
@@ -43,5 +43,5 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY cmd_option_bindt_mf_cc_caller {
 };
 }  // namespace binder
 }  // namespace cli
-}  // namespace util
+LIBATFRAME_UTILS_NAMESPACE_END
 #endif /* _CMDOPTIONBINDT_MF_CC_H_ */

@@ -33,14 +33,15 @@ extern "C" {
 #    include <uv.h>
 }
 
-namespace util {
+LIBATFRAME_UTILS_NAMESPACE_BEGIN
 namespace network {
 
 /**
  * http_request using libuv
  * @see https://curl.haxx.se/libcurl/c/multi-uv.html
  */
-class http_request : public std::enable_shared_from_this<http_request>, public ::util::design_pattern::noncopyable {
+class http_request : public std::enable_shared_from_this<http_request>,
+                     public LIBATFRAME_UTILS_NAMESPACE_ID::design_pattern::noncopyable {
  public:
   /**
    * @brief types
@@ -358,7 +359,7 @@ class http_request : public std::enable_shared_from_this<http_request>, public :
     curl_httppost *begin;
     curl_httppost *end;
     curl_slist *headerlist;
-    util::tquerystring qs_fields;
+    LIBATFRAME_UTILS_NAMESPACE_ID::tquerystring qs_fields;
 
     size_t posted_size;
     FILE *uploaded_file;
@@ -385,7 +386,7 @@ class http_request : public std::enable_shared_from_this<http_request>, public :
   on_verbose_fn_t on_verbose_fn_;
 };
 }  // namespace network
-}  // namespace util
+LIBATFRAME_UTILS_NAMESPACE_END
 #  endif
 
 #endif

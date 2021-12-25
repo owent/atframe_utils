@@ -19,7 +19,7 @@
 // 默认文件大小是256KB
 #define DEFAULT_FILE_SIZE 256 * 1024
 
-namespace util {
+LIBATFRAME_UTILS_NAMESPACE_BEGIN
 namespace log {
 
 LIBATFRAME_UTILS_API log_sink_file_backend::log_sink_file_backend()
@@ -81,19 +81,19 @@ LIBATFRAME_UTILS_API void log_sink_file_backend::set_file_pattern(const std::str
   // 计算检查周期，考虑到某些地区有夏令时，所以最大是小时。Unix时间戳会抹平闰秒，所以可以不考虑闰秒
   if (check_interval[(int)'S'] == 0) {
     check_interval[(int)'f'] = 1;
-    check_interval[(int)'R'] = util::time::time_utility::MINITE_SECONDS;
+    check_interval[(int)'R'] = LIBATFRAME_UTILS_NAMESPACE_ID::time::time_utility::MINITE_SECONDS;
     check_interval[(int)'T'] = 1;
-    check_interval[(int)'F'] = util::time::time_utility::HOUR_SECONDS;
+    check_interval[(int)'F'] = LIBATFRAME_UTILS_NAMESPACE_ID::time::time_utility::HOUR_SECONDS;
     check_interval[(int)'S'] = 1;
-    check_interval[(int)'M'] = util::time::time_utility::MINITE_SECONDS;
-    check_interval[(int)'I'] = util::time::time_utility::HOUR_SECONDS;
-    check_interval[(int)'H'] = util::time::time_utility::HOUR_SECONDS;
-    check_interval[(int)'w'] = util::time::time_utility::HOUR_SECONDS;
-    check_interval[(int)'d'] = util::time::time_utility::HOUR_SECONDS;
-    check_interval[(int)'j'] = util::time::time_utility::HOUR_SECONDS;
-    check_interval[(int)'m'] = util::time::time_utility::HOUR_SECONDS;
-    check_interval[(int)'y'] = util::time::time_utility::HOUR_SECONDS;
-    check_interval[(int)'Y'] = util::time::time_utility::HOUR_SECONDS;
+    check_interval[(int)'M'] = LIBATFRAME_UTILS_NAMESPACE_ID::time::time_utility::MINITE_SECONDS;
+    check_interval[(int)'I'] = LIBATFRAME_UTILS_NAMESPACE_ID::time::time_utility::HOUR_SECONDS;
+    check_interval[(int)'H'] = LIBATFRAME_UTILS_NAMESPACE_ID::time::time_utility::HOUR_SECONDS;
+    check_interval[(int)'w'] = LIBATFRAME_UTILS_NAMESPACE_ID::time::time_utility::HOUR_SECONDS;
+    check_interval[(int)'d'] = LIBATFRAME_UTILS_NAMESPACE_ID::time::time_utility::HOUR_SECONDS;
+    check_interval[(int)'j'] = LIBATFRAME_UTILS_NAMESPACE_ID::time::time_utility::HOUR_SECONDS;
+    check_interval[(int)'m'] = LIBATFRAME_UTILS_NAMESPACE_ID::time::time_utility::HOUR_SECONDS;
+    check_interval[(int)'y'] = LIBATFRAME_UTILS_NAMESPACE_ID::time::time_utility::HOUR_SECONDS;
+    check_interval[(int)'Y'] = LIBATFRAME_UTILS_NAMESPACE_ID::time::time_utility::HOUR_SECONDS;
   }
 
   {
@@ -151,7 +151,7 @@ LIBATFRAME_UTILS_API void log_sink_file_backend::operator()(const log_formatter:
 
   f->write(content, content_size);
   f->put('\n');
-  time_t now = util::time::time_utility::get_sys_now();
+  time_t now = LIBATFRAME_UTILS_NAMESPACE_ID::time::time_utility::get_sys_now();
 
   // 日志级别高于指定级别，需要刷入
   if (static_cast<uint32_t>(caller.level_id) <= log_file_.auto_flush) {
@@ -272,9 +272,9 @@ LIBATFRAME_UTILS_API std::shared_ptr<std::ofstream> log_sink_file_backend::open_
   }
 
   std::string dir_name;
-  util::file_system::dirname(log_file, file_path_len, dir_name);
-  if (!dir_name.empty() && !util::file_system::is_exist(dir_name.c_str())) {
-    util::file_system::mkdir(dir_name.c_str(), true);
+  LIBATFRAME_UTILS_NAMESPACE_ID::file_system::dirname(log_file, file_path_len, dir_name);
+  if (!dir_name.empty() && !LIBATFRAME_UTILS_NAMESPACE_ID::file_system::is_exist(dir_name.c_str())) {
+    LIBATFRAME_UTILS_NAMESPACE_ID::file_system::mkdir(dir_name.c_str(), true);
   }
 
   // 销毁原先的内容
@@ -297,7 +297,7 @@ LIBATFRAME_UTILS_API std::shared_ptr<std::ofstream> log_sink_file_backend::open_
   log_file_.written_size = static_cast<size_t>(of->tellp());
 
   log_file_.opened_file = of;
-  log_file_.opened_file_point_ = util::time::time_utility::get_sys_now();
+  log_file_.opened_file_point_ = LIBATFRAME_UTILS_NAMESPACE_ID::time::time_utility::get_sys_now();
   log_file_.file_path.assign(log_file, file_path_len);
 
   // 硬链接别名
@@ -319,7 +319,8 @@ LIBATFRAME_UTILS_API std::shared_ptr<std::ofstream> log_sink_file_backend::open_
       return log_file_.opened_file;
     }
 
-    int res = util::file_system::link(log_file, alias_log_file, util::file_system::link_opt_t::EN_LOT_FORCE_REWRITE);
+    int res = LIBATFRAME_UTILS_NAMESPACE_ID::file_system::link(
+        log_file, alias_log_file, LIBATFRAME_UTILS_NAMESPACE_ID::file_system::link_opt_t::EN_LOT_FORCE_REWRITE);
     if (res != 0) {
       std::cerr << "link(" << log_file << ", " << alias_log_file << ") failed, errno: " << res << std::endl;
 #  ifdef UTIL_FS_WINDOWS_API
@@ -354,8 +355,8 @@ LIBATFRAME_UTILS_API void log_sink_file_backend::rotate_log() {
 
 LIBATFRAME_UTILS_API void log_sink_file_backend::check_update() {
   if (0 != log_file_.opened_file_point_) {
-    if (0 == check_interval_ ||
-        util::time::time_utility::get_sys_now() / check_interval_ == log_file_.opened_file_point_ / check_interval_) {
+    if (0 == check_interval_ || LIBATFRAME_UTILS_NAMESPACE_ID::time::time_utility::get_sys_now() / check_interval_ ==
+                                    log_file_.opened_file_point_ / check_interval_) {
       return;
     }
   }
@@ -382,14 +383,14 @@ LIBATFRAME_UTILS_API void log_sink_file_backend::check_update() {
   if (new_file_path == old_file_path) {
     // 本次刷新周期内的文件名未变化，说明检测周期小于实际周期，所以这个周期内不需要再检测了
     // 因为考虑到夏时令，只要大于小时的配置检测周期都设置为小时，必然会小于实际周期然后走到这里
-    log_file_.opened_file_point_ = util::time::time_utility::get_sys_now();
+    log_file_.opened_file_point_ = LIBATFRAME_UTILS_NAMESPACE_ID::time::time_utility::get_sys_now();
     return;
   }
 
   std::string new_dir;
   std::string old_dir;
-  util::file_system::dirname(new_file_path.c_str(), new_file_path.size(), new_dir);
-  util::file_system::dirname(old_file_path.c_str(), old_file_path.size(), old_dir);
+  LIBATFRAME_UTILS_NAMESPACE_ID::file_system::dirname(new_file_path.c_str(), new_file_path.size(), new_dir);
+  LIBATFRAME_UTILS_NAMESPACE_ID::file_system::dirname(old_file_path.c_str(), old_file_path.size(), old_dir);
 
   // 如果目录变化则重置序号
   if (new_dir != old_dir) {
@@ -410,4 +411,4 @@ LIBATFRAME_UTILS_API void log_sink_file_backend::reset_log_file() {
   // log_file_.file_path.clear(); // 保留上一个文件路径，即便已被关闭。用于rotate后的目录变更判定
 }
 }  // namespace log
-}  // namespace util
+LIBATFRAME_UTILS_NAMESPACE_END

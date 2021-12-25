@@ -25,7 +25,7 @@
 #include <config/atframe_utils_build_feature.h>
 #include <config/compiler_features.h>
 
-namespace util {
+LIBATFRAME_UTILS_NAMESPACE_BEGIN
 namespace log {
 struct LIBATFRAME_UTILS_API stacktrace_options {
   uint16_t skip_start_frames;
@@ -37,6 +37,6 @@ LIBATFRAME_UTILS_API bool is_stacktrace_enabled() noexcept;
 
 LIBATFRAME_UTILS_API size_t stacktrace_write(char *buf, size_t bufsz, const stacktrace_options *options = nullptr);
 }  // namespace log
-}  // namespace util
+LIBATFRAME_UTILS_NAMESPACE_END
 
 #endif

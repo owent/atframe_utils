@@ -12,7 +12,7 @@ struct obj_bind0 {
   int m;
   obj_bind0(int _m) : m(_m) {}
 
-  void operator()(util::cli::callback_param par) {
+  void operator()(LIBATFRAME_UTILS_NAMESPACE_ID::cli::callback_param par) {
     printf("On Bind Obj Params:");
     int len = static_cast<int>(par.get_params_number());
     for (int i = 0; i < len; ++i) {
@@ -27,7 +27,7 @@ struct obj_bind1 {
   int m;
   obj_bind1(int _m) : m(_m) {}
 
-  void operator()(util::cli::callback_param par, int a) {
+  void operator()(LIBATFRAME_UTILS_NAMESPACE_ID::cli::callback_param par, int a) {
     printf("On Bind Obj1 Params:");
     int len = static_cast<int>(par.get_params_number());
     for (int i = 0; i < len; ++i) {
@@ -42,7 +42,7 @@ struct obj_bind2 {
   int m;
   obj_bind2(int _m) : m(_m) {}
 
-  void operator()(util::cli::callback_param par, int a, double b) {
+  void operator()(LIBATFRAME_UTILS_NAMESPACE_ID::cli::callback_param par, int a, double b) {
     printf("On Bind Obj2 Params:");
     int len = static_cast<int>(par.get_params_number());
     for (int i = 0; i < len; ++i) {
@@ -57,7 +57,7 @@ struct obj_bind3 {
   int m;
   obj_bind3(int _m) : m(_m) {}
 
-  void operator()(util::cli::callback_param par, int a, double b, bool c) {
+  void operator()(LIBATFRAME_UTILS_NAMESPACE_ID::cli::callback_param par, int a, double b, bool c) {
     printf("On Bind Obj3 Params:");
     int len = static_cast<int>(par.get_params_number());
     for (int i = 0; i < len; ++i) {
@@ -71,7 +71,8 @@ struct obj_bind3 {
 void bind_obj_init() {
   puts("绑定函数对象");
 
-  util::cli::cmd_option::ptr_type co = util::cli::cmd_option::create();
+  LIBATFRAME_UTILS_NAMESPACE_ID::cli::cmd_option::ptr_type co =
+      LIBATFRAME_UTILS_NAMESPACE_ID::cli::cmd_option::create();
   co->bind_cmd("-obj, --object, --bind_object", obj_bind0(105));
   co->bind_cmd("-obj1, --object1", obj_bind1(205), 206);
   co->bind_cmd("-obj2, --object2", obj_bind2(305), 306, 30.6);

@@ -24,7 +24,7 @@
 
 #include <config/atframe_utils_build_feature.h>
 
-namespace util {
+LIBATFRAME_UTILS_NAMESPACE_BEGIN
 namespace hash {
 namespace core {
 template <typename Ty, size_t s>
@@ -295,6 +295,6 @@ LIBATFRAME_UTILS_API_HEAD_ONLY THVal hash_ap(const void *bin, size_t len, THVal 
   return hval;
 }
 }  // namespace hash
-}  // namespace util
+LIBATFRAME_UTILS_NAMESPACE_END
 
 #endif /* HASH_H_ */

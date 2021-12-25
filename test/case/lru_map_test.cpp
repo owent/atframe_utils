@@ -11,7 +11,7 @@
 #include "mem_pool/lru_map.h"
 
 CASE_TEST(lru_map_test, basic_container) {
-  using lru_t = util::mempool::lru_map<int, long>;
+  using lru_t = LIBATFRAME_UTILS_NAMESPACE_ID::mempool::lru_map<int, long>;
   lru_t lru;
   lru.reserve(128);
 
@@ -87,7 +87,7 @@ CASE_TEST(lru_map_test, basic_container) {
 }
 
 CASE_TEST(lru_map_test, erase_range) {
-  using lru_t = util::mempool::lru_map<int, long>;
+  using lru_t = LIBATFRAME_UTILS_NAMESPACE_ID::mempool::lru_map<int, long>;
   lru_t lru;
   lru.reserve(128);
 
@@ -111,7 +111,7 @@ CASE_TEST(lru_map_test, erase_range) {
 }
 
 CASE_TEST(lru_map_test, emplace) {
-  using lru_t = util::mempool::lru_map<int, std::vector<long> >;
+  using lru_t = LIBATFRAME_UTILS_NAMESPACE_ID::mempool::lru_map<int, std::vector<long> >;
   lru_t lru;
   using insert_pair_t = std::pair<lru_t::iterator, bool>;
 
@@ -131,7 +131,7 @@ CASE_TEST(lru_map_test, emplace) {
 }
 
 CASE_TEST(lru_map_test, lru_reorder) {
-  using lru_t = util::mempool::lru_map<int, long>;
+  using lru_t = LIBATFRAME_UTILS_NAMESPACE_ID::mempool::lru_map<int, long>;
   lru_t lru;
 
   for (int i = 1; i <= 60; ++i) {

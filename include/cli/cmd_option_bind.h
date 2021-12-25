@@ -16,7 +16,7 @@
 #include "cli/cmd_option_bindt_cc.h"
 #include "cli/cmd_option_bindt_mf_cc.h"
 
-namespace util {
+LIBATFRAME_UTILS_NAMESPACE_BEGIN
 namespace cli {
 // 标准指令处理函数(无返回值，参数为选项的映射表)
 // void function_name (cmd_option_list&, [参数]); // 函数参数可选
@@ -29,5 +29,5 @@ enum cmd_option_char {
   CMDSPLIT = 0x0008,   // (第四位)指令分隔符
 };
 }  // namespace cli
-}  // namespace util
+LIBATFRAME_UTILS_NAMESPACE_END
 #endif /* _CMDOPTIONBIND_H_ */

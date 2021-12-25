@@ -18,9 +18,9 @@
 
 #  if defined(CRYPTO_USE_OPENSSL) || defined(CRYPTO_USE_LIBRESSL) || defined(CRYPTO_USE_BORINGSSL)
 struct openssl_test_init_wrapper {
-  openssl_test_init_wrapper() { util::crypto::cipher::init_global_algorithm(); }
+  openssl_test_init_wrapper() { LIBATFRAME_UTILS_NAMESPACE_ID::crypto::cipher::init_global_algorithm(); }
 
-  ~openssl_test_init_wrapper() { util::crypto::cipher::cleanup_global_algorithm(); }
+  ~openssl_test_init_wrapper() { LIBATFRAME_UTILS_NAMESPACE_ID::crypto::cipher::cleanup_global_algorithm(); }
 };
 
 static std::shared_ptr<openssl_test_init_wrapper> openssl_test_inited;
@@ -34,7 +34,7 @@ CASE_TEST(crypto_cipher, get_all_cipher_names) {
   }
 #  endif
 
-  const std::vector<std::string> &all_ciphers = util::crypto::cipher::get_all_cipher_names();
+  const std::vector<std::string> &all_ciphers = LIBATFRAME_UTILS_NAMESPACE_ID::crypto::cipher::get_all_cipher_names();
   std::stringstream ss;
   for (size_t i = 0; i < all_ciphers.size(); ++i) {
     if (i) {
@@ -59,7 +59,7 @@ CASE_TEST(crypto_cipher, split_ciphers) {
   res.first = in.c_str();
   res.second = in.c_str();
   while (nullptr != res.second) {
-    res = util::crypto::cipher::ciphertok(res.second);
+    res = LIBATFRAME_UTILS_NAMESPACE_ID::crypto::cipher::ciphertok(res.second);
 
     if (nullptr != res.second && nullptr != res.first) {
       all_ciphers.push_back(std::string(res.first, res.second));
@@ -105,17 +105,17 @@ CASE_TEST(crypto_cipher, aes_cfb) {
   }
 #  endif
 
-  if (nullptr == util::crypto::cipher::get_cipher_by_name("AES-128-CFB")) {
+  if (nullptr == LIBATFRAME_UTILS_NAMESPACE_ID::crypto::cipher::get_cipher_by_name("AES-128-CFB")) {
     CASE_MSG_INFO() << "Current crypto suite do not support AES-128-CFB, just skip the test." << std::endl;
     return;
   }
 
-  if (nullptr == util::crypto::cipher::get_cipher_by_name("AES-192-CFB")) {
+  if (nullptr == LIBATFRAME_UTILS_NAMESPACE_ID::crypto::cipher::get_cipher_by_name("AES-192-CFB")) {
     CASE_MSG_INFO() << "Current crypto suite do not support AES-192-CFB, just skip the test." << std::endl;
     return;
   }
 
-  if (nullptr == util::crypto::cipher::get_cipher_by_name("AES-256-CFB")) {
+  if (nullptr == LIBATFRAME_UTILS_NAMESPACE_ID::crypto::cipher::get_cipher_by_name("AES-256-CFB")) {
     CASE_MSG_INFO() << "Current crypto suite do not support AES-256-CFB, just skip the test." << std::endl;
     return;
   }
@@ -124,9 +124,9 @@ CASE_TEST(crypto_cipher, aes_cfb) {
     int u = i >> 1;
     int v = i & 1;
 
-    util::crypto::cipher ci;
-    int mode = (0 == v) ? (::util::crypto::cipher::mode_t::EN_CMODE_DECRYPT)
-                        : (::util::crypto::cipher::mode_t::EN_CMODE_ENCRYPT);
+    LIBATFRAME_UTILS_NAMESPACE_ID::crypto::cipher ci;
+    int mode = (0 == v) ? (LIBATFRAME_UTILS_NAMESPACE_ID::crypto::cipher::mode_t::EN_CMODE_DECRYPT)
+                        : (LIBATFRAME_UTILS_NAMESPACE_ID::crypto::cipher::mode_t::EN_CMODE_ENCRYPT);
     if (0 == u) {
       CASE_EXPECT_EQ(0, ci.init("AES-128-CFB", mode));
     } else if (1 == u) {
@@ -142,7 +142,7 @@ CASE_TEST(crypto_cipher, aes_cfb) {
 
     unsigned char buf_in[64], buf_out[128];
     size_t olen = sizeof(buf_out);
-    if (::util::crypto::cipher::mode_t::EN_CMODE_DECRYPT == mode) {
+    if (LIBATFRAME_UTILS_NAMESPACE_ID::crypto::cipher::mode_t::EN_CMODE_DECRYPT == mode) {
       memcpy(buf_in, aes_test_cfb128_ct[u], 64);
       CASE_EXPECT_EQ(0, ci.decrypt(buf_in, 64, buf_out, &olen));
 
@@ -174,14 +174,14 @@ CASE_TEST(crypto_cipher, aes_cfb_nopadding_encrypt) {
   }
 #  endif
 
-  if (nullptr == util::crypto::cipher::get_cipher_by_name("AES-256-CFB")) {
+  if (nullptr == LIBATFRAME_UTILS_NAMESPACE_ID::crypto::cipher::get_cipher_by_name("AES-256-CFB")) {
     CASE_MSG_INFO() << "Current crypto suite do not support AES-256-CFB, just skip the test." << std::endl;
     return;
   }
 
   {
-    util::crypto::cipher ci;
-    CASE_EXPECT_EQ(0, ci.init("AES-256-CFB", ::util::crypto::cipher::mode_t::EN_CMODE_ENCRYPT));
+    LIBATFRAME_UTILS_NAMESPACE_ID::crypto::cipher ci;
+    CASE_EXPECT_EQ(0, ci.init("AES-256-CFB", LIBATFRAME_UTILS_NAMESPACE_ID::crypto::cipher::mode_t::EN_CMODE_ENCRYPT));
 
     // CASE_EXPECT_EQ(16, ci.get_iv_size());
     // CASE_EXPECT_EQ(0, ci.set_iv(aes_test_cfb128_iv, 16));
@@ -199,14 +199,14 @@ CASE_TEST(crypto_cipher, aes_cfb_nopadding_encrypt) {
 
       CASE_MSG_INFO() << "AES-256-CFB => txt: " << aes_test_cfb128_nopadding_pt[i] << std::endl;
       CASE_MSG_INFO() << "AES-256-CFB => enc: ";
-      util::string::dumphex(buf_out, olen, std::cout);
+      LIBATFRAME_UTILS_NAMESPACE_ID::string::dumphex(buf_out, olen, std::cout);
       std::cout << std::endl;
     }
   }
 
   {
-    util::crypto::cipher ci;
-    CASE_EXPECT_EQ(0, ci.init("AES-256-CFB", ::util::crypto::cipher::mode_t::EN_CMODE_DECRYPT));
+    LIBATFRAME_UTILS_NAMESPACE_ID::crypto::cipher ci;
+    CASE_EXPECT_EQ(0, ci.init("AES-256-CFB", LIBATFRAME_UTILS_NAMESPACE_ID::crypto::cipher::mode_t::EN_CMODE_DECRYPT));
 
     // CASE_EXPECT_EQ(16, ci.get_iv_size());
     // CASE_EXPECT_EQ(0, ci.set_iv(aes_test_cfb128_iv, 16));
@@ -223,7 +223,7 @@ CASE_TEST(crypto_cipher, aes_cfb_nopadding_encrypt) {
       CASE_EXPECT_EQ(0, memcmp(buf_out, aes_test_cfb128_nopadding_pt[i], buffer_len));
 
       CASE_MSG_INFO() << "AES-256-CFB => dec: ";
-      util::string::dumphex(buf_in, buffer_len, std::cout);
+      LIBATFRAME_UTILS_NAMESPACE_ID::string::dumphex(buf_in, buffer_len, std::cout);
       std::cout << std::endl;
       CASE_MSG_INFO() << "AES-256-CFB => txt: " << ((unsigned char *)buf_out) << std::endl;
     }
@@ -254,7 +254,7 @@ static const unsigned char xtea_test_ct[6][8] = {
 
 CASE_TEST(crypto_cipher, xxtea) {
   for (int i = 0; i < 6; ++i) {
-    util::crypto::cipher ci;
+    LIBATFRAME_UTILS_NAMESPACE_ID::crypto::cipher ci;
     CASE_EXPECT_EQ(0, ci.init("XXTEA"));
     CASE_EXPECT_EQ(0, ci.set_key(xtea_test_key[i], ci.get_key_bits()));
 
@@ -529,8 +529,8 @@ CASE_TEST(crypto_cipher, evp_test) {
 #  endif
 
   std::string evptest_file_path;
-  util::file_system::dirname(__FILE__, 0, evptest_file_path);
-  evptest_file_path += util::file_system::DIRECTORY_SEPARATOR;
+  LIBATFRAME_UTILS_NAMESPACE_ID::file_system::dirname(__FILE__, 0, evptest_file_path);
+  evptest_file_path += LIBATFRAME_UTILS_NAMESPACE_ID::file_system::DIRECTORY_SEPARATOR;
   evptest_file_path += "evptests.txt";
 
   CASE_MSG_INFO() << "Load " << evptest_file_path << " for additional cipher tests." << std::endl;
@@ -539,11 +539,12 @@ CASE_TEST(crypto_cipher, evp_test) {
   evp_test_info info;
 
   while (evp_test_parse_info(fin, info)) {
-    int mode = util::crypto::cipher::mode_t::EN_CMODE_ENCRYPT | util::crypto::cipher::mode_t::EN_CMODE_DECRYPT;
+    int mode = LIBATFRAME_UTILS_NAMESPACE_ID::crypto::cipher::mode_t::EN_CMODE_ENCRYPT |
+               LIBATFRAME_UTILS_NAMESPACE_ID::crypto::cipher::mode_t::EN_CMODE_DECRYPT;
     if (info.operation == EN_ETOT_ENCRYPT) {
-      mode = util::crypto::cipher::mode_t::EN_CMODE_ENCRYPT;
+      mode = LIBATFRAME_UTILS_NAMESPACE_ID::crypto::cipher::mode_t::EN_CMODE_ENCRYPT;
     } else if (info.operation == EN_ETOT_DECRYPT) {
-      mode = util::crypto::cipher::mode_t::EN_CMODE_DECRYPT;
+      mode = LIBATFRAME_UTILS_NAMESPACE_ID::crypto::cipher::mode_t::EN_CMODE_DECRYPT;
     }
 
 #  if defined(CRYPTO_USE_MBEDTLS)
@@ -552,7 +553,7 @@ CASE_TEST(crypto_cipher, evp_test) {
     }
 #  endif
 
-    util::crypto::cipher ci;
+    LIBATFRAME_UTILS_NAMESPACE_ID::crypto::cipher ci;
     if (0 != ci.init(info.cipher.c_str(), mode)) {
       CASE_MSG_INFO() << "\tCipher: " << info.cipher << " => not available for current crypto libraries, skipped."
                       << std::endl;
@@ -570,7 +571,7 @@ CASE_TEST(crypto_cipher, evp_test) {
     buffer.resize((info.plaintext.size() > info.ciphertext.size() ? info.plaintext.size() : info.ciphertext.size()) +
                   ci.get_block_size());
 
-    if (mode & util::crypto::cipher::mode_t::EN_CMODE_ENCRYPT) {
+    if (mode & LIBATFRAME_UTILS_NAMESPACE_ID::crypto::cipher::mode_t::EN_CMODE_ENCRYPT) {
       std::chrono::system_clock::time_point begin = std::chrono::system_clock::now();
       int enc_res = 0;
       const char *failed_step = "memory check";
@@ -617,9 +618,9 @@ CASE_TEST(crypto_cipher, evp_test) {
           CASE_EXPECT_EQ(0, check_tag);
           if (0 != check_tag) {
             std::cout << "Expect Tag: ";
-            util::string::dumphex(info.tag.c_str(), info.tag.size(), std::cout);
+            LIBATFRAME_UTILS_NAMESPACE_ID::string::dumphex(info.tag.c_str(), info.tag.size(), std::cout);
             std::cout << std::endl << "Real   Tag: ";
-            util::string::dumphex(&aead_tag[0], aead_tag_len, std::cout);
+            LIBATFRAME_UTILS_NAMESPACE_ID::string::dumphex(&aead_tag[0], aead_tag_len, std::cout);
             std::cout << std::endl;
           }
         } else {
@@ -638,9 +639,9 @@ CASE_TEST(crypto_cipher, evp_test) {
           CASE_EXPECT_EQ(0, enc_res);
           if (0 != enc_res) {
             std::cout << "Expect CipherText: ";
-            util::string::dumphex(info.ciphertext.c_str(), info.ciphertext.size(), std::cout);
+            LIBATFRAME_UTILS_NAMESPACE_ID::string::dumphex(info.ciphertext.c_str(), info.ciphertext.size(), std::cout);
             std::cout << std::endl << "Real   CipherText: ";
-            util::string::dumphex(&buffer[0], olen, std::cout);
+            LIBATFRAME_UTILS_NAMESPACE_ID::string::dumphex(&buffer[0], olen, std::cout);
             std::cout << std::endl;
           }
         }
@@ -663,7 +664,7 @@ CASE_TEST(crypto_cipher, evp_test) {
       }
     }
 
-    if (mode & util::crypto::cipher::mode_t::EN_CMODE_DECRYPT) {
+    if (mode & LIBATFRAME_UTILS_NAMESPACE_ID::crypto::cipher::mode_t::EN_CMODE_DECRYPT) {
       std::chrono::system_clock::time_point begin = std::chrono::system_clock::now();
       int dec_res = 0;
       const char *failed_step = "memory check";
@@ -718,9 +719,9 @@ CASE_TEST(crypto_cipher, evp_test) {
           CASE_EXPECT_EQ(0, dec_res);
           if (0 != dec_res) {
             std::cout << "Expect PlainText: ";
-            util::string::dumphex(info.plaintext.c_str(), info.plaintext.size(), std::cout);
+            LIBATFRAME_UTILS_NAMESPACE_ID::string::dumphex(info.plaintext.c_str(), info.plaintext.size(), std::cout);
             std::cout << std::endl << "Real   PlainText: ";
-            util::string::dumphex(&buffer[0], olen, std::cout);
+            LIBATFRAME_UTILS_NAMESPACE_ID::string::dumphex(&buffer[0], olen, std::cout);
             std::cout << std::endl;
           }
         }

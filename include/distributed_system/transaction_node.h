@@ -18,7 +18,7 @@
 
 #include "distributed_system/transaction_common_defs.h"
 
-namespace util {
+LIBATFRAME_UTILS_NAMESPACE_BEGIN
 namespace distributed_system {
 // Event: prepare(check conditions)
 // Event: merge(check running[Wound Wait: lock])
@@ -26,4 +26,4 @@ namespace distributed_system {
 // Event: cancle
 // Event: redo
 }  // namespace distributed_system
-}  // namespace util
+LIBATFRAME_UTILS_NAMESPACE_END

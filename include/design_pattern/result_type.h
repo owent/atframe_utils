@@ -16,7 +16,7 @@
 #include <type_traits>
 #include <utility>
 
-namespace util {
+LIBATFRAME_UTILS_NAMESPACE_BEGIN
 namespace design_pattern {
 template <class T>
 struct LIBATFRAME_UTILS_API_HEAD_ONLY small_object_optimize_storage_deleter {
@@ -53,7 +53,9 @@ struct LIBATFRAME_UTILS_API_HEAD_ONLY compact_storage_select_type<void> {
 template <class T>
 struct LIBATFRAME_UTILS_API_HEAD_ONLY compact_storage_select_type {
   typedef typename std::conditional<
-#if (defined(__cplusplus) && __cplusplus >= 201402L) || ((defined(_MSVC_LANG) && _MSVC_LANG >= 201402L))
+#if ((defined(_MSVC_LANG) && _MSVC_LANG >= 201402L)) || \
+    (defined(__cplusplus) && __cplusplus >= 201402L &&  \
+     !(!defined(__clang__) && defined(__GNUC__) && defined(__GNUC_MINOR__) && __GNUC__ * 100 + __GNUC_MINOR__ <= 409))
       std::is_trivially_copyable<T>::value
 #elif (defined(__cplusplus) && __cplusplus >= 201103L) || ((defined(_MSVC_LANG) && _MSVC_LANG >= 201103L))
       std::is_trivial<T>::value
@@ -436,4 +438,4 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY result_type : public result_base_type<TOK, 
   }
 };
 }  // namespace design_pattern
-}  // namespace util
+LIBATFRAME_UTILS_NAMESPACE_END

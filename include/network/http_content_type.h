@@ -21,7 +21,7 @@
 
 #include <config/atframe_utils_build_feature.h>
 
-namespace util {
+LIBATFRAME_UTILS_NAMESPACE_BEGIN
 namespace network {
 namespace http_content_type {
 enum main_type {
@@ -116,5 +116,5 @@ struct LIBATFRAME_UTILS_API http_response_content_type_t {
   enum type {};
 };
 }  // namespace network
-}  // namespace util
+LIBATFRAME_UTILS_NAMESPACE_END
 #endif

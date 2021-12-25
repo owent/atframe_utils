@@ -39,7 +39,7 @@
 
 #include <algorithm/base64.h>
 
-namespace util {
+LIBATFRAME_UTILS_NAMESPACE_BEGIN
 namespace hash {
 class sha {
  public:
@@ -77,18 +77,21 @@ class sha {
   LIBATFRAME_UTILS_API std::string get_output_hex(bool is_uppercase = false) const;
 
   LIBATFRAME_UTILS_API std::string get_output_base64(
-      ::util::base64_mode_t::type bt = ::util::base64_mode_t::EN_BMT_STANDARD) const;
+      LIBATFRAME_UTILS_NAMESPACE_ID::base64_mode_t::type bt =
+          LIBATFRAME_UTILS_NAMESPACE_ID::base64_mode_t::EN_BMT_STANDARD) const;
 
   static LIBATFRAME_UTILS_API std::string hash_to_binary(type t, const void* in, size_t inlen);
   static LIBATFRAME_UTILS_API std::string hash_to_hex(type t, const void* in, size_t inlen, bool is_uppercase = false);
   static LIBATFRAME_UTILS_API std::string hash_to_base64(
-      type t, const void* in, size_t inlen, ::util::base64_mode_t::type bt = ::util::base64_mode_t::EN_BMT_STANDARD);
+      type t, const void* in, size_t inlen,
+      LIBATFRAME_UTILS_NAMESPACE_ID::base64_mode_t::type bt =
+          LIBATFRAME_UTILS_NAMESPACE_ID::base64_mode_t::EN_BMT_STANDARD);
 
  private:
   type hash_type_;
   void* private_raw_data_;
 };
 }  // namespace hash
-}  // namespace util
+LIBATFRAME_UTILS_NAMESPACE_END
 
 #endif

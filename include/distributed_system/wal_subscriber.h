@@ -16,7 +16,7 @@
 
 #include "distributed_system/wal_common_defs.h"
 
-namespace util {
+LIBATFRAME_UTILS_NAMESPACE_BEGIN
 namespace distributed_system {
 
 template <class PrivateDataT, class KeyT, class HashSubscriberKeyT = std::hash<KeyT>,
@@ -300,4 +300,4 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_subscriber {
 };
 
 }  // namespace distributed_system
-}  // namespace util
+LIBATFRAME_UTILS_NAMESPACE_END

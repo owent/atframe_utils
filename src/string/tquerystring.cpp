@@ -5,7 +5,7 @@
 
 #include "string/tquerystring.h"
 
-namespace util {
+LIBATFRAME_UTILS_NAMESPACE_BEGIN
 namespace uri {
 using uri_map_type = bool[256];
 
@@ -567,4 +567,4 @@ LIBATFRAME_UTILS_API types::item_array::ptr_type tquerystring::create_array() { 
 LIBATFRAME_UTILS_API types::item_object::ptr_type tquerystring::create_object() {
   return types::item_object::create();
 };
-}  // namespace util
+LIBATFRAME_UTILS_NAMESPACE_END

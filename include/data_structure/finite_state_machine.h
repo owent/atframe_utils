@@ -15,7 +15,7 @@
 #include <map>
 #include <memory>
 
-namespace util {
+LIBATFRAME_UTILS_NAMESPACE_BEGIN
 namespace ds {
 
 /**
@@ -219,4 +219,4 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY finite_state_machine {
   std::shared_ptr<listener_set_type> enter_to_listener_;
 };
 }  // namespace ds
-}  // namespace util
+LIBATFRAME_UTILS_NAMESPACE_END

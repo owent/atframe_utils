@@ -66,7 +66,7 @@
 #  define UTIL_FS_CLOSE(f) fclose(f)
 #endif
 
-namespace util {
+LIBATFRAME_UTILS_NAMESPACE_BEGIN
 class file_system {
  public:
   static constexpr const char DIRECTORY_SEPARATOR =
@@ -241,6 +241,6 @@ class file_system {
                                        int options = link_opt_t::EN_LOT_DEFAULT);
 #endif
 };
-}  // namespace util
+LIBATFRAME_UTILS_NAMESPACE_END
 
 #endif  //_UTIL_COMMON__FILESYSTEM_H

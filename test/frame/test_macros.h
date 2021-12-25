@@ -99,14 +99,14 @@
 #endif
 
 // 前景色: BLACK,RED,GREEN,YELLOW,BLUE,MAGENTA,CYAN,WHITE
-#define CASE_MSG_FCOLOR(x) util::cli::shell_font_style::SHELL_FONT_COLOR_##x
+#define CASE_MSG_FCOLOR(x) LIBATFRAME_UTILS_NAMESPACE_ID::cli::shell_font_style::SHELL_FONT_COLOR_##x
 // 背景色: BLACK,RED,GREEN,YELLOW,BLUE,MAGENTA,CYAN,WHITE
-#define CASE_MSG_BCOLOR(x) util::cli::shell_font_style::SHELL_FONT_BACKGROUND_COLOR_##x
+#define CASE_MSG_BCOLOR(x) LIBATFRAME_UTILS_NAMESPACE_ID::cli::shell_font_style::SHELL_FONT_BACKGROUND_COLOR_##x
 // 字体格式: BOLD,UNDERLINE,FLASH,DARK
-#define CASE_MSG_STYLE(x) util::cli::shell_font_style::SHELL_FONT_SPEC_##x
+#define CASE_MSG_STYLE(x) LIBATFRAME_UTILS_NAMESPACE_ID::cli::shell_font_style::SHELL_FONT_SPEC_##x
 
-#define CASE_MSG_INFO() util::cli::shell_stream(std::cout)() << "[ RUNNING  ] "
-#define CASE_MSG_ERROR() util::cli::shell_stream(std::cerr)() << "[ RUNNING  ] "
+#define CASE_MSG_INFO() LIBATFRAME_UTILS_NAMESPACE_ID::cli::shell_stream(std::cout)() << "[ RUNNING  ] "
+#define CASE_MSG_ERROR() LIBATFRAME_UTILS_NAMESPACE_ID::cli::shell_stream(std::cerr)() << "[ RUNNING  ] "
 
 // 测试中休眠
 #if (defined(__cplusplus) && __cplusplus >= 201103L) || (defined(_MSC_VER) && _MSC_VER >= 1800)

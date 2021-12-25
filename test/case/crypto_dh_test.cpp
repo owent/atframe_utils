@@ -10,9 +10,9 @@
 
 #  if defined(CRYPTO_USE_OPENSSL) || defined(CRYPTO_USE_LIBRESSL) || defined(CRYPTO_USE_BORINGSSL)
 struct openssl_test_init_wrapper_for_dh {
-  openssl_test_init_wrapper_for_dh() { util::crypto::cipher::init_global_algorithm(); }
+  openssl_test_init_wrapper_for_dh() { LIBATFRAME_UTILS_NAMESPACE_ID::crypto::cipher::init_global_algorithm(); }
 
-  ~openssl_test_init_wrapper_for_dh() { util::crypto::cipher::cleanup_global_algorithm(); }
+  ~openssl_test_init_wrapper_for_dh() { LIBATFRAME_UTILS_NAMESPACE_ID::crypto::cipher::cleanup_global_algorithm(); }
 };
 
 static std::shared_ptr<openssl_test_init_wrapper_for_dh> openssl_test_inited_for_dh;
@@ -25,7 +25,7 @@ CASE_TEST(crypto_dh, get_all_curve_names) {
     openssl_test_inited_for_dh = std::make_shared<openssl_test_init_wrapper_for_dh>();
   }
 #  endif
-  const std::vector<std::string> &all_curves = util::crypto::dh::get_all_curve_names();
+  const std::vector<std::string> &all_curves = LIBATFRAME_UTILS_NAMESPACE_ID::crypto::dh::get_all_curve_names();
   std::stringstream ss;
   for (size_t i = 0; i < all_curves.size(); ++i) {
     if (i) {
@@ -64,20 +64,21 @@ CASE_TEST(crypto_dh, dh) {
 
   while (left_times-- > 0) {
     // client shared context & dh
-    util::crypto::dh cli_dh;
+    LIBATFRAME_UTILS_NAMESPACE_ID::crypto::dh cli_dh;
 
     // server shared context & dh
-    util::crypto::dh svr_dh;
+    LIBATFRAME_UTILS_NAMESPACE_ID::crypto::dh svr_dh;
 
     // server - init: read and setup server dh params
     {
-      util::crypto::dh::shared_context::ptr_t svr_shctx = util::crypto::dh::shared_context::create();
+      LIBATFRAME_UTILS_NAMESPACE_ID::crypto::dh::shared_context::ptr_t svr_shctx =
+          LIBATFRAME_UTILS_NAMESPACE_ID::crypto::dh::shared_context::create();
 
       std::string dir;
-      CASE_EXPECT_TRUE(util::file_system::dirname(__FILE__, 0, dir, 2));
-      dir += util::file_system::DIRECTORY_SEPARATOR;
+      CASE_EXPECT_TRUE(LIBATFRAME_UTILS_NAMESPACE_ID::file_system::dirname(__FILE__, 0, dir, 2));
+      dir += LIBATFRAME_UTILS_NAMESPACE_ID::file_system::DIRECTORY_SEPARATOR;
       dir += "resource";
-      dir += util::file_system::DIRECTORY_SEPARATOR;
+      dir += LIBATFRAME_UTILS_NAMESPACE_ID::file_system::DIRECTORY_SEPARATOR;
       dir += "test-dhparam.pem";
       CASE_EXPECT_EQ(0, svr_shctx->init(dir.c_str()));
       CASE_EXPECT_EQ(0, svr_dh.init(svr_shctx));
@@ -85,8 +86,9 @@ CASE_TEST(crypto_dh, dh) {
 
     // client - init: read and setup client shared context
     {
-      util::crypto::dh::shared_context::ptr_t cli_shctx = util::crypto::dh::shared_context::create();
-      CASE_EXPECT_EQ(0, cli_shctx->init(util::crypto::dh::method_t::EN_CDT_DH));
+      LIBATFRAME_UTILS_NAMESPACE_ID::crypto::dh::shared_context::ptr_t cli_shctx =
+          LIBATFRAME_UTILS_NAMESPACE_ID::crypto::dh::shared_context::create();
+      CASE_EXPECT_EQ(0, cli_shctx->init(LIBATFRAME_UTILS_NAMESPACE_ID::crypto::dh::method_t::EN_CDT_DH));
       CASE_EXPECT_EQ(0, cli_dh.init(cli_shctx));
     }
 
@@ -135,7 +137,7 @@ CASE_TEST(crypto_dh, ecdh) {
 
   int test_times = 16;
   // 单元测试多次以定位openssl是否内存泄漏的问题
-  const std::vector<std::string> &all_curves = util::crypto::dh::get_all_curve_names();
+  const std::vector<std::string> &all_curves = LIBATFRAME_UTILS_NAMESPACE_ID::crypto::dh::get_all_curve_names();
 
   clock_t min_cost_clock = 0;
   clock_t max_cost_clock = 0;
@@ -150,22 +152,24 @@ CASE_TEST(crypto_dh, ecdh) {
     size_t secret_bits = 0;
     while (left_times-- > 0) {
       // client shared context & dh
-      util::crypto::dh cli_dh;
+      LIBATFRAME_UTILS_NAMESPACE_ID::crypto::dh cli_dh;
 
       // server shared context & dh
-      util::crypto::dh svr_dh;
+      LIBATFRAME_UTILS_NAMESPACE_ID::crypto::dh svr_dh;
 
       // server - init: read and setup server dh params
       {
-        util::crypto::dh::shared_context::ptr_t svr_shctx = util::crypto::dh::shared_context::create();
+        LIBATFRAME_UTILS_NAMESPACE_ID::crypto::dh::shared_context::ptr_t svr_shctx =
+            LIBATFRAME_UTILS_NAMESPACE_ID::crypto::dh::shared_context::create();
         CASE_EXPECT_EQ(0, svr_shctx->init(all_curves[curve_idx].c_str()));
         CASE_EXPECT_EQ(0, svr_dh.init(svr_shctx));
       }
 
       // client - init: read and setup client shared context
       {
-        util::crypto::dh::shared_context::ptr_t cli_shctx = util::crypto::dh::shared_context::create();
-        CASE_EXPECT_EQ(0, cli_shctx->init(util::crypto::dh::method_t::EN_CDT_ECDH));
+        LIBATFRAME_UTILS_NAMESPACE_ID::crypto::dh::shared_context::ptr_t cli_shctx =
+            LIBATFRAME_UTILS_NAMESPACE_ID::crypto::dh::shared_context::create();
+        CASE_EXPECT_EQ(0, cli_shctx->init(LIBATFRAME_UTILS_NAMESPACE_ID::crypto::dh::method_t::EN_CDT_ECDH));
         CASE_EXPECT_EQ(0, cli_dh.init(cli_shctx));
       }
 
