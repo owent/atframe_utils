@@ -13,30 +13,10 @@ include(EchoWithColor)
 
 # 默认配置选项
 # ######################################################################################################################
-option(LIBATFRAME_UTILS_ENABLE_ABI_TAG_COMMIT_ID "Use commit id as default abi tag." ON)
-if(LIBATFRAME_UTILS_ENABLE_ABI_TAG_COMMIT_ID)
-  execute_process(
-    COMMAND "${GIT_EXECUTABLE}" rev-parse --short HEAD
-    WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
-    OUTPUT_VARIABLE LIBATFRAME_UTILS_GIT_COMMIT_ID
-    ERROR_QUIET OUTPUT_STRIP_TRAILING_WHITESPACE)
-
-  if(LIBATFRAME_UTILS_GIT_COMMIT_ID)
-    set(LIBATFRAME_UTILS_ABI_TAG
-        "_${LIBATFRAME_UTILS_GIT_COMMIT_ID}"
-        CACHE STRING "ABI tag for libatframe_utils.")
-  else()
-    set(LIBATFRAME_UTILS_ABI_TAG
-        "v0"
-        CACHE STRING "ABI tag for libatframe_utils.")
-  endif()
-else()
-  set(LIBATFRAME_UTILS_ABI_TAG
-      "v0"
-      CACHE STRING "ABI tag for libatframe_utils.")
-endif()
-set(LIBATFRAME_UTILS_NAMESPACE_BEGIN "namespace util { inline namespace ${LIBATFRAME_UTILS_ABI_TAG} {")
-set(LIBATFRAME_UTILS_NAMESPACE_END "} }")
+math(EXPR LIBATFRAME_UTILS_API_LEVEL "1000 * ${PROJECT_VERSION_MAJOR} + ${PROJECT_VERSION_MINOR}" OUTPUT_FORMAT DECIMAL)
+set(LIBATFRAME_UTILS_ABI_TAG
+    "v${LIBATFRAME_UTILS_API_LEVEL}"
+    CACHE STRING "ABI tag for libatframe_utils.")
 
 cmake_dependent_option(LIBUNWIND_ENABLED "Enable using libunwind." ON "NOT WIN32;NOT MINGW;NOT CYGWIN" OFF)
 option(LOG_WRAPPER_ENABLE_LUA_SUPPORT "Enable lua support." ON)
