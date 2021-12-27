@@ -1,16 +1,5 @@
-/*
- * shell_fonts.h
- *
- *  Created on: 2014年3月11日
- *      Author: owent
- *
- *  Released under the MIT license
- * @history
- *    2015-06-30  增加Windows控制台支持，增加通用输出流
- */
-
-#ifndef UTIL_CLI_SHELLFONT_H
-#define UTIL_CLI_SHELLFONT_H
+// Copyright 2022 atframework
+// Created on: 2014-3-11 by owent
 
 #pragma once
 
@@ -211,5 +200,3 @@ class UTIL_SYMBOL_VISIBLE shell_stream {
 
 }  // namespace cli
 LIBATFRAME_UTILS_NAMESPACE_END
-
-#endif /* SHELLFONT_H_ */
