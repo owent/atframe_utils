@@ -1,18 +1,5 @@
-/**
- * @file utf8_char_t.h
- * @brief utf8字符和相关算法
- * Licensed under the MIT licenses.
- *
- * @version 1.0
- * @author owent
- * @date 2017.06.05
- *
- * @history
- *
- */
-
-#ifndef UTIL_STRING_UTF8_CHAR_T_H
-#define UTIL_STRING_UTF8_CHAR_T_H
+// Copyright 2021 atframework
+// Created by owent on 2017-06-05
 
 #pragma once
 
@@ -20,9 +7,11 @@
 #include <stdint.h>
 #include <cstddef>
 #include <cstring>
+#include <functional>
 #include <iostream>
 #include <memory>
 #include <string>
+#include <type_traits>
 
 #ifdef __cpp_impl_three_way_comparison
 #  include <compare>
@@ -35,26 +24,24 @@
 LIBATFRAME_UTILS_NAMESPACE_BEGIN
 namespace string {
 struct LIBATFRAME_UTILS_API_HEAD_ONLY utf8_char_t {
-  utf8_char_t(const char *str) {
+  explicit utf8_char_t(const char *str) {
     size_t len = length(str);
     for (size_t i = 0; i < len; ++i) {
       data[i] = str[i];
     }
-  };
-  utf8_char_t(const std::string &str) {
+  }
+
+  explicit utf8_char_t(const std::string &str) {
     size_t len = length(str.c_str());
     for (size_t i = 0; i < len; ++i) {
       data[i] = str[i];
     }
-  };
+  }
 
-  utf8_char_t(const char &c) {
-    const char *str = &c;
-    size_t len = length(str);
-    for (size_t i = 0; i < len; ++i) {
-      data[i] = str[i];
-    }
-  };
+  utf8_char_t(char c) {
+    c &= 0x7f; // protect invalid char
+    data[0] = c;
+  }
 
   char data[8];
 
@@ -190,4 +177,17 @@ struct LIBATFRAME_UTILS_API_HEAD_ONLY utf8_char_t {
 }  // namespace string
 LIBATFRAME_UTILS_NAMESPACE_END
 
-#endif
+namespace std {
+template <>
+struct hash<LIBATFRAME_UTILS_NAMESPACE_ID::string::utf8_char_t> {
+  std::size_t operator()(const LIBATFRAME_UTILS_NAMESPACE_ID::string::utf8_char_t &c) const noexcept {
+    std::hash<char> hasher = std::hash<char>{};
+    std::size_t result = hasher(c[0]);
+    std::size_t length = c.length();
+    for (std::size_t i = 1; i < length; ++i) {
+      result = (result << 1) ^ hasher(c[i]);
+    }
+    return result;
+  }
+};
+}  // namespace std
