@@ -277,6 +277,12 @@ static test_wal_publisher_type::vtable_pointer create_vtable() {
     return true;
   };
 
+  ret->subscriber_force_sync_snapshot = [](wal_publisher_type&, const wal_publisher_type::subscriber_pointer&,
+                                           wal_publisher_type::callback_param_type) -> bool {
+    // Always return false, use compact to sync snapshot
+    return false;
+  };
+
   ret->on_subscriber_request = [](wal_publisher_type&, const wal_publisher_type::subscriber_pointer& subscriber,
                                   wal_publisher_type::callback_param_type) {
     ++details::g_test_wal_publisher_stats.event_on_subscribe_heartbeat;

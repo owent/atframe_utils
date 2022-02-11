@@ -84,8 +84,12 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_publisher {
   using callback_send_subscribe_response_fn_t =
       std::function<wal_result_code(wal_publisher&, const subscriber_pointer&, wal_result_code, callback_param_type)>;
 
-  // Send subscribe response
+  // Check if subscriber still available
   using callback_check_subscriber_fn_t =
+      std::function<bool(wal_publisher&, const subscriber_pointer&, callback_param_type)>;
+
+  // Check if need send backup snapshot
+  using callback_subscriber_force_sync_snapshot_fn_t =
       std::function<bool(wal_publisher&, const subscriber_pointer&, callback_param_type)>;
 
   // On subscriber request
@@ -106,6 +110,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_publisher {
     callback_send_subscribe_response_fn_t subscribe_response;
 
     callback_check_subscriber_fn_t check_subscriber;
+    callback_subscriber_force_sync_snapshot_fn_t subscriber_force_sync_snapshot;
     callback_on_subscriber_request_fn_t on_subscriber_request;
     callback_on_subscriber_added_fn_t on_subscriber_added;
     callback_on_subscriber_removed_fn_t on_subscriber_removed;
@@ -439,6 +444,14 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_publisher {
 
     if (vtable_ && vtable_->on_subscriber_request) {
       vtable_->on_subscriber_request(*this, subscriber, param);
+    }
+
+    if (vtable_ && vtable_->subscriber_force_sync_snapshot) {
+      if (vtable_->subscriber_force_sync_snapshot(*this, subscriber, param)) {
+        auto iters = subscriber_manager_->find_iterator(key);
+        auto notify_result = send_snapshot(iters.first, iters.second, param);
+        return send_subscribe_response(subscriber, notify_result, std::move(param));
+      }
     }
 
     if (nullptr != wal_object_->get_last_removed_key()) {
