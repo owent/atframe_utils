@@ -153,24 +153,6 @@ jobs:
           path: |
             third_party/install
           key: ${{ runner.os }}-${ hashFiles('.github/.cache-key') }
-    runs-on: ${{ matrix.os }}
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v2
-      - name: Build & Test
-        shell: pwsh
-        env:
-          CMAKE_GENERATOR: ${{ matrix.generator }}
-          BUILD_SHARED_LIBS: ${{ matrix.build_shared_libs }}
-          CONFIGURATION: Debug
-        run: |
-          pwsh ci/do_ci.ps1 msvc.2017.test ;
-      - name: Cache packages
-        uses: actions/cache@v2
-        with:
-          path: |
-            third_party/install
-          key: ${{ runner.os }}-${ hashFiles('.github/.cache-key') }
   mingw_build: # job id, can be any string
     name: MinGW Build
     strategy:
