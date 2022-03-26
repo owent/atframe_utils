@@ -65,7 +65,8 @@ if ( $RUN_MODE -eq "msvc.2019+.test" ) {
     exit $LastExitCode
   }
 
-  $ALL_DLL_FILES = Get-ChildItem -Path "$PROJECT_DIR/third_party/install/*.dll" -Recurse
+  $CURRENT_CWD = Get-Location
+  $ALL_DLL_FILES = (Get-ChildItem -Path "$CURRENT_CWD/*.dll" -Recurse) + (Get-ChildItem -Path "$PROJECT_DIR/third_party/install/*.dll" -Recurse)
   $ALL_DLL_DIRS = $(foreach ($dll_file in $ALL_DLL_FILES) {
       $dll_file.Directory.FullName
     }) | Sort-Object | Get-Unique
@@ -93,7 +94,8 @@ elseif ( $RUN_MODE -eq "msvc.no-rtti.test" ) {
     exit $LastExitCode
   }
 
-  $ALL_DLL_FILES = Get-ChildItem -Path "$PROJECT_DIR/third_party/install/*.dll" -Recurse
+  $CURRENT_CWD = Get-Location
+  $ALL_DLL_FILES = (Get-ChildItem -Path "$CURRENT_CWD/*.dll" -Recurse) + (Get-ChildItem -Path "$PROJECT_DIR/third_party/install/*.dll" -Recurse)
   $ALL_DLL_DIRS = $(foreach ($dll_file in $ALL_DLL_FILES) {
       $dll_file.Directory.FullName
     }) | Sort-Object | Get-Unique
@@ -121,7 +123,8 @@ elseif ( $RUN_MODE -eq "msvc.no-exceptions.test" ) {
     exit $LastExitCode
   }
 
-  $ALL_DLL_FILES = Get-ChildItem -Path "$PROJECT_DIR/third_party/install/*.dll" -Recurse
+  $CURRENT_CWD = Get-Location
+  $ALL_DLL_FILES = (Get-ChildItem -Path "$CURRENT_CWD/*.dll" -Recurse) + (Get-ChildItem -Path "$PROJECT_DIR/third_party/install/*.dll" -Recurse)
   $ALL_DLL_DIRS = $(foreach ($dll_file in $ALL_DLL_FILES) {
       $dll_file.Directory.FullName
     }) | Sort-Object | Get-Unique
@@ -148,7 +151,8 @@ elseif ( $RUN_MODE -eq "msvc.2017.test" ) {
     exit $LastExitCode
   }
 
-  $ALL_DLL_FILES = Get-ChildItem -Path "$PROJECT_DIR/third_party/install/*.dll" -Recurse
+  $CURRENT_CWD = Get-Location
+  $ALL_DLL_FILES = (Get-ChildItem -Path "$CURRENT_CWD/*.dll" -Recurse) + (Get-ChildItem -Path "$PROJECT_DIR/third_party/install/*.dll" -Recurse)
   $ALL_DLL_DIRS = $(foreach ($dll_file in $ALL_DLL_FILES) {
       $dll_file.Directory.FullName
     }) | Sort-Object | Get-Unique

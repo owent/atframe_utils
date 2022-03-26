@@ -157,6 +157,9 @@ elif [[ "$1" == "msys2.mingw.test" ]]; then
     "-DATFRAMEWORK_CMAKE_TOOLSET_THIRD_PARTY_LOW_MEMORY_MODE=ON"
   cmake --build . -j || cmake --build .
   PROJECT_DIR="$(cygpath -m "$PROJECT_DIR")"
+  for EXT_PATH in $(find "$(cygpath -m "$PWD")" -name "*.dll" | xargs dirname | sort -u); do
+    export PATH="$EXT_PATH:$PATH"
+  done
   for EXT_PATH in $(find "$PROJECT_DIR/third_party/install/" -name "*.dll" | xargs dirname | sort -u); do
     export PATH="$EXT_PATH:$PATH"
   done
