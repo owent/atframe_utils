@@ -51,6 +51,7 @@ if ($IsWindows) {
 }
 
 Set-Location "$SCRIPT_DIR/.."
+$PROJECT_DIR = Split-Path -Parent $SCRIPT_DIR
 $RUN_MODE = $args[0]
 
 if ( $RUN_MODE -eq "msvc.2019+.test" ) {
@@ -64,11 +65,12 @@ if ( $RUN_MODE -eq "msvc.2019+.test" ) {
     exit $LastExitCode
   }
 
-  $ALL_DLL_FILES = Get-ChildItem -Path "../third_party/install/*.dll" -Recurse
+  $ALL_DLL_FILES = Get-ChildItem -Path "$PROJECT_DIR/third_party/install/*.dll" -Recurse
   $ALL_DLL_DIRS = $(foreach ($dll_file in $ALL_DLL_FILES) {
       $dll_file.Directory.FullName
     }) | Sort-Object | Get-Unique
   $Env:PATH = ($ALL_DLL_DIRS + $Env:PATH) -Join [IO.Path]::PathSeparator
+  Write-Output "PATH=$Env:PATH"
 
   & cmake --build . --config $Env:CONFIGURATION
   if ( $LastExitCode -ne 0 ) {
@@ -91,11 +93,12 @@ elseif ( $RUN_MODE -eq "msvc.no-rtti.test" ) {
     exit $LastExitCode
   }
 
-  $ALL_DLL_FILES = Get-ChildItem -Path "../third_party/install/*.dll" -Recurse
+  $ALL_DLL_FILES = Get-ChildItem -Path "$PROJECT_DIR/third_party/install/*.dll" -Recurse
   $ALL_DLL_DIRS = $(foreach ($dll_file in $ALL_DLL_FILES) {
       $dll_file.Directory.FullName
     }) | Sort-Object | Get-Unique
   $Env:PATH = ($ALL_DLL_DIRS + $Env:PATH) -Join [IO.Path]::PathSeparator
+  Write-Output "PATH=$Env:PATH"
 
   & cmake --build . --config $Env:CONFIGURATION
   if ( $LastExitCode -ne 0 ) {
@@ -118,11 +121,12 @@ elseif ( $RUN_MODE -eq "msvc.no-exceptions.test" ) {
     exit $LastExitCode
   }
 
-  $ALL_DLL_FILES = Get-ChildItem -Path "../third_party/install/*.dll" -Recurse
+  $ALL_DLL_FILES = Get-ChildItem -Path "$PROJECT_DIR/third_party/install/*.dll" -Recurse
   $ALL_DLL_DIRS = $(foreach ($dll_file in $ALL_DLL_FILES) {
       $dll_file.Directory.FullName
     }) | Sort-Object | Get-Unique
   $Env:PATH = ($ALL_DLL_DIRS + $Env:PATH) -Join [IO.Path]::PathSeparator
+  Write-Output "PATH=$Env:PATH"
 
   & cmake --build . --config $Env:CONFIGURATION
   if ( $LastExitCode -ne 0 ) {
@@ -144,11 +148,12 @@ elseif ( $RUN_MODE -eq "msvc.2017.test" ) {
     exit $LastExitCode
   }
 
-  $ALL_DLL_FILES = Get-ChildItem -Path "../third_party/install/*.dll" -Recurse
+  $ALL_DLL_FILES = Get-ChildItem -Path "$PROJECT_DIR/third_party/install/*.dll" -Recurse
   $ALL_DLL_DIRS = $(foreach ($dll_file in $ALL_DLL_FILES) {
       $dll_file.Directory.FullName
     }) | Sort-Object | Get-Unique
   $Env:PATH = ($ALL_DLL_DIRS + $Env:PATH) -Join [IO.Path]::PathSeparator
+  Write-Output "PATH=$Env:PATH"
 
   & cmake --build . --config $Env:CONFIGURATION
   if ( $LastExitCode -ne 0 ) {
