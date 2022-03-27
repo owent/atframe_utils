@@ -18,6 +18,18 @@ set(LIBATFRAME_UTILS_ABI_TAG
     "v${LIBATFRAME_UTILS_API_LEVEL}"
     CACHE STRING "ABI tag for libatframe_utils.")
 
+if(ANDROID
+   OR CMAKE_HOST_APPLE
+   OR WIN32
+   OR MINGW
+   OR (CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS "4.9"))
+  # There is a BUG in gcc 4.6-4.8 and fixed in gcc 4.9 https://gcc.gnu.org/bugzilla/show_bug.cgi?id=58016
+  # https://gcc.gnu.org/gcc-4.9/changes.html
+  option(LIBUNWIND_ENABLED "Enable using libunwind." OFF)
+else()
+  option(LIBUNWIND_ENABLED "Enable using libunwind." ON)
+endif()
+
 cmake_dependent_option(LIBUNWIND_ENABLED "Enable using libunwind." ON "NOT WIN32;NOT MINGW;NOT CYGWIN" OFF)
 option(LOG_WRAPPER_ENABLE_LUA_SUPPORT "Enable lua support." ON)
 option(LOG_WRAPPER_CHECK_LUA "Check lua support." ON)
