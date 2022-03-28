@@ -30,7 +30,6 @@ else()
   option(LIBUNWIND_ENABLED "Enable using libunwind." ON)
 endif()
 
-cmake_dependent_option(LIBUNWIND_ENABLED "Enable using libunwind." ON "NOT WIN32;NOT MINGW;NOT CYGWIN" OFF)
 option(LOG_WRAPPER_ENABLE_LUA_SUPPORT "Enable lua support." ON)
 option(LOG_WRAPPER_CHECK_LUA "Check lua support." ON)
 set(LOG_WRAPPER_MAX_SIZE_PER_LINE
