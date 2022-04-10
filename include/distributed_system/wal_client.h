@@ -78,11 +78,11 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_client {
   };
   using vtable_pointer = std::shared_ptr<vtable_type>;
 
-  struct congfigure_type : public object_type::congfigure_type {
+  struct configure_type : public object_type::configure_type {
     duration subscriber_heartbeat_interval;
     duration subscriber_heartbeat_retry_interval;
   };
-  using congfigure_pointer = std::shared_ptr<congfigure_type>;
+  using configure_pointer = std::shared_ptr<configure_type>;
 
  private:
   UTIL_DESIGN_PATTERN_NOMOVABLE(wal_client);
@@ -90,7 +90,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_client {
   struct construct_helper {
     time_point next_heartbeat;
     vtable_pointer vt;
-    congfigure_pointer conf;
+    configure_pointer conf;
     std::shared_ptr<object_type> wal_object;
   };
 
@@ -116,7 +116,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_client {
   }
 
   template <class... ArgsT>
-  static std::shared_ptr<wal_client> create(time_point now, vtable_pointer vt, congfigure_pointer conf,
+  static std::shared_ptr<wal_client> create(time_point now, vtable_pointer vt, configure_pointer conf,
                                             ArgsT&&... args) {
     if (!vt || !conf) {
       return nullptr;
@@ -134,9 +134,9 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_client {
     helper.next_heartbeat = now;
     helper.vt = vt;
     helper.conf = conf;
-    helper.wal_object = object_type::create(
-        std::static_pointer_cast<typename object_type::vtable_type>(helper.vt),
-        std::static_pointer_cast<typename object_type::congfigure_type>(helper.conf), std::forward<ArgsT>(args)...);
+    helper.wal_object = object_type::create(std::static_pointer_cast<typename object_type::vtable_type>(helper.vt),
+                                            std::static_pointer_cast<typename object_type::configure_type>(helper.conf),
+                                            std::forward<ArgsT>(args)...);
     if (!helper.wal_object) {
       return nullptr;
     }
@@ -144,8 +144,8 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_client {
     return std::make_shared<wal_client>(helper);
   }
 
-  static congfigure_pointer make_configure() {
-    congfigure_pointer ret = std::make_shared<congfigure_type>();
+  static configure_pointer make_configure() {
+    configure_pointer ret = std::make_shared<configure_type>();
     if (!ret) {
       return ret;
     }
@@ -218,13 +218,13 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_client {
   inline const log_key_compare_type& get_log_key_compare() const noexcept { return wal_object_->get_log_key_compare(); }
   inline log_key_compare_type& get_log_key_compare() noexcept { return wal_object_->get_log_key_compare(); }
 
-  inline const congfigure_type& get_configure() const noexcept {
-    // We can not create wal_object without congfigure, so it's safe here
+  inline const configure_type& get_configure() const noexcept {
+    // We can not create wal_object without configure, so it's safe here
     return *configure_;
   }
 
-  inline congfigure_type& get_configure() noexcept {
-    // We can not create wal_object without congfigure, so it's safe here
+  inline configure_type& get_configure() noexcept {
+    // We can not create wal_object without configure, so it's safe here
     return *configure_;
   }
 
@@ -347,7 +347,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_client {
 
  private:
   vtable_pointer vtable_;
-  congfigure_pointer configure_;
+  configure_pointer configure_;
 
   // logs
   std::shared_ptr<object_type> wal_object_;

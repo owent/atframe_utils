@@ -204,8 +204,8 @@ static test_wal_object_type::vtable_pointer create_vtable() {
   return ret;
 }
 
-static test_wal_object_type::congfigure_pointer create_configure() {
-  test_wal_object_type::congfigure_pointer ret = std::make_shared<test_wal_object_type::congfigure_type>();
+static test_wal_object_type::configure_pointer create_configure() {
+  test_wal_object_type::configure_pointer ret = std::make_shared<test_wal_object_type::configure_type>();
   test_wal_object_type::default_configure(*ret);
 
   ret->gc_expire_duration = std::chrono::duration_cast<test_wal_object_type::duration>(std::chrono::seconds{8});

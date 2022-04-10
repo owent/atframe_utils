@@ -311,8 +311,8 @@ static test_wal_publisher_type::vtable_pointer create_vtable() {
   return ret;
 }
 
-static test_wal_publisher_type::congfigure_pointer create_configure() {
-  test_wal_publisher_type::congfigure_pointer ret = test_wal_publisher_type::make_configure();
+static test_wal_publisher_type::configure_pointer create_configure() {
+  test_wal_publisher_type::configure_pointer ret = test_wal_publisher_type::make_configure();
 
   ret->gc_expire_duration = std::chrono::duration_cast<test_wal_publisher_type::duration>(std::chrono::seconds{8});
   ret->max_log_size = 8;

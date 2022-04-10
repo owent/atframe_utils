@@ -203,8 +203,8 @@ static test_wal_client_type::vtable_pointer create_vtable() {
   return ret;
 }
 
-static test_wal_client_type::congfigure_pointer create_configure() {
-  test_wal_client_type::congfigure_pointer ret = test_wal_client_type::make_configure();
+static test_wal_client_type::configure_pointer create_configure() {
+  test_wal_client_type::configure_pointer ret = test_wal_client_type::make_configure();
 
   ret->max_log_size = 8;
   ret->gc_log_size = 4;

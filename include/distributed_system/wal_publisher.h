@@ -117,18 +117,18 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_publisher {
   };
   using vtable_pointer = std::shared_ptr<vtable_type>;
 
-  struct congfigure_type : public object_type::congfigure_type {
+  struct configure_type : public object_type::configure_type {
     duration subscriber_timeout;
     bool enable_last_broadcast_for_removed_subscriber;
   };
-  using congfigure_pointer = std::shared_ptr<congfigure_type>;
+  using configure_pointer = std::shared_ptr<configure_type>;
 
  private:
   UTIL_DESIGN_PATTERN_NOMOVABLE(wal_publisher);
   UTIL_DESIGN_PATTERN_NOCOPYABLE(wal_publisher);
   struct construct_helper {
     vtable_pointer vt;
-    congfigure_pointer conf;
+    configure_pointer conf;
     std::shared_ptr<object_type> wal_object;
     std::shared_ptr<subscriber_manager_type> subscriber_manager;
   };
@@ -150,7 +150,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_publisher {
   }
 
   template <class... ArgsT>
-  static std::shared_ptr<wal_publisher> create(vtable_pointer vt, congfigure_pointer conf, ArgsT&&... args) {
+  static std::shared_ptr<wal_publisher> create(vtable_pointer vt, configure_pointer conf, ArgsT&&... args) {
     if (!vt || !conf) {
       return nullptr;
     }
@@ -166,9 +166,9 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_publisher {
     construct_helper helper;
     helper.vt = vt;
     helper.conf = conf;
-    helper.wal_object = object_type::create(
-        std::static_pointer_cast<typename object_type::vtable_type>(helper.vt),
-        std::static_pointer_cast<typename object_type::congfigure_type>(helper.conf), std::forward<ArgsT>(args)...);
+    helper.wal_object = object_type::create(std::static_pointer_cast<typename object_type::vtable_type>(helper.vt),
+                                            std::static_pointer_cast<typename object_type::configure_type>(helper.conf),
+                                            std::forward<ArgsT>(args)...);
     helper.subscriber_manager = std::make_shared<subscriber_manager_type>();
     if (!helper.wal_object || !helper.subscriber_manager) {
       return nullptr;
@@ -177,8 +177,8 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_publisher {
     return std::make_shared<wal_publisher>(helper);
   }
 
-  static congfigure_pointer make_configure() {
-    congfigure_pointer ret = std::make_shared<congfigure_type>();
+  static configure_pointer make_configure() {
+    configure_pointer ret = std::make_shared<configure_type>();
     if (!ret) {
       return ret;
     }
@@ -276,13 +276,13 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_publisher {
   inline const log_key_compare_type& get_log_key_compare() const noexcept { return wal_object_->get_log_key_compare(); }
   inline log_key_compare_type& get_log_key_compare() noexcept { return wal_object_->get_log_key_compare(); }
 
-  inline const congfigure_type& get_configure() const noexcept {
-    // We can not create wal_object without congfigure, so it's safe here
+  inline const configure_type& get_configure() const noexcept {
+    // We can not create wal_object without configure, so it's safe here
     return *configure_;
   }
 
-  inline congfigure_type& get_configure() noexcept {
-    // We can not create wal_object without congfigure, so it's safe here
+  inline configure_type& get_configure() noexcept {
+    // We can not create wal_object without configure, so it's safe here
     return *configure_;
   }
 
@@ -585,7 +585,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_publisher {
 
  private:
   vtable_pointer vtable_;
-  congfigure_pointer configure_;
+  configure_pointer configure_;
 
   // logs
   std::shared_ptr<object_type> wal_object_;
