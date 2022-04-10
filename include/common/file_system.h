@@ -76,6 +76,9 @@ class file_system {
       '/';
 #endif
 
+  // When LongPathsEnabled on Windows, it allow 32767 characters in a absolute path.But it still only allow 260
+  // characters in a relative path.
+  // See https://docs.microsoft.com/en-us/windows/win32/fileio/maximum-file-path-limitation
   static constexpr const size_t MAX_PATH_LEN =
 #if defined(MAX_PATH)
       MAX_PATH;

@@ -137,6 +137,7 @@ LIBATFRAME_UTILS_API int http_request::start(method_t::type method, bool wait) {
   }
 
   if (http_form_.flags & form_list_t::EN_FLFT_WRITE_FORM_USE_FUNC) {
+    curl_easy_setopt(req, CURLOPT_POSTFIELDS, nullptr);
     curl_easy_setopt(req, CURLOPT_READFUNCTION, curl_callback_on_read);
     curl_easy_setopt(req, CURLOPT_READDATA, this);
 

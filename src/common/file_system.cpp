@@ -419,8 +419,10 @@ LIBATFRAME_UTILS_API bool file_system::generate_tmp_file_name(std::string &inout
 #  if defined(UTIL_FS_C11_API)
 #    if defined(L_tmpnam_s)
   char path_buffer[L_tmpnam_s + 1] = {0};
+  path_buffer[L_tmpnam_s] = 0;
 #    else
-  char path_buffer[LIBATFRAME_UTILS_NAMESPACE_ID::file_system::MAX_PATH_LEN + 1] = {0};
+  char path_buffer[LIBATFRAME_UTILS_NAMESPACE_ID::file_system::MAX_PATH_LEN + 1];
+  path_buffer[LIBATFRAME_UTILS_NAMESPACE_ID::file_system::MAX_PATH_LEN] = 0;
 #    endif
   if (0 == tmpnam_s(path_buffer, sizeof(path_buffer) - 1)) {
     inout = &path_buffer[0];
@@ -431,8 +433,10 @@ LIBATFRAME_UTILS_API bool file_system::generate_tmp_file_name(std::string &inout
 #  else
 #    if defined(L_tmpnam)
   char path_buffer[L_tmpnam + 1] = {0};
+  path_buffer[L_tmpnam] = 0;
 #    else
-  char path_buffer[LIBATFRAME_UTILS_NAMESPACE_ID::file_system::MAX_PATH_LEN + 1] = {0};
+  char path_buffer[LIBATFRAME_UTILS_NAMESPACE_ID::file_system::MAX_PATH_LEN + 1];
+  path_buffer[LIBATFRAME_UTILS_NAMESPACE_ID::file_system::MAX_PATH_LEN] = 0;
 #    endif
   if (nullptr != tmpnam(path_buffer)) {
     inout = &path_buffer[0];

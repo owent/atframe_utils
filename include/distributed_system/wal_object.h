@@ -112,19 +112,19 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_object {
   };
   using vtable_pointer = std::shared_ptr<vtable_type>;
 
-  struct congfigure_type {
+  struct configure_type {
     duration gc_expire_duration;
     size_t max_log_size;
     size_t gc_log_size;
   };
-  using congfigure_pointer = std::shared_ptr<congfigure_type>;
+  using configure_pointer = std::shared_ptr<configure_type>;
 
  private:
   UTIL_DESIGN_PATTERN_NOMOVABLE(wal_object);
   UTIL_DESIGN_PATTERN_NOCOPYABLE(wal_object);
   struct construct_helper {
     vtable_pointer vt;
-    congfigure_pointer conf;
+    configure_pointer conf;
   };
 
   struct finally_helper {
@@ -147,7 +147,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_object {
         private_data_(std::forward<ArgsT>(args)...) {}
 
   template <class... ArgsT>
-  static std::shared_ptr<wal_object> create(vtable_pointer vt, congfigure_pointer conf, ArgsT&&... args) {
+  static std::shared_ptr<wal_object> create(vtable_pointer vt, configure_pointer conf, ArgsT&&... args) {
     if (!vt || !conf) {
       return nullptr;
     }
@@ -162,7 +162,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_object {
     return std::make_shared<wal_object>(helper, std::forward<ArgsT>(args)...);
   }
 
-  static void default_configure(congfigure_type& out) {
+  static void default_configure(configure_type& out) {
     out.gc_expire_duration = std::chrono::duration_cast<duration>(std::chrono::hours(7 * 24));
     out.max_log_size = 512;
     out.gc_log_size = 128;
@@ -427,13 +427,13 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_object {
   inline const log_key_compare_type& get_log_key_compare() const noexcept { return log_key_compare_; }
   inline log_key_compare_type& get_log_key_compare() noexcept { return log_key_compare_; }
 
-  inline const congfigure_type& get_configure() const noexcept {
-    // We can not create wal_object without congfigure, so it's safe here
+  inline const configure_type& get_configure() const noexcept {
+    // We can not create wal_object without configure, so it's safe here
     return *configure_;
   }
 
-  inline congfigure_type& get_configure() noexcept {
-    // We can not create wal_object without congfigure, so it's safe here
+  inline configure_type& get_configure() noexcept {
+    // We can not create wal_object without configure, so it's safe here
     return *configure_;
   }
 
@@ -716,7 +716,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_object {
  private:
   bool in_log_action_callback_;
   vtable_pointer vtable_;
-  congfigure_pointer configure_;
+  configure_pointer configure_;
   private_data_type private_data_;
   log_key_compare_type log_key_compare_;
 
