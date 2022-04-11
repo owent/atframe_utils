@@ -22,7 +22,7 @@ enable_testing()
 
 project(
   atframe_utils
-  VERSION "2.4.0"
+  VERSION "2.4.1"
   HOMEPAGE_URL "https://github.com/atframework/atframe_utils"
   LANGUAGES C CXX)
 
@@ -214,20 +214,20 @@ if(BUILD_SHARED_LIBS OR ATFRAMEWORK_USE_DYNAMIC_LIBRARY)
   add_library(${PROJECT_NAME} SHARED ${HEADER_LIST} ${SRC_LIST})
   set_target_properties(
     ${PROJECT_NAME}
-    PROPERTIES C_VISIBILITY_PRESET "hidden"
-               CXX_VISIBILITY_PRESET "hidden"
-               VERSION ${PROJECT_VERSION}
+    PROPERTIES VERSION ${PROJECT_VERSION}
                SOVERSION ${PROJECT_VERSION}
                INTERFACE_COMPILE_DEFINITIONS LIBATFRAME_UTILS_API_DLL=1)
+  if(NOT APPLE)
+    set_target_properties(${PROJECT_NAME} PROPERTIES C_VISIBILITY_PRESET "hidden" CXX_VISIBILITY_PRESET "hidden")
+  endif()
   target_compile_definitions(${PROJECT_NAME} PRIVATE LIBATFRAME_UTILS_API_NATIVE=1 LIBATFRAME_UTILS_API_DLL=1)
   target_compile_options(${PROJECT_NAME} PRIVATE ${COMPILER_STRICT_EXTRA_CFLAGS} ${COMPILER_STRICT_CFLAGS})
 else()
   add_library(${PROJECT_NAME} STATIC ${HEADER_LIST} ${SRC_LIST})
-  set_target_properties(
-    ${PROJECT_NAME}
-    PROPERTIES C_VISIBILITY_PRESET "hidden"
-               CXX_VISIBILITY_PRESET "hidden"
-               VERSION ${PROJECT_VERSION})
+  set_target_properties(${PROJECT_NAME} PROPERTIES VERSION ${PROJECT_VERSION})
+  if(NOT APPLE)
+    set_target_properties(${PROJECT_NAME} PROPERTIES C_VISIBILITY_PRESET "hidden" CXX_VISIBILITY_PRESET "hidden")
+  endif()
   target_compile_definitions(${PROJECT_NAME} PRIVATE LIBATFRAME_UTILS_API_NATIVE=1)
   target_compile_options(${PROJECT_NAME} PRIVATE ${COMPILER_STRICT_EXTRA_CFLAGS} ${COMPILER_STRICT_CFLAGS})
 endif()
