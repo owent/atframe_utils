@@ -12,13 +12,11 @@
 #    pragma warning(disable : 4309)
 #  endif
 
-#  if _MSC_VER < 1910
-#    pragma warning(disable : 4800)
-#  endif
 #  pragma warning(disable : 4244)
 #  pragma warning(disable : 4251)
 #  pragma warning(disable : 4267)
 #  pragma warning(disable : 4668)
+#  pragma warning(disable : 4800)
 #  pragma warning(disable : 4946)
 
 #endif

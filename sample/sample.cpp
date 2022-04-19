@@ -36,8 +36,10 @@ std::string g_exec_dir;
 
 #if defined(LOG_WRAPPER_ENABLE_FWAPI) && LOG_WRAPPER_ENABLE_FWAPI
 
-enum test_auto_enum_conversation_for_log_formatter {
-  EN_TAECFLF_NONE = 0,
+struct test_auto_enum_conversation_for_log_formatter {
+  enum type {
+    EN_TAECFLF_NONE = 0,
+  };
 };
 
 struct test_exception_for_log_formatter {
@@ -48,12 +50,12 @@ struct test_exception_for_log_formatter {
 
 namespace LOG_WRAPPER_FWAPI_NAMESPACE_ID {
 template <class CharT>
-struct formatter<test_auto_enum_conversation_for_log_formatter, CharT> : formatter<CharT *, CharT> {
+struct formatter<test_auto_enum_conversation_for_log_formatter::type, CharT> : formatter<CharT *, CharT> {
   template <class FormatContext>
-  auto format(const test_auto_enum_conversation_for_log_formatter &obj, FormatContext &ctx) {
+  auto format(const test_auto_enum_conversation_for_log_formatter::type &obj, FormatContext &ctx) {
     auto ret = ctx.out();
     switch (obj) {
-      case EN_TAECFLF_NONE:
+      case test_auto_enum_conversation_for_log_formatter::EN_TAECFLF_NONE:
         *(ret++) = 'Y';
         break;
       default:
@@ -263,8 +265,11 @@ void log_sample_func6() {
       ->add_sink(log_sample_func6_stdout);
   std::cout << "---------------- setup log sink for std::format done--------------" << std::endl;
 #  if defined(LOG_WRAPPER_ENABLE_FWAPI) && LOG_WRAPPER_ENABLE_FWAPI
-  FWLOGINFO("{} {}: {} {}", "Hello", std::string("World"), 42,
-            test_auto_enum_conversation_for_log_formatter::EN_TAECFLF_NONE);
+  // clang 14.0.1 has a BUG which dectects T& of T&& as A& but not const A& when we pass temporary object of A
+  // This will lead to compiling error.
+  test_auto_enum_conversation_for_log_formatter::type enum_value =
+      test_auto_enum_conversation_for_log_formatter::EN_TAECFLF_NONE;
+  FWLOGINFO("{} {}: {} {}", "Hello", std::string("World"), 42, enum_value);
 #  endif
   WLOG_GETCAT(LIBATFRAME_UTILS_NAMESPACE_ID::log::log_wrapper::categorize_t::DEFAULT)->pop_sink();
   FWLOGERROR("No log sink now");

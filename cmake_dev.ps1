@@ -9,8 +9,8 @@
     Build Type: Debug, Release, RelWithDebInfo, MinSizeRel
 .PARAMETER Compiler
     Compiler to use: clang, gcc, /usr/bin/gcc and etc.
-.PARAMETER GaneratorToolset
-    Ganerator Toolset of cmake: v143, v142, v141, v140 and etc.
+.PARAMETER GeneratorToolset
+    Generator Toolset of cmake: v143, v142, v141, v140 and etc.
 .PARAMETER Generator
     Generator to use: Ninja, Makefiles, Xcode, Visual Studio 16 2019 and etc.
 .PARAMETER GeneratorPlatform
@@ -59,12 +59,12 @@ param (
 
   [Parameter(ValueFromPipeline = $true,
     ValueFromPipelineByPropertyName = $true)]
-  [string]$GaneratorToolset = "",
+  [string]$GeneratorToolset = "",
 
   [Parameter(ValueFromPipeline = $true,
     ValueFromPipelineByPropertyName = $true,
-    HelpMessage = "Ganerator to use")]
-  [string]$Ganerator = "",
+    HelpMessage = "Generator to use")]
+  [string]$Generator = "",
 
   [Parameter(ValueFromPipeline = $true,
     ValueFromPipelineByPropertyName = $true)]
@@ -168,6 +168,10 @@ function Check-BooleanString {
     [string]$CheckString
   )
 
+  if ($CheckString.Length -eq 0) {
+    return $false
+  }
+
   return !($CheckString.ToLower() -match '^(no|disable|disabled|false|0)$')
 }
 
@@ -196,41 +200,41 @@ if ($Compiler.Length -eq 0) {
 }
 
 $NinjaOverwriteMakeProgram = $false
-if ($Ganerator.Length -eq 0) {
+if ($Generator.Length -eq 0) {
   $Ninja = Get-Command ninja
   if ($IsWindows) {
     if ($VsInstallationPath -match '[\\/]2022[\\/][\d\w\s_\-\.]+[\\/]?') {
-      $Ganerator = "Visual Studio 17 2022"
+      $Generator = "Visual Studio 17 2022"
       if ($GeneratorPlatform.Length -eq 0) {
         $GeneratorPlatform = "x64"
       }
     }
     elseif ($VsInstallationPath -match '[\\/]2019[\\/][\d\w\s_\-\.]+[\\/]?') {
-      $Ganerator = "Visual Studio 16 2019"
+      $Generator = "Visual Studio 16 2019"
       if ($GeneratorPlatform.Length -eq 0) {
         $GeneratorPlatform = "x64"
       }
     }
     elseif ($VsInstallationPath -match '[\\/]2017[\\/][\d\w\s_\-\.]+[\\/]?') {
-      $Ganerator = "Visual Studio 15 2017 Win64"
+      $Generator = "Visual Studio 15 2017 Win64"
     }
   }
-  elseif ((Check-BooleanString $Ninja)) {
+  elseif ((Check-BooleanString "$Ninja")) {
     if ($Ninja.Length -eq 0) {
       $Ninja = Get-Command ninja
       if ($? -and $Ninja) {
-        $Ganerator = "Ninja";
+        $Generator = "Ninja";
       }
     }
     else {
-      $Ganerator = "Ninja";
+      $Generator = "Ninja";
       $NinjaOverwriteMakeProgram = $true
     }
   }
 }
 
-if ($Ganerator.Length -gt 0) {
-  $CMakeGeneratorArgs = @("-G", $Ganerator) 
+if ($Generator.Length -gt 0) {
+  $CMakeGeneratorArgs = @("-G", $Generator) 
 }
 else {
   $CMakeGeneratorArgs = @() 
@@ -240,8 +244,8 @@ if ($GeneratorPlatform.Length -gt 0) {
   $CMakeGeneratorArgs += @("-A", $GeneratorPlatform) 
 }
 
-if ($GaneratorToolset.Length -gt 0) {
-  $CMakeGeneratorArgs += @("-T", $GaneratorToolset) 
+if ($GeneratorToolset.Length -gt 0) {
+  $CMakeGeneratorArgs += @("-T", $GeneratorToolset) 
 }
 
 if ($Compiler.Length -gt 0) {
@@ -251,7 +255,7 @@ if ($Compiler.Length -gt 0) {
     $CompilerCXX = $Compiler.Substring(0, $LastSearchGccIndex) + "g++" + $Compiler.Substring($LastSearchGccIndex + 3);
   }
   elseif ($LastSearchClangIndex -ge 0) {
-    $CompilerCXX = $Compiler.Substring(0, $LastSearchClangIndex) + "clang++" + $Compiler.Substring($LastSearchClangIndex + 3);
+    $CompilerCXX = $Compiler.Substring(0, $LastSearchClangIndex) + "clang++" + $Compiler.Substring($LastSearchClangIndex + 5);
   }
   else {
     $CompilerCXX = $Compiler;
@@ -261,13 +265,13 @@ if ($Compiler.Length -gt 0) {
 }
 
 if ($Compiler -match "clang") {
-  if ((Check-BooleanString $Distcc)) {
+  if ((Check-BooleanString "$Distcc")) {
     if ($Distcc.Length -eq 0) {
       $Distcc = Get-Command distcc
     }
   }
 
-  if ((Check-BooleanString $CCache)) {
+  if ((Check-BooleanString "$CCache")) {
     if ($CCache.Length -eq 0) {
       $CCache = Get-Command ccache
     }
@@ -341,18 +345,18 @@ if ($BuildDirectory.Length -eq 0) {
 $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Definition
 $RunCMakeDir = ($ScriptDir, $BuildDirectory) -Join [IO.Path]::DirectorySeparatorChar
 
-if ($Ganerator.Equals("Ninja") -and $NinjaOverwriteMakeProgram) {
+if ($Generator.Equals("Ninja") -and $NinjaOverwriteMakeProgram) {
   $CMakeCompilerArgs += @("-DCMAKE_MAKE_PROGRAM=$Ninja")
 }
 
 $CMakeGeneratorArgs += @("-DCMAKE_BUILD_TYPE=$BuildType")
-if ((Check-BooleanString $EnableSample)) {
+if ((Check-BooleanString "$EnableSample")) {
   $CMakeGeneratorArgs += @("-DPROJECT_ENABLE_SAMPLE=ON")
 }
-if ((Check-BooleanString $EnableTest)) {
+if ((Check-BooleanString "$EnableTest")) {
   $CMakeGeneratorArgs += @("-DPROJECT_ENABLE_UNITTEST=ON", "-DBUILD_TESTING=ON")
 }
-if ((Check-BooleanString $EnableTools)) {
+if ((Check-BooleanString "$EnableTools")) {
   $CMakeGeneratorArgs += @("-DPROJECT_ENABLE_TOOLS=ON")
 }
 
