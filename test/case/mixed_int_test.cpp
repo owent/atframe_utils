@@ -24,6 +24,9 @@ CASE_TEST(mixed_int_test, basic) {
 
     mixed_uint64_t a4 = 20000000000LL;
     CASE_EXPECT_EQ((uint64_t)20000000000LL, (uint64_t)a4);
+
+    CASE_EXPECT_EQ(4294901756, -a3);
+    CASE_EXPECT_EQ(65540, +a3);
   }
 
   {
@@ -38,6 +41,9 @@ CASE_TEST(mixed_int_test, basic) {
 
     mixed_int64_t a4 = -20000000000LL;
     CASE_EXPECT_EQ((int64_t)-20000000000LL, (int64_t)a4);
+
+    CASE_EXPECT_EQ(65540, -a3);
+    CASE_EXPECT_EQ(-65540, +a3);
   }
 }
 
