@@ -226,6 +226,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY mixed_int
     return ret;
   }
 
+  friend value_type operator+(const self_type &v) { return (value_type)v; }
   friend value_type operator+(const self_type &l, const self_type &r) { return (value_type)l + (value_type)r; }
   template <typename TL>
   friend value_type operator+(const TL &l, const self_type &r) {
@@ -236,6 +237,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY mixed_int
     return (value_type)l + unwrapper(r);
   }
 
+  friend value_type operator-(const self_type &v) { return static_cast<value_type>(0) - (value_type)v; }
   friend value_type operator-(const self_type &l, const self_type &r) { return (value_type)l - (value_type)r; }
   template <typename TL>
   friend value_type operator-(const TL &l, const self_type &r) {
