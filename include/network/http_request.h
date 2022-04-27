@@ -273,6 +273,8 @@ class http_request : public std::enable_shared_from_this<http_request>,
 
   LIBATFRAME_UTILS_API void set_libcurl_no_expect();
 
+  LIBATFRAME_UTILS_API void set_libcurl_allow_expect_100_continue();
+
   LIBATFRAME_UTILS_API void append_http_header(const char *http_header);
   // -------- set options of libcurl @see https://curl.haxx.se/libcurl/c/curl_easy_setopt.html for detail --------
 
@@ -370,6 +372,7 @@ class http_request : public std::enable_shared_from_this<http_request>,
       EN_FLFT_HAS_FORM_FIELD = 0x02,
       EN_FLFT_WRITE_FORM_USE_FUNC = 0x04,
       EN_FLFT_LIBCURL_NO_EXPECT = 0x08,
+      EN_FLFT_LIBCURL_ALLOW_EXPECT_100_CONTINUE = 0x10,
     };
   };
   form_list_t http_form_;

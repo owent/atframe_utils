@@ -122,7 +122,9 @@ LIBATFRAME_UTILS_API int http_request::start(method_t::type method, bool wait) {
   build_http_form(method);
 
   if (nullptr != http_form_.begin) {
-    set_libcurl_no_expect();
+    if (0 == (http_form_.flags & form_list_t::EN_FLFT_LIBCURL_ALLOW_EXPECT_100_CONTINUE)) {
+      set_libcurl_no_expect();
+    }
     curl_easy_setopt(req, CURLOPT_HTTPPOST, http_form_.begin);
     // curl_easy_setopt(req, CURLOPT_VERBOSE, 1L);
   }
@@ -141,15 +143,24 @@ LIBATFRAME_UTILS_API int http_request::start(method_t::type method, bool wait) {
     curl_easy_setopt(req, CURLOPT_READFUNCTION, curl_callback_on_read);
     curl_easy_setopt(req, CURLOPT_READDATA, this);
 
-    long infile_size = 0;
+#    if LIBCURL_VERSION_NUM >= 0x071700
+    using infile_size_type = curl_off_t;
+#    else
+    using infile_size_type = long;
+#    endif
+    infile_size_type infile_size = 0;
     if (nullptr != http_form_.uploaded_file) {
       fseek(http_form_.uploaded_file, 0, SEEK_END);
-      infile_size = ftell(http_form_.uploaded_file);
+      infile_size = static_cast<infile_size_type>(ftell(http_form_.uploaded_file));
       fseek(http_form_.uploaded_file, 0, SEEK_SET);
     } else if (!post_data_.empty()) {
-      infile_size = static_cast<long>(post_data_.size());
+      infile_size = static_cast<infile_size_type>(post_data_.size());
     }
+#    if LIBCURL_VERSION_NUM >= 0x071700
+    curl_easy_setopt(req, CURLOPT_INFILESIZE_LARGE, infile_size);
+#    else
     curl_easy_setopt(req, CURLOPT_INFILESIZE, infile_size);
+#    endif
   }
 
   if (timeout_ms_ > 0) {
@@ -447,6 +458,13 @@ LIBATFRAME_UTILS_API void http_request::set_libcurl_no_expect() {
   append_http_header(LIBATFRAME_UTILS_NAMESPACE_ID::network::detail::custom_no_expect_header);
 }
 
+LIBATFRAME_UTILS_API void http_request::set_libcurl_allow_expect_100_continue() {
+  if (http_form_.flags & form_list_t::EN_FLFT_LIBCURL_ALLOW_EXPECT_100_CONTINUE) {
+    return;
+  }
+  http_form_.flags |= form_list_t::EN_FLFT_LIBCURL_ALLOW_EXPECT_100_CONTINUE;
+}
+
 LIBATFRAME_UTILS_API void http_request::append_http_header(const char *http_header) {
   http_form_.headerlist = curl_slist_append(http_form_.headerlist, http_header);
 }
@@ -646,8 +664,10 @@ LIBATFRAME_UTILS_API void http_request::build_http_form(method_t::type method) {
     // @see https://curl.haxx.se/libcurl/c/CURLOPT_READFUNCTION.html
     // @see https://curl.haxx.se/libcurl/c/CURLOPT_INFILESIZE.html
     // @see https://curl.haxx.se/libcurl/c/CURLOPT_INFILESIZE_LARGE.html
-    if (!http_form_.qs_fields.empty()) {
+    if (0 == (http_form_.flags & form_list_t::EN_FLFT_LIBCURL_ALLOW_EXPECT_100_CONTINUE)) {
       set_libcurl_no_expect();
+    }
+    if (!http_form_.qs_fields.empty()) {
       append_http_header(LIBATFRAME_UTILS_NAMESPACE_ID::network::detail::content_type_multipart_post);
       http_form_.qs_fields.to_string().swap(post_data_);
       http_form_.flags |= form_list_t::EN_FLFT_WRITE_FORM_USE_FUNC;
@@ -656,11 +676,14 @@ LIBATFRAME_UTILS_API void http_request::build_http_form(method_t::type method) {
         fclose(http_form_.uploaded_file);
         http_form_.uploaded_file = nullptr;
       }
-    } else if (nullptr != http_form_.uploaded_file) {
-      set_libcurl_no_expect();
+    } else if (nullptr == http_form_.uploaded_file) {
+      // Using custom post_data_
+      http_form_.flags |= form_list_t::EN_FLFT_WRITE_FORM_USE_FUNC;
     }
   } else if (!http_form_.qs_fields.empty()) {
-    set_libcurl_no_expect();
+    if (0 == (http_form_.flags & form_list_t::EN_FLFT_LIBCURL_ALLOW_EXPECT_100_CONTINUE)) {
+      set_libcurl_no_expect();
+    }
 
     for (LIBATFRAME_UTILS_NAMESPACE_ID::tquerystring::data_const_iterator iter = http_form_.qs_fields.data().begin();
          iter != http_form_.qs_fields.data().end(); ++iter) {
