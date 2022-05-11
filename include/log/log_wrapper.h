@@ -129,9 +129,12 @@ LIBATFRAME_UTILS_API_HEAD_ONLY LOG_WRAPPER_FWAPI_NAMESPACE format_to_n_result<Ou
       std::forward<TARGS>(args)...);
 #  else
   typename details::truncating_iterator<OutputIt> buf(std::move(out), n);
-  LOG_WRAPPER_FWAPI_NAMESPACE vformat_to(buf, std::forward<TFMT>(fmt_text),
+  LOG_WRAPPER_FWAPI_NAMESPACE vformat_to(std::back_inserter(buf), std::forward<TFMT>(fmt_text),
                                          make_format_args(std::forward<TARGS>(args)...));
-  return LOG_WRAPPER_FWAPI_NAMESPACE format_to_n_result<OutputIt>{buf.base(), buf.count()};
+  LOG_WRAPPER_FWAPI_NAMESPACE format_to_n_result<OutputIt> ret;
+  ret.out = buf.base();
+  ret.size = static_cast<decltype(ret.size)>(buf.count());
+  return ret;
 #  endif
 #  if defined(LIBATFRAME_UTILS_ENABLE_EXCEPTION) && LIBATFRAME_UTILS_ENABLE_EXCEPTION
   } catch (const LOG_WRAPPER_FWAPI_NAMESPACE format_error &e) {
