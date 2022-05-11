@@ -10,10 +10,11 @@
  * @history
  *
  */
-#ifndef STD_EXPLICIT_DECLARE_H
-#define STD_EXPLICIT_DECLARE_H
 
 #pragma once
+
+#include <cstdlib>
+#include <utility>
 
 // ============================================================
 // 公共包含部分
@@ -177,4 +178,60 @@
 #  define EXPLICIT_MAY_ALIAS
 #endif
 
+#if !defined(EXPLICIT_LIKELY_ATTR) && defined(__has_cpp_attribute)
+#  if __has_cpp_attribute(likely)
+#    define EXPLICIT_LIKELY_ATTR [[likely]]
+#  endif
+#endif
+#ifndef EXPLICIT_LIKELY_ATTR
+#  define EXPLICIT_LIKELY_ATTR
+#endif
+
+#if !defined(EXPLICIT_UNLIKELY_ATTR) && defined(__has_cpp_attribute)
+#  if __has_cpp_attribute(unlikely)
+#    define EXPLICIT_UNLIKELY_ATTR [[unlikely]]
+#  endif
+#endif
+#ifndef EXPLICIT_UNLIKELY_ATTR
+#  define EXPLICIT_UNLIKELY_ATTR
+#endif
+
+#if !defined(EXPLICIT_NORETURN_ATTR) && defined(__has_cpp_attribute)
+#  if __has_cpp_attribute(noreturn)
+#    define EXPLICIT_NORETURN_ATTR [[noreturn]]
+#  endif
+#endif
+#ifndef EXPLICIT_NORETURN_ATTR
+#  define EXPLICIT_NORETURN_ATTR
+#endif
+
+#ifndef EXPLICIT_UNREACHABLE
+#  if defined(__cpp_lib_unreachable)
+#    if __cpp_lib_unreachable
+#      define EXPLICIT_UNREACHABLE() std::unreachable()
+#    endif
+#  endif
+#  if !defined(EXPLICIT_UNREACHABLE) && defined(unreachable)
+#    define EXPLICIT_UNREACHABLE() unreachable()
+#  endif
+#  if !defined(EXPLICIT_UNREACHABLE)
+#    ifdef __GNUC__
+#      ifdef __clang__
+#        if __has_builtin(__builtin_unreachable)
+#          define EXPLICIT_UNREACHABLE() __builtin_unreachable()
+#        endif
+#      else
+#        if (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 6))
+#          define EXPLICIT_UNREACHABLE() __builtin_unreachable()
+#        endif
+#      endif
+#    endif
+#  endif
+#endif
+#if !defined(EXPLICIT_UNREACHABLE)
+#  if defined(_DEBUG) || !defined(NDEBUG)
+#    define EXPLICIT_UNREACHABLE() std::abort()
+#  else
+#    define EXPLICIT_UNREACHABLE()
+#  endif
 #endif

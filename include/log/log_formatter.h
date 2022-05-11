@@ -1,9 +1,6 @@
-// Copyright 2021 atframework
+// Copyright 2022 atframework
 // Licensed under the MIT licenses.
 // Created by owent on 2015-06-29
-
-#ifndef UTIL_LOG_LOG_FORMATTER_H
-#define UTIL_LOG_LOG_FORMATTER_H
 
 #pragma once
 
@@ -50,14 +47,14 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY truncating_iterator_base {
 #  endif
   using iterator_category = std::output_iterator_tag;
   using value_type = typename std::iterator_traits<OutputIt>::value_type;
-  using difference_type = void;
-  using pointer = void;
-  using reference = void;
+  using difference_type = typename std::iterator_traits<OutputIt>::difference_type;
+  using pointer = typename std::iterator_traits<OutputIt>::pointer;
+  using reference = typename std::iterator_traits<OutputIt>::reference;
 
   truncating_iterator_base(OutputIt out, size_type limit) : out_(out), limit_(limit), count_(0) {}
 
-  OutputIt base() const { return out_; }
-  size_type count() const { return count_; }
+  OutputIt base() const noexcept { return out_; }
+  size_type count() const noexcept { return count_; }
 
  protected:
   OutputIt out_;
@@ -74,26 +71,39 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY truncating_iterator;
 template <class OutputIt>
 class LIBATFRAME_UTILS_API_HEAD_ONLY truncating_iterator<OutputIt, std::false_type>
     : public truncating_iterator_base<OutputIt> {
-  mutable typename truncating_iterator_base<OutputIt>::value_type blackhole_;
-
  public:
   using value_type = typename truncating_iterator_base<OutputIt>::value_type;
   using size_type = typename truncating_iterator_base<OutputIt>::size_type;
 
   truncating_iterator(OutputIt out, size_type limit) : truncating_iterator_base<OutputIt>(out, limit) {}
 
-  truncating_iterator &operator++() {
-    if (this->count_++ < this->limit_) ++this->out_;
+  inline truncating_iterator &operator++() noexcept {
+    if (this->count_++ < this->limit_) {
+      ++this->out_;
+    }
     return *this;
   }
 
-  truncating_iterator operator++(int) {
+  inline truncating_iterator operator++(int) noexcept {
     auto it = *this;
     ++*this;
     return it;
   }
 
-  value_type &operator*() const { return this->count_ < this->limit_ ? *this->out_ : blackhole_; }
+  template <typename T>
+  inline void push_back(T &&val) {
+    if (this->count_++ < this->limit_) {
+      *this->out_++ = std::forward<T>(val);
+    }
+  }
+
+  template <typename T>
+  inline truncating_iterator &operator=(T &&val) {
+    push_back(std::forward<T>(val));
+    return *this;
+  }
+
+  inline truncating_iterator &operator*() noexcept { return *this; }
 };
 
 template <class OutputIt>
@@ -106,14 +116,24 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY truncating_iterator<OutputIt, std::true_typ
   truncating_iterator(OutputIt out, size_type limit) : truncating_iterator_base<OutputIt>(out, limit) {}
 
   template <typename T>
-  truncating_iterator &operator=(T val) {
-    if (this->count_++ < this->limit_) *this->out_++ = val;
+  inline void push_back(T &&val) {
+    if (this->count_++ < this->limit_) {
+      using assign_target_type = typename std::remove_cv<typename std::remove_reference<T>::type>::type;
+      assign_target_type *out = reinterpret_cast<assign_target_type *>(this->out_);
+      *out++ = std::forward<T>(val);
+      this->out_ = reinterpret_cast<void *>(out);
+    }
+  }
+
+  template <typename T>
+  truncating_iterator &operator=(T &&val) {
+    push_back(std::forward<T>(val));
     return *this;
   }
 
-  truncating_iterator &operator++() { return *this; }
-  truncating_iterator &operator++(int) { return *this; }
-  truncating_iterator &operator*() { return *this; }
+  inline truncating_iterator &operator++() noexcept { return *this; }
+  inline truncating_iterator &operator++(int) noexcept { return *this; }
+  inline truncating_iterator &operator*() noexcept { return *this; }
 };
 
 }  // namespace details
@@ -250,7 +270,5 @@ LOG_WRAPPER_FWAPI_DECL_NAMESPACE() {
     }
   };
 }
-
-#endif
 
 #endif
