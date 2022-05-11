@@ -1,3 +1,5 @@
+// Copyright 2022 atframework
+
 #pragma once
 
 // ================ branch prediction information ================
@@ -17,25 +19,6 @@
 #  endif
 #endif
 
-#ifndef unreachable
-#  ifdef __GNUC__
-#    ifdef __clang__
-#      if __has_builtin(__builtin_unreachable)
-#        define unreachable() __builtin_unreachable()
-#      else
-#        define unreachable() abort()
-#      endif
-#    else
-#      if (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 6))
-#        define unreachable() __builtin_unreachable()
-#      else
-#        define unreachable() abort()
-#      endif
-#    endif
-#  else
-#    define unreachable() abort()
-#  endif
-#endif
 // ---------------- branch prediction information ----------------
 
 // ================ import/export ================

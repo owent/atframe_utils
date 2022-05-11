@@ -320,6 +320,28 @@ int main() {
   return 0;
 }"
     LIBATFRAME_UTILS_ENABLE_STD_FORMAT)
+  if(LIBATFRAME_UTILS_ENABLE_STD_FORMAT)
+    check_cxx_source_compiles(
+      "
+#include <format>
+#include <iostream>
+#include <string>
+
+template<class TFMT, class... TARGS>
+std::string forward_fmt_text(TFMT&& fmt, TARGS&&... args) {
+    return std::format(std::forward<TFMT>(fmt), std::forward<TARGS>(args)...);
+}
+
+int main() {
+  std::cout<< forward_fmt_text(\"Hello {}!{}\", \"World\", 123)<< std::endl;
+  return 0;
+}
+"
+      LIBATFRAME_UTILS_ENABLE_FORWARD_FMTTEXT)
+    set(LIBATFRAME_UTILS_ENABLE_FORWARD_FMTTEXT
+        ${LIBATFRAME_UTILS_ENABLE_FORWARD_FMTTEXT}
+        CACHE BOOL "fmttext is allowed to be forward when using std format")
+  endif()
   set(LIBATFRAME_UTILS_ENABLE_STD_FORMAT
       ${LIBATFRAME_UTILS_ENABLE_STD_FORMAT}
       CACHE BOOL "Using std format for log formatter")
@@ -334,23 +356,47 @@ if(NOT LIBATFRAME_UTILS_ENABLE_STD_FORMAT)
     set(CMAKE_REQUIRED_LIBRARIES ${ATFRAMEWORK_CMAKE_TOOLSET_THIRD_PARTY_FMTLIB_LINK_NAME})
     check_cxx_source_compiles(
       "
-        #include <fmt/format.h>
-        #include <iostream>
-        #include <string>
-        int main() {
-            std::cout<< fmt::format(\"The answer is {}.\", 42)<< std::endl;
-            char buffer[64] = {0};
-            const auto result = fmt::format_to_n(buffer, sizeof(buffer), \"{} {}: {}\", \"Hello\", \"World!\", 42);
-            std::cout << \"Buffer: \" << buffer << \",Untruncated output size = \" << result.size << std::endl;
-            return 0;
-        }"
+#include <fmt/format.h>
+#include <iostream>
+#include <string>
+int main() {
+    std::cout<< fmt::format(\"The answer is {}.\", 42)<< std::endl;
+    char buffer[64] = {0};
+    const auto result = fmt::format_to_n(buffer, sizeof(buffer), \"{} {}: {}\", \"Hello\", \"World!\", 42);
+    std::cout << \"Buffer: \" << buffer << \",Untruncated output size = \" << result.size << std::endl;
+    return 0;
+}
+"
       LIBATFRAME_UTILS_ENABLE_FMTLIB)
+    if(LIBATFRAME_UTILS_ENABLE_FMTLIB)
+      check_cxx_source_compiles(
+        "
+#include <fmt/format.h>
+#include <iostream>
+
+template<class TFMT, class... TARGS>
+void forward_fmt_text(TFMT&& fmt, TARGS&&... args) {
+    std::cout<< fmt::format(std::forward<TFMT>(fmt), std::forward<TARGS>(args)...)<< std::endl;
+}
+
+int main() {
+  forward_fmt_text(\"Hello {}!{}\", \"World\", 123);
+  return 0;
+}
+"
+        LIBATFRAME_UTILS_ENABLE_FORWARD_FMTTEXT)
+    endif()
     set(CMAKE_REQUIRED_LIBRARIES ${LIBATFRAME_UTILS_TEST_FMT_BACKUP_CMAKE_REQUIRED_LIBRARIES})
     unset(LIBATFRAME_UTILS_TEST_FMT_BACKUP_CMAKE_REQUIRED_LIBRARIES)
 
     set(LIBATFRAME_UTILS_ENABLE_FMTLIB
         ${LIBATFRAME_UTILS_ENABLE_FMTLIB}
         CACHE BOOL "Using fmt.dev for log formatter")
+    if(LIBATFRAME_UTILS_ENABLE_FORWARD_FMTTEXT)
+      set(LIBATFRAME_UTILS_ENABLE_FORWARD_FMTTEXT
+          ${LIBATFRAME_UTILS_ENABLE_FORWARD_FMTTEXT}
+          CACHE BOOL "fmttext is allowed to be forward when using fmt.dev")
+    endif()
   endif()
 
   if(LIBATFRAME_UTILS_ENABLE_FMTLIB)

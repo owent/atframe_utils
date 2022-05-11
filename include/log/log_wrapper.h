@@ -2,9 +2,6 @@
 // Licensed under the MIT licenses.
 // Created by owent on 2015-06-29
 
-#ifndef UTIL_LOG_LOG_WRAPPER_H
-#define UTIL_LOG_LOG_WRAPPER_H
-
 #pragma once
 
 #include <config/atframe_utils_build_feature.h>
@@ -46,8 +43,11 @@ LIBATFRAME_UTILS_API_HEAD_ONLY std::string format(TFMT &&fmt_text, TARGS &&...ar
 #  endif
 #  ifdef LOG_WRAPPER_FWAPI_USING_FORMAT_STRING
     return LOG_WRAPPER_FWAPI_NAMESPACE format(fmt_text, std::forward<TARGS>(args)...);
-#  else
+#  elif defined(LIBATFRAME_UTILS_ENABLE_FORWARD_FMTTEXT) && LIBATFRAME_UTILS_ENABLE_FORWARD_FMTTEXT
   return LOG_WRAPPER_FWAPI_NAMESPACE format(std::forward<TFMT>(fmt_text), std::forward<TARGS>(args)...);
+#  else
+return LOG_WRAPPER_FWAPI_NAMESPACE vformat(std::forward<TFMT>(fmt_text),
+                                           make_format_args(std::forward<TARGS>(args)...));
 #  endif
 #  if defined(LIBATFRAME_UTILS_ENABLE_EXCEPTION) && LIBATFRAME_UTILS_ENABLE_EXCEPTION
   } catch (const LOG_WRAPPER_FWAPI_NAMESPACE format_error &e) {
@@ -73,8 +73,11 @@ LIBATFRAME_UTILS_API_HEAD_ONLY auto format_to(OutputIt out, TFMT &&fmt_text, TAR
 #  endif
 #  ifdef LOG_WRAPPER_FWAPI_USING_FORMAT_STRING
     return LOG_WRAPPER_FWAPI_NAMESPACE format_to(out, fmt_text, std::forward<TARGS>(args)...);
-#  else
+#  elif defined(LIBATFRAME_UTILS_ENABLE_FORWARD_FMTTEXT) && LIBATFRAME_UTILS_ENABLE_FORWARD_FMTTEXT
   return LOG_WRAPPER_FWAPI_NAMESPACE format_to(out, std::forward<TFMT>(fmt_text), std::forward<TARGS>(args)...);
+#  else
+return LOG_WRAPPER_FWAPI_NAMESPACE vformat_to(out, std::forward<TFMT>(fmt_text),
+                                              make_format_args(std::forward<TARGS>(args)...));
 #  endif
 #  if defined(LIBATFRAME_UTILS_ENABLE_EXCEPTION) && LIBATFRAME_UTILS_ENABLE_EXCEPTION
   } catch (const LOG_WRAPPER_FWAPI_NAMESPACE format_error &e) {
@@ -120,10 +123,15 @@ LIBATFRAME_UTILS_API_HEAD_ONLY LOG_WRAPPER_FWAPI_NAMESPACE format_to_n_result<Ou
     return LOG_WRAPPER_FWAPI_NAMESPACE vformat_to_n(
         out, static_cast<typename details::truncating_iterator<OutputIt>::size_type>(n), std::forward<TFMT>(fmt_text),
         LOG_WRAPPER_FWAPI_NAMESPACE make_format_args(std::forward<TARGS>(args)...));
-#  else
+#  elif defined(LIBATFRAME_UTILS_ENABLE_FORWARD_FMTTEXT) && LIBATFRAME_UTILS_ENABLE_FORWARD_FMTTEXT
   return LOG_WRAPPER_FWAPI_NAMESPACE format_to_n(
       out, static_cast<typename details::truncating_iterator<OutputIt>::size_type>(n), std::forward<TFMT>(fmt_text),
       std::forward<TARGS>(args)...);
+#  else
+  typename details::truncating_iterator<OutputIt> buf(std::move(out), n);
+  LOG_WRAPPER_FWAPI_NAMESPACE vformat_to(buf, std::forward<TFMT>(fmt_text),
+                                         make_format_args(std::forward<TARGS>(args)...));
+  return LOG_WRAPPER_FWAPI_NAMESPACE format_to_n_result<OutputIt>{buf.base(), buf.count()};
 #  endif
 #  if defined(LIBATFRAME_UTILS_ENABLE_EXCEPTION) && LIBATFRAME_UTILS_ENABLE_EXCEPTION
   } catch (const LOG_WRAPPER_FWAPI_NAMESPACE format_error &e) {
@@ -291,9 +299,8 @@ class log_wrapper {
                 std::forward<FMT>(fmt_text),
                 LOG_WRAPPER_FWAPI_NAMESPACE make_format_args(std::forward<TARGS>(args)...));
 #  else
-          LOG_WRAPPER_FWAPI_NAMESPACE format_to_n<char *>(writer.buffer + writer.writen_size,
-                                                          writer.total_size - writer.writen_size - 1,
-                                                          std::forward<TARGS>(args)...);
+          util::log::format_to_n<char *>(writer.buffer + writer.writen_size, writer.total_size - writer.writen_size - 1,
+                                         std::forward<TARGS>(args)...);
 #  endif
         if (result.size > 0) {
           writer.writen_size += static_cast<size_t>(result.size);
@@ -713,5 +720,3 @@ LOG_WRAPPER_FWAPI_FORMAT_AS(typename LIBATFRAME_UTILS_NAMESPACE_ID::log::log_wra
 #endif
 
 #include "config/compiler/template_suffix.h"
-
-#endif  // _UTIL_LOG_LOG_WRAPPER_H_
