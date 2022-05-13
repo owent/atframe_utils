@@ -289,6 +289,12 @@ if(NOT ATFRAMEWORK_CMAKE_TOOLSET_THIRD_PARTY_CRYPTO_DISABLED)
   endif()
 endif()
 
+# MSVC 1929 - VS 2019 (14.29) has wrong argument type for some functions of std::format So we disable it for easier to
+# use
+if(MSVC AND MSVC_VERSION LESS 1930)
+  set(LIBATFRAME_UTILS_ENABLE_STD_FORMAT FALSE)
+endif()
+
 # Check fmtlib(https://fmt.dev/) or std::format
 if(NOT DEFINED LIBATFRAME_UTILS_ENABLE_STD_FORMAT AND NOT DEFINED CACHE{LIBATFRAME_UTILS_ENABLE_STD_FORMAT})
   check_cxx_source_compiles(

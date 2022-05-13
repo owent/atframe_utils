@@ -4,6 +4,7 @@
 
 // ================ branch prediction information ================
 #if !defined(UTIL_LIKELY_IF) && defined(__cplusplus)
+// GCC 9 has likely attribute but do not support declare it at the beginning of statement
 #  if defined(__has_cpp_attribute) && (defined(__clang__) || !defined(__GNUC__) || __GNUC__ > 9)
 #    if __has_cpp_attribute(likely)
 #      define UTIL_LIKELY_IF(...) if (__VA_ARGS__) [[likely]]
@@ -18,6 +19,7 @@
 #endif
 
 #if !defined(UTIL_UNLIKELY_IF) && defined(__cplusplus)
+// GCC 9 has likely attribute but do not support declare it at the beginning of statement
 #  if defined(__has_cpp_attribute) && (defined(__clang__) || !defined(__GNUC__) || __GNUC__ > 9)
 #    if __has_cpp_attribute(likely)
 #      define COPP_UNLIKELY_IF(...) if (__VA_ARGS__) [[unlikely]]
