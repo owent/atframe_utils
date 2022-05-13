@@ -329,35 +329,18 @@ void log_sample_func7() {
             << std::endl;
 
 #    if defined(LIBATFRAME_UTILS_ENABLE_STD_FORMAT) && LIBATFRAME_UTILS_ENABLE_STD_FORMAT
-  using iterator_type = decltype(LIBATFRAME_UTILS_NAMESPACE_ID::log::format_to(string_buffer, "{},{}", 1, te1));
-  // MSVC 1929(VS 16.10) has some problem on type detection and converting, so we speciffy OutputIt here
-  LIBATFRAME_UTILS_NAMESPACE_ID::log::vformat_to<iterator_type>(
-      string_buffer, "{},{},{},{}",
-      LIBATFRAME_UTILS_NAMESPACE_ID::log::make_format_args
-#      if defined(_MSC_VER) && _MSC_VER < 1930  // Bug of MSVC 1929
-      <LOG_WRAPPER_FWAPI_NAMESPACE basic_format_context<iterator_type, char> >
-#      endif
-      (1, 2, 3));
+  LIBATFRAME_UTILS_NAMESPACE_ID::log::vformat_to(string_buffer, "{},{},{},{}",
+                                                 LIBATFRAME_UTILS_NAMESPACE_ID::log::make_format_args(1, 2, 3));
   std::cout << "vformat_to: " << string_buffer << std::endl;
   memset(string_buffer, 0, sizeof(string_buffer));
 
-  LIBATFRAME_UTILS_NAMESPACE_ID::log::vformat_to<iterator_type>(
-      string_buffer, "{},{}",
-      LIBATFRAME_UTILS_NAMESPACE_ID::log::make_format_args
-#      if defined(_MSC_VER) && _MSC_VER < 1930  // Bug of MSVC 1929
-      <LOG_WRAPPER_FWAPI_NAMESPACE basic_format_context<iterator_type, char> >
-#      endif
-      (1, te1));
+  LIBATFRAME_UTILS_NAMESPACE_ID::log::vformat_to(string_buffer, "{},{}",
+                                                 LIBATFRAME_UTILS_NAMESPACE_ID::log::make_format_args(1, te1));
   std::cout << "vformat_to: " << string_buffer << std::endl;
   memset(string_buffer, 0, sizeof(string_buffer));
 
-  LIBATFRAME_UTILS_NAMESPACE_ID::log::vformat_to<iterator_type>(
-      string_buffer, "{},{}",
-      LIBATFRAME_UTILS_NAMESPACE_ID::log::make_format_args
-#      if defined(_MSC_VER) && _MSC_VER < 1930  // Bug of MSVC 1929
-      <LOG_WRAPPER_FWAPI_NAMESPACE basic_format_context<iterator_type, char> >
-#      endif
-      (1, te2));
+  LIBATFRAME_UTILS_NAMESPACE_ID::log::vformat_to(string_buffer, "{},{}",
+                                                 LIBATFRAME_UTILS_NAMESPACE_ID::log::make_format_args(1, te2));
   std::cout << "vformat_to: " << string_buffer << std::endl;
 #    else
   LIBATFRAME_UTILS_NAMESPACE_ID::log::vformat_to(string_buffer, "{},{},{},{}",

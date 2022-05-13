@@ -263,7 +263,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_client {
         } else {
           next_heartbeat_timepoint_ = now + get_configure().subscriber_heartbeat_interval;
         }
-        if (unlikely(next_heartbeat_timepoint_ <= now)) {
+        UTIL_UNLIKELY_IF(next_heartbeat_timepoint_ <= now) {
           next_heartbeat_timepoint_ = now + std::chrono::duration_cast<duration>(std::chrono::minutes{3});
         }
 
