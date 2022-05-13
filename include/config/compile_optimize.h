@@ -3,20 +3,48 @@
 #pragma once
 
 // ================ branch prediction information ================
-#ifndef likely
-#  ifdef __GNUC__
-#    define likely(x) __builtin_expect(!!(x), 1)
-#  else
-#    define likely(x) !!(x)
+#ifndef UTIL_LIKELY_IF
+#  if defined(__has_cpp_attribute)
+#    if __has_cpp_attribute(likely)
+#      define UTIL_LIKELY_IF(...) if (__VA_ARGS__) [[likely]]
+#    endif
+#  elif defined(__clang__)
+#    if __clang_major__ >= 12
+#      define UTIL_LIKELY_IF(...) if (__VA_ARGS__) [[likely]]
+#    endif
+#  elif defined(__GNUC__)
+#    if __GNUC__ >= 9
+#      define UTIL_LIKELY_IF(...) if (__VA_ARGS__) [[likely]]
+#    endif
 #  endif
 #endif
+#if !defined(UTIL_LIKELY_IF) && (defined(__clang__) || defined(__GNUC__))
+#  define UTIL_LIKELY_IF(...) if (__builtin_expect(!!(__VA_ARGS__), true))
+#endif
+#ifndef UTIL_LIKELY_IF
+#  define UTIL_LIKELY_IF(...) if (__VA_ARGS__)
+#endif
 
-#ifndef unlikely
-#  ifdef __GNUC__
-#    define unlikely(x) __builtin_expect(!!(x), 0)
-#  else
-#    define unlikely(x) !!(x)
+#ifndef UTIL_UNLIKELY_IF
+#  if defined(__has_cpp_attribute)
+#    if __has_cpp_attribute(likely)
+#      define UTIL_UNLIKELY_IF(...) if (__VA_ARGS__) [[unlikely]]
+#    endif
+#  elif defined(__clang__)
+#    if __clang_major__ >= 12
+#      define UTIL_UNLIKELY_IF(...) if (__VA_ARGS__) [[unlikely]]
+#    endif
+#  elif defined(__GNUC__)
+#    if __GNUC__ >= 9
+#      define UTIL_UNLIKELY_IF(...) if (__VA_ARGS__) [[unlikely]]
+#    endif
 #  endif
+#endif
+#if !defined(UTIL_UNLIKELY_IF) && (defined(__clang__) || defined(__GNUC__))
+#  define UTIL_UNLIKELY_IF(...) if (__builtin_expect(!!(__VA_ARGS__), false))
+#endif
+#ifndef UTIL_UNLIKELY_IF
+#  define UTIL_UNLIKELY_IF(...) if (__VA_ARGS__)
 #endif
 
 // ---------------- branch prediction information ----------------

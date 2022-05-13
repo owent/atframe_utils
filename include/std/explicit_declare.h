@@ -178,24 +178,6 @@
 #  define EXPLICIT_MAY_ALIAS
 #endif
 
-#if !defined(EXPLICIT_LIKELY_ATTR) && defined(__has_cpp_attribute)
-#  if __has_cpp_attribute(likely)
-#    define EXPLICIT_LIKELY_ATTR [[likely]]
-#  endif
-#endif
-#ifndef EXPLICIT_LIKELY_ATTR
-#  define EXPLICIT_LIKELY_ATTR
-#endif
-
-#if !defined(EXPLICIT_UNLIKELY_ATTR) && defined(__has_cpp_attribute)
-#  if __has_cpp_attribute(unlikely)
-#    define EXPLICIT_UNLIKELY_ATTR [[unlikely]]
-#  endif
-#endif
-#ifndef EXPLICIT_UNLIKELY_ATTR
-#  define EXPLICIT_UNLIKELY_ATTR
-#endif
-
 #if !defined(EXPLICIT_NORETURN_ATTR) && defined(__has_cpp_attribute)
 #  if __has_cpp_attribute(noreturn)
 #    define EXPLICIT_NORETURN_ATTR [[noreturn]]
