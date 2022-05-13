@@ -4,16 +4,8 @@
 
 // ================ branch prediction information ================
 #if !defined(UTIL_LIKELY_IF) && defined(__cplusplus)
-#  if defined(__has_cpp_attribute)
+#  if defined(__has_cpp_attribute) && (defined(__clang__) || !defined(__GNUC__) || __GNUC__ > 9)
 #    if __has_cpp_attribute(likely)
-#      define UTIL_LIKELY_IF(...) if (__VA_ARGS__) [[likely]]
-#    endif
-#  elif __cplusplus >= 202002L && defined(__clang__)
-#    if __clang_major__ >= 12
-#      define UTIL_LIKELY_IF(...) if (__VA_ARGS__) [[likely]]
-#    endif
-#  elif __cplusplus >= 202002L && defined(__GNUC__)
-#    if __GNUC__ >= 9
 #      define UTIL_LIKELY_IF(...) if (__VA_ARGS__) [[likely]]
 #    endif
 #  endif
@@ -26,17 +18,9 @@
 #endif
 
 #if !defined(UTIL_UNLIKELY_IF) && defined(__cplusplus)
-#  if defined(__has_cpp_attribute)
+#  if defined(__has_cpp_attribute) && (defined(__clang__) || !defined(__GNUC__) || __GNUC__ > 9)
 #    if __has_cpp_attribute(likely)
-#      define UTIL_UNLIKELY_IF(...) if (__VA_ARGS__) [[unlikely]]
-#    endif
-#  elif __cplusplus >= 202002L && defined(__clang__)
-#    if __clang_major__ >= 12
-#      define UTIL_UNLIKELY_IF(...) if (__VA_ARGS__) [[unlikely]]
-#    endif
-#  elif __cplusplus >= 202002L && defined(__GNUC__)
-#    if __GNUC__ >= 9
-#      define UTIL_UNLIKELY_IF(...) if (__VA_ARGS__) [[unlikely]]
+#      define COPP_UNLIKELY_IF(...) if (__VA_ARGS__) [[unlikely]]
 #    endif
 #  endif
 #endif
