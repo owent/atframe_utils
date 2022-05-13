@@ -39,12 +39,15 @@ elseif(TARGET gsl::gsl-lite)
   list(APPEND PROJECT_ATFRAME_UTILS_PUBLIC_LINK_NAMES gsl::gsl-lite)
 endif()
 
+set(LIBATFRAME_UTILS_TEST_GSL_SUPPORT_BACKUP_CMAKE_REQUIRED_LIBRARIES ${CMAKE_REQUIRED_LIBRARIES})
+set(CMAKE_REQUIRED_LIBRARIES ${PROJECT_ATFRAME_UTILS_PUBLIC_LINK_NAMES} ${ATFRAMEWORK_CMAKE_TOOLSET_SYSTEM_LINKS})
+
 check_cxx_source_compiles(
   "
 #include <iostream>
 #include <string_view>
 int main() {
-constexpr std::string_view unicode[] {\"▀▄─\", \"▄▀─\", \"▀─▄\", \"▄─▀\"};
+std::string_view unicode[] {\"▀▄─\", \"▄▀─\", \"▀─▄\", \"▄─▀\"};
 
 for (int y{}, p{}; y != 6; ++y, p = ((p + 1) % 4)) {
   for (int x{}; x != 16; ++x)
@@ -92,3 +95,6 @@ int main() {
     set(LIBATFRAME_UTILS_ENABLE_GSL_WITH_FALLBACK_STL ON)
   endif()
 endif()
+
+set(CMAKE_REQUIRED_LIBRARIES ${LIBATFRAME_UTILS_TEST_GSL_SUPPORT_BACKUP_CMAKE_REQUIRED_LIBRARIES})
+unset(LIBATFRAME_UTILS_TEST_GSL_SUPPORT_BACKUP_CMAKE_REQUIRED_LIBRARIES)
