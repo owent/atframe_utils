@@ -38,13 +38,8 @@
 #include <memory>
 #include <sstream>
 #include <string>
+#include <unordered_map>
 #include <vector>
-
-#if defined(LIBATFRAME_UTILS_ENABLE_UNORDERED_MAP_SET) && LIBATFRAME_UTILS_ENABLE_UNORDERED_MAP_SET
-#  include <unordered_map>
-#else
-#  include <map>
-#endif
 
 LIBATFRAME_UTILS_NAMESPACE_BEGIN
 namespace config {

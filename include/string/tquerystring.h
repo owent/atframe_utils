@@ -15,9 +15,6 @@
  *      2020.08.14 增加优先使用unordered_map
  */
 
-#ifndef UTIL_URI_TQUERYSTRING_H
-#define UTIL_URI_TQUERYSTRING_H
-
 #pragma once
 
 #include <config/atframe_utils_build_feature.h>
@@ -26,13 +23,8 @@
 #include <memory>
 #include <sstream>
 #include <string>
+#include <unordered_map>
 #include <vector>
-
-#if defined(LIBATFRAME_UTILS_ENABLE_UNORDERED_MAP_SET) && LIBATFRAME_UTILS_ENABLE_UNORDERED_MAP_SET
-#  include <unordered_map>
-#else
-#  include <map>
-#endif
 
 LIBATFRAME_UTILS_NAMESPACE_BEGIN
 namespace uri {
@@ -536,5 +528,3 @@ class tquerystring : public types::item_object {
   LIBATFRAME_UTILS_API types::item_object::ptr_type create_object();
 };
 LIBATFRAME_UTILS_NAMESPACE_END
-
-#endif

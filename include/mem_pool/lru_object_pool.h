@@ -22,9 +22,6 @@
  *
  */
 
-#ifndef UTIL_MEMPOOL_LRUOBJECTPOOL_H
-#define UTIL_MEMPOOL_LRUOBJECTPOOL_H
-
 #pragma once
 
 #include <config/atframe_utils_build_feature.h>
@@ -37,19 +34,14 @@
 #include <limits>
 #include <list>
 #include <memory>
-
-#include "lock/seq_alloc.h"
-
-#if defined(LIBATFRAME_UTILS_ENABLE_UNORDERED_MAP_SET) && LIBATFRAME_UTILS_ENABLE_UNORDERED_MAP_SET
-#  include <unordered_map>
-#else
-#  include <map>
-#endif
+#include <unordered_map>
 
 // 开启这个宏在包含此文件会开启对象重复push进同一个池的检测，同时也会导致push、pull和gc的复杂度由O(1)变为O(log(n))
 #ifdef UTIL_MEMPOOL_LRUOBJECTPOOL_CHECK_REPUSH
 #  include <set>
 #endif
+
+#include "lock/seq_alloc.h"
 
 LIBATFRAME_UTILS_NAMESPACE_BEGIN
 namespace mempool {
@@ -489,5 +481,3 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY lru_pool : public lru_pool_base {
 };
 }  // namespace mempool
 LIBATFRAME_UTILS_NAMESPACE_END
-
-#endif /* _UTIL_MEMPOOL_LRUOBJECTPOOL_H_ */

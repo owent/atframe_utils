@@ -1,19 +1,14 @@
 // Copyright 2021 atframework
 
+#include <config/compiler_features.h>
+
 #include <time.h>
 #include <algorithm>
-
-#include <config/compiler_features.h>
+#include <unordered_set>
 
 #include "frame/test_macros.h"
 #include "random/random_generator.h"
 #include "random/uuid_generator.h"
-
-#if defined(LIBATFRAME_UTILS_ENABLE_UNORDERED_MAP_SET) && LIBATFRAME_UTILS_ENABLE_UNORDERED_MAP_SET
-#  include <unordered_set>
-#else
-#  include <set>
-#endif
 
 template <typename TOS, typename TVEC>
 void print_vec(const TOS &os, const std::vector<TVEC> &vec) {

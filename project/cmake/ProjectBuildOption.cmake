@@ -374,7 +374,8 @@ if(NOT LIBATFRAME_UTILS_ENABLE_STD_FORMAT)
      AND NOT DEFINED LIBATFRAME_UTILS_ENABLE_FMTLIB
      AND NOT DEFINED CACHE{LIBATFRAME_UTILS_ENABLE_FMTLIB})
     set(LIBATFRAME_UTILS_TEST_FMT_BACKUP_CMAKE_REQUIRED_LIBRARIES ${CMAKE_REQUIRED_LIBRARIES})
-    set(CMAKE_REQUIRED_LIBRARIES ${ATFRAMEWORK_CMAKE_TOOLSET_SYSTEM_LINKS})
+    set(CMAKE_REQUIRED_LIBRARIES ${ATFRAMEWORK_CMAKE_TOOLSET_THIRD_PARTY_FMTLIB_LINK_NAME}
+                                 ${ATFRAMEWORK_CMAKE_TOOLSET_SYSTEM_LINKS})
     check_cxx_source_compiles(
       "
 #include <fmt/format.h>
@@ -430,21 +431,6 @@ set(CMAKE_REQUIRED_LIBRARIES ${ATFRAMEWORK_CMAKE_TOOLSET_SYSTEM_LINKS})
 
 check_cxx_source_compiles(
   "
-#include <unordered_map>
-#include <unordered_set>
-#include <string>
-
-int main() {
-    std::unordered_set<std::string> k1;
-    k1.insert(std::string());
-    std::unordered_map<std::string, int> k2;
-    k2[std::string()] = 123;
-    return 0;
-}"
-  LIBATFRAME_UTILS_ENABLE_UNORDERED_MAP_SET)
-if(LIBATFRAME_UTILS_ENABLE_UNORDERED_MAP_SET)
-  check_cxx_source_compiles(
-    "
         #include <unordered_map>
         #include <unordered_set>
         #include <string>
@@ -456,8 +442,8 @@ if(LIBATFRAME_UTILS_ENABLE_UNORDERED_MAP_SET)
             k2.reserve(8);
             return 0;
         }"
-    LIBATFRAME_UTILS_UNORDERED_MAP_SET_HAS_RESERVE)
-endif()
+  LIBATFRAME_UTILS_UNORDERED_MAP_SET_HAS_RESERVE)
+
 set(CMAKE_REQUIRED_LIBRARIES ${LIBATFRAME_UTILS_TEST_UNORDERED_MAP_SET_BACKUP_CMAKE_REQUIRED_LIBRARIES})
 unset(LIBATFRAME_UTILS_TEST_UNORDERED_MAP_SET_BACKUP_CMAKE_REQUIRED_LIBRARIES)
 

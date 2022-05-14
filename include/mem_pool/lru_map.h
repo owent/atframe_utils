@@ -24,12 +24,7 @@
 #include <cstddef>
 #include <list>
 #include <memory>
-
-#if defined(LIBATFRAME_UTILS_ENABLE_UNORDERED_MAP_SET) && LIBATFRAME_UTILS_ENABLE_UNORDERED_MAP_SET
-#  include <unordered_map>
-#else
-#  include <map>
-#endif
+#include <unordered_map>
 
 LIBATFRAME_UTILS_NAMESPACE_BEGIN
 namespace mempool {
@@ -46,13 +41,8 @@ struct LIBATFRAME_UTILS_API_HEAD_ONLY lru_map_type_traits {
   using const_iterator = typename list_type::const_iterator;
 };
 
-#if defined(LIBATFRAME_UTILS_ENABLE_UNORDERED_MAP_SET) && LIBATFRAME_UTILS_ENABLE_UNORDERED_MAP_SET
 template <class TKEY, class TVALUE, class THasher = std::hash<TKEY>, class TKeyEQ = std::equal_to<TKEY>,
           class TAlloc = std::allocator<std::pair<const TKEY, typename lru_map_type_traits<TKEY, TVALUE>::iterator> > >
-#else
-template <typename TKEY, typename TVALUE, class TLESSCMP = std::less<TKEY>,
-          class TAlloc = std::allocator<std::pair<const TKEY, typename lru_map_type_traits<TKEY, TVALUE>::iterator> > >
-#endif
 class LIBATFRAME_UTILS_API_HEAD_ONLY lru_map {
  public:
   using key_type = typename lru_map_type_traits<TKEY, TVALUE>::key_type;
@@ -69,13 +59,8 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY lru_map {
   using iterator = typename lru_map_type_traits<TKEY, TVALUE>::iterator;
   using const_iterator = typename lru_map_type_traits<TKEY, TVALUE>::const_iterator;
 
-#if defined(LIBATFRAME_UTILS_ENABLE_UNORDERED_MAP_SET) && LIBATFRAME_UTILS_ENABLE_UNORDERED_MAP_SET
   using lru_key_value_map_type = std::unordered_map<TKEY, iterator, THasher, TKeyEQ, TAlloc>;
   using self_type = lru_map<TKEY, TVALUE, THasher, TKeyEQ, TAlloc>;
-#else
-  using lru_key_value_map_type = std::map<TKEY, iterator, TLESSCMP, TAlloc>;
-  using self_type = lru_map<TKEY, TVALUE, TLESSCMP, TAlloc>;
-#endif
 
   lru_map() {}
 

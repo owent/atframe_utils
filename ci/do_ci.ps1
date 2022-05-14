@@ -66,11 +66,11 @@ if ( $RUN_MODE -eq "msvc.2019+.test" ) {
   }
 
   $CURRENT_CWD = Get-Location
-  $ALL_DLL_FILES = (Get-ChildItem -Path "$CURRENT_CWD/*.dll" -Recurse) + (Get-ChildItem -Path "$PROJECT_DIR/third_party/install/*.dll" -Recurse)
+  $ALL_DLL_FILES = @(Get-ChildItem -Path "$CURRENT_CWD/*.dll" -Recurse) + @(Get-ChildItem -Path "$PROJECT_DIR/third_party/install/*.dll" -Recurse)
   $ALL_DLL_DIRS = $(foreach ($dll_file in $ALL_DLL_FILES) {
       $dll_file.Directory.FullName
     }) | Sort-Object | Get-Unique
-  $Env:PATH = ($ALL_DLL_DIRS + $Env:PATH) -Join [IO.Path]::PathSeparator
+  $Env:PATH = ($ALL_DLL_DIRS -Join [IO.Path]::PathSeparator) + [IO.Path]::PathSeparator + $Env:PATH
   Write-Output "PATH=$Env:PATH"
 
   & cmake --build . --config $Env:CONFIGURATION
@@ -95,11 +95,11 @@ elseif ( $RUN_MODE -eq "msvc.no-rtti.test" ) {
   }
 
   $CURRENT_CWD = Get-Location
-  $ALL_DLL_FILES = (Get-ChildItem -Path "$CURRENT_CWD/*.dll" -Recurse) + (Get-ChildItem -Path "$PROJECT_DIR/third_party/install/*.dll" -Recurse)
+  $ALL_DLL_FILES = @(Get-ChildItem -Path "$CURRENT_CWD/*.dll" -Recurse) + @(Get-ChildItem -Path "$PROJECT_DIR/third_party/install/*.dll" -Recurse)
   $ALL_DLL_DIRS = $(foreach ($dll_file in $ALL_DLL_FILES) {
       $dll_file.Directory.FullName
     }) | Sort-Object | Get-Unique
-  $Env:PATH = ($ALL_DLL_DIRS + $Env:PATH) -Join [IO.Path]::PathSeparator
+  $Env:PATH = ($ALL_DLL_DIRS -Join [IO.Path]::PathSeparator) + [IO.Path]::PathSeparator + $Env:PATH
   Write-Output "PATH=$Env:PATH"
 
   & cmake --build . --config $Env:CONFIGURATION
@@ -124,11 +124,11 @@ elseif ( $RUN_MODE -eq "msvc.no-exceptions.test" ) {
   }
 
   $CURRENT_CWD = Get-Location
-  $ALL_DLL_FILES = (Get-ChildItem -Path "$CURRENT_CWD/*.dll" -Recurse) + (Get-ChildItem -Path "$PROJECT_DIR/third_party/install/*.dll" -Recurse)
+  $ALL_DLL_FILES = @(Get-ChildItem -Path "$CURRENT_CWD/*.dll" -Recurse) + @(Get-ChildItem -Path "$PROJECT_DIR/third_party/install/*.dll" -Recurse)
   $ALL_DLL_DIRS = $(foreach ($dll_file in $ALL_DLL_FILES) {
       $dll_file.Directory.FullName
     }) | Sort-Object | Get-Unique
-  $Env:PATH = ($ALL_DLL_DIRS + $Env:PATH) -Join [IO.Path]::PathSeparator
+  $Env:PATH = ($ALL_DLL_DIRS -Join [IO.Path]::PathSeparator) + [IO.Path]::PathSeparator + $Env:PATH
   Write-Output "PATH=$Env:PATH"
 
   & cmake --build . --config $Env:CONFIGURATION
@@ -152,11 +152,11 @@ elseif ( $RUN_MODE -eq "msvc.2017.test" ) {
   }
 
   $CURRENT_CWD = Get-Location
-  $ALL_DLL_FILES = (Get-ChildItem -Path "$CURRENT_CWD/*.dll" -Recurse) + (Get-ChildItem -Path "$PROJECT_DIR/third_party/install/*.dll" -Recurse)
+  $ALL_DLL_FILES = @(Get-ChildItem -Path "$CURRENT_CWD/*.dll" -Recurse) + @(Get-ChildItem -Path "$PROJECT_DIR/third_party/install/*.dll" -Recurse)
   $ALL_DLL_DIRS = $(foreach ($dll_file in $ALL_DLL_FILES) {
       $dll_file.Directory.FullName
     }) | Sort-Object | Get-Unique
-  $Env:PATH = ($ALL_DLL_DIRS + $Env:PATH) -Join [IO.Path]::PathSeparator
+  $Env:PATH = ($ALL_DLL_DIRS -Join [IO.Path]::PathSeparator) + [IO.Path]::PathSeparator + $Env:PATH
   Write-Output "PATH=$Env:PATH"
 
   & cmake --build . --config $Env:CONFIGURATION
