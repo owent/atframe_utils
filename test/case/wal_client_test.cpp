@@ -473,3 +473,56 @@ CASE_TEST(wal_client, receive_logs) {
     CASE_EXPECT_EQ(126, *client->get_last_finished_log_key());
   }
 }
+
+CASE_TEST(wal_client, receive_invalid_log) {
+  LIBATFRAME_UTILS_NAMESPACE_ID::distributed_system::wal_time_point now = std::chrono::system_clock::now();
+  test_wal_client_storage_type storage;
+  test_wal_client_context ctx;
+
+  auto conf = create_configure();
+  auto vtable = create_vtable();
+  auto client = test_wal_client_type::create(now, vtable, conf, &storage);
+  CASE_EXPECT_TRUE(!!client);
+  if (!client) {
+    return;
+  }
+
+  CASE_EXPECT_EQ(
+      static_cast<int32_t>(LIBATFRAME_UTILS_NAMESPACE_ID::distributed_system::wal_result_code::kInvalidParam),
+      static_cast<int32_t>(client->receive_log(ctx, test_wal_client_type::log_pointer{})));
+
+  CASE_EXPECT_EQ(
+      static_cast<int32_t>(LIBATFRAME_UTILS_NAMESPACE_ID::distributed_system::wal_result_code::kInvalidParam),
+      static_cast<int32_t>(client->receive_hole_log(ctx, test_wal_client_type::log_pointer{})));
+}
+
+CASE_TEST(wal_client, receive_hole_logs) {
+  LIBATFRAME_UTILS_NAMESPACE_ID::distributed_system::wal_time_point now = std::chrono::system_clock::now();
+  test_wal_client_storage_type storage;
+  test_wal_client_context ctx;
+
+  auto conf = create_configure();
+  auto vtable = create_vtable();
+  auto client = test_wal_client_type::create(now, vtable, conf, &storage);
+  CASE_EXPECT_TRUE(!!client);
+  if (!client) {
+    return;
+  }
+
+  std::vector<test_wal_client_log_type> logs;
+  logs.push_back(test_wal_client_log_type{now, 124, test_wal_client_log_action::kDoNothing, 124});
+  logs.push_back(test_wal_client_log_type{now, 125, test_wal_client_log_action::kFallbackDefault, 125});
+
+  client->set_last_finished_log_key(126);
+
+  auto event_on_log_added = details::g_test_wal_client_stats.event_on_log_added;
+
+  CASE_EXPECT_EQ(0, client->receive_logs(ctx, logs.begin(), logs.end()));
+  CASE_EXPECT_EQ(2, client->receive_hole_logs(ctx, logs.begin(), logs.end()));
+
+  CASE_EXPECT_EQ(event_on_log_added + 2, details::g_test_wal_client_stats.event_on_log_added);
+  CASE_EXPECT_TRUE(!!client->get_last_finished_log_key());
+  if (client->get_last_finished_log_key()) {
+    CASE_EXPECT_EQ(126, *client->get_last_finished_log_key());
+  }
+}
