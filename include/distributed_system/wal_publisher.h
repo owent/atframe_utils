@@ -120,6 +120,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_publisher {
   struct configure_type : public object_type::configure_type {
     duration subscriber_timeout;
     bool enable_last_broadcast_for_removed_subscriber;
+    bool enable_hole_log;
   };
   using configure_pointer = std::shared_ptr<configure_type>;
 
@@ -144,6 +145,19 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_publisher {
         // reset broadcast
         if (!wal.get_all_logs().empty() && this->vtable_ && this->vtable_->get_log_key) {
           this->set_broadcast_key_bound(this->vtable_->get_log_key(wal, **wal.get_all_logs().rbegin()));
+        }
+        broadcast_hole_logs_.clear();
+      });
+
+      wal_object_->set_internal_event_on_assign_logs([this](object_type& wal, const log_pointer& log) {
+        if (!log) {
+          return;
+        }
+
+        if (broadcast_key_bound_ && configure_ && configure_->enable_hole_log && this->vtable_ &&
+            this->vtable_->get_log_key &&
+            wal.get_log_key_compare()(this->vtable_->get_log_key(wal, *log), *broadcast_key_bound_)) {
+          broadcast_hole_logs_.push_back(log);
         }
       });
     }
@@ -186,6 +200,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_publisher {
     object_type::default_configure(*ret);
     ret->subscriber_timeout = std::chrono::duration_cast<duration>(std::chrono::minutes{10});
     ret->enable_last_broadcast_for_removed_subscriber = false;
+    ret->enable_hole_log = false;
     return ret;
   }
 
@@ -503,13 +518,16 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_publisher {
     } else {
       logs = wal_object_->log_all_range();
     }
-    if (logs.first == logs.second) {
-      return 0;
-    }
 
     std::pair<subscriber_iterator, subscriber_iterator> subscribers = subscriber_manager_->all_range();
     if (subscribers.first != subscribers.second) {
-      send_logs(logs.first, logs.second, subscribers.first, subscribers.second, param);
+      if (logs.first != logs.second) {
+        send_logs(logs.first, logs.second, subscribers.first, subscribers.second, param);
+      }
+      if (!broadcast_hole_logs_.empty()) {
+        send_logs(broadcast_hole_logs_.begin(), broadcast_hole_logs_.end(), subscribers.first, subscribers.second,
+                  param);
+      }
     }
 
     size_t retry_last_broadcast = 3;
@@ -517,7 +535,18 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_publisher {
       --retry_last_broadcast;
       subscriber_collector_type cache;
       cache.swap(gc_subscribers_);
-      if (wal_result_code::kOk == send_logs(logs.first, logs.second, cache.begin(), cache.end(), param)) {
+      bool send_logs_result = true;
+      bool send_hole_logs_result = true;
+      if (logs.first != logs.second) {
+        send_logs_result =
+            (wal_result_code::kOk == send_logs(logs.first, logs.second, cache.begin(), cache.end(), param));
+      }
+      if (!broadcast_hole_logs_.empty()) {
+        send_hole_logs_result =
+            (wal_result_code::kOk ==
+             send_logs(broadcast_hole_logs_.begin(), broadcast_hole_logs_.end(), cache.begin(), cache.end(), param));
+      }
+      if (send_logs_result && send_hole_logs_result) {
         retry_last_broadcast = 0;
       } else {
         for (auto& new_removed_subscriber : gc_subscribers_) {
@@ -530,15 +559,23 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_publisher {
       gc_subscribers_.clear();
     }
 
-    int ret = 0;
+    size_t ret = broadcast_hole_logs_.size();
+    if (!broadcast_hole_logs_.empty()) {
+      broadcast_hole_logs_.clear();
+    }
+
     log_const_iterator last;
+    bool reset_broadcast_key_bound = false;
     while (logs.first != logs.second) {
       last = logs.first;
+      reset_broadcast_key_bound = true;
       ++logs.first;
       ++ret;
     }
 
-    set_broadcast_key_bound(vtable_->get_log_key(*wal_object_, **last));
+    if (reset_broadcast_key_bound) {
+      set_broadcast_key_bound(vtable_->get_log_key(*wal_object_, **last));
+    }
 
     return ret;
   }
@@ -594,6 +631,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_publisher {
 
   // publish-subscribe
   std::unique_ptr<log_key_type> broadcast_key_bound_;
+  log_container_type broadcast_hole_logs_;
 };
 
 }  // namespace distributed_system

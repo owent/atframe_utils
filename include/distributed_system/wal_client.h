@@ -289,7 +289,6 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_client {
       if (get_last_finished_log_key() && !get_log_key_compare()(*this->get_last_finished_log_key(), log_key)) {
         return wal_result_code::kIgnore;
       }
-
       set_last_finished_log_key(std::move(log_key));
     }
 
@@ -297,7 +296,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_client {
   }
 
   wal_result_code receive_log(callback_param_type param, const log_pointer& log) {
-    return receive_log(log_pointer{log}, param);
+    return receive_log(param, log_pointer{log});
   }
 
   template <class... LogCtorArgsT>
@@ -310,6 +309,47 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_client {
     size_t ret = 0;
     while (begin != end) {
       if (wal_result_code::kOk == receive_log(param, *begin)) {
+        ++ret;
+      }
+      ++begin;
+    }
+
+    return ret;
+  }
+
+  wal_result_code receive_hole_log(callback_param_type param, log_pointer&& log) {
+    if (!wal_object_) {
+      return wal_result_code::kInitlization;
+    }
+
+    if (!log) {
+      return wal_result_code::kInvalidParam;
+    }
+
+    if (vtable_ && vtable_->get_log_key) {
+      auto log_key = vtable_->get_log_key(*wal_object_, *log);
+      if (!(get_last_finished_log_key() && !get_log_key_compare()(*this->get_last_finished_log_key(), log_key))) {
+        set_last_finished_log_key(std::move(log_key));
+      }
+    }
+
+    return wal_object_->emplace_back(std::move(log), param);
+  }
+
+  wal_result_code receive_hole_log(callback_param_type param, const log_pointer& log) {
+    return receive_hole_log(param, log_pointer{log});
+  }
+
+  template <class... LogCtorArgsT>
+  wal_result_code receive_hole_log(callback_param_type param, LogCtorArgsT&&... args) {
+    return receive_hole_log(param, std::make_shared<log_type>(std::forward<LogCtorArgsT>(args)...));
+  }
+
+  template <class IteratorT>
+  size_t receive_hole_logs(callback_param_type param, IteratorT begin, IteratorT end) {
+    size_t ret = 0;
+    while (begin != end) {
+      if (wal_result_code::kOk == receive_hole_log(param, *begin)) {
         ++ret;
       }
       ++begin;

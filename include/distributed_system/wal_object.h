@@ -618,6 +618,11 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_object {
     if (wal_result_code::kOk != ret) {
       return ret;
     }
+
+    if (internal_event_on_add_log_) {
+      internal_event_on_add_log_(*this, log);
+    }
+
     logs_.push_back(log);
     if (vtable_ && vtable_->on_log_added) {
       vtable_->on_log_added(*this, log);
@@ -672,6 +677,11 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_object {
     if (wal_result_code::kOk != ret) {
       return ret;
     }
+
+    if (internal_event_on_add_log_) {
+      internal_event_on_add_log_(*this, log);
+    }
+
     logs_.insert(iter, log);
     if (vtable_ && vtable_->on_log_added) {
       vtable_->on_log_added(*this, log);
@@ -706,8 +716,11 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_object {
   friend class wal_client;
 
   using callback_log_event_on_assign_fn_t = std::function<void(wal_object&)>;
+  using callback_log_event_on_add_log_fn_t = std::function<void(wal_object&, const log_pointer&)>;
 
   void set_internal_event_on_assign_logs(callback_log_event_on_assign_fn_t fn) { internal_event_on_assign_ = fn; }
+
+  void set_internal_event_on_assign_logs(callback_log_event_on_add_log_fn_t fn) { internal_event_on_add_log_ = fn; }
 
   void set_internal_event_on_loaded(callback_load_fn_t fn) { internal_event_on_loaded_ = fn; }
 
@@ -730,6 +743,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_object {
 
   // internal events
   callback_log_event_on_assign_fn_t internal_event_on_assign_;
+  callback_log_event_on_add_log_fn_t internal_event_on_add_log_;
   callback_load_fn_t internal_event_on_loaded_;
   callback_dump_fn_t internal_event_on_dumped_;
 };
