@@ -22,7 +22,8 @@ if(MSVC)
   set_property(TARGET ${BIN_NAME} PROPERTY FOLDER "atframework/sample")
 endif(MSVC)
 
-add_test(NAME test COMMAND ${BIN_NAME})
+add_test(NAME "atframe_utils.sample" COMMAND "$<TARGET_FILE:${BIN_NAME}>")
+set_tests_properties("atframe_utils.sample" PROPERTIES LABELS "atframe_utils;atframe_utils.sample")
 
 if(NOT EXISTS ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})
   file(MAKE_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})

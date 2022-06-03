@@ -333,7 +333,7 @@ class log_wrapper {
   // 一般日志级别检查
   UTIL_FORCEINLINE bool check_level(level_t::type level) const { return log_level_ >= level; }
 
-  static UTIL_FORCEINLINE bool check_level(const log_wrapper *logger, level_t::type level) {
+  UTIL_FORCEINLINE static bool check_level(const log_wrapper *logger, level_t::type level) {
     if (nullptr == logger) {
       return false;
     }

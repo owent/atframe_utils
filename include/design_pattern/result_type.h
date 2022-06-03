@@ -78,17 +78,17 @@ struct LIBATFRAME_UTILS_API_HEAD_ONLY
   using pointer = std::unique_ptr<void, small_object_optimize_storage_deleter<void>>;
   using storage_type = pointer;
 
-  static UTIL_FORCEINLINE void destroy_storage(storage_type &out) {
+  UTIL_FORCEINLINE static void destroy_storage(storage_type &out) {
     out.release();
     out.~storage_type();
   }
 
-  static UTIL_FORCEINLINE void construct_storage(void *out) {
+  UTIL_FORCEINLINE static void construct_storage(void *out) {
     // Placement new
     new (out) storage_type(out);
   }
 
-  static UTIL_FORCEINLINE void move_storage(storage_type &out, storage_type &&in) noexcept {
+  UTIL_FORCEINLINE static void move_storage(storage_type &out, storage_type &&in) noexcept {
     if (&out == &in) {
       return;
     }
@@ -96,12 +96,12 @@ struct LIBATFRAME_UTILS_API_HEAD_ONLY
     out = std::move(in);
   }
 
-  static UTIL_FORCEINLINE void swap(storage_type &l, storage_type &r) noexcept { l.swap(r); }
+  UTIL_FORCEINLINE static void swap(storage_type &l, storage_type &r) noexcept { l.swap(r); }
 
-  static UTIL_FORCEINLINE pointer &unref(storage_type &storage) noexcept { return storage; }
-  static UTIL_FORCEINLINE const pointer &unref(const storage_type &storage) noexcept { return storage; }
+  UTIL_FORCEINLINE static pointer &unref(storage_type &storage) noexcept { return storage; }
+  UTIL_FORCEINLINE static const pointer &unref(const storage_type &storage) noexcept { return storage; }
 
-  static UTIL_FORCEINLINE pointer &default_instance() noexcept {
+  UTIL_FORCEINLINE static pointer &default_instance() noexcept {
     static pointer empty;
     return empty;
   }
@@ -114,13 +114,13 @@ struct LIBATFRAME_UTILS_API_HEAD_ONLY
   using pointer = std::unique_ptr<value_type, small_object_optimize_storage_deleter<value_type>>;
   using storage_type = std::pair<value_type, pointer>;
 
-  static UTIL_FORCEINLINE void destroy_storage(storage_type &out) {
+  UTIL_FORCEINLINE static void destroy_storage(storage_type &out) {
     out.second.release();
     out.~storage_type();
   }
 
   template <class... TARGS>
-  static UTIL_FORCEINLINE void construct_storage(void *out, TARGS &&...in) {
+  UTIL_FORCEINLINE static void construct_storage(void *out, TARGS &&...in) {
     // Placement new
     storage_type *ptr = new (out) storage_type(value_type{std::forward<TARGS>(in)...}, nullptr);
     ptr->second.reset(&ptr->first);
@@ -130,7 +130,7 @@ struct LIBATFRAME_UTILS_API_HEAD_ONLY
             typename std::enable_if<std::is_base_of<T, typename std::decay<U>::type>::value ||
                                         std::is_convertible<typename std::decay<U>::type, T>::value,
                                     bool>::type = false>
-  static UTIL_FORCEINLINE void construct_storage(void *out, std::unique_ptr<U, UDELETOR> &&in) noexcept {
+  UTIL_FORCEINLINE static void construct_storage(void *out, std::unique_ptr<U, UDELETOR> &&in) noexcept {
     storage_type *ptr;
     if (in) {
       // Placement new
@@ -142,7 +142,7 @@ struct LIBATFRAME_UTILS_API_HEAD_ONLY
     ptr->second.reset(ptr->first);
   }
 
-  static UTIL_FORCEINLINE void move_storage(storage_type &out, storage_type &&in) noexcept {
+  UTIL_FORCEINLINE static void move_storage(storage_type &out, storage_type &&in) noexcept {
     if (&out == &in) {
       return;
     }
@@ -150,16 +150,16 @@ struct LIBATFRAME_UTILS_API_HEAD_ONLY
     out.first = in.first;
   }
 
-  static UTIL_FORCEINLINE void swap(storage_type &l, storage_type &r) noexcept {
+  UTIL_FORCEINLINE static void swap(storage_type &l, storage_type &r) noexcept {
     value_type lv = l.first;
     l.first = r.first;
     r.first = lv;
   }
 
-  static UTIL_FORCEINLINE pointer &unref(storage_type &storage) noexcept { return storage.second; }
-  static UTIL_FORCEINLINE const pointer &unref(const storage_type &storage) noexcept { return storage.second; }
+  UTIL_FORCEINLINE static pointer &unref(storage_type &storage) noexcept { return storage.second; }
+  UTIL_FORCEINLINE static const pointer &unref(const storage_type &storage) noexcept { return storage.second; }
 
-  static UTIL_FORCEINLINE pointer &default_instance() noexcept {
+  UTIL_FORCEINLINE static pointer &default_instance() noexcept {
     static pointer empty;
     return empty;
   }
@@ -172,22 +172,22 @@ struct LIBATFRAME_UTILS_API_HEAD_ONLY compact_storage_type<T, typename std::uniq
   using pointer = std::unique_ptr<T, typename std::unique_ptr<T>::deleter_type>;
   using storage_type = pointer;
 
-  static UTIL_FORCEINLINE void destroy_storage(storage_type &out) { out.~storage_type(); }
+  UTIL_FORCEINLINE static void destroy_storage(storage_type &out) { out.~storage_type(); }
 
   template <class U, typename std::enable_if<std::is_convertible<typename std::decay<U>::type, pointer>::value,
                                              bool>::type = false>
-  static UTIL_FORCEINLINE void construct_storage(void *out, U &&in) {
+  UTIL_FORCEINLINE static void construct_storage(void *out, U &&in) {
     // Placement new
     new (out) pointer{std::move(in)};
   }
 
   template <class... TARGS>
-  static UTIL_FORCEINLINE void construct_storage(void *out, TARGS &&...in) {
+  UTIL_FORCEINLINE static void construct_storage(void *out, TARGS &&...in) {
     // Placement new
     new (out) pointer{new T(std::forward<TARGS>(in)...)};
   }
 
-  static UTIL_FORCEINLINE void move_storage(storage_type &out, storage_type &&in) noexcept {
+  UTIL_FORCEINLINE static void move_storage(storage_type &out, storage_type &&in) noexcept {
     if (&out == &in) {
       return;
     }
@@ -196,12 +196,12 @@ struct LIBATFRAME_UTILS_API_HEAD_ONLY compact_storage_type<T, typename std::uniq
     in.reset();
   }
 
-  static UTIL_FORCEINLINE void swap(storage_type &l, storage_type &r) noexcept { l.swap(r); }
+  UTIL_FORCEINLINE static void swap(storage_type &l, storage_type &r) noexcept { l.swap(r); }
 
-  static UTIL_FORCEINLINE pointer &unref(storage_type &storage) noexcept { return storage; }
-  static UTIL_FORCEINLINE const pointer &unref(const storage_type &storage) noexcept { return storage; }
+  UTIL_FORCEINLINE static pointer &unref(storage_type &storage) noexcept { return storage; }
+  UTIL_FORCEINLINE static const pointer &unref(const storage_type &storage) noexcept { return storage; }
 
-  static UTIL_FORCEINLINE pointer &default_instance() noexcept {
+  UTIL_FORCEINLINE static pointer &default_instance() noexcept {
     static pointer empty;
     return empty;
   }
@@ -213,15 +213,15 @@ struct LIBATFRAME_UTILS_API_HEAD_ONLY compact_storage_type : public std::false_t
   using pointer = std::unique_ptr<T, DeleterT>;
   using storage_type = pointer;
 
-  static UTIL_FORCEINLINE void destroy_storage(storage_type &out) { out.~storage_type(); }
+  UTIL_FORCEINLINE static void destroy_storage(storage_type &out) { out.~storage_type(); }
 
   template <class... TARGS>
-  static UTIL_FORCEINLINE void construct_storage(void *out, TARGS &&...in) {
+  UTIL_FORCEINLINE static void construct_storage(void *out, TARGS &&...in) {
     // Placement new
     new (out) pointer{std::forward<TARGS>(in)...};
   }
 
-  static UTIL_FORCEINLINE void move_storage(storage_type &out, storage_type &&in) noexcept {
+  UTIL_FORCEINLINE static void move_storage(storage_type &out, storage_type &&in) noexcept {
     if (&out == &in) {
       return;
     }
@@ -230,12 +230,12 @@ struct LIBATFRAME_UTILS_API_HEAD_ONLY compact_storage_type : public std::false_t
     in.reset();
   }
 
-  static UTIL_FORCEINLINE void swap(storage_type &l, storage_type &r) noexcept { l.swap(r); }
+  UTIL_FORCEINLINE static void swap(storage_type &l, storage_type &r) noexcept { l.swap(r); }
 
-  static UTIL_FORCEINLINE pointer &unref(storage_type &storage) noexcept { return storage; }
-  static UTIL_FORCEINLINE const pointer &unref(const storage_type &storage) noexcept { return storage; }
+  UTIL_FORCEINLINE static pointer &unref(storage_type &storage) noexcept { return storage; }
+  UTIL_FORCEINLINE static const pointer &unref(const storage_type &storage) noexcept { return storage; }
 
-  static UTIL_FORCEINLINE pointer &default_instance() noexcept {
+  UTIL_FORCEINLINE static pointer &default_instance() noexcept {
     static pointer empty;
     return empty;
   }
