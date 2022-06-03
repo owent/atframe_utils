@@ -24,4 +24,5 @@ atframe_add_test_executable(atframe_utils_unit_test ${PROJECT_TEST_SRC_LIST})
 target_link_libraries(atframe_utils_unit_test ${PROJECT_NAME})
 target_compile_options(atframe_utils_unit_test PRIVATE ${COMPILER_STRICT_EXTRA_CFLAGS} ${COMPILER_STRICT_CFLAGS})
 
-add_test(NAME test COMMAND atframe_utils_unit_test)
+add_test(NAME "atframe_utils.unit_test" COMMAND "$<TARGET_FILE:atframe_utils_unit_test>")
+set_tests_properties("atframe_utils.unit_test" PROPERTIES LABELS "atframe_utils;atframe_utils.unit_test")
