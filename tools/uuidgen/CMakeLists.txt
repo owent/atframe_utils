@@ -19,9 +19,12 @@ if(MSVC)
   add_target_properties(${BIN_NAME} LINK_FLAGS /NODEFAULTLIB:library)
 endif(MSVC)
 
-add_test(NAME test-uuidgen COMMAND ${BIN_NAME})
-add_test(NAME test-uuidgen-r COMMAND ${BIN_NAME} -r)
-add_test(NAME test-uuidgen-t COMMAND ${BIN_NAME} -t)
-add_test(NAME test-uuidgen-V COMMAND ${BIN_NAME} -V)
-add_test(NAME test-uuidgen-h COMMAND ${BIN_NAME} -h)
+add_test(NAME test-uuidgen COMMAND "$<TARGET_FILE:${BIN_NAME}>")
+add_test(NAME test-uuidgen-r COMMAND "$<TARGET_FILE:${BIN_NAME}>" -r)
+add_test(NAME test-uuidgen-t COMMAND "$<TARGET_FILE:${BIN_NAME}>" -t)
+add_test(NAME test-uuidgen-V COMMAND "$<TARGET_FILE:${BIN_NAME}>" -V)
+add_test(NAME test-uuidgen-h COMMAND "$<TARGET_FILE:${BIN_NAME}>" -h)
 add_test(NAME test-uuidgen--bad-params COMMAND ${BIN_NAME} --bad-params)
+
+set_tests_properties(test-uuidgen test-uuidgen-r test-uuidgen-t test-uuidgen-V test-uuidgen-h test-uuidgen--bad-params
+                     PROPERTIES LABELS "atframe_utils;atframe_utils.tools")
