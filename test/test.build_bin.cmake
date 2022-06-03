@@ -63,5 +63,6 @@ function(atframe_add_test_executable TARGET_NAME)
     target_compile_definitions(${TARGET_NAME} PRIVATE ${PROJECT_TEST_DEFINITIONS})
   endif()
 
-  # add_test(NAME test COMMAND ${TARGET_NAME})
+  # add_test(NAME test-name COMMAND "$<TARGET_FILE:${TARGET_NAME}>") set_tests_properties(test-name PROPERTIES LABELS
+  # "label1;label2")
 endfunction()
