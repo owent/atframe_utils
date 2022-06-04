@@ -5,7 +5,7 @@ on: # @see https://help.github.com/en/articles/events-that-trigger-workflows#web
     branches: # Array of patterns that match refs/heads
       - main
   pull_request:
-    branches: [ main ]
+    branches: [main]
 
 jobs:
   format:
@@ -177,6 +177,8 @@ jobs:
         with:
           path: |
             third_party/install
+            C:/msys64/var/cache/pacman/pkg
+            C:/msys64/var/lib/pacman
           key: ${{ runner.os }}-${ hashFiles('.github/.cache-key') }
   coverage: # job id, can be any string
     name: Coverage
@@ -206,7 +208,7 @@ jobs:
         with:
           # token: ${{secrets.CODECOV_TOKEN}} # not required for public repos
           fail_ci_if_error: true
-          gcov_args: '-lp'
+          gcov_args: "-lp"
       - name: Cache packages
         uses: actions/cache@v2
         with:
