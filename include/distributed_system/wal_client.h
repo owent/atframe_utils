@@ -275,6 +275,9 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_client {
     return ret;
   }
 
+  inline void set_next_heartbeat_timepoint(time_point t) noexcept { next_heartbeat_timepoint_ = t; }
+  inline time_point get_next_heartbeat_timepoint() const noexcept { return next_heartbeat_timepoint_; }
+
   wal_result_code receive_log(callback_param_type param, log_pointer&& log) {
     if (!wal_object_) {
       return wal_result_code::kInitlization;
