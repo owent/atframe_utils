@@ -381,6 +381,11 @@ CASE_TEST(wal_client, retry_heartbeat) {
 
   CASE_EXPECT_EQ(subscribe_request_count + 5, details::g_test_wal_client_stats.subscribe_request_count);
   CASE_EXPECT_EQ(receive_subscribe_response_count, details::g_test_wal_client_stats.receive_subscribe_response_count);
+
+  // set_next_heartbeat_timepoint/get_next_heartbeat_timepoint
+  CASE_EXPECT_NE(std::chrono::system_clock::from_time_t(0), client->get_next_heartbeat_timepoint());
+  client->set_next_heartbeat_timepoint(std::chrono::system_clock::from_time_t(0));
+  CASE_EXPECT_EQ(std::chrono::system_clock::from_time_t(0), client->get_next_heartbeat_timepoint());
 }
 
 // receive_snapshot
