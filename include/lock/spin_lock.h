@@ -183,7 +183,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY spin_lock {
  private:
   enum lock_state_t { UNLOCKED = 0, LOCKED = 1 };
   LIBATFRAME_UTILS_NAMESPACE_ID::lock::atomic_int_type<
-#if defined(LOCK_DISABLE_MT) && LOCK_DISABLE_MT
+#if defined(LIBATFRAME_UTILS_LOCK_DISABLE_MT) && LIBATFRAME_UTILS_LOCK_DISABLE_MT
       LIBATFRAME_UTILS_NAMESPACE_ID::lock::unsafe_int_type<unsigned int>
 #else
       unsigned int

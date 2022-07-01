@@ -373,7 +373,7 @@ std::basic_ostream<E, T> &operator<<(std::basic_ostream<E, T> &os, intrusive_ptr
 }
 }  // namespace std
 
-#if defined(LOCK_DISABLE_MT) && LOCK_DISABLE_MT
+#if defined(LIBATFRAME_UTILS_LOCK_DISABLE_MT) && LIBATFRAME_UTILS_LOCK_DISABLE_MT
 #  define UTIL_INTRUSIVE_PTR_ATOMIC_TYPE \
     LIBATFRAME_UTILS_NAMESPACE_ID::lock::atomic_int_type<LIBATFRAME_UTILS_NAMESPACE_ID::lock::unsafe_int_type<size_t> >
 #else

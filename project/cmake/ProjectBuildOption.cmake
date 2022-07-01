@@ -95,7 +95,7 @@ if(ANDROID)
 else()
   option(LOG_WRAPPER_ENABLE_STACKTRACE "Try to enable stacktrace for log." ON)
 endif()
-option(LOCK_DISABLE_MT "Disable multi-thread support lua support." OFF)
+option(LIBATFRAME_UTILS_LOCK_DISABLE_MT "Disable multi-thread support lua support." OFF)
 set(LOG_STACKTRACE_MAX_STACKS
     "100"
     CACHE STRING "Max stacks when stacktracing.")

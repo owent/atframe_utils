@@ -25,7 +25,7 @@ namespace lock {
 class LIBATFRAME_UTILS_API_HEAD_ONLY spin_rw_lock {
  private:
   LIBATFRAME_UTILS_NAMESPACE_ID::lock::atomic_int_type<
-#if defined(LOCK_DISABLE_MT) && LOCK_DISABLE_MT
+#if defined(LIBATFRAME_UTILS_LOCK_DISABLE_MT) && LIBATFRAME_UTILS_LOCK_DISABLE_MT
       LIBATFRAME_UTILS_NAMESPACE_ID::lock::unsafe_int_type<int32_t>
 #else
       int32_t
