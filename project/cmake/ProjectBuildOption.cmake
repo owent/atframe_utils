@@ -444,6 +444,35 @@ check_cxx_source_compiles(
         }"
   LIBATFRAME_UTILS_UNORDERED_MAP_SET_HAS_RESERVE)
 
+check_cxx_source_compiles(
+  "
+  #include <iostream>
+  #include <string_view>
+  #include <source_location>
+
+  void log(const std::string_view message,
+           const std::source_location location =
+                 std::source_location::current()) {
+    std::cout << \"file: \"
+              << location.file_name() << \"(\"
+              << location.line() << \":\"
+              << location.column() << \") `\"
+              << location.function_name() << \"`: \"
+              << message << std::endl;
+  }
+
+  template <typename T> void fun(T x) {
+    log(x);
+  }
+
+  int main(int, char*[]) {
+    log(\"Hello world!\");
+    fun(\"Hello C++20!\");
+    return 0;
+  }"
+  LIBATFRAME_UTILS_TEST_SOURCE_LOCATION)
+set(LIBATFRAME_UTILS_ENABLE_SOURCE_LOCATION ${LIBATFRAME_UTILS_TEST_SOURCE_LOCATION})
+
 set(CMAKE_REQUIRED_LIBRARIES ${LIBATFRAME_UTILS_TEST_UNORDERED_MAP_SET_BACKUP_CMAKE_REQUIRED_LIBRARIES})
 unset(LIBATFRAME_UTILS_TEST_UNORDERED_MAP_SET_BACKUP_CMAKE_REQUIRED_LIBRARIES)
 
