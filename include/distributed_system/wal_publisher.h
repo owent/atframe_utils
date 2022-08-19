@@ -359,22 +359,30 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_publisher {
 
   void remove_subscriber(const subscriber_key_type& key, wal_unsubscribe_reason reason, callback_param_type param) {
     subscriber_pointer subscriber = subscriber_manager_->unsubscribe(key, reason);
-    if (subscriber && vtable_ && vtable_->on_subscriber_removed) {
-      if (configure_ && configure_->enable_last_broadcast_for_removed_subscriber) {
-        gc_subscribers_[key] = subscriber;
-      }
+    if (!subscriber) {
+      return;
+    }
 
+    if (configure_ && configure_->enable_last_broadcast_for_removed_subscriber) {
+      gc_subscribers_[key] = subscriber;
+    }
+
+    if (vtable_ && vtable_->on_subscriber_removed) {
       vtable_->on_subscriber_removed(*this, subscriber, reason, param);
     }
   }
 
   void remove_subscriber(const subscriber_pointer& checked, wal_unsubscribe_reason reason, callback_param_type param) {
     subscriber_pointer subscriber = subscriber_manager_->unsubscribe(checked, reason);
-    if (subscriber && vtable_ && vtable_->on_subscriber_removed) {
-      if (configure_ && configure_->enable_last_broadcast_for_removed_subscriber) {
-        gc_subscribers_[checked->get_key()] = subscriber;
-      }
+    if (!subscriber) {
+      return;
+    }
 
+    if (configure_ && configure_->enable_last_broadcast_for_removed_subscriber) {
+      gc_subscribers_[subscriber->get_key()] = subscriber;
+    }
+
+    if (vtable_ && vtable_->on_subscriber_removed) {
       vtable_->on_subscriber_removed(*this, subscriber, reason, param);
     }
   }
