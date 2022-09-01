@@ -6,6 +6,7 @@
 #include <config/atframe_utils_build_feature.h>
 
 #include <algorithm>
+#include <cstddef>
 #include <type_traits>
 
 #ifdef max
@@ -68,8 +69,9 @@ struct LIBATFRAME_UTILS_API_HEAD_ONLY aligned_union {
 
 template <std::size_t Len, std::size_t Align = alignof(std::max_align_t)>
 struct LIBATFRAME_UTILS_API_HEAD_ONLY aligned_storage {
+  static constexpr const std::size_t max_size = (Len > Align) ? Len : Align;
   struct type {
-    alignas(Len, Align) unsigned char _s[Len];
+    alignas(max_size) unsigned char _s[max_size];
   };
 };
 #endif
