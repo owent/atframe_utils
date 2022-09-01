@@ -1,6 +1,8 @@
 // Copyright 2021 atframework
 // Created by owent on 2021-08-10
 
+#include <nostd/type_traits.h>
+
 #include <stdint.h>
 #include <cstdlib>
 #include <cstring>
@@ -14,15 +16,15 @@ CASE_TEST(result_type, all_triviall) {
   using test_type = LIBATFRAME_UTILS_NAMESPACE_ID::design_pattern::result_type<int, uint64_t>;
   auto success_obj = test_type::make_success(123);
   auto error_obj = test_type::make_error(456U);
-  static_assert(
-      sizeof(std::aligned_storage<sizeof(test_type::error_storage_type::storage_type)>::type) + sizeof(int64_t) >=
-          sizeof(test_type),
-      "size invalid for trivial result_type");
+  static_assert(sizeof(util::nostd::aligned_storage<sizeof(test_type::error_storage_type::storage_type)>::type) +
+                        sizeof(int64_t) >=
+                    sizeof(test_type),
+                "size invalid for trivial result_type");
 
   CASE_MSG_INFO() << "sizeof(test_type::error_storage_type): " << sizeof(test_type::error_storage_type::storage_type)
                   << std::endl;
-  CASE_MSG_INFO() << "sizeof(std::aligned_storage<sizeof(test_type::error_storage_type)>::type): "
-                  << sizeof(std::aligned_storage<sizeof(test_type::error_storage_type::storage_type)>::type)
+  CASE_MSG_INFO() << "sizeof(util::nostd::aligned_storage<sizeof(test_type::error_storage_type)>::type): "
+                  << sizeof(util::nostd::aligned_storage<sizeof(test_type::error_storage_type::storage_type)>::type)
                   << std::endl;
   CASE_MSG_INFO() << "sizeof(result_type<int, uint64_t>): " << sizeof(test_type) << std::endl;
   CASE_EXPECT_TRUE(success_obj.is_success());
