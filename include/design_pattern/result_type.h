@@ -34,12 +34,12 @@ struct LIBATFRAME_UTILS_API_HEAD_ONLY max_storage_size_helper;
 
 template <class LT, class RT>
 struct LIBATFRAME_UTILS_API_HEAD_ONLY max_storage_size_helper<LT, RT, true> {
-  static constexpr const std::size_t value = sizeof(typename std::aligned_storage<sizeof(RT)>::type);
+  static constexpr const std::size_t value = sizeof(typename nostd::aligned_storage<sizeof(RT)>::type);
 };
 
 template <class LT, class RT>
 struct LIBATFRAME_UTILS_API_HEAD_ONLY max_storage_size_helper<LT, RT, false> {
-  static constexpr const std::size_t value = sizeof(typename std::aligned_storage<sizeof(LT)>::type);
+  static constexpr const std::size_t value = sizeof(typename nostd::aligned_storage<sizeof(LT)>::type);
 };
 
 template <class T>

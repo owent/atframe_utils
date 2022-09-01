@@ -3,6 +3,8 @@
 
 #pragma once
 
+#include <config/atframe_utils_build_feature.h>
+
 #include <algorithm>
 #include <type_traits>
 
@@ -12,9 +14,15 @@
 
 LIBATFRAME_UTILS_NAMESPACE_BEGIN
 namespace nostd {
-#if ((defined(__cplusplus) && __cplusplus >= 201703L) || (defined(_MSVC_LANG) && _MSVC_LANG >= 201703L))
+// std::aligned_union is deprecated in C++23, which will be warned by MSVC with C++20 only
+#if ((defined(__cplusplus) && __cplusplus >= 201703L) || (defined(_MSVC_LANG) && _MSVC_LANG >= 201703L)) && \
+    !((defined(__cplusplus) && __cplusplus >= 202004L) || (defined(_MSVC_LANG) && _MSVC_LANG >= 202004L))
 template <std::size_t Len, class... Types>
 using aligned_union = std::aligned_union<Len, Types...>;
+
+template <std::size_t Len, std::size_t Align = alignof(std::max_align_t)>
+using aligned_storage = std::aligned_storage<Len, Align>;
+
 #else
 template <std::size_t Len, class... Types>
 struct max_alignof_size_helper;
@@ -55,6 +63,13 @@ struct LIBATFRAME_UTILS_API_HEAD_ONLY aligned_union {
 
   struct type {
     alignas(sizeof(unsigned char[alignment_value])) unsigned char _s[max_sizeof_size_helper<0, Types...>::value];
+  };
+};
+
+template <std::size_t Len, std::size_t Align = alignof(std::max_align_t)>
+struct LIBATFRAME_UTILS_API_HEAD_ONLY aligned_storage {
+  struct type {
+    alignas(Len, Align) unsigned char _s[Len];
   };
 };
 #endif
