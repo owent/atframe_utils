@@ -75,9 +75,8 @@ template <std::size_t Len, std::size_t Align = alignof(max_align_t)>
 template <std::size_t Len, std::size_t Align = 16>
 #  endif
 struct LIBATFRAME_UTILS_API_HEAD_ONLY aligned_storage {
-  static constexpr const std::size_t max_size = (Len > Align) ? Len : Align;
   struct type {
-    alignas(max_size) unsigned char _s[max_size];
+    alignas(Align) unsigned char _s[Len];
   };
 };
 #endif
