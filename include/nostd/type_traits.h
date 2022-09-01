@@ -67,9 +67,10 @@ struct LIBATFRAME_UTILS_API_HEAD_ONLY aligned_union {
   };
 };
 
+// We should align to at least 16 bytes, @see https://wiki.osdev.org/System_V_ABI for more details
 #  if (defined(__cplusplus) && __cplusplus >= 201103L) || \
       (defined(__STDC_VERSION__) && __STDC_VERSION__ >= 201112L) || (defined(_MSC_VER) && _MSC_VER >= 1900)
-template <std::size_t Len, std::size_t Align = alignof(std::max_align_t)>
+template <std::size_t Len, std::size_t Align = alignof(max_align_t)>
 #  else
 template <std::size_t Len, std::size_t Align = 16>
 #  endif
