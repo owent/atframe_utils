@@ -76,7 +76,7 @@ EXPLICIT_NODISCARD_ATTR unique_ptr<T> make_unique(Args &&...args) {
 }  // namespace gsl
 
 #elif defined(LIBATFRAME_UTILS_ENABLE_GSL_WITH_GSL_LITE) && LIBATFRAME_UTILS_ENABLE_GSL_WITH_GSL_LITE
-#  include <gsl-lite/gsl-lite.hpp>
+#  include <gsl/gsl-lite.hpp>
 #elif defined(LIBATFRAME_UTILS_ENABLE_GSL_WITH_FALLBACK_STL) && LIBATFRAME_UTILS_ENABLE_GSL_WITH_FALLBACK_STL
 #  include <array>
 #  include <cstddef>
