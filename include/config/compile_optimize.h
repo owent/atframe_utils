@@ -204,7 +204,11 @@
 
 #ifndef UTIL_CONST_INIT
 #  if defined(__cpp_constinit) && __cpp_constinit >= 201907L
-#    define UTIL_CONST_INIT constinit
+#    if defined(_MSC_VER)
+#      define UTIL_CONST_INIT
+#    else
+#      define UTIL_CONST_INIT constinit
+#    endif
 #  elif UTIL_HAVE_CPP_ATTRIBUTE(clang::require_constant_initialization)
 #    define UTIL_CONST_INIT [[clang::require_constant_initialization]]
 #  else

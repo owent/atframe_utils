@@ -103,18 +103,18 @@ EXPLICIT_NODISCARD_ATTR unique_ptr<T> make_unique(Args&&... args) {
 #  endif
 
 template <class T, size_t N>
-EXPLICIT_NODISCARD_ATTR LIBATFRAME_UTILS_API_HEAD_ONLY inline constexpr T& at(T (&arr)[N], size_t pos) {
+EXPLICIT_NODISCARD_ATTR LIBATFRAME_UTILS_API_HEAD_ONLY constexpr inline T& at(T (&arr)[N], size_t pos) {
   return arr[pos];
 }
 
 template <class Container>
-EXPLICIT_NODISCARD_ATTR LIBATFRAME_UTILS_API_HEAD_ONLY inline constexpr typename Container::value_type& at(
+EXPLICIT_NODISCARD_ATTR LIBATFRAME_UTILS_API_HEAD_ONLY constexpr inline typename Container::value_type& at(
     Container& cont, size_t pos) {
   return cont[pos];
 }
 
 template <class Container>
-EXPLICIT_NODISCARD_ATTR LIBATFRAME_UTILS_API_HEAD_ONLY inline constexpr typename Container::value_type const& at(
+EXPLICIT_NODISCARD_ATTR LIBATFRAME_UTILS_API_HEAD_ONLY constexpr inline typename Container::value_type const& at(
     Container const& cont, size_t pos) {
   return cont[pos];
 }
@@ -122,15 +122,45 @@ EXPLICIT_NODISCARD_ATTR LIBATFRAME_UTILS_API_HEAD_ONLY inline constexpr typename
 #  if gsl_HAVE(INITIALIZER_LIST)
 
 template <class T>
-EXPLICIT_NODISCARD_ATTR LIBATFRAME_UTILS_API_HEAD_ONLY inline const constexpr T at(std::initializer_list<T> cont,
+EXPLICIT_NODISCARD_ATTR LIBATFRAME_UTILS_API_HEAD_ONLY constexpr inline const T at(std::initializer_list<T> cont,
                                                                                    size_t pos) {
   return *(cont.begin() + pos);
 }
 #  endif
 
 template <class T>
-EXPLICIT_NODISCARD_ATTR LIBATFRAME_UTILS_API_HEAD_ONLY inline constexpr T& at(span<T> s, size_t pos) {
+EXPLICIT_NODISCARD_ATTR LIBATFRAME_UTILS_API_HEAD_ONLY constexpr inline T& at(span<T> s, size_t pos) {
   return s[pos];
+}
+
+template <class TCONTAINER>
+LIBATFRAME_UTILS_API_HEAD_ONLY constexpr inline auto size(const TCONTAINER& container) -> decltype(container.size()) {
+  return container.size();
+}
+
+template <class T, size_t SIZE>
+LIBATFRAME_UTILS_API_HEAD_ONLY constexpr inline size_t size(const T (&)[SIZE]) noexcept {
+  return SIZE;
+}
+
+template <class TCONTAINER>
+LIBATFRAME_UTILS_API_HEAD_ONLY constexpr inline auto data(TCONTAINER& container) -> decltype(container.data()) {
+  return container.data();
+}
+
+template <class TCONTAINER>
+LIBATFRAME_UTILS_API_HEAD_ONLY constexpr inline auto data(const TCONTAINER& container) -> decltype(container.data()) {
+  return container.data();
+}
+
+template <class T, size_t SIZE>
+LIBATFRAME_UTILS_API_HEAD_ONLY constexpr inline T* data(T (&array_value)[SIZE]) noexcept {
+  return array_value;
+}
+
+template <class TELEMENT>
+LIBATFRAME_UTILS_API_HEAD_ONLY constexpr inline const TELEMENT* data(std::initializer_list<TELEMENT> l) noexcept {
+  return l.begin();
 }
 
 #  if defined(LIBATFRAME_UTILS_ENABLE_GSL_WITH_FALLBACK_STL_SPAN) && LIBATFRAME_UTILS_ENABLE_GSL_WITH_FALLBACK_STL_SPAN
