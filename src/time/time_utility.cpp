@@ -66,19 +66,12 @@ LIBATFRAME_UTILS_API void time_utility::reset_global_now_offset() {
 
 // ====================== 后面的函数都和时区相关 ======================
 LIBATFRAME_UTILS_API time_t time_utility::get_sys_zone_offset() {
-  time_t ret = 0;
-  std::tm t;
-  memset(&t, 0, sizeof(t));
-  t.tm_year = 70;
-  t.tm_mon = 0;
-  t.tm_mday = 2;  // VC 在时区offset是负数的时候会出错，所以改成从第二天开始然后减一天
-  t.tm_hour = 0;
-  t.tm_min = 0;
-  t.tm_sec = 0;
-  t.tm_isdst = 0;
-
-  ret = mktime(&t);
-  return ret - DAY_SECONDS;
+  // 部分地区当前时间时区和70年不一样，所以要基于当前时间算
+  time_t local_timepoint = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+  tm t;
+  UTIL_STRFUNC_LOCALTIME_S(&local_timepoint, &t);
+  time_t utc_timepoint = mktime(&t);
+  return local_timepoint - utc_timepoint;
 }
 
 LIBATFRAME_UTILS_API time_t time_utility::get_zone_offset() {
