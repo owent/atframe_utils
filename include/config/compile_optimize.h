@@ -191,3 +191,27 @@
 #    define UTIL_NOINLINE_NOCLONE
 #  endif
 #endif
+
+#ifndef UTIL_HAVE_CPP_ATTRIBUTE
+#  if defined(__cplusplus) && defined(__has_cpp_attribute)
+// NOTE: requiring __cplusplus above should not be necessary, but
+// works around https://bugs.llvm.org/show_bug.cgi?id=23435.
+#    define UTIL_HAVE_CPP_ATTRIBUTE(x) __has_cpp_attribute(x)
+#  else
+#    define UTIL_HAVE_CPP_ATTRIBUTE(x) 0
+#  endif
+#endif
+
+#ifndef UTIL_CONST_INIT
+#  if defined(__cpp_constinit) && __cpp_constinit >= 201907L
+#    if defined(_MSC_VER)
+#      define UTIL_CONST_INIT
+#    else
+#      define UTIL_CONST_INIT constinit
+#    endif
+#  elif UTIL_HAVE_CPP_ATTRIBUTE(clang::require_constant_initialization)
+#    define UTIL_CONST_INIT [[clang::require_constant_initialization]]
+#  else
+#    define UTIL_CONST_INIT
+#  endif
+#endif
