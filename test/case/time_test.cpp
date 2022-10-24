@@ -61,7 +61,7 @@ CASE_TEST(time_test, sys_zone_offset) {
   UTIL_STRFUNC_LOCALTIME_S(&local_now, &local_tm);
   UTIL_STRFUNC_GMTIME_S(&gmt_now, &gmt_tm);
 
-  CASE_EXPECT_EQ(local_tm.tm_year, gmt_tm.tm_yday);
+  CASE_EXPECT_EQ(local_tm.tm_year, gmt_tm.tm_year);
   CASE_EXPECT_EQ(local_tm.tm_mon, gmt_tm.tm_mon);
   CASE_EXPECT_EQ(local_tm.tm_mday, gmt_tm.tm_mday);
   CASE_EXPECT_EQ(local_tm.tm_hour, gmt_tm.tm_hour);
