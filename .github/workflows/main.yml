@@ -206,9 +206,9 @@ jobs:
       - name: Uploaded code coverage
         uses: codecov/codecov-action@v3
         with:
-          directory: build_jobs_coverage
-          # token: ${{secrets.CODECOV_TOKEN}} # not required for public repos
+          token: ${{secrets.CODECOV_TOKEN}} # not required for public repos
           fail_ci_if_error: true
+          gcov_args: "-lp"
       - name: Cache packages
         uses: actions/cache@v2
         with:
