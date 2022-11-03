@@ -81,6 +81,7 @@ elif [[ "$1" == "coverage" ]]; then
   cd build_jobs_coverage
   cmake --build . -j --config $CONFIGURATION || cmake --build . --config $CONFIGURATION
   ctest . -VV -C --config $CONFIGURATION -L atframe_utils
+  lcov --directory $PWD --capture --output-file coverage.info
 elif [[ "$1" == "ssl.openssl" ]]; then
   CRYPTO_OPTIONS="-DATFRAMEWORK_CMAKE_TOOLSET_THIRD_PARTY_CRYPTO_USE_OPENSSL=ON"
   if [[ "x${USE_CC:0:5}" == "xclang" ]]; then

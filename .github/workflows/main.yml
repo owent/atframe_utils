@@ -202,13 +202,16 @@ jobs:
           USE_SSL: ${{ matrix.ssl }}
           GCOV_FLAGS: "${{ matrix.gcov_flags }}"
         run: |
+          set -e
+          apt update -y
+          apt install --no-install-recommends --no-install-suggests -y lcov
           bash ci/do_ci.sh coverage ;
       - name: Uploaded code coverage
         uses: codecov/codecov-action@v3
         with:
           token: ${{secrets.CODECOV_TOKEN}} # not required for public repos
           fail_ci_if_error: true
-          gcov_args: "-lp"
+          file: ${{ github.workspace }}/build_jobs_coverage/coverage.info
       - name: Cache packages
         uses: actions/cache@v2
         with:
