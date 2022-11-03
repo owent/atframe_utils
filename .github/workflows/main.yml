@@ -203,8 +203,8 @@ jobs:
           GCOV_FLAGS: "${{ matrix.gcov_flags }}"
         run: |
           set -e
-          apt update -y
-          apt install --no-install-recommends --no-install-suggests -y lcov
+          sudo apt update -y
+          sudo apt install --no-install-recommends --no-install-suggests -y lcov
           bash ci/do_ci.sh coverage ;
       - name: Uploaded code coverage
         uses: codecov/codecov-action@v3
