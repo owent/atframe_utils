@@ -202,9 +202,13 @@ jobs:
           USE_SSL: ${{ matrix.ssl }}
           GCOV_FLAGS: "${{ matrix.gcov_flags }}"
         run: |
+          SETUP_INSTALL_LCOV=0
+          which lcov || SETUP_INSTALL_LCOV=1
           set -e
-          sudo apt update -y
-          sudo apt install --no-install-recommends --no-install-suggests -y lcov
+          if [[ $SETUP_INSTALL_LCOV -ne 0 ]]; then
+            sudo apt update -y
+            sudo apt install --no-install-recommends --no-install-suggests -y lcov
+          fi
           bash ci/do_ci.sh coverage ;
       - name: Uploaded code coverage
         uses: codecov/codecov-action@v3

@@ -487,8 +487,29 @@ static void __uuid_generate_random(LIBATFRAME_UTILS_NAMESPACE_ID::random::uuid &
 // }
 }  // namespace details
 #  endif
+
+#  if !(defined(LIBATFRAME_UTILS_ENABLE_LIBUUID) && LIBATFRAME_UTILS_ENABLE_LIBUUID)
+namespace details {
+inline static void __to_hex(char *output, unsigned char input) {
+  unsigned char low = input & 0x0f;
+  unsigned char high = (input >> 4) & 0x0f;
+  if (high > 10) {
+    output[0] = high - 10 + 'a';
+  } else {
+    output[0] = high + '0';
+  }
+
+  if (low > 10) {
+    output[1] = low - 10 + 'a';
+  } else {
+    output[1] = low + '0';
+  }
+}
+}  // namespace details
+#  endif
+
 LIBATFRAME_UTILS_API std::string uuid_generator::uuid_to_string(const uuid &id, bool remove_minus) {
-  char str_buff[64] = {0};
+  char str_buff[40] = {0};
 
 #  if defined(LIBATFRAME_UTILS_ENABLE_LIBUUID) && LIBATFRAME_UTILS_ENABLE_LIBUUID
   uuid_t linux_uid;
@@ -509,13 +530,44 @@ LIBATFRAME_UTILS_API std::string uuid_generator::uuid_to_string(const uuid &id, 
   }
 #  else
   if (remove_minus) {
-    UTIL_STRFUNC_SNPRINTF(str_buff, sizeof(str_buff), "%08x%04x%04x%04x%02x%02x%02x%02x%02x%02x", id.time_low,
-                          id.time_mid, id.time_hi_and_version, id.clock_seq, id.node[0], id.node[1], id.node[2],
-                          id.node[3], id.node[4], id.node[5]);
+    details::__to_hex(str_buff, static_cast<unsigned char>((id.time_low >> 24) & 0xff));
+    details::__to_hex(str_buff + 2, static_cast<unsigned char>((id.time_low >> 16) & 0xff));
+    details::__to_hex(str_buff + 4, static_cast<unsigned char>((id.time_low >> 8) & 0xff));
+    details::__to_hex(str_buff + 6, static_cast<unsigned char>(id.time_low & 0xff));
+    details::__to_hex(str_buff + 8, static_cast<unsigned char>((id.time_mid >> 8) & 0xff));
+    details::__to_hex(str_buff + 10, static_cast<unsigned char>(id.time_mid & 0xff));
+    details::__to_hex(str_buff + 12, static_cast<unsigned char>((id.time_hi_and_version >> 8) & 0xff));
+    details::__to_hex(str_buff + 14, static_cast<unsigned char>(id.time_hi_and_version & 0xff));
+    details::__to_hex(str_buff + 16, static_cast<unsigned char>((id.clock_seq >> 8) & 0xff));
+    details::__to_hex(str_buff + 18, static_cast<unsigned char>(id.clock_seq & 0xff));
+    details::__to_hex(str_buff + 20, id.node[0]);
+    details::__to_hex(str_buff + 22, id.node[1]);
+    details::__to_hex(str_buff + 24, id.node[2]);
+    details::__to_hex(str_buff + 26, id.node[3]);
+    details::__to_hex(str_buff + 28, id.node[4]);
+    details::__to_hex(str_buff + 30, id.node[5]);
   } else {
-    UTIL_STRFUNC_SNPRINTF(str_buff, sizeof(str_buff), "%08x-%04x-%04x-%04x-%02x%02x%02x%02x%02x%02x", id.time_low,
-                          id.time_mid, id.time_hi_and_version, id.clock_seq, id.node[0], id.node[1], id.node[2],
-                          id.node[3], id.node[4], id.node[5]);
+    details::__to_hex(str_buff, static_cast<unsigned char>((id.time_low >> 24) & 0xff));
+    details::__to_hex(str_buff + 2, static_cast<unsigned char>((id.time_low >> 16) & 0xff));
+    details::__to_hex(str_buff + 4, static_cast<unsigned char>((id.time_low >> 8) & 0xff));
+    details::__to_hex(str_buff + 6, static_cast<unsigned char>(id.time_low & 0xff));
+    str_buff[8] = '-';
+    details::__to_hex(str_buff + 9, static_cast<unsigned char>((id.time_mid >> 8) & 0xff));
+    details::__to_hex(str_buff + 11, static_cast<unsigned char>(id.time_mid & 0xff));
+    str_buff[13] = '-';
+    details::__to_hex(str_buff + 14, static_cast<unsigned char>((id.time_hi_and_version >> 8) & 0xff));
+    details::__to_hex(str_buff + 16, static_cast<unsigned char>(id.time_hi_and_version & 0xff));
+    str_buff[18] = '-';
+    details::__to_hex(str_buff + 19, static_cast<unsigned char>((id.clock_seq >> 8) & 0xff));
+    details::__to_hex(str_buff + 21, static_cast<unsigned char>(id.clock_seq & 0xff));
+    str_buff[23] = '-';
+
+    details::__to_hex(str_buff + 24, id.node[0]);
+    details::__to_hex(str_buff + 26, id.node[1]);
+    details::__to_hex(str_buff + 28, id.node[2]);
+    details::__to_hex(str_buff + 30, id.node[3]);
+    details::__to_hex(str_buff + 32, id.node[4]);
+    details::__to_hex(str_buff + 34, id.node[5]);
   }
 #  endif
   return std::string(str_buff);
