@@ -1,7 +1,8 @@
 languages:
   - cpp
 queries:
-  - +security-and-quality
+  - name: Security And Quality
+    uses: security-and-quality
 paths:
   - include
   - src
