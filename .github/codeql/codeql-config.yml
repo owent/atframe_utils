@@ -8,3 +8,4 @@ paths:
   - src
 paths-ignore:
   - third_party
+  - test

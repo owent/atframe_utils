@@ -157,7 +157,7 @@ elif [[ "$1" == "msys2.mingw.test" ]]; then
     mingw-w64-x86_64-curl mingw-w64-x86_64-wget mingw-w64-x86_64-perl \
     mingw-w64-x86_64-git-lfs mingw-w64-x86_64-toolchain mingw-w64-x86_64-libtool \
     mingw-w64-x86_64-python mingw-w64-x86_64-python-pip mingw-w64-x86_64-python-setuptools || true
-  git config --global http.sslBackend openssl
+  # git config --global http.sslBackend openssl
   mkdir -p build_jobs_ci
   cd build_jobs_ci
   cmake .. -G 'MinGW Makefiles' "-DBUILD_SHARED_LIBS=$BUILD_SHARED_LIBS" -DPROJECT_ENABLE_UNITTEST=ON -DPROJECT_ENABLE_SAMPLE=ON -DPROJECT_ENABLE_TOOLS=ON \
