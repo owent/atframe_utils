@@ -241,7 +241,6 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        language: [cpp]
         include:
           - cc: gcc
             triplet: x64-linux
@@ -266,10 +265,7 @@ jobs:
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v2
         with:
-          languages: ${{ matrix.language }}
-          queries: +security-and-quality
-          paths: include,src
-          paths-ignore: third_party
+          config-file: ./.github/codeql/codeql-config.yml
       - name: Build
         shell: bash
         env:
@@ -281,4 +277,4 @@ jobs:
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v2
         with:
-          category: "/language:${{ matrix.language }}"
+          category: "/language:cpp"

@@ -1,0 +1,9 @@
+languages:
+  - cpp
+queries:
+  - +security-and-quality
+paths:
+  - include
+  - src
+paths-ignore:
+  - third_party
