@@ -12,11 +12,11 @@
  *
  */
 
-#ifndef UTIL_COMMON_STRING_OPRS_H
-#define UTIL_COMMON_STRING_OPRS_H
-
-// 目测主流编译器都支持且有优化， gcc 3.4 and upper, vc, clang, c++ builder xe3, intel c++ and etc.
 #pragma once
+
+#ifndef __STDC_WANT_LIB_EXT1__
+#  define __STDC_WANT_LIB_EXT1__ 1
+#endif
 
 #include <config/atframe_utils_build_feature.h>
 
@@ -511,5 +511,3 @@ LIBATFRAME_UTILS_NAMESPACE_END
 LIBATFRAME_UTILS_API_C(const char *) util_string_version_tok(const char *v, int64_t &out);
 LIBATFRAME_UTILS_API_C(int) util_string_version_compare(const char *l, const char *r);
 LIBATFRAME_UTILS_API std::string util_string_version_normalize(const char *v);
-
-#endif /* _UTIL_COMMON_COMPILER_MESSAGE_H_ */

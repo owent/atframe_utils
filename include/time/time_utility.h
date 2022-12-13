@@ -9,10 +9,11 @@
  * @history
  */
 
-#ifndef UTIL_TIME_TIME_UTILITY_H
-#define UTIL_TIME_TIME_UTILITY_H
-
 #pragma once
+
+#ifndef __STDC_WANT_LIB_EXT1__
+#  define __STDC_WANT_LIB_EXT1__ 1
+#endif
 
 #include <stdint.h>
 #include <cstddef>
@@ -316,5 +317,3 @@ class time_utility {
 };
 }  // namespace time
 LIBATFRAME_UTILS_NAMESPACE_END
-
-#endif  // _UTIL_TIME_TIME_UTILITY_H_
