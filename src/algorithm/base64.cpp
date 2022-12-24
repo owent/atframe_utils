@@ -156,10 +156,11 @@ static int base64_decode_inner(unsigned char *dst, size_t dlen, size_t *olen, co
                                base_dec_map_t &base64_dec_map, unsigned char padding_char) {
   size_t i, n;
   size_t j, x;
+  size_t valid_slen, line_len;
   unsigned char *p;
 
   /* First pass: check for validity and get output length */
-  for (i = n = j = 0; i < slen; i++) {
+  for (i = n = j = valid_slen = line_len = 0; i < slen; i++) {
     /* Skip spaces before checking for EOL */
     x = 0;
     while (i < slen && (src[i] == ' ' || src[i] == '\t')) {
@@ -170,15 +171,21 @@ static int base64_decode_inner(unsigned char *dst, size_t dlen, size_t *olen, co
     /* Spaces at end of buffer are OK */
     if (i == slen) break;
 
-    if ((slen - i) >= 2 && src[i] == '\r' && src[i + 1] == '\n') continue;
-
-    if (src[i] == '\n') continue;
+    if (src[i] == '\r' || src[i] == '\n') {
+      line_len = 0;
+      continue;
+    }
 
     /* Space inside a line is an error */
-    if (x != 0) return -2;
+    if (x != 0 && line_len != 0) return -2;
 
+    ++valid_slen;
+    ++line_len;
     if (src[i] == padding_char) {
       if (++j > 2) {
+        return -2;
+      } else if ((valid_slen & 3) == 1 || (valid_slen & 3) == 2) {
+        // First and second char of every group can not be padding char
         return -2;
       }
     } else {
@@ -196,9 +203,9 @@ static int base64_decode_inner(unsigned char *dst, size_t dlen, size_t *olen, co
   }
 
   // no padding, add j to padding length
-  if (slen & 3) {
-    j += 4 - (slen & 3);
-    n += 4 - (slen & 3);
+  if (valid_slen & 3) {
+    j += 4 - (valid_slen & 3);
+    n += 4 - (valid_slen & 3);
   }
 
   /* The following expression is to calculate the following formula without
@@ -213,17 +220,17 @@ static int base64_decode_inner(unsigned char *dst, size_t dlen, size_t *olen, co
     return -1;
   }
 
-  for (j = 3, n = x = 0, p = dst; i > 0; i--, src++) {
+  for (n = x = 0, p = dst; i > 0; i--, src++) {
     if (*src == '\r' || *src == '\n' || *src == ' ' || *src == '\t') continue;
+    if (*src == padding_char) continue;
 
-    j -= (*src == padding_char ? 1 : 0);
     x = (x << 6) | (base64_dec_map[*src] & 0x3F);
 
     if (++n == 4) {
       n = 0;
-      if (j > 0) *p++ = (unsigned char)(x >> 16);
-      if (j > 1) *p++ = (unsigned char)(x >> 8);
-      if (j > 2) *p++ = (unsigned char)(x);
+      *p++ = (unsigned char)(x >> 16);
+      *p++ = (unsigned char)(x >> 8);
+      *p++ = (unsigned char)(x);
     }
   }
 
