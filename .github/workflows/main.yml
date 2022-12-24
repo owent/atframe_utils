@@ -258,9 +258,16 @@ jobs:
         uses: actions/cache@v3
         with:
           path: |
-            /usr/local/share/vcpkg/installed
             third_party/install
           key: ${{ runner.os }}-${ hashFiles('.github/.cache-key') }) }}
+      - name: Build
+        shell: bash
+        env:
+          USE_CC: ${{ matrix.cc }}
+          USE_SSL: ${{ matrix.ssl }}
+          VCPKG_TARGET_TRIPLET: ${{ matrix.triplet }}
+        run: |
+          bash ci/do_ci.sh codeql.configure
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v2
         with:
@@ -272,7 +279,7 @@ jobs:
           USE_SSL: ${{ matrix.ssl }}
           VCPKG_TARGET_TRIPLET: ${{ matrix.triplet }}
         run: |
-          bash ci/do_ci.sh ssl.openssl
+          bash ci/do_ci.sh codeql.build
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v2
         with:

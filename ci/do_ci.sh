@@ -82,6 +82,12 @@ elif [[ "$1" == "coverage" ]]; then
   cmake --build . -j --config $CONFIGURATION || cmake --build . --config $CONFIGURATION
   ctest . -VV -C --config $CONFIGURATION -L atframe_utils
   lcov --directory $PWD --capture --output-file coverage.info
+elif [[ "$1" == "codeql.configure" ]]; then
+  CRYPTO_OPTIONS="-DATFRAMEWORK_CMAKE_TOOLSET_THIRD_PARTY_CRYPTO_USE_OPENSSL=ON"
+  bash cmake_dev.sh -l -b RelWithDebInfo -r build_jobs_ci -c $USE_CC -- $CRYPTO_OPTIONS "-DATFRAMEWORK_CMAKE_TOOLSET_THIRD_PARTY_LOW_MEMORY_MODE=ON"
+elif [[ "$1" == "codeql.build" ]]; then
+  cd build_jobs_ci
+  cmake --build . -j --config $CONFIGURATION || cmake --build . --config $CONFIGURATION
 elif [[ "$1" == "ssl.openssl" ]]; then
   CRYPTO_OPTIONS="-DATFRAMEWORK_CMAKE_TOOLSET_THIRD_PARTY_CRYPTO_USE_OPENSSL=ON"
   if [[ "x${USE_CC:0:5}" == "xclang" ]]; then
