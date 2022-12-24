@@ -83,6 +83,64 @@ CASE_TEST(base64, decode_standard) {
   CASE_EXPECT_EQ(0, memcmp(base64_test_dec, std_str_out.c_str(), 64));
 }
 
+CASE_TEST(base64, decode_standard_invalid) {
+  // Invalid
+  std::string std_str_out;
+  std::string std_str_in = "=";
+  CASE_EXPECT_EQ(-2, LIBATFRAME_UTILS_NAMESPACE_ID::base64_decode(std_str_out, std_str_in));
+
+  std_str_in = "J=";
+  CASE_EXPECT_EQ(-2, LIBATFRAME_UTILS_NAMESPACE_ID::base64_decode(std_str_out, std_str_in));
+  std_str_in = "JEhu=";
+  CASE_EXPECT_EQ(-2, LIBATFRAME_UTILS_NAMESPACE_ID::base64_decode(std_str_out, std_str_in));
+  std_str_in = "JEhuV=";
+  CASE_EXPECT_EQ(-2, LIBATFRAME_UTILS_NAMESPACE_ID::base64_decode(std_str_out, std_str_in));
+  std_str_in = "JEhuVodi=";
+  CASE_EXPECT_EQ(-2, LIBATFRAME_UTILS_NAMESPACE_ID::base64_decode(std_str_out, std_str_in));
+  std_str_in = "JEhuVodiW=";
+  CASE_EXPECT_EQ(-2, LIBATFRAME_UTILS_NAMESPACE_ID::base64_decode(std_str_out, std_str_in));
+
+  CASE_EXPECT_EQ(-2, LIBATFRAME_UTILS_NAMESPACE_ID::base64_decode(std_str_out, std_str_in));
+  std_str_in = "  J=";
+  CASE_EXPECT_EQ(-2, LIBATFRAME_UTILS_NAMESPACE_ID::base64_decode(std_str_out, std_str_in));
+  std_str_in = "  JEhu=";
+  CASE_EXPECT_EQ(-2, LIBATFRAME_UTILS_NAMESPACE_ID::base64_decode(std_str_out, std_str_in));
+  std_str_in = "  JEhuV=";
+  CASE_EXPECT_EQ(-2, LIBATFRAME_UTILS_NAMESPACE_ID::base64_decode(std_str_out, std_str_in));
+  std_str_in = "  JEhuVodi=";
+  CASE_EXPECT_EQ(-2, LIBATFRAME_UTILS_NAMESPACE_ID::base64_decode(std_str_out, std_str_in));
+  std_str_in = "  JEhuVodiW=";
+  CASE_EXPECT_EQ(-2, LIBATFRAME_UTILS_NAMESPACE_ID::base64_decode(std_str_out, std_str_in));
+
+  std_str_in = "JE=";
+  CASE_EXPECT_EQ(0, LIBATFRAME_UTILS_NAMESPACE_ID::base64_decode(std_str_out, std_str_in));
+  std_str_in = "JE==";
+  CASE_EXPECT_EQ(0, LIBATFRAME_UTILS_NAMESPACE_ID::base64_decode(std_str_out, std_str_in));
+  std_str_in = "JE==huVo";
+  CASE_EXPECT_EQ(-2, LIBATFRAME_UTILS_NAMESPACE_ID::base64_decode(std_str_out, std_str_in));
+  std_str_in = "JE=huVo=";
+  CASE_EXPECT_EQ(-2, LIBATFRAME_UTILS_NAMESPACE_ID::base64_decode(std_str_out, std_str_in));
+
+  std_str_in = " JE=";
+  CASE_EXPECT_EQ(0, LIBATFRAME_UTILS_NAMESPACE_ID::base64_decode(std_str_out, std_str_in));
+  std_str_in = " JE==";
+  CASE_EXPECT_EQ(0, LIBATFRAME_UTILS_NAMESPACE_ID::base64_decode(std_str_out, std_str_in));
+  std_str_in = " JE==huVo";
+  CASE_EXPECT_EQ(-2, LIBATFRAME_UTILS_NAMESPACE_ID::base64_decode(std_str_out, std_str_in));
+  std_str_in = " JE=huVo=";
+  CASE_EXPECT_EQ(-2, LIBATFRAME_UTILS_NAMESPACE_ID::base64_decode(std_str_out, std_str_in));
+
+  std_str_in = "JE= ";
+  CASE_EXPECT_EQ(0, LIBATFRAME_UTILS_NAMESPACE_ID::base64_decode(std_str_out, std_str_in));
+  std_str_in = "JE==\r\n";
+  CASE_EXPECT_EQ(0, LIBATFRAME_UTILS_NAMESPACE_ID::base64_decode(std_str_out, std_str_in));
+
+  std_str_in = "J E=";
+  CASE_EXPECT_EQ(-2, LIBATFRAME_UTILS_NAMESPACE_ID::base64_decode(std_str_out, std_str_in));
+  std_str_in = "J E==";
+  CASE_EXPECT_EQ(-2, LIBATFRAME_UTILS_NAMESPACE_ID::base64_decode(std_str_out, std_str_in));
+}
+
 CASE_TEST(base64, decode_no_padding) {
   std::string std_str_out;
 
