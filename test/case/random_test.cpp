@@ -605,10 +605,10 @@ CASE_TEST(random_test, uuid_generator) {
     CASE_EXPECT_EQ(gsr_full.size(), 36);
 
     for (auto ch : gs_mini) {
-      CASE_EXPECT_TRUE((ch >= '0' && ch <= '9') || (ch >= 'a' && ch <= 'f'));
+      CASE_EXPECT_TRUE((ch >= '0' && ch <= '9') || (ch >= 'a' && ch <= 'f') || (ch >= 'A' && ch <= 'F'));
     }
     for (auto ch : gsr_mini) {
-      CASE_EXPECT_TRUE((ch >= '0' && ch <= '9') || (ch >= 'a' && ch <= 'f'));
+      CASE_EXPECT_TRUE((ch >= '0' && ch <= '9') || (ch >= 'a' && ch <= 'f') || (ch >= 'A' && ch <= 'F'));
     }
 
     for (size_t j = 0; j < gs_full.size(); ++j) {
@@ -616,7 +616,7 @@ CASE_TEST(random_test, uuid_generator) {
       if (j == 8 || j == 13 || j == 18 || j == 23) {
         CASE_EXPECT_TRUE(ch == '-');
       } else {
-        CASE_EXPECT_TRUE((ch >= '0' && ch <= '9') || (ch >= 'a' && ch <= 'f'));
+        CASE_EXPECT_TRUE((ch >= '0' && ch <= '9') || (ch >= 'a' && ch <= 'f') || (ch >= 'A' && ch <= 'F'));
       }
     }
     for (size_t j = 0; j < gsr_full.size(); ++j) {
@@ -624,7 +624,7 @@ CASE_TEST(random_test, uuid_generator) {
       if (j == 8 || j == 13 || j == 18 || j == 23) {
         CASE_EXPECT_TRUE(ch == '-');
       } else {
-        CASE_EXPECT_TRUE((ch >= '0' && ch <= '9') || (ch >= 'a' && ch <= 'f'));
+        CASE_EXPECT_TRUE((ch >= '0' && ch <= '9') || (ch >= 'a' && ch <= 'f') || (ch >= 'A' && ch <= 'F'));
       }
     }
   }
