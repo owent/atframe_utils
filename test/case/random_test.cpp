@@ -590,14 +590,48 @@ CASE_TEST(random_test, xoshiro256_plus) {
 }
 
 CASE_TEST(random_test, uuid_generator) {
-  CASE_MSG_INFO() << "generate_string(true): "
-                  << LIBATFRAME_UTILS_NAMESPACE_ID::random::uuid_generator::generate_string(true) << std::endl;
-  CASE_MSG_INFO() << "generate_string(false): "
-                  << LIBATFRAME_UTILS_NAMESPACE_ID::random::uuid_generator::generate_string(false) << std::endl;
-  CASE_MSG_INFO() << "generate_string_random(true): "
-                  << LIBATFRAME_UTILS_NAMESPACE_ID::random::uuid_generator::generate_string_random(true) << std::endl;
-  CASE_MSG_INFO() << "generate_string_random(false): "
-                  << LIBATFRAME_UTILS_NAMESPACE_ID::random::uuid_generator::generate_string_random(false) << std::endl;
+  std::string gs_mini;
+  std::string gs_full;
+  std::string gsr_mini;
+  std::string gsr_full;
+  for (int i = 0; i < 2048; ++i) {
+    gs_mini = LIBATFRAME_UTILS_NAMESPACE_ID::random::uuid_generator::generate_string(true);
+    gs_full = LIBATFRAME_UTILS_NAMESPACE_ID::random::uuid_generator::generate_string(false);
+    gsr_mini = LIBATFRAME_UTILS_NAMESPACE_ID::random::uuid_generator::generate_string_random(true);
+    gsr_full = LIBATFRAME_UTILS_NAMESPACE_ID::random::uuid_generator::generate_string_random(false);
+    CASE_EXPECT_EQ(gs_mini.size(), 32);
+    CASE_EXPECT_EQ(gsr_mini.size(), 32);
+    CASE_EXPECT_EQ(gs_full.size(), 36);
+    CASE_EXPECT_EQ(gsr_full.size(), 36);
+
+    for (auto ch : gs_mini) {
+      CASE_EXPECT_TRUE((ch >= '0' && ch <= '9') || (ch >= 'a' && ch <= 'f'));
+    }
+    for (auto ch : gsr_mini) {
+      CASE_EXPECT_TRUE((ch >= '0' && ch <= '9') || (ch >= 'a' && ch <= 'f'));
+    }
+
+    for (size_t j = 0; j < gs_full.size(); ++j) {
+      auto ch = gs_full[j];
+      if (j == 8 || j == 13 || j == 18 || j == 23) {
+        CASE_EXPECT_TRUE(ch == '-');
+      } else {
+        CASE_EXPECT_TRUE((ch >= '0' && ch <= '9') || (ch >= 'a' && ch <= 'f'));
+      }
+    }
+    for (size_t j = 0; j < gsr_full.size(); ++j) {
+      auto ch = gsr_full[j];
+      if (j == 8 || j == 13 || j == 18 || j == 23) {
+        CASE_EXPECT_TRUE(ch == '-');
+      } else {
+        CASE_EXPECT_TRUE((ch >= '0' && ch <= '9') || (ch >= 'a' && ch <= 'f'));
+      }
+    }
+  }
+  CASE_MSG_INFO() << "generate_string(true): " << gs_mini << std::endl;
+  CASE_MSG_INFO() << "generate_string(false): " << gs_full << std::endl;
+  CASE_MSG_INFO() << "generate_string_random(true): " << gsr_mini << std::endl;
+  CASE_MSG_INFO() << "generate_string_random(false): " << gsr_full << std::endl;
 
   LIBATFRAME_UTILS_AUTO_SELETC_SET(std::string) uuids;
   for (int i = 0; i < 1000000; ++i) {

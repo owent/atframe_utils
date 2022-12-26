@@ -493,13 +493,13 @@ namespace details {
 inline static void __to_hex(char *output, unsigned char input) {
   unsigned char low = input & 0x0f;
   unsigned char high = (input >> 4) & 0x0f;
-  if (high > 10) {
+  if (high >= 10) {
     output[0] = high - 10 + 'a';
   } else {
     output[0] = high + '0';
   }
 
-  if (low > 10) {
+  if (low >= 10) {
     output[1] = low - 10 + 'a';
   } else {
     output[1] = low + '0';
