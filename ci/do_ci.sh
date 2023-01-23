@@ -122,7 +122,7 @@ elif [[ "$1" == "ssl.libressl" ]]; then
   cmake --build . -j --config $CONFIGURATION || cmake --build . --config $CONFIGURATION
   ctest . -VV -C --config $CONFIGURATION -L atframe_utils
 elif [[ "$1" == "ssl.boringssl" ]]; then
-  CRYPTO_OPTIONS="-DATFRAMEWORK_CMAKE_TOOLSET_THIRD_PARTY_CRYPTO_USE_BORINGSSL=ON -DLIBATFRAME_UTILS_ENABLE_LIBUUID=OFF"
+  CRYPTO_OPTIONS="-DATFRAMEWORK_CMAKE_TOOLSET_THIRD_PARTY_CRYPTO_USE_BORINGSSL=ON -DLIBATFRAME_UTILS_ENABLE_LIBUUID=OFF -DLIBUNWIND_ENABLED=OFF"
   chmod +x cmake_dev.sh
   ./cmake_dev.sh -lus -b RelWithDebInfo -r build_jobs_ci -c $USE_CC -- $CRYPTO_OPTIONS \
     "-DATFRAMEWORK_CMAKE_TOOLSET_THIRD_PARTY_LOW_MEMORY_MODE=ON"
