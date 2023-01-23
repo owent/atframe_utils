@@ -1221,7 +1221,7 @@ LIBATFRAME_UTILS_API int http_request::curl_callback_on_verbose(CURL *, curl_inf
   return 0;
 }
 
-LIBATFRAME_UTILS_API void http_request::curl_share_callback_on_lock(CURL *handle, curl_lock_data data, curl_lock_access,
+LIBATFRAME_UTILS_API void http_request::curl_share_callback_on_lock(CURL *, curl_lock_data data, curl_lock_access,
                                                                     void *userptr) {
   curl_share_context *share = reinterpret_cast<curl_share_context *>(userptr);
   if (nullptr == share) {
@@ -1245,8 +1245,7 @@ LIBATFRAME_UTILS_API void http_request::curl_share_callback_on_lock(CURL *handle
   }
 }
 
-LIBATFRAME_UTILS_API void http_request::curl_share_callback_on_unlock(CURL *handle, curl_lock_data data,
-                                                                      void *userptr) {
+LIBATFRAME_UTILS_API void http_request::curl_share_callback_on_unlock(CURL *, curl_lock_data data, void *userptr) {
   curl_share_context *share = reinterpret_cast<curl_share_context *>(userptr);
   if (nullptr == share) {
     return;
