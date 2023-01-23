@@ -17,8 +17,10 @@
 #include <cstdio>
 #include <functional>
 #include <memory>
+#include <mutex>
 #include <sstream>
 #include <string>
+#include <unordered_map>
 
 #include "design_pattern/noncopyable.h"
 #include "string/tquerystring.h"
@@ -116,21 +118,118 @@ class http_request : public std::enable_shared_from_this<http_request>,
       EN_FT_RUNNING = 0x02,
       EN_FT_CLEANING = 0x04,
       EN_FT_STOPING = 0x08,
+      EN_FT_SETUP_SHARE = 0x10,
     };
   };
 
-  struct curl_m_bind_t {
-    uv_loop_t *ev_loop;
-    CURLM *curl_multi;
-    uv_timer_t ev_timeout;
+  struct LIBATFRAME_UTILS_API_HEAD_ONLY curl_share_options {
+    bool enable_multi_thread;
+    bool share_cookie;
+    bool share_dns;
+    bool share_ssl_session;  // curl 7.23.0+
 
-    LIBATFRAME_UTILS_API curl_m_bind_t();
-    std::shared_ptr<curl_m_bind_t> self_holder;
+    // Connections that are used for HTTP/1.1 Pipelining or HTTP/2 multiplexing only get additional transfers added to
+    //   them if the existing connection is held by the same multi or easy handle. libcurl does not support doing HTTP/2
+    //   streams in different threads using a shared connection.
+    // Note that due to a known bug, it is not safe to share connections this way between multiple concurrent threads.
+    // Note that when you use the multi interface, all easy handles added to the same multi handle will share connection
+    //   cache by default without using this option.
+    bool share_connection;  // curl 7.57.0+
+
+    bool share_psl;   // Public Suffix List, curl 7.61.0+
+    bool share_hsts;  // The in-memory HSTS cache, curl 7.88.0+
+
+    inline curl_share_options() noexcept
+        : enable_multi_thread(true),
+          share_cookie(true),
+          share_dns(true),
+#    if LIBCURL_VERSION_NUM >= 0x071700
+          share_ssl_session(true),
+#    else
+          share_ssl_session(false),
+#    endif
+          share_connection(true),
+#    if LIBCURL_VERSION_NUM >= 0x073d00
+          share_psl(true),
+#    else
+          share_psl(false),
+#    endif
+#    if LIBCURL_VERSION_NUM >= 0x075800
+          share_hsts(true)
+#    else
+          share_hsts(false)
+#    endif
+    {
+    }
   };
-  using curl_m_bind_ptr_t = std::shared_ptr<curl_m_bind_t>;
+
+  struct curl_share_context {
+   private:
+    curl_share_context(const curl_share_context &) = delete;
+    curl_share_context(curl_share_context &&) = delete;
+
+    curl_share_context &operator=(const curl_share_context &) = delete;
+    curl_share_context &operator=(curl_share_context &&) = delete;
+
+   public:
+    LIBATFRAME_UTILS_API curl_share_context(CURLSH *share) noexcept;
+    LIBATFRAME_UTILS_API ~curl_share_context();
+
+    UTIL_FORCEINLINE CURLSH *get_share_handle() noexcept { return curl_share_; }
+    UTIL_FORCEINLINE const CURLSH *get_share_handle() const noexcept { return curl_share_; }
+
+   private:
+    friend class http_request;
+
+    CURLSH *curl_share_;
+    bool enable_lock_;
+    std::recursive_mutex global_lock_;
+    std::unordered_map<curl_lock_data, std::shared_ptr<std::mutex>> data_locks_;
+  };
+  using curl_share_context_ptr_type = std::shared_ptr<curl_share_context>;
+
+  struct LIBATFRAME_UTILS_API_HEAD_ONLY curl_multi_options {
+    uv_loop_t *ev_loop;
+    curl_share_context_ptr_type share_context;
+
+    inline curl_multi_options() noexcept : ev_loop(nullptr) {}
+    inline curl_multi_options(uv_loop_t *loop, curl_share_context_ptr_type share) noexcept
+        : ev_loop(loop), share_context(share) {}
+  };
+
+  class curl_multi_context {
+   private:
+    curl_multi_context(const curl_multi_context &) = delete;
+    curl_multi_context(curl_multi_context &&) = delete;
+
+    curl_multi_context &operator=(const curl_multi_context &) = delete;
+    curl_multi_context &operator=(curl_multi_context &&) = delete;
+
+   public:
+    LIBATFRAME_UTILS_API curl_multi_context() noexcept;
+
+    UTIL_FORCEINLINE uv_loop_t *get_evloop() noexcept { return ev_loop_; }
+    UTIL_FORCEINLINE const uv_loop_t *get_evloop() const noexcept { return ev_loop_; }
+
+    UTIL_FORCEINLINE CURLM *get_multi_handle() noexcept { return curl_multi_; }
+    UTIL_FORCEINLINE const CURLM *get_multi_handle() const noexcept { return curl_multi_; }
+
+   private:
+    friend class http_request;
+
+    uv_loop_t *ev_loop_;
+    CURLM *curl_multi_;
+    uv_timer_t ev_timeout_;
+    std::shared_ptr<curl_multi_context> self_holder_;
+    curl_share_context_ptr_type share_context_;
+  };
+
+  using curl_multi_context_ptr_type = std::shared_ptr<curl_multi_context>;
+  using curl_m_bind_t = curl_multi_context;
+  using curl_m_bind_ptr_t = curl_multi_context_ptr_type;
 
   struct LIBATFRAME_UTILS_API curl_poll_context_t {
-    curl_m_bind_t *bind_multi;
+    curl_multi_context *bind_multi;
     uv_poll_t poll_object;
     curl_socket_t sockfd;
     bool is_removed;
@@ -161,17 +260,22 @@ class http_request : public std::enable_shared_from_this<http_request>,
                                             size_t size)>;  // it's useful if we want to debug and show verbose info
 
  public:
-  LIBATFRAME_UTILS_API static ptr_t create(curl_m_bind_t *, const std::string &url);
+  LIBATFRAME_UTILS_API static ptr_t create(curl_multi_context *, const std::string &url);
 
-  LIBATFRAME_UTILS_API static ptr_t create(curl_m_bind_t *);
+  LIBATFRAME_UTILS_API static ptr_t create(curl_multi_context *);
 
   LIBATFRAME_UTILS_API static int get_status_code_group(int code);
 
-  LIBATFRAME_UTILS_API http_request(curl_m_bind_t *curl_multi);
+  LIBATFRAME_UTILS_API http_request(curl_multi_context *curl_multi);
   LIBATFRAME_UTILS_API ~http_request();
 
-  static LIBATFRAME_UTILS_API int create_curl_multi(uv_loop_t *evloop, std::shared_ptr<curl_m_bind_t> &manager);
-  static LIBATFRAME_UTILS_API int destroy_curl_multi(std::shared_ptr<curl_m_bind_t> &manager);
+  static LIBATFRAME_UTILS_API int create_curl_share(const curl_share_options &options,
+                                                    std::shared_ptr<curl_share_context> &output);
+
+  static LIBATFRAME_UTILS_API int create_curl_multi(uv_loop_t *evloop, std::shared_ptr<curl_multi_context> &manager);
+  static LIBATFRAME_UTILS_API int create_curl_multi(const curl_multi_options &options,
+                                                    std::shared_ptr<curl_multi_context> &manager);
+  static LIBATFRAME_UTILS_API int destroy_curl_multi(std::shared_ptr<curl_multi_context> &manager);
 
   /**
    * @brief start a http request
@@ -338,15 +442,19 @@ class http_request : public std::enable_shared_from_this<http_request>,
   static LIBATFRAME_UTILS_API int curl_callback_on_verbose(CURL *handle, curl_infotype type, char *data, size_t size,
                                                            void *userptr);
 
+  static LIBATFRAME_UTILS_API void curl_share_callback_on_lock(CURL *handle, curl_lock_data data,
+                                                               curl_lock_access access, void *userptr);
+  static LIBATFRAME_UTILS_API void curl_share_callback_on_unlock(CURL *handle, curl_lock_data data, void *userptr);
+
  private:
   // event dispatcher
   time_t timeout_ms_;
   time_t connect_timeout_ms_;
 
   // curl resource
-  curl_m_bind_t *bind_m_;
+  curl_multi_context *bind_multi_;
   CURL *request_;
-  int flags_;
+  uint32_t flags_;
 
   // data and resource
   std::string url_;
