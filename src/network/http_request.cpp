@@ -791,7 +791,7 @@ LIBATFRAME_UTILS_API http_request::curl_share_context::curl_share_context(CURLSH
     : curl_share_(share), enable_lock_(false) {}
 
 LIBATFRAME_UTILS_API http_request::curl_share_context::~curl_share_context() {
-  std::unordered_map<curl_lock_data, std::shared_ptr<std::mutex>> data_locks;
+  std::unordered_map<int32_t, std::shared_ptr<std::mutex>> data_locks;
 
   if (enable_lock_) {
     std::lock_guard<std::recursive_mutex> guard{global_lock_};

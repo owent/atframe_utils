@@ -184,7 +184,7 @@ class http_request : public std::enable_shared_from_this<http_request>,
     CURLSH *curl_share_;
     bool enable_lock_;
     std::recursive_mutex global_lock_;
-    std::unordered_map<curl_lock_data, std::shared_ptr<std::mutex>> data_locks_;
+    std::unordered_map<int32_t, std::shared_ptr<std::mutex>> data_locks_;
   };
   using curl_share_context_ptr_type = std::shared_ptr<curl_share_context>;
 
