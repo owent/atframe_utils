@@ -420,7 +420,7 @@ class http_request : public std::enable_shared_from_this<http_request>,
 
 #    if LIBCURL_VERSION_NUM >= 0x073800
   LIBATFRAME_UTILS_API curl_mime *mutable_multipart();
-#    endif()
+#    endif
 
   LIBATFRAME_UTILS_API void build_http_form(method_t::type method);
 
