@@ -92,11 +92,14 @@ LIBATFRAME_UTILS_API http_request::http_request(curl_multi_context *curl_multi,
       response_code_(0),
       last_error_code_(0),
       priv_data_(nullptr) {
+#    if LIBCURL_VERSION_NUM >= 0x073800
+  http_form_.multipart = nullptr;
+#    else
   http_form_.begin = nullptr;
   http_form_.end = nullptr;
+#    endif
   http_form_.headerlist = nullptr;
   http_form_.posted_size = 0;
-  http_form_.uploaded_file = nullptr;
   http_form_.flags = 0;
   set_user_agent("libcurl");
 
@@ -129,7 +132,9 @@ LIBATFRAME_UTILS_API int http_request::start(method_t::type method, bool wait) {
       curl_easy_setopt(req, CURLOPT_POST, 1L);
       break;
     case method_t::EN_MT_PUT: {
+#    if LIBCURL_VERSION_NUM < 0x075700
       curl_easy_setopt(req, CURLOPT_PUT, 1L);
+#    endif
       curl_easy_setopt(req, CURLOPT_UPLOAD, 1L);
       break;
     }
@@ -146,11 +151,19 @@ LIBATFRAME_UTILS_API int http_request::start(method_t::type method, bool wait) {
   last_error_code_ = CURLE_OK;
   build_http_form(method);
 
+#    if LIBCURL_VERSION_NUM >= 0x073800
+  if (nullptr != http_form_.multipart) {
+#    else
   if (nullptr != http_form_.begin) {
+#    endif
     if (0 == (http_form_.flags & form_list_t::EN_FLFT_LIBCURL_ALLOW_EXPECT_100_CONTINUE)) {
       set_libcurl_no_expect();
     }
+#    if LIBCURL_VERSION_NUM >= 0x073800
+    curl_easy_setopt(req, CURLOPT_MIMEPOST, http_form_.multipart);
+#    else
     curl_easy_setopt(req, CURLOPT_HTTPPOST, http_form_.begin);
+#    endif
     // curl_easy_setopt(req, CURLOPT_VERBOSE, 1L);
   }
   if (!post_data_.empty()) {
@@ -173,14 +186,7 @@ LIBATFRAME_UTILS_API int http_request::start(method_t::type method, bool wait) {
 #    else
     using infile_size_type = long;
 #    endif
-    infile_size_type infile_size = 0;
-    if (nullptr != http_form_.uploaded_file) {
-      fseek(http_form_.uploaded_file, 0, SEEK_END);
-      infile_size = static_cast<infile_size_type>(ftell(http_form_.uploaded_file));
-      fseek(http_form_.uploaded_file, 0, SEEK_SET);
-    } else if (!post_data_.empty()) {
-      infile_size = static_cast<infile_size_type>(post_data_.size());
-    }
+    infile_size_type infile_size = post_data_.size();
 #    if LIBCURL_VERSION_NUM >= 0x071700
     curl_easy_setopt(req, CURLOPT_INFILESIZE_LARGE, infile_size);
 #    else
@@ -297,26 +303,26 @@ LIBATFRAME_UTILS_API int http_request::add_form_file(const std::string &fieldnam
     return -1;
   }
 
-  if (nullptr != http_form_.uploaded_file) {
-    fclose(http_form_.uploaded_file);
-    http_form_.uploaded_file = nullptr;
+  if (!file_system::is_exist(filename)) {
+    return -1;
   }
 
-  UTIL_FS_OPEN(res, http_form_.uploaded_file, filename, "rb");
-  if (0 != res || nullptr == http_form_.uploaded_file) {
-    if (nullptr != http_form_.uploaded_file) {
-      fclose(http_form_.uploaded_file);
-    }
-    return res;
+#    if LIBCURL_VERSION_NUM >= 0x073800
+  curl_mimepart *part = curl_mime_addpart(mutable_multipart());
+  if (nullptr == part) {
+    return -1;
   }
-
+  int ret = curl_mime_name(part, fieldname.c_str());
+  if (ret != CURLE_OK) {
+    return ret;
+  }
+  ret = curl_mime_filedata(part, filename);
+#    else
   int ret = curl_formadd(&http_form_.begin, &http_form_.end, CURLFORM_COPYNAME, fieldname.c_str(), CURLFORM_NAMELENGTH,
                          static_cast<long>(fieldname.size()), CURLFORM_FILE, filename, CURLFORM_END);
+#    endif
   if (0 == ret) {
     http_form_.flags |= form_list_t::EN_FLFT_HAS_FORM_FILE;
-  } else {
-    fclose(http_form_.uploaded_file);
-    http_form_.uploaded_file = nullptr;
   }
   return ret;
 }
@@ -327,27 +333,29 @@ LIBATFRAME_UTILS_API int http_request::add_form_file(const std::string &fieldnam
     return -1;
   }
 
-  if (nullptr != http_form_.uploaded_file) {
-    fclose(http_form_.uploaded_file);
-    http_form_.uploaded_file = nullptr;
+  if (!file_system::is_exist(filename)) {
+    return -1;
   }
 
-  UTIL_FS_OPEN(res, http_form_.uploaded_file, filename, "rb");
-  if (0 != res || nullptr == http_form_.uploaded_file) {
-    if (nullptr != http_form_.uploaded_file) {
-      fclose(http_form_.uploaded_file);
-    }
-    return res;
+#    if LIBCURL_VERSION_NUM >= 0x073800
+  curl_mimepart *part = curl_mime_addpart(mutable_multipart());
+  if (nullptr == part) {
+    return -1;
   }
-
+  int ret = curl_mime_name(part, fieldname.c_str());
+  if (ret != CURLE_OK) {
+    return ret;
+  }
+  ret = curl_mime_filedata(part, filename);
+  curl_mime_type(part, content_type);
+  curl_mime_filename(part, new_filename);
+#    else
   int ret = curl_formadd(&http_form_.begin, &http_form_.end, CURLFORM_COPYNAME, fieldname.c_str(), CURLFORM_NAMELENGTH,
                          static_cast<long>(fieldname.size()), CURLFORM_FILE, filename, CURLFORM_CONTENTTYPE,
                          content_type, CURLFORM_FILENAME, new_filename, CURLFORM_END);
+#    endif
   if (0 == ret) {
     http_form_.flags |= form_list_t::EN_FLFT_HAS_FORM_FILE;
-  } else {
-    fclose(http_form_.uploaded_file);
-    http_form_.uploaded_file = nullptr;
   }
   return ret;
 }
@@ -358,27 +366,28 @@ LIBATFRAME_UTILS_API int http_request::add_form_file(const std::string &fieldnam
     return -1;
   }
 
-  if (nullptr != http_form_.uploaded_file) {
-    fclose(http_form_.uploaded_file);
-    http_form_.uploaded_file = nullptr;
+  if (!file_system::is_exist(filename)) {
+    return -1;
   }
 
-  UTIL_FS_OPEN(res, http_form_.uploaded_file, filename, "rb");
-  if (0 != res || nullptr == http_form_.uploaded_file) {
-    if (nullptr != http_form_.uploaded_file) {
-      fclose(http_form_.uploaded_file);
-    }
-    return res;
+#    if LIBCURL_VERSION_NUM >= 0x073800
+  curl_mimepart *part = curl_mime_addpart(mutable_multipart());
+  if (nullptr == part) {
+    return -1;
   }
-
+  int ret = curl_mime_name(part, fieldname.c_str());
+  if (ret != CURLE_OK) {
+    return ret;
+  }
+  ret = curl_mime_filedata(part, filename);
+  curl_mime_type(part, content_type);
+#    else
   int ret = curl_formadd(&http_form_.begin, &http_form_.end, CURLFORM_COPYNAME, fieldname.c_str(), CURLFORM_NAMELENGTH,
                          static_cast<long>(fieldname.size()), CURLFORM_FILE, filename, CURLFORM_CONTENTTYPE,
                          content_type, CURLFORM_END);
+#    endif
   if (0 == ret) {
     http_form_.flags |= form_list_t::EN_FLFT_HAS_FORM_FILE;
-  } else {
-    fclose(http_form_.uploaded_file);
-    http_form_.uploaded_file = nullptr;
   }
   return ret;
 }
@@ -607,13 +616,19 @@ LIBATFRAME_UTILS_API void http_request::remove_curl_request() {
   }
   UNSET_FLAG(flags_, flag_t::EN_FT_STOPING);
   UNSET_FLAG(flags_, flag_t::EN_FT_RUNNING);
-
+#    if LIBCURL_VERSION_NUM >= 0x073800
+  if (nullptr != http_form_.multipart) {
+    curl_mime_free(http_form_.multipart);
+    http_form_.multipart = nullptr;
+  }
+#    else
   if (nullptr != http_form_.begin) {
     curl_formfree(http_form_.begin);
     http_form_.begin = nullptr;
     http_form_.end = nullptr;
-    http_form_.qs_fields.clear();
   }
+#    endif
+  http_form_.qs_fields.clear();
 
   if (nullptr != http_form_.headerlist) {
     curl_slist_free_all(http_form_.headerlist);
@@ -621,14 +636,9 @@ LIBATFRAME_UTILS_API void http_request::remove_curl_request() {
   }
 
   http_form_.posted_size = 0;
-
-  if (nullptr != http_form_.uploaded_file) {
-    fclose(http_form_.uploaded_file);
-    http_form_.uploaded_file = nullptr;
-  }
-  http_form_.flags = 0;
-
   post_data_.clear();
+
+  http_form_.flags = 0;
 }
 
 LIBATFRAME_UTILS_API void http_request::cleanup() {
@@ -685,6 +695,14 @@ LIBATFRAME_UTILS_API CURL *http_request::mutable_request() {
   return request_;
 }
 
+#    if LIBCURL_VERSION_NUM >= 0x073800
+LIBATFRAME_UTILS_API curl_mime *http_request::mutable_multipart() {
+  UTIL_UNLIKELY_IF(nullptr == http_form_.multipart) { http_form_.multipart = curl_mime_init(mutable_request()); }
+
+  return http_form_.multipart;
+}
+#    endif
+
 LIBATFRAME_UTILS_API void http_request::build_http_form(method_t::type method) {
   if (method_t::EN_MT_PUT == method) {
     http_form_.posted_size = 0;
@@ -704,12 +722,7 @@ LIBATFRAME_UTILS_API void http_request::build_http_form(method_t::type method) {
       append_http_header(LIBATFRAME_UTILS_NAMESPACE_ID::network::detail::content_type_multipart_post);
       http_form_.qs_fields.to_string().swap(post_data_);
       http_form_.flags |= form_list_t::EN_FLFT_WRITE_FORM_USE_FUNC;
-
-      if (nullptr != http_form_.uploaded_file) {
-        fclose(http_form_.uploaded_file);
-        http_form_.uploaded_file = nullptr;
-      }
-    } else if (nullptr == http_form_.uploaded_file) {
+    } else {
       // Using custom post_data_
       http_form_.flags |= form_list_t::EN_FLFT_WRITE_FORM_USE_FUNC;
     }
@@ -730,26 +743,37 @@ LIBATFRAME_UTILS_API void http_request::build_http_form(method_t::type method) {
 #    endif
 
         if (nullptr != val) {
+#    if LIBCURL_VERSION_NUM >= 0x073800
+          curl_mimepart *part = curl_mime_addpart(mutable_multipart());
+          if (part != nullptr) {
+            curl_mime_name(part, iter->first.c_str());
+            curl_mime_data(part, val->data().c_str(), val->data().size());
+          }
+#    else
           curl_formadd(&http_form_.begin, &http_form_.end, CURLFORM_PTRNAME, iter->first.c_str(), CURLFORM_NAMELENGTH,
                        static_cast<long>(iter->first.size()), CURLFORM_PTRCONTENTS, val->data().c_str(),
-#    if LIBCURL_VERSION_NUM >= 0x072e00
+#      if LIBCURL_VERSION_NUM >= 0x072e00
                        CURLFORM_CONTENTLEN, static_cast<curl_off_t>(val->data().size()),
-#    else
+#      else
                        CURLFORM_CONTENTSLENGTH, static_cast<long>(val->data().size()),
-#    endif
+#      endif
                        CURLFORM_END);
+#    endif
         }
       } else {
         std::string val = iter->second->to_string();
+#    if LIBCURL_VERSION_NUM >= 0x073800
+        curl_mimepart *part = curl_mime_addpart(mutable_multipart());
+        if (part != nullptr) {
+          curl_mime_name(part, iter->first.c_str());
+          curl_mime_data(part, val.c_str(), val.size());
+        }
+#    else
         curl_formadd(&http_form_.begin, &http_form_.end, CURLFORM_PTRNAME, iter->first.c_str(), CURLFORM_NAMELENGTH,
                      static_cast<long>(iter->first.size()), CURLFORM_COPYCONTENTS, val.c_str(), CURLFORM_CONTENTSLENGTH,
                      static_cast<long>(val.size()), CURLFORM_END);
+#    endif
       }
-    }
-
-    if (nullptr != http_form_.uploaded_file) {
-      fclose(http_form_.uploaded_file);
-      http_form_.uploaded_file = nullptr;
     }
   }
 }
@@ -1166,10 +1190,6 @@ LIBATFRAME_UTILS_API size_t http_request::curl_callback_on_read(char *buffer, si
   assert(self);
   if (nullptr == self) {
     return 0;
-  }
-
-  if (self->post_data_.empty() && nullptr != self->http_form_.uploaded_file) {
-    return fread(buffer, size, nitems, self->http_form_.uploaded_file);
   }
 
   if (self->post_data_.size() <= self->http_form_.posted_size) {

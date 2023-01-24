@@ -269,7 +269,7 @@ class http_request : public std::enable_shared_from_this<http_request>,
 
   LIBATFRAME_UTILS_API static int get_status_code_group(int code);
 
-  LIBATFRAME_UTILS_API http_request(curl_multi_context *curl_multi, const curl_share_context_ptr_type & share_context);
+  LIBATFRAME_UTILS_API http_request(curl_multi_context *curl_multi, const curl_share_context_ptr_type &share_context);
 
   LIBATFRAME_UTILS_API ~http_request();
 
@@ -418,6 +418,10 @@ class http_request : public std::enable_shared_from_this<http_request>,
 
   LIBATFRAME_UTILS_API CURL *mutable_request();
 
+#    if LIBCURL_VERSION_NUM >= 0x073800
+  LIBATFRAME_UTILS_API curl_mime *mutable_multipart();
+#    endif()
+
   LIBATFRAME_UTILS_API void build_http_form(method_t::type method);
 
   static LIBATFRAME_UTILS_API curl_poll_context_t *malloc_poll(http_request *req, curl_socket_t sockfd);
@@ -471,13 +475,16 @@ class http_request : public std::enable_shared_from_this<http_request>,
   std::string useragent_;
 
   struct form_list_t {
+#    if LIBCURL_VERSION_NUM >= 0x073800
+    curl_mime *multipart;
+#    else
     curl_httppost *begin;
     curl_httppost *end;
+#    endif
     curl_slist *headerlist;
     LIBATFRAME_UTILS_NAMESPACE_ID::tquerystring qs_fields;
 
     size_t posted_size;
-    FILE *uploaded_file;
     int flags;
 
     enum flag_t {
