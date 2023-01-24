@@ -118,7 +118,6 @@ class http_request : public std::enable_shared_from_this<http_request>,
       EN_FT_RUNNING = 0x02,
       EN_FT_CLEANING = 0x04,
       EN_FT_STOPING = 0x08,
-      EN_FT_SETUP_SHARE = 0x10,
     };
   };
 
@@ -264,9 +263,14 @@ class http_request : public std::enable_shared_from_this<http_request>,
 
   LIBATFRAME_UTILS_API static ptr_t create(curl_multi_context *);
 
+  LIBATFRAME_UTILS_API static ptr_t create(const curl_share_context_ptr_type &, const std::string &url);
+
+  LIBATFRAME_UTILS_API static ptr_t create(const curl_share_context_ptr_type &);
+
   LIBATFRAME_UTILS_API static int get_status_code_group(int code);
 
-  LIBATFRAME_UTILS_API http_request(curl_multi_context *curl_multi);
+  LIBATFRAME_UTILS_API http_request(curl_multi_context *curl_multi, const curl_share_context_ptr_type & share_context);
+
   LIBATFRAME_UTILS_API ~http_request();
 
   static LIBATFRAME_UTILS_API int create_curl_share(const curl_share_options &options,
@@ -455,6 +459,7 @@ class http_request : public std::enable_shared_from_this<http_request>,
   curl_multi_context *bind_multi_;
   CURL *request_;
   uint32_t flags_;
+  curl_share_context_ptr_type share_context_;
 
   // data and resource
   std::string url_;
