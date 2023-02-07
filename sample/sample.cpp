@@ -184,6 +184,7 @@ void log_sample_func1(int times) {
         i, origin_fmt_str, fmt_str, fmt_to_str, fmt_to_n_str);
   }
 #endif
+  FWLOGINFO("FWLOG* without parameter");
 
   THREAD_SLEEP_MS(1000);
   LIBATFRAME_UTILS_NAMESPACE_ID::time::time_utility::update();
