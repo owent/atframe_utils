@@ -296,11 +296,11 @@ int cipher::init_with_cipher(const cipher_interface_info_t *interface, int mode)
       cipher_context_.enc = EVP_CIPHER_CTX_new();
 
       if (nullptr == cipher_context_.enc) {
-        ret = details::setup_errorno(*this, ERR_peek_error(), error_code_t::MALLOC);
+        ret = details::setup_errorno(*this, static_cast<int64_t>(ERR_peek_error()), error_code_t::MALLOC);
         break;
       }
       if (!(EVP_CipherInit_ex(cipher_context_.enc, cipher_kt_, nullptr, nullptr, nullptr, 1))) {
-        ret = details::setup_errorno(*this, ERR_peek_error(), error_code_t::CIPHER_OPERATION);
+        ret = details::setup_errorno(*this, static_cast<int64_t>(ERR_peek_error()), error_code_t::CIPHER_OPERATION);
         break;
       }
     } else {
@@ -311,12 +311,12 @@ int cipher::init_with_cipher(const cipher_interface_info_t *interface, int mode)
       cipher_context_.dec = EVP_CIPHER_CTX_new();
 
       if (nullptr == cipher_context_.dec) {
-        ret = details::setup_errorno(*this, ERR_peek_error(), error_code_t::MALLOC);
+        ret = details::setup_errorno(*this, static_cast<int64_t>(ERR_peek_error()), error_code_t::MALLOC);
         break;
       }
 
       if (!(EVP_CipherInit_ex(cipher_context_.dec, cipher_kt_, nullptr, nullptr, nullptr, 0))) {
-        ret = details::setup_errorno(*this, ERR_peek_error(), error_code_t::CIPHER_OPERATION);
+        ret = details::setup_errorno(*this, static_cast<int64_t>(ERR_peek_error()), error_code_t::CIPHER_OPERATION);
         break;
       }
     } else {
@@ -812,7 +812,8 @@ LIBATFRAME_UTILS_API int cipher::encrypt(const unsigned char *input, size_t ilen
 
       if (!iv_.empty()) {
         if (!EVP_CipherInit_ex(cipher_context_.enc, nullptr, nullptr, nullptr, &iv_[0], -1)) {
-          return details::setup_errorno(*this, ERR_peek_error(), error_code_t::CIPHER_OPERATION_SET_IV);
+          return details::setup_errorno(*this, static_cast<int64_t>(ERR_peek_error()),
+                                        error_code_t::CIPHER_OPERATION_SET_IV);
         }
       }
 
@@ -821,14 +822,14 @@ LIBATFRAME_UTILS_API int cipher::encrypt(const unsigned char *input, size_t ilen
       }
 
       if (!(EVP_CipherUpdate(cipher_context_.enc, output, &outl, input, static_cast<int>(ilen)))) {
-        return details::setup_errorno(*this, ERR_peek_error(), error_code_t::CIPHER_OPERATION);
+        return details::setup_errorno(*this, static_cast<int64_t>(ERR_peek_error()), error_code_t::CIPHER_OPERATION);
       }
 
       if (0 != (interface_->flags & EN_CIFT_NO_FINISH)) {
         finish_olen = 0;
       } else {
         if (!(EVP_CipherFinal_ex(cipher_context_.enc, output + outl, &finish_olen))) {
-          return details::setup_errorno(*this, ERR_peek_error(), error_code_t::CIPHER_OPERATION);
+          return details::setup_errorno(*this, static_cast<int64_t>(ERR_peek_error()), error_code_t::CIPHER_OPERATION);
         }
       }
 
@@ -935,7 +936,8 @@ LIBATFRAME_UTILS_API int cipher::decrypt(const unsigned char *input, size_t ilen
 
       if (!iv_.empty()) {
         if (!EVP_CipherInit_ex(cipher_context_.dec, nullptr, nullptr, nullptr, &iv_[0], -1)) {
-          return details::setup_errorno(*this, ERR_peek_error(), error_code_t::CIPHER_OPERATION_SET_IV);
+          return details::setup_errorno(*this, static_cast<int64_t>(ERR_peek_error()),
+                                        error_code_t::CIPHER_OPERATION_SET_IV);
         }
       }
 
@@ -944,14 +946,14 @@ LIBATFRAME_UTILS_API int cipher::decrypt(const unsigned char *input, size_t ilen
       }
 
       if (!(EVP_CipherUpdate(cipher_context_.dec, output, &outl, input, static_cast<int>(ilen)))) {
-        return details::setup_errorno(*this, ERR_peek_error(), error_code_t::CIPHER_OPERATION);
+        return details::setup_errorno(*this, static_cast<int64_t>(ERR_peek_error()), error_code_t::CIPHER_OPERATION);
       }
 
       if (0 != (interface_->flags & EN_CIFT_NO_FINISH)) {
         finish_olen = 0;
       } else {
         if (!(EVP_CipherFinal_ex(cipher_context_.dec, output + outl, &finish_olen))) {
-          return details::setup_errorno(*this, ERR_peek_error(), error_code_t::CIPHER_OPERATION);
+          return details::setup_errorno(*this, static_cast<int64_t>(ERR_peek_error()), error_code_t::CIPHER_OPERATION);
         }
       }
 
@@ -1055,26 +1057,28 @@ LIBATFRAME_UTILS_API int cipher::encrypt_aead(const unsigned char *input, size_t
       if (!iv_.empty()) {
         if (0 != (interface_->flags & EN_CIFT_VARIABLE_IV_LEN)) {
           if (!EVP_CIPHER_CTX_ctrl(cipher_context_.enc, EVP_CTRL_AEAD_SET_IVLEN, static_cast<int>(iv_.size()), 0)) {
-            return details::setup_errorno(*this, ERR_peek_error(), error_code_t::CIPHER_OPERATION_SET_IV);
+            return details::setup_errorno(*this, static_cast<int64_t>(ERR_peek_error()),
+                                          error_code_t::CIPHER_OPERATION_SET_IV);
           }
         }
 
         if (!EVP_CipherInit_ex(cipher_context_.enc, nullptr, nullptr, nullptr, &iv_[0], -1)) {
-          return details::setup_errorno(*this, ERR_peek_error(), error_code_t::CIPHER_OPERATION_SET_IV);
+          return details::setup_errorno(*this, static_cast<int64_t>(ERR_peek_error()),
+                                        error_code_t::CIPHER_OPERATION_SET_IV);
         }
       }
 
       if (0 != (interface_->flags & EN_CIFT_AEAD_SET_LENGTH_BEFORE)) {
         int tmplen;
         if (!EVP_CipherUpdate(cipher_context_.enc, nullptr, &tmplen, nullptr, static_cast<int>(ilen))) {
-          return details::setup_errorno(*this, ERR_peek_error(), error_code_t::CIPHER_OPERATION);
+          return details::setup_errorno(*this, static_cast<int64_t>(ERR_peek_error()), error_code_t::CIPHER_OPERATION);
         }
       }
 
       int chunklen = 0;
       if (nullptr != ad && ad_len > 0) {
         if (!EVP_CipherUpdate(cipher_context_.enc, nullptr, &chunklen, ad, static_cast<int>(ad_len))) {
-          return details::setup_errorno(*this, ERR_peek_error(), error_code_t::CIPHER_OPERATION);
+          return details::setup_errorno(*this, static_cast<int64_t>(ERR_peek_error()), error_code_t::CIPHER_OPERATION);
         }
       }
 
@@ -1083,14 +1087,14 @@ LIBATFRAME_UTILS_API int cipher::encrypt_aead(const unsigned char *input, size_t
       }
 
       if (!(EVP_CipherUpdate(cipher_context_.enc, output, &outl, input, static_cast<int>(ilen)))) {
-        return details::setup_errorno(*this, ERR_peek_error(), error_code_t::CIPHER_OPERATION);
+        return details::setup_errorno(*this, static_cast<int64_t>(ERR_peek_error()), error_code_t::CIPHER_OPERATION);
       }
 
       if (0 != (interface_->flags & EN_CIFT_NO_FINISH)) {
         finish_olen = 0;
       } else {
         if (!(EVP_CipherFinal_ex(cipher_context_.enc, output + outl, &finish_olen))) {
-          return details::setup_errorno(*this, ERR_peek_error(), error_code_t::CIPHER_OPERATION);
+          return details::setup_errorno(*this, static_cast<int64_t>(ERR_peek_error()), error_code_t::CIPHER_OPERATION);
         }
       }
 
@@ -1098,7 +1102,7 @@ LIBATFRAME_UTILS_API int cipher::encrypt_aead(const unsigned char *input, size_t
 
       if (nullptr != tag && tag_len > 0) {
         if (!EVP_CIPHER_CTX_ctrl(cipher_context_.enc, EVP_CTRL_AEAD_GET_TAG, static_cast<int>(tag_len), tag)) {
-          return details::setup_errorno(*this, ERR_peek_error(), error_code_t::CIPHER_OPERATION);
+          return details::setup_errorno(*this, static_cast<int64_t>(ERR_peek_error()), error_code_t::CIPHER_OPERATION);
         }
       }
 
@@ -1214,33 +1218,35 @@ LIBATFRAME_UTILS_API int cipher::decrypt_aead(const unsigned char *input, size_t
       if (!iv_.empty()) {
         if (0 != (interface_->flags & EN_CIFT_VARIABLE_IV_LEN)) {
           if (!EVP_CIPHER_CTX_ctrl(cipher_context_.dec, EVP_CTRL_AEAD_SET_IVLEN, static_cast<int>(iv_.size()), 0)) {
-            return details::setup_errorno(*this, ERR_peek_error(), error_code_t::CIPHER_OPERATION_SET_IV);
+            return details::setup_errorno(*this, static_cast<int64_t>(ERR_peek_error()),
+                                          error_code_t::CIPHER_OPERATION_SET_IV);
           }
         }
 
         if (!EVP_CipherInit_ex(cipher_context_.dec, nullptr, nullptr, nullptr, &iv_[0], -1)) {
-          return details::setup_errorno(*this, ERR_peek_error(), error_code_t::CIPHER_OPERATION_SET_IV);
+          return details::setup_errorno(*this, static_cast<int64_t>(ERR_peek_error()),
+                                        error_code_t::CIPHER_OPERATION_SET_IV);
         }
       }
 
       if (nullptr != tag && tag_len > 0) {
         if (!(EVP_CIPHER_CTX_ctrl(cipher_context_.dec, EVP_CTRL_AEAD_SET_TAG, static_cast<int>(tag_len),
                                   const_cast<unsigned char *>(tag)))) {
-          return details::setup_errorno(*this, ERR_peek_error(), error_code_t::CIPHER_OPERATION);
+          return details::setup_errorno(*this, static_cast<int64_t>(ERR_peek_error()), error_code_t::CIPHER_OPERATION);
         }
       }
 
       if (0 != (interface_->flags & EN_CIFT_AEAD_SET_LENGTH_BEFORE)) {
         int tmplen;
         if (!EVP_CipherUpdate(cipher_context_.dec, nullptr, &tmplen, nullptr, static_cast<int>(ilen))) {
-          return details::setup_errorno(*this, ERR_peek_error(), error_code_t::CIPHER_OPERATION);
+          return details::setup_errorno(*this, static_cast<int64_t>(ERR_peek_error()), error_code_t::CIPHER_OPERATION);
         }
       }
 
       int chunklen = 0;
       if (nullptr != ad && ad_len > 0) {
         if (!EVP_CipherUpdate(cipher_context_.dec, nullptr, &chunklen, ad, static_cast<int>(ad_len))) {
-          return details::setup_errorno(*this, ERR_peek_error(), error_code_t::CIPHER_OPERATION);
+          return details::setup_errorno(*this, static_cast<int64_t>(ERR_peek_error()), error_code_t::CIPHER_OPERATION);
         }
       }
 
@@ -1249,14 +1255,14 @@ LIBATFRAME_UTILS_API int cipher::decrypt_aead(const unsigned char *input, size_t
       }
 
       if (!(EVP_CipherUpdate(cipher_context_.dec, output, &outl, input, static_cast<int>(ilen)))) {
-        return details::setup_errorno(*this, ERR_peek_error(), error_code_t::CIPHER_OPERATION);
+        return details::setup_errorno(*this, static_cast<int64_t>(ERR_peek_error()), error_code_t::CIPHER_OPERATION);
       }
 
       if (0 != (interface_->flags & EN_CIFT_NO_FINISH)) {
         finish_olen = 0;
       } else {
         if (!(EVP_CipherFinal_ex(cipher_context_.dec, output + outl, &finish_olen))) {
-          return details::setup_errorno(*this, ERR_peek_error(), error_code_t::CIPHER_OPERATION);
+          return details::setup_errorno(*this, static_cast<int64_t>(ERR_peek_error()), error_code_t::CIPHER_OPERATION);
         }
       }
 

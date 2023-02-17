@@ -149,7 +149,7 @@ LIBATFRAME_UTILS_API void log_sink_file_backend::operator()(const log_formatter:
     return;
   }
 
-  f->write(content, content_size);
+  f->write(content, static_cast<std::streamsize>(content_size));
   f->put('\n');
   time_t now = LIBATFRAME_UTILS_NAMESPACE_ID::time::time_utility::get_sys_now();
 

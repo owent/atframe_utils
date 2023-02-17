@@ -120,7 +120,7 @@ static int base64_encode_inner(unsigned char *dst, size_t dlen, size_t *olen, co
     }
   }
 
-  *olen = p - dst;
+  *olen = static_cast<size_t>(p - dst);
   *p = 0;
 
   return (0);
@@ -242,7 +242,7 @@ static int base64_decode_inner(unsigned char *dst, size_t dlen, size_t *olen, co
     *p++ = (unsigned char)(x >> 2);
   }
 
-  *olen = p - dst;
+  *olen = static_cast<size_t>(p - dst);
 
   return (0);
 }

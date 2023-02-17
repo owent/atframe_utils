@@ -306,7 +306,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY cmd_option_bind : public binder::cmd_option
     map_value_[(uc_t)','] = map_value_[(uc_t)';'] = CMDSPLIT;
 
     // 转义字符设置
-    for (int i = 0; i < 256; ++i) trans_value_[i] = (uc_t)i;
+    for (int i = 0; i < 256; ++i) trans_value_[i] = static_cast<char>(i & 0xff);
 
     trans_value_[(uc_t)'0'] = '\0';
     trans_value_[(uc_t)'a'] = '\a';

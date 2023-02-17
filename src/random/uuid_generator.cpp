@@ -192,14 +192,14 @@ static void random_get_bytes(unsigned char *buf, size_t nbytes) {
     struct timeval tv;
     gettimeofday(&tv, 0);
     uuid_generator_rand_engine::result_type seed =
-        static_cast<uuid_generator_rand_engine::result_type>((
 #    ifdef _MSC_VER
-                                                                 _getpid()
+        static_cast<uuid_generator_rand_engine::result_type>(_getpid() << 16)
 #    else
-                                                                 getpid()
+        static_cast<uuid_generator_rand_engine::result_type>(getpid() << static_cast<pid_t>(16))
 #    endif
-                                                                 << 16) ^
-                                                             getuid() ^ tv.tv_sec ^ tv.tv_usec);
+        ^ static_cast<uuid_generator_rand_engine::result_type>(getuid()) ^
+        static_cast<uuid_generator_rand_engine::result_type>(tv.tv_sec) ^
+        static_cast<uuid_generator_rand_engine::result_type>(tv.tv_usec);
 
     random_generator.init_seed(seed);
     uuid_generator_rand_engine_inited = true;
@@ -268,7 +268,7 @@ static int get_node_id(unsigned char *node_id) {
     return -1;
   }
   n = ifc.ifc_len;
-  for (i = 0; i < n; i += ifreq_size(*ifrp)) {
+  for (i = 0; i < n; i += static_cast<int>(ifreq_size(*ifrp))) {
     ifrp = (struct ifreq *)((char *)ifc.ifc_buf + i);
     strncpy(ifr.ifr_name, ifrp->ifr_name, IFNAMSIZ);
 #    ifdef SIOCGIFHWADDR
@@ -379,8 +379,8 @@ static int get_clock(uint32_t *clock_high, uint32_t *clock_low, uint16_t *ret_cl
 
     if (fscanf(uuid_generator_state_file.state_f, "clock: %04x tv: %lu %lu adj: %d\n", &cl, &tv1, &tv2, &a) == 4) {
       clock_seq = cl & 0x3FFF;
-      last.tv_sec = tv1;
-      last.tv_usec = tv2;
+      last.tv_sec = static_cast<decltype(last.tv_sec)>(tv1);
+      last.tv_usec = static_cast<decltype(last.tv_usec)>(tv2);
       adjustment = a;
     }
   }
@@ -406,7 +406,7 @@ try_again:
     last = tv;
   }
 
-  clock_reg = tv.tv_usec * 10 + adjustment;
+  clock_reg = static_cast<uint64_t>(tv.tv_usec) * 10 + static_cast<uint64_t>(adjustment);
   clock_reg += ((uint64_t)tv.tv_sec) * 10000000;
   clock_reg += (((uint64_t)0x01B21DD2) << 32) + 0x13814000;
 

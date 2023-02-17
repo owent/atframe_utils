@@ -117,7 +117,7 @@ static std::string _decode_uri(const char *data, size_t sz, bool like_php) {
     } else {
       const unsigned char high_c = static_cast<unsigned char>(data[1]);
       const unsigned char low_c = static_cast<unsigned char>(data[2]);
-      ret += static_cast<unsigned char>((hex_char_map[high_c] << 4) + hex_char_map[low_c]);
+      ret += static_cast<char>((hex_char_map[high_c] << 4) + hex_char_map[low_c]);
       data += 2;
       sz -= 2;
     }

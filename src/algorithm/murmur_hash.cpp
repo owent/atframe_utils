@@ -85,7 +85,7 @@ LIBATFRAME_UTILS_API uint32_t murmur_hash2(const void *key, int len, uint32_t se
 
   // Initialize the hash to a 'random' value
 
-  uint32_t h = seed ^ len;
+  uint32_t h = seed ^ static_cast<uint32_t>(len);
 
   // Mix 4 bytes at a time into the hash
 
@@ -141,7 +141,7 @@ LIBATFRAME_UTILS_API uint64_t murmur_hash2_64a(const void *key, int len, uint64_
   const uint64_t m = BIG_CONSTANT(0xc6a4a7935bd1e995);
   const int r = 47;
 
-  uint64_t h = seed ^ (len * m);
+  uint64_t h = seed ^ (static_cast<uint64_t>(len) * m);
 
   const uint64_t *data = (const uint64_t *)key;
   const uint64_t *end = data + (len / 8);
@@ -196,7 +196,7 @@ LIBATFRAME_UTILS_API uint64_t murmur_hash2_64b(const void *key, int len, uint64_
   const uint32_t m = 0x5bd1e995;
   const int r = 24;
 
-  uint32_t h1 = uint32_t(seed) ^ len;
+  uint32_t h1 = uint32_t(seed) ^ static_cast<uint32_t>(len);
   uint32_t h2 = uint32_t(seed >> 32);
 
   const uint32_t *data = (const uint32_t *)key;
@@ -309,7 +309,7 @@ LIBATFRAME_UTILS_API uint32_t murmur_hash3_x86_32(const void *key, int len, uint
   //----------
   // finalization
 
-  h1 ^= len;
+  h1 ^= static_cast<uint32_t>(len);
 
   h1 = fmix32(h1);
 
@@ -456,10 +456,10 @@ LIBATFRAME_UTILS_API void murmur_hash3_x86_128(const void *key, const int len, u
   //----------
   // finalization
 
-  h1 ^= len;
-  h2 ^= len;
-  h3 ^= len;
-  h4 ^= len;
+  h1 ^= static_cast<uint32_t>(len);
+  h2 ^= static_cast<uint32_t>(len);
+  h3 ^= static_cast<uint32_t>(len);
+  h4 ^= static_cast<uint32_t>(len);
 
   h1 += h2;
   h1 += h3;
@@ -592,8 +592,8 @@ LIBATFRAME_UTILS_API void murmur_hash3_x64_128(const void *key, const int len, c
   //----------
   // finalization
 
-  h1 ^= len;
-  h2 ^= len;
+  h1 ^= static_cast<uint64_t>(len);
+  h2 ^= static_cast<uint64_t>(len);
 
   h1 += h2;
   h2 += h1;

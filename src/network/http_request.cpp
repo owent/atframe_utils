@@ -29,9 +29,9 @@ UTIL_CONFIG_STATIC_ASSERT(
 #      endif
 #    endif
 
-#    define CHECK_FLAG(f, v) !!((f) & (v))
-#    define SET_FLAG(f, v) (f) |= (v)
-#    define UNSET_FLAG(f, v) (f) &= (~(v))
+#    define CHECK_FLAG(f, v) !!((f) & static_cast<uint32_t>(v))
+#    define SET_FLAG(f, v) (f) |= static_cast<uint32_t>(v)
+#    define UNSET_FLAG(f, v) (f) &= (~static_cast<uint32_t>(v))
 
 LIBATFRAME_UTILS_NAMESPACE_BEGIN
 namespace network {
@@ -186,7 +186,7 @@ LIBATFRAME_UTILS_API int http_request::start(method_t::type method, bool wait) {
 #    else
     using infile_size_type = long;
 #    endif
-    infile_size_type infile_size = post_data_.size();
+    infile_size_type infile_size = static_cast<infile_size_type>(post_data_.size());
 #    if LIBCURL_VERSION_NUM >= 0x071700
     curl_easy_setopt(req, CURLOPT_INFILESIZE_LARGE, infile_size);
 #    else
@@ -1148,7 +1148,7 @@ LIBATFRAME_UTILS_API size_t http_request::curl_callback_on_write(char *ptr, size
   }
 
   if (nullptr != data && data_len > 0) {
-    self->response_.write(data, data_len);
+    self->response_.write(data, static_cast<std::streamsize>(data_len));
   }
 
   return size * nmemb;
@@ -1240,7 +1240,7 @@ LIBATFRAME_UTILS_API size_t http_request::curl_callback_on_header(char *buffer, 
 
   if (keylen > 0 && nullptr != self && self->on_header_fn_) {
     if (static_cast<size_t>(val - buffer) < nwrite) {
-      self->on_header_fn_(*self, key, keylen, val, nwrite - (val - key));
+      self->on_header_fn_(*self, key, keylen, val, nwrite - static_cast<size_t>(val - key));
     } else {
       self->on_header_fn_(*self, key, keylen, nullptr, 0);
     }
