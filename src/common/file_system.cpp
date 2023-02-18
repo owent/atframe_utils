@@ -167,7 +167,7 @@ LIBATFRAME_UTILS_API bool file_system::file_size(const char *file_path, size_t &
   return true;
 }
 
-LIBATFRAME_UTILS_API bool file_system::mkdir(const char *dir_path, bool recursion, int mode) {
+LIBATFRAME_UTILS_API bool file_system::mkdir(const char *dir_path, bool recursion, EXPLICIT_UNUSED_ATTR int mode) {
 #ifndef UTIL_FS_WINDOWS_API
   if (0 == mode) {
     mode = S_IRWXU | S_IRWXG | S_IRWXO;

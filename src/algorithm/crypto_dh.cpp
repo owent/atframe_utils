@@ -1568,21 +1568,21 @@ LIBATFRAME_UTILS_API int dh::make_params(std::vector<unsigned char> &param) {
 #      else
       const BIGNUM *r[4] = {nullptr, nullptr, nullptr, nullptr};
 
-      DH *dh = EVP_PKEY_get0_DH(dh_context_.openssl_dh_pkey_);
-      if (nullptr == dh) {
+      DH *dh_inst = EVP_PKEY_get0_DH(dh_context_.openssl_dh_pkey_);
+      if (nullptr == dh_inst) {
         ret = details::setup_errorno(*this, static_cast<int>(ERR_peek_error()), error_code_t::INIT_DH_GENERATE_KEY);
         break;
       }
 
       const BIGNUM *self_pubkey = nullptr;
-      DH_get0_key(dh, &self_pubkey, nullptr);
+      DH_get0_key(dh_inst, &self_pubkey, nullptr);
       if (nullptr == self_pubkey) {
         ret = details::setup_errorno(*this, static_cast<int>(ERR_peek_error()), error_code_t::INIT_DH_GENERATE_KEY);
         break;
       }
 
-      DH_get0_pqg(dh, &r[0], nullptr, &r[1]);
-      DH_get0_key(dh, &r[2], nullptr);
+      DH_get0_pqg(dh_inst, &r[0], nullptr, &r[1]);
+      DH_get0_key(dh_inst, &r[2], nullptr);
 #      endif
       // puts("make_params");
       // BN_print_fp(stdout, r[0]);
@@ -1869,15 +1869,15 @@ LIBATFRAME_UTILS_API int dh::make_public(std::vector<unsigned char> &param) {
         break;
       }
 #      else
-      DH *dh = EVP_PKEY_get0_DH(dh_context_.openssl_dh_pkey_);
-      if (nullptr == dh) {
+      DH *dh_inst = EVP_PKEY_get0_DH(dh_context_.openssl_dh_pkey_);
+      if (nullptr == dh_inst) {
         ret = details::setup_errorno(*this, static_cast<int>(ERR_peek_error()), error_code_t::INIT_DH_READ_PARAM);
         break;
       }
 
       int errcode = 0;
       const BIGNUM *self_pubkey = nullptr;
-      DH_get0_key(dh, &self_pubkey, nullptr);
+      DH_get0_key(dh_inst, &self_pubkey, nullptr);
       if (nullptr == self_pubkey) {
         ret = details::setup_errorno(*this, errcode, error_code_t::INIT_DH_GENERATE_KEY);
         break;
@@ -2039,13 +2039,13 @@ LIBATFRAME_UTILS_API int dh::read_public(const unsigned char *input, size_t ilen
         break;
       }
 
-      DH *dh = EVP_PKEY_get0_DH(dh_context_.openssl_dh_peer_key_);
-      if (nullptr == dh) {
+      DH *dh_inst = EVP_PKEY_get0_DH(dh_context_.openssl_dh_peer_key_);
+      if (nullptr == dh_inst) {
         ret = details::setup_errorno(*this, static_cast<int>(ERR_peek_error()), error_code_t::INIT_DH_GENERATE_KEY);
         break;
       }
 
-      if (DH_set0_key(dh, pub_key.get(), nullptr)) {
+      if (DH_set0_key(dh_inst, pub_key.get(), nullptr)) {
         pub_key.ref() = nullptr;
       }
 #      endif
