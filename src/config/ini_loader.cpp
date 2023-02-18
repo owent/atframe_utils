@@ -134,10 +134,10 @@ T str2int(const_cstring str, const_cstring *left = nullptr) {
       char c = static_cast<char>(::tolower(str[i]));
       if (c >= '0' && c <= '9') {
         out <<= 4;
-        out += c - '0';
+        out += static_cast<T>(c - '0');
       } else if (c >= 'a' && c <= 'f') {
         out <<= 4;
-        out += c - 'a' + 10;
+        out += static_cast<T>(c - 'a' + 10);
       } else {
         break;
       }
@@ -145,12 +145,12 @@ T str2int(const_cstring str, const_cstring *left = nullptr) {
   } else if ('\\' == str[0]) {  // oct
     for (i = 0; str[i] >= '0' && str[i] < '8'; ++i) {
       out <<= 3;
-      out += str[i] - '0';
+      out += static_cast<T>(str[i] - '0');
     }
   } else {  // dec
     for (i = 0; str[i] >= '0' && str[i] <= '9'; ++i) {
       out *= 10;
-      out += str[i] - '0';
+      out += static_cast<T>(str[i] - '0');
     }
   }
 
@@ -913,9 +913,9 @@ LIBATFRAME_UTILS_API void ini_loader::dump_to(LIBATFRAME_UTILS_NAMESPACE_ID::nos
   ini_value &cur_node = get_node(path);
   if (cur_node.has_data() || is_force) {
     const std::string &val = cur_node.as_cpp_string(index);
-    memcpy(begin, val.c_str(), std::min<size_t>(end - begin, val.size()));
+    memcpy(begin, val.c_str(), std::min<size_t>(static_cast<size_t>(end - begin), val.size()));
     if (static_cast<size_t>(end - begin) > val.size()) {
-      memset(begin + val.size(), 0, end - begin - val.size());
+      memset(begin + val.size(), 0, static_cast<size_t>(end - begin) - val.size());
     }
   }
 }

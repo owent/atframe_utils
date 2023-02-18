@@ -98,7 +98,7 @@ LIBATFRAME_UTILS_API bool file_system::get_file_content(std::string &out, const 
     std::stringstream ss;
     while (true) {
       size_t read_sz = fread(buf, 1, sizeof(buf), f);
-      ss.write(buf, read_sz);
+      ss.write(buf, static_cast<std::streamsize>(read_sz));
       if (read_sz < sizeof(buf)) {
         break;
       }
@@ -174,7 +174,7 @@ LIBATFRAME_UTILS_API bool file_system::mkdir(const char *dir_path, bool recursio
   }
 #endif
   if (!recursion) {
-    return 0 == FUNC_MKDIR(dir_path, mode);
+    return 0 == FUNC_MKDIR(dir_path, static_cast<mode_t>(mode));
   }
 
   std::vector<std::string> path_segs;
@@ -203,7 +203,7 @@ LIBATFRAME_UTILS_API bool file_system::mkdir(const char *dir_path, bool recursio
     now_path += path_segs[i];
 
     if (false == is_exist(now_path.c_str())) {
-      if (0 != FUNC_MKDIR(now_path.c_str(), mode)) {
+      if (0 != FUNC_MKDIR(now_path.c_str(), static_cast<mode_t>(mode))) {
         return false;
       }
     }

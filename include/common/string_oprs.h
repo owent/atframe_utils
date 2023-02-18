@@ -55,17 +55,17 @@
 #  ifdef _MSC_VER
 #    define UTIL_STRFUNC_VSNPRINTF(buffer, bufsz, fmt, arg) \
       vsnprintf_s(buffer, static_cast<size_t>(bufsz), _TRUNCATE, fmt, arg)
-#    define UTIL_STRFUNC_SNPRINTF(...) sprintf_s(__VA_ARGS__)
+#    define UTIL_STRFUNC_SNPRINTF(buffer, bufsz, ...) sprintf_s(buffer, static_cast<size_t>(bufsz), __VA_ARGS__)
 #  else
-#    define UTIL_STRFUNC_VSNPRINTF(buffer, bufsz, fmt, arg) vsnprintf_s(buffer, static_cast<size_t>(bufsz), fmt, arg)
-#    define UTIL_STRFUNC_SNPRINTF(...) snprintf_s(__VA_ARGS__)
+#    define UTIL_STRFUNC_VSNPRINTF(buffer, bufsz, fmt, arg) vsnprintf_s(buffer, static_cast<rsize_t>(bufsz), fmt, arg)
+#    define UTIL_STRFUNC_SNPRINTF(buffer, bufsz, fmt, args...) snprintf_s(buffer, static_cast<rsize_t>(bufsz), fmt, ##args)
 #  endif
 
 #  define UTIL_STRFUNC_C11_SUPPORT 1
 #else
 #  define UTIL_STRFUNC_SSCANF(...) sscanf(__VA_ARGS__)
-#  define UTIL_STRFUNC_SNPRINTF(...) snprintf(__VA_ARGS__)
-#  define UTIL_STRFUNC_VSNPRINTF(buffer, bufsz, fmt, arg) vsnprintf(buffer, static_cast<int>(bufsz), fmt, arg)
+#  define UTIL_STRFUNC_SNPRINTF(buffer, bufsz, fmt, args...) snprintf(buffer, static_cast<size_t>(bufsz), fmt, ##args)
+#  define UTIL_STRFUNC_VSNPRINTF(buffer, bufsz, fmt, arg) vsnprintf(buffer, static_cast<size_t>(bufsz), fmt, arg)
 #endif
 
 LIBATFRAME_UTILS_NAMESPACE_BEGIN
@@ -128,7 +128,7 @@ LIBATFRAME_UTILS_API_HEAD_ONLY std::pair<const TCH *, size_t> trim(const TCH *st
       ++str_end;
     }
 
-    sz = str_end - str_begin;
+    sz = static_cast<size_t>(str_end - str_begin);
   }
 
   if (trim_left && str_begin) {

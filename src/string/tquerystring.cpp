@@ -117,7 +117,7 @@ static std::string _decode_uri(const char *data, size_t sz, bool like_php) {
     } else {
       const unsigned char high_c = static_cast<unsigned char>(data[1]);
       const unsigned char low_c = static_cast<unsigned char>(data[2]);
-      ret += static_cast<unsigned char>((hex_char_map[high_c] << 4) + hex_char_map[low_c]);
+      ret += static_cast<char>((hex_char_map[high_c] << 4) + hex_char_map[low_c]);
       data += 2;
       sz -= 2;
     }
@@ -191,14 +191,14 @@ LIBATFRAME_UTILS_API void item_impl::append_to(std::string &target, const std::s
 // 字符串类型
 LIBATFRAME_UTILS_API item_string::item_string() {}
 
-LIBATFRAME_UTILS_API item_string::item_string(const std::string &data) : data_(data) {}
+LIBATFRAME_UTILS_API item_string::item_string(const std::string &input_data) : data_(input_data) {}
 
 LIBATFRAME_UTILS_API item_string::~item_string() {}
 
 LIBATFRAME_UTILS_API item_string::ptr_type item_string::create() { return std::make_shared<item_string>(); }
 
-LIBATFRAME_UTILS_API item_string::ptr_type item_string::create(const std::string &data) {
-  return std::make_shared<item_string>(data);
+LIBATFRAME_UTILS_API item_string::ptr_type item_string::create(const std::string &input_data) {
+  return std::make_shared<item_string>(input_data);
 }
 
 LIBATFRAME_UTILS_API bool item_string::empty() const { return data_.empty(); }
@@ -223,12 +223,12 @@ LIBATFRAME_UTILS_API const std::string &item_string::data() const { return data_
 
 LIBATFRAME_UTILS_API item_string::operator std::string() { return get(); };
 
-LIBATFRAME_UTILS_API item_string &item_string::operator=(const std::string &data) {
-  set(data);
+LIBATFRAME_UTILS_API item_string &item_string::operator=(const std::string &input_data) {
+  set(input_data);
   return (*this);
 };
 
-LIBATFRAME_UTILS_API void item_string::set(const std::string &data) { data_ = data; };
+LIBATFRAME_UTILS_API void item_string::set(const std::string &input_data) { data_ = input_data; };
 
 LIBATFRAME_UTILS_API std::string &item_string::get() { return data_; };
 
@@ -349,21 +349,21 @@ LIBATFRAME_UTILS_API std::string item_object::to_string(const char *prefix) cons
   return ret;
 }
 
-LIBATFRAME_UTILS_API bool item_object::parse(const std::vector<std::string> &keys, size_t index,
-                                             const std::string &value) {
-  if (index >= keys.size()) {
+LIBATFRAME_UTILS_API bool item_object::parse(const std::vector<std::string> &input_keys, size_t index,
+                                             const std::string &input_value) {
+  if (index >= input_keys.size()) {
     return false;
   }
 
-  data_iterator iter = data_.find(keys[index]);
+  data_iterator iter = data_.find(input_keys[index]);
   if (iter == data_.end()) {
     types::item_impl::ptr_type ptr;
     // 最后一级，字符串类型
-    if (index + 1 == keys.size()) {
+    if (index + 1 == input_keys.size()) {
       ptr = std::static_pointer_cast<types::item_impl>(item_string::create());
     }
     // 倒数第二级，且最后一级key为空，数组类型
-    else if (index + 2 == keys.size() && keys.back().size() == 0) {
+    else if (index + 2 == input_keys.size() && input_keys.back().size() == 0) {
       ptr = std::static_pointer_cast<types::item_impl>(item_array::create());
     }
     // Object类型
@@ -371,10 +371,10 @@ LIBATFRAME_UTILS_API bool item_object::parse(const std::vector<std::string> &key
       ptr = std::static_pointer_cast<types::item_impl>(item_object::create());
     }
 
-    data_.insert(std::make_pair(keys[index], ptr));
-    return ptr->parse(keys, index + 1, value);
+    data_.insert(std::make_pair(input_keys[index], ptr));
+    return ptr->parse(input_keys, index + 1, input_value);
   } else {
-    return iter->second->parse(keys, index + 1, value);
+    return iter->second->parse(input_keys, index + 1, input_value);
   }
 
   // return false;
@@ -490,7 +490,7 @@ LIBATFRAME_UTILS_API bool tquerystring::decode(const char *content, size_t sz) {
 
 LIBATFRAME_UTILS_API bool tquerystring::decode_record(const char *content, size_t sz) {
   std::string seg, value, origin_val;
-  std::vector<std::string> keys;
+  std::vector<std::string> input_keys;
   origin_val.assign(content, sz);
   seg.reserve(sz);
 
@@ -515,7 +515,7 @@ LIBATFRAME_UTILS_API bool tquerystring::decode_record(const char *content, size_
       ++sz;
     }
 
-    keys.push_back(seg);
+    input_keys.push_back(seg);
     seg.clear();
 
     if (sz >= origin_val.size()) {
@@ -527,8 +527,8 @@ LIBATFRAME_UTILS_API bool tquerystring::decode_record(const char *content, size_
   }
 
   if (seg.size() > 0) {
-    keys.push_back(seg);
-    return parse(keys, 0, value);
+    input_keys.push_back(seg);
+    return parse(input_keys, 0, value);
   } else {
     return false;
   }

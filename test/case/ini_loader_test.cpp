@@ -31,7 +31,7 @@ CASE_TEST(ini_loader, number) {
 
   float t3 = 0.0;
   cfg_loader.dump_to("a.b.c2", t3);
-  CASE_EXPECT_EQ(1.23f, t3);
+  CASE_EXPECT_LE(std::abs(1.23f - t3), std::numeric_limits<float>::epsilon());
 }
 
 CASE_TEST(ini_loader, string) {

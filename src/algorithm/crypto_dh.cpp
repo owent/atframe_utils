@@ -563,9 +563,9 @@ static size_t crypto_dh_EVP_PKEY_set1_tls_encodedpoint(EVP_PKEY *pkey, const uns
         (defined(OPENSSL_API_LEVEL) && OPENSSL_API_LEVEL >= 30000) ||            \
         (!defined(LIBRESSL_VERSION_NUMBER) && defined(OPENSSL_VERSION_NUMBER) && \
          OPENSSL_VERSION_NUMBER >= 0x30000000L)
-  return EVP_PKEY_set1_encoded_public_key(pkey, pt, ptlen);
+  return static_cast<size_t>(EVP_PKEY_set1_encoded_public_key(pkey, pt, ptlen));
 #    else
-  return EVP_PKEY_set1_tls_encodedpoint(pkey, pt, ptlen);
+  return static_cast<size_t>(EVP_PKEY_set1_tls_encodedpoint(pkey, pt, ptlen));
 #    endif
 }
 
@@ -626,7 +626,7 @@ static inline BIGNUM *openssl_get_dh_point(const unsigned char *&input, size_t &
     return nullptr;
   }
 
-  BIGNUM *ret = BN_bin2bn(input + 2, point_size, nullptr);
+  BIGNUM *ret = BN_bin2bn(input + 2, static_cast<int>(point_size), nullptr);
   if (nullptr != ret) {
     input += 2 + point_size;
     left_size -= 2 + point_size;
@@ -640,7 +640,7 @@ static inline bool openssl_put_dh_point(const BIGNUM *input, unsigned char *&out
     return false;
   }
 
-  unsigned int point_size = BN_num_bytes(input);
+  unsigned int point_size = static_cast<unsigned int>(BN_num_bytes(input));
   if (left_size < 2 + point_size) {
     return false;
   }
@@ -1237,7 +1237,11 @@ LIBATFRAME_UTILS_API int dh::shared_context::random(void *output, size_t output_
 
   int ret = error_code_t::OK;
 #  if defined(CRYPTO_USE_OPENSSL) || defined(CRYPTO_USE_LIBRESSL) || defined(CRYPTO_USE_BORINGSSL)
+#    if defined(CRYPTO_USE_BORINGSSL)
+  if (!RAND_bytes(reinterpret_cast<unsigned char *>(output), static_cast<size_t>(output_sz))) {
+#    else
   if (!RAND_bytes(reinterpret_cast<unsigned char *>(output), static_cast<int>(output_sz))) {
+#    endif
     ret = static_cast<int>(ERR_peek_error());
   }
 
@@ -1377,25 +1381,25 @@ LIBATFRAME_UTILS_API dh::dh() : last_errorno_(0) {
 }
 LIBATFRAME_UTILS_API dh::~dh() { close(); }
 
-LIBATFRAME_UTILS_API int dh::init(shared_context::ptr_t shared_context) {
-  if (!shared_context) {
+LIBATFRAME_UTILS_API int dh::init(shared_context::ptr_t shared_context_ptr) {
+  if (!shared_context_ptr) {
     return details::setup_errorno(*this, 0, error_code_t::INVALID_PARAM);
   }
 
-  // shared_context must be initialized
-  if (method_t::EN_CDT_INVALID == shared_context->get_method()) {
+  // shared_context_ptr must be initialized
+  if (method_t::EN_CDT_INVALID == shared_context_ptr->get_method()) {
     return details::setup_errorno(*this, 0, error_code_t::NOT_INITED);
   }
 
   int ret = 0;
 
-  switch (shared_context->get_method()) {
+  switch (shared_context_ptr->get_method()) {
 #  if !defined(CRYPTO_USE_BORINGSSL)
     case method_t::EN_CDT_DH: {
 // init DH param file
 #    if defined(CRYPTO_USE_OPENSSL) || defined(CRYPTO_USE_LIBRESSL)
-      if (false == shared_context->is_client_mode()) {
-        if (nullptr == shared_context->get_dh_parameter().keygen_ctx) {
+      if (false == shared_context_ptr->is_client_mode()) {
+        if (nullptr == shared_context_ptr->get_dh_parameter().keygen_ctx) {
           ret = error_code_t::NOT_SERVER_MODE;
           break;
         }
@@ -1406,11 +1410,11 @@ LIBATFRAME_UTILS_API int dh::init(shared_context::ptr_t shared_context) {
         mbedtls_dhm_init(&dh_context_.mbedtls_dh_ctx_);
 
         // client mode, just init , do not read PEM file
-        if (false == shared_context->is_client_mode()) {
+        if (false == shared_context_ptr->is_client_mode()) {
           int res = mbedtls_dhm_parse_dhm(
               &dh_context_.mbedtls_dh_ctx_,
-              reinterpret_cast<const unsigned char *>(shared_context->get_dh_parameter().param.data()),
-              shared_context->get_dh_parameter().param.size());
+              reinterpret_cast<const unsigned char *>(shared_context_ptr->get_dh_parameter().param.data()),
+              shared_context_ptr->get_dh_parameter().param.size());
           if (0 != res) {
             ret = details::setup_errorno(*this, res, error_code_t::INIT_DHPARAM);
             break;
@@ -1428,8 +1432,8 @@ LIBATFRAME_UTILS_API int dh::init(shared_context::ptr_t shared_context) {
     case method_t::EN_CDT_ECDH: {
 // init DH param file
 #  if defined(CRYPTO_USE_OPENSSL) || defined(CRYPTO_USE_LIBRESSL) || defined(CRYPTO_USE_BORINGSSL)
-      if (false == shared_context->is_client_mode()) {
-        if (nullptr == shared_context->get_dh_parameter().keygen_ctx) {
+      if (false == shared_context_ptr->is_client_mode()) {
+        if (nullptr == shared_context_ptr->get_dh_parameter().keygen_ctx) {
           ret = error_code_t::NOT_SERVER_MODE;
           break;
         }
@@ -1439,8 +1443,8 @@ LIBATFRAME_UTILS_API int dh::init(shared_context::ptr_t shared_context) {
       do {
         mbedtls_ecdh_init(&dh_context_.mbedtls_ecdh_ctx_);
 
-        if (false == shared_context->is_client_mode()) {
-          int res = mbedtls_ecdh_setup(&dh_context_.mbedtls_ecdh_ctx_, shared_context->get_dh_parameter().group_id);
+        if (false == shared_context_ptr->is_client_mode()) {
+          int res = mbedtls_ecdh_setup(&dh_context_.mbedtls_ecdh_ctx_, shared_context_ptr->get_dh_parameter().group_id);
           if (0 != res) {
             ret = details::setup_errorno(*this, res, error_code_t::INIT_DHPARAM);
             break;
@@ -1463,7 +1467,7 @@ LIBATFRAME_UTILS_API int dh::init(shared_context::ptr_t shared_context) {
     return ret;
   }
 
-  shared_context_ = shared_context;
+  shared_context_ = shared_context_ptr;
   return details::setup_errorno(*this, 0, error_code_t::OK);
 }
 
@@ -1472,10 +1476,10 @@ LIBATFRAME_UTILS_API int dh::close() {
     return details::setup_errorno(*this, 0, error_code_t::NOT_INITED);
   }
 
-  shared_context::ptr_t shared_context;
-  shared_context.swap(shared_context_);
+  shared_context::ptr_t shared_context_ptr;
+  shared_context_ptr.swap(shared_context_);
 
-  switch (shared_context->get_method()) {
+  switch (shared_context_ptr->get_method()) {
     case method_t::EN_CDT_DH: {
 // clear DH param file and cache
 #  if defined(CRYPTO_USE_OPENSSL) || defined(CRYPTO_USE_LIBRESSL) || defined(CRYPTO_USE_BORINGSSL)
@@ -1568,21 +1572,21 @@ LIBATFRAME_UTILS_API int dh::make_params(std::vector<unsigned char> &param) {
 #      else
       const BIGNUM *r[4] = {nullptr, nullptr, nullptr, nullptr};
 
-      DH *dh = EVP_PKEY_get0_DH(dh_context_.openssl_dh_pkey_);
-      if (nullptr == dh) {
+      DH *dh_inst = EVP_PKEY_get0_DH(dh_context_.openssl_dh_pkey_);
+      if (nullptr == dh_inst) {
         ret = details::setup_errorno(*this, static_cast<int>(ERR_peek_error()), error_code_t::INIT_DH_GENERATE_KEY);
         break;
       }
 
       const BIGNUM *self_pubkey = nullptr;
-      DH_get0_key(dh, &self_pubkey, nullptr);
+      DH_get0_key(dh_inst, &self_pubkey, nullptr);
       if (nullptr == self_pubkey) {
         ret = details::setup_errorno(*this, static_cast<int>(ERR_peek_error()), error_code_t::INIT_DH_GENERATE_KEY);
         break;
       }
 
-      DH_get0_pqg(dh, &r[0], nullptr, &r[1]);
-      DH_get0_key(dh, &r[2], nullptr);
+      DH_get0_pqg(dh_inst, &r[0], nullptr, &r[1]);
+      DH_get0_key(dh_inst, &r[2], nullptr);
 #      endif
       // puts("make_params");
       // BN_print_fp(stdout, r[0]);
@@ -1594,7 +1598,7 @@ LIBATFRAME_UTILS_API int dh::make_params(std::vector<unsigned char> &param) {
         size_t olen = 0;
         unsigned int nr[4] = {0};
         for (int i = 0; i < 4 && r[i] != nullptr; i++) {
-          nr[i] = BN_num_bytes(r[i]);
+          nr[i] = static_cast<unsigned int>(BN_num_bytes(r[i]));
           // DHM_MPI_EXPORT in mbedtls/polarssl use 2 byte to store length, so openssl/libressl/boringssl should use
           // OPENSSL_NO_SRP
           olen += static_cast<size_t>(nr[i] + 2);
@@ -1869,15 +1873,15 @@ LIBATFRAME_UTILS_API int dh::make_public(std::vector<unsigned char> &param) {
         break;
       }
 #      else
-      DH *dh = EVP_PKEY_get0_DH(dh_context_.openssl_dh_pkey_);
-      if (nullptr == dh) {
+      DH *dh_inst = EVP_PKEY_get0_DH(dh_context_.openssl_dh_pkey_);
+      if (nullptr == dh_inst) {
         ret = details::setup_errorno(*this, static_cast<int>(ERR_peek_error()), error_code_t::INIT_DH_READ_PARAM);
         break;
       }
 
       int errcode = 0;
       const BIGNUM *self_pubkey = nullptr;
-      DH_get0_key(dh, &self_pubkey, nullptr);
+      DH_get0_key(dh_inst, &self_pubkey, nullptr);
       if (nullptr == self_pubkey) {
         ret = details::setup_errorno(*this, errcode, error_code_t::INIT_DH_GENERATE_KEY);
         break;
@@ -1885,7 +1889,7 @@ LIBATFRAME_UTILS_API int dh::make_public(std::vector<unsigned char> &param) {
 #      endif
       // write big number into buffer, the size must be no less than BN_num_bytes()
       // @see https://www.openssl.org/docs/manmaster/crypto/BN_bn2bin.html
-      size_t dhparam_bnsz = BN_num_bytes(self_pubkey);
+      size_t dhparam_bnsz = static_cast<size_t>(BN_num_bytes(self_pubkey));
       param.resize(dhparam_bnsz, 0);
       BN_bn2bin(self_pubkey, &param[0]);
 #      ifdef CRYPTO_USE_OPENSSL_WITH_OSSL_APIS
@@ -2039,13 +2043,13 @@ LIBATFRAME_UTILS_API int dh::read_public(const unsigned char *input, size_t ilen
         break;
       }
 
-      DH *dh = EVP_PKEY_get0_DH(dh_context_.openssl_dh_peer_key_);
-      if (nullptr == dh) {
+      DH *dh_inst = EVP_PKEY_get0_DH(dh_context_.openssl_dh_peer_key_);
+      if (nullptr == dh_inst) {
         ret = details::setup_errorno(*this, static_cast<int>(ERR_peek_error()), error_code_t::INIT_DH_GENERATE_KEY);
         break;
       }
 
-      if (DH_set0_key(dh, pub_key.get(), nullptr)) {
+      if (DH_set0_key(dh_inst, pub_key.get(), nullptr)) {
         pub_key.ref() = nullptr;
       }
 #      endif
