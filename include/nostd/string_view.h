@@ -454,7 +454,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY basic_string_view {
     // A static cast is used here to work around the fact that memchr returns
     // a void* on Posix-compliant systems and const void* on Windows.
     do {
-      match = static_cast<const unsigned char*>(memchr(phaystack, pneedle[0], hayend - phaystack));
+      match = static_cast<const unsigned char*>(memchr(phaystack, pneedle[0], static_cast<size_t>(hayend - phaystack)));
       if (nullptr == match) {
         break;
       }

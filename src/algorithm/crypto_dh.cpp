@@ -1237,7 +1237,11 @@ LIBATFRAME_UTILS_API int dh::shared_context::random(void *output, size_t output_
 
   int ret = error_code_t::OK;
 #  if defined(CRYPTO_USE_OPENSSL) || defined(CRYPTO_USE_LIBRESSL) || defined(CRYPTO_USE_BORINGSSL)
+#    if defined(CRYPTO_USE_BORINGSSL)
   if (!RAND_bytes(reinterpret_cast<unsigned char *>(output), static_cast<size_t>(output_sz))) {
+#    else
+  if (!RAND_bytes(reinterpret_cast<unsigned char *>(output), static_cast<int>(output_sz))) {
+#    endif
     ret = static_cast<int>(ERR_peek_error());
   }
 

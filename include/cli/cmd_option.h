@@ -400,8 +400,8 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY cmd_option_bind : public binder::cmd_option
 
       for (; i < argv; ++i) {
         // 把所有的非指令字符串设为指令参数
-        if (callback_funcs_.find(args[i]->to_string()) == callback_funcs_.end()) {
-          cmd_args.add(args[i]->to_string());
+        if (callback_funcs_.find(args[static_cast<size_t>(i)]->to_string()) == callback_funcs_.end()) {
+          cmd_args.add(args[static_cast<size_t>(i)]->to_string());
         } else {
           // 如果是单指令且有未知参数则分发@OnError错误处理
           if (is_single_cmd && cmd_args.get_params_number() > 0) {
@@ -413,8 +413,9 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY cmd_option_bind : public binder::cmd_option
 
           // 追加所有参数，执行单指令
           if (is_single_cmd) {
-            cmd_content = TCmdStr(args[i]->to_cpp_string().c_str(), args[i]->to_cpp_string().size());
-            for (++i; i < argv; ++i) cmd_args.add(args[i]->to_string());
+            cmd_content = TCmdStr(args[static_cast<size_t>(i)]->to_cpp_string().c_str(),
+                                  args[static_cast<size_t>(i)]->to_cpp_string().size());
+            for (++i; i < argv; ++i) cmd_args.add(args[static_cast<size_t>(i)]->to_string());
           }
           break;
         }
@@ -422,7 +423,8 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY cmd_option_bind : public binder::cmd_option
 
       run_cmd(cmd_content, cmd_args);
       if (i >= argv) break;
-      cmd_content = TCmdStr(args[i]->to_cpp_string().c_str(), args[i]->to_cpp_string().size());
+      cmd_content = TCmdStr(args[static_cast<size_t>(i)]->to_cpp_string().c_str(),
+                            args[static_cast<size_t>(i)]->to_cpp_string().size());
     }
   }
 
