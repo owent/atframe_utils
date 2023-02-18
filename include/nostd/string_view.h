@@ -83,7 +83,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY basic_string_view {
       : ptr_(str), length_(str ? _strlen_internal(str) : 0) {}
 
   // Implicit constructor of a `basic_string_view` from a `const_pointer` and length.
-  constexpr basic_string_view(const_pointer data, size_type len) : ptr_(data), length_(len) {}
+  constexpr basic_string_view(const_pointer input_data, size_type len) : ptr_(input_data), length_(len) {}
 
   // Just like std::basic_string_view in C++20, but it's more simple
   template <class It, class End,
