@@ -414,7 +414,7 @@ LIBATFRAME_UTILS_API size_t stacktrace_write(char *buf, size_t bufsz, const stac
 
   size_t ret = 0;
   void *stacks[LOG_STACKTRACE_MAX_STACKS_ARRAY_SIZE] = {nullptr};
-  size_t frames_count = backtrace(stacks, LOG_STACKTRACE_MAX_STACKS_ARRAY_SIZE);
+  size_t frames_count = static_cast<size_t>(backtrace(stacks, LOG_STACKTRACE_MAX_STACKS_ARRAY_SIZE));
   char **func_name_cache = backtrace_symbols(stacks, (int)frames_count);
   size_t skip_frames = 1 + static_cast<size_t>(options->skip_start_frames);
 
