@@ -109,13 +109,13 @@ LIBATFRAME_UTILS_API uint32_t murmur_hash2(const void *key, int len, uint32_t se
 
   switch (len) {
     case 3:
-      h ^= data[2] << 16;
+      h ^= static_cast<uint32_t>(data[2]) << 16;
       EXPLICIT_FALLTHROUGH
     case 2:
-      h ^= data[1] << 8;
+      h ^= static_cast<uint32_t>(data[1]) << 8;
       EXPLICIT_FALLTHROUGH
     case 1:
-      h ^= data[0];
+      h ^= static_cast<uint32_t>(data[0]);
       h *= m;
   };
 
@@ -231,13 +231,13 @@ LIBATFRAME_UTILS_API uint64_t murmur_hash2_64b(const void *key, int len, uint64_
 
   switch (len) {
     case 3:
-      h2 ^= ((unsigned char *)data)[2] << 16;
+      h2 ^= static_cast<uint32_t>(((unsigned char *)data)[2]) << 16;
       EXPLICIT_FALLTHROUGH
     case 2:
-      h2 ^= ((unsigned char *)data)[1] << 8;
+      h2 ^= static_cast<uint32_t>(((unsigned char *)data)[1]) << 8;
       EXPLICIT_FALLTHROUGH
     case 1:
-      h2 ^= ((unsigned char *)data)[0];
+      h2 ^= static_cast<uint32_t>(((unsigned char *)data)[0]);
       h2 *= m;
   };
 
@@ -293,13 +293,13 @@ LIBATFRAME_UTILS_API uint32_t murmur_hash3_x86_32(const void *key, int len, uint
 
   switch (len & 3) {
     case 3:
-      k1 ^= tail[2] << 16;
+      k1 ^= static_cast<uint32_t>(tail[2]) << 16;
       EXPLICIT_FALLTHROUGH
     case 2:
-      k1 ^= tail[1] << 8;
+      k1 ^= static_cast<uint32_t>(tail[1]) << 8;
       EXPLICIT_FALLTHROUGH
     case 1:
-      k1 ^= tail[0];
+      k1 ^= static_cast<uint32_t>(tail[0]);
       k1 *= c1;
       k1 = ROTL32(k1, 15);
       k1 *= c2;
@@ -392,61 +392,61 @@ LIBATFRAME_UTILS_API void murmur_hash3_x86_128(const void *key, const int len, u
 
   switch (len & 15) {
     case 15:
-      k4 ^= tail[14] << 16;
+      k4 ^= static_cast<uint32_t>(tail[14]) << 16;
       EXPLICIT_FALLTHROUGH
     case 14:
-      k4 ^= tail[13] << 8;
+      k4 ^= static_cast<uint32_t>(tail[13]) << 8;
       EXPLICIT_FALLTHROUGH
     case 13:
-      k4 ^= tail[12] << 0;
+      k4 ^= static_cast<uint32_t>(tail[12]) << 0;
       k4 *= c4;
       k4 = ROTL32(k4, 18);
       k4 *= c1;
       h4 ^= k4;
       EXPLICIT_FALLTHROUGH
     case 12:
-      k3 ^= tail[11] << 24;
+      k3 ^= static_cast<uint32_t>(tail[11]) << 24;
       EXPLICIT_FALLTHROUGH
     case 11:
-      k3 ^= tail[10] << 16;
+      k3 ^= static_cast<uint32_t>(tail[10]) << 16;
       EXPLICIT_FALLTHROUGH
     case 10:
-      k3 ^= tail[9] << 8;
+      k3 ^= static_cast<uint32_t>(tail[9]) << 8;
       EXPLICIT_FALLTHROUGH
     case 9:
-      k3 ^= tail[8] << 0;
+      k3 ^= static_cast<uint32_t>(tail[8]) << 0;
       k3 *= c3;
       k3 = ROTL32(k3, 17);
       k3 *= c4;
       h3 ^= k3;
       EXPLICIT_FALLTHROUGH
     case 8:
-      k2 ^= tail[7] << 24;
+      k2 ^= static_cast<uint32_t>(tail[7]) << 24;
       EXPLICIT_FALLTHROUGH
     case 7:
-      k2 ^= tail[6] << 16;
+      k2 ^= static_cast<uint32_t>(tail[6]) << 16;
       EXPLICIT_FALLTHROUGH
     case 6:
-      k2 ^= tail[5] << 8;
+      k2 ^= static_cast<uint32_t>(tail[5]) << 8;
       EXPLICIT_FALLTHROUGH
     case 5:
-      k2 ^= tail[4] << 0;
+      k2 ^= static_cast<uint32_t>(tail[4]) << 0;
       k2 *= c2;
       k2 = ROTL32(k2, 16);
       k2 *= c3;
       h2 ^= k2;
       EXPLICIT_FALLTHROUGH
     case 4:
-      k1 ^= tail[3] << 24;
+      k1 ^= static_cast<uint32_t>(tail[3]) << 24;
       EXPLICIT_FALLTHROUGH
     case 3:
-      k1 ^= tail[2] << 16;
+      k1 ^= static_cast<uint32_t>(tail[2]) << 16;
       EXPLICIT_FALLTHROUGH
     case 2:
-      k1 ^= tail[1] << 8;
+      k1 ^= static_cast<uint32_t>(tail[1]) << 8;
       EXPLICIT_FALLTHROUGH
     case 1:
-      k1 ^= tail[0] << 0;
+      k1 ^= static_cast<uint32_t>(tail[0]) << 0;
       k1 *= c1;
       k1 = ROTL32(k1, 15);
       k1 *= c2;
