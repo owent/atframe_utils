@@ -29,12 +29,14 @@
 #  pragma GCC diagnostic ignored "-Wtype-limits"
 #  pragma GCC diagnostic ignored "-Wsign-compare"
 #  pragma GCC diagnostic ignored "-Wsign-conversion"
+#  pragma GCC diagnostic ignored "-Wshadow"
 #elif defined(__clang__) || defined(__apple_build_version__)
 #  pragma clang diagnostic push
 #  pragma clang diagnostic ignored "-Wunused-parameter"
 #  pragma clang diagnostic ignored "-Wtype-limits"
 #  pragma clang diagnostic ignored "-Wsign-compare"
 #  pragma clang diagnostic ignored "-Wsign-conversion"
+#  pragma clang diagnostic ignored "-Wshadow"
 #endif
 
 #include "template_prefix.h"
