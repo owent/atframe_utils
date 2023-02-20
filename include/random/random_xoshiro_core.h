@@ -46,7 +46,9 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY xoshiro_engine {
   seed_type xoshiro_seed_;
 
   static inline result_type rotl(const result_type x, int k) noexcept {
-    return (x << k) | (x >> ((sizeof(result_type) * 8) - static_cast<result_type>(k)));
+    return (static_cast<result_type>(x) << k) |
+           (static_cast<result_type>(x) >>
+            (static_cast<result_type>(sizeof(result_type) * 8) - static_cast<result_type>(k)));
   }
 
   template <class, bool>
