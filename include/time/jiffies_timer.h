@@ -324,7 +324,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY jiffies_timer {
   static inline size_t calc_index(time_t expires, size_t lvl) {
     // 这里的expires 必然大于等于last_tick_，并且至少加一帧
     // 本帧的定时器列表检查可能会多次执行，所以不能加在当前帧
-    expires = (expires + LVL_GRAN(lvl)) >> LVL_SHIFT(lvl);
+    expires = (expires + LVL_GRAN(static_cast<time_t>(lvl))) >> LVL_SHIFT(static_cast<time_t>(lvl));
     return LVL_OFFS(lvl) + static_cast<size_t>(expires & LVL_MASK);
   }
 
