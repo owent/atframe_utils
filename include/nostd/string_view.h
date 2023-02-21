@@ -90,7 +90,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY basic_string_view {
             typename std::enable_if<!std::is_convertible<End, std::size_t>::value &&
                                         std::is_same<CharT, typename std::iterator_traits<It>::value_type>::value,
                                     bool>::type = true>
-  constexpr basic_string_view(It first, End last) : ptr_(first), length_(last - first) {}
+  constexpr basic_string_view(It first, End last) : ptr_(first), length_(static_cast<size_type>(last - first)) {}
 
   // Just like std::basic_string_view in C++23
   constexpr basic_string_view(std::nullptr_t) = delete;
