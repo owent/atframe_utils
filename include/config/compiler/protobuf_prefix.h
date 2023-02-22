@@ -18,6 +18,9 @@
 #  pragma warning(disable : 4668)
 #  pragma warning(disable : 4800)
 #  pragma warning(disable : 4946)
+#  pragma warning(disable : 6001)
+#  pragma warning(disable : 6244)
+#  pragma warning(disable : 6246)
 
 #endif
 
@@ -30,6 +33,7 @@
 #  pragma GCC diagnostic ignored "-Wsign-compare"
 #  pragma GCC diagnostic ignored "-Wsign-conversion"
 #  pragma GCC diagnostic ignored "-Wshadow"
+#  pragma GCC diagnostic ignored "-Wuninitialized"
 #elif defined(__clang__) || defined(__apple_build_version__)
 #  pragma clang diagnostic push
 #  pragma clang diagnostic ignored "-Wunused-parameter"
@@ -37,6 +41,7 @@
 #  pragma clang diagnostic ignored "-Wsign-compare"
 #  pragma clang diagnostic ignored "-Wsign-conversion"
 #  pragma clang diagnostic ignored "-Wshadow"
+#  pragma clang diagnostic ignored "-Wuninitialized"
 #endif
 
 #include "template_prefix.h"
