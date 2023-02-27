@@ -10,13 +10,18 @@
 #  if ((defined(__cplusplus) && __cplusplus >= 201703L) || (defined(_MSVC_LANG) && _MSVC_LANG >= 201703L))
 #    pragma warning(disable : 4996)
 #    pragma warning(disable : 4309)
+#    if _MSC_VER >= 1922
+#      pragma warning(disable : 5054)
+#    endif
 #  endif
 
+#  if _MSC_VER < 1910
+#    pragma warning(disable : 4800)
+#  endif
 #  pragma warning(disable : 4244)
 #  pragma warning(disable : 4251)
 #  pragma warning(disable : 4267)
 #  pragma warning(disable : 4668)
-#  pragma warning(disable : 4800)
 #  pragma warning(disable : 4946)
 #  pragma warning(disable : 6001)
 #  pragma warning(disable : 6244)
@@ -34,6 +39,9 @@
 #  pragma GCC diagnostic ignored "-Wsign-conversion"
 #  pragma GCC diagnostic ignored "-Wshadow"
 #  pragma GCC diagnostic ignored "-Wuninitialized"
+#  if (__GNUC__ * 100 + __GNUC_MINOR__ * 10) >= 510
+#    pragma GCC diagnostic ignored "-Wsuggest-override"
+#  endif
 #elif defined(__clang__) || defined(__apple_build_version__)
 #  pragma clang diagnostic push
 #  pragma clang diagnostic ignored "-Wunused-parameter"
@@ -42,6 +50,10 @@
 #  pragma clang diagnostic ignored "-Wsign-conversion"
 #  pragma clang diagnostic ignored "-Wshadow"
 #  pragma clang diagnostic ignored "-Wuninitialized"
+#  if !(((__clang_major__ * 100) + __clang_minor__) >= 305)
+#    pragma GCC diagnostic ignored "-Wsuggest-override"
+#    pragma GCC diagnostic ignored "-Winconsistent-missing-override"
+#  endif
 #endif
 
 #include "template_prefix.h"
