@@ -225,18 +225,18 @@ class item_string : public item_impl {
    */
   static LIBATFRAME_UTILS_API ptr_type create(const std::string &data);
 
-  LIBATFRAME_UTILS_API virtual bool empty() const;
+  LIBATFRAME_UTILS_API bool empty() const override;
 
-  LIBATFRAME_UTILS_API virtual std::size_t size() const;
+  LIBATFRAME_UTILS_API std::size_t size() const override;
 
-  LIBATFRAME_UTILS_API virtual types::ITEM_TYPE type() const;
+  LIBATFRAME_UTILS_API types::ITEM_TYPE type() const override;
 
-  LIBATFRAME_UTILS_API virtual std::string to_string(const char *prefix = "") const;
+  LIBATFRAME_UTILS_API std::string to_string(const char *prefix = "") const override;
 
-  LIBATFRAME_UTILS_API virtual bool encode(std::string &output, const char *prefix = "") const;
+  LIBATFRAME_UTILS_API bool encode(std::string &output, const char *prefix = "") const override;
 
-  LIBATFRAME_UTILS_API virtual bool parse(const std::vector<std::string> &keys, std::size_t index,
-                                          const std::string &value);
+  LIBATFRAME_UTILS_API bool parse(const std::vector<std::string> &keys, std::size_t index,
+                                  const std::string &value) override;
 
   LIBATFRAME_UTILS_API const std::string &data() const;
 
@@ -289,18 +289,18 @@ class item_array : public item_impl {
    */
   static LIBATFRAME_UTILS_API ptr_type create();
 
-  LIBATFRAME_UTILS_API virtual bool empty() const;
+  LIBATFRAME_UTILS_API bool empty() const override;
 
-  LIBATFRAME_UTILS_API virtual std::size_t size() const;
+  LIBATFRAME_UTILS_API std::size_t size() const override;
 
-  LIBATFRAME_UTILS_API virtual types::ITEM_TYPE type() const;
+  LIBATFRAME_UTILS_API types::ITEM_TYPE type() const override;
 
-  LIBATFRAME_UTILS_API virtual std::string to_string(const char *prefix = "") const;
+  LIBATFRAME_UTILS_API std::string to_string(const char *prefix = "") const override;
 
-  LIBATFRAME_UTILS_API virtual bool encode(std::string &output, const char *prefix = "") const;
+  LIBATFRAME_UTILS_API bool encode(std::string &output, const char *prefix = "") const override;
 
-  LIBATFRAME_UTILS_API virtual bool parse(const std::vector<std::string> &keys, std::size_t index,
-                                          const std::string &value);
+  LIBATFRAME_UTILS_API bool parse(const std::vector<std::string> &keys, std::size_t index,
+                                  const std::string &value) override;
 
   /**
    * @breif 依据下标获取数据
@@ -378,18 +378,18 @@ class item_object : public item_impl {
 
   LIBATFRAME_UTILS_API virtual ~item_object();
 
-  LIBATFRAME_UTILS_API virtual bool empty() const;
+  LIBATFRAME_UTILS_API bool empty() const override;
 
-  LIBATFRAME_UTILS_API virtual std::size_t size() const;
+  LIBATFRAME_UTILS_API std::size_t size() const override;
 
-  LIBATFRAME_UTILS_API virtual types::ITEM_TYPE type() const;
+  LIBATFRAME_UTILS_API types::ITEM_TYPE type() const override;
 
-  LIBATFRAME_UTILS_API virtual std::string to_string(const char *prefix = "") const;
+  LIBATFRAME_UTILS_API std::string to_string(const char *prefix = "") const override;
 
-  LIBATFRAME_UTILS_API virtual bool encode(std::string &output, const char *prefix = "") const;
+  LIBATFRAME_UTILS_API bool encode(std::string &output, const char *prefix = "") const override;
 
-  LIBATFRAME_UTILS_API virtual bool parse(const std::vector<std::string> &keys, std::size_t index,
-                                          const std::string &value);
+  LIBATFRAME_UTILS_API bool parse(const std::vector<std::string> &keys, std::size_t index,
+                                  const std::string &value) override;
 
   LIBATFRAME_UTILS_API std::vector<std::string> keys() const;
 
@@ -471,15 +471,15 @@ class tquerystring : public types::item_object {
    */
   static LIBATFRAME_UTILS_API ptr_type create(const std::string &spliter);
 
-  LIBATFRAME_UTILS_API virtual bool empty() const;
+  LIBATFRAME_UTILS_API bool empty() const override;
 
-  LIBATFRAME_UTILS_API virtual std::size_t size() const;
+  LIBATFRAME_UTILS_API std::size_t size() const override;
 
-  LIBATFRAME_UTILS_API virtual types::ITEM_TYPE type() const;
+  LIBATFRAME_UTILS_API types::ITEM_TYPE type() const override;
 
-  LIBATFRAME_UTILS_API virtual std::string to_string(const char *prefix = "") const;
+  LIBATFRAME_UTILS_API std::string to_string(const char *prefix = "") const override;
 
-  LIBATFRAME_UTILS_API virtual bool encode(std::string &output, const char *prefix = "") const;
+  LIBATFRAME_UTILS_API bool encode(std::string &output, const char *prefix = "") const override;
 
   /**
    * @breif 解码数据

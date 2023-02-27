@@ -529,7 +529,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY cmd_option_bind : public binder::cmd_option
   /**
    * 执行子结构
    */
-  virtual void operator()(callback_param arg) {
+  void operator()(callback_param arg) override {
     // 响应@OnCallFunc事件
     typename funmap_type::const_iterator iter = callback_funcs_.find("@OnCallFunc");
     if (iter != callback_funcs_.end()) (*iter->second)(arg);
@@ -542,7 +542,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY cmd_option_bind : public binder::cmd_option
    * 获取命令集合的帮助信息
    * @param prefix_data 前缀
    */
-  virtual std::string get_help_msg(const char *prefix_data = "") const {
+  std::string get_help_msg(const char *prefix_data = "") const override {
     std::set<typename funmap_type::mapped_type> set_obj;
     std::string help_msg_content;
 
