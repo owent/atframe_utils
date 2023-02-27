@@ -222,7 +222,7 @@ if(BUILD_SHARED_LIBS OR ATFRAMEWORK_USE_DYNAMIC_LIBRARY)
   endif()
   target_compile_definitions(${PROJECT_NAME} PRIVATE LIBATFRAME_UTILS_API_NATIVE=1 LIBATFRAME_UTILS_API_DLL=1)
   target_compile_options(${PROJECT_NAME} PRIVATE ${COMPILER_STRICT_EXTRA_CFLAGS} ${COMPILER_STRICT_CFLAGS}
-                                                 ${COMPILER_STRICT_RECOMMEND_EXTRA_CFLAGS} /we6001 /we6244 /we6246)
+                                                 ${COMPILER_STRICT_RECOMMEND_EXTRA_CFLAGS})
 else()
   add_library(${PROJECT_NAME} STATIC ${HEADER_LIST} ${SRC_LIST})
   set_target_properties(${PROJECT_NAME} PROPERTIES VERSION ${PROJECT_VERSION})
@@ -231,7 +231,7 @@ else()
   endif()
   target_compile_definitions(${PROJECT_NAME} PRIVATE LIBATFRAME_UTILS_API_NATIVE=1)
   target_compile_options(${PROJECT_NAME} PRIVATE ${COMPILER_STRICT_EXTRA_CFLAGS} ${COMPILER_STRICT_CFLAGS}
-                                                 ${COMPILER_STRICT_RECOMMEND_EXTRA_CFLAGS} /we6001 /we6244 /we6246)
+                                                 ${COMPILER_STRICT_RECOMMEND_EXTRA_CFLAGS})
 endif()
 
 if(PROJECT_ATFRAME_UTILS_PUBLIC_DEFINITIONS)
