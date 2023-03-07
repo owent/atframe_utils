@@ -45,9 +45,9 @@ option(ENABLE_CXX_GSL "Enable C++ Core Guideline: The Guideline Support Library.
 find_package(Threads)
 if(CMAKE_USE_PTHREADS_INIT)
   set(THREAD_TLS_USE_PTHREAD 1)
-  if(TARGET Threads::Threads)
-    list(APPEND PROJECT_ATFRAME_UTILS_PUBLIC_LINK_NAMES Threads::Threads)
-  endif()
+endif()
+if(TARGET Threads::Threads)
+  list(APPEND PROJECT_ATFRAME_UTILS_PUBLIC_LINK_NAMES Threads::Threads)
 endif()
 
 set(LIBATFRAME_UTILS_TEST_MKTEMP_BACKUP_CMAKE_REQUIRED_LIBRARIES ${CMAKE_REQUIRED_LIBRARIES})
