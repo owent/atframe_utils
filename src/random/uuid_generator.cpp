@@ -424,8 +424,8 @@ try_again:
     flock(uuid_generator_state_file.state_fd, LOCK_UN);
   }
 
-  *clock_high = clock_reg >> 32;
-  *clock_low = clock_reg;
+  *clock_high = static_cast<uint32_t>(clock_reg >> 32);
+  *clock_low = static_cast<uint32_t>(clock_reg);
   *ret_clock_seq = clock_seq;
   return ret;
 }
@@ -451,7 +451,7 @@ static int __uuid_generate_time(LIBATFRAME_UTILS_NAMESPACE_ID::random::uuid &out
   ret = get_clock(&clock_mid, &out.time_low, &out.clock_seq);
   out.clock_seq |= 0x8000;
   out.time_mid = (uint16_t)clock_mid;
-  out.time_hi_and_version = ((clock_mid >> 16) & 0x0FFF) | 0x1000;
+  out.time_hi_and_version = static_cast<uint16_t>(((clock_mid >> 16) & 0x0FFF) | 0x1000);
   memcpy(out.node, node_id, 6);
   return ret;
 }
@@ -459,8 +459,8 @@ static int __uuid_generate_time(LIBATFRAME_UTILS_NAMESPACE_ID::random::uuid &out
 static void __uuid_generate_random(LIBATFRAME_UTILS_NAMESPACE_ID::random::uuid &out) {
   random_get_bytes(reinterpret_cast<unsigned char *>(&out), sizeof(out));
   // Set version
-  out.clock_seq = (out.clock_seq & 0x3FFF) | 0x8000;
-  out.time_hi_and_version = (out.time_hi_and_version & 0x0FFF) | 0x4000;
+  out.clock_seq = static_cast<uint16_t>((out.clock_seq & 0x3FFF) | 0x8000);
+  out.time_hi_and_version = static_cast<uint16_t>((out.time_hi_and_version & 0x0FFF) | 0x4000);
 }
 
 /*
@@ -494,15 +494,15 @@ inline static void __to_hex(char *output, unsigned char input) {
   unsigned char low = input & 0x0f;
   unsigned char high = (input >> 4) & 0x0f;
   if (high >= 10) {
-    output[0] = high - 10 + 'a';
+    output[0] = static_cast<char>(high + 'a' - 10);
   } else {
-    output[0] = high + '0';
+    output[0] = static_cast<char>(high + '0');
   }
 
   if (low >= 10) {
-    output[1] = low - 10 + 'a';
+    output[1] = static_cast<char>(low + 'a' - 10);
   } else {
-    output[1] = low + '0';
+    output[1] = static_cast<char>(low + '0');
   }
 }
 }  // namespace details
@@ -600,9 +600,10 @@ LIBATFRAME_UTILS_API uuid uuid_generator::binary_to_uuid(const std::string &id_b
 
   ret.time_low = (static_cast<uint32_t>(id_bin[0]) << 24) | static_cast<uint32_t>(id_bin[1] << 16) |
                  static_cast<uint32_t>(id_bin[2] << 8) | static_cast<uint32_t>(id_bin[3]);
-  ret.time_mid = (static_cast<uint16_t>(id_bin[4]) << 8) | static_cast<uint16_t>(id_bin[5]);
-  ret.time_hi_and_version = (static_cast<uint16_t>(id_bin[6]) << 8) | static_cast<uint16_t>(id_bin[7]);
-  ret.clock_seq = (static_cast<uint16_t>(id_bin[8]) << 8) | static_cast<uint16_t>(id_bin[9]);
+  ret.time_mid = static_cast<uint16_t>((static_cast<uint16_t>(id_bin[4]) << 8) | static_cast<uint16_t>(id_bin[5]));
+  ret.time_hi_and_version =
+      static_cast<uint16_t>((static_cast<uint16_t>(id_bin[6]) << 8) | static_cast<uint16_t>(id_bin[7]));
+  ret.clock_seq = static_cast<uint16_t>((static_cast<uint16_t>(id_bin[8]) << 8) | static_cast<uint16_t>(id_bin[9]));
   memcpy(ret.node, &id_bin[10], sizeof(ret.node));
   return ret;
 }

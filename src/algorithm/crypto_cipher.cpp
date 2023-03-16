@@ -551,7 +551,7 @@ LIBATFRAME_UTILS_API uint32_t cipher::get_key_bits() const {
     case EN_CIMT_INVALID:
       return 0;
     case EN_CIMT_XXTEA:
-      return sizeof(LIBATFRAME_UTILS_NAMESPACE_ID::xxtea_key) * 8;
+      return static_cast<uint32_t>(sizeof(LIBATFRAME_UTILS_NAMESPACE_ID::xxtea_key) * 8);
     case EN_CIMT_CIPHER:
       if (nullptr != cipher_context_.enc) {
 #  if defined(CRYPTO_USE_OPENSSL) || defined(CRYPTO_USE_LIBRESSL) || defined(CRYPTO_USE_BORINGSSL)
@@ -572,34 +572,34 @@ LIBATFRAME_UTILS_API uint32_t cipher::get_key_bits() const {
 #  if defined(CRYPTO_USE_LIBSODIUM) && CRYPTO_USE_LIBSODIUM
     case EN_CIMT_LIBSODIUM_CHACHA20:
       UTIL_CONFIG_STATIC_ASSERT(crypto_stream_chacha20_KEYBYTES <= sizeof(libsodium_context_t));
-      return crypto_stream_chacha20_KEYBYTES * 8;
+      return static_cast<uint32_t>(crypto_stream_chacha20_KEYBYTES * 8);
     case EN_CIMT_LIBSODIUM_CHACHA20_IETF:
       UTIL_CONFIG_STATIC_ASSERT(crypto_stream_chacha20_ietf_KEYBYTES <= sizeof(libsodium_context_t));
-      return crypto_stream_chacha20_ietf_KEYBYTES * 8;
+      return static_cast<uint32_t>(crypto_stream_chacha20_ietf_KEYBYTES * 8);
 
 #    ifdef crypto_stream_xchacha20_KEYBYTES
     case EN_CIMT_LIBSODIUM_XCHACHA20:
       UTIL_CONFIG_STATIC_ASSERT(crypto_stream_xchacha20_KEYBYTES <= sizeof(libsodium_context_t));
-      return crypto_stream_xchacha20_KEYBYTES * 8;
+      return static_cast<uint32_t>(crypto_stream_xchacha20_KEYBYTES * 8);
 #    endif
 
     case EN_CIMT_LIBSODIUM_SALSA20:
       UTIL_CONFIG_STATIC_ASSERT(crypto_stream_salsa20_KEYBYTES <= sizeof(libsodium_context_t));
-      return crypto_stream_salsa20_KEYBYTES * 8;
+      return static_cast<uint32_t>(crypto_stream_salsa20_KEYBYTES * 8);
     case EN_CIMT_LIBSODIUM_XSALSA20:
       UTIL_CONFIG_STATIC_ASSERT(crypto_stream_xsalsa20_KEYBYTES <= sizeof(libsodium_context_t));
-      return crypto_stream_xsalsa20_KEYBYTES * 8;
+      return static_cast<uint32_t>(crypto_stream_xsalsa20_KEYBYTES * 8);
     case EN_CIMT_LIBSODIUM_CHACHA20_POLY1305:
       UTIL_CONFIG_STATIC_ASSERT(crypto_aead_chacha20poly1305_KEYBYTES <= sizeof(libsodium_context_t));
-      return crypto_aead_chacha20poly1305_KEYBYTES * 8;
+      return static_cast<uint32_t>(crypto_aead_chacha20poly1305_KEYBYTES * 8);
     case EN_CIMT_LIBSODIUM_CHACHA20_POLY1305_IETF:
       UTIL_CONFIG_STATIC_ASSERT(crypto_aead_chacha20poly1305_IETF_KEYBYTES <= sizeof(libsodium_context_t));
-      return crypto_aead_chacha20poly1305_IETF_KEYBYTES * 8;
+      return static_cast<uint32_t>(crypto_aead_chacha20poly1305_IETF_KEYBYTES * 8);
 
 #    ifdef crypto_aead_xchacha20poly1305_ietf_KEYBYTES
     case EN_CIMT_LIBSODIUM_XCHACHA20_POLY1305_IETF:
       UTIL_CONFIG_STATIC_ASSERT(crypto_aead_xchacha20poly1305_ietf_KEYBYTES <= sizeof(libsodium_context_t));
-      return crypto_aead_xchacha20poly1305_ietf_KEYBYTES * 8;
+      return static_cast<uint32_t>(crypto_aead_xchacha20poly1305_ietf_KEYBYTES * 8);
 #    endif
 
 #  endif

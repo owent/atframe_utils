@@ -97,7 +97,7 @@ using const_cstring = const char *;
 template <typename T>
 T tolower(T c) {
   if (c >= 'A' && c <= 'Z') {
-    return c - 'A' + 'a';
+    return static_cast<T>(c + static_cast<T>('a' - 'A'));
   }
 
   return c;
@@ -133,24 +133,24 @@ T str2int(const_cstring str, const_cstring *left = nullptr) {
     for (i = 2; str[i]; ++i) {
       char c = static_cast<char>(::tolower(str[i]));
       if (c >= '0' && c <= '9') {
-        out <<= 4;
-        out += static_cast<T>(c - '0');
+        out = static_cast<T>(out << 4);
+        out = static_cast<T>(out + static_cast<T>(c - '0'));
       } else if (c >= 'a' && c <= 'f') {
-        out <<= 4;
-        out += static_cast<T>(c - 'a' + 10);
+        out = static_cast<T>(out << 4);
+        out = static_cast<T>(out + static_cast<T>(c - 'a' + 10));
       } else {
         break;
       }
     }
   } else if ('\\' == str[0]) {  // oct
     for (i = 0; str[i] >= '0' && str[i] < '8'; ++i) {
-      out <<= 3;
-      out += static_cast<T>(str[i] - '0');
+      out = static_cast<T>(out << 3);
+      out = static_cast<T>(out + static_cast<T>(str[i] - '0'));
     }
   } else {  // dec
     for (i = 0; str[i] >= '0' && str[i] <= '9'; ++i) {
-      out *= 10;
-      out += static_cast<T>(str[i] - '0');
+      out = static_cast<T>(out * 10);
+      out = static_cast<T>(out + static_cast<T>(str[i] - '0'));
     }
   }
 
@@ -159,7 +159,7 @@ T str2int(const_cstring str, const_cstring *left = nullptr) {
   }
 
   if (is_negative) {
-    out = (~out) + 1;
+    out = static_cast<T>((~out) + 1);
   }
 
   return out;
