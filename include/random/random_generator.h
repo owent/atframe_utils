@@ -128,7 +128,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY random_manager_wrapper {
       return lowest;
     }
     result_type res = (*this)();
-    return static_cast<ResultType>(res % static_cast<result_type>(highest - lowest)) + lowest;
+    return static_cast<ResultType>(static_cast<ResultType>(res % static_cast<result_type>(highest - lowest)) + lowest);
   }
 
  public:

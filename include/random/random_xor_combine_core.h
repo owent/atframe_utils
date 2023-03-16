@@ -36,7 +36,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY linear_feedback_shift_engine {
 
   /// \cond show_private
   static constexpr result_type wordmask() noexcept {
-    return (~((~(static_cast<uint64_t>(0))) << (sizeof(result_type) * 8)));
+    return static_cast<result_type>(~((~(static_cast<uint64_t>(0))) << (sizeof(result_type) * 8)));
   }
 
  public:
