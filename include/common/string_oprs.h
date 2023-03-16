@@ -58,7 +58,8 @@
 #    define UTIL_STRFUNC_SNPRINTF(buffer, bufsz, ...) sprintf_s(buffer, static_cast<size_t>(bufsz), __VA_ARGS__)
 #  else
 #    define UTIL_STRFUNC_VSNPRINTF(buffer, bufsz, fmt, arg) vsnprintf_s(buffer, static_cast<rsize_t>(bufsz), fmt, arg)
-#    define UTIL_STRFUNC_SNPRINTF(buffer, bufsz, fmt, args...) snprintf_s(buffer, static_cast<rsize_t>(bufsz), fmt, ##args)
+#    define UTIL_STRFUNC_SNPRINTF(buffer, bufsz, fmt, args...) \
+      snprintf_s(buffer, static_cast<rsize_t>(bufsz), fmt, ##args)
 #  endif
 
 #  define UTIL_STRFUNC_C11_SUPPORT 1
@@ -79,7 +80,7 @@ namespace string {
 template <typename TCH = char>
 LIBATFRAME_UTILS_API_HEAD_ONLY TCH tolower(TCH c) {
   if (c >= 'A' && c <= 'Z') {
-    return static_cast<TCH>(c - 'A' + 'a');
+    return static_cast<TCH>(c + static_cast<TCH>('a' - 'A'));
   }
 
   return c;
@@ -212,7 +213,7 @@ LIBATFRAME_UTILS_API_HEAD_ONLY size_t int2str_unsigned(char *str, size_t strsz, 
 
   size_t ret = 0;
   while (ret < strsz && in > 0) {
-    str[ret] = (in % 10) + '0';
+    str[ret] = static_cast<char>((in % 10) + '0');
 
     in /= 10;
     ++ret;
@@ -306,29 +307,29 @@ LIBATFRAME_UTILS_API_HEAD_ONLY const TCHAR *str2int(T &out, const TCHAR *str, si
     for (cur += 2; (0 == strsz || cur < strsz) && str[cur]; ++cur) {
       char c = tolower(str[cur]);
       if (c >= '0' && c <= '9') {
-        out <<= 4;
-        out += static_cast<T>(c - static_cast<char>('0'));
+        out = static_cast<T>(out << 4);
+        out = static_cast<T>(out + static_cast<T>(c - static_cast<char>('0')));
       } else if (c >= 'a' && c <= 'f') {
-        out <<= 4;
-        out += static_cast<T>(c - static_cast<char>('a') + 10);
+        out = static_cast<T>(out << 4);
+        out = static_cast<T>(out + static_cast<T>(c - static_cast<char>('a') + 10));
       } else {
         break;
       }
     }
   } else if ((0 == strsz || cur < strsz) && '\\' == str[cur]) {  // oct
     for (++cur; (0 == strsz || cur < strsz) && (str[cur] >= '0' && str[cur] < '8'); ++cur) {
-      out <<= 3;
-      out += static_cast<T>(str[cur] - static_cast<char>('0'));
+      out = static_cast<T>(out << 3);
+      out = static_cast<T>(out + static_cast<T>(str[cur] - static_cast<char>('0')));
     }
   } else {  // dec
     for (; (0 == strsz || cur < strsz) && (str[cur] >= '0' && str[cur] <= '9'); ++cur) {
-      out *= 10;
-      out += static_cast<T>(str[cur] - static_cast<char>('0'));
+      out = static_cast<T>(out * 10);
+      out = static_cast<T>(out + static_cast<T>(str[cur] - static_cast<char>('0')));
     }
   }
 
   if (is_negative) {
-    out = (~out) + 1;
+    out = static_cast<T>((~out) + 1);
   }
 
   return str + cur;
@@ -376,9 +377,16 @@ LIBATFRAME_UTILS_API_HEAD_ONLY void hex(TStr *out, TCh c, bool upper_case = fals
 
   for (int i = 0; i < 2; ++i) {
     if (out[i] > 9) {
-      out[i] += (upper_case ? 'A' : 'a') - 10;
+      TStr base;
+      if (upper_case) {
+        base = static_cast<TStr>('A');
+      } else {
+        base = static_cast<TStr>('a');
+      }
+      base = static_cast<TStr>(base - 10);
+      out[i] = static_cast<TStr>(out[i] + base);
     } else {
-      out[i] += '0';
+      out[i] = static_cast<TStr>(out[i] + static_cast<TStr>('0'));
     }
   }
 }

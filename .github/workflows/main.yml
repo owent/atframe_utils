@@ -76,7 +76,7 @@ jobs:
           path: |
             /usr/local/share/vcpkg/installed
             third_party/install
-          key: ${{ runner.os }}-${{ matrix.cc }}-${{ matrix.ci_mode }}-${ hashFiles('.github/.cache-key') }
+          key: ${{ matrix.os }}-${{ matrix.cc }}-${{ matrix.ci_mode }}-${{ hashFiles('.github/.cache-key') }}
       - name: Build & Test
         shell: bash
         env:

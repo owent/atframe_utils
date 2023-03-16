@@ -42,12 +42,13 @@ option(ENABLE_NETWORK "Enable network support." ON)
 option(ENABLE_CXX_GSL "Enable C++ Core Guideline: The Guideline Support Library." ON)
 
 # Check pthread
+set(THREADS_PREFER_PTHREAD_FLAG TRUE)
 find_package(Threads)
-if(CMAKE_USE_PTHREADS_INIT)
+if(CMAKE_USE_PTHREADS_INIT OR ATFRAMEWORK_CMAKE_TOOLSET_TEST_FLAG_PTHREAD)
   set(THREAD_TLS_USE_PTHREAD 1)
-  if(TARGET Threads::Threads)
-    list(APPEND PROJECT_ATFRAME_UTILS_PUBLIC_LINK_NAMES Threads::Threads)
-  endif()
+endif()
+if(TARGET Threads::Threads)
+  list(APPEND PROJECT_ATFRAME_UTILS_PUBLIC_LINK_NAMES Threads::Threads)
 endif()
 
 set(LIBATFRAME_UTILS_TEST_MKTEMP_BACKUP_CMAKE_REQUIRED_LIBRARIES ${CMAKE_REQUIRED_LIBRARIES})

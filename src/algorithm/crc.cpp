@@ -179,7 +179,7 @@ LIBATFRAME_UTILS_API uint16_t crc16(const unsigned char *s, size_t l, uint16_t i
   size_t j;
   for (j = 0; j < l; ++j) {
     unsigned char byte = s[j];
-    init_val = (init_val << 8) ^ detail::crc16_tab[((init_val >> 8) ^ (uint16_t)byte) & 0x00FF];
+    init_val = static_cast<uint16_t>(init_val << 8) ^ detail::crc16_tab[((init_val >> 8) ^ (uint16_t)byte) & 0x00FF];
   }
   return init_val;
 }

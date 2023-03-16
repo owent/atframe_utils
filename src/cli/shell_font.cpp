@@ -17,7 +17,7 @@ namespace cli {
 namespace detail {
 static char tolower(char c) {
   if (c >= 'A' && c <= 'Z') {
-    return c - 'A' + 'a';
+    return static_cast<char>(c - 'A' + 'a');
   }
 
   return c;
@@ -95,7 +95,7 @@ LIBATFRAME_UTILS_API std::string shell_font::GetStyleCode(int iFlag) {
     int iStart = 0;
     for (; iStart < 8 && !(iFlag & (1 << iStart)); ++iStart)
       ;
-    if (iStart < 8) base[1] += static_cast<char>(iStart);
+    if (iStart < 8) base[1] = static_cast<char>(base[1] + iStart);
     ret += std::string((!bFirst) ? ";" : "") + base;
     bFirst = false;
   }
@@ -107,7 +107,7 @@ LIBATFRAME_UTILS_API std::string shell_font::GetStyleCode(int iFlag) {
     int iStart = 0;
     for (; iStart < 8 && !(iFlag & (1 << iStart)); ++iStart)
       ;
-    if (iStart < 8) base[1] += static_cast<char>(iStart);
+    if (iStart < 8) base[1] = static_cast<char>(base[1] + iStart);
     ret += std::string((!bFirst) ? ";" : "") + base;
     // bFirst = false; no need to set because not used later
   }

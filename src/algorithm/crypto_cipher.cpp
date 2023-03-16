@@ -23,13 +23,14 @@ using libsodium_counter_t = uint64_t;
 #    define LIBSODIUM_COUNTER_SIZE sizeof(libsodium_counter_t)
 
 static inline libsodium_counter_t libsodium_get_block(const unsigned char *p) {
-  return ((uint32_t)(p)[0]) | (((uint32_t)(p)[1]) << 8) | (((uint32_t)p[2]) << 16) | (((uint32_t)(p)[3]) << 24);
+  return static_cast<libsodium_counter_t>(((uint32_t)(p)[0]) | (((uint32_t)(p)[1]) << 8) | (((uint32_t)p[2]) << 16) |
+                                          (((uint32_t)(p)[3]) << 24));
 }
 
 static inline libsodium_counter_t libsodium_get_counter(const unsigned char *iv) {
-  uint32_t low = libsodium_get_block(iv);
-  uint32_t high = libsodium_get_block(iv + 4);
-  return (((libsodium_counter_t)(high)) << 32) | low;
+  uint32_t low = static_cast<uint32_t>(libsodium_get_block(iv));
+  uint32_t high = static_cast<uint32_t>(libsodium_get_block(iv + 4));
+  return static_cast<libsodium_counter_t>((((libsodium_counter_t)(high)) << 32) | low);
 }
 
 #  endif
@@ -551,7 +552,7 @@ LIBATFRAME_UTILS_API uint32_t cipher::get_key_bits() const {
     case EN_CIMT_INVALID:
       return 0;
     case EN_CIMT_XXTEA:
-      return sizeof(LIBATFRAME_UTILS_NAMESPACE_ID::xxtea_key) * 8;
+      return static_cast<uint32_t>(sizeof(LIBATFRAME_UTILS_NAMESPACE_ID::xxtea_key) * 8);
     case EN_CIMT_CIPHER:
       if (nullptr != cipher_context_.enc) {
 #  if defined(CRYPTO_USE_OPENSSL) || defined(CRYPTO_USE_LIBRESSL) || defined(CRYPTO_USE_BORINGSSL)
@@ -572,34 +573,34 @@ LIBATFRAME_UTILS_API uint32_t cipher::get_key_bits() const {
 #  if defined(CRYPTO_USE_LIBSODIUM) && CRYPTO_USE_LIBSODIUM
     case EN_CIMT_LIBSODIUM_CHACHA20:
       UTIL_CONFIG_STATIC_ASSERT(crypto_stream_chacha20_KEYBYTES <= sizeof(libsodium_context_t));
-      return crypto_stream_chacha20_KEYBYTES * 8;
+      return static_cast<uint32_t>(crypto_stream_chacha20_KEYBYTES * 8);
     case EN_CIMT_LIBSODIUM_CHACHA20_IETF:
       UTIL_CONFIG_STATIC_ASSERT(crypto_stream_chacha20_ietf_KEYBYTES <= sizeof(libsodium_context_t));
-      return crypto_stream_chacha20_ietf_KEYBYTES * 8;
+      return static_cast<uint32_t>(crypto_stream_chacha20_ietf_KEYBYTES * 8);
 
 #    ifdef crypto_stream_xchacha20_KEYBYTES
     case EN_CIMT_LIBSODIUM_XCHACHA20:
       UTIL_CONFIG_STATIC_ASSERT(crypto_stream_xchacha20_KEYBYTES <= sizeof(libsodium_context_t));
-      return crypto_stream_xchacha20_KEYBYTES * 8;
+      return static_cast<uint32_t>(crypto_stream_xchacha20_KEYBYTES * 8);
 #    endif
 
     case EN_CIMT_LIBSODIUM_SALSA20:
       UTIL_CONFIG_STATIC_ASSERT(crypto_stream_salsa20_KEYBYTES <= sizeof(libsodium_context_t));
-      return crypto_stream_salsa20_KEYBYTES * 8;
+      return static_cast<uint32_t>(crypto_stream_salsa20_KEYBYTES * 8);
     case EN_CIMT_LIBSODIUM_XSALSA20:
       UTIL_CONFIG_STATIC_ASSERT(crypto_stream_xsalsa20_KEYBYTES <= sizeof(libsodium_context_t));
-      return crypto_stream_xsalsa20_KEYBYTES * 8;
+      return static_cast<uint32_t>(crypto_stream_xsalsa20_KEYBYTES * 8);
     case EN_CIMT_LIBSODIUM_CHACHA20_POLY1305:
       UTIL_CONFIG_STATIC_ASSERT(crypto_aead_chacha20poly1305_KEYBYTES <= sizeof(libsodium_context_t));
-      return crypto_aead_chacha20poly1305_KEYBYTES * 8;
+      return static_cast<uint32_t>(crypto_aead_chacha20poly1305_KEYBYTES * 8);
     case EN_CIMT_LIBSODIUM_CHACHA20_POLY1305_IETF:
       UTIL_CONFIG_STATIC_ASSERT(crypto_aead_chacha20poly1305_IETF_KEYBYTES <= sizeof(libsodium_context_t));
-      return crypto_aead_chacha20poly1305_IETF_KEYBYTES * 8;
+      return static_cast<uint32_t>(crypto_aead_chacha20poly1305_IETF_KEYBYTES * 8);
 
 #    ifdef crypto_aead_xchacha20poly1305_ietf_KEYBYTES
     case EN_CIMT_LIBSODIUM_XCHACHA20_POLY1305_IETF:
       UTIL_CONFIG_STATIC_ASSERT(crypto_aead_xchacha20poly1305_ietf_KEYBYTES <= sizeof(libsodium_context_t));
-      return crypto_aead_xchacha20poly1305_ietf_KEYBYTES * 8;
+      return static_cast<uint32_t>(crypto_aead_xchacha20poly1305_ietf_KEYBYTES * 8);
 #    endif
 
 #  endif
@@ -856,23 +857,23 @@ LIBATFRAME_UTILS_API int cipher::encrypt(const unsigned char *input, size_t ilen
 #  if defined(CRYPTO_USE_LIBSODIUM) && CRYPTO_USE_LIBSODIUM
     case EN_CIMT_LIBSODIUM_CHACHA20:
       if ((last_errorno_ = crypto_stream_chacha20_xor_ic(output, input, ilen, &iv_[LIBSODIUM_COUNTER_SIZE],
-                                                         libsodium_get_counter(&iv_[0]), libsodium_context_.key)) !=
-          0) {
+                                                         static_cast<uint64_t>(libsodium_get_counter(&iv_[0])),
+                                                         libsodium_context_.key)) != 0) {
         return error_code_t::LIBSODIUM_OPERATION;
       }
       return error_code_t::OK;
     case EN_CIMT_LIBSODIUM_CHACHA20_IETF:
-      if ((last_errorno_ =
-               crypto_stream_chacha20_ietf_xor_ic(output, input, ilen, &iv_[LIBSODIUM_COUNTER_SIZE],
-                                                  libsodium_get_counter(&iv_[0]), libsodium_context_.key)) != 0) {
+      if ((last_errorno_ = crypto_stream_chacha20_ietf_xor_ic(output, input, ilen, &iv_[LIBSODIUM_COUNTER_SIZE],
+                                                              static_cast<uint32_t>(libsodium_get_counter(&iv_[0])),
+                                                              libsodium_context_.key)) != 0) {
         return error_code_t::LIBSODIUM_OPERATION;
       }
       return error_code_t::OK;
 
 #    ifdef crypto_stream_xchacha20_KEYBYTES
       if ((last_errorno_ = crypto_stream_xchacha20_xor_ic(output, input, ilen, &iv_[LIBSODIUM_COUNTER_SIZE],
-                                                          libsodium_get_counter(&iv_[0]), libsodium_context_.key)) !=
-          0) {
+                                                          static_cast<uint64_t>(libsodium_get_counter(&iv_[0])),
+                                                          libsodium_context_.key)) != 0) {
         return error_code_t::LIBSODIUM_OPERATION;
       }
       return error_code_t::OK;
@@ -880,14 +881,15 @@ LIBATFRAME_UTILS_API int cipher::encrypt(const unsigned char *input, size_t ilen
 
     case EN_CIMT_LIBSODIUM_SALSA20:
       if ((last_errorno_ = crypto_stream_salsa20_xor_ic(output, input, ilen, &iv_[LIBSODIUM_COUNTER_SIZE],
-                                                        libsodium_get_counter(&iv_[0]), libsodium_context_.key)) != 0) {
+                                                        static_cast<uint64_t>(libsodium_get_counter(&iv_[0])),
+                                                        libsodium_context_.key)) != 0) {
         return error_code_t::LIBSODIUM_OPERATION;
       }
       return error_code_t::OK;
     case EN_CIMT_LIBSODIUM_XSALSA20:
       if ((last_errorno_ = crypto_stream_xsalsa20_xor_ic(output, input, ilen, &iv_[LIBSODIUM_COUNTER_SIZE],
-                                                         libsodium_get_counter(&iv_[0]), libsodium_context_.key)) !=
-          0) {
+                                                         static_cast<uint64_t>(libsodium_get_counter(&iv_[0])),
+                                                         libsodium_context_.key)) != 0) {
         return error_code_t::LIBSODIUM_OPERATION;
       }
       return error_code_t::OK;
@@ -980,23 +982,23 @@ LIBATFRAME_UTILS_API int cipher::decrypt(const unsigned char *input, size_t ilen
 #  if defined(CRYPTO_USE_LIBSODIUM) && CRYPTO_USE_LIBSODIUM
     case EN_CIMT_LIBSODIUM_CHACHA20:
       if ((last_errorno_ = crypto_stream_chacha20_xor_ic(output, input, ilen, &iv_[LIBSODIUM_COUNTER_SIZE],
-                                                         libsodium_get_counter(&iv_[0]), libsodium_context_.key)) !=
-          0) {
+                                                         static_cast<uint64_t>(libsodium_get_counter(&iv_[0])),
+                                                         libsodium_context_.key)) != 0) {
         return error_code_t::LIBSODIUM_OPERATION;
       }
       return error_code_t::OK;
     case EN_CIMT_LIBSODIUM_CHACHA20_IETF:
-      if ((last_errorno_ =
-               crypto_stream_chacha20_ietf_xor_ic(output, input, ilen, &iv_[LIBSODIUM_COUNTER_SIZE],
-                                                  libsodium_get_counter(&iv_[0]), libsodium_context_.key)) != 0) {
+      if ((last_errorno_ = crypto_stream_chacha20_ietf_xor_ic(output, input, ilen, &iv_[LIBSODIUM_COUNTER_SIZE],
+                                                              static_cast<uint32_t>(libsodium_get_counter(&iv_[0])),
+                                                              libsodium_context_.key)) != 0) {
         return error_code_t::LIBSODIUM_OPERATION;
       }
       return error_code_t::OK;
 
 #    ifdef crypto_stream_xchacha20_KEYBYTES
       if ((last_errorno_ = crypto_stream_xchacha20_xor_ic(output, input, ilen, &iv_[LIBSODIUM_COUNTER_SIZE],
-                                                          libsodium_get_counter(&iv_[0]), libsodium_context_.key)) !=
-          0) {
+                                                          static_cast<uint64_t>(libsodium_get_counter(&iv_[0])),
+                                                          libsodium_context_.key)) != 0) {
         return error_code_t::LIBSODIUM_OPERATION;
       }
       return error_code_t::OK;
@@ -1004,14 +1006,15 @@ LIBATFRAME_UTILS_API int cipher::decrypt(const unsigned char *input, size_t ilen
 
     case EN_CIMT_LIBSODIUM_SALSA20:
       if ((last_errorno_ = crypto_stream_salsa20_xor_ic(output, input, ilen, &iv_[LIBSODIUM_COUNTER_SIZE],
-                                                        libsodium_get_counter(&iv_[0]), libsodium_context_.key)) != 0) {
+                                                        static_cast<uint64_t>(libsodium_get_counter(&iv_[0])),
+                                                        libsodium_context_.key)) != 0) {
         return error_code_t::LIBSODIUM_OPERATION;
       }
       return error_code_t::OK;
     case EN_CIMT_LIBSODIUM_XSALSA20:
       if ((last_errorno_ = crypto_stream_xsalsa20_xor_ic(output, input, ilen, &iv_[LIBSODIUM_COUNTER_SIZE],
-                                                         libsodium_get_counter(&iv_[0]), libsodium_context_.key)) !=
-          0) {
+                                                         static_cast<uint64_t>(libsodium_get_counter(&iv_[0])),
+                                                         libsodium_context_.key)) != 0) {
         return error_code_t::LIBSODIUM_OPERATION;
       }
       return error_code_t::OK;
