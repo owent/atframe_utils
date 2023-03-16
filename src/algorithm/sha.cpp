@@ -1179,7 +1179,7 @@ LIBATFRAME_UTILS_API size_t sha::get_output_length(type bt) {
     return 0;
   }
 
-  int ret = EVP_MD_size(md);
+  auto ret = EVP_MD_size(md);
   if (ret <= 0) {
     return 0;
   }
