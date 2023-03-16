@@ -58,7 +58,8 @@
 #    define UTIL_STRFUNC_SNPRINTF(buffer, bufsz, ...) sprintf_s(buffer, static_cast<size_t>(bufsz), __VA_ARGS__)
 #  else
 #    define UTIL_STRFUNC_VSNPRINTF(buffer, bufsz, fmt, arg) vsnprintf_s(buffer, static_cast<rsize_t>(bufsz), fmt, arg)
-#    define UTIL_STRFUNC_SNPRINTF(buffer, bufsz, fmt, args...) snprintf_s(buffer, static_cast<rsize_t>(bufsz), fmt, ##args)
+#    define UTIL_STRFUNC_SNPRINTF(buffer, bufsz, fmt, args...) \
+      snprintf_s(buffer, static_cast<rsize_t>(bufsz), fmt, ##args)
 #  endif
 
 #  define UTIL_STRFUNC_C11_SUPPORT 1
@@ -212,7 +213,7 @@ LIBATFRAME_UTILS_API_HEAD_ONLY size_t int2str_unsigned(char *str, size_t strsz, 
 
   size_t ret = 0;
   while (ret < strsz && in > 0) {
-    str[ret] = (in % 10) + '0';
+    str[ret] = static_cast<char>((in % 10) + '0');
 
     in /= 10;
     ++ret;
@@ -376,9 +377,16 @@ LIBATFRAME_UTILS_API_HEAD_ONLY void hex(TStr *out, TCh c, bool upper_case = fals
 
   for (int i = 0; i < 2; ++i) {
     if (out[i] > 9) {
-      out[i] += (upper_case ? 'A' : 'a') - 10;
+      TStr base;
+      if (upper_case) {
+        base = static_cast<TStr>('A');
+      } else {
+        base = static_cast<TStr>('a');
+      }
+      base -= static_cast<TStr>(10);
+      out[i] += base;
     } else {
-      out[i] += '0';
+      out[i] += static_cast<TStr>('0');
     }
   }
 }

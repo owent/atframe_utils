@@ -414,7 +414,7 @@ test_manager &test_manager::me() {
 
 std::string test_manager::get_expire_time(clock_t begin, clock_t end) {
   std::stringstream ss;
-  double ms = 1000.0 * (end - begin) / CLOCKS_PER_SEC;
+  double ms = 1000.0 * static_cast<double>(end - begin) / CLOCKS_PER_SEC;
 
   ss << ms << " ms";
 
