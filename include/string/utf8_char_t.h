@@ -39,7 +39,7 @@ struct LIBATFRAME_UTILS_API_HEAD_ONLY utf8_char_t {
   }
 
   utf8_char_t(char c) {
-    c &= 0x7f; // protect invalid char
+    c &= 0x7f;  // protect invalid char
     data[0] = c;
   }
 
@@ -47,16 +47,16 @@ struct LIBATFRAME_UTILS_API_HEAD_ONLY utf8_char_t {
 
   static inline size_t length(const char *s) {
     size_t ret = 1;
-    char c = 0;
+    unsigned char c = 0;
     if (nullptr != s) {
-      c = *s;
+      c = static_cast<unsigned char>(*s);
     }
 
     if (!(c & 0x80)) {
       return ret;
     }
 
-    for (; ret < 6; ++ret, c <<= 1) {
+    for (; ret < 6; ++ret, c = static_cast<unsigned char>(c << 1)) {
       if (!(c & 0x40)) {
         break;
       }
