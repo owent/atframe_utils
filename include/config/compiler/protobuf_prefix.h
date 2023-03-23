@@ -55,12 +55,14 @@
 #  pragma clang diagnostic ignored "-Wshadow"
 #  pragma clang diagnostic ignored "-Wuninitialized"
 #  pragma clang diagnostic ignored "-Wconversion"
-#  if !(((__clang_major__ * 100) + __clang_minor__) >= 305)
-#    pragma GCC diagnostic ignored "-Wsuggest-override"
-#    pragma GCC diagnostic ignored "-Winconsistent-missing-override"
+#  if ((__clang_major__ * 100) + __clang_minor__) >= 305
+#    pragma clang diagnostic ignored "-Wfloat-conversion"
 #  endif
-#  if !(((__clang_major__ * 100) + __clang_minor__) >= 309)
-#    pragma GCC diagnostic ignored "-Wfloat-conversion"
+#  if ((__clang_major__ * 100) + __clang_minor__) >= 306
+#    pragma clang diagnostic ignored "-Winconsistent-missing-override"
+#  endif
+#  if ((__clang_major__ * 100) + __clang_minor__) >= 1100
+#    pragma clang diagnostic ignored "-Wsuggest-override"
 #  endif
 #endif
 
