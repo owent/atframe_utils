@@ -57,19 +57,19 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY cmd_option_bind_param_list {
   /**
    * 用于创建存储对象索引和解包索引[0, 1, 2, ..., sizeof...(_Args) - 1]
    */
-  template <int... _Index>
+  template <std::size_t... _Index>
   struct index_args_var_list {};
 
-  template <std::size_t N, int... _Index>
+  template <std::size_t N, std::size_t... _Index>
   struct build_args_index : build_args_index<N - 1, _Index..., sizeof...(_Index)> {};
 
-  template <int... _Index>
+  template <std::size_t... _Index>
   struct build_args_index<0, _Index...> {
     using type = index_args_var_list<_Index...>;
   };
 
  private:
-  template <class _F, int... _Indexes>
+  template <class _F, std::size_t... _Indexes>
   void _do_call(_F &f, callback_param args, index_args_var_list<_Indexes...>) {
     f(args, std::get<_Indexes>(args_)...);
   }
