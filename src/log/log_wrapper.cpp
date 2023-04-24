@@ -5,6 +5,8 @@
 #include <stdarg.h>
 #include <cstdio>
 #include <cstring>
+#include <iterator>
+
 #include "std/thread.h"
 
 #include "common/string_oprs.h"
@@ -151,7 +153,7 @@ LIBATFRAME_UTILS_API bool log_wrapper::set_sink(size_t idx, level_t::type level_
 
   std::list<log_router_t>::iterator beg = log_sinks_.begin();
   if (idx > 0) {
-    std::advance(beg, idx);
+    std::advance(beg, static_cast<std::iterator_traits<std::list<log_router_t>::iterator>::difference_type>(idx));
   }
 
   (*beg).level_min = level_min;
