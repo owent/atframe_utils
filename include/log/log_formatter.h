@@ -24,7 +24,30 @@
 #    define LOG_WRAPPER_FWAPI_FMT_STRING(S) (S)
 #  endif
 #elif defined(LIBATFRAME_UTILS_ENABLE_FMTLIB) && LIBATFRAME_UTILS_ENABLE_FMTLIB
+
+#  if defined(__GNUC__) && !defined(__clang__) && !defined(__apple_build_version__)
+#    if (__GNUC__ * 100 + __GNUC_MINOR__ * 10) >= 460
+#      pragma GCC diagnostic push
+#    endif
+#    pragma GCC diagnostic ignored "-Warray-bounds"
+#    if (__GNUC__ * 100 + __GNUC_MINOR__ * 10) >= 710
+#      pragma GCC diagnostic ignored "-Wstringop-overflow"
+#    endif
+#  elif defined(__clang__) || defined(__apple_build_version__)
+#    pragma clang diagnostic push
+#    pragma GCC diagnostic ignored "-Warray-bounds"
+#  endif
+
 #  include <fmt/format.h>
+
+#  if defined(__GNUC__) && !defined(__clang__) && !defined(__apple_build_version__)
+#    if (__GNUC__ * 100 + __GNUC_MINOR__ * 10) >= 460
+#      pragma GCC diagnostic pop
+#    endif
+#  elif defined(__clang__) || defined(__apple_build_version__)
+#    pragma clang diagnostic pop
+#  endif
+
 #  ifndef LOG_WRAPPER_FWAPI_FMT_STRING
 #    define LOG_WRAPPER_FWAPI_FMT_STRING(S) FMT_STRING(S)
 #  endif
