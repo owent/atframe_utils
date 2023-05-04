@@ -60,8 +60,15 @@ set(LIBATFRAME_UTILS_VERSION_MAJOR "${PROJECT_VERSION_MAJOR}")
 set(LIBATFRAME_UTILS_VERSION_MINOR "${PROJECT_VERSION_MINOR}")
 set(LIBATFRAME_UTILS_VERSION_PATCH "${PROJECT_VERSION_PATCH}")
 set(LIBATFRAME_UTILS_VERSION "${PROJECT_VERSION}")
+
+set(LIBATFRAME_UTILS_GENERATED_DIR "${CMAKE_CURRENT_BINARY_DIR}/_generated")
+file(MAKE_DIRECTORY "${LIBATFRAME_UTILS_GENERATED_DIR}/include/config")
+file(MAKE_DIRECTORY "${LIBATFRAME_UTILS_GENERATED_DIR}/temp")
 configure_file("${PROJECT_ATFRAME_UTILS_INCLUDE_DIR}/config/atframe_utils_build_feature.h.in"
-               "${PROJECT_ATFRAME_UTILS_INCLUDE_DIR}/config/atframe_utils_build_feature.h" @ONLY)
+               "${LIBATFRAME_UTILS_GENERATED_DIR}/temp/atframe_utils_build_feature.h" @ONLY)
+execute_process(
+  COMMAND ${CMAKE_COMMAND} -E copy_if_different "${LIBATFRAME_UTILS_GENERATED_DIR}/temp/atframe_utils_build_feature.h"
+          "${LIBATFRAME_UTILS_GENERATED_DIR}/include/config")
 
 # Source
 set(SRC_LIST
@@ -269,8 +276,9 @@ else()
   list(APPEND PROJECT_ATFRAME_UTILS_INTERFACE_LINK_NAMES ${ATFRAMEWORK_CMAKE_TOOLSET_SYSTEM_LIBRARIES})
 endif()
 
-target_include_directories(${PROJECT_NAME} PUBLIC "$<BUILD_INTERFACE:${PROJECT_ATFRAME_UTILS_INCLUDE_DIR}>"
-                                                  "$<INSTALL_INTERFACE:include>")
+target_include_directories(
+  ${PROJECT_NAME} PUBLIC "$<BUILD_INTERFACE:${PROJECT_ATFRAME_UTILS_INCLUDE_DIR}>"
+                         "$<BUILD_INTERFACE:${LIBATFRAME_UTILS_GENERATED_DIR}/include>" "$<INSTALL_INTERFACE:include>")
 if(PROJECT_ATFRAME_UTILS_PUBLIC_INCLUDE_DIRS)
   target_include_directories(${PROJECT_NAME} PUBLIC "$<BUILD_INTERFACE:${PROJECT_ATFRAME_UTILS_PUBLIC_INCLUDE_DIRS}>")
 endif()
@@ -351,6 +359,8 @@ export(
 install(FILES "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/cmake/${PROJECT_NAME}/${PROJECT_NAME}-config.cmake"
               "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/cmake/${PROJECT_NAME}/${PROJECT_NAME}-config-version.cmake"
         DESTINATION ${CMAKE_INSTALL_CMAKEDIR})
+install(FILES "${LIBATFRAME_UTILS_GENERATED_DIR}/include/config/atframe_utils_build_feature.h"
+        DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/config/")
 
 install(
   EXPORT ${PROJECT_LIB_EXPORT_NAME}
