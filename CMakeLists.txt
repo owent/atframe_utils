@@ -98,6 +98,7 @@ set(SRC_LIST
     "${CMAKE_CURRENT_LIST_DIR}/src/string/tquerystring.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/src/time/time_utility.cpp")
 set(HEADER_LIST
+    "${LIBATFRAME_UTILS_GENERATED_DIR}/include/config/atframe_utils_build_feature.h"
     "${CMAKE_CURRENT_LIST_DIR}/include/algorithm/base64.h"
     "${CMAKE_CURRENT_LIST_DIR}/include/algorithm/crc.h"
     "${CMAKE_CURRENT_LIST_DIR}/include/algorithm/crypto_cipher.h"
@@ -122,7 +123,6 @@ set(HEADER_LIST
     "${CMAKE_CURRENT_LIST_DIR}/include/common/demangle.h"
     "${CMAKE_CURRENT_LIST_DIR}/include/common/file_system.h"
     "${CMAKE_CURRENT_LIST_DIR}/include/common/string_oprs.h"
-    "${CMAKE_CURRENT_LIST_DIR}/include/config/atframe_utils_build_feature.h"
     "${CMAKE_CURRENT_LIST_DIR}/include/config/compiler/migrate_prefix.h"
     "${CMAKE_CURRENT_LIST_DIR}/include/config/compiler/migrate_suffix.h"
     "${CMAKE_CURRENT_LIST_DIR}/include/config/compiler/protobuf_prefix.h"

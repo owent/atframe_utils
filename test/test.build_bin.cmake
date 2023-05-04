@@ -8,10 +8,11 @@ function(atframe_add_test_executable TARGET_NAME)
   if(TARGET GTest::gtest OR GTest::GTest)
     list(APPEND PROJECT_TEST_DEFINITIONS PROJECT_TEST_MACRO_ENABLE_GTEST=1)
     if(TARGET GTest::GTest)
-      list(APPEND PROJECT_TEST_LIB_LINK GTest::gtest)
-    else()
       list(APPEND PROJECT_TEST_LIB_LINK GTest::GTest)
+    else()
+      list(APPEND PROJECT_TEST_LIB_LINK GTest::gtest)
     endif()
+    project_build_tools_patch_default_imported_config(GTest::GTest GTest::gtest)
 
     # =========== enable find boost.test ===========
   elseif(PROJECT_TEST_ENABLE_BOOST_UNIT_TEST)

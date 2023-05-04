@@ -163,6 +163,7 @@ if(NOT DEFINED LIBATFRAME_UTILS_ENABLE_LIBUUID AND NOT DEFINED CACHE{LIBATFRAME_
     echowithcolor(COLOR YELLOW "-- Dependency(${PROJECT_NAME}): uuid generator with libuuid.(Target: libuuid)")
     list(APPEND PROJECT_ATFRAME_UTILS_PUBLIC_LINK_NAMES libuuid)
     set(LIBATFRAME_UTILS_ENABLE_LIBUUID TRUE)
+    project_build_tools_patch_default_imported_config(libuuid)
   elseif(Libuuid_FOUND)
     echowithcolor(
       COLOR YELLOW
@@ -224,6 +225,7 @@ if(ENABLE_NETWORK)
     message(STATUS "Curl using target(${PROJECT_NAME}): CURL::libcurl")
     set(NETWORK_ENABLE_CURL 1)
     list(APPEND PROJECT_ATFRAME_UTILS_PUBLIC_LINK_NAMES CURL::libcurl)
+    project_build_tools_patch_default_imported_config(CURL::libcurl)
   elseif(CURL_FOUND AND CURL_LIBRARIES)
     message(STATUS "Curl support enabled(${PROJECT_NAME})")
     set(NETWORK_ENABLE_CURL 1)

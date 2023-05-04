@@ -10,6 +10,9 @@ if(LOG_WRAPPER_ENABLE_LUA_SUPPORT AND LOG_WRAPPER_CHECK_LUA)
     set(LOG_WRAPPER_ENABLE_LUA_SUPPORT OFF)
     message(STATUS "Lua not found and disabled.")
   endif()
+  if(PROJECT_ATFRAME_UTILS_EXTENTION_LINK_LIB)
+    project_build_tools_patch_default_imported_config(lua::liblua-dynamic lua::liblua-static lua)
+  endif()
 endif()
 
 # traceback 检测 gcc可能需要加 -funwind-tables 选项，尽可能不要用 -fvisibility=hidden Android下需要 APP_STL := gnustl_static or
