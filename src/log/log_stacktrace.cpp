@@ -595,7 +595,9 @@ LIBATFRAME_UTILS_API size_t stacktrace_write(char *buf, size_t bufsz, const stac
   }
 
 #  elif (defined(LOG_STACKTRACE_USING_DBGHELP) && LOG_STACKTRACE_USING_DBGHELP)
+#    ifdef UNICODE
   USES_CONVERSION;
+#    endif
   SYMBOL_INFO *symbol;
   DWORD64 displacement = 0;
 
@@ -638,7 +640,9 @@ LIBATFRAME_UTILS_API size_t stacktrace_write(char *buf, size_t bufsz, const stac
 
   free(symbol);
 #  else
+#    ifdef UNICODE
   USES_CONVERSION;
+#    endif
 
   log_stacktrace_com_holder<IDebugClient> dbg_cli;
   log_stacktrace_com_holder<IDebugControl> dbg_ctrl;
