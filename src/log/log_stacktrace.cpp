@@ -41,10 +41,10 @@
 #  include <DbgHelp.h>
 
 #  ifdef _MSC_VER
-#    include <atlconv.h>
 #    pragma comment(lib, "dbghelp.lib")
 
 #    ifdef UNICODE
+#      include <atlconv.h>
 #      define LOG_STACKTRACE_VC_A2W(x) A2W(x)
 #      define LOG_STACKTRACE_VC_W2A(x) W2A(x)
 #    else
@@ -82,11 +82,11 @@ struct SymInitializeHelper {
 #  include <DbgEng.h>
 
 #  ifdef _MSC_VER
-#    include <atlconv.h>
 #    pragma comment(lib, "ole32.lib")
 #    pragma comment(lib, "dbgeng.lib")
 
 #    ifdef UNICODE
+#      include <atlconv.h>
 #      define LOG_STACKTRACE_VC_A2W(x) A2W(x)
 #      define LOG_STACKTRACE_VC_W2A(x) W2A(x)
 #    else
