@@ -17,15 +17,15 @@
 
 #pragma once
 
+#include <config/atframe_utils_build_feature.h>
+#include <config/compile_optimize.h>
+#include <std/explicit_declare.h>
+
 #include <climits>
 #include <cstdio>
 #include <list>
 #include <string>
 #include <vector>
-
-#include <config/atframe_utils_build_feature.h>
-#include <config/compile_optimize.h>
-#include <std/explicit_declare.h>
 
 #if defined(__CYGWIN__)  // Windows Cygwin
 #  define UTIL_FS_POSIX_API

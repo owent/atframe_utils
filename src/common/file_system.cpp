@@ -1,6 +1,8 @@
+// Copyright 2023 atframework
+// Created by owent on 2015/6/2.
 //
-// Created by 欧文韬 on 2015/6/2.
-//
+
+#include "common/file_system.h"
 
 #include <std/explicit_declare.h>
 
@@ -9,8 +11,8 @@
 #include <cstring>
 #include <memory>
 #include <sstream>
+
 #include "common/compiler_message.h"
-#include "common/file_system.h"
 
 #ifdef UTIL_FS_WINDOWS_API
 
@@ -22,11 +24,9 @@
 #  include <direct.h>
 #  include <io.h>
 
-#  ifdef _MSC_VER
-#    include <atlconv.h>
-#  endif
-
 #  ifdef UNICODE
+#    include <atlconv.h>
+
 #    define VC_TEXT(x) A2W(x)
 #  else
 #    define VC_TEXT(x) x
@@ -501,7 +501,7 @@ LIBATFRAME_UTILS_API int file_system::scan_dir(const char *dir_path, std::list<s
       accept = options & dir_opt_t::EN_DOT_TOTH;
     }
 
-#  ifdef _MSC_VER
+#  if defined(UNICODE)
     USES_CONVERSION;
 #  endif
 
@@ -682,7 +682,7 @@ LIBATFRAME_UTILS_API int file_system::link(const char *oldpath, const char *newp
 
 #  if defined(UTIL_FS_WINDOWS_API)
 
-#    ifdef _MSC_VER
+#    if defined(UNICODE)
   USES_CONVERSION;
 #    endif
 
