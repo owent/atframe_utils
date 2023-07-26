@@ -92,23 +92,29 @@
  * @brief nodiscard, 标记禁止忽略返回值
  * usage:
  *   EXPLICIT_NODISCARD_ATTR int a;
- *   class EXPLICIT_NODISCARD_ATTR a;
+ *   class EXPLICIT_NODISCARD_TYPE_ATTR a;
  *   EXPLICIT_NODISCARD_ATTR int a();
  */
 #if defined(__cplusplus) && __cplusplus >= 201703L
 #  define EXPLICIT_NODISCARD_ATTR [[nodiscard]]
+#  define EXPLICIT_NODISCARD_TYPE_ATTR [[nodiscard]]
 #elif defined(__clang__)
 #  define EXPLICIT_NODISCARD_ATTR __attribute__((warn_unused_result))
+#  define EXPLICIT_NODISCARD_TYPE_ATTR
 #elif defined(__GNUC__) && ((__GNUC__ >= 4) || ((__GNUC__ == 3) && (__GNUC_MINOR__ >= 1)))
 #  define EXPLICIT_NODISCARD_ATTR __attribute__((warn_unused_result))
+#  define EXPLICIT_NODISCARD_TYPE_ATTR
 #elif defined(_MSC_VER) && _MSC_VER >= 1700  // vs 2012 or higher
 #  if _MSC_VER >= 1910 && defined(_MSVC_LANG) && _MSVC_LANG >= 201703L
 #    define EXPLICIT_NODISCARD_ATTR [[nodiscard]]
+#    define EXPLICIT_NODISCARD_TYPE_ATTR [[nodiscard]]
 #  else
 #    define EXPLICIT_NODISCARD_ATTR _Check_return_
+#    define EXPLICIT_NODISCARD_TYPE_ATTR
 #  endif
 #else
 #  define EXPLICIT_NODISCARD_ATTR
+#  define EXPLICIT_NODISCARD_TYPE_ATTR
 #endif
 
 /**
