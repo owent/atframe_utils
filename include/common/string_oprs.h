@@ -77,7 +77,7 @@ namespace string {
  * @return str 如果是大写字符输出响应的小写字符，否则原样返回
  * @note 用于替换标准函数里参数是int类型导致的某些编译器warning问题
  */
-template <typename TCH = char>
+template <class TCH = char>
 LIBATFRAME_UTILS_API_HEAD_ONLY TCH tolower(TCH c) {
   if (c >= 'A' && c <= 'Z') {
     return static_cast<TCH>(c + static_cast<TCH>('a' - 'A'));
@@ -92,7 +92,7 @@ LIBATFRAME_UTILS_API_HEAD_ONLY TCH tolower(TCH c) {
  * @return str 如果是小写字符输出响应的大写字符，否则原样返回
  * @note 用于替换标准函数里参数是int类型导致的某些编译器warning问题
  */
-template <typename TCH = char>
+template <class TCH = char>
 LIBATFRAME_UTILS_API_HEAD_ONLY TCH toupper(TCH c) {
   if (c >= 'a' && c <= 'z') {
     return static_cast<TCH>(c - 'a' + 'A');
@@ -106,7 +106,7 @@ LIBATFRAME_UTILS_API_HEAD_ONLY TCH toupper(TCH c) {
  * @param c 字符
  * @return 如果是空白字符，返回true，否则返回false
  */
-template <typename TCH>
+template <class TCH>
 LIBATFRAME_UTILS_API_HEAD_ONLY inline bool is_space(const TCH &c) {
   return ' ' == c || '\t' == c || '\r' == c || '\n' == c;
 }
@@ -120,7 +120,7 @@ LIBATFRAME_UTILS_API_HEAD_ONLY inline bool is_space(const TCH &c) {
  * @return 返回子串的起始地址和长度
  * @note 注意，返回的字符串是源的子串，共享地址。并且不保证以0结尾，需要用返回的长度来判定子串长度
  */
-template <typename TCH>
+template <class TCH>
 LIBATFRAME_UTILS_API_HEAD_ONLY std::pair<const TCH *, size_t> trim(const TCH *str_begin, size_t sz,
                                                                    bool trim_left = true, bool trim_right = true) {
   if (0 == sz) {
@@ -158,11 +158,22 @@ LIBATFRAME_UTILS_API_HEAD_ONLY std::pair<const TCH *, size_t> trim(const TCH *st
 }
 
 /**
+ * @brief 移除两边或一边的空白字符
+ * @param input 字符串视图
+ * @param trim_left 是否移除左边的空白字符
+ * @param trim_right 是否移除右边的空白字符
+ * @return 返回子串的起始地址和长度
+ * @note 注意，返回的字符串是源的子串，共享地址。并且不保证以0结尾，需要用返回的长度来判定子串长度
+ */
+LIBATFRAME_UTILS_API gsl::string_view trim_string(gsl::string_view input, bool trim_left = true,
+                                                  bool trim_right = true);
+
+/**
  * @brief 翻转字符串
  * @param begin 字符串起始地址
  * @param end 字符串结束地址,填入NULL，则从begin开是找到\0结束
  */
-template <typename TCH, typename TCHE>
+template <class TCH, class TCHE>
 LIBATFRAME_UTILS_API_HEAD_ONLY void reverse(TCH *begin, TCHE end_any) {
   TCH *end = reinterpret_cast<TCH *>(end_any);
   if (nullptr == begin) {
@@ -190,17 +201,17 @@ LIBATFRAME_UTILS_API_HEAD_ONLY void reverse(TCH *begin, TCHE end_any) {
   }
 }
 
-template <typename TCH>
+template <class TCH>
 LIBATFRAME_UTILS_API_HEAD_ONLY inline void reverse(TCH *begin, int end_any) {
   reverse<TCH, TCH *>(begin, reinterpret_cast<TCH *>(static_cast<intptr_t>(end_any)));
 }
 
-template <typename TCH>
+template <class TCH>
 LIBATFRAME_UTILS_API_HEAD_ONLY inline void reverse(TCH *begin, std::nullptr_t) {
   reverse<TCH, TCH *>(begin, static_cast<TCH *>(nullptr));
 }
 
-template <typename T>
+template <class T>
 LIBATFRAME_UTILS_API_HEAD_ONLY size_t int2str_unsigned(char *str, size_t strsz, T in) {
   if (0 == strsz) {
     return 0;
@@ -227,7 +238,7 @@ LIBATFRAME_UTILS_API_HEAD_ONLY size_t int2str_unsigned(char *str, size_t strsz, 
   return ret;
 }
 
-template <typename T>
+template <class T>
 LIBATFRAME_UTILS_API_HEAD_ONLY size_t int2str_signed(char *str, size_t strsz, T in) {
   if (0 == strsz) {
     return 0;
@@ -246,7 +257,7 @@ LIBATFRAME_UTILS_API_HEAD_ONLY size_t int2str_signed(char *str, size_t strsz, T 
   }
 }
 
-template <typename T>
+template <class T>
 struct LIBATFRAME_UTILS_API_HEAD_ONLY int2str_helper {
   using value_type_s = T;
   using value_type_u = typename std::make_unsigned<T>::type;
@@ -263,7 +274,7 @@ struct LIBATFRAME_UTILS_API_HEAD_ONLY int2str_helper {
  * @param in 输入的数字
  * @return 返回输出的数据长度，失败返回0
  */
-template <typename T>
+template <class T>
 LIBATFRAME_UTILS_API_HEAD_ONLY inline size_t int2str(char *str, size_t strsz, const T &in) {
   size_t ret = int2str_helper<typename std::make_signed<typename std::remove_cv<T>::type>::type>::call(str, strsz, in);
   if (ret < strsz) {
@@ -279,7 +290,7 @@ LIBATFRAME_UTILS_API_HEAD_ONLY inline size_t int2str(char *str, size_t strsz, co
  * @param str 被转换的字符串
  * @note 性能肯定比sscanf系，和iostream系高。strtol系就不知道了
  */
-template <typename T, typename TCHAR>
+template <class T, class TCHAR>
 LIBATFRAME_UTILS_API_HEAD_ONLY const TCHAR *str2int(T &out, const TCHAR *str, size_t strsz = 0) {
   out = static_cast<T>(0);
   if (nullptr == str || !(*str)) {
@@ -335,18 +346,18 @@ LIBATFRAME_UTILS_API_HEAD_ONLY const TCHAR *str2int(T &out, const TCHAR *str, si
   return str + cur;
 }
 
-template <typename T, typename TCHAR>
+template <class T, class TCHAR>
 LIBATFRAME_UTILS_API_HEAD_ONLY const TCHAR *str2int(T &out, const std::basic_string<TCHAR> &str) {
   return str2int(out, str.c_str(), str.size());
 }
 
-template <typename T, typename TCHAR>
+template <class T, class TCHAR>
 LIBATFRAME_UTILS_API_HEAD_ONLY const TCHAR *str2int(T &out, nostd::basic_string_view<TCHAR> str) {
   return str2int(out, str.data(), str.size());
 }
 
 #if defined(LIBATFRAME_UTILS_GSL_TEST_STL_STRING_VIEW) && LIBATFRAME_UTILS_GSL_TEST_STL_STRING_VIEW
-template <typename T, typename TCHAR>
+template <class T, class TCHAR>
 LIBATFRAME_UTILS_API_HEAD_ONLY const TCHAR *str2int(T &out, std::basic_string_view<TCHAR> str) {
   return str2int(out, str.data(), str.size());
 }
@@ -370,7 +381,7 @@ LIBATFRAME_UTILS_API_HEAD_ONLY inline T to_int(TINPUT &&input) {
  * @param c 被转换的字符
  * @param upper_case 输出大写字符？
  */
-template <typename TStr, typename TCh>
+template <class TStr, class TCh>
 LIBATFRAME_UTILS_API_HEAD_ONLY void hex(TStr *out, TCh c, bool upper_case = false) {
   out[0] = static_cast<TStr>((c >> 4) & 0x0F);
   out[1] = static_cast<TStr>(c & 0x0F);
@@ -397,7 +408,7 @@ LIBATFRAME_UTILS_API_HEAD_ONLY void hex(TStr *out, TCh c, bool upper_case = fals
  * @param c 被转换的字符
  * @param upper_case 输出大写字符？
  */
-template <typename TStr, typename TCh>
+template <class TStr, class TCh>
 LIBATFRAME_UTILS_API_HEAD_ONLY void oct(TStr *out, TCh c) {
   out[0] = static_cast<TStr>(((c >> 6) & 0x07) + '0');
   out[1] = static_cast<TStr>(((c >> 3) & 0x07) + '0');
@@ -411,7 +422,7 @@ LIBATFRAME_UTILS_API_HEAD_ONLY void oct(TStr *out, TCh c) {
  * @param out 输出buffer
  * @param os 输出buffer长度，回传输出缓冲区使用的长度
  */
-template <typename TCh>
+template <class TCh>
 LIBATFRAME_UTILS_API_HEAD_ONLY void serialization(const void *src, size_t ss, TCh *out, size_t &os) {
   const TCh *cs = reinterpret_cast<const TCh *>(src);
   size_t i, j;
@@ -437,7 +448,7 @@ LIBATFRAME_UTILS_API_HEAD_ONLY void serialization(const void *src, size_t ss, TC
  * @param ss 输入的buffer长度
  * @param out 输出缓冲区
  */
-template <typename Elem, typename Traits>
+template <class Elem, class Traits>
 LIBATFRAME_UTILS_API_HEAD_ONLY void serialization(const void *src, size_t ss, std::basic_ostream<Elem, Traits> &out) {
   const Elem *cs = reinterpret_cast<const Elem *>(src);
   size_t i;
@@ -459,7 +470,7 @@ LIBATFRAME_UTILS_API_HEAD_ONLY void serialization(const void *src, size_t ss, st
  * @param out 输出buffer
  * @param upper_case 是否大写
  */
-template <typename TCh>
+template <class TCh>
 LIBATFRAME_UTILS_API_HEAD_ONLY void dumphex(const void *src, size_t ss, TCh *out, bool upper_case = false) {
   const unsigned char *cs = reinterpret_cast<const unsigned char *>(src);
   size_t i;
@@ -475,7 +486,7 @@ LIBATFRAME_UTILS_API_HEAD_ONLY void dumphex(const void *src, size_t ss, TCh *out
  * @param out 输出缓冲区
  * @param upper_case 是否大写
  */
-template <typename Elem, typename Traits>
+template <class Elem, class Traits>
 LIBATFRAME_UTILS_API_HEAD_ONLY void dumphex(const void *src, size_t ss, std::basic_ostream<Elem, Traits> &out,
                                             bool upper_case = false) {
   const unsigned char *cs = reinterpret_cast<const unsigned char *>(src);

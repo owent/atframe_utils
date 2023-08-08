@@ -87,20 +87,37 @@ CASE_TEST(string_oprs, trim) {
   const char *test_after_trim_right = "  \t \n \rtrim done";
   const char *test_after_trim_all = "trim done";
 
-  std::pair<const char *, size_t> trim_left_res =
-      LIBATFRAME_UTILS_NAMESPACE_ID::string::trim(test_origin, 0, true, false);
-  std::pair<const char *, size_t> trim_right_res =
-      LIBATFRAME_UTILS_NAMESPACE_ID::string::trim(test_origin, 0, false, true);
-  std::pair<const char *, size_t> trim_all_res = LIBATFRAME_UTILS_NAMESPACE_ID::string::trim(test_origin, 0);
+  {
+    std::pair<const char *, size_t> trim_left_res =
+        LIBATFRAME_UTILS_NAMESPACE_ID::string::trim(test_origin, 0, true, false);
+    std::pair<const char *, size_t> trim_right_res =
+        LIBATFRAME_UTILS_NAMESPACE_ID::string::trim(test_origin, 0, false, true);
+    std::pair<const char *, size_t> trim_all_res = LIBATFRAME_UTILS_NAMESPACE_ID::string::trim(test_origin, 0);
 
-  CASE_EXPECT_EQ(0, UTIL_STRFUNC_STRNCMP(trim_left_res.first, test_after_trim_left, trim_left_res.second));
-  CASE_EXPECT_EQ(strlen(test_after_trim_left), trim_left_res.second);
+    CASE_EXPECT_EQ(0, UTIL_STRFUNC_STRNCMP(trim_left_res.first, test_after_trim_left, trim_left_res.second));
+    CASE_EXPECT_EQ(strlen(test_after_trim_left), trim_left_res.second);
 
-  CASE_EXPECT_EQ(0, UTIL_STRFUNC_STRNCMP(trim_right_res.first, test_after_trim_right, trim_right_res.second));
-  CASE_EXPECT_EQ(strlen(test_after_trim_right), trim_right_res.second);
+    CASE_EXPECT_EQ(0, UTIL_STRFUNC_STRNCMP(trim_right_res.first, test_after_trim_right, trim_right_res.second));
+    CASE_EXPECT_EQ(strlen(test_after_trim_right), trim_right_res.second);
 
-  CASE_EXPECT_EQ(0, UTIL_STRFUNC_STRNCMP(trim_all_res.first, test_after_trim_all, trim_all_res.second));
-  CASE_EXPECT_EQ(strlen(test_after_trim_all), trim_all_res.second);
+    CASE_EXPECT_EQ(0, UTIL_STRFUNC_STRNCMP(trim_all_res.first, test_after_trim_all, trim_all_res.second));
+    CASE_EXPECT_EQ(strlen(test_after_trim_all), trim_all_res.second);
+  }
+
+  {
+    gsl::string_view trim_left_res = LIBATFRAME_UTILS_NAMESPACE_ID::string::trim_string(test_origin, true, false);
+    gsl::string_view trim_right_res = LIBATFRAME_UTILS_NAMESPACE_ID::string::trim_string(test_origin, false, true);
+    gsl::string_view trim_all_res = LIBATFRAME_UTILS_NAMESPACE_ID::string::trim_string(test_origin);
+
+    CASE_EXPECT_EQ(0, UTIL_STRFUNC_STRNCMP(trim_left_res.data(), test_after_trim_left, trim_left_res.size()));
+    CASE_EXPECT_EQ(strlen(test_after_trim_left), trim_left_res.size());
+
+    CASE_EXPECT_EQ(0, UTIL_STRFUNC_STRNCMP(trim_right_res.data(), test_after_trim_right, trim_right_res.size()));
+    CASE_EXPECT_EQ(strlen(test_after_trim_right), trim_right_res.size());
+
+    CASE_EXPECT_EQ(0, UTIL_STRFUNC_STRNCMP(trim_all_res.data(), test_after_trim_all, trim_all_res.size()));
+    CASE_EXPECT_EQ(strlen(test_after_trim_all), trim_all_res.size());
+  }
 }
 
 CASE_TEST(string_oprs, reverse) {

@@ -3,6 +3,15 @@
 
 LIBATFRAME_UTILS_NAMESPACE_BEGIN
 namespace string {
+LIBATFRAME_UTILS_API gsl::string_view trim_string(gsl::string_view input, bool trim_left, bool trim_right) {
+  if (input.empty()) {
+    return input;
+  }
+
+  auto ret = trim(input.data(), input.size(), trim_left, trim_right);
+  return gsl::string_view{ret.first, ret.second};
+}
+
 LIBATFRAME_UTILS_API const char *version_tok(const char *v, int64_t &out) {
   if (nullptr == v) {
     out = 0;
