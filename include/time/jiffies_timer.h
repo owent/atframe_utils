@@ -338,7 +338,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY jiffies_timer {
    * @brief 获取当前定时器类型的最大时间范围（tick）
    * @return 当前定时器类型的最大时间范围（tick）
    */
-  static UTIL_FORCEINLINE constexpr time_t get_max_tick_distance() { return LVL_START(LVL_DEPTH) - 1; }
+  UTIL_FORCEINLINE constexpr static time_t get_max_tick_distance() { return LVL_START(LVL_DEPTH) - 1; }
 
   static inline size_t calc_index(time_t expires, size_t lvl) noexcept {
     // 这里的expires 必然大于等于last_tick_，并且至少加一帧
@@ -364,22 +364,22 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY jiffies_timer {
   }
 
  public:
-  static UTIL_FORCEINLINE void *get_timer_private_data(const timer_type &timer) noexcept { return timer.private_data; }
-  static UTIL_FORCEINLINE void *set_timer_private_data(timer_type &timer, void *priv_data) noexcept {
+  UTIL_FORCEINLINE static void *get_timer_private_data(const timer_type &timer) noexcept { return timer.private_data; }
+  UTIL_FORCEINLINE static void *set_timer_private_data(timer_type &timer, void *priv_data) noexcept {
     void *old_value = timer.private_data;
     timer.private_data = priv_data;
     return old_value;
   }
-  static UTIL_FORCEINLINE uint32_t get_timer_sequence(const timer_type &timer) noexcept { return timer.sequence; }
-  static UTIL_FORCEINLINE size_t get_timer_wheel_index(const timer_type &timer) noexcept { return timer.owner_idx; }
-  static UTIL_FORCEINLINE time_t get_timer_timeout(const timer_type &timer) noexcept { return timer.timeout; }
-  static UTIL_FORCEINLINE bool check_timer_flags(const timer_type &timer, typename timer_flag_t::type f) noexcept {
+  UTIL_FORCEINLINE static uint32_t get_timer_sequence(const timer_type &timer) noexcept { return timer.sequence; }
+  UTIL_FORCEINLINE static size_t get_timer_wheel_index(const timer_type &timer) noexcept { return timer.owner_idx; }
+  UTIL_FORCEINLINE static time_t get_timer_timeout(const timer_type &timer) noexcept { return timer.timeout; }
+  UTIL_FORCEINLINE static bool check_timer_flags(const timer_type &timer, typename timer_flag_t::type f) noexcept {
     return !!(timer.flags & static_cast<uint32_t>(f));
   }
-  static UTIL_FORCEINLINE void set_timer_flags(const timer_type &timer, typename timer_flag_t::type f) noexcept {
+  UTIL_FORCEINLINE static void set_timer_flags(const timer_type &timer, typename timer_flag_t::type f) noexcept {
     timer.flags |= static_cast<uint32_t>(f);
   }
-  static UTIL_FORCEINLINE void unset_timer_flags(const timer_type &timer, typename timer_flag_t::type f) noexcept {
+  UTIL_FORCEINLINE static void unset_timer_flags(const timer_type &timer, typename timer_flag_t::type f) noexcept {
     timer.flags &= ~static_cast<uint32_t>(f);
   }
   static inline void remove_timer(timer_type &timer) noexcept {
