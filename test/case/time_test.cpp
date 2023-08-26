@@ -396,12 +396,14 @@ struct jiffies_timer_fn {
   void *check_priv_data;
   jiffies_timer_fn(void *pd) : check_priv_data(pd) {}
 
-  void operator()(time_t, const short_timer_t::timer_t &timer) {
+  void operator()(time_t tick, const short_timer_t::timer_t &timer) {
     if (nullptr != check_priv_data) {
       CASE_EXPECT_EQ(short_timer_t::get_timer_private_data(timer), check_priv_data);
     } else if (nullptr != short_timer_t::get_timer_private_data(timer)) {
       ++(*reinterpret_cast<int *>(short_timer_t::get_timer_private_data(timer)));
     }
+
+    CASE_EXPECT_EQ(short_timer_t::get_timer_timeout(timer), tick);
 
     CASE_MSG_INFO() << "jiffies_timer " << short_timer_t::get_timer_sequence(timer) << " actived" << std::endl;
   }
@@ -432,8 +434,13 @@ CASE_TEST(time_test, jiffies_timer_basic) {
                  short_timer.add_timer(short_timer.get_max_tick_distance() - short_timer_t::LVL_GRAN(3),
                                        jiffies_timer_fn(&short_timer), &short_timer));
 
-  CASE_EXPECT_EQ(short_timer_t::error_type_t::EN_JTET_SUCCESS,
-                 short_timer.add_timer(-123, jiffies_timer_fn(nullptr), &count));
+  {
+    short_timer_t::timer_wptr_t timer_watcher;
+    CASE_EXPECT_EQ(short_timer_t::error_type_t::EN_JTET_SUCCESS,
+                   short_timer.add_timer(-123, jiffies_timer_fn(nullptr), &count, &timer_watcher));
+
+    CASE_EXPECT_EQ(short_timer.get_last_tick() + 1, short_timer_t::get_timer_timeout(*timer_watcher.lock()));
+  }
   CASE_EXPECT_EQ(short_timer_t::error_type_t::EN_JTET_SUCCESS,
                  short_timer.add_timer(30, jiffies_timer_fn(nullptr), &count));
   CASE_EXPECT_EQ(short_timer_t::error_type_t::EN_JTET_SUCCESS,
@@ -447,10 +454,9 @@ CASE_TEST(time_test, jiffies_timer_basic) {
   CASE_EXPECT_EQ(1, count);
   CASE_EXPECT_EQ(4, static_cast<int>(short_timer.size()));
 
-  // +30的触发点是+31。因为添加定时器的时候会认为当前时间是+0.XXX，并且由于触发只会延后不会提前
-  short_timer.tick(max_tick + 30);
+  short_timer.tick(max_tick + 29);
   CASE_EXPECT_EQ(1, count);
-  short_timer.tick(max_tick + 31);
+  short_timer.tick(max_tick + 30);
   CASE_EXPECT_EQ(2, count);
 
   // 跨tick
@@ -459,13 +465,29 @@ CASE_TEST(time_test, jiffies_timer_basic) {
   CASE_EXPECT_EQ(2, static_cast<int>(short_timer.size()));
 
   // 非第一层、非第一个定时器组.（512+64*5-1 = 831）
+  short_timer_t::timer_wptr_t timer_watcher_831;
+  short_timer_t::timer_wptr_t timer_watcher_832;
   CASE_EXPECT_EQ(short_timer_t::error_type_t::EN_JTET_SUCCESS,
-                 short_timer.add_timer(831, jiffies_timer_fn(nullptr), &count));
-  short_timer.tick(max_tick + 64 + 831);
+                 short_timer.add_timer(831, jiffies_timer_fn(nullptr), &count, &timer_watcher_831));
+  CASE_EXPECT_EQ(short_timer_t::error_type_t::EN_JTET_SUCCESS,
+                 short_timer.add_timer(832, jiffies_timer_fn(nullptr), &count, &timer_watcher_832));
+  size_t wheel_idx_831 = short_timer_t::get_timer_wheel_index(*timer_watcher_831.lock());
+  size_t wheel_idx_832 = short_timer_t::get_timer_wheel_index(*timer_watcher_832.lock());
+  CASE_EXPECT_NE(wheel_idx_831, wheel_idx_832);
+  CASE_EXPECT_GE(wheel_idx_831, 128);
+  CASE_EXPECT_GE(wheel_idx_832, 128);
+
+  // 768-831 share tick, it will move timer but will not trigger it
+  short_timer.tick(max_tick + 64 + 830);
+  size_t wheel_idx_831_moved = short_timer_t::get_timer_wheel_index(*timer_watcher_831.lock());
+  CASE_EXPECT_NE(wheel_idx_831, wheel_idx_831_moved);
+  CASE_EXPECT_LT(wheel_idx_831_moved, 64);
+
   CASE_EXPECT_EQ(3, count);
-  // 768-831 share tick
-  short_timer.tick(max_tick + 64 + 832);
+  short_timer.tick(max_tick + 64 + 831);
   CASE_EXPECT_EQ(4, count);
+  short_timer.tick(max_tick + 64 + 832);
+  CASE_EXPECT_EQ(5, count);
 
   // 32767
   short_timer.tick(32767 + max_tick);
@@ -480,7 +502,7 @@ CASE_TEST(time_test, jiffies_timer_basic) {
 
   // 全部执行掉
   short_timer.tick(32767 + max_tick + 2000);
-  CASE_EXPECT_EQ(6, count);
+  CASE_EXPECT_EQ(7, count);
   CASE_EXPECT_EQ(0, static_cast<int>(short_timer.size()));
 }
 
@@ -488,7 +510,7 @@ CASE_TEST(time_test, jiffies_timer_slot) {
   size_t timer_list_count[short_timer_t::WHEEL_SIZE] = {0};
   time_t blank_area[short_timer_t::WHEEL_SIZE / short_timer_t::LVL_SIZE] = {0};
   time_t max_tick = short_timer_t::get_max_tick_distance();
-  for (time_t i = 0; i <= max_tick; ++i) {
+  for (time_t i = 1; i <= max_tick; ++i) {
     size_t idx = short_timer_t::calc_wheel_index(i, 0);
     CASE_EXPECT_LT(idx, static_cast<size_t>(short_timer_t::WHEEL_SIZE));
     ++timer_list_count[idx];
@@ -618,13 +640,13 @@ struct jiffies_timer_add_in_callback_fn {
     CASE_EXPECT_EQ(short_timer_t::error_type_t::EN_JTET_SUCCESS,
                    owner->add_timer(0, jiffies_timer_fn(nullptr), nullptr));
     CASE_EXPECT_EQ(short_timer_t::error_type_t::EN_JTET_SUCCESS,
-                   owner->add_timer(short_timer_t::LVL_SIZE - 5 - 1, jiffies_timer_fn(nullptr), nullptr));
+                   owner->add_timer(short_timer_t::LVL_SIZE - 4 - 1, jiffies_timer_fn(nullptr), nullptr));
     CASE_EXPECT_EQ(short_timer_t::error_type_t::EN_JTET_SUCCESS,
-                   owner->add_timer(short_timer_t::LVL_SIZE - 5, jiffies_timer_fn(nullptr), nullptr));
-    CASE_EXPECT_EQ(short_timer_t::error_type_t::EN_JTET_SUCCESS,
-                   owner->add_timer(short_timer_t::LVL_SIZE - 1, jiffies_timer_fn(nullptr), nullptr));
+                   owner->add_timer(short_timer_t::LVL_SIZE - 4, jiffies_timer_fn(nullptr), nullptr));
     CASE_EXPECT_EQ(short_timer_t::error_type_t::EN_JTET_SUCCESS,
                    owner->add_timer(short_timer_t::LVL_SIZE, jiffies_timer_fn(nullptr), nullptr));
+    CASE_EXPECT_EQ(short_timer_t::error_type_t::EN_JTET_SUCCESS,
+                   owner->add_timer(short_timer_t::LVL_SIZE + 1, jiffies_timer_fn(nullptr), nullptr));
   }
 };
 
@@ -643,12 +665,73 @@ CASE_TEST(time_test, jiffies_timer_add_in_callback) {
   timer_ptr = timer_holer.lock();
   CASE_EXPECT_EQ(&short_timer, short_timer_t::get_timer_private_data(*timer_ptr));
 
-  short_timer.tick(max_tick + 6);
+  short_timer.tick(max_tick + 5);
   CASE_EXPECT_EQ(5, static_cast<int>(short_timer.size()));
 
-  short_timer.tick(max_tick + 6 + short_timer_t::LVL_SIZE);
+  short_timer.tick(max_tick + 5 + short_timer_t::LVL_SIZE);
   CASE_EXPECT_EQ(1, static_cast<int>(short_timer.size()));
 
-  short_timer.tick(max_tick + 6 + short_timer_t::LVL_SIZE + short_timer_t::LVL_CLK_DIV);
+  short_timer.tick(max_tick + 5 + short_timer_t::LVL_SIZE + short_timer_t::LVL_CLK_DIV);
+  CASE_EXPECT_EQ(0, static_cast<int>(short_timer.size()));
+}
+
+struct jiffies_timer_keep_order_fn {
+  jiffies_timer_keep_order_fn() {}
+
+  void operator()(time_t, const short_timer_t::timer_t &timer) {
+    auto sequence = short_timer_t::get_timer_sequence(timer);
+    short_timer_t *owner = reinterpret_cast<short_timer_t *>(short_timer_t::get_timer_private_data(timer));
+    uint32_t *check_order = reinterpret_cast<uint32_t *>(owner->get_private_data());
+    CASE_MSG_INFO() << "jiffies_timer " << sequence << " add timer in callback" << std::endl;
+
+    CASE_EXPECT_GT(sequence, *check_order);
+    *check_order = sequence;
+  }
+};
+
+CASE_TEST(time_test, jiffies_timer_keep_order) {
+  short_timer_t short_timer;
+  uint32_t check_order = 0;
+  short_timer.set_private_data(reinterpret_cast<void *>(&check_order));
+
+  CASE_EXPECT_EQ(short_timer_t::error_type_t::EN_JTET_SUCCESS, short_timer.init(0));
+
+  time_t timeout_tick = 4165;
+  short_timer_t::timer_wptr_t timer_holer1;
+  CASE_EXPECT_EQ(short_timer_t::error_type_t::EN_JTET_SUCCESS,
+                 short_timer.add_timer(timeout_tick - short_timer.get_last_tick(), jiffies_timer_keep_order_fn(),
+                                       &short_timer, &timer_holer1));
+  size_t wheel_idx1 = short_timer_t::get_timer_wheel_index(*timer_holer1.lock());
+  CASE_EXPECT_GE(wheel_idx1, 192);
+  short_timer.tick(4096);
+
+  short_timer_t::timer_wptr_t timer_holer2;
+  CASE_EXPECT_EQ(short_timer_t::error_type_t::EN_JTET_SUCCESS,
+                 short_timer.add_timer(timeout_tick - short_timer.get_last_tick(), jiffies_timer_keep_order_fn(),
+                                       &short_timer, &timer_holer2));
+
+  size_t wheel_idx2 = short_timer_t::get_timer_wheel_index(*timer_holer2.lock());
+  CASE_EXPECT_GE(wheel_idx2, 64);
+  CASE_EXPECT_NE(wheel_idx1, wheel_idx2);
+  wheel_idx1 = short_timer_t::get_timer_wheel_index(*timer_holer1.lock());
+  CASE_EXPECT_EQ(wheel_idx1, wheel_idx2);
+
+  short_timer.tick(timeout_tick - 1);
+
+  short_timer_t::timer_wptr_t timer_holer3;
+  CASE_EXPECT_EQ(short_timer_t::error_type_t::EN_JTET_SUCCESS,
+                 short_timer.add_timer(timeout_tick - short_timer.get_last_tick(), jiffies_timer_keep_order_fn(),
+                                       &short_timer, &timer_holer3));
+
+  size_t wheel_idx3 = short_timer_t::get_timer_wheel_index(*timer_holer3.lock());
+  CASE_EXPECT_LT(wheel_idx3, 64);
+  CASE_EXPECT_NE(wheel_idx1, wheel_idx3);
+  wheel_idx1 = short_timer_t::get_timer_wheel_index(*timer_holer1.lock());
+  wheel_idx2 = short_timer_t::get_timer_wheel_index(*timer_holer2.lock());
+  CASE_EXPECT_EQ(wheel_idx3, wheel_idx1);
+  CASE_EXPECT_EQ(wheel_idx3, wheel_idx1);
+
+  CASE_EXPECT_EQ(3, static_cast<int>(short_timer.size()));
+  short_timer.tick(timeout_tick);
   CASE_EXPECT_EQ(0, static_cast<int>(short_timer.size()));
 }
