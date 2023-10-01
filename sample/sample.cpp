@@ -286,7 +286,9 @@ void log_sample_func7() {
   test_exception_for_log_formatter te2{false, true};
   std::cout << "---------------- catch exception of log format APIs --------------" << std::endl;
 #    ifndef LOG_WRAPPER_FWAPI_USING_FORMAT_STRING
+#      if defined(LIBATFRAME_UTILS_ENABLE_STD_FORMAT) && LIBATFRAME_UTILS_ENABLE_STD_FORMAT
   std::cout << "format: " << LIBATFRAME_UTILS_NAMESPACE_ID::log::format("{},{},{},{}", 1, 2, 3) << std::endl;
+#      endif
 #    endif
   std::cout << "format: " << LIBATFRAME_UTILS_NAMESPACE_ID::log::format("{},{}", 1, te1) << std::endl;
   std::cout << "format: " << LIBATFRAME_UTILS_NAMESPACE_ID::log::format("{},{}", 1, te2) << std::endl;
