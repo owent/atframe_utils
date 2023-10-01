@@ -7,6 +7,7 @@
 #include <config/atframe_utils_build_feature.h>
 
 #include <nostd/string_view.h>
+#include <gsl/select-gsl.h>
 
 #include <inttypes.h>
 #include <stdint.h>
@@ -190,15 +191,16 @@ class log_formatter {
 
   struct LIBATFRAME_UTILS_API caller_info_t {
     level_t::type level_id;
-    const char *level_name;
-    const char *file_path;
+    gsl::string_view level_name;
+    gsl::string_view file_path;
     uint32_t line_number;
-    const char *func_name;
+    gsl::string_view func_name;
     uint32_t rotate_index;
 
     caller_info_t();
-    caller_info_t(level_t::type lid, const char *lname, const char *fpath, uint32_t lnum, const char *fnname);
-    caller_info_t(level_t::type lid, const char *lname, const char *fpath, uint32_t lnum, const char *fnname,
+    ~caller_info_t();
+    caller_info_t(level_t::type lid, gsl::string_view lname, gsl::string_view fpath, uint32_t lnum, gsl::string_view fnname);
+    caller_info_t(level_t::type lid, gsl::string_view lname, gsl::string_view fpath, uint32_t lnum, gsl::string_view fnname,
                   uint32_t ridx);
   };
 
@@ -250,7 +252,7 @@ class log_formatter {
    * @param name 日志等级的名称（disable/disabled, fatal, error, warn/warning, info, notice, debug）
    * @return 读取到的等级id,默认会返回debug
    */
-  LIBATFRAME_UTILS_API static level_t::type get_level_by_name(const char *name);
+  LIBATFRAME_UTILS_API static level_t::type get_level_by_name(gsl::string_view name);
 
  private:
   LIBATFRAME_UTILS_API static struct tm *get_iso_tm();

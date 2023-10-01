@@ -446,19 +446,19 @@ LIBATFRAME_UTILS_NAMESPACE_END
       WDTLOGGETCAT(cat)->log(WDTLOGFILENF(lv, lv_name), __VA_ARGS__);
 
 #  define WCLOGTRACE(cat, ...) \
-    WCLOGDEFLV(LIBATFRAME_UTILS_NAMESPACE_ID::log::log_wrapper::level_t::LOG_LW_TRACE, nullptr, cat, __VA_ARGS__)
+    WCLOGDEFLV(LIBATFRAME_UTILS_NAMESPACE_ID::log::log_wrapper::level_t::LOG_LW_TRACE, {}, cat, __VA_ARGS__)
 #  define WCLOGDEBUG(cat, ...) \
-    WCLOGDEFLV(LIBATFRAME_UTILS_NAMESPACE_ID::log::log_wrapper::level_t::LOG_LW_DEBUG, nullptr, cat, __VA_ARGS__)
+    WCLOGDEFLV(LIBATFRAME_UTILS_NAMESPACE_ID::log::log_wrapper::level_t::LOG_LW_DEBUG, {}, cat, __VA_ARGS__)
 #  define WCLOGNOTICE(cat, ...) \
-    WCLOGDEFLV(LIBATFRAME_UTILS_NAMESPACE_ID::log::log_wrapper::level_t::LOG_LW_NOTICE, nullptr, cat, __VA_ARGS__)
+    WCLOGDEFLV(LIBATFRAME_UTILS_NAMESPACE_ID::log::log_wrapper::level_t::LOG_LW_NOTICE, {}, cat, __VA_ARGS__)
 #  define WCLOGINFO(cat, ...) \
-    WCLOGDEFLV(LIBATFRAME_UTILS_NAMESPACE_ID::log::log_wrapper::level_t::LOG_LW_INFO, nullptr, cat, __VA_ARGS__)
+    WCLOGDEFLV(LIBATFRAME_UTILS_NAMESPACE_ID::log::log_wrapper::level_t::LOG_LW_INFO, {}, cat, __VA_ARGS__)
 #  define WCLOGWARNING(cat, ...) \
-    WCLOGDEFLV(LIBATFRAME_UTILS_NAMESPACE_ID::log::log_wrapper::level_t::LOG_LW_WARNING, nullptr, cat, __VA_ARGS__)
+    WCLOGDEFLV(LIBATFRAME_UTILS_NAMESPACE_ID::log::log_wrapper::level_t::LOG_LW_WARNING, {}, cat, __VA_ARGS__)
 #  define WCLOGERROR(cat, ...) \
-    WCLOGDEFLV(LIBATFRAME_UTILS_NAMESPACE_ID::log::log_wrapper::level_t::LOG_LW_ERROR, nullptr, cat, __VA_ARGS__)
+    WCLOGDEFLV(LIBATFRAME_UTILS_NAMESPACE_ID::log::log_wrapper::level_t::LOG_LW_ERROR, {}, cat, __VA_ARGS__)
 #  define WCLOGFATAL(cat, ...) \
-    WCLOGDEFLV(LIBATFRAME_UTILS_NAMESPACE_ID::log::log_wrapper::level_t::LOG_LW_FATAL, nullptr, cat, __VA_ARGS__)
+    WCLOGDEFLV(LIBATFRAME_UTILS_NAMESPACE_ID::log::log_wrapper::level_t::LOG_LW_FATAL, {}, cat, __VA_ARGS__)
 
 /** 对指定log_wrapper的日志输出工具 - snprintf **/
 
@@ -466,20 +466,20 @@ LIBATFRAME_UTILS_NAMESPACE_END
     if ((__inst).check_level(lv)) (__inst).log(WDTLOGFILENF(lv, lv_name), __VA_ARGS__);
 
 #  define WINSTLOGTRACE(__inst, ...) \
-    WINSTLOGDEFLV(LIBATFRAME_UTILS_NAMESPACE_ID::log::log_wrapper::level_t::LOG_LW_TRACE, nullptr, __inst, __VA_ARGS__)
+    WINSTLOGDEFLV(LIBATFRAME_UTILS_NAMESPACE_ID::log::log_wrapper::level_t::LOG_LW_TRACE, {}, __inst, __VA_ARGS__)
 #  define WINSTLOGDEBUG(__inst, ...) \
-    WINSTLOGDEFLV(LIBATFRAME_UTILS_NAMESPACE_ID::log::log_wrapper::level_t::LOG_LW_DEBUG, nullptr, __inst, __VA_ARGS__)
+    WINSTLOGDEFLV(LIBATFRAME_UTILS_NAMESPACE_ID::log::log_wrapper::level_t::LOG_LW_DEBUG, {}, __inst, __VA_ARGS__)
 #  define WINSTLOGNOTICE(__inst, ...) \
-    WINSTLOGDEFLV(LIBATFRAME_UTILS_NAMESPACE_ID::log::log_wrapper::level_t::LOG_LW_NOTICE, nullptr, __inst, __VA_ARGS__)
+    WINSTLOGDEFLV(LIBATFRAME_UTILS_NAMESPACE_ID::log::log_wrapper::level_t::LOG_LW_NOTICE, {}, __inst, __VA_ARGS__)
 #  define WINSTLOGINFO(__inst, ...) \
-    WINSTLOGDEFLV(LIBATFRAME_UTILS_NAMESPACE_ID::log::log_wrapper::level_t::LOG_LW_INFO, nullptr, __inst, __VA_ARGS__)
+    WINSTLOGDEFLV(LIBATFRAME_UTILS_NAMESPACE_ID::log::log_wrapper::level_t::LOG_LW_INFO, {}, __inst, __VA_ARGS__)
 #  define WINSTLOGWARNING(__inst, ...)                                                                       \
-    WINSTLOGDEFLV(LIBATFRAME_UTILS_NAMESPACE_ID::log::log_wrapper::level_t::LOG_LW_WARNING, nullptr, __inst, \
+    WINSTLOGDEFLV(LIBATFRAME_UTILS_NAMESPACE_ID::log::log_wrapper::level_t::LOG_LW_WARNING, {}, __inst, \
                   __VA_ARGS__)
 #  define WINSTLOGERROR(__inst, ...) \
-    WINSTLOGDEFLV(LIBATFRAME_UTILS_NAMESPACE_ID::log::log_wrapper::level_t::LOG_LW_ERROR, nullptr, __inst, __VA_ARGS__)
+    WINSTLOGDEFLV(LIBATFRAME_UTILS_NAMESPACE_ID::log::log_wrapper::level_t::LOG_LW_ERROR, {}, __inst, __VA_ARGS__)
 #  define WINSTLOGFATAL(__inst, ...) \
-    WINSTLOGDEFLV(LIBATFRAME_UTILS_NAMESPACE_ID::log::log_wrapper::level_t::LOG_LW_FATAL, nullptr, __inst, __VA_ARGS__)
+    WINSTLOGDEFLV(LIBATFRAME_UTILS_NAMESPACE_ID::log::log_wrapper::level_t::LOG_LW_FATAL, {}, __inst, __VA_ARGS__)
 
 #  if defined(LOG_WRAPPER_ENABLE_FWAPI) && LOG_WRAPPER_ENABLE_FWAPI
 /** 全局日志输出工具 - std::format **/
@@ -488,44 +488,44 @@ LIBATFRAME_UTILS_NAMESPACE_END
         WDTLOGGETCAT(cat)->format_log(WDTLOGFILENF(lv, lv_name), __VA_ARGS__);
 
 #    define FWCLOGTRACE(cat, ...) \
-      FWCLOGDEFLV(LIBATFRAME_UTILS_NAMESPACE_ID::log::log_wrapper::level_t::LOG_LW_TRACE, nullptr, cat, __VA_ARGS__)
+      FWCLOGDEFLV(LIBATFRAME_UTILS_NAMESPACE_ID::log::log_wrapper::level_t::LOG_LW_TRACE, {}, cat, __VA_ARGS__)
 #    define FWCLOGDEBUG(cat, ...) \
-      FWCLOGDEFLV(LIBATFRAME_UTILS_NAMESPACE_ID::log::log_wrapper::level_t::LOG_LW_DEBUG, nullptr, cat, __VA_ARGS__)
+      FWCLOGDEFLV(LIBATFRAME_UTILS_NAMESPACE_ID::log::log_wrapper::level_t::LOG_LW_DEBUG, {}, cat, __VA_ARGS__)
 #    define FWCLOGNOTICE(cat, ...) \
-      FWCLOGDEFLV(LIBATFRAME_UTILS_NAMESPACE_ID::log::log_wrapper::level_t::LOG_LW_NOTICE, nullptr, cat, __VA_ARGS__)
+      FWCLOGDEFLV(LIBATFRAME_UTILS_NAMESPACE_ID::log::log_wrapper::level_t::LOG_LW_NOTICE, {}, cat, __VA_ARGS__)
 #    define FWCLOGINFO(cat, ...) \
-      FWCLOGDEFLV(LIBATFRAME_UTILS_NAMESPACE_ID::log::log_wrapper::level_t::LOG_LW_INFO, nullptr, cat, __VA_ARGS__)
+      FWCLOGDEFLV(LIBATFRAME_UTILS_NAMESPACE_ID::log::log_wrapper::level_t::LOG_LW_INFO, {}, cat, __VA_ARGS__)
 #    define FWCLOGWARNING(cat, ...) \
-      FWCLOGDEFLV(LIBATFRAME_UTILS_NAMESPACE_ID::log::log_wrapper::level_t::LOG_LW_WARNING, nullptr, cat, __VA_ARGS__)
+      FWCLOGDEFLV(LIBATFRAME_UTILS_NAMESPACE_ID::log::log_wrapper::level_t::LOG_LW_WARNING, {}, cat, __VA_ARGS__)
 #    define FWCLOGERROR(cat, ...) \
-      FWCLOGDEFLV(LIBATFRAME_UTILS_NAMESPACE_ID::log::log_wrapper::level_t::LOG_LW_ERROR, nullptr, cat, __VA_ARGS__)
+      FWCLOGDEFLV(LIBATFRAME_UTILS_NAMESPACE_ID::log::log_wrapper::level_t::LOG_LW_ERROR, {}, cat, __VA_ARGS__)
 #    define FWCLOGFATAL(cat, ...) \
-      FWCLOGDEFLV(LIBATFRAME_UTILS_NAMESPACE_ID::log::log_wrapper::level_t::LOG_LW_FATAL, nullptr, cat, __VA_ARGS__)
+      FWCLOGDEFLV(LIBATFRAME_UTILS_NAMESPACE_ID::log::log_wrapper::level_t::LOG_LW_FATAL, {}, cat, __VA_ARGS__)
 
 /** 对指定log_wrapper的日志输出工具 - std::format **/
 #    define FWINSTLOGDEFLV(lv, lv_name, __inst, ...) \
       if ((__inst).check_level(lv)) (__inst).format_log(WDTLOGFILENF(lv, lv_name), __VA_ARGS__);
 
 #    define FWINSTLOGTRACE(__inst, ...)                                                                       \
-      FWINSTLOGDEFLV(LIBATFRAME_UTILS_NAMESPACE_ID::log::log_wrapper::level_t::LOG_LW_TRACE, nullptr, __inst, \
+      FWINSTLOGDEFLV(LIBATFRAME_UTILS_NAMESPACE_ID::log::log_wrapper::level_t::LOG_LW_TRACE, {}, __inst, \
                      __VA_ARGS__)
 #    define FWINSTLOGDEBUG(__inst, ...)                                                                       \
-      FWINSTLOGDEFLV(LIBATFRAME_UTILS_NAMESPACE_ID::log::log_wrapper::level_t::LOG_LW_DEBUG, nullptr, __inst, \
+      FWINSTLOGDEFLV(LIBATFRAME_UTILS_NAMESPACE_ID::log::log_wrapper::level_t::LOG_LW_DEBUG, {}, __inst, \
                      __VA_ARGS__)
 #    define FWINSTLOGNOTICE(__inst, ...)                                                                       \
-      FWINSTLOGDEFLV(LIBATFRAME_UTILS_NAMESPACE_ID::log::log_wrapper::level_t::LOG_LW_NOTICE, nullptr, __inst, \
+      FWINSTLOGDEFLV(LIBATFRAME_UTILS_NAMESPACE_ID::log::log_wrapper::level_t::LOG_LW_NOTICE, {}, __inst, \
                      __VA_ARGS__)
 #    define FWINSTLOGINFO(__inst, ...)                                                                       \
-      FWINSTLOGDEFLV(LIBATFRAME_UTILS_NAMESPACE_ID::log::log_wrapper::level_t::LOG_LW_INFO, nullptr, __inst, \
+      FWINSTLOGDEFLV(LIBATFRAME_UTILS_NAMESPACE_ID::log::log_wrapper::level_t::LOG_LW_INFO, {}, __inst, \
                      __VA_ARGS__)
 #    define FWINSTLOGWARNING(__inst, ...)                                                                       \
-      FWINSTLOGDEFLV(LIBATFRAME_UTILS_NAMESPACE_ID::log::log_wrapper::level_t::LOG_LW_WARNING, nullptr, __inst, \
+      FWINSTLOGDEFLV(LIBATFRAME_UTILS_NAMESPACE_ID::log::log_wrapper::level_t::LOG_LW_WARNING, {}, __inst, \
                      __VA_ARGS__)
 #    define FWINSTLOGERROR(__inst, ...)                                                                       \
-      FWINSTLOGDEFLV(LIBATFRAME_UTILS_NAMESPACE_ID::log::log_wrapper::level_t::LOG_LW_ERROR, nullptr, __inst, \
+      FWINSTLOGDEFLV(LIBATFRAME_UTILS_NAMESPACE_ID::log::log_wrapper::level_t::LOG_LW_ERROR, {}, __inst, \
                      __VA_ARGS__)
 #    define FWINSTLOGFATAL(__inst, ...)                                                                       \
-      FWINSTLOGDEFLV(LIBATFRAME_UTILS_NAMESPACE_ID::log::log_wrapper::level_t::LOG_LW_FATAL, nullptr, __inst, \
+      FWINSTLOGDEFLV(LIBATFRAME_UTILS_NAMESPACE_ID::log::log_wrapper::level_t::LOG_LW_FATAL, {}, __inst, \
                      __VA_ARGS__)
 
 #    define LOG_WRAPPER_FWAPI_FORMAT(...) LIBATFRAME_UTILS_NAMESPACE_ID::log::format(__VA_ARGS__)
@@ -544,38 +544,38 @@ LIBATFRAME_UTILS_NAMESPACE_END
       WDTLOGGETCAT(cat)->log(WDTLOGFILENF(lv, lv_name), ##args);
 
 #  define WCLOGTRACE(...) \
-    WCLOGDEFLV(LIBATFRAME_UTILS_NAMESPACE_ID::log::log_wrapper::level_t::LOG_LW_TRACE, nullptr, __VA_ARGS__)
+    WCLOGDEFLV(LIBATFRAME_UTILS_NAMESPACE_ID::log::log_wrapper::level_t::LOG_LW_TRACE, {}, __VA_ARGS__)
 #  define WCLOGDEBUG(...) \
-    WCLOGDEFLV(LIBATFRAME_UTILS_NAMESPACE_ID::log::log_wrapper::level_t::LOG_LW_DEBUG, nullptr, __VA_ARGS__)
+    WCLOGDEFLV(LIBATFRAME_UTILS_NAMESPACE_ID::log::log_wrapper::level_t::LOG_LW_DEBUG, {}, __VA_ARGS__)
 #  define WCLOGNOTICE(...) \
-    WCLOGDEFLV(LIBATFRAME_UTILS_NAMESPACE_ID::log::log_wrapper::level_t::LOG_LW_NOTICE, nullptr, __VA_ARGS__)
+    WCLOGDEFLV(LIBATFRAME_UTILS_NAMESPACE_ID::log::log_wrapper::level_t::LOG_LW_NOTICE, {}, __VA_ARGS__)
 #  define WCLOGINFO(...) \
-    WCLOGDEFLV(LIBATFRAME_UTILS_NAMESPACE_ID::log::log_wrapper::level_t::LOG_LW_INFO, nullptr, __VA_ARGS__)
+    WCLOGDEFLV(LIBATFRAME_UTILS_NAMESPACE_ID::log::log_wrapper::level_t::LOG_LW_INFO, {}, __VA_ARGS__)
 #  define WCLOGWARNING(...) \
-    WCLOGDEFLV(LIBATFRAME_UTILS_NAMESPACE_ID::log::log_wrapper::level_t::LOG_LW_WARNING, nullptr, __VA_ARGS__)
+    WCLOGDEFLV(LIBATFRAME_UTILS_NAMESPACE_ID::log::log_wrapper::level_t::LOG_LW_WARNING, {}, __VA_ARGS__)
 #  define WCLOGERROR(...) \
-    WCLOGDEFLV(LIBATFRAME_UTILS_NAMESPACE_ID::log::log_wrapper::level_t::LOG_LW_ERROR, nullptr, __VA_ARGS__)
+    WCLOGDEFLV(LIBATFRAME_UTILS_NAMESPACE_ID::log::log_wrapper::level_t::LOG_LW_ERROR, {}, __VA_ARGS__)
 #  define WCLOGFATAL(...) \
-    WCLOGDEFLV(LIBATFRAME_UTILS_NAMESPACE_ID::log::log_wrapper::level_t::LOG_LW_FATAL, nullptr, __VA_ARGS__)
+    WCLOGDEFLV(LIBATFRAME_UTILS_NAMESPACE_ID::log::log_wrapper::level_t::LOG_LW_FATAL, {}, __VA_ARGS__)
 
 /** 对指定log_wrapper的日志输出工具 - snprintf **/
 #  define WINSTLOGDEFLV(lv, lv_name, __inst, args...) \
     if ((__inst).check_level(lv)) (__inst).log(WDTLOGFILENF(lv, lv_name), ##args);
 
 #  define WINSTLOGTRACE(...) \
-    WINSTLOGDEFLV(LIBATFRAME_UTILS_NAMESPACE_ID::log::log_wrapper::level_t::LOG_LW_TRACE, nullptr, __VA_ARGS__)
+    WINSTLOGDEFLV(LIBATFRAME_UTILS_NAMESPACE_ID::log::log_wrapper::level_t::LOG_LW_TRACE, {}, __VA_ARGS__)
 #  define WINSTLOGDEBUG(...) \
-    WINSTLOGDEFLV(LIBATFRAME_UTILS_NAMESPACE_ID::log::log_wrapper::level_t::LOG_LW_DEBUG, nullptr, __VA_ARGS__)
+    WINSTLOGDEFLV(LIBATFRAME_UTILS_NAMESPACE_ID::log::log_wrapper::level_t::LOG_LW_DEBUG, {}, __VA_ARGS__)
 #  define WINSTLOGNOTICE(...) \
-    WINSTLOGDEFLV(LIBATFRAME_UTILS_NAMESPACE_ID::log::log_wrapper::level_t::LOG_LW_NOTICE, nullptr, __VA_ARGS__)
+    WINSTLOGDEFLV(LIBATFRAME_UTILS_NAMESPACE_ID::log::log_wrapper::level_t::LOG_LW_NOTICE, {}, __VA_ARGS__)
 #  define WINSTLOGINFO(...) \
-    WINSTLOGDEFLV(LIBATFRAME_UTILS_NAMESPACE_ID::log::log_wrapper::level_t::LOG_LW_INFO, nullptr, __VA_ARGS__)
+    WINSTLOGDEFLV(LIBATFRAME_UTILS_NAMESPACE_ID::log::log_wrapper::level_t::LOG_LW_INFO, {}, __VA_ARGS__)
 #  define WINSTLOGWARNING(...) \
-    WINSTLOGDEFLV(LIBATFRAME_UTILS_NAMESPACE_ID::log::log_wrapper::level_t::LOG_LW_WARNING, nullptr, __VA_ARGS__)
+    WINSTLOGDEFLV(LIBATFRAME_UTILS_NAMESPACE_ID::log::log_wrapper::level_t::LOG_LW_WARNING, {}, __VA_ARGS__)
 #  define WINSTLOGERROR(...) \
-    WINSTLOGDEFLV(LIBATFRAME_UTILS_NAMESPACE_ID::log::log_wrapper::level_t::LOG_LW_ERROR, nullptr, __VA_ARGS__)
+    WINSTLOGDEFLV(LIBATFRAME_UTILS_NAMESPACE_ID::log::log_wrapper::level_t::LOG_LW_ERROR, {}, __VA_ARGS__)
 #  define WINSTLOGFATAL(...) \
-    WINSTLOGDEFLV(LIBATFRAME_UTILS_NAMESPACE_ID::log::log_wrapper::level_t::LOG_LW_FATAL, nullptr, __VA_ARGS__)
+    WINSTLOGDEFLV(LIBATFRAME_UTILS_NAMESPACE_ID::log::log_wrapper::level_t::LOG_LW_FATAL, {}, __VA_ARGS__)
 
 #  if defined(LOG_WRAPPER_ENABLE_FWAPI) && LOG_WRAPPER_ENABLE_FWAPI
 /** 全局日志输出工具 - std::format **/
@@ -584,19 +584,19 @@ LIBATFRAME_UTILS_NAMESPACE_END
         WDTLOGGETCAT(cat)->format_log(WDTLOGFILENF(lv, lv_name), LOG_WRAPPER_FWAPI_FMT_STRING(FMT), ##args);
 
 #    define FWCLOGTRACE(...) \
-      FWCLOGDEFLV(LIBATFRAME_UTILS_NAMESPACE_ID::log::log_wrapper::level_t::LOG_LW_TRACE, nullptr, __VA_ARGS__)
+      FWCLOGDEFLV(LIBATFRAME_UTILS_NAMESPACE_ID::log::log_wrapper::level_t::LOG_LW_TRACE, {}, __VA_ARGS__)
 #    define FWCLOGDEBUG(...) \
-      FWCLOGDEFLV(LIBATFRAME_UTILS_NAMESPACE_ID::log::log_wrapper::level_t::LOG_LW_DEBUG, nullptr, __VA_ARGS__)
+      FWCLOGDEFLV(LIBATFRAME_UTILS_NAMESPACE_ID::log::log_wrapper::level_t::LOG_LW_DEBUG, {}, __VA_ARGS__)
 #    define FWCLOGNOTICE(...) \
-      FWCLOGDEFLV(LIBATFRAME_UTILS_NAMESPACE_ID::log::log_wrapper::level_t::LOG_LW_NOTICE, nullptr, __VA_ARGS__)
+      FWCLOGDEFLV(LIBATFRAME_UTILS_NAMESPACE_ID::log::log_wrapper::level_t::LOG_LW_NOTICE, {}, __VA_ARGS__)
 #    define FWCLOGINFO(...) \
-      FWCLOGDEFLV(LIBATFRAME_UTILS_NAMESPACE_ID::log::log_wrapper::level_t::LOG_LW_INFO, nullptr, __VA_ARGS__)
+      FWCLOGDEFLV(LIBATFRAME_UTILS_NAMESPACE_ID::log::log_wrapper::level_t::LOG_LW_INFO, {}, __VA_ARGS__)
 #    define FWCLOGWARNING(...) \
-      FWCLOGDEFLV(LIBATFRAME_UTILS_NAMESPACE_ID::log::log_wrapper::level_t::LOG_LW_WARNING, nullptr, __VA_ARGS__)
+      FWCLOGDEFLV(LIBATFRAME_UTILS_NAMESPACE_ID::log::log_wrapper::level_t::LOG_LW_WARNING, {}, __VA_ARGS__)
 #    define FWCLOGERROR(...) \
-      FWCLOGDEFLV(LIBATFRAME_UTILS_NAMESPACE_ID::log::log_wrapper::level_t::LOG_LW_ERROR, nullptr, __VA_ARGS__)
+      FWCLOGDEFLV(LIBATFRAME_UTILS_NAMESPACE_ID::log::log_wrapper::level_t::LOG_LW_ERROR, {}, __VA_ARGS__)
 #    define FWCLOGFATAL(...) \
-      FWCLOGDEFLV(LIBATFRAME_UTILS_NAMESPACE_ID::log::log_wrapper::level_t::LOG_LW_FATAL, nullptr, __VA_ARGS__)
+      FWCLOGDEFLV(LIBATFRAME_UTILS_NAMESPACE_ID::log::log_wrapper::level_t::LOG_LW_FATAL, {}, __VA_ARGS__)
 
 /** 对指定log_wrapper的日志输出工具 - std::format **/
 #    define FWINSTLOGDEFLV(lv, lv_name, __inst, FMT, args...) \
@@ -604,19 +604,19 @@ LIBATFRAME_UTILS_NAMESPACE_END
         (__inst).format_log(WDTLOGFILENF(lv, lv_name), LOG_WRAPPER_FWAPI_FMT_STRING(FMT), ##args);
 
 #    define FWINSTLOGTRACE(...) \
-      FWINSTLOGDEFLV(LIBATFRAME_UTILS_NAMESPACE_ID::log::log_wrapper::level_t::LOG_LW_TRACE, nullptr, __VA_ARGS__)
+      FWINSTLOGDEFLV(LIBATFRAME_UTILS_NAMESPACE_ID::log::log_wrapper::level_t::LOG_LW_TRACE, {}, __VA_ARGS__)
 #    define FWINSTLOGDEBUG(...) \
-      FWINSTLOGDEFLV(LIBATFRAME_UTILS_NAMESPACE_ID::log::log_wrapper::level_t::LOG_LW_DEBUG, nullptr, __VA_ARGS__)
+      FWINSTLOGDEFLV(LIBATFRAME_UTILS_NAMESPACE_ID::log::log_wrapper::level_t::LOG_LW_DEBUG, {}, __VA_ARGS__)
 #    define FWINSTLOGNOTICE(...) \
-      FWINSTLOGDEFLV(LIBATFRAME_UTILS_NAMESPACE_ID::log::log_wrapper::level_t::LOG_LW_NOTICE, nullptr, __VA_ARGS__)
+      FWINSTLOGDEFLV(LIBATFRAME_UTILS_NAMESPACE_ID::log::log_wrapper::level_t::LOG_LW_NOTICE, {}, __VA_ARGS__)
 #    define FWINSTLOGINFO(...) \
-      FWINSTLOGDEFLV(LIBATFRAME_UTILS_NAMESPACE_ID::log::log_wrapper::level_t::LOG_LW_INFO, nullptr, __VA_ARGS__)
+      FWINSTLOGDEFLV(LIBATFRAME_UTILS_NAMESPACE_ID::log::log_wrapper::level_t::LOG_LW_INFO, {}, __VA_ARGS__)
 #    define FWINSTLOGWARNING(...) \
-      FWINSTLOGDEFLV(LIBATFRAME_UTILS_NAMESPACE_ID::log::log_wrapper::level_t::LOG_LW_WARNING, nullptr, __VA_ARGS__)
+      FWINSTLOGDEFLV(LIBATFRAME_UTILS_NAMESPACE_ID::log::log_wrapper::level_t::LOG_LW_WARNING, {}, __VA_ARGS__)
 #    define FWINSTLOGERROR(...) \
-      FWINSTLOGDEFLV(LIBATFRAME_UTILS_NAMESPACE_ID::log::log_wrapper::level_t::LOG_LW_ERROR, nullptr, __VA_ARGS__)
+      FWINSTLOGDEFLV(LIBATFRAME_UTILS_NAMESPACE_ID::log::log_wrapper::level_t::LOG_LW_ERROR, {}, __VA_ARGS__)
 #    define FWINSTLOGFATAL(...) \
-      FWINSTLOGDEFLV(LIBATFRAME_UTILS_NAMESPACE_ID::log::log_wrapper::level_t::LOG_LW_FATAL, nullptr, __VA_ARGS__)
+      FWINSTLOGDEFLV(LIBATFRAME_UTILS_NAMESPACE_ID::log::log_wrapper::level_t::LOG_LW_FATAL, {}, __VA_ARGS__)
 
 #    define LOG_WRAPPER_FWAPI_FORMAT(FMT, args...) \
       LIBATFRAME_UTILS_NAMESPACE_ID::log::format(LOG_WRAPPER_FWAPI_FMT_STRING(FMT), ##args)

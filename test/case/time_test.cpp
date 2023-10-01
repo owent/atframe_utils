@@ -735,3 +735,49 @@ CASE_TEST(time_test, jiffies_timer_keep_order) {
   short_timer.tick(timeout_tick);
   CASE_EXPECT_EQ(0, static_cast<int>(short_timer.size()));
 }
+
+using default_timer_t = LIBATFRAME_UTILS_NAMESPACE_ID::time::jiffies_timer<6, 3, 8>;
+struct jiffies_default_timer_keep_order_fn {
+  jiffies_default_timer_keep_order_fn() {}
+
+  void operator()(time_t, const default_timer_t::timer_t &timer) {
+    auto sequence = default_timer_t::get_timer_sequence(timer);
+    default_timer_t *owner = reinterpret_cast<default_timer_t *>(default_timer_t::get_timer_private_data(timer));
+    uint32_t *check_order = reinterpret_cast<uint32_t *>(owner->get_private_data());
+    CASE_MSG_INFO() << "jiffies_timer " << sequence << " add timer in callback" << std::endl;
+
+    CASE_EXPECT_GT(sequence, *check_order);
+    *check_order = sequence;
+  }
+};
+
+CASE_TEST(time_test, reinsert_lower_wheel) {
+  default_timer_t test_timer;
+  uint32_t check_order = 0;
+  test_timer.set_private_data(reinterpret_cast<void *>(&check_order));
+
+  CASE_EXPECT_EQ(default_timer_t::error_type_t::EN_JTET_SUCCESS, test_timer.init(16959102784));
+
+  default_timer_t::timer_wptr_t timer_holer1;
+  CASE_EXPECT_EQ(default_timer_t::error_type_t::EN_JTET_SUCCESS,
+                 test_timer.add_timer(16959103301 - test_timer.get_last_tick(), jiffies_default_timer_keep_order_fn(),
+                                      &test_timer, &timer_holer1));
+  size_t wheel_idx1 = default_timer_t::get_timer_wheel_index(*timer_holer1.lock());
+  CASE_EXPECT_EQ(wheel_idx1, 133);
+
+  default_timer_t::timer_wptr_t timer_holer2;
+  CASE_EXPECT_EQ(default_timer_t::error_type_t::EN_JTET_SUCCESS,
+                 test_timer.add_timer(16959107395 - test_timer.get_last_tick(), jiffies_default_timer_keep_order_fn(),
+                                      &test_timer, &timer_holer2));
+
+  size_t wheel_idx2 = default_timer_t::get_timer_wheel_index(*timer_holer2.lock());
+  CASE_EXPECT_EQ(wheel_idx2, 248);
+
+  test_timer.tick(16959103300);
+  test_timer.insert_timer(timer_holer2.lock());
+
+  test_timer.tick(16959103301);
+
+  wheel_idx2 = default_timer_t::get_timer_wheel_index(*timer_holer2.lock());
+  CASE_EXPECT_EQ(wheel_idx2, 133);
+}

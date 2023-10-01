@@ -283,6 +283,17 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY jiffies_timer {
               continue;
             }
 
+            // 如果手动执行 insert_timer 把定时器从高阶移动到低阶，可能导致定时器未过期但被插入。
+            // 此时直接跳过即可，否则会陷入插入定时器死循环。
+            // 由于定时器总是按顺序插入，这里碰到第一个未过期定时器，那么后面的一定都未过期。
+            if (timer_ptr->timeout > last_tick_) {
+              // 定时器从高阶移动到低阶是允许的，手动执行 insert_timer 时会出现要插入的目标和当前相同的情况
+              size_t idx = calc_wheel_index(timer_ptr->timeout, last_tick_);
+              if (idx < WHEEL_SIZE && timer_list[list_sz] == &timer_base_[idx]) {
+                break;
+              }
+            }
+
             remove_timer(*timer_ptr);
 
             if (timer_ptr->timeout > last_tick_) {

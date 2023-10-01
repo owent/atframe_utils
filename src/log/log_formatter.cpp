@@ -37,28 +37,31 @@ static const char *log_formatter_get_level_name(int l) {
 
 LIBATFRAME_UTILS_API log_formatter::caller_info_t::caller_info_t()
     : level_id(level_t::LOG_LW_DISABLED),
-      level_name(nullptr),
-      file_path(nullptr),
+      level_name{},
+      file_path{},
       line_number(0),
-      func_name(nullptr),
+      func_name{},
       rotate_index(0) {
-  if (nullptr == level_name) {
-    level_name = detail::log_formatter_get_level_name(level_id);
-  }
-}
-LIBATFRAME_UTILS_API log_formatter::caller_info_t::caller_info_t(level_t::type lid, const char *lname,
-                                                                 const char *fpath, uint32_t lnum, const char *fnname)
-    : level_id(lid), level_name(lname), file_path(fpath), line_number(lnum), func_name(fnname), rotate_index(0) {
-  if (nullptr == level_name) {
+  if (level_name.empty()) {
     level_name = detail::log_formatter_get_level_name(level_id);
   }
 }
 
-LIBATFRAME_UTILS_API log_formatter::caller_info_t::caller_info_t(level_t::type lid, const char *lname,
-                                                                 const char *fpath, uint32_t lnum, const char *fnname,
+LIBATFRAME_UTILS_API log_formatter::caller_info_t::~caller_info_t() {}
+
+LIBATFRAME_UTILS_API log_formatter::caller_info_t::caller_info_t(level_t::type lid, gsl::string_view lname,
+                                                                 gsl::string_view fpath, uint32_t lnum, gsl::string_view fnname)
+    : level_id(lid), level_name(lname), file_path(fpath), line_number(lnum), func_name(fnname), rotate_index(0) {
+  if (level_name.empty()) {
+    level_name = detail::log_formatter_get_level_name(level_id);
+  }
+}
+
+LIBATFRAME_UTILS_API log_formatter::caller_info_t::caller_info_t(level_t::type lid, gsl::string_view lname,
+                                                                 gsl::string_view fpath, uint32_t lnum, gsl::string_view fnname,
                                                                  uint32_t ridx)
     : level_id(lid), level_name(lname), file_path(fpath), line_number(lnum), func_name(fnname), rotate_index(ridx) {
-  if (nullptr == level_name) {
+  if (level_name.empty()) {
     level_name = detail::log_formatter_get_level_name(level_id);
   }
 }
@@ -302,12 +305,19 @@ LIBATFRAME_UTILS_API size_t log_formatter::format(char *buff, size_t bufz, const
 
       // =================== caller data ===================
       case 'L': {
-        if (nullptr != caller.level_name) {
-          int res = UTIL_STRFUNC_SNPRINTF(&buff[ret], bufz - ret, "%8s", caller.level_name);
-          if (res < 0) {
+        if (!caller.level_name.empty()) {
+          size_t write_size = 8;
+          if (caller.level_name.size() < write_size) {
+            write_size = caller.level_name.size();
+          }
+          if (bufz - ret <= 8) {
             running = false;
           } else {
-            ret += static_cast<size_t>(res);
+            memcpy(&buff[ret], caller.level_name.data(), write_size);
+            for (size_t j = write_size; j < 8; ++ j) {
+              buff[ret + j] = ' ';
+            }
+            ret += 8;
           }
         }
         break;
@@ -322,45 +332,46 @@ LIBATFRAME_UTILS_API size_t log_formatter::format(char *buff, size_t bufz, const
         break;
       }
       case 's': {
-        if (nullptr != caller.file_path) {
-          const char *file_path = caller.file_path;
+        if (!caller.file_path.empty()) {
+          gsl::string_view file_path = caller.file_path;
+          size_t strip_position = 0;
           if (!project_dir_.empty()) {
-            for (size_t j = 0; j < project_dir_.size(); ++j) {
-              if (file_path && *file_path && project_dir_[j] == *file_path) {
-                ++file_path;
+            for (size_t j = 0; j < project_dir_.size() && j < file_path.size(); ++j) {
+              if (project_dir_[j] == file_path[j]) {
+                strip_position = j + 1;
               } else {
-                file_path = caller.file_path;
                 break;
               }
             }
 
-            if (file_path != caller.file_path && ret < bufz - 1) {
+            if (strip_position > 0) {
+              file_path = file_path.substr(strip_position);
               buff[ret++] = '~';
             }
           }
 
-          int res = UTIL_STRFUNC_SNPRINTF(&buff[ret], bufz - ret, "%s", file_path);
-          if (res < 0) {
+          if (bufz - ret <= file_path.size()) {
             running = false;
           } else {
-            ret += static_cast<size_t>(res);
+            memcpy(&buff[ret], file_path.data(), file_path.size());
+            ret += file_path.size();
           }
         }
         break;
       }
       case 'k': {
-        if (nullptr != caller.file_path) {
-          const char *file_name = caller.file_path;
-          for (const char *dir_split = caller.file_path; *dir_split; ++dir_split) {
-            if ('/' == *dir_split || '\\' == *dir_split) {
-              file_name = dir_split + 1;
+        if (!caller.file_path.empty()) {
+          gsl::string_view file_name = caller.file_path;
+          for (size_t j = 0; j < caller.file_path.size(); ++ j) {
+            if ('/' == caller.file_path[j] || '\\' == caller.file_path[j]) {
+              file_name = caller.file_path.substr(j + 1);
             }
           }
-          int res = UTIL_STRFUNC_SNPRINTF(&buff[ret], bufz - ret, "%s", file_name);
-          if (res < 0) {
+          if (bufz - ret <= file_name.size()) {
             running = false;
           } else {
-            ret += static_cast<size_t>(res);
+            memcpy(&buff[ret], file_name.data(), file_name.size());
+            ret += file_name.size();
           }
         }
         break;
@@ -375,12 +386,12 @@ LIBATFRAME_UTILS_API size_t log_formatter::format(char *buff, size_t bufz, const
         break;
       }
       case 'C': {
-        if (nullptr != caller.func_name) {
-          int res = UTIL_STRFUNC_SNPRINTF(&buff[ret], bufz - ret, "%s", caller.func_name);
-          if (res < 0) {
+        if (!caller.func_name.empty()) {
+          if (bufz - ret <= caller.func_name.size()) {
             running = false;
           } else {
-            ret += static_cast<size_t>(res);
+            memcpy(&buff[ret], caller.func_name.data(), caller.func_name.size());
+            ret += caller.func_name.size();
           }
         }
         break;
@@ -444,13 +455,13 @@ LIBATFRAME_UTILS_API void log_formatter::set_project_directory(const char *dirbu
   }
 }
 
-LIBATFRAME_UTILS_API log_formatter::level_t::type log_formatter::get_level_by_name(const char *name) {
-  if (nullptr == name) {
+LIBATFRAME_UTILS_API log_formatter::level_t::type log_formatter::get_level_by_name(gsl::string_view name) {
+  if (name.empty()) {
     return level_t::LOG_LW_DEBUG;
   }
 
   // number, directly convert it
-  if (name && (name[0] == '\\' || (name[0] >= '0' && name[0] <= '9'))) {
+  if (name[0] == '\\' || (name[0] >= '0' && name[0] <= '9')) {
     int l = LIBATFRAME_UTILS_NAMESPACE_ID::string::to_int<int>(name);
     if (l >= 0 && l <= level_t::LOG_LW_DEBUG) {
       return static_cast<level_t::type>(l);
@@ -461,35 +472,35 @@ LIBATFRAME_UTILS_API log_formatter::level_t::type log_formatter::get_level_by_na
 
   // name and convert into level
 
-  if (0 == UTIL_STRFUNC_STRNCASE_CMP("disable", name, 7)) {
+  if (0 == UTIL_STRFUNC_STRNCASE_CMP("disable", name.data(), name.size())) {
     return level_t::LOG_LW_DISABLED;
   }
 
-  if (0 == UTIL_STRFUNC_STRNCASE_CMP("fatal", name, 5)) {
+  if (0 == UTIL_STRFUNC_STRNCASE_CMP("fatal", name.data(), name.size())) {
     return level_t::LOG_LW_FATAL;
   }
 
-  if (0 == UTIL_STRFUNC_STRNCASE_CMP("error", name, 5)) {
+  if (0 == UTIL_STRFUNC_STRNCASE_CMP("error", name.data(), name.size())) {
     return level_t::LOG_LW_ERROR;
   }
 
-  if (0 == UTIL_STRFUNC_STRNCASE_CMP("warn", name, 4)) {
+  if (0 == UTIL_STRFUNC_STRNCASE_CMP("warn", name.data(), name.size())) {
     return level_t::LOG_LW_WARNING;
   }
 
-  if (0 == UTIL_STRFUNC_STRNCASE_CMP("info", name, 4)) {
+  if (0 == UTIL_STRFUNC_STRNCASE_CMP("info", name.data(), name.size())) {
     return level_t::LOG_LW_INFO;
   }
 
-  if (0 == UTIL_STRFUNC_STRNCASE_CMP("notice", name, 6)) {
+  if (0 == UTIL_STRFUNC_STRNCASE_CMP("notice", name.data(), name.size())) {
     return level_t::LOG_LW_NOTICE;
   }
 
-  if (0 == UTIL_STRFUNC_STRNCASE_CMP("debug", name, 5)) {
+  if (0 == UTIL_STRFUNC_STRNCASE_CMP("debug", name.data(), name.size())) {
     return level_t::LOG_LW_DEBUG;
   }
 
-  if (0 == UTIL_STRFUNC_STRNCASE_CMP("trace", name, 5)) {
+  if (0 == UTIL_STRFUNC_STRNCASE_CMP("trace", name.data(), name.size())) {
     return level_t::LOG_LW_TRACE;
   }
 
