@@ -6,8 +6,8 @@
 
 #include <config/atframe_utils_build_feature.h>
 
-#include <nostd/string_view.h>
 #include <gsl/select-gsl.h>
+#include <nostd/string_view.h>
 
 #include <inttypes.h>
 #include <stdint.h>
@@ -189,7 +189,7 @@ class log_formatter {
     };
   };
 
-  struct LIBATFRAME_UTILS_API caller_info_t {
+  struct UTIL_SYMBOL_VISIBLE caller_info_t {
     level_t::type level_id;
     gsl::string_view level_name;
     gsl::string_view file_path;
@@ -197,11 +197,23 @@ class log_formatter {
     gsl::string_view func_name;
     uint32_t rotate_index;
 
-    caller_info_t();
-    ~caller_info_t();
-    caller_info_t(level_t::type lid, gsl::string_view lname, gsl::string_view fpath, uint32_t lnum, gsl::string_view fnname);
-    caller_info_t(level_t::type lid, gsl::string_view lname, gsl::string_view fpath, uint32_t lnum, gsl::string_view fnname,
-                  uint32_t ridx);
+    inline caller_info_t()
+        : level_id(level_t::LOG_LW_DISABLED), level_name{}, file_path{}, line_number(0), func_name{}, rotate_index(0) {}
+
+    inline ~caller_info_t() {}
+
+    inline caller_info_t(level_t::type lid, gsl::string_view lname, gsl::string_view fpath, uint32_t lnum,
+                         gsl::string_view fnname)
+        : level_id(lid), level_name(lname), file_path(fpath), line_number(lnum), func_name(fnname), rotate_index(0) {}
+
+    inline caller_info_t(level_t::type lid, gsl::string_view lname, gsl::string_view fpath, uint32_t lnum,
+                         gsl::string_view fnname, uint32_t ridx)
+        : level_id(lid),
+          level_name(lname),
+          file_path(fpath),
+          line_number(lnum),
+          func_name(fnname),
+          rotate_index(ridx) {}
   };
 
  public:

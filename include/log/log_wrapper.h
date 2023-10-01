@@ -27,7 +27,12 @@ namespace log {
 #if defined(LOG_WRAPPER_ENABLE_FWAPI) && LOG_WRAPPER_ENABLE_FWAPI
 template <class TCONTEXT = LOG_WRAPPER_FWAPI_NAMESPACE format_context, class... TARGS>
 LIBATFRAME_UTILS_API_HEAD_ONLY auto make_format_args(TARGS &&...args) {
+#  if defined(LIBATFRAME_UTILS_ENABLE_FMTLIB) && LIBATFRAME_UTILS_ENABLE_FMTLIB && defined(FMT_VERSION) && \
+      FMT_VERSION >= 100000
+  return LOG_WRAPPER_FWAPI_NAMESPACE make_format_args<TCONTEXT>(args...);
+#  else
   return LOG_WRAPPER_FWAPI_NAMESPACE make_format_args<TCONTEXT>(std::forward<TARGS>(args)...);
+#  endif
 }
 
 #  ifdef LOG_WRAPPER_FWAPI_USING_FORMAT_STRING
@@ -47,7 +52,13 @@ LIBATFRAME_UTILS_API_HEAD_ONLY std::string format(TFMT &&fmt_text, TARGS &&...ar
   return LOG_WRAPPER_FWAPI_NAMESPACE format(std::forward<TFMT>(fmt_text), std::forward<TARGS>(args)...);
 #  else
 return LOG_WRAPPER_FWAPI_NAMESPACE vformat(std::forward<TFMT>(fmt_text),
-                                           LOG_WRAPPER_FWAPI_NAMESPACE make_format_args(std::forward<TARGS>(args)...));
+#    if defined(LIBATFRAME_UTILS_ENABLE_FMTLIB) && LIBATFRAME_UTILS_ENABLE_FMTLIB && defined(FMT_VERSION) && \
+        FMT_VERSION >= 100000
+                                           LOG_WRAPPER_FWAPI_NAMESPACE make_format_args(args...)
+#    else
+                                           LOG_WRAPPER_FWAPI_NAMESPACE make_format_args(std::forward<TARGS>(args)...)
+#    endif
+);
 #  endif
 #  if defined(LIBATFRAME_UTILS_ENABLE_EXCEPTION) && LIBATFRAME_UTILS_ENABLE_EXCEPTION
   } catch (const LOG_WRAPPER_FWAPI_NAMESPACE format_error &e) {
@@ -76,8 +87,15 @@ LIBATFRAME_UTILS_API_HEAD_ONLY auto format_to(OutputIt out, TFMT &&fmt_text, TAR
 #  elif defined(LIBATFRAME_UTILS_ENABLE_FORWARD_FMTTEXT) && LIBATFRAME_UTILS_ENABLE_FORWARD_FMTTEXT
   return LOG_WRAPPER_FWAPI_NAMESPACE format_to(out, std::forward<TFMT>(fmt_text), std::forward<TARGS>(args)...);
 #  else
-return LOG_WRAPPER_FWAPI_NAMESPACE vformat_to(
-    out, std::forward<TFMT>(fmt_text), LOG_WRAPPER_FWAPI_NAMESPACE make_format_args(std::forward<TARGS>(args)...));
+return LOG_WRAPPER_FWAPI_NAMESPACE vformat_to(out, std::forward<TFMT>(fmt_text),
+#    if defined(LIBATFRAME_UTILS_ENABLE_FMTLIB) && LIBATFRAME_UTILS_ENABLE_FMTLIB && defined(FMT_VERSION) && \
+        FMT_VERSION >= 100000
+                                              LOG_WRAPPER_FWAPI_NAMESPACE make_format_args(args...)
+#    else
+                                               LOG_WRAPPER_FWAPI_NAMESPACE make_format_args(
+                                                   std::forward<TARGS>(args)...)
+#    endif
+);
 #  endif
 #  if defined(LIBATFRAME_UTILS_ENABLE_EXCEPTION) && LIBATFRAME_UTILS_ENABLE_EXCEPTION
   } catch (const LOG_WRAPPER_FWAPI_NAMESPACE format_error &e) {
@@ -122,7 +140,13 @@ LIBATFRAME_UTILS_API_HEAD_ONLY LOG_WRAPPER_FWAPI_NAMESPACE format_to_n_result<Ou
 #  ifdef LOG_WRAPPER_FWAPI_USING_FORMAT_STRING
     return LOG_WRAPPER_FWAPI_NAMESPACE vformat_to_n(
         out, static_cast<typename details::truncating_iterator<OutputIt>::size_type>(n), std::forward<TFMT>(fmt_text),
-        LOG_WRAPPER_FWAPI_NAMESPACE make_format_args(std::forward<TARGS>(args)...));
+#    if defined(LIBATFRAME_UTILS_ENABLE_FMTLIB) && LIBATFRAME_UTILS_ENABLE_FMTLIB && defined(FMT_VERSION) && \
+        FMT_VERSION >= 100000
+        LOG_WRAPPER_FWAPI_NAMESPACE make_format_args(args...)
+#    else
+        LOG_WRAPPER_FWAPI_NAMESPACE make_format_args(std::forward<TARGS>(args)...)
+#    endif
+    );
 #  elif defined(LIBATFRAME_UTILS_ENABLE_FORWARD_FMTTEXT) && LIBATFRAME_UTILS_ENABLE_FORWARD_FMTTEXT
   return LOG_WRAPPER_FWAPI_NAMESPACE format_to_n(
       out, static_cast<typename details::truncating_iterator<OutputIt>::size_type>(n), std::forward<TFMT>(fmt_text),
@@ -130,7 +154,13 @@ LIBATFRAME_UTILS_API_HEAD_ONLY LOG_WRAPPER_FWAPI_NAMESPACE format_to_n_result<Ou
 #  else
   typename details::truncating_iterator<OutputIt> buf(std::move(out), n);
   LOG_WRAPPER_FWAPI_NAMESPACE vformat_to(std::back_inserter(buf), std::forward<TFMT>(fmt_text),
-                                         LOG_WRAPPER_FWAPI_NAMESPACE make_format_args(std::forward<TARGS>(args)...));
+#    if defined(LIBATFRAME_UTILS_ENABLE_FMTLIB) && LIBATFRAME_UTILS_ENABLE_FMTLIB && defined(FMT_VERSION) && \
+        FMT_VERSION >= 100000
+                                         LOG_WRAPPER_FWAPI_NAMESPACE make_format_args(args...)
+#    else
+                                         LOG_WRAPPER_FWAPI_NAMESPACE make_format_args(std::forward<TARGS>(args)...)
+#    endif
+  );
   LOG_WRAPPER_FWAPI_NAMESPACE format_to_n_result<OutputIt> ret;
   ret.out = buf.base();
   ret.size = static_cast<decltype(ret.size)>(buf.count());
@@ -297,10 +327,17 @@ class log_wrapper {
 #  endif
         LOG_WRAPPER_FWAPI_NAMESPACE format_to_n_result<char *> result =
 #  ifdef LOG_WRAPPER_FWAPI_USING_FORMAT_STRING
-            LOG_WRAPPER_FWAPI_NAMESPACE vformat_to_n<char *>(
-                writer.buffer + writer.writen_size, writer.total_size - writer.writen_size - 1,
-                std::forward<FMT>(fmt_text),
-                LOG_WRAPPER_FWAPI_NAMESPACE make_format_args(std::forward<TARGS>(args)...));
+            LOG_WRAPPER_FWAPI_NAMESPACE vformat_to_n<char *>(writer.buffer + writer.writen_size,
+                                                             writer.total_size - writer.writen_size - 1,
+                                                             std::forward<FMT>(fmt_text),
+#    if defined(LIBATFRAME_UTILS_ENABLE_FMTLIB) && LIBATFRAME_UTILS_ENABLE_FMTLIB && defined(FMT_VERSION) && \
+        FMT_VERSION >= 100000
+                                                             LOG_WRAPPER_FWAPI_NAMESPACE make_format_args(args...)
+#    else
+                                                             LOG_WRAPPER_FWAPI_NAMESPACE make_format_args(
+                                                                 std::forward<TARGS>(args)...)
+#    endif
+            );
 #  else
           util::log::format_to_n<char *>(writer.buffer + writer.writen_size, writer.total_size - writer.writen_size - 1,
                                          std::forward<TARGS>(args)...);
@@ -473,9 +510,8 @@ LIBATFRAME_UTILS_NAMESPACE_END
     WINSTLOGDEFLV(LIBATFRAME_UTILS_NAMESPACE_ID::log::log_wrapper::level_t::LOG_LW_NOTICE, {}, __inst, __VA_ARGS__)
 #  define WINSTLOGINFO(__inst, ...) \
     WINSTLOGDEFLV(LIBATFRAME_UTILS_NAMESPACE_ID::log::log_wrapper::level_t::LOG_LW_INFO, {}, __inst, __VA_ARGS__)
-#  define WINSTLOGWARNING(__inst, ...)                                                                       \
-    WINSTLOGDEFLV(LIBATFRAME_UTILS_NAMESPACE_ID::log::log_wrapper::level_t::LOG_LW_WARNING, {}, __inst, \
-                  __VA_ARGS__)
+#  define WINSTLOGWARNING(__inst, ...) \
+    WINSTLOGDEFLV(LIBATFRAME_UTILS_NAMESPACE_ID::log::log_wrapper::level_t::LOG_LW_WARNING, {}, __inst, __VA_ARGS__)
 #  define WINSTLOGERROR(__inst, ...) \
     WINSTLOGDEFLV(LIBATFRAME_UTILS_NAMESPACE_ID::log::log_wrapper::level_t::LOG_LW_ERROR, {}, __inst, __VA_ARGS__)
 #  define WINSTLOGFATAL(__inst, ...) \
@@ -506,27 +542,20 @@ LIBATFRAME_UTILS_NAMESPACE_END
 #    define FWINSTLOGDEFLV(lv, lv_name, __inst, ...) \
       if ((__inst).check_level(lv)) (__inst).format_log(WDTLOGFILENF(lv, lv_name), __VA_ARGS__);
 
-#    define FWINSTLOGTRACE(__inst, ...)                                                                       \
-      FWINSTLOGDEFLV(LIBATFRAME_UTILS_NAMESPACE_ID::log::log_wrapper::level_t::LOG_LW_TRACE, {}, __inst, \
-                     __VA_ARGS__)
-#    define FWINSTLOGDEBUG(__inst, ...)                                                                       \
-      FWINSTLOGDEFLV(LIBATFRAME_UTILS_NAMESPACE_ID::log::log_wrapper::level_t::LOG_LW_DEBUG, {}, __inst, \
-                     __VA_ARGS__)
-#    define FWINSTLOGNOTICE(__inst, ...)                                                                       \
-      FWINSTLOGDEFLV(LIBATFRAME_UTILS_NAMESPACE_ID::log::log_wrapper::level_t::LOG_LW_NOTICE, {}, __inst, \
-                     __VA_ARGS__)
-#    define FWINSTLOGINFO(__inst, ...)                                                                       \
-      FWINSTLOGDEFLV(LIBATFRAME_UTILS_NAMESPACE_ID::log::log_wrapper::level_t::LOG_LW_INFO, {}, __inst, \
-                     __VA_ARGS__)
-#    define FWINSTLOGWARNING(__inst, ...)                                                                       \
-      FWINSTLOGDEFLV(LIBATFRAME_UTILS_NAMESPACE_ID::log::log_wrapper::level_t::LOG_LW_WARNING, {}, __inst, \
-                     __VA_ARGS__)
-#    define FWINSTLOGERROR(__inst, ...)                                                                       \
-      FWINSTLOGDEFLV(LIBATFRAME_UTILS_NAMESPACE_ID::log::log_wrapper::level_t::LOG_LW_ERROR, {}, __inst, \
-                     __VA_ARGS__)
-#    define FWINSTLOGFATAL(__inst, ...)                                                                       \
-      FWINSTLOGDEFLV(LIBATFRAME_UTILS_NAMESPACE_ID::log::log_wrapper::level_t::LOG_LW_FATAL, {}, __inst, \
-                     __VA_ARGS__)
+#    define FWINSTLOGTRACE(__inst, ...) \
+      FWINSTLOGDEFLV(LIBATFRAME_UTILS_NAMESPACE_ID::log::log_wrapper::level_t::LOG_LW_TRACE, {}, __inst, __VA_ARGS__)
+#    define FWINSTLOGDEBUG(__inst, ...) \
+      FWINSTLOGDEFLV(LIBATFRAME_UTILS_NAMESPACE_ID::log::log_wrapper::level_t::LOG_LW_DEBUG, {}, __inst, __VA_ARGS__)
+#    define FWINSTLOGNOTICE(__inst, ...) \
+      FWINSTLOGDEFLV(LIBATFRAME_UTILS_NAMESPACE_ID::log::log_wrapper::level_t::LOG_LW_NOTICE, {}, __inst, __VA_ARGS__)
+#    define FWINSTLOGINFO(__inst, ...) \
+      FWINSTLOGDEFLV(LIBATFRAME_UTILS_NAMESPACE_ID::log::log_wrapper::level_t::LOG_LW_INFO, {}, __inst, __VA_ARGS__)
+#    define FWINSTLOGWARNING(__inst, ...) \
+      FWINSTLOGDEFLV(LIBATFRAME_UTILS_NAMESPACE_ID::log::log_wrapper::level_t::LOG_LW_WARNING, {}, __inst, __VA_ARGS__)
+#    define FWINSTLOGERROR(__inst, ...) \
+      FWINSTLOGDEFLV(LIBATFRAME_UTILS_NAMESPACE_ID::log::log_wrapper::level_t::LOG_LW_ERROR, {}, __inst, __VA_ARGS__)
+#    define FWINSTLOGFATAL(__inst, ...) \
+      FWINSTLOGDEFLV(LIBATFRAME_UTILS_NAMESPACE_ID::log::log_wrapper::level_t::LOG_LW_FATAL, {}, __inst, __VA_ARGS__)
 
 #    define LOG_WRAPPER_FWAPI_FORMAT(...) LIBATFRAME_UTILS_NAMESPACE_ID::log::format(__VA_ARGS__)
 #    define LOG_WRAPPER_FWAPI_FORMAT_TO(...) LIBATFRAME_UTILS_NAMESPACE_ID::log::format_to(__VA_ARGS__)

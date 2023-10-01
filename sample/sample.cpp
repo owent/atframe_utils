@@ -52,7 +52,7 @@ namespace LOG_WRAPPER_FWAPI_NAMESPACE_ID {
 template <class CharT>
 struct formatter<test_auto_enum_conversation_for_log_formatter::type, CharT> : formatter<CharT *, CharT> {
   template <class FormatContext>
-  auto format(const test_auto_enum_conversation_for_log_formatter::type &obj, FormatContext &ctx) {
+  auto format(const test_auto_enum_conversation_for_log_formatter::type &obj, FormatContext &&ctx) {
     auto ret = ctx.out();
     switch (obj) {
       case test_auto_enum_conversation_for_log_formatter::EN_TAECFLF_NONE:
@@ -322,48 +322,52 @@ void log_sample_func7() {
   std::cout << "format_to_n: " << string_buffer << std::endl;
   memset(string_buffer, 0, sizeof(string_buffer));
 
+  int integer_1 = 1;
+  int integer_2 = 2;
+  int integer_3 = 3;
 #    if defined(LIBATFRAME_UTILS_ENABLE_STD_FORMAT) && LIBATFRAME_UTILS_ENABLE_STD_FORMAT
   std::cout << "vformat: "
             << LIBATFRAME_UTILS_NAMESPACE_ID::log::vformat(
-                   "{},{},{},{}", LIBATFRAME_UTILS_NAMESPACE_ID::log::make_format_args(1, 2, 3))
+                   "{},{},{},{}", LIBATFRAME_UTILS_NAMESPACE_ID::log::make_format_args(integer_1, integer_2, integer_3))
             << std::endl;
 #    endif
   std::cout << "vformat: "
-            << LIBATFRAME_UTILS_NAMESPACE_ID::log::vformat("{},{}",
-                                                           LIBATFRAME_UTILS_NAMESPACE_ID::log::make_format_args(1, te1))
+            << LIBATFRAME_UTILS_NAMESPACE_ID::log::vformat(
+                   "{},{}", LIBATFRAME_UTILS_NAMESPACE_ID::log::make_format_args(integer_1, te1))
             << std::endl;
   std::cout << "vformat: "
-            << LIBATFRAME_UTILS_NAMESPACE_ID::log::vformat("{},{}",
-                                                           LIBATFRAME_UTILS_NAMESPACE_ID::log::make_format_args(1, te2))
+            << LIBATFRAME_UTILS_NAMESPACE_ID::log::vformat(
+                   "{},{}", LIBATFRAME_UTILS_NAMESPACE_ID::log::make_format_args(integer_1, te2))
             << std::endl;
 
 #    if defined(LIBATFRAME_UTILS_ENABLE_STD_FORMAT) && LIBATFRAME_UTILS_ENABLE_STD_FORMAT
-  LIBATFRAME_UTILS_NAMESPACE_ID::log::vformat_to(string_buffer, "{},{},{},{}",
-                                                 LIBATFRAME_UTILS_NAMESPACE_ID::log::make_format_args(1, 2, 3));
+  LIBATFRAME_UTILS_NAMESPACE_ID::log::vformat_to(
+      string_buffer, "{},{},{},{}",
+      LIBATFRAME_UTILS_NAMESPACE_ID::log::make_format_args(integer_1, integer_2, integer_3));
   std::cout << "vformat_to: " << string_buffer << std::endl;
   memset(string_buffer, 0, sizeof(string_buffer));
 
   LIBATFRAME_UTILS_NAMESPACE_ID::log::vformat_to(string_buffer, "{},{}",
-                                                 LIBATFRAME_UTILS_NAMESPACE_ID::log::make_format_args(1, te1));
+                                                 LIBATFRAME_UTILS_NAMESPACE_ID::log::make_format_args(integer_1, te1));
   std::cout << "vformat_to: " << string_buffer << std::endl;
   memset(string_buffer, 0, sizeof(string_buffer));
 
   LIBATFRAME_UTILS_NAMESPACE_ID::log::vformat_to(string_buffer, "{},{}",
-                                                 LIBATFRAME_UTILS_NAMESPACE_ID::log::make_format_args(1, te2));
+                                                 LIBATFRAME_UTILS_NAMESPACE_ID::log::make_format_args(integer_1, te2));
   std::cout << "vformat_to: " << string_buffer << std::endl;
 #    else
-  LIBATFRAME_UTILS_NAMESPACE_ID::log::vformat_to(string_buffer, "{},{},{}",
-                                                 LIBATFRAME_UTILS_NAMESPACE_ID::log::make_format_args(1, 2, 3));
+  LIBATFRAME_UTILS_NAMESPACE_ID::log::vformat_to(
+      string_buffer, "{},{},{}", LIBATFRAME_UTILS_NAMESPACE_ID::log::make_format_args(integer_1, integer_2, integer_3));
   std::cout << "vformat_to: " << string_buffer << std::endl;
   memset(string_buffer, 0, sizeof(string_buffer));
 
   LIBATFRAME_UTILS_NAMESPACE_ID::log::vformat_to(string_buffer, "{},{}",
-                                                 LIBATFRAME_UTILS_NAMESPACE_ID::log::make_format_args(1, te1));
+                                                 LIBATFRAME_UTILS_NAMESPACE_ID::log::make_format_args(integer_1, te1));
   std::cout << "vformat_to: " << string_buffer << std::endl;
   memset(string_buffer, 0, sizeof(string_buffer));
 
   LIBATFRAME_UTILS_NAMESPACE_ID::log::vformat_to(string_buffer, "{},{}",
-                                                 LIBATFRAME_UTILS_NAMESPACE_ID::log::make_format_args(1, te2));
+                                                 LIBATFRAME_UTILS_NAMESPACE_ID::log::make_format_args(integer_1, te2));
   std::cout << "vformat_to: " << string_buffer << std::endl;
 #    endif
 }

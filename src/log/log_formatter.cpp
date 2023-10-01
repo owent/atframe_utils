@@ -35,37 +35,6 @@ static const char *log_formatter_get_level_name(int l) {
 }
 }  // namespace detail
 
-LIBATFRAME_UTILS_API log_formatter::caller_info_t::caller_info_t()
-    : level_id(level_t::LOG_LW_DISABLED),
-      level_name{},
-      file_path{},
-      line_number(0),
-      func_name{},
-      rotate_index(0) {
-  if (level_name.empty()) {
-    level_name = detail::log_formatter_get_level_name(level_id);
-  }
-}
-
-LIBATFRAME_UTILS_API log_formatter::caller_info_t::~caller_info_t() {}
-
-LIBATFRAME_UTILS_API log_formatter::caller_info_t::caller_info_t(level_t::type lid, gsl::string_view lname,
-                                                                 gsl::string_view fpath, uint32_t lnum, gsl::string_view fnname)
-    : level_id(lid), level_name(lname), file_path(fpath), line_number(lnum), func_name(fnname), rotate_index(0) {
-  if (level_name.empty()) {
-    level_name = detail::log_formatter_get_level_name(level_id);
-  }
-}
-
-LIBATFRAME_UTILS_API log_formatter::caller_info_t::caller_info_t(level_t::type lid, gsl::string_view lname,
-                                                                 gsl::string_view fpath, uint32_t lnum, gsl::string_view fnname,
-                                                                 uint32_t ridx)
-    : level_id(lid), level_name(lname), file_path(fpath), line_number(lnum), func_name(fnname), rotate_index(ridx) {
-  if (level_name.empty()) {
-    level_name = detail::log_formatter_get_level_name(level_id);
-  }
-}
-
 std::string log_formatter::project_dir_;
 
 LIBATFRAME_UTILS_API bool log_formatter::check_flag(int32_t flags, int32_t checked) {
@@ -92,6 +61,11 @@ LIBATFRAME_UTILS_API size_t log_formatter::format(char *buff, size_t bufz, const
   if (nullptr == fmt || 0 == fmtz) {
     buff[0] = '\0';
     return 0;
+  }
+
+  gsl::string_view level_name = caller.level_name;
+  if (level_name.empty()) {
+    level_name = detail::log_formatter_get_level_name(caller.level_id);
   }
 
   bool need_parse = false, running = true;
@@ -305,16 +279,16 @@ LIBATFRAME_UTILS_API size_t log_formatter::format(char *buff, size_t bufz, const
 
       // =================== caller data ===================
       case 'L': {
-        if (!caller.level_name.empty()) {
+        if (!level_name.empty()) {
           size_t write_size = 8;
-          if (caller.level_name.size() < write_size) {
-            write_size = caller.level_name.size();
+          if (level_name.size() < write_size) {
+            write_size = level_name.size();
           }
           if (bufz - ret <= 8) {
             running = false;
           } else {
-            memcpy(&buff[ret], caller.level_name.data(), write_size);
-            for (size_t j = write_size; j < 8; ++ j) {
+            memcpy(&buff[ret], level_name.data(), write_size);
+            for (size_t j = write_size; j < 8; ++j) {
               buff[ret + j] = ' ';
             }
             ret += 8;
@@ -362,7 +336,7 @@ LIBATFRAME_UTILS_API size_t log_formatter::format(char *buff, size_t bufz, const
       case 'k': {
         if (!caller.file_path.empty()) {
           gsl::string_view file_name = caller.file_path;
-          for (size_t j = 0; j < caller.file_path.size(); ++ j) {
+          for (size_t j = 0; j < caller.file_path.size(); ++j) {
             if ('/' == caller.file_path[j] || '\\' == caller.file_path[j]) {
               file_name = caller.file_path.substr(j + 1);
             }
