@@ -286,15 +286,17 @@ void log_sample_func7() {
   test_exception_for_log_formatter te2{false, true};
   std::cout << "---------------- catch exception of log format APIs --------------" << std::endl;
 #    ifndef LOG_WRAPPER_FWAPI_USING_FORMAT_STRING
-  std::cout << "format: " << LIBATFRAME_UTILS_NAMESPACE_ID::log::format("{},{},{}", 1, 2, 3) << std::endl;
+  std::cout << "format: " << LIBATFRAME_UTILS_NAMESPACE_ID::log::format("{},{},{},{}", 1, 2, 3) << std::endl;
 #    endif
   std::cout << "format: " << LIBATFRAME_UTILS_NAMESPACE_ID::log::format("{},{}", 1, te1) << std::endl;
   std::cout << "format: " << LIBATFRAME_UTILS_NAMESPACE_ID::log::format("{},{}", 1, te2) << std::endl;
 
   char string_buffer[256] = {0};
 #    ifndef LOG_WRAPPER_FWAPI_USING_FORMAT_STRING
-  LIBATFRAME_UTILS_NAMESPACE_ID::log::format_to(string_buffer, "{},{},{}", 1, 2, 3);
+#      if defined(LIBATFRAME_UTILS_ENABLE_STD_FORMAT) && LIBATFRAME_UTILS_ENABLE_STD_FORMAT
+  LIBATFRAME_UTILS_NAMESPACE_ID::log::format_to(string_buffer, "{},{},{},{}", 1, 2, 3);
   std::cout << "format_to: " << string_buffer << std::endl;
+#      endif
 #    endif
   memset(string_buffer, 0, sizeof(string_buffer));
   LIBATFRAME_UTILS_NAMESPACE_ID::log::format_to(string_buffer, "{},{}", 1, te1);
@@ -305,8 +307,10 @@ void log_sample_func7() {
   memset(string_buffer, 0, sizeof(string_buffer));
 
 #    ifndef LOG_WRAPPER_FWAPI_USING_FORMAT_STRING
-  LIBATFRAME_UTILS_NAMESPACE_ID::log::format_to_n(string_buffer, 100, "{},{},{}", 1, 2, 3);
+#      if defined(LIBATFRAME_UTILS_ENABLE_STD_FORMAT) && LIBATFRAME_UTILS_ENABLE_STD_FORMAT
+  LIBATFRAME_UTILS_NAMESPACE_ID::log::format_to_n(string_buffer, 100, "{},{},{},{}", 1, 2, 3);
   std::cout << "format_to_n: " << string_buffer << std::endl;
+#      endif
 #    endif
   memset(string_buffer, 0, sizeof(string_buffer));
   LIBATFRAME_UTILS_NAMESPACE_ID::log::format_to_n(string_buffer, 100, "{},{}", 1, te1);
@@ -316,10 +320,12 @@ void log_sample_func7() {
   std::cout << "format_to_n: " << string_buffer << std::endl;
   memset(string_buffer, 0, sizeof(string_buffer));
 
+#    if defined(LIBATFRAME_UTILS_ENABLE_STD_FORMAT) && LIBATFRAME_UTILS_ENABLE_STD_FORMAT
   std::cout << "vformat: "
             << LIBATFRAME_UTILS_NAMESPACE_ID::log::vformat(
-                   "{},{},{}", LIBATFRAME_UTILS_NAMESPACE_ID::log::make_format_args(1, 2, 3))
+                   "{},{},{},{}", LIBATFRAME_UTILS_NAMESPACE_ID::log::make_format_args(1, 2, 3))
             << std::endl;
+#    endif
   std::cout << "vformat: "
             << LIBATFRAME_UTILS_NAMESPACE_ID::log::vformat("{},{}",
                                                            LIBATFRAME_UTILS_NAMESPACE_ID::log::make_format_args(1, te1))
@@ -330,7 +336,7 @@ void log_sample_func7() {
             << std::endl;
 
 #    if defined(LIBATFRAME_UTILS_ENABLE_STD_FORMAT) && LIBATFRAME_UTILS_ENABLE_STD_FORMAT
-  LIBATFRAME_UTILS_NAMESPACE_ID::log::vformat_to(string_buffer, "{},{},{}",
+  LIBATFRAME_UTILS_NAMESPACE_ID::log::vformat_to(string_buffer, "{},{},{},{}",
                                                  LIBATFRAME_UTILS_NAMESPACE_ID::log::make_format_args(1, 2, 3));
   std::cout << "vformat_to: " << string_buffer << std::endl;
   memset(string_buffer, 0, sizeof(string_buffer));
