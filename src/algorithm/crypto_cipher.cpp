@@ -1421,6 +1421,8 @@ LIBATFRAME_UTILS_API int cipher::init_global_algorithm() {
     ERR_load_ERR_strings();
     ERR_load_crypto_strings();
     OpenSSL_add_all_algorithms();
+    OpenSSL_add_all_ciphers();
+    OpenSSL_add_all_digests();
 #    else
 
 #      ifdef OPENSSL_INIT_LOAD_CONFIG

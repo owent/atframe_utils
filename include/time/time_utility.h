@@ -32,7 +32,7 @@
 #  define UTIL_STRFUNC_LOCALTIME_S(time_t_ptr, tm_ptr) localtime_s(tm_ptr, time_t_ptr)
 #  define UTIL_STRFUNC_GMTIME_S(time_t_ptr, tm_ptr) gmtime_s(tm_ptr, time_t_ptr)
 
-#elif defined(__STDC_VERSION__)
+#elif defined(_XOPEN_SOURCE) || defined(_BSD_SOURCE) || defined(_SVID_SOURCE) || defined(_POSIX_SOURCE)
 #  define UTIL_STRFUNC_LOCALTIME_S(time_t_ptr, tm_ptr) localtime_r(time_t_ptr, tm_ptr)
 #  define UTIL_STRFUNC_GMTIME_S(time_t_ptr, tm_ptr) gmtime_r(time_t_ptr, tm_ptr)
 
