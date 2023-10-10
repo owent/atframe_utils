@@ -75,4 +75,18 @@
 #  undef min
 #endif
 
+// Unreal Engine will define these macros
+#pragma push_macro("check")
+#ifdef check
+#  undef check
+#endif
+#pragma push_macro("verify")
+#ifdef verify
+#  undef verify
+#endif
+#pragma push_macro("cast")
+#ifdef cast
+#  undef cast
+#endif
+
 #endif

@@ -1,5 +1,8 @@
 // Copyright 2021 atframework
 #ifdef UTIL_CONFIG_COMPILER_PROTOBUF_PREFIX_H
+#  pragma pop_macro("cast")
+#  pragma pop_macro("verify")
+#  pragma pop_macro("check")
 #  include "template_suffix.h"
 
 #  if defined(__GNUC__) && !defined(__clang__) && !defined(__apple_build_version__)
