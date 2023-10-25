@@ -25,7 +25,7 @@
 LIBATFRAME_UTILS_NAMESPACE_BEGIN
 namespace log {
 namespace detail {
-char *get_log_tls_buffer() {
+static char *get_log_tls_buffer() {
   static THREAD_TLS char ret[LOG_WRAPPER_MAX_SIZE_PER_LINE];
   return ret;
 }
@@ -50,7 +50,23 @@ static void dtor_pthread_get_log_tls(void *p) {
 
 static void init_pthread_get_log_tls() { (void)pthread_key_create(&gt_get_log_tls_key, dtor_pthread_get_log_tls); }
 
-char *get_log_tls_buffer() {
+struct gt_get_log_tls_buffer_main_thread_dtor_t {
+  gt_get_log_tls_buffer_main_thread_dtor_t() {}
+
+  ~gt_get_log_tls_buffer_main_thread_dtor_t() {
+    char *buffer_ptr = reinterpret_cast<char *>(pthread_getspecific(gt_get_log_tls_key));
+    pthread_setspecific(gt_get_log_tls_key, nullptr);
+    dtor_pthread_get_log_tls(buffer_ptr);
+  }
+};
+
+static void init_pthread_get_log_tls_main_thread_dtor() {
+  static gt_get_log_tls_buffer_main_thread_dtor_t gt_get_log_tls_buffer_main_thread_dtor;
+  (void)gt_get_log_tls_buffer_main_thread_dtor;
+}
+
+static char *get_log_tls_buffer() {
+  init_pthread_get_log_tls_main_thread_dtor();
   (void)pthread_once(&gt_get_log_tls_once, init_pthread_get_log_tls);
   char *buffer_block = reinterpret_cast<char *>(pthread_getspecific(gt_get_log_tls_key));
   if (nullptr == buffer_block) {
@@ -59,17 +75,6 @@ char *get_log_tls_buffer() {
   }
   return buffer_block;
 }
-
-struct gt_get_log_tls_buffer_main_thread_dtor_t {
-  char *buffer_ptr;
-  gt_get_log_tls_buffer_main_thread_dtor_t() { buffer_ptr = get_log_tls_buffer(); }
-
-  ~gt_get_log_tls_buffer_main_thread_dtor_t() {
-    pthread_setspecific(gt_get_log_tls_key, nullptr);
-    dtor_pthread_get_log_tls(buffer_ptr);
-  }
-};
-static gt_get_log_tls_buffer_main_thread_dtor_t gt_get_log_tls_buffer_main_thread_dtor;
 }  // namespace detail
 }  // namespace log
 LIBATFRAME_UTILS_NAMESPACE_END
@@ -129,7 +134,7 @@ LIBATFRAME_UTILS_API void log_wrapper::add_sink(log_handler_t h, level_t::type l
     LIBATFRAME_UTILS_NAMESPACE_ID::lock::write_lock_holder<LIBATFRAME_UTILS_NAMESPACE_ID::lock::spin_rw_lock> holder(
         log_sinks_lock_);
     log_sinks_.push_back(router);
-  };
+  }
 }
 
 LIBATFRAME_UTILS_API void log_wrapper::pop_sink() {
