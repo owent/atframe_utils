@@ -52,7 +52,7 @@ namespace LOG_WRAPPER_FWAPI_NAMESPACE_ID {
 template <class CharT>
 struct formatter<test_auto_enum_conversation_for_log_formatter::type, CharT> : formatter<CharT *, CharT> {
   template <class FormatContext>
-  auto format(const test_auto_enum_conversation_for_log_formatter::type &obj, FormatContext &&ctx) {
+  auto format(const test_auto_enum_conversation_for_log_formatter::type &obj, FormatContext &&ctx) const {
     auto ret = ctx.out();
     switch (obj) {
       case test_auto_enum_conversation_for_log_formatter::EN_TAECFLF_NONE:
@@ -69,7 +69,7 @@ struct formatter<test_auto_enum_conversation_for_log_formatter::type, CharT> : f
 template <class CharT>
 struct formatter<test_exception_for_log_formatter, CharT> : public formatter<CharT *, CharT> {
   template <class FormatContext>
-  auto format(const test_exception_for_log_formatter &obj, FormatContext &ctx) {
+  auto format(const test_exception_for_log_formatter &obj, FormatContext &ctx) const {
 #  if defined(LIBATFRAME_UTILS_ENABLE_EXCEPTION) && LIBATFRAME_UTILS_ENABLE_EXCEPTION
     if (obj.throw_exception) {
       if (obj.runtime_error) {
@@ -104,7 +104,7 @@ namespace LOG_WRAPPER_FWAPI_NAMESPACE_ID {
 template <class CharT>
 struct formatter<test_custom_object_for_log_formatter, CharT> : public formatter<CharT *, CharT> {
   template <class FormatContext>
-  auto format(const test_custom_object_for_log_formatter &obj, FormatContext &ctx) {
+  auto format(const test_custom_object_for_log_formatter &obj, FormatContext &ctx) const {
     test_exception_for_log_formatter x(false, false);
     std::cout << LIBATFRAME_UTILS_NAMESPACE_ID::log::vformat("{}, {}", LOG_WRAPPER_FWAPI_MAKE_FORMAT_ARGS(obj.x, obj.y))
               << std::endl;

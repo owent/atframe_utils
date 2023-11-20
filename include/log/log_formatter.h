@@ -276,15 +276,15 @@ LIBATFRAME_UTILS_NAMESPACE_END
 #if defined(LOG_WRAPPER_ENABLE_FWAPI) && LOG_WRAPPER_ENABLE_FWAPI
 #  if defined(LIBATFRAME_UTILS_ENABLE_STD_FORMAT) && LIBATFRAME_UTILS_ENABLE_STD_FORMAT
 #    define LOG_WRAPPER_FWAPI_DECL_NAMESPACE() namespace std
-#    define LOG_WRAPPER_FWAPI_FORMAT_AS(Type, Base)                                 \
-      LOG_WRAPPER_FWAPI_DECL_NAMESPACE() {                                          \
-        template <class CharT>                                                      \
-        struct formatter<Type, CharT> : formatter<Base, CharT> {                    \
-          template <class FormatContext>                                            \
-          auto format(Type const &val, FormatContext &ctx) -> decltype(ctx.out()) { \
-            return formatter<Base, CharT>::format(val, ctx);                        \
-          }                                                                         \
-        };                                                                          \
+#    define LOG_WRAPPER_FWAPI_FORMAT_AS(Type, Base)                                       \
+      LOG_WRAPPER_FWAPI_DECL_NAMESPACE() {                                                \
+        template <class CharT>                                                            \
+        struct formatter<Type, CharT> : formatter<Base, CharT> {                          \
+          template <class FormatContext>                                                  \
+          auto format(Type const &val, FormatContext &ctx) -> decltype(ctx.out()) const { \
+            return formatter<Base, CharT>::format(val, ctx);                              \
+          }                                                                               \
+        };                                                                                \
       }
 #  else
 #    define LOG_WRAPPER_FWAPI_DECL_NAMESPACE() namespace fmt
@@ -300,8 +300,8 @@ LOG_WRAPPER_FWAPI_DECL_NAMESPACE() {
   struct formatter<LIBATFRAME_UTILS_NAMESPACE_ID::nostd::basic_string_view<CharT, Traits>, CharT>
       : formatter<LOG_WRAPPER_FWAPI_NAMESPACE basic_string_view<CharT>, CharT> {
     template <class FormatContext>
-    auto format(LIBATFRAME_UTILS_NAMESPACE_ID::nostd::basic_string_view<CharT, Traits> const &val, FormatContext &ctx)
-        -> decltype(ctx.out()) {
+    auto format(LIBATFRAME_UTILS_NAMESPACE_ID::nostd::basic_string_view<CharT, Traits> const &val,
+                FormatContext &ctx) const -> decltype(ctx.out()) {
       return formatter<LOG_WRAPPER_FWAPI_NAMESPACE basic_string_view<CharT>, CharT>::format(
           LOG_WRAPPER_FWAPI_NAMESPACE basic_string_view<CharT>{val.data(), val.size()}, ctx);
     }
