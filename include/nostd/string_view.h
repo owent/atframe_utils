@@ -347,7 +347,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY basic_string_view {
     const CharT* result = reinterpret_cast<const CharT*>(
         _memmatch(reinterpret_cast<const unsigned char*>(ptr_ + pos), (length_ - pos) * sizeof(CharT),
                   reinterpret_cast<const unsigned char*>(s.ptr_), s.length_ * sizeof(CharT)));
-    return result ? result - ptr_ : npos;
+    return result ? static_cast<size_type>(result - ptr_) : npos;
   }
 
   // Overload of `basic_string_view::find()` for finding the given character `c`
@@ -360,7 +360,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY basic_string_view {
     if (result == ptr_ + length_) {
       return npos;
     }
-    return result - ptr_;
+    return static_cast<size_type>(result - ptr_);
   }
 
   // Overload of `basic_string_view::find()` for finding a substring of a different
@@ -383,7 +383,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY basic_string_view {
     if (s.empty()) return Min(length_, pos);
     const CharT* last = ptr_ + Min(length_ - s.length_, pos) + s.length_;
     const CharT* result = std::find_end(ptr_, last, s.ptr_, s.ptr_ + s.length_);
-    return result != last ? result - ptr_ : npos;
+    return result != last ? static_cast<size_type>(result - ptr_) : npos;
   }
 
   // Overload of `basic_string_view::rfind()` for finding the last given character `c`

@@ -42,7 +42,7 @@ static constexpr const char content_type_multipart_post[] = "Content-Type: appli
 // static constexpr const char content_type_multipart_form_data[] = "Content-Type: multipart/form-data";
 }  // namespace detail
 
-LIBATFRAME_UTILS_API http_request::ptr_t http_request::create(curl_multi_context *curl_multi, const std::string &url) {
+LIBATFRAME_UTILS_API http_request::ptr_t http_request::create(curl_multi_context *curl_multi, gsl::string_view url) {
   ptr_t ret = create(curl_multi);
   if (ret) {
     ret->set_url(url);
@@ -61,7 +61,7 @@ LIBATFRAME_UTILS_API http_request::ptr_t http_request::create(curl_multi_context
 }
 
 LIBATFRAME_UTILS_API http_request::ptr_t http_request::create(const curl_share_context_ptr_type &share_context,
-                                                              const std::string &url) {
+                                                              gsl::string_view url) {
   ptr_t ret = create(share_context);
   if (ret) {
     ret->set_url(url);
@@ -252,23 +252,23 @@ LIBATFRAME_UTILS_API int http_request::stop() {
   return 0;
 }
 
-LIBATFRAME_UTILS_API void http_request::set_url(const std::string &v) {
+LIBATFRAME_UTILS_API void http_request::set_url(gsl::string_view v) {
   if (nullptr == mutable_request()) {
     return;
   }
 
-  url_ = v;
+  url_ = static_cast<std::string>(v);
   curl_easy_setopt(mutable_request(), CURLOPT_URL, url_.c_str());
 }
 
 LIBATFRAME_UTILS_API const std::string &http_request::get_url() const { return url_; }
 
-LIBATFRAME_UTILS_API void http_request::set_user_agent(const std::string &v) {
+LIBATFRAME_UTILS_API void http_request::set_user_agent(gsl::string_view v) {
   if (nullptr == mutable_request()) {
     return;
   }
 
-  useragent_ = v;
+  useragent_ = static_cast<std::string>(v);
   curl_easy_setopt(mutable_request(), CURLOPT_USERAGENT, url_.c_str());
 }
 

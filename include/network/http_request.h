@@ -23,6 +23,7 @@
 #include <unordered_map>
 
 #include "design_pattern/noncopyable.h"
+#include "gsl/select-gsl.h"
 #include "string/tquerystring.h"
 
 #include "config/atframe_utils_build_feature.h"
@@ -259,11 +260,11 @@ class http_request : public std::enable_shared_from_this<http_request>,
                                             size_t size)>;  // it's useful if we want to debug and show verbose info
 
  public:
-  LIBATFRAME_UTILS_API static ptr_t create(curl_multi_context *, const std::string &url);
+  LIBATFRAME_UTILS_API static ptr_t create(curl_multi_context *, gsl::string_view url);
 
   LIBATFRAME_UTILS_API static ptr_t create(curl_multi_context *);
 
-  LIBATFRAME_UTILS_API static ptr_t create(const curl_share_context_ptr_type &, const std::string &url);
+  LIBATFRAME_UTILS_API static ptr_t create(const curl_share_context_ptr_type &, gsl::string_view url);
 
   LIBATFRAME_UTILS_API static ptr_t create(const curl_share_context_ptr_type &);
 
@@ -290,10 +291,10 @@ class http_request : public std::enable_shared_from_this<http_request>,
 
   LIBATFRAME_UTILS_API int stop();
 
-  LIBATFRAME_UTILS_API void set_url(const std::string &v);
+  LIBATFRAME_UTILS_API void set_url(gsl::string_view v);
   LIBATFRAME_UTILS_API const std::string &get_url() const;
 
-  LIBATFRAME_UTILS_API void set_user_agent(const std::string &v);
+  LIBATFRAME_UTILS_API void set_user_agent(gsl::string_view v);
   LIBATFRAME_UTILS_API const std::string &get_user_agent() const;
 
   LIBATFRAME_UTILS_API std::string &post_data();
