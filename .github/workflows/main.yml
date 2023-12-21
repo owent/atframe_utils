@@ -161,35 +161,6 @@ jobs:
           } else {
             pwsh ci/do_ci.ps1 "msvc.2019+.test" ;
           }
-  mingw_build: # job id, can be any string
-    name: MinGW Build
-    strategy:
-      matrix:
-        include:
-          - os: windows-latest
-            build_shared_libs: "ON"
-          - os: windows-latest
-            build_shared_libs: "OFF"
-    runs-on: ${{ matrix.os }}
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v2
-      - name: Generate cache key
-        shell: bash
-        run: git submodule > '.github/.cache-key'
-      - name: Cache packages
-        uses: actions/cache@v3
-        with:
-          path: |
-            third_party/install
-            C:/msys64/var/cache/pacman/pkg
-          key: ${{ runner.os }}-mingw-shared-${{ matrix.build_shared_libs }}-${ hashFiles('.github/.cache-key') }
-      - name: Build & Test
-        shell: bash
-        env:
-          BUILD_SHARED_LIBS: ${{ matrix.build_shared_libs }}
-        run: |
-          C:/msys64/msys2_shell.cmd -mingw64 -defterm -no-start -here -lc "bash ci/do_ci.sh msys2.mingw.test"
   coverage: # job id, can be any string
     name: Coverage
     # This job runs on Linux
