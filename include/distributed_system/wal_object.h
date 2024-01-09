@@ -279,13 +279,13 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_object {
 
     wal_result_code ret;
     if (!vtable_ || !vtable_->get_log_key) {
-      ret = pusk_back_inner(std::move(log), param);
+      ret = pusk_back_internal(std::move(log), param);
     } else {
       log_key_type this_key = vtable_->get_log_key(*this, *log);
       if (global_ingore_ && !log_key_compare_(*global_ingore_, this_key)) {
         ret = wal_result_code::kIgnore;
       } else {
-        ret = pusk_back_inner(std::move(log), param);
+        ret = pusk_back_internal(std::move(log), param);
       }
     }
 
@@ -304,8 +304,16 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_object {
         }
       }
 
-      pusk_back_inner(std::move((*pending_log).first), (*pending_log).second);
+      pusk_back_internal(std::move((*pending_log).first), (*pending_log).second);
       pending_logs_.erase(pending_log);
+    }
+
+    // Auto gc for max size
+    if (configure_ && configure_->max_log_size > 0) {
+      size_t max_log_size = configure_->max_log_size;
+      while (logs_.size() > max_log_size) {
+        pop_front_internal();
+      }
     }
 
     return ret;
@@ -325,7 +333,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_object {
 
       meta_result_type meta = vtable_->get_meta(*this, *logs_.back());
       if (meta.is_success() && meta.get_success()->timepoint < now) {
-        pop_front_inner();
+        pop_front_internal();
       } else if (meta.is_error()) {
         return *meta.get_error();
       } else if (meta.is_none()) {
@@ -372,23 +380,23 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_object {
       }
 
       if (logs_.size() > max_log_size) {
-        pop_front_inner();
+        pop_front_internal();
         continue;
       }
 
       if (!vtable_ || !vtable_->get_meta) {
-        pop_front_inner();
+        pop_front_internal();
         continue;
       }
 
       meta_result_type meta = vtable_->get_meta(*this, **logs_.begin());
       if (meta.is_error() || meta.is_none()) {
-        pop_front_inner();
+        pop_front_internal();
       } else if (meta.is_success() && meta.get_success()->timepoint + gc_expire_duration <= now) {
         if (nullptr != hold && log_key_compare_(*hold, meta.get_success()->log_key)) {
           break;
         }
-        pop_front_inner();
+        pop_front_internal();
       } else {
         break;
       }
@@ -613,7 +621,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_object {
     return ret;
   }
 
-  wal_result_code pusk_back_inner_uncheck(log_pointer&& log, callback_param_lvalue_reference_type param) {
+  wal_result_code pusk_back_internal_uncheck(log_pointer&& log, callback_param_lvalue_reference_type param) {
     wal_result_code ret = redo_log(log, param);
     if (wal_result_code::kOk != ret) {
       return ret;
@@ -631,7 +639,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_object {
     return ret;
   }
 
-  wal_result_code pusk_back_inner(log_pointer&& log, callback_param_lvalue_reference_type param) {
+  wal_result_code pusk_back_internal(log_pointer&& log, callback_param_lvalue_reference_type param) {
     if (!log) {
       return wal_result_code::kInvalidParam;
     }
@@ -642,12 +650,12 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_object {
 
     // Empty
     if (logs_.empty()) {
-      return pusk_back_inner_uncheck(std::move(log), param);
+      return pusk_back_internal_uncheck(std::move(log), param);
     }
 
     // Can not get log key
     if (!vtable_ || !vtable_->get_log_key) {
-      return pusk_back_inner_uncheck(std::move(log), param);
+      return pusk_back_internal_uncheck(std::move(log), param);
     }
 
     log_key_type last_key = vtable_->get_log_key(*this, *logs_.back());
@@ -655,7 +663,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_object {
     // Has log key
     //   -- push_back
     if (log_key_compare_(last_key, this_key)) {
-      return pusk_back_inner_uncheck(std::move(log), param);
+      return pusk_back_internal_uncheck(std::move(log), param);
     }
     //   -- insert
     auto iter =
@@ -689,7 +697,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_object {
     return ret;
   }
 
-  void pop_front_inner() {
+  void pop_front_internal() {
     if (logs_.empty()) {
       return;
     }
