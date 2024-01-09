@@ -12,6 +12,7 @@
 #include <memory>
 #include <unordered_map>
 #include <utility>
+#include <limits>
 
 #include "distributed_system/wal_common_defs.h"
 #include "distributed_system/wal_object.h"

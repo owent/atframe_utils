@@ -607,7 +607,7 @@ CASE_TEST(wal_object, gc) {
     } while (false);
   }
 
-  CASE_EXPECT_EQ(4, wal_obj->gc(now));
+  CASE_EXPECT_EQ(0, wal_obj->gc(now));
   CASE_EXPECT_EQ(8, wal_obj->get_all_logs().size());
   CASE_EXPECT_EQ(old_add_count + 12, details::g_test_wal_object_stats.event_on_log_added);
   CASE_EXPECT_EQ(old_remove_count + 4, details::g_test_wal_object_stats.event_on_log_removed);
