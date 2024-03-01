@@ -78,8 +78,8 @@ class test_manager {
                                std::is_pointer<typename std::decay<TR>::type>::value,
             bool has_number = std::is_arithmetic<typename std::decay<TL>::type>::value ||
                               std::is_arithmetic<typename std::decay<TR>::type>::value,
-            bool all_number = std::is_arithmetic<typename std::decay<TL>::type>::value
-                &&std::is_arithmetic<typename std::decay<TR>::type>::value>
+            bool all_number = std::is_arithmetic<typename std::decay<TL>::type>::value &&
+                              std::is_arithmetic<typename std::decay<TR>::type>::value>
   struct pick_param;
 
   // compare pointer with integer

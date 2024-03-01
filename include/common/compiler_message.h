@@ -24,7 +24,7 @@
 #define COMPILER_MSG_DEFER(M, ...) M(__VA_ARGS__)
 
 #if defined(__clang__) || defined(__GNUC__)
-#  define COMPILER_PRAGMA(x) _Pragma(#  x)
+#  define COMPILER_PRAGMA(x) _Pragma(#x)
 
 #  define COMPILER_MSG_INFO(...) COMPILER_PRAGMA(message(__VA_ARGS__))
 #  define COMPILER_MSG_WARN(...) COMPILER_PRAGMA(GCC warning __VA_ARGS__)
@@ -68,7 +68,7 @@
 
 #else
 // 默认尝试GCC方案, 一些编译器会做gcc适配，如果编译不过请直接重定义为空
-#  define COMPILER_PRAGMA(x) _Pragma(#  x)
+#  define COMPILER_PRAGMA(x) _Pragma(#x)
 
 #  define COMPILER_MSG_INFO(...) COMPILER_PRAGMA(message(__VA_ARGS__))
 #  define COMPILER_MSG_WARN(...) COMPILER_PRAGMA(GCC warning __VA_ARGS__)

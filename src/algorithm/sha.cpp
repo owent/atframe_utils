@@ -422,10 +422,10 @@ static void inner_internal_sha1_process(sha1_context_t &ctx, const unsigned char
   GET_UINT32_BE(W[14], data, 56);
   GET_UINT32_BE(W[15], data, 60);
 
-#  define S(x, n) (((x) << (n)) | (((x)&0xFFFFFFFF) >> (32 - (n))))
+#  define S(x, n) (((x) << (n)) | (((x) & 0xFFFFFFFF) >> (32 - (n))))
 
 #  define R(t) \
-    (temp = W[((t)-3) & 0x0F] ^ W[((t)-8) & 0x0F] ^ W[((t)-14) & 0x0F] ^ W[(t)&0x0F], (W[(t)&0x0F] = S(temp, 1)))
+    (temp = W[((t)-3) & 0x0F] ^ W[((t)-8) & 0x0F] ^ W[((t)-14) & 0x0F] ^ W[(t) & 0x0F], (W[(t) & 0x0F] = S(temp, 1)))
 
 #  define P(a, b, c, d, e, x)                        \
     do {                                             \
@@ -662,7 +662,7 @@ static void inner_internal_sha256_process(sha256_context_t &ctx, const unsigned 
       0x748F82EE, 0x78A5636F, 0x84C87814, 0x8CC70208, 0x90BEFFFA, 0xA4506CEB, 0xBEF9A3F7, 0xC67178F2,
   };
 
-#  define SHR(x, n) (((x)&0xFFFFFFFF) >> (n))
+#  define SHR(x, n) (((x) & 0xFFFFFFFF) >> (n))
 #  define ROTR(x, n) (SHR(x, n) | ((x) << (32 - (n))))
 
 #  define S0(x) (ROTR(x, 7) ^ ROTR(x, 18) ^ SHR(x, 3))

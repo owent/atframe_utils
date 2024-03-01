@@ -1,5 +1,7 @@
+// Copyright 2024 atframework
+// Licenses under the MIT License
 
-#include <mem_pool/lru_object_pool.h>
+#include "memory/lru_object_pool.h"
 
 #include <assert.h>
 #include <stdint.h>
@@ -8,7 +10,7 @@
 #include <memory>
 
 LIBATFRAME_UTILS_NAMESPACE_BEGIN
-namespace mempool {
+namespace memory {
 LIBATFRAME_UTILS_API lru_pool_base::list_type_base::list_type_base() {}
 LIBATFRAME_UTILS_API lru_pool_base::list_type_base::~list_type_base() {}
 
@@ -229,5 +231,5 @@ LIBATFRAME_UTILS_API bool lru_pool_manager::check_tick(time_t tp) {
   return 0 == list_tick_timeout_ || abs(last_proc_tick_ - tp) <= list_tick_timeout_;
 }
 
-}  // namespace mempool
+}  // namespace memory
 LIBATFRAME_UTILS_NAMESPACE_END

@@ -13,7 +13,8 @@
 
 static void on_error(LIBATFRAME_UTILS_NAMESPACE_ID::cli::callback_param params, bool& need_exit) {
   std::stringstream args;
-  for (LIBATFRAME_UTILS_NAMESPACE_ID::cli::cmd_option_list::cmd_array_type::const_iterator iter = params.get_cmd_array().begin();
+  for (LIBATFRAME_UTILS_NAMESPACE_ID::cli::cmd_option_list::cmd_array_type::const_iterator iter =
+           params.get_cmd_array().begin();
        iter != params.get_cmd_array().end(); ++iter) {
     args << " \"" << iter->first << '"';
   }
@@ -29,7 +30,8 @@ static void on_error(LIBATFRAME_UTILS_NAMESPACE_ID::cli::callback_param params, 
   need_exit = true;
 }
 
-void on_help(LIBATFRAME_UTILS_NAMESPACE_ID::cli::callback_param, LIBATFRAME_UTILS_NAMESPACE_ID::cli::cmd_option* self, bool& need_exit) {
+void on_help(LIBATFRAME_UTILS_NAMESPACE_ID::cli::callback_param, LIBATFRAME_UTILS_NAMESPACE_ID::cli::cmd_option* self,
+             bool& need_exit) {
   std::cout << "Usage: uuidgen [options...]" << std::endl;
   std::cout << (*self);
 
@@ -50,7 +52,8 @@ void on_version(LIBATFRAME_UTILS_NAMESPACE_ID::cli::callback_param, bool& need_e
 }
 
 int main(int argc, char* argv[]) {
-  LIBATFRAME_UTILS_NAMESPACE_ID::cli::cmd_option::ptr_type opts = LIBATFRAME_UTILS_NAMESPACE_ID::cli::cmd_option::create();
+  LIBATFRAME_UTILS_NAMESPACE_ID::cli::cmd_option::ptr_type opts =
+      LIBATFRAME_UTILS_NAMESPACE_ID::cli::cmd_option::create();
   bool using_random = false;
   bool using_time = false;
   bool need_exit = false;

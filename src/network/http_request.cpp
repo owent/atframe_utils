@@ -697,7 +697,9 @@ LIBATFRAME_UTILS_API CURL *http_request::mutable_request() {
 
 #    if LIBCURL_VERSION_NUM >= 0x073800
 LIBATFRAME_UTILS_API curl_mime *http_request::mutable_multipart() {
-  UTIL_UNLIKELY_IF(nullptr == http_form_.multipart) { http_form_.multipart = curl_mime_init(mutable_request()); }
+  UTIL_UNLIKELY_IF (nullptr == http_form_.multipart) {
+    http_form_.multipart = curl_mime_init(mutable_request());
+  }
 
   return http_form_.multipart;
 }

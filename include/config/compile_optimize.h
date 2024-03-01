@@ -22,7 +22,7 @@
 // GCC 9 has likely attribute but do not support declare it at the beginning of statement
 #  if defined(__has_cpp_attribute) && (defined(__clang__) || !defined(__GNUC__) || __GNUC__ > 9)
 #    if __has_cpp_attribute(likely)
-#      define COPP_UNLIKELY_IF(...) if (__VA_ARGS__) [[unlikely]]
+#      define UTIL_UNLIKELY_IF(...) if (__VA_ARGS__) [[unlikely]]
 #    endif
 #  endif
 #endif

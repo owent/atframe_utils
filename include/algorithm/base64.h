@@ -2,11 +2,11 @@
 // @file base64.h
 // @brief base64算法
 // Licensed under the MIT licenses.
-// 
+//
 // @version 1.0
 // @author OWenT
 // @date 2017.11.17
-// 
+//
 // @see https://en.wikipedia.org/wiki/Base64
 
 #pragma once
