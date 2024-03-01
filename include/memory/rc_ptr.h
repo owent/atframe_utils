@@ -213,7 +213,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY strong_rc_counter {
     try {
 #endif
       pi_ = new rc_ptr_counted_data_with_deleter<
-          r.get(), typename std::remove_cv<typename std::remove_reference<UDeleter>::type>::type>(
+          UT, typename std::remove_cv<typename std::remove_reference<UDeleter>::type>::type>(
           r.get(), std::forward<UDeleter>(r.get_deleter()));
 
       r.release();
@@ -300,7 +300,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY strong_rc_counter {
   inline rc_ptr_counted_data_base* ref_counter() const noexcept { return pi_; }
 
  private:
-  template <class T>
+  template <class>
   friend class LIBATFRAME_UTILS_API_HEAD_ONLY strong_rc_counter;
 
   rc_ptr_counted_data_base* pi_;
@@ -390,7 +390,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY weak_rc_counter {
   inline rc_ptr_counted_data_base* ref_counter() const noexcept { return pi_; }
 
  private:
-  template <class T>
+  template <class>
   friend class LIBATFRAME_UTILS_API_HEAD_ONLY weak_rc_counter;
 
   rc_ptr_counted_data_base* pi_;
@@ -621,12 +621,12 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY strong_rc_ptr : public strong_rc_ptr_access
   }
 
   template <class Y, class Y2 = typename std::remove_cv<Y>::type>
-  typename std::enable_if<!__has_esft_base<Y2>::value>::type enable_shared_from_this_with(Y* p) noexcept {}
+  typename std::enable_if<!__has_esft_base<Y2>::value>::type enable_shared_from_this_with(Y*) noexcept {}
 
-  template <typename>
+  template <class>
   friend class LIBATFRAME_UTILS_API_HEAD_ONLY weak_rc_ptr;
 
-  template <typename>
+  template <class>
   friend class LIBATFRAME_UTILS_API_HEAD_ONLY strong_rc_ptr;
 
  private:
@@ -663,15 +663,14 @@ struct __compare_three_way_common_type<T1, T2, false> {
 template <class T1, class T2>
 LIBATFRAME_UTILS_API_HEAD_ONLY inline std::strong_ordering operator<=>(const strong_rc_ptr<T1>& l,
                                                                        const strong_rc_ptr<T2>& r) noexcept {
-  return std::compare_three_way()(
-      reinterpret_cast<typename __compare_three_way_common_type<T1, T2>::left_type>(l.get()),
-      reinterpret_cast<typename __compare_three_way_common_type<T1, T2>::right_type>(r.get()));
+  return reinterpret_cast<typename __compare_three_way_common_type<T1, T2>::left_type>(l.get()) <=>
+         reinterpret_cast<typename __compare_three_way_common_type<T1, T2>::right_type>(r.get());
 }
 
 template <class T1>
 LIBATFRAME_UTILS_API_HEAD_ONLY inline std::strong_ordering operator<=>(const strong_rc_ptr<T1>& l,
                                                                        ::std::nullptr_t) noexcept {
-  return std::compare_three_way()(l.get(), static_cast<T1*>(nullptr));
+  return l.get() <=> static_cast<T1*>(nullptr);
 }
 #else
 
@@ -857,7 +856,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY weak_rc_ptr {
   std::size_t owner_hash() const noexcept { return std::hash<rc_ptr_counted_data_base*>()(ref_counter_.ref_counter()); }
 
  private:
-  template <class T>
+  template <class>
   friend class LIBATFRAME_UTILS_API_HEAD_ONLY enable_shared_rc_from_this;
 
   // Used by enable_shared_rc_from_this.
@@ -868,10 +867,10 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY weak_rc_ptr {
     }
   }
 
-  template <typename>
+  template <class>
   friend class LIBATFRAME_UTILS_API_HEAD_ONLY weak_rc_ptr;
 
-  template <typename>
+  template <class>
   friend class LIBATFRAME_UTILS_API_HEAD_ONLY strong_rc_ptr;
 
  private:
@@ -897,8 +896,8 @@ class enable_shared_rc_from_this {
   ~enable_shared_rc_from_this() = default;
 
  private:
-  template <class T>
-  class LIBATFRAME_UTILS_API_HEAD_ONLY strong_rc_ptr;
+  template <class>
+  friend class LIBATFRAME_UTILS_API_HEAD_ONLY strong_rc_ptr;
 
   template <class Y>
   void weak_assign(T* __p, const strong_rc_counter<Y>& __n) const noexcept {
