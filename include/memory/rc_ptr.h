@@ -680,24 +680,22 @@ LIBATFRAME_UTILS_API_HEAD_ONLY inline bool operator==(::std::nullptr_t, const st
 }
 
 template <class T1, class T2>
-LIBATFRAME_UTILS_API_HEAD_ONLY inline bool operator!=(const strong_rc_ptr<T1>& l,
-                                                      const strong_rc_ptr<T2>& r) const noexcept {
+LIBATFRAME_UTILS_API_HEAD_ONLY inline bool operator!=(const strong_rc_ptr<T1>& l, const strong_rc_ptr<T2>& r) noexcept {
   return l.get() != r.get();
 }
 
 template <class T1>
-LIBATFRAME_UTILS_API_HEAD_ONLY inline bool operator!=(const strong_rc_ptr<T1>& l, ::std::nullptr_t) const noexcept {
+LIBATFRAME_UTILS_API_HEAD_ONLY inline bool operator!=(const strong_rc_ptr<T1>& l, ::std::nullptr_t) noexcept {
   return l.get() != nullptr;
 }
 
 template <class T1>
-LIBATFRAME_UTILS_API_HEAD_ONLY inline bool operator!=(::std::nullptr_t, const strong_rc_ptr<T1>& r) const noexcept {
+LIBATFRAME_UTILS_API_HEAD_ONLY inline bool operator!=(::std::nullptr_t, const strong_rc_ptr<T1>& r) noexcept {
   return r.get() != nullptr;
 }
 
 template <class T1, class T2>
-LIBATFRAME_UTILS_API_HEAD_ONLY inline bool operator<(const strong_rc_ptr<T1>& l,
-                                                     const strong_rc_ptr<T2>& r) const noexcept {
+LIBATFRAME_UTILS_API_HEAD_ONLY inline bool operator<(const strong_rc_ptr<T1>& l, const strong_rc_ptr<T2>& r) noexcept {
   return std::less<
       typename std::common_type<typename std::add_pointer<typename strong_rc_ptr<T1>::element_type>::type,
                                 typename std::add_pointer<typename strong_rc_ptr<T2>::element_type>::type>::type>()(
@@ -705,18 +703,17 @@ LIBATFRAME_UTILS_API_HEAD_ONLY inline bool operator<(const strong_rc_ptr<T1>& l,
 }
 
 template <class T1>
-LIBATFRAME_UTILS_API_HEAD_ONLY inline bool operator<(const strong_rc_ptr<T1>& l, ::std::nullptr_t) const noexcept {
+LIBATFRAME_UTILS_API_HEAD_ONLY inline bool operator<(const strong_rc_ptr<T1>& l, ::std::nullptr_t) noexcept {
   return std::less<T1>()(l.get(), nullptr);
 }
 
 template <class T1>
-LIBATFRAME_UTILS_API_HEAD_ONLY inline bool operator<(::std::nullptr_t, const strong_rc_ptr<T1>& r) const noexcept {
+LIBATFRAME_UTILS_API_HEAD_ONLY inline bool operator<(::std::nullptr_t, const strong_rc_ptr<T1>& r) noexcept {
   return std::less<T1>()(nullptr, r.get());
 }
 
 template <class T1, class T2>
-LIBATFRAME_UTILS_API_HEAD_ONLY inline bool operator>(const strong_rc_ptr<T1>& l,
-                                                     const strong_rc_ptr<T2>& r) const noexcept {
+LIBATFRAME_UTILS_API_HEAD_ONLY inline bool operator>(const strong_rc_ptr<T1>& l, const strong_rc_ptr<T2>& r) noexcept {
   return std::greater<
       typename std::common_type<typename std::add_pointer<typename strong_rc_ptr<T1>::element_type>::type,
                                 typename std::add_pointer<typename strong_rc_ptr<T2>::element_type>::type>::type>()(
@@ -724,44 +721,42 @@ LIBATFRAME_UTILS_API_HEAD_ONLY inline bool operator>(const strong_rc_ptr<T1>& l,
 }
 
 template <class T1>
-LIBATFRAME_UTILS_API_HEAD_ONLY inline bool operator>(const strong_rc_ptr<T1>& l, ::std::nullptr_t) const noexcept {
+LIBATFRAME_UTILS_API_HEAD_ONLY inline bool operator>(const strong_rc_ptr<T1>& l, ::std::nullptr_t) noexcept {
   return std::greater<T1>()(l.get(), nullptr);
 }
 
 template <class T1>
-LIBATFRAME_UTILS_API_HEAD_ONLY inline bool operator>(::std::nullptr_t, const strong_rc_ptr<T1>& r) const noexcept {
+LIBATFRAME_UTILS_API_HEAD_ONLY inline bool operator>(::std::nullptr_t, const strong_rc_ptr<T1>& r) noexcept {
   return std::greater<T1>()(nullptr, r.get());
 }
 
 template <class T1, class T2>
-LIBATFRAME_UTILS_API_HEAD_ONLY inline bool operator<=(const strong_rc_ptr<T1>& l,
-                                                      const strong_rc_ptr<T2>& r) const noexcept {
+LIBATFRAME_UTILS_API_HEAD_ONLY inline bool operator<=(const strong_rc_ptr<T1>& l, const strong_rc_ptr<T2>& r) noexcept {
   return !(r < l);
 }
 
 template <class T1>
-LIBATFRAME_UTILS_API_HEAD_ONLY inline bool operator<=(const strong_rc_ptr<T1>& l, ::std::nullptr_t) const noexcept {
+LIBATFRAME_UTILS_API_HEAD_ONLY inline bool operator<=(const strong_rc_ptr<T1>& l, ::std::nullptr_t) noexcept {
   return !(nullptr < l);
 }
 
 template <class T1>
-LIBATFRAME_UTILS_API_HEAD_ONLY inline bool operator<=(::std::nullptr_t, const strong_rc_ptr<T1>& r) const noexcept {
+LIBATFRAME_UTILS_API_HEAD_ONLY inline bool operator<=(::std::nullptr_t, const strong_rc_ptr<T1>& r) noexcept {
   return !(r < nullptr);
 }
 
 template <class T1, class T2>
-LIBATFRAME_UTILS_API_HEAD_ONLY inline bool operator>=(const strong_rc_ptr<T1>& l,
-                                                      const strong_rc_ptr<T2>& r) const noexcept {
+LIBATFRAME_UTILS_API_HEAD_ONLY inline bool operator>=(const strong_rc_ptr<T1>& l, const strong_rc_ptr<T2>& r) noexcept {
   return !(r > l);
 }
 
 template <class T1>
-LIBATFRAME_UTILS_API_HEAD_ONLY inline bool operator>=(const strong_rc_ptr<T1>& l, ::std::nullptr_t) const noexcept {
+LIBATFRAME_UTILS_API_HEAD_ONLY inline bool operator>=(const strong_rc_ptr<T1>& l, ::std::nullptr_t) noexcept {
   return !(nullptr > l);
 }
 
 template <class T1>
-LIBATFRAME_UTILS_API_HEAD_ONLY inline bool operator>=(::std::nullptr_t, const strong_rc_ptr<T1>& r) const noexcept {
+LIBATFRAME_UTILS_API_HEAD_ONLY inline bool operator>=(::std::nullptr_t, const strong_rc_ptr<T1>& r) noexcept {
   return !(r > nullptr);
 }
 #endif
