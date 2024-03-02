@@ -12,6 +12,15 @@
 #include <utility>
 #include <vector>
 
+#if defined(__GNUC__) && !defined(__clang__) && !defined(__apple_build_version__)
+#  if (__GNUC__ * 100 + __GNUC_MINOR__ * 10) >= 460
+#    pragma GCC diagnostic push
+#  endif
+#elif defined(__clang__) || defined(__apple_build_version__)
+#  pragma clang diagnostic push
+#  pragma clang diagnostic ignored "-Wself-assign-overloaded"
+#endif
+
 namespace {
 template <class X>
 struct checked_deleter {
@@ -1911,6 +1920,7 @@ struct V {
 struct W : public V {};
 
 void test() {
+#  if defined(LIBATFRAME_UTILS_ENABLE_EXCEPTION) && LIBATFRAME_UTILS_ENABLE_EXCEPTION
   {
     util::memory::strong_rc_ptr<V> pv;
     util::memory::strong_rc_ptr<W> pw = util::memory::dynamic_pointer_cast<W>(pv);
@@ -1958,6 +1968,7 @@ void test() {
     util::memory::strong_rc_ptr<V> pv2(pw);
     CASE_EXPECT_TRUE(!(pv < pv2 || pv2 < pv));
   }
+#  endif
 }
 
 }  // namespace n_dynamic_cast
@@ -2180,7 +2191,7 @@ class X {
   virtual int g() = 0;
 
  protected:
-  ~X() {}
+  virtual ~X() {}
 };
 
 util::memory::strong_rc_ptr<X> createX();
@@ -2442,7 +2453,7 @@ class X {
   virtual void f() = 0;
 
  protected:
-  ~X() {}
+  virtual ~X() {}
 };
 
 class Y {
@@ -2450,7 +2461,7 @@ class Y {
   virtual util::memory::strong_rc_ptr<X> getX() = 0;
 
  protected:
-  ~Y() {}
+  virtual ~Y() {}
 };
 
 class impl : public X, public Y {
@@ -4178,3 +4189,11 @@ CASE_TEST(rc_ptr, owner_hash) {
   CASE_EXPECT_NE(get_owner_hash(q1), get_owner_hash(q3));
   CASE_EXPECT_NE(get_owner_hash(q1), get_owner_hash(q4));
 }
+
+#if defined(__GNUC__) && !defined(__clang__) && !defined(__apple_build_version__)
+#  if (__GNUC__ * 100 + __GNUC_MINOR__ * 10) >= 460
+#    pragma GCC diagnostic pop
+#  endif
+#elif defined(__clang__) || defined(__apple_build_version__)
+#  pragma clang diagnostic pop
+#endif
