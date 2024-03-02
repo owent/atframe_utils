@@ -702,7 +702,7 @@ LIBATFRAME_UTILS_API_HEAD_ONLY inline bool operator!=(::std::nullptr_t, const st
 
 template <class T1, class T2>
 LIBATFRAME_UTILS_API_HEAD_ONLY inline bool operator<(const strong_rc_ptr<T1>& l, const strong_rc_ptr<T2>& r) noexcept {
-  return std::less<typename __strong_rc_ptr_compare_common_type<typename strong_rc_ptr<T1>::element_typ,
+  return std::less<typename __strong_rc_ptr_compare_common_type<typename strong_rc_ptr<T1>::element_type,
                                                                 typename strong_rc_ptr<T2>::element_type>::type>()(
       l.get(), r.get());
 }
@@ -719,7 +719,7 @@ LIBATFRAME_UTILS_API_HEAD_ONLY inline bool operator<(::std::nullptr_t, const str
 
 template <class T1, class T2>
 LIBATFRAME_UTILS_API_HEAD_ONLY inline bool operator>(const strong_rc_ptr<T1>& l, const strong_rc_ptr<T2>& r) noexcept {
-  return std::greater<typename __strong_rc_ptr_compare_common_type<typename strong_rc_ptr<T1>::element_typ,
+  return std::greater<typename __strong_rc_ptr_compare_common_type<typename strong_rc_ptr<T1>::element_type,
                                                                    typename strong_rc_ptr<T2>::element_type>::type>()(
       l.get(), r.get());
 }
