@@ -596,10 +596,10 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY strong_rc_ptr : public strong_rc_ptr_access
   std::size_t owner_hash() const noexcept { return std::hash<rc_ptr_counted_data_base*>()(ref_counter_.ref_counter()); }
 
  private:
-  template <typename Yp>
-  using __esft_base_t = decltype(enable_shared_rc_from_this_base(std::declval<Yp*>()));
+  template <class Yp>
+  using __esft_base_t = decltype(__strong_rc_enable_shared_rc_from_this_base(std::declval<Yp*>()));
 
-  template <typename Yp, typename = void>
+  template <class Yp, class = void>
   struct __has_esft_base : std::false_type {};
 
   template <class>
@@ -615,7 +615,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY strong_rc_ptr : public strong_rc_ptr_access
   template <class Y, class Y2 = typename std::remove_cv<Y>::type,
             typename std::enable_if<__has_esft_base<Y2>::value, uint32_t>::type = 0>
   void enable_shared_from_this_with(Y* p) noexcept {
-    auto base = enable_shared_rc_from_this_base(p);
+    auto base = __strong_rc_enable_shared_rc_from_this_base(p);
     if (nullptr != base) {
       base->weak_assign();
     }
@@ -903,7 +903,7 @@ class enable_shared_rc_from_this {
     weak_this_.assign(__p, __n);
   }
 
-  friend inline const enable_shared_rc_from_this* enable_shared_rc_from_this_base(
+  friend inline const enable_shared_rc_from_this* __strong_rc_enable_shared_rc_from_this_base(
       const enable_shared_rc_from_this* __p) {
     return __p;
   }
