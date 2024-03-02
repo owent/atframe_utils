@@ -612,16 +612,18 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY strong_rc_ptr : public strong_rc_ptr_access
   struct __has_esft_base<Yp, __void_t<__esft_base_t<Yp>>> : public __has_esft_check_type {
   };  // No enable shared_from_this for arrays
 
-  template <class Y, class Y2 = typename std::remove_cv<Y>::type>
-  typename std::enable_if<__has_esft_base<Y2>::value>::type enable_shared_from_this_with(Y* p) noexcept {
+  template <class Y, class Y2 = typename std::remove_cv<Y>::type,
+            typename std::enable_if<__has_esft_base<Y2>::value, uint32_t>::type = 0>
+  void enable_shared_from_this_with(Y* p) noexcept {
     auto base = enable_shared_rc_from_this_base(p);
     if (nullptr != base) {
       base->weak_assign();
     }
   }
 
-  template <class Y, class Y2 = typename std::remove_cv<Y>::type>
-  typename std::enable_if<!__has_esft_base<Y2>::value>::type enable_shared_from_this_with(Y*) noexcept {}
+  template <class Y, class Y2 = typename std::remove_cv<Y>::type,
+            typename std::enable_if<!__has_esft_base<Y2>::value, int32_t>::type = 0>
+  void enable_shared_from_this_with(Y*) noexcept {}
 
   template <class>
   friend class LIBATFRAME_UTILS_API_HEAD_ONLY weak_rc_ptr;
@@ -644,27 +646,31 @@ LIBATFRAME_UTILS_API_HEAD_ONLY inline bool operator==(const strong_rc_ptr<T1>& l
   return !l;
 }
 
-#ifdef __cpp_impl_three_way_comparison
 template <class T1, class T2, bool = std::is_convertible<T1*, T2*>::value || std::is_convertible<T2*, T1*>::value>
-struct __compare_three_way_common_type;
+struct __strong_rc_ptr_compare_common_type;
 
 template <class T1, class T2>
-struct __compare_three_way_common_type<T1, T2, true> {
+struct __strong_rc_ptr_compare_common_type<T1, T2, true> {
   using left_type = T1*;
   using right_type = T2*;
+
+  using common_type = typename std::common_type<left_type, right_type>::type;
 };
 
 template <class T1, class T2>
-struct __compare_three_way_common_type<T1, T2, false> {
+struct __strong_rc_ptr_compare_common_type<T1, T2, false> {
   using left_type = const void*;
   using right_type = const void*;
+
+  using common_type = const void*;
 };
 
+#ifdef __cpp_impl_three_way_comparison
 template <class T1, class T2>
 LIBATFRAME_UTILS_API_HEAD_ONLY inline std::strong_ordering operator<=>(const strong_rc_ptr<T1>& l,
                                                                        const strong_rc_ptr<T2>& r) noexcept {
-  return reinterpret_cast<typename __compare_three_way_common_type<T1, T2>::left_type>(l.get()) <=>
-         reinterpret_cast<typename __compare_three_way_common_type<T1, T2>::right_type>(r.get());
+  return reinterpret_cast<typename __strong_rc_ptr_compare_common_type<T1, T2>::left_type>(l.get()) <=>
+         reinterpret_cast<typename __strong_rc_ptr_compare_common_type<T1, T2>::right_type>(r.get());
 }
 
 template <class T1>
@@ -696,9 +702,8 @@ LIBATFRAME_UTILS_API_HEAD_ONLY inline bool operator!=(::std::nullptr_t, const st
 
 template <class T1, class T2>
 LIBATFRAME_UTILS_API_HEAD_ONLY inline bool operator<(const strong_rc_ptr<T1>& l, const strong_rc_ptr<T2>& r) noexcept {
-  return std::less<
-      typename std::common_type<typename std::add_pointer<typename strong_rc_ptr<T1>::element_type>::type,
-                                typename std::add_pointer<typename strong_rc_ptr<T2>::element_type>::type>::type>()(
+  return std::less<typename __strong_rc_ptr_compare_common_type<typename strong_rc_ptr<T1>::element_typ,
+                                                                typename strong_rc_ptr<T2>::element_type>::type>()(
       l.get(), r.get());
 }
 
@@ -714,9 +719,8 @@ LIBATFRAME_UTILS_API_HEAD_ONLY inline bool operator<(::std::nullptr_t, const str
 
 template <class T1, class T2>
 LIBATFRAME_UTILS_API_HEAD_ONLY inline bool operator>(const strong_rc_ptr<T1>& l, const strong_rc_ptr<T2>& r) noexcept {
-  return std::greater<
-      typename std::common_type<typename std::add_pointer<typename strong_rc_ptr<T1>::element_type>::type,
-                                typename std::add_pointer<typename strong_rc_ptr<T2>::element_type>::type>::type>()(
+  return std::greater<typename __strong_rc_ptr_compare_common_type<typename strong_rc_ptr<T1>::element_typ,
+                                                                   typename strong_rc_ptr<T2>::element_type>::type>()(
       l.get(), r.get());
 }
 
