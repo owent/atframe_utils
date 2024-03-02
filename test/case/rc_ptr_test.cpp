@@ -1920,7 +1920,6 @@ struct V {
 struct W : public V {};
 
 void test() {
-#  if defined(LIBATFRAME_UTILS_ENABLE_EXCEPTION) && LIBATFRAME_UTILS_ENABLE_EXCEPTION
   {
     util::memory::strong_rc_ptr<V> pv;
     util::memory::strong_rc_ptr<W> pw = util::memory::dynamic_pointer_cast<W>(pv);
@@ -1968,7 +1967,6 @@ void test() {
     util::memory::strong_rc_ptr<V> pv2(pw);
     CASE_EXPECT_TRUE(!(pv < pv2 || pv2 < pv));
   }
-#  endif
 }
 
 }  // namespace n_dynamic_cast

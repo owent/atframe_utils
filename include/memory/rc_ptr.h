@@ -702,9 +702,9 @@ LIBATFRAME_UTILS_API_HEAD_ONLY inline bool operator!=(::std::nullptr_t, const st
 
 template <class T1, class T2>
 LIBATFRAME_UTILS_API_HEAD_ONLY inline bool operator<(const strong_rc_ptr<T1>& l, const strong_rc_ptr<T2>& r) noexcept {
-  return std::less<typename __strong_rc_ptr_compare_common_type<typename strong_rc_ptr<T1>::element_type,
-                                                                typename strong_rc_ptr<T2>::element_type>::type>()(
-      l.get(), r.get());
+  return std::less<typename __strong_rc_ptr_compare_common_type<
+      typename strong_rc_ptr<T1>::element_type, typename strong_rc_ptr<T2>::element_type>::common_type>()(l.get(),
+                                                                                                          r.get());
 }
 
 template <class T1>
@@ -719,9 +719,9 @@ LIBATFRAME_UTILS_API_HEAD_ONLY inline bool operator<(::std::nullptr_t, const str
 
 template <class T1, class T2>
 LIBATFRAME_UTILS_API_HEAD_ONLY inline bool operator>(const strong_rc_ptr<T1>& l, const strong_rc_ptr<T2>& r) noexcept {
-  return std::greater<typename __strong_rc_ptr_compare_common_type<typename strong_rc_ptr<T1>::element_type,
-                                                                   typename strong_rc_ptr<T2>::element_type>::type>()(
-      l.get(), r.get());
+  return std::greater<typename __strong_rc_ptr_compare_common_type<
+      typename strong_rc_ptr<T1>::element_type, typename strong_rc_ptr<T2>::element_type>::common_type>()(l.get(),
+                                                                                                          r.get());
 }
 
 template <class T1>
@@ -931,7 +931,7 @@ strong_rc_ptr<T> const_pointer_cast(const strong_rc_ptr<Y>& r) noexcept {
   return strong_rc_ptr<T>(r, const_cast<typename strong_rc_ptr<T>::element_type*>(r.get()));
 }
 
-#if defined(LIBATFRAME_UTILS_ENABLE_EXCEPTION) && LIBATFRAME_UTILS_ENABLE_EXCEPTION
+#if defined(LIBATFRAME_UTILS_ENABLE_RTTI) && LIBATFRAME_UTILS_ENABLE_RTTI
 template <class T, class Y>
 strong_rc_ptr<T> dynamic_pointer_cast(const strong_rc_ptr<Y>& r) noexcept {
   return strong_rc_ptr<T>(r, dynamic_cast<typename strong_rc_ptr<T>::element_type*>(r.get()));
