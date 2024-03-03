@@ -19,6 +19,18 @@
 #include <config/compiler_features.h>
 #include <nostd/type_traits.h>
 
+#if defined(_MSC_VER)
+#  define LIBATFRAME_UTILS_STRONG_RC_PTR_ENABLE_SHARED_FROM_THIS_VERSION 2
+#elif defined(__GNUC__) && !defined(__clang__) && !defined(__apple_build_version__)
+#  if (__GNUC__ * 100 + __GNUC_MINOR__ * 10) >= 700
+#    define LIBATFRAME_UTILS_STRONG_RC_PTR_ENABLE_SHARED_FROM_THIS_VERSION 2
+#  else
+#    define LIBATFRAME_UTILS_STRONG_RC_PTR_ENABLE_SHARED_FROM_THIS_VERSION 1
+#  endif
+#elif defined(__clang__) || defined(__apple_build_version__)
+#  define LIBATFRAME_UTILS_STRONG_RC_PTR_ENABLE_SHARED_FROM_THIS_VERSION 2
+#endif
+
 LIBATFRAME_UTILS_NAMESPACE_BEGIN
 namespace memory {
 
@@ -446,6 +458,15 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY strong_rc_ptr_access<T, true, false> {
   inline element_type* get() const noexcept { return static_cast<const strong_rc_ptr<T>*>(this)->get(); }
 };
 
+#if LIBATFRAME_UTILS_STRONG_RC_PTR_ENABLE_SHARED_FROM_THIS_VERSION <= 1
+template <class T1, class T2>
+LIBATFRAME_UTILS_API_HEAD_ONLY void __enable_shared_from_this_with(const strong_rc_counter<T1>&,
+                                                                   enable_shared_rc_from_this<T2>* p);
+
+template <class T>
+LIBATFRAME_UTILS_API_HEAD_ONLY inline void __enable_shared_from_this_with(const strong_rc_counter<T>&, ...) {}
+#endif
+
 template <class T>
 class LIBATFRAME_UTILS_API_HEAD_ONLY strong_rc_ptr : public strong_rc_ptr_access<T> {
  public:
@@ -461,12 +482,20 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY strong_rc_ptr : public strong_rc_ptr_access
   explicit strong_rc_ptr(Y* ptr) noexcept : ptr_(ptr), ref_counter_(ptr) {
     static_assert(!std::is_void<Y>::value, "incomplete type");
     static_assert(sizeof(Y) > 0, "incomplete type");
-    enable_shared_from_this_with(ptr);
+#if LIBATFRAME_UTILS_STRONG_RC_PTR_ENABLE_SHARED_FROM_THIS_VERSION > 1
+    __enable_shared_from_this_with(ptr_);
+#else
+    __enable_shared_from_this_with(ref_counter_, ptr_);
+#endif
   }
 
   template <class Y, class Deleter>
   strong_rc_ptr(Y* ptr, Deleter d) noexcept : ptr_(ptr), ref_counter_(ptr, std::move(d)) {
-    enable_shared_from_this_with(ptr);
+#if LIBATFRAME_UTILS_STRONG_RC_PTR_ENABLE_SHARED_FROM_THIS_VERSION > 1
+    __enable_shared_from_this_with(ptr_);
+#else
+    __enable_shared_from_this_with(ref_counter_, ptr_);
+#endif
   }
 
   template <class Deleter>
@@ -508,13 +537,21 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY strong_rc_ptr : public strong_rc_ptr_access
   template <class Y, class Deleter>
   explicit strong_rc_ptr(std::unique_ptr<Y, Deleter>&& other) noexcept : ptr_(other.get()), ref_counter_() {
     ref_counter_ = ref_counter_(std::move(other));
-    enable_shared_from_this_with(ptr_);
+#if LIBATFRAME_UTILS_STRONG_RC_PTR_ENABLE_SHARED_FROM_THIS_VERSION > 1
+    __enable_shared_from_this_with(ptr_);
+#else
+    __enable_shared_from_this_with(ref_counter_, ptr_);
+#endif
   }
 
   template <class... Args>
   explicit strong_rc_ptr(_strong_rc_alloc_shared_tag<T> __tag, Args&&... args) noexcept
       : ptr_(nullptr), ref_counter_(ptr_, __tag, std::forward<Args>(args)...) {
-    enable_shared_from_this_with(ptr_);
+#if LIBATFRAME_UTILS_STRONG_RC_PTR_ENABLE_SHARED_FROM_THIS_VERSION > 1
+    __enable_shared_from_this_with(ptr_);
+#else
+    __enable_shared_from_this_with(ref_counter_, ptr_);
+#endif
   }
 
   ~strong_rc_ptr() noexcept = default;
@@ -596,6 +633,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY strong_rc_ptr : public strong_rc_ptr_access
   std::size_t owner_hash() const noexcept { return std::hash<rc_ptr_counted_data_base*>()(ref_counter_.ref_counter()); }
 
  private:
+#if LIBATFRAME_UTILS_STRONG_RC_PTR_ENABLE_SHARED_FROM_THIS_VERSION > 1
   template <class Yp>
   using __esft_base_t = decltype(__strong_rc_enable_shared_rc_from_this_base(std::declval<Yp*>()));
 
@@ -614,7 +652,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY strong_rc_ptr : public strong_rc_ptr_access
 
   template <class Y, class Y2 = typename std::remove_cv<Y>::type,
             typename std::enable_if<__has_esft_base<Y2>::value, uint32_t>::type = 0>
-  void enable_shared_from_this_with(Y* p) noexcept {
+  void __enable_shared_from_this_with(Y* p) noexcept {
     auto base = __strong_rc_enable_shared_rc_from_this_base(p);
     if (nullptr != base) {
       base->weak_assign();
@@ -623,7 +661,8 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY strong_rc_ptr : public strong_rc_ptr_access
 
   template <class Y, class Y2 = typename std::remove_cv<Y>::type,
             typename std::enable_if<!__has_esft_base<Y2>::value, int32_t>::type = 0>
-  void enable_shared_from_this_with(Y*) noexcept {}
+  void __enable_shared_from_this_with(Y*) noexcept {}
+#endif
 
   template <class>
   friend class LIBATFRAME_UTILS_API_HEAD_ONLY weak_rc_ptr;
@@ -903,10 +942,19 @@ class enable_shared_rc_from_this {
     weak_this_.assign(__p, __n);
   }
 
+#if LIBATFRAME_UTILS_STRONG_RC_PTR_ENABLE_SHARED_FROM_THIS_VERSION == 1
+  template <class Y>
+  friend void __enable_shared_from_this_with(const strong_rc_counter<Y>&, enable_shared_rc_from_this* p) {
+    if (nullptr != p) {
+      p->weak_assign();
+    }
+  }
+#else
   friend inline const enable_shared_rc_from_this* __strong_rc_enable_shared_rc_from_this_base(
       const enable_shared_rc_from_this* __p) {
     return __p;
   }
+#endif
 
  private:
   weak_rc_ptr<T> weak_this_;

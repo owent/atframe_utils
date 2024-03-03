@@ -26,7 +26,10 @@
 #  endif
 #elif defined(LIBATFRAME_UTILS_ENABLE_FMTLIB) && LIBATFRAME_UTILS_ENABLE_FMTLIB
 
-#  if defined(__GNUC__) && !defined(__clang__) && !defined(__apple_build_version__)
+#  if defined(_MSC_VER)
+#    pragma warning(push)
+#    pragma warning(disable : 4702)
+#  elif defined(__GNUC__) && !defined(__clang__) && !defined(__apple_build_version__)
 #    if (__GNUC__ * 100 + __GNUC_MINOR__ * 10) >= 460
 #      pragma GCC diagnostic push
 #    endif
@@ -41,7 +44,9 @@
 
 #  include <fmt/format.h>
 
-#  if defined(__GNUC__) && !defined(__clang__) && !defined(__apple_build_version__)
+#  if defined(_MSC_VER)
+#    pragma warning(pop)
+#  elif defined(__GNUC__) && !defined(__clang__) && !defined(__apple_build_version__)
 #    if (__GNUC__ * 100 + __GNUC_MINOR__ * 10) >= 460
 #      pragma GCC diagnostic pop
 #    endif
