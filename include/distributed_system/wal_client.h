@@ -77,13 +77,13 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_client {
     callback_on_receive_subscribe_response_fn_t on_receive_subscribe_response;
     callback_send_subscribe_request_fn_t subscribe_request;
   };
-  using vtable_pointer = std::shared_ptr<vtable_type>;
+  using vtable_pointer = typename wal_mt_mode_data_trait<vtable_type, log_operator_type::mt_mode>::strong_ptr;
 
   struct configure_type : public object_type::configure_type {
     duration subscriber_heartbeat_interval;
     duration subscriber_heartbeat_retry_interval;
   };
-  using configure_pointer = std::shared_ptr<configure_type>;
+  using configure_pointer = typename wal_mt_mode_data_trait<configure_type, log_operator_type::mt_mode>::strong_ptr;
 
  private:
   UTIL_DESIGN_PATTERN_NOMOVABLE(wal_client);
@@ -92,7 +92,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_client {
     time_point next_heartbeat;
     vtable_pointer vt;
     configure_pointer conf;
-    std::shared_ptr<object_type> wal_object;
+    typename wal_mt_mode_data_trait<object_type, log_operator_type::mt_mode>::strong_ptr wal_object;
   };
 
  public:
@@ -117,8 +117,8 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_client {
   }
 
   template <class... ArgsT>
-  static std::shared_ptr<wal_client> create(time_point now, vtable_pointer vt, configure_pointer conf,
-                                            ArgsT&&... args) {
+  static typename wal_mt_mode_data_trait<wal_client, log_operator_type::mt_mode>::strong_ptr create(
+      time_point now, vtable_pointer vt, configure_pointer conf, ArgsT&&... args) {
     if (!vt || !conf) {
       return nullptr;
     }
@@ -135,18 +135,19 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_client {
     helper.next_heartbeat = now;
     helper.vt = vt;
     helper.conf = conf;
-    helper.wal_object = object_type::create(std::static_pointer_cast<typename object_type::vtable_type>(helper.vt),
-                                            std::static_pointer_cast<typename object_type::configure_type>(helper.conf),
-                                            std::forward<ArgsT>(args)...);
+    helper.wal_object = object_type::create(
+        log_operator_type::template static_pointer_cast<typename object_type::vtable_type>(helper.vt),
+        log_operator_type::template static_pointer_cast<typename object_type::configure_type>(helper.conf),
+        std::forward<ArgsT>(args)...);
     if (!helper.wal_object) {
       return nullptr;
     }
 
-    return std::make_shared<wal_client>(helper);
+    return log_operator_type::template make_strong<wal_client>(helper);
   }
 
   static configure_pointer make_configure() {
-    configure_pointer ret = std::make_shared<configure_type>();
+    configure_pointer ret = log_operator_type::template make_strong<configure_type>();
     if (!ret) {
       return ret;
     }
@@ -305,7 +306,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_client {
 
   template <class... LogCtorArgsT>
   wal_result_code receive_log(callback_param_type param, LogCtorArgsT&&... args) {
-    return receive_log(param, std::make_shared<log_type>(std::forward<LogCtorArgsT>(args)...));
+    return receive_log(param, log_operator_type::template make_strong<log_type>(std::forward<LogCtorArgsT>(args)...));
   }
 
   template <class IteratorT>
@@ -346,7 +347,8 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_client {
 
   template <class... LogCtorArgsT>
   wal_result_code receive_hole_log(callback_param_type param, LogCtorArgsT&&... args) {
-    return receive_hole_log(param, std::make_shared<log_type>(std::forward<LogCtorArgsT>(args)...));
+    return receive_hole_log(param,
+                            log_operator_type::template make_strong<log_type>(std::forward<LogCtorArgsT>(args)...));
   }
 
   template <class IteratorT>
@@ -394,7 +396,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_client {
   configure_pointer configure_;
 
   // logs
-  std::shared_ptr<object_type> wal_object_;
+  typename wal_mt_mode_data_trait<object_type, log_operator_type::mt_mode>::strong_ptr wal_object_;
 
   // publish-subscribe
   time_point next_heartbeat_timepoint_;

@@ -110,14 +110,14 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_object {
     callback_log_group_map_t log_action_delegate;
     callback_log_fn_group_t default_delegate;
   };
-  using vtable_pointer = std::shared_ptr<vtable_type>;
+  using vtable_pointer = typename wal_mt_mode_data_trait<vtable_type, log_operator_type::mt_mode>::strong_ptr;
 
   struct configure_type {
     duration gc_expire_duration;
     size_t max_log_size;
     size_t gc_log_size;
   };
-  using configure_pointer = std::shared_ptr<configure_type>;
+  using configure_pointer = typename wal_mt_mode_data_trait<configure_type, log_operator_type::mt_mode>::strong_ptr;
 
  private:
   UTIL_DESIGN_PATTERN_NOMOVABLE(wal_object);
@@ -147,7 +147,8 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_object {
         private_data_(std::forward<ArgsT>(args)...) {}
 
   template <class... ArgsT>
-  static std::shared_ptr<wal_object> create(vtable_pointer vt, configure_pointer conf, ArgsT&&... args) {
+  static typename wal_mt_mode_data_trait<wal_object, log_operator_type::mt_mode>::strong_ptr create(
+      vtable_pointer vt, configure_pointer conf, ArgsT&&... args) {
     if (!vt || !conf) {
       return nullptr;
     }
@@ -159,7 +160,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_object {
     construct_helper helper;
     helper.vt = vt;
     helper.conf = conf;
-    return std::make_shared<wal_object>(helper, std::forward<ArgsT>(args)...);
+    return log_operator_type::template make_strong<wal_object>(helper, std::forward<ArgsT>(args)...);
   }
 
   static void default_configure(configure_type& out) {
@@ -245,7 +246,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_object {
       return nullptr;
     }
 
-    log_pointer ret = std::make_shared<log_type>(std::forward<ArgsT>(args)...);
+    log_pointer ret = log_operator_type::template make_strong<log_type>(std::forward<ArgsT>(args)...);
     if (!ret) {
       return ret;
     }
@@ -467,7 +468,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_object {
 
     log_key_type found_key = vtable_->get_log_key(*this, **iter);
     if (!log_key_compare_(key, found_key) && !log_key_compare_(found_key, key)) {
-      return std::const_pointer_cast<const log_type>(*iter);
+      return wal_mt_mode_func_trait<log_operator_type::mt_mode>::template const_pointer_cast<const log_type>(*iter);
     }
 
     return nullptr;
