@@ -1,4 +1,4 @@
-// Copyright 2021 atframework
+// Copyright 2024 atframework
 
 #include <algorithm>
 #include <chrono>
@@ -6,6 +6,7 @@
 #include <ctime>
 #include <memory>
 #include <sstream>
+#include <type_traits>
 #include <vector>
 
 #include <distributed_system/wal_object.h>
@@ -63,6 +64,16 @@ using test_wal_object_type =
     LIBATFRAME_UTILS_NAMESPACE_ID::distributed_system::wal_object<test_wal_object_log_storage_type,
                                                                   test_wal_object_log_operator, test_wal_object_context,
                                                                   test_wal_object_private_type>;
+
+static_assert(std::is_same<std::shared_ptr<test_wal_object_context>,
+                           test_wal_object_log_operator::strong_ptr<test_wal_object_context>>::value,
+              "WAL check strong_ptr type failed");
+static_assert(std::is_same<std::weak_ptr<test_wal_object_context>,
+                           test_wal_object_log_operator::weak_ptr<test_wal_object_context>>::value,
+              "WAL check weak_ptr type failed");
+static_assert(std::is_same<std::enable_shared_from_this<test_wal_object_context>,
+                           test_wal_object_log_operator::enable_shared_from_this<test_wal_object_context>>::value,
+              "WAL check enable_shared_from_this type failed");
 
 struct test_wal_object_stats {
   int64_t key_alloc;
@@ -743,6 +754,16 @@ using test_wal_object_type =
     LIBATFRAME_UTILS_NAMESPACE_ID::distributed_system::wal_object<test_wal_object_log_storage_type,
                                                                   test_wal_object_log_operator, test_wal_object_context,
                                                                   test_wal_object_private_type>;
+
+static_assert(std::is_same<util::memory::strong_rc_ptr<test_wal_object_context>,
+                           test_wal_object_log_operator::strong_ptr<test_wal_object_context>>::value,
+              "WAL check strong_ptr type failed");
+static_assert(std::is_same<util::memory::weak_rc_ptr<test_wal_object_context>,
+                           test_wal_object_log_operator::weak_ptr<test_wal_object_context>>::value,
+              "WAL check weak_ptr type failed");
+static_assert(std::is_same<util::memory::enable_shared_rc_from_this<test_wal_object_context>,
+                           test_wal_object_log_operator::enable_shared_from_this<test_wal_object_context>>::value,
+              "WAL check enable_shared_from_this type failed");
 
 struct test_wal_object_stats {
   int64_t key_alloc;

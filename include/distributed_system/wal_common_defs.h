@@ -97,6 +97,9 @@ struct LIBATFRAME_UTILS_API_HEAD_ONLY wal_mt_mode_data_trait<T, wal_mt_mode::kMu
 
 template <>
 struct LIBATFRAME_UTILS_API_HEAD_ONLY wal_mt_mode_func_trait<wal_mt_mode::kSingleThread> {
+  template <class Y>
+  using enable_shared_from_this = memory::enable_shared_rc_from_this<Y>;
+
   template <class Y, class... ArgsT>
   static inline memory::strong_rc_ptr<Y> make_strong(ArgsT&&... args) {
     return memory::make_strong_rc<Y>(std::forward<ArgsT>(args)...);
@@ -111,10 +114,20 @@ struct LIBATFRAME_UTILS_API_HEAD_ONLY wal_mt_mode_func_trait<wal_mt_mode::kSingl
   static inline memory::strong_rc_ptr<Y> const_pointer_cast(F&& f) {
     return memory::const_pointer_cast<Y>(std::forward<F>(f));
   }
+
+#if defined(LIBATFRAME_UTILS_ENABLE_RTTI) && LIBATFRAME_UTILS_ENABLE_RTTI
+  template <class Y, class F>
+  static inline memory::strong_rc_ptr<Y> dynamic_pointer_cast(F&& f) {
+    return memory::dynamic_pointer_cast<Y>(std::forward<F>(f));
+  }
+#endif
 };
 
 template <>
 struct LIBATFRAME_UTILS_API_HEAD_ONLY wal_mt_mode_func_trait<wal_mt_mode::kMultiThread> {
+  template <class Y>
+  using enable_shared_from_this = std::enable_shared_from_this<Y>;
+
   template <class Y, class... ArgsT>
   static inline std::shared_ptr<Y> make_strong(ArgsT&&... args) {
     return std::make_shared<Y>(std::forward<ArgsT>(args)...);
@@ -129,6 +142,13 @@ struct LIBATFRAME_UTILS_API_HEAD_ONLY wal_mt_mode_func_trait<wal_mt_mode::kMulti
   static inline std::shared_ptr<Y> const_pointer_cast(F&& f) {
     return std::const_pointer_cast<Y>(std::forward<F>(f));
   }
+
+#if defined(LIBATFRAME_UTILS_ENABLE_RTTI) && LIBATFRAME_UTILS_ENABLE_RTTI
+  template <class Y, class F>
+  static inline std::shared_ptr<Y> dynamic_pointer_cast(F&& f) {
+    return std::dynamic_pointer_cast<Y>(std::forward<F>(f));
+  }
+#endif
 };
 
 template <class LogKeyT, class LogT, class ActionGetter, class CompareLogKeyT = std::less<LogKeyT>,
@@ -166,6 +186,20 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_log_operator {
   static inline typename wal_mt_mode_data_trait<Y, mt_mode>::strong_ptr const_pointer_cast(F&& f) {
     return wal_mt_mode_func_trait<mt_mode>::template const_pointer_cast<Y>(std::forward<F>(f));
   }
+
+#if defined(LIBATFRAME_UTILS_ENABLE_RTTI) && LIBATFRAME_UTILS_ENABLE_RTTI
+  template <class Y, class F>
+  static inline typename wal_mt_mode_data_trait<Y, mt_mode>::strong_ptr dynamic_pointer_cast(F&& f) {
+    return wal_mt_mode_func_trait<mt_mode>::template dynamic_pointer_cast<Y>(std::forward<F>(f));
+  }
+#endif
+
+  template <class Y>
+  using strong_ptr = typename wal_mt_mode_data_trait<Y, mt_mode>::strong_ptr;
+  template <class Y>
+  using weak_ptr = typename wal_mt_mode_data_trait<Y, mt_mode>::weak_ptr;
+  template <class Y>
+  using enable_shared_from_this = typename wal_mt_mode_func_trait<mt_mode>::template enable_shared_from_this<Y>;
 };
 
 template <class LogKeyT, class LogT, class ActionGetter, wal_mt_mode MTMode, class CompareLogKeyT = std::less<LogKeyT>,
