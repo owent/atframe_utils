@@ -3,12 +3,26 @@
 
 #pragma once
 
+#include <config/atframe_utils_build_feature.h>
+#include <config/compiler_features.h>
+
 #include <iostream>
 #include <map>
 #include <string>
 
-#include <config/atframe_utils_build_feature.h>
-#include <config/compiler_features.h>
+#if defined(__GNUC__) && !defined(__clang__) && !defined(__apple_build_version__)
+#  if (__GNUC__ * 100 + __GNUC_MINOR__ * 10) >= 460
+#    pragma GCC diagnostic push
+#    pragma GCC diagnostic ignored "-Waddress"
+
+#    if (__GNUC__ * 100 + __GNUC_MINOR__ * 10) >= 600
+#      pragma GCC diagnostic ignored "-Wnonnull-compare"
+#    endif
+#  endif
+#elif defined(__clang__) || defined(__apple_build_version__)
+#  pragma clang diagnostic push
+#  pragma clang diagnostic ignored "-Waddress"
+#endif
 
 /**
  * Window 控制台相关
@@ -30,38 +44,38 @@
 LIBATFRAME_UTILS_NAMESPACE_BEGIN
 namespace cli {
 
-//下面是编码表
+// 下面是编码表
 //
-//编码    颜色/动作
-// 0   重新设置属性到缺省设置
-// 1   设置粗体
-// 2   设置一半亮度（模拟彩色显示器的颜色）
-// 4   设置下划线（模拟彩色显示器的颜色）
-// 5   设置闪烁
-// 7   设置反向图象
-// 22  设置一般密度
-// 24  关闭下划线
-// 25  关闭闪烁
-// 27  关闭反向图象
-// 30  设置黑色前景
-// 31  设置红色前景
-// 32  设置绿色前景
-// 33  设置棕色前景
-// 34  设置蓝色前景
-// 35  设置紫色前景
-// 36  设置青色前景
-// 37  设置白色前景
-// 38  在缺省的前景颜色上设置下划线
-// 39  在缺省的前景颜色上关闭下划线
-// 40  设置黑色背景
-// 41  设置红色背景
-// 42  设置绿色背景
-// 43  设置棕色背景
-// 44  设置蓝色背景
-// 45  设置紫色背景
-// 46  设置青色背景
-// 47  设置白色背景
-// 49  设置缺省黑色背景
+// 编码    颜色/动作
+//  0   重新设置属性到缺省设置
+//  1   设置粗体
+//  2   设置一半亮度（模拟彩色显示器的颜色）
+//  4   设置下划线（模拟彩色显示器的颜色）
+//  5   设置闪烁
+//  7   设置反向图象
+//  22  设置一般密度
+//  24  关闭下划线
+//  25  关闭闪烁
+//  27  关闭反向图象
+//  30  设置黑色前景
+//  31  设置红色前景
+//  32  设置绿色前景
+//  33  设置棕色前景
+//  34  设置蓝色前景
+//  35  设置紫色前景
+//  36  设置青色前景
+//  37  设置白色前景
+//  38  在缺省的前景颜色上设置下划线
+//  39  在缺省的前景颜色上关闭下划线
+//  40  设置黑色背景
+//  41  设置红色背景
+//  42  设置绿色背景
+//  43  设置棕色背景
+//  44  设置蓝色背景
+//  45  设置紫色背景
+//  46  设置青色背景
+//  47  设置白色背景
+//  49  设置缺省黑色背景
 
 struct LIBATFRAME_UTILS_API shell_font_style {
   enum shell_font_spec {
@@ -104,7 +118,8 @@ class LIBATFRAME_UTILS_API shell_font {
    * 字体信息
    * @param iFlag
    */
-  shell_font(int iFlag = 0);
+  explicit shell_font(int iFlag = 0);
+
   virtual ~shell_font();
 
   /**
@@ -200,3 +215,11 @@ class UTIL_SYMBOL_VISIBLE shell_stream {
 
 }  // namespace cli
 LIBATFRAME_UTILS_NAMESPACE_END
+
+#if defined(__GNUC__) && !defined(__clang__) && !defined(__apple_build_version__)
+#  if (__GNUC__ * 100 + __GNUC_MINOR__ * 10) >= 460
+#    pragma GCC diagnostic pop
+#  endif
+#elif defined(__clang__) || defined(__apple_build_version__)
+#  pragma clang diagnostic pop
+#endif

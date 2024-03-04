@@ -1,11 +1,11 @@
-// Copyright 2021 atframework
-
-#ifndef TEST_CASE_BASE_H_
-#define TEST_CASE_BASE_H_
+// Copyright 2024 atframework
 
 #pragma once
 
 #include <string>
+#include <unordered_map>
+#include <unordered_set>
+#include <utility>
 
 #ifdef UTILS_TEST_MACRO_TEST_ENABLE_BOOST_TEST
 #  include <boost/test/unit_test.hpp>
@@ -13,8 +13,6 @@
 
 #if (defined(__cplusplus) && __cplusplus >= 201103L) || (defined(_MSC_VER) && _MSC_VER >= 1600)
 
-#  include <unordered_map>
-#  include <unordered_set>
 #  define UTIL_UNIT_TEST_MACRO_AUTO_MAP(...) std::unordered_map<__VA_ARGS__>
 #  define UTIL_UNIT_TEST_MACRO_AUTO_SET(...) std::unordered_set<__VA_ARGS__>
 #  define UTIL_UNIT_TEST_MACRO_AUTO_UNORDERED 1
@@ -47,7 +45,7 @@ class test_case_base {
 
 class test_on_start_base {
  public:
-  using after_set_t = UTIL_UNIT_TEST_MACRO_AUTO_SET(std::string);
+  using after_set_t = std::unordered_set<std::string>;
   using on_start_func = void (*)();
 
  public:
@@ -74,7 +72,7 @@ class test_on_start_base {
 
 class test_on_exit_base {
  public:
-  using before_set_t = UTIL_UNIT_TEST_MACRO_AUTO_SET(std::string);
+  using before_set_t = std::unordered_set<std::string>;
   using on_exit_func = void (*)();
 
  public:
@@ -98,5 +96,3 @@ class test_on_exit_base {
  private:
   void register_self();
 };
-
-#endif /* TEST_CASE_BASE_H_ */

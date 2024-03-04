@@ -28,7 +28,7 @@ enable_testing()
 
 project(
   atframe_utils
-  VERSION "2.5.3"
+  VERSION "2.6.0"
   HOMEPAGE_URL "https://github.com/atframework/atframe_utils"
   LANGUAGES C CXX)
 
@@ -97,7 +97,8 @@ set(SRC_LIST
     "${CMAKE_CURRENT_LIST_DIR}/src/log/log_stacktrace.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/src/log/log_wrapper.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/src/log/lua_log_adaptor.cpp"
-    "${CMAKE_CURRENT_LIST_DIR}/src/mem_pool/lru_object_pool.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/src/memory/lru_object_pool.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/src/memory/rc_ptr.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/src/network/http_content_type.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/src/network/http_request.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/src/random/uuid_generator.cpp"
@@ -156,6 +157,9 @@ set(HEADER_LIST
     "${CMAKE_CURRENT_LIST_DIR}/include/log/lua_log_adaptor.h"
     "${CMAKE_CURRENT_LIST_DIR}/include/mem_pool/lru_map.h"
     "${CMAKE_CURRENT_LIST_DIR}/include/mem_pool/lru_object_pool.h"
+    "${CMAKE_CURRENT_LIST_DIR}/include/memory/lru_map.h"
+    "${CMAKE_CURRENT_LIST_DIR}/include/memory/rc_ptr.h"
+    "${CMAKE_CURRENT_LIST_DIR}/include/memory/lru_object_pool.h"
     "${CMAKE_CURRENT_LIST_DIR}/include/network/http_content_type.h"
     "${CMAKE_CURRENT_LIST_DIR}/include/network/http_request.h"
     "${CMAKE_CURRENT_LIST_DIR}/include/nostd/string_view.h"

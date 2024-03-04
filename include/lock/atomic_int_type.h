@@ -747,11 +747,10 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY atomic_int_type<unsafe_int_type<Ty> > {
 
  private:
   inline bool cas(value_type &expected, value_type desired) noexcept {
-    UTIL_LIKELY_IF(data_ == expected) {
+    UTIL_LIKELY_IF (data_ == expected) {
       data_ = desired;
       return true;
-    }
-    else {
+    } else {
       expected = data_;
       return false;
     }

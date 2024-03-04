@@ -92,8 +92,7 @@ return LOG_WRAPPER_FWAPI_NAMESPACE vformat_to(out, std::forward<TFMT>(fmt_text),
         FMT_VERSION >= 100000
                                               LOG_WRAPPER_FWAPI_NAMESPACE make_format_args(args...)
 #    else
-                                               LOG_WRAPPER_FWAPI_NAMESPACE make_format_args(
-                                                   std::forward<TARGS>(args)...)
+                                              LOG_WRAPPER_FWAPI_NAMESPACE make_format_args(std::forward<TARGS>(args)...)
 #    endif
 );
 #  endif
