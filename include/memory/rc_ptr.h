@@ -6,6 +6,7 @@
 #include <cstdint>
 #include <functional>
 #include <memory>
+#include <ostream>
 #include <type_traits>
 #include <utility>
 
@@ -962,7 +963,7 @@ class enable_shared_rc_from_this {
 
 template <class T, class... TArgs>
 strong_rc_ptr<T> make_strong_rc(TArgs&&... args) {
-  static_assert(!std::is_array<T>::value, "make_shared<T[]> not supported");
+  static_assert(!std::is_array<T>::value, "make_strong_rc<T[]> not supported");
 
   using strong_rc_ptr_element = typename std::remove_const<T>::type;
 
@@ -1002,4 +1003,11 @@ struct LIBATFRAME_UTILS_API_HEAD_ONLY hash<LIBATFRAME_UTILS_NAMESPACE_ID::memory
     return std::hash<T*>()(s.get());
   }
 };
+
+template <class CharT, class TraitT, class T>
+LIBATFRAME_UTILS_API_HEAD_ONLY inline std::basic_ostream<CharT, TraitT>& operator<<(
+    std::basic_ostream<CharT, TraitT>& __os, const LIBATFRAME_UTILS_NAMESPACE_ID::memory::strong_rc_ptr<T>& __p) {
+  __os << __p.get();
+  return __os;
+}
 }  // namespace std

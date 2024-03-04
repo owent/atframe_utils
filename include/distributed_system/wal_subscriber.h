@@ -20,10 +20,10 @@ LIBATFRAME_UTILS_NAMESPACE_BEGIN
 namespace distributed_system {
 
 template <class PrivateDataT, class KeyT, class HashSubscriberKeyT = std::hash<KeyT>,
-          class EqualSubscriberKeyT = std::equal_to<KeyT> >
+          class EqualSubscriberKeyT = std::equal_to<KeyT>, wal_mt_mode MTMode = wal_mt_mode::kMultiThread>
 class LIBATFRAME_UTILS_API_HEAD_ONLY wal_subscriber {
  public:
-  using pointer = std::shared_ptr<wal_subscriber>;
+  using pointer = typename wal_mt_mode_data_trait<wal_subscriber, MTMode>::strong_ptr;
 
   using private_data_type = PrivateDataT;
 
@@ -39,7 +39,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_subscriber {
 
   struct timer_type {
     time_point timeout;
-    std::weak_ptr<wal_subscriber> subscriber;
+    typename wal_mt_mode_data_trait<wal_subscriber, MTMode>::weak_ptr subscriber;
   };
 
  private:
@@ -177,8 +177,8 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_subscriber {
       }
 
       construct_helper guard;
-      auto ret = std::make_shared<wal_subscriber>(guard, *this, key, now, timeout, subscribers_timer_.end(),
-                                                  std::forward<ArgsT>(args)...);
+      auto ret = wal_mt_mode_func_trait<MTMode>::template make_strong<wal_subscriber>(
+          guard, *this, key, now, timeout, subscribers_timer_.end(), std::forward<ArgsT>(args)...);
       if (!ret) {
         return ret;
       }
@@ -298,6 +298,10 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_subscriber {
 
   typename std::list<timer_type>::iterator timer_handle_;
 };
+
+template <class PrivateDataT, class KeyT, wal_mt_mode MTMode, class HashSubscriberKeyT = std::hash<KeyT>,
+          class EqualSubscriberKeyT = std::equal_to<KeyT>>
+using wal_subscriber_with_mt_mode = wal_subscriber<PrivateDataT, KeyT, HashSubscriberKeyT, EqualSubscriberKeyT, MTMode>;
 
 }  // namespace distributed_system
 LIBATFRAME_UTILS_NAMESPACE_END

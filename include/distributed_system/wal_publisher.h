@@ -115,14 +115,14 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_publisher {
     callback_on_subscriber_added_fn_t on_subscriber_added;
     callback_on_subscriber_removed_fn_t on_subscriber_removed;
   };
-  using vtable_pointer = std::shared_ptr<vtable_type>;
+  using vtable_pointer = typename wal_mt_mode_data_trait<vtable_type, log_operator_type::mt_mode>::strong_ptr;
 
   struct configure_type : public object_type::configure_type {
     duration subscriber_timeout;
     bool enable_last_broadcast_for_removed_subscriber;
     bool enable_hole_log;
   };
-  using configure_pointer = std::shared_ptr<configure_type>;
+  using configure_pointer = typename wal_mt_mode_data_trait<configure_type, log_operator_type::mt_mode>::strong_ptr;
 
  private:
   UTIL_DESIGN_PATTERN_NOMOVABLE(wal_publisher);
@@ -130,8 +130,8 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_publisher {
   struct construct_helper {
     vtable_pointer vt;
     configure_pointer conf;
-    std::shared_ptr<object_type> wal_object;
-    std::shared_ptr<subscriber_manager_type> subscriber_manager;
+    typename wal_mt_mode_data_trait<object_type, log_operator_type::mt_mode>::strong_ptr wal_object;
+    typename wal_mt_mode_data_trait<subscriber_manager_type, log_operator_type::mt_mode>::strong_ptr subscriber_manager;
   };
 
  public:
@@ -164,7 +164,8 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_publisher {
   }
 
   template <class... ArgsT>
-  static std::shared_ptr<wal_publisher> create(vtable_pointer vt, configure_pointer conf, ArgsT&&... args) {
+  static typename wal_mt_mode_data_trait<wal_publisher, log_operator_type::mt_mode>::strong_ptr create(
+      vtable_pointer vt, configure_pointer conf, ArgsT&&... args) {
     if (!vt || !conf) {
       return nullptr;
     }
@@ -180,19 +181,20 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_publisher {
     construct_helper helper;
     helper.vt = vt;
     helper.conf = conf;
-    helper.wal_object = object_type::create(std::static_pointer_cast<typename object_type::vtable_type>(helper.vt),
-                                            std::static_pointer_cast<typename object_type::configure_type>(helper.conf),
-                                            std::forward<ArgsT>(args)...);
-    helper.subscriber_manager = std::make_shared<subscriber_manager_type>();
+    helper.wal_object = object_type::create(
+        log_operator_type::template static_pointer_cast<typename object_type::vtable_type>(helper.vt),
+        log_operator_type::template static_pointer_cast<typename object_type::configure_type>(helper.conf),
+        std::forward<ArgsT>(args)...);
+    helper.subscriber_manager = log_operator_type::template make_strong<subscriber_manager_type>();
     if (!helper.wal_object || !helper.subscriber_manager) {
       return nullptr;
     }
 
-    return std::make_shared<wal_publisher>(helper);
+    return log_operator_type::template make_strong<wal_publisher>(helper);
   }
 
   static configure_pointer make_configure() {
-    configure_pointer ret = std::make_shared<configure_type>();
+    configure_pointer ret = log_operator_type::template make_strong<configure_type>();
     if (!ret) {
       return ret;
     }
@@ -633,8 +635,8 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_publisher {
   configure_pointer configure_;
 
   // logs
-  std::shared_ptr<object_type> wal_object_;
-  std::shared_ptr<subscriber_manager_type> subscriber_manager_;
+  typename wal_mt_mode_data_trait<object_type, log_operator_type::mt_mode>::strong_ptr wal_object_;
+  typename wal_mt_mode_data_trait<subscriber_manager_type, log_operator_type::mt_mode>::strong_ptr subscriber_manager_;
   subscriber_collector_type gc_subscribers_;
 
   // publish-subscribe
