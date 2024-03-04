@@ -1,15 +1,14 @@
-// Copyright 2021 atframework
-
-#ifndef TEST_MANAGER_H_
-#define TEST_MANAGER_H_
+// Copyright 2024 atframework
 
 #pragma once
 
 #include <stdint.h>
 #include <ctime>
-#include <map>
 #include <string>
 #include <type_traits>
+#include <unordered_map>
+#include <unordered_set>
+#include <utility>
 #include <vector>
 
 #ifdef __cpp_impl_three_way_comparison
@@ -17,13 +16,12 @@
 #endif
 
 #include "cli/shell_font.h"
+#include "nostd/string_view.h"
 
 #include "test_case_base.h"
 
 #if (defined(__cplusplus) && __cplusplus >= 201103L) || (defined(_MSC_VER) && _MSC_VER >= 1600)
 
-#  include <unordered_map>
-#  include <unordered_set>
 #  define UTILS_TEST_ENV_AUTO_MAP(...) std::unordered_map<__VA_ARGS__>
 #  define UTILS_TEST_ENV_AUTO_SET(...) std::unordered_set<__VA_ARGS__>
 #  define UTILS_TEST_ENV_AUTO_UNORDERED 1
@@ -36,8 +34,6 @@
 
 #endif
 
-#include "nostd/string_view.h"
-
 /**
  *
  */
@@ -49,7 +45,7 @@ class test_manager {
   using test_type = std::vector<std::pair<std::string, case_ptr_type> >;
   using event_on_start_type = std::vector<std::pair<std::string, on_start_ptr_type> >;
   using event_on_exit_type = std::vector<std::pair<std::string, on_exit_ptr_type> >;
-  using test_data_type = UTILS_TEST_ENV_AUTO_MAP(std::string, test_type);
+  using test_data_type = std::unordered_map<std::string, test_type>;
 
  public:
   test_manager();
@@ -303,12 +299,10 @@ class test_manager {
   event_on_exit_type evt_on_exits_;
   int success_;
   int failed_;
-  UTILS_TEST_ENV_AUTO_SET(std::string) run_cases_;
-  UTILS_TEST_ENV_AUTO_SET(std::string) run_groups_;
+  std::unordered_set<std::string> run_cases_;
+  std::unordered_set<std::string> run_groups_;
 };
 
 int run_event_on_start();
 int run_event_on_exit();
 int run_tests(int argc, char *argv[]);
-
-#endif /* TEST_MANAGER_H_ */
