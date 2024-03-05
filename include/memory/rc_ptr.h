@@ -556,8 +556,8 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY strong_rc_ptr : public strong_rc_ptr_access
   }
 
   ~strong_rc_ptr() noexcept = default;
-  explicit strong_rc_ptr(const strong_rc_ptr& other) noexcept = default;
-  strong_rc_ptr& operator=(const strong_rc_ptr& other) noexcept = default;
+  explicit strong_rc_ptr(const strong_rc_ptr&) noexcept = default;
+  strong_rc_ptr& operator=(const strong_rc_ptr&) noexcept = default;
 
   explicit strong_rc_ptr(strong_rc_ptr&& other) noexcept : ptr_(other.ptr_), ref_counter_() {
     ref_counter_.swap(other.ref_counter_);
@@ -813,8 +813,8 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY weak_rc_ptr {
  public:
   UTIL_CONFIG_CONSTEXPR weak_rc_ptr() noexcept : ptr_(nullptr), ref_counter_() {}
 
-  explicit weak_rc_ptr(const weak_rc_ptr& other) noexcept = default;
-  weak_rc_ptr& operator=(const weak_rc_ptr& other) noexcept = default;
+  explicit weak_rc_ptr(const weak_rc_ptr&) noexcept = default;
+  weak_rc_ptr& operator=(const weak_rc_ptr&) noexcept = default;
   ~weak_rc_ptr() = default;
 
   explicit weak_rc_ptr(weak_rc_ptr&& other) noexcept : ptr_(other.ptr_), ref_counter_(std::move(other.ref_counter_)) {
