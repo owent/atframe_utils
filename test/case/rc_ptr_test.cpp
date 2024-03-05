@@ -4199,7 +4199,7 @@ class X {
   virtual void f() = 0;
 
  protected:
-  ~X() {}
+  virtual ~X() {}
 };
 
 class Y {
@@ -4207,7 +4207,7 @@ class Y {
   virtual util::memory::strong_rc_ptr<X> getX() = 0;
 
  protected:
-  ~Y() {}
+  virtual ~Y() {}
 };
 
 util::memory::strong_rc_ptr<Y> createY();
