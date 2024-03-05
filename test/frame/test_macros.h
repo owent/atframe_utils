@@ -87,7 +87,7 @@
 #    define CASE_EXPECT_GE(l, r) BOOST_CHECK_GE(l, r)
 
 #  else
-#    define CASE_EXPECT_ERROR(msg) test_manager::me().expect_true(false, msg, __FILE__, __LINE__)
+#    define CASE_EXPECT_ERROR(msg) test_manager::me().expect_false(true, msg, __FILE__, __LINE__)
 #    define CASE_EXPECT_TRUE(c) test_manager::me().expect_true((c), #c, __FILE__, __LINE__)
 #    define CASE_EXPECT_FALSE(c) test_manager::me().expect_false((c), #c, __FILE__, __LINE__)
 #    define CASE_EXPECT_EQ(l, r) test_manager::me().expect_eq((l), (r), #l, #r, __FILE__, __LINE__)

@@ -4192,6 +4192,120 @@ CASE_TEST(rc_ptr, owner_hash) {
   CASE_EXPECT_NE(get_owner_hash(q1), get_owner_hash(q4));
 }
 
+namespace shared_from_this {
+
+class X {
+ public:
+  virtual void f() = 0;
+
+ protected:
+  ~X() {}
+};
+
+class Y {
+ public:
+  virtual util::memory::strong_rc_ptr<X> getX() = 0;
+
+ protected:
+  ~Y() {}
+};
+
+util::memory::strong_rc_ptr<Y> createY();
+
+void test() {
+  util::memory::strong_rc_ptr<Y> py = createY();
+  CASE_EXPECT_TRUE(py.get() != 0);
+  CASE_EXPECT_TRUE(py.use_count() == 1);
+
+#if defined(LIBATFRAME_UTILS_ENABLE_EXCEPTION) && LIBATFRAME_UTILS_ENABLE_EXCEPTION
+  try {
+    util::memory::strong_rc_ptr<X> px = py->getX();
+    CASE_EXPECT_TRUE(px.get() != 0);
+    CASE_EXPECT_TRUE(py.use_count() == 2);
+
+    px->f();
+
+#  if defined(LIBATFRAME_UTILS_ENABLE_RTTI) && LIBATFRAME_UTILS_ENABLE_RTTI
+    util::memory::strong_rc_ptr<Y> py2 = util::memory::dynamic_pointer_cast<Y>(px);
+    CASE_EXPECT_TRUE(py.get() == py2.get());
+    CASE_EXPECT_TRUE(!(py < py2 || py2 < py));
+    CASE_EXPECT_TRUE(py.use_count() == 3);
+#  endif
+  } catch (std::bad_weak_ptr const &) {
+    CASE_EXPECT_ERROR("py->getX() failed");
+  }
+#endif
+}
+
+void test2();
+void test3();
+
+CASE_TEST(rc_ptr, shared_from_this) {
+  test();
+  test2();
+  test3();
+}
+
+// virtual inheritance to stress the implementation
+// (prevents Y* -> impl*, enable_shared_rc_from_this<impl>* -> impl* casts)
+
+class impl : public X, public virtual Y, public virtual util::memory::enable_shared_rc_from_this<impl> {
+ public:
+  virtual void f() {}
+
+  virtual util::memory::strong_rc_ptr<X> getX() {
+    util::memory::strong_rc_ptr<impl> pi = shared_from_this();
+    CASE_EXPECT_TRUE(pi.get() == this);
+    return pi;
+  }
+};
+
+// intermediate impl2 to stress the implementation
+
+class impl2 : public impl {};
+
+util::memory::strong_rc_ptr<Y> createY() {
+  util::memory::strong_rc_ptr<Y> pi(new impl2);
+  return pi;
+}
+
+void test2() { util::memory::strong_rc_ptr<Y> pi(static_cast<impl2 *>(0)); }
+
+//
+
+struct V : public util::memory::enable_shared_rc_from_this<V> {};
+
+void test3() {
+  util::memory::strong_rc_ptr<V> p(new V);
+
+#if defined(LIBATFRAME_UTILS_ENABLE_EXCEPTION) && LIBATFRAME_UTILS_ENABLE_EXCEPTION
+  try {
+    util::memory::strong_rc_ptr<V> q = p->shared_from_this();
+    CASE_EXPECT_TRUE(p == q);
+    CASE_EXPECT_TRUE(!(p < q) && !(q < p));
+  } catch (std::bad_weak_ptr const &) {
+    CASE_EXPECT_ERROR("p->shared_from_this() failed");
+  }
+
+  V v2(*p);
+
+  try {
+    util::memory::strong_rc_ptr<V> r = v2.shared_from_this();
+    CASE_EXPECT_ERROR("v2.shared_from_this() failed to throw");
+  } catch (std::bad_weak_ptr const &) {
+  }
+
+  try {
+    *p = V();
+    util::memory::strong_rc_ptr<V> r = p->shared_from_this();
+    CASE_EXPECT_ERROR("*p = V() failed to throw");
+  } catch (std::bad_weak_ptr const &) {
+  }
+#endif
+}
+
+}  // namespace shared_from_this
+
 #if defined(__GNUC__) && !defined(__clang__) && !defined(__apple_build_version__)
 #  if (__GNUC__ * 100 + __GNUC_MINOR__ * 10) >= 460
 #    pragma GCC diagnostic pop
