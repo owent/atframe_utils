@@ -78,7 +78,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY lock_holder {
  public:
   using value_type = TLock;
 
-  lock_holder() noexcept : lock_flag_(nullptr) {}
+  inline lock_holder() noexcept : lock_flag_(nullptr) {}
 
   lock_holder(TLock &lock)  // NOLINT: runtime/explicit
       : lock_flag_(&lock) {
@@ -89,16 +89,10 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY lock_holder {
 
   lock_holder(lock_holder &&other) noexcept : lock_flag_(other.lock_flag_) { other.lock_flag_ = nullptr; }
 
-  ~lock_holder() {
-    if (nullptr != lock_flag_) {
-      TUnlockAct()(*lock_flag_);
-    }
-  }
+  ~lock_holder() { reset(); }
 
   lock_holder &operator=(lock_holder &&other) {
-    if (nullptr != lock_flag_) {
-      TUnlockAct()(*lock_flag_);
-    }
+    reset();
 
     lock_flag_ = other.lock_flag_;
     other.lock_flag_ = nullptr;
@@ -106,7 +100,15 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY lock_holder {
     return *this;
   }
 
-  bool is_available() const { return nullptr != lock_flag_; }
+  inline void reset() {
+    if (nullptr != lock_flag_) {
+      value_type *lock = lock_flag_;
+      lock_flag_ = nullptr;
+      TUnlockAct()(*lock);
+    }
+  }
+
+  inline bool is_available() const { return nullptr != lock_flag_; }
 
  private:
   lock_holder(const lock_holder &) = delete;
