@@ -29,10 +29,20 @@ CASE_TEST(lock_test, lock_holder) {
   CASE_EXPECT_FALSE(lock.is_locked());
 
   {
+    LIBATFRAME_UTILS_NAMESPACE_ID::lock::lock_holder<LIBATFRAME_UTILS_NAMESPACE_ID::lock::spin_lock> holder;
+    CASE_EXPECT_FALSE(holder.is_available());
+  }
+
+  {
     LIBATFRAME_UTILS_NAMESPACE_ID::lock::lock_holder<LIBATFRAME_UTILS_NAMESPACE_ID::lock::spin_lock> holder1(lock);
 
     CASE_EXPECT_TRUE(lock.is_locked());
     CASE_EXPECT_TRUE(holder1.is_available());
+
+    LIBATFRAME_UTILS_NAMESPACE_ID::lock::lock_holder<LIBATFRAME_UTILS_NAMESPACE_ID::lock::spin_lock> holder3 =
+        std::move(holder1);
+    CASE_EXPECT_FALSE(holder1.is_available());
+    CASE_EXPECT_TRUE(holder3.is_available());
 
     LIBATFRAME_UTILS_NAMESPACE_ID::lock::lock_holder<
         LIBATFRAME_UTILS_NAMESPACE_ID::lock::spin_lock,

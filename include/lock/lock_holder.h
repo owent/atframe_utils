@@ -12,9 +12,6 @@
  * @history
  */
 
-#ifndef UTIL_LOCK_LOCK_HOLDER_H
-#define UTIL_LOCK_LOCK_HOLDER_H
-
 #pragma once
 
 #include <cstring>
@@ -81,16 +78,32 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY lock_holder {
  public:
   using value_type = TLock;
 
-  lock_holder(TLock &lock) : lock_flag_(&lock) {
+  lock_holder() noexcept : lock_flag_(nullptr) {}
+
+  lock_holder(TLock &lock)  // NOLINT: runtime/explicit
+      : lock_flag_(&lock) {
     if (false == TLockAct()(lock)) {
       lock_flag_ = nullptr;
     }
   }
 
+  lock_holder(lock_holder &&other) noexcept : lock_flag_(other.lock_flag_) { other.lock_flag_ = nullptr; }
+
   ~lock_holder() {
     if (nullptr != lock_flag_) {
       TUnlockAct()(*lock_flag_);
     }
+  }
+
+  lock_holder &operator=(lock_holder &&other) {
+    if (nullptr != lock_flag_) {
+      TUnlockAct()(*lock_flag_);
+    }
+
+    lock_flag_ = other.lock_flag_;
+    other.lock_flag_ = nullptr;
+
+    return *this;
   }
 
   bool is_available() const { return nullptr != lock_flag_; }
@@ -107,7 +120,7 @@ template <typename TLock>
 class LIBATFRAME_UTILS_API_HEAD_ONLY read_lock_holder
     : public lock_holder<TLock, detail::default_read_lock_action<TLock>, detail::default_read_unlock_action<TLock> > {
  public:
-  read_lock_holder(TLock &lock)
+  read_lock_holder(TLock &lock)  // NOLINT: runtime/explicit
       : lock_holder<TLock, detail::default_read_lock_action<TLock>, detail::default_read_unlock_action<TLock> >(lock) {}
 };
 
@@ -115,11 +128,9 @@ template <typename TLock>
 class LIBATFRAME_UTILS_API_HEAD_ONLY write_lock_holder
     : public lock_holder<TLock, detail::default_write_lock_action<TLock>, detail::default_write_unlock_action<TLock> > {
  public:
-  write_lock_holder(TLock &lock)
+  write_lock_holder(TLock &lock)  // NOLINT: runtime/explicit
       : lock_holder<TLock, detail::default_write_lock_action<TLock>, detail::default_write_unlock_action<TLock> >(
             lock) {}
 };
 }  // namespace lock
 LIBATFRAME_UTILS_NAMESPACE_END
-
-#endif /* _UTIL_LOCK_LOCK_HOLDER_H_ */
