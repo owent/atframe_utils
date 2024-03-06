@@ -18,7 +18,7 @@ using lru_map_type_traits = memory::lru_map_type_traits<TKEY, TVALUE, TOption>;
 template <class TKEY, class TVALUE, class THasher = std::hash<TKEY>, class TKeyEQ = std::equal_to<TKEY>,
           class TOption = memory::lru_map_option<memory::compat_strong_ptr_mode::kStl>,
           class TAlloc =
-              std::allocator<std::pair<const TKEY, typename memory::lru_map_type_traits<TKEY, TVALUE>::iterator>>>
+              std::allocator<std::pair<const TKEY, typename memory::lru_map_type_traits<TKEY, TVALUE, TOption>::iterator>>>
 using lru_map = memory::lru_map<TKEY, TVALUE, THasher, TKeyEQ, TOption, TAlloc>;
 
 }  // namespace mempool
