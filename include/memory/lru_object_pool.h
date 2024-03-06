@@ -25,6 +25,7 @@
 #pragma once
 
 #include <config/atframe_utils_build_feature.h>
+#include <memory/rc_ptr.h>
 
 #include <assert.h>
 #include <stdint.h>
@@ -69,11 +70,11 @@ class LIBATFRAME_UTILS_API lru_pool_base {
  */
 class lru_pool_manager {
  public:
-  using ptr_t = std::shared_ptr<lru_pool_manager>;
+  using ptr_t = strong_rc_ptr<lru_pool_manager>;
 
   struct check_item_t {
     time_t push_tick;
-    std::weak_ptr<lru_pool_base::list_type_base> list_;
+    weak_rc_ptr<lru_pool_base::list_type_base> list_;
   };
 
   using check_list_t = std::list<check_item_t>;
@@ -125,7 +126,7 @@ class lru_pool_manager {
   /**
    * @brief 添加检查列表
    */
-  LIBATFRAME_UTILS_API check_list_t::iterator push_check_list(std::weak_ptr<lru_pool_base::list_type_base> list_);
+  LIBATFRAME_UTILS_API check_list_t::iterator push_check_list(weak_rc_ptr<lru_pool_base::list_type_base> list_);
 
   LIBATFRAME_UTILS_API bool erase_check_list(check_list_t::iterator iter);
 
@@ -177,7 +178,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY lru_pool : public lru_pool_base {
   using action_type = TAction;
 
   class list_type;
-  using list_ptr_type = std::shared_ptr<list_type>;
+  using list_ptr_type = strong_rc_ptr<list_type>;
   using cat_map_type = LIBATFRAME_UTILS_AUTO_SELETC_MAP(key_t, list_ptr_type);
 
   class list_type : public lru_pool_base::list_type_base {
@@ -239,10 +240,10 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY lru_pool : public lru_pool_base {
       for (typename std::list<wrapper>::iterator iter = cache_.begin(); iter != cache_.end(); ++iter) {
 #if defined(LIBATFRAME_UTILS_ENABLE_RTTI) && LIBATFRAME_UTILS_ENABLE_RTTI
         (*iter).refer_iterator =
-            owner_->mgr_->push_check_list(std::dynamic_pointer_cast<lru_pool_base::list_type_base>(self));
+            owner_->mgr_->push_check_list(util::memory::dynamic_pointer_cast<lru_pool_base::list_type_base>(self));
 #else
         (*iter).refer_iterator =
-            owner_->mgr_->push_check_list(std::static_pointer_cast<lru_pool_base::list_type_base>(self));
+            owner_->mgr_->push_check_list(util::memory::static_pointer_cast<lru_pool_base::list_type_base>(self));
 #endif
       }
     }
@@ -258,10 +259,10 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY lru_pool : public lru_pool_base {
       if (owner_->mgr_) {
 #if defined(LIBATFRAME_UTILS_ENABLE_RTTI) && LIBATFRAME_UTILS_ENABLE_RTTI
         (*iter).refer_iterator =
-            owner_->mgr_->push_check_list(std::dynamic_pointer_cast<lru_pool_base::list_type_base>(self));
+            owner_->mgr_->push_check_list(util::memory::dynamic_pointer_cast<lru_pool_base::list_type_base>(self));
 #else
         (*iter).refer_iterator =
-            owner_->mgr_->push_check_list(std::static_pointer_cast<lru_pool_base::list_type_base>(self));
+            owner_->mgr_->push_check_list(util::memory::static_pointer_cast<lru_pool_base::list_type_base>(self));
 #endif
       }
 
@@ -373,7 +374,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY lru_pool : public lru_pool_base {
 
     list_ptr_type &list_ = data_[id];
     if (!list_) {
-      list_ = std::make_shared<list_type>(*this, id);
+      list_ = make_strong_rc<list_type>(*this, id);
       if (!list_) {
         return false;
       }

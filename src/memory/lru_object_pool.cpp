@@ -126,7 +126,7 @@ LIBATFRAME_UTILS_API size_t lru_pool_manager::proc(time_t tick) {
       continue;
     }
 
-    std::shared_ptr<lru_pool_base::list_type_base> tar_ls = checked_item.list_.lock();
+    util::memory::strong_rc_ptr<lru_pool_base::list_type_base> tar_ls = checked_item.list_.lock();
     if (!tar_ls) {
       item_count_.dec();
       checked_list_.pop_front();
@@ -154,7 +154,7 @@ LIBATFRAME_UTILS_API size_t lru_pool_manager::proc(time_t tick) {
  * @brief 添加检查列表
  */
 LIBATFRAME_UTILS_API lru_pool_manager::check_list_t::iterator lru_pool_manager::push_check_list(
-    std::weak_ptr<lru_pool_base::list_type_base> list_) {
+    util::memory::weak_rc_ptr<lru_pool_base::list_type_base> list_) {
   check_list_t::iterator ret = checked_list_.insert(checked_list_.end(), check_item_t());
   if (ret == checked_list_.end()) {
     return ret;

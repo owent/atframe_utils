@@ -12,27 +12,34 @@
  *
  */
 
-#ifndef UTIL_MEMPOOL_LRU_MAP_H
-#define UTIL_MEMPOOL_LRU_MAP_H
-
 #pragma once
 
 #include <config/atframe_utils_build_feature.h>
 #include <config/compiler_features.h>
+#include <memory/rc_ptr.h>
 
 #include <stdint.h>
 #include <cstddef>
+#include <functional>
 #include <list>
 #include <memory>
 #include <unordered_map>
+#include <utility>
 
 LIBATFRAME_UTILS_NAMESPACE_BEGIN
 namespace memory {
-template <class TKEY, class TVALUE>
+
+template <compat_strong_ptr_mode PtrMode>
+struct LIBATFRAME_UTILS_API_HEAD_ONLY lru_map_option {
+  static UTIL_CONFIG_CONSTEXPR const compat_strong_ptr_mode ptr_mode = PtrMode;
+};
+
+template <class TKEY, class TVALUE, class TOption = lru_map_option<compat_strong_ptr_mode::kStl>>
 struct LIBATFRAME_UTILS_API_HEAD_ONLY lru_map_type_traits {
   using key_type = TKEY;
   using mapped_type = TVALUE;
-  using store_type = std::shared_ptr<TVALUE>;
+  using option_type = TOption;
+  using store_type = typename compat_strong_ptr_function_trait<option_type::ptr_mode>::template shared_ptr<TVALUE>;
   using value_type = std::pair<const TKEY, store_type>;
   using size_type = size_t;
 
@@ -42,25 +49,28 @@ struct LIBATFRAME_UTILS_API_HEAD_ONLY lru_map_type_traits {
 };
 
 template <class TKEY, class TVALUE, class THasher = std::hash<TKEY>, class TKeyEQ = std::equal_to<TKEY>,
-          class TAlloc = std::allocator<std::pair<const TKEY, typename lru_map_type_traits<TKEY, TVALUE>::iterator> > >
+          class TOption = lru_map_option<compat_strong_ptr_mode::kStl>,
+          class TAlloc =
+              std::allocator<std::pair<const TKEY, typename lru_map_type_traits<TKEY, TVALUE, TOption>::iterator>>>
 class LIBATFRAME_UTILS_API_HEAD_ONLY lru_map {
  public:
-  using key_type = typename lru_map_type_traits<TKEY, TVALUE>::key_type;
-  using mapped_type = typename lru_map_type_traits<TKEY, TVALUE>::mapped_type;
-  using value_type = typename lru_map_type_traits<TKEY, TVALUE>::value_type;
-  using size_type = typename lru_map_type_traits<TKEY, TVALUE>::size_type;
-  using store_type = typename lru_map_type_traits<TKEY, TVALUE>::store_type;
+  using key_type = typename lru_map_type_traits<TKEY, TVALUE, TOption>::key_type;
+  using mapped_type = typename lru_map_type_traits<TKEY, TVALUE, TOption>::mapped_type;
+  using value_type = typename lru_map_type_traits<TKEY, TVALUE, TOption>::value_type;
+  using size_type = typename lru_map_type_traits<TKEY, TVALUE, TOption>::size_type;
+  using store_type = typename lru_map_type_traits<TKEY, TVALUE, TOption>::store_type;
+  using option_type = typename lru_map_type_traits<TKEY, TVALUE, TOption>::option_type;
   using allocator_type = TAlloc;
   using reference = value_type &;
   using const_reference = const value_type &;
   using pointer = value_type *;
   using const_pointer = const value_type *;
-  using lru_history_list_type = typename lru_map_type_traits<TKEY, TVALUE>::list_type;
-  using iterator = typename lru_map_type_traits<TKEY, TVALUE>::iterator;
-  using const_iterator = typename lru_map_type_traits<TKEY, TVALUE>::const_iterator;
+  using lru_history_list_type = typename lru_map_type_traits<TKEY, TVALUE, TOption>::list_type;
+  using iterator = typename lru_map_type_traits<TKEY, TVALUE, TOption>::iterator;
+  using const_iterator = typename lru_map_type_traits<TKEY, TVALUE, TOption>::const_iterator;
 
   using lru_key_value_map_type = std::unordered_map<TKEY, iterator, THasher, TKeyEQ, TAlloc>;
-  using self_type = lru_map<TKEY, TVALUE, THasher, TKeyEQ, TAlloc>;
+  using self_type = lru_map<TKEY, TVALUE, THasher, TKeyEQ, TOption, TAlloc>;
 
   lru_map() {}
 
@@ -120,12 +130,14 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY lru_map {
   template <class TPARAMKEY, class TPARAMVALUE>
   LIBATFRAME_UTILS_API_HEAD_ONLY std::pair<iterator, bool> insert_key_value(const TPARAMKEY &key,
                                                                             const TPARAMVALUE &copy_value) {
-    return insert_key_value(key, std::make_shared<mapped_type>(copy_value));
+    return insert_key_value(
+        key, compat_strong_ptr_function_trait<option_type::ptr_mode>::template make_shared<mapped_type>(copy_value));
   }
 
   template <class TPARAMKEY, class TPARAMVALUE>
-  LIBATFRAME_UTILS_API_HEAD_ONLY std::pair<iterator, bool> insert_key_value(const TPARAMKEY &key,
-                                                                            const std::shared_ptr<TPARAMVALUE> &value) {
+  LIBATFRAME_UTILS_API_HEAD_ONLY std::pair<iterator, bool> insert_key_value(
+      const TPARAMKEY &key,
+      const typename compat_strong_ptr_function_trait<option_type::ptr_mode>::template shared_ptr<TPARAMVALUE> &value) {
     typename lru_key_value_map_type::iterator it = kv_data_.find(key);
     if (it != kv_data_.end()) {
       return std::pair<iterator, bool>(visit_history_.end(), false);
@@ -160,21 +172,24 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY lru_map {
   }
 
   template <class TPARAMKEY, class TPARAMVALUE>
-  LIBATFRAME_UTILS_API_HEAD_ONLY std::pair<iterator, bool> insert_key_value(TPARAMKEY &&key,
-                                                                            std::shared_ptr<TPARAMVALUE> &&value) {
+  LIBATFRAME_UTILS_API_HEAD_ONLY std::pair<iterator, bool> insert_key_value(
+      TPARAMKEY &&key,
+      typename compat_strong_ptr_function_trait<option_type::ptr_mode>::template shared_ptr<TPARAMVALUE> &&value) {
     return insert(value_type(std::forward<TPARAMKEY>(key), value));
   }
 
   template <class TPARAMKEY, class TPARAMVALUE>
-  LIBATFRAME_UTILS_API_HEAD_ONLY std::pair<iterator, bool> insert_key_value(TPARAMKEY &&key,
-                                                                            std::shared_ptr<TPARAMVALUE> &value) {
+  LIBATFRAME_UTILS_API_HEAD_ONLY std::pair<iterator, bool> insert_key_value(
+      TPARAMKEY &&key,
+      typename compat_strong_ptr_function_trait<option_type::ptr_mode>::template shared_ptr<TPARAMVALUE> &value) {
     return insert(value_type(std::forward<TPARAMKEY>(key), value));
   }
 
   template <class TPARAMKEY, class TPARAMVALUE>
   LIBATFRAME_UTILS_API_HEAD_ONLY std::pair<iterator, bool> insert_key_value(TPARAMKEY &&key, TPARAMVALUE &&copy_value) {
-    return insert(
-        value_type(std::forward<TPARAMKEY>(key), std::make_shared<mapped_type>(std::forward<TPARAMVALUE>(copy_value))));
+    return insert(value_type(std::forward<TPARAMKEY>(key),
+                             compat_strong_ptr_function_trait<option_type::ptr_mode>::template make_shared<mapped_type>(
+                                 std::forward<TPARAMVALUE>(copy_value))));
   }
 
   template <class InputIt>
@@ -236,7 +251,8 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY lru_map {
   mapped_type &operator[](const key_type &key) {
     iterator it = find(key);
     if (it == end()) {
-      std::pair<iterator, bool> res = insert(value_type(key, std::make_shared<mapped_type>()));
+      std::pair<iterator, bool> res = insert(value_type(
+          key, compat_strong_ptr_function_trait<option_type::ptr_mode>::template make_shared<mapped_type>()));
       return *(*res.first).second;
     }
 
@@ -249,5 +265,3 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY lru_map {
 };
 }  // namespace memory
 LIBATFRAME_UTILS_NAMESPACE_END
-
-#endif /* _UTIL_MEMPOOL_LRUOBJECTPOOL_H_ */

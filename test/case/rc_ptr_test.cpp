@@ -9,6 +9,7 @@
 #include <stdint.h>
 #include <functional>
 #include <map>
+#include <string>
 #include <utility>
 #include <vector>
 
@@ -1982,7 +1983,7 @@ namespace n_map {
 struct X {};
 
 void test() {
-  std::vector<util::memory::strong_rc_ptr<int> > vi;
+  std::vector<util::memory::strong_rc_ptr<int>> vi;
 
   {
     util::memory::strong_rc_ptr<int> pi1(new int);
@@ -2002,7 +2003,7 @@ void test() {
     vi.push_back(pi1);
   }
 
-  std::vector<util::memory::strong_rc_ptr<X> > vx;
+  std::vector<util::memory::strong_rc_ptr<X>> vx;
 
   {
     util::memory::strong_rc_ptr<X> px1(new X);
@@ -2025,13 +2026,13 @@ void test() {
   std::map<util::memory::strong_rc_ptr<void>, int64_t> m;
 
   {
-    for (std::vector<util::memory::strong_rc_ptr<int> >::iterator i = vi.begin(); i != vi.end(); ++i) {
+    for (std::vector<util::memory::strong_rc_ptr<int>>::iterator i = vi.begin(); i != vi.end(); ++i) {
       ++m[*i];
     }
   }
 
   {
-    for (std::vector<util::memory::strong_rc_ptr<X> >::iterator i = vx.begin(); i != vx.end(); ++i) {
+    for (std::vector<util::memory::strong_rc_ptr<X>>::iterator i = vx.begin(); i != vx.end(); ++i) {
       ++m[*i];
     }
   }
@@ -2423,7 +2424,7 @@ class smart_pointer_deleter {
 void test() {
   another_ptr<event_handler> p = get_event_handler();
 
-  util::memory::strong_rc_ptr<event_handler> q(p.get(), smart_pointer_deleter<another_ptr<event_handler> >(p));
+  util::memory::strong_rc_ptr<event_handler> q(p.get(), smart_pointer_deleter<another_ptr<event_handler>>(p));
 
   p.reset();
 
@@ -4305,6 +4306,46 @@ void test3() {
 }
 
 }  // namespace shared_from_this
+
+CASE_TEST(rc_ptr, compat) {
+  static_assert(
+      std::is_same<util::memory::compat_strong_ptr_type_trait<std::string,
+                                                              util::memory::compat_strong_ptr_mode::kStl>::shared_ptr,
+                   std::shared_ptr<std::string>>::value,
+      "check shared_ptr failed");
+  static_assert(std::is_same<util::memory::compat_strong_ptr_type_trait<
+                                 std::string, util::memory::compat_strong_ptr_mode::kStrongRc>::shared_ptr,
+                             util::memory::strong_rc_ptr<std::string>>::value,
+                "check strong_rc_ptr failed");
+
+  static_assert(
+      std::is_same<
+          util::memory::compat_strong_ptr_type_trait<std::string, util::memory::compat_strong_ptr_mode::kStl>::weak_ptr,
+          std::weak_ptr<std::string>>::value,
+      "check weak_ptr failed");
+  static_assert(std::is_same<util::memory::compat_strong_ptr_type_trait<
+                                 std::string, util::memory::compat_strong_ptr_mode::kStrongRc>::weak_ptr,
+                             util::memory::weak_rc_ptr<std::string>>::value,
+                "check strong_rc_ptr failed");
+
+  static_assert(std::is_same<util::memory::compat_strong_ptr_function_trait<
+                                 util::memory::compat_strong_ptr_mode::kStl>::enable_shared_from_this<std::string>,
+                             std::enable_shared_from_this<std::string>>::value,
+                "check enable_shared_from_this failed");
+  static_assert(std::is_same<util::memory::compat_strong_ptr_function_trait<
+                                 util::memory::compat_strong_ptr_mode::kStrongRc>::enable_shared_from_this<std::string>,
+                             util::memory::enable_shared_rc_from_this<std::string>>::value,
+                "check enable_shared_from_this failed");
+
+  static_assert(std::is_same<decltype(util::memory::compat_strong_ptr_function_trait<
+                                      util::memory::compat_strong_ptr_mode::kStl>::make_shared<std::string>()),
+                             std::shared_ptr<std::string>>::value,
+                "check make_shared failed");
+  static_assert(std::is_same<decltype(util::memory::compat_strong_ptr_function_trait<
+                                      util::memory::compat_strong_ptr_mode::kStrongRc>::make_shared<std::string>()),
+                             util::memory::strong_rc_ptr<std::string>>::value,
+                "check make_shared failed");
+}
 
 #if defined(__GNUC__) && !defined(__clang__) && !defined(__apple_build_version__)
 #  if (__GNUC__ * 100 + __GNUC_MINOR__ * 10) >= 460
