@@ -572,7 +572,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY strong_rc_ptr : public strong_rc_ptr_access
   template <class Y, class Deleter>
   strong_rc_ptr(std::unique_ptr<Y, Deleter>&& other) noexcept  // NOLINT: runtime/explicit
       : ptr_(other.get()), ref_counter_() {
-    ref_counter_ = ref_counter_(std::move(other));
+    ref_counter_ = __strong_rc_counter<element_type>{std::move(other)};
     __enable_shared_from_this_with(&ref_counter_, ptr_, ptr_);
   }
 

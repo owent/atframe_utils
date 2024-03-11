@@ -4307,6 +4307,253 @@ void test3() {
 
 }  // namespace shared_from_this
 
+namespace sp_unique_ptr {
+struct X : public ::util::memory::enable_shared_rc_from_this<X> {
+  static int instances;
+
+  X() { ++instances; }
+
+  ~X() { --instances; }
+
+ private:
+  X(X const &);
+  X &operator=(X const &);
+};
+
+int X::instances = 0;
+
+struct Y {
+  static int instances;
+
+  bool deleted_;
+
+  Y() : deleted_(false) { ++instances; }
+
+  ~Y() {
+    CASE_EXPECT_TRUE(deleted_);
+    --instances;
+  }
+
+ private:
+  Y(Y const &);
+  Y &operator=(Y const &);
+};
+
+int Y::instances = 0;
+
+struct YD {
+  void operator()(Y *p) const {
+    if (p) {
+      p->deleted_ = true;
+      delete p;
+    } else {
+      CASE_EXPECT_ERROR("YD::operator()(0) called");
+    }
+  }
+};
+
+template <class U, class T, class D>
+static void test_null_unique_ptr(std::unique_ptr<T, D> p1, std::unique_ptr<T, D> p2) {
+  CASE_EXPECT_TRUE(T::instances == 0);
+
+  ::util::memory::strong_rc_ptr<U> sp(std::move(p1));
+
+  CASE_EXPECT_TRUE(sp.get() == 0);
+  CASE_EXPECT_TRUE(sp.use_count() == 0);
+
+  sp.reset(new T, typename std::remove_reference<D>::type());
+
+  CASE_EXPECT_TRUE(sp.get() != 0);
+  CASE_EXPECT_TRUE(sp.use_count() == 1);
+
+  CASE_EXPECT_TRUE(T::instances == 1);
+
+  sp = std::move(p2);
+
+  CASE_EXPECT_TRUE(sp.get() == 0);
+  CASE_EXPECT_TRUE(sp.use_count() == 0);
+
+  CASE_EXPECT_TRUE(T::instances == 0);
+}
+
+CASE_TEST(rc_ptr, sp_unique_ptr) {
+  {
+    CASE_EXPECT_TRUE(X::instances == 0);
+
+    std::unique_ptr<X> p(new X);
+    CASE_EXPECT_TRUE(X::instances == 1);
+
+    ::util::memory::strong_rc_ptr<X> p2(std::move(p));
+    CASE_EXPECT_TRUE(X::instances == 1);
+    CASE_EXPECT_TRUE(p.get() == 0);
+
+    ::util::memory::strong_rc_ptr<X> p3 = p2->shared_from_this();
+    CASE_EXPECT_TRUE(p2 == p3);
+    CASE_EXPECT_TRUE(!(p2 < p3) && !(p3 < p2));
+
+    p2.reset();
+    p3.reset();
+    CASE_EXPECT_TRUE(X::instances == 0);
+
+    p2 = std::unique_ptr<X>(new X);
+    CASE_EXPECT_TRUE(X::instances == 1);
+
+    p2 = std::unique_ptr<X>(new X);
+    CASE_EXPECT_TRUE(X::instances == 1);
+
+    p2.reset();
+    CASE_EXPECT_TRUE(X::instances == 0);
+  }
+
+  {
+    CASE_EXPECT_TRUE(X::instances == 0);
+
+    std::unique_ptr<X> p(new X);
+    CASE_EXPECT_TRUE(X::instances == 1);
+
+    ::util::memory::strong_rc_ptr<X const> p2(std::move(p));
+    CASE_EXPECT_TRUE(X::instances == 1);
+    CASE_EXPECT_TRUE(p.get() == 0);
+
+    ::util::memory::strong_rc_ptr<X const> p3 = p2->shared_from_this();
+    CASE_EXPECT_TRUE(p2 == p3);
+    CASE_EXPECT_TRUE(!(p2 < p3) && !(p3 < p2));
+
+    p2.reset();
+    p3.reset();
+    CASE_EXPECT_TRUE(X::instances == 0);
+
+    p2 = std::unique_ptr<X>(new X);
+    CASE_EXPECT_TRUE(X::instances == 1);
+
+    p2 = std::unique_ptr<X>(new X);
+    CASE_EXPECT_TRUE(X::instances == 1);
+
+    p2.reset();
+    CASE_EXPECT_TRUE(X::instances == 0);
+  }
+
+  {
+    CASE_EXPECT_TRUE(X::instances == 0);
+
+    std::unique_ptr<X> p(new X);
+    CASE_EXPECT_TRUE(X::instances == 1);
+
+    ::util::memory::strong_rc_ptr<void> p2(std::move(p));
+    CASE_EXPECT_TRUE(X::instances == 1);
+    CASE_EXPECT_TRUE(p.get() == 0);
+
+    p2.reset();
+    CASE_EXPECT_TRUE(X::instances == 0);
+
+    p2 = std::unique_ptr<X>(new X);
+    CASE_EXPECT_TRUE(X::instances == 1);
+
+    p2 = std::unique_ptr<X>(new X);
+    CASE_EXPECT_TRUE(X::instances == 1);
+
+    p2.reset();
+    CASE_EXPECT_TRUE(X::instances == 0);
+  }
+
+  {
+    CASE_EXPECT_TRUE(Y::instances == 0);
+
+    std::unique_ptr<Y, YD> p(new Y, YD());
+    CASE_EXPECT_TRUE(Y::instances == 1);
+
+    ::util::memory::strong_rc_ptr<Y> p2(std::move(p));
+    CASE_EXPECT_TRUE(Y::instances == 1);
+    CASE_EXPECT_TRUE(p.get() == 0);
+
+    p2.reset();
+    CASE_EXPECT_TRUE(Y::instances == 0);
+
+    p2 = std::unique_ptr<Y, YD>(new Y, YD());
+    CASE_EXPECT_TRUE(Y::instances == 1);
+
+    p2 = std::unique_ptr<Y, YD>(new Y, YD());
+    CASE_EXPECT_TRUE(Y::instances == 1);
+
+    p2.reset();
+    CASE_EXPECT_TRUE(Y::instances == 0);
+  }
+
+  {
+    CASE_EXPECT_TRUE(Y::instances == 0);
+
+    YD yd;
+
+    std::unique_ptr<Y, YD &> p(new Y, yd);
+    CASE_EXPECT_TRUE(Y::instances == 1);
+
+    ::util::memory::strong_rc_ptr<Y> p2(std::move(p));
+    CASE_EXPECT_TRUE(Y::instances == 1);
+    CASE_EXPECT_TRUE(p.get() == 0);
+
+    p2.reset();
+    CASE_EXPECT_TRUE(Y::instances == 0);
+
+    p2 = std::unique_ptr<Y, YD &>(new Y, yd);
+    CASE_EXPECT_TRUE(Y::instances == 1);
+
+    p2 = std::unique_ptr<Y, YD &>(new Y, yd);
+    CASE_EXPECT_TRUE(Y::instances == 1);
+
+    p2.reset();
+    CASE_EXPECT_TRUE(Y::instances == 0);
+  }
+
+  {
+    CASE_EXPECT_TRUE(Y::instances == 0);
+
+    YD yd;
+
+    std::unique_ptr<Y, YD const &> p(new Y, yd);
+    CASE_EXPECT_TRUE(Y::instances == 1);
+
+    ::util::memory::strong_rc_ptr<Y> p2(std::move(p));
+    CASE_EXPECT_TRUE(Y::instances == 1);
+    CASE_EXPECT_TRUE(p.get() == 0);
+
+    p2.reset();
+    CASE_EXPECT_TRUE(Y::instances == 0);
+
+    p2 = std::unique_ptr<Y, YD const &>(new Y, yd);
+    CASE_EXPECT_TRUE(Y::instances == 1);
+
+    p2 = std::unique_ptr<Y, YD const &>(new Y, yd);
+    CASE_EXPECT_TRUE(Y::instances == 1);
+
+    p2.reset();
+    CASE_EXPECT_TRUE(Y::instances == 0);
+  }
+
+  {
+    test_null_unique_ptr<X>(std::unique_ptr<X>(), std::unique_ptr<X>());
+    test_null_unique_ptr<X const>(std::unique_ptr<X>(), std::unique_ptr<X>());
+    test_null_unique_ptr<void>(std::unique_ptr<X>(), std::unique_ptr<X>());
+    test_null_unique_ptr<void const>(std::unique_ptr<X>(), std::unique_ptr<X>());
+  }
+
+  {
+    test_null_unique_ptr<Y>(std::unique_ptr<Y, YD>(0, YD()), std::unique_ptr<Y, YD>(0, YD()));
+    test_null_unique_ptr<Y const>(std::unique_ptr<Y, YD>(0, YD()), std::unique_ptr<Y, YD>(0, YD()));
+    test_null_unique_ptr<void>(std::unique_ptr<Y, YD>(0, YD()), std::unique_ptr<Y, YD>(0, YD()));
+    test_null_unique_ptr<void const>(std::unique_ptr<Y, YD>(0, YD()), std::unique_ptr<Y, YD>(0, YD()));
+  }
+
+  {
+    YD yd;
+
+    test_null_unique_ptr<Y>(std::unique_ptr<Y, YD &>(0, yd), std::unique_ptr<Y, YD &>(0, yd));
+    test_null_unique_ptr<Y const>(std::unique_ptr<Y, YD &>(0, yd), std::unique_ptr<Y, YD &>(0, yd));
+    test_null_unique_ptr<void>(std::unique_ptr<Y, YD &>(0, yd), std::unique_ptr<Y, YD &>(0, yd));
+    test_null_unique_ptr<void const>(std::unique_ptr<Y, YD &>(0, yd), std::unique_ptr<Y, YD &>(0, yd));
+  }
+}
+}  // namespace sp_unique_ptr
+
 CASE_TEST(rc_ptr, compat) {
   static_assert(
       std::is_same<util::memory::compat_strong_ptr_type_trait<std::string,
