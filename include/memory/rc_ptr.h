@@ -527,7 +527,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY strong_rc_ptr : public strong_rc_ptr_access
   }
 
   template <class Y, class Deleter>
-  strong_rc_ptr(Y* ptr, Deleter d) noexcept : ptr_(ptr), ref_counter_(ptr, std::move(d)) {
+  strong_rc_ptr(Y* ptr, Deleter d) : ptr_(ptr), ref_counter_(ptr, std::move(d)) {
     __enable_shared_from_this_with(&ref_counter_, ptr, ptr);
   }
 
@@ -570,14 +570,14 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY strong_rc_ptr : public strong_rc_ptr_access
   }
 
   template <class Y, class Deleter>
-  strong_rc_ptr(std::unique_ptr<Y, Deleter>&& other) noexcept  // NOLINT: runtime/explicit
+  strong_rc_ptr(std::unique_ptr<Y, Deleter>&& other)  // NOLINT: runtime/explicit
       : ptr_(other.get()), ref_counter_() {
     ref_counter_ = __strong_rc_counter<element_type>{std::move(other)};
     __enable_shared_from_this_with(&ref_counter_, ptr_, ptr_);
   }
 
   template <class... Args>
-  strong_rc_ptr(__strong_rc_alloc_shared_tag<T> __tag, Args&&... args) noexcept  // NOLINT: runtime/explicit
+  strong_rc_ptr(__strong_rc_alloc_shared_tag<T> __tag, Args&&... args)  // NOLINT: runtime/explicit
       : ptr_(nullptr), ref_counter_(ptr_, __tag, std::forward<Args>(args)...) {
     __enable_shared_from_this_with(&ref_counter_, ptr_, ptr_);
   }
@@ -605,6 +605,12 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY strong_rc_ptr : public strong_rc_ptr_access
 
   template <class Y>
   inline strong_rc_ptr& operator=(strong_rc_ptr<Y>&& other) noexcept {
+    strong_rc_ptr{std::move(other)}.swap(*this);
+    return *this;
+  }
+
+  template <class Y, class Deleter>
+  inline strong_rc_ptr& operator=(std::unique_ptr<Y, Deleter>&& other) {
     strong_rc_ptr{std::move(other)}.swap(*this);
     return *this;
   }
