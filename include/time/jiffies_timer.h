@@ -70,6 +70,8 @@
 
 #include <config/atframe_utils_build_feature.h>
 
+#include <memory/rc_ptr.h>
+
 #include <assert.h>
 #include <stdint.h>
 #include <bitset>
@@ -90,7 +92,8 @@ namespace time {
  *       最大定时器范围: 2^(LVL_CLK_SHIFT * (LVL_DEPTH - 1) + LVL_BITS) * tick周期 <br />
  * @note 如果外部需要引用定时器对象，请使用 timer_t 代替函数签名中的 timer_type
  */
-template <time_t LVL_BITS = 6, time_t LVL_CLK_SHIFT = 3, size_t LVL_DEPTH = 8>
+template <time_t LVL_BITS = 6, time_t LVL_CLK_SHIFT = 3, size_t LVL_DEPTH = 8,
+          memory::compat_strong_ptr_mode PTR_MODE = memory::compat_strong_ptr_mode::kStl>
 class LIBATFRAME_UTILS_API_HEAD_ONLY jiffies_timer {
  public:
   UTIL_CONFIG_STATIC_ASSERT(LVL_CLK_SHIFT < LVL_BITS);
@@ -119,8 +122,10 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY jiffies_timer {
 
  public:
   using timer_callback_fn_t = std::function<void(time_t tick_time, const timer_type &timer)>;
-  using timer_ptr_t = std::shared_ptr<timer_type>;  // 外部请勿直接访问内部成员，只允许通过API访问
-  using timer_wptr_t = std::weak_ptr<timer_type>;   // 外部请勿直接访问内部成员，只允许通过API访问
+  using timer_ptr_t = typename memory::compat_strong_ptr_function_trait<PTR_MODE>::template shared_ptr<
+      timer_type>;  // 外部请勿直接访问内部成员，只允许通过API访问
+  using timer_wptr_t = typename memory::compat_strong_ptr_function_trait<PTR_MODE>::template weak_ptr<
+      timer_type>;  // 外部请勿直接访问内部成员，只允许通过API访问
 
  private:
   struct timer_type {
@@ -217,7 +222,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY jiffies_timer {
       delta = 1;
     }
 
-    timer_ptr_t timer_inst = std::make_shared<timer_type>();
+    timer_ptr_t timer_inst = memory::compat_strong_ptr_function_trait<PTR_MODE>::template make_shared<timer_type>();
     timer_inst->flags = 0;
     timer_inst->timeout = last_tick_ + delta;
     timer_inst->private_data = priv_data;
