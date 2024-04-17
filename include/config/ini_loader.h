@@ -74,15 +74,15 @@ class ini_value : public std::enable_shared_from_this<ini_value> {
   UTIL_FORCEINLINE static void clear_data(std::string &data) { data.clear(); }
   UTIL_FORCEINLINE static void clear_data(bool &data) { data = false; }
   UTIL_FORCEINLINE static void clear_data(char &data) { data = 0; }
-  UTIL_FORCEINLINE static void clear_data(short &data) { data = 0; }
+  UTIL_FORCEINLINE static void clear_data(short &data) { data = 0; }  // NOLINT: runtime/int
   UTIL_FORCEINLINE static void clear_data(int &data) { data = 0; }
-  UTIL_FORCEINLINE static void clear_data(long &data) { data = 0; }
-  UTIL_FORCEINLINE static void clear_data(long long &data) { data = 0; }
+  UTIL_FORCEINLINE static void clear_data(long &data) { data = 0; }       // NOLINT: runtime/int
+  UTIL_FORCEINLINE static void clear_data(long long &data) { data = 0; }  // NOLINT: runtime/int
   UTIL_FORCEINLINE static void clear_data(unsigned char &data) { data = 0; }
-  UTIL_FORCEINLINE static void clear_data(unsigned short &data) { data = 0; }
+  UTIL_FORCEINLINE static void clear_data(unsigned short &data) { data = 0; }  // NOLINT: runtime/int
   UTIL_FORCEINLINE static void clear_data(unsigned int &data) { data = 0; }
-  UTIL_FORCEINLINE static void clear_data(unsigned long &data) { data = 0; }
-  UTIL_FORCEINLINE static void clear_data(unsigned long long &data) { data = 0; }
+  UTIL_FORCEINLINE static void clear_data(unsigned long &data) { data = 0; }       // NOLINT: runtime/int
+  UTIL_FORCEINLINE static void clear_data(unsigned long long &data) { data = 0; }  // NOLINT: runtime/int
   UTIL_FORCEINLINE static void clear_data(duration_value &data) {
     data.sec = 0;
     data.nsec = 0;
@@ -202,13 +202,13 @@ class ini_value : public std::enable_shared_from_this<ini_value> {
 
   LIBATFRAME_UTILS_API char as_char(size_t index = 0) const;
 
-  LIBATFRAME_UTILS_API short as_short(size_t index = 0) const;
+  LIBATFRAME_UTILS_API short as_short(size_t index = 0) const;  // NOLINT: runtime/int
 
   LIBATFRAME_UTILS_API int as_int(size_t index = 0) const;
 
-  LIBATFRAME_UTILS_API long as_long(size_t index = 0) const;
+  LIBATFRAME_UTILS_API long as_long(size_t index = 0) const;  // NOLINT: runtime/int
 
-  LIBATFRAME_UTILS_API long long as_longlong(size_t index = 0) const;
+  LIBATFRAME_UTILS_API long long as_longlong(size_t index = 0) const;  // NOLINT: runtime/int
 
   LIBATFRAME_UTILS_API double as_double(size_t index = 0) const;
 
@@ -218,13 +218,13 @@ class ini_value : public std::enable_shared_from_this<ini_value> {
 
   LIBATFRAME_UTILS_API unsigned char as_uchar(size_t index = 0) const;
 
-  LIBATFRAME_UTILS_API unsigned short as_ushort(size_t index = 0) const;
+  LIBATFRAME_UTILS_API unsigned short as_ushort(size_t index = 0) const;  // NOLINT: runtime/int
 
   LIBATFRAME_UTILS_API unsigned int as_uint(size_t index = 0) const;
 
-  LIBATFRAME_UTILS_API unsigned long as_ulong(size_t index = 0) const;
+  LIBATFRAME_UTILS_API unsigned long as_ulong(size_t index = 0) const;  // NOLINT: runtime/int
 
-  LIBATFRAME_UTILS_API unsigned long long as_ulonglong(size_t index = 0) const;
+  LIBATFRAME_UTILS_API unsigned long long as_ulonglong(size_t index = 0) const;  // NOLINT: runtime/int
 
   LIBATFRAME_UTILS_API int8_t as_int8(size_t index = 0) const;
 
