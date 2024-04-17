@@ -113,8 +113,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY lru_map {
   inline void reserve(size_type s) { kv_data_.reserve(s); }
 
 #else
-  inline void reserve(size_type) { /* do nothing, some old compiler don't support this. */
-  }
+  inline void reserve(size_type) { /* do nothing, some old compiler don't support this. */ }
 #endif
 
   void swap(self_type &other) {

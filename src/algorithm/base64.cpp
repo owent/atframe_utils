@@ -9,7 +9,7 @@
 
 #include "algorithm/base64.h"
 
-#define BASE64_SIZE_T_MAX ((size_t)-1)   /* SIZE_T_MAX is not standard */
+#define BASE64_SIZE_T_MAX ((size_t) - 1) /* SIZE_T_MAX is not standard */
 #define BASE64_INVALID_CHARACTER -0x002C /**< Invalid character in input. */
 
 LIBATFRAME_UTILS_NAMESPACE_BEGIN

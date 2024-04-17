@@ -436,8 +436,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY lru_pool : public lru_pool_base {
     for (typename cat_map_type::iterator iter = data_.begin(); iter != data_.end();) {
       typename cat_map_type::iterator checked_it = iter++;
       if (checked_it->second) {
-        while (checked_it->second->gc())
-          ;
+        while (checked_it->second->gc());
       }
     }
 

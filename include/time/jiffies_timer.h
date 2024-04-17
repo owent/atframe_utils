@@ -230,8 +230,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY jiffies_timer {
     timer_inst->owner = nullptr;
     timer_inst->owner_idx = static_cast<size_t>(-1);
     // timer_inst->owner_iter = ...
-    while (0 == ++seq_alloc_)
-      ;
+    while (0 == ++seq_alloc_);
     timer_inst->sequence = seq_alloc_;
 
     timer_inst->fn = std::move(fn);

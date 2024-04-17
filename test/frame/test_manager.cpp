@@ -366,8 +366,7 @@ int test_manager::run() {
   ss() << LIBATFRAME_UTILS_NAMESPACE_ID::cli::shell_font_style::SHELL_FONT_COLOR_GREEN
        << LIBATFRAME_UTILS_NAMESPACE_ID::cli::shell_font_style::SHELL_FONT_SPEC_BOLD << "[==========] "
        << LIBATFRAME_UTILS_NAMESPACE_ID::cli::shell_font_style::SHELL_FONT_SPEC_NULL << (success_ + failed_)
-       << " test(s) ran."
-       << " (" << get_expire_time(all_begin_time, all_end_time) << " total)" << std::endl;
+       << " test(s) ran." << " (" << get_expire_time(all_begin_time, all_end_time) << " total)" << std::endl;
 
   ss() << LIBATFRAME_UTILS_NAMESPACE_ID::cli::shell_font_style::SHELL_FONT_COLOR_GREEN << "[  PASSED  ] "
        << LIBATFRAME_UTILS_NAMESPACE_ID::cli::shell_font_style::SHELL_FONT_SPEC_NULL << success_ << " test case(s)."

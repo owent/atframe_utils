@@ -424,8 +424,9 @@ static void inner_internal_sha1_process(sha1_context_t &ctx, const unsigned char
 
 #  define S(x, n) (((x) << (n)) | (((x) & 0xFFFFFFFF) >> (32 - (n))))
 
-#  define R(t) \
-    (temp = W[((t)-3) & 0x0F] ^ W[((t)-8) & 0x0F] ^ W[((t)-14) & 0x0F] ^ W[(t) & 0x0F], (W[(t) & 0x0F] = S(temp, 1)))
+#  define R(t)                                                                                \
+    (temp = W[((t) - 3) & 0x0F] ^ W[((t) - 8) & 0x0F] ^ W[((t) - 14) & 0x0F] ^ W[(t) & 0x0F], \
+     (W[(t) & 0x0F] = S(temp, 1)))
 
 #  define P(a, b, c, d, e, x)                        \
     do {                                             \
@@ -674,7 +675,7 @@ static void inner_internal_sha256_process(sha256_context_t &ctx, const unsigned 
 #  define F0(x, y, z) (((x) & (y)) | ((z) & ((x) | (y))))
 #  define F1(x, y, z) ((z) ^ ((x) & ((y) ^ (z))))
 
-#  define R(t) (W[t] = S1(W[(t)-2]) + W[(t)-7] + S0(W[(t)-15]) + W[(t)-16])
+#  define R(t) (W[t] = S1(W[(t) - 2]) + W[(t) - 7] + S0(W[(t) - 15]) + W[(t) - 16])
 
 #  define P(a, b, c, d, e, f, g, h, x, K)                  \
     do {                                                   \
