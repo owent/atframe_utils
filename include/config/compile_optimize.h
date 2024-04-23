@@ -17,6 +17,20 @@
 #ifndef UTIL_LIKELY_IF
 #  define UTIL_LIKELY_IF(...) if (__VA_ARGS__)
 #endif
+#if !defined(UTIL_LIKELY_CONDITION) && defined(__cplusplus)
+// GCC 9 has likely attribute but do not support declare it at the beginning of statement
+#  if defined(__has_cpp_attribute) && (defined(__clang__) || !defined(__GNUC__) || __GNUC__ > 9)
+#    if __has_cpp_attribute(likely)
+#      define UTIL_LIKELY_CONDITION(__C) (__C) [[likely]]
+#    endif
+#  endif
+#endif
+#if !defined(UTIL_LIKELY_CONDITION) && (defined(__clang__) || defined(__GNUC__))
+#  define UTIL_LIKELY_CONDITION(__C) (__builtin_expect(!!(__C), true))
+#endif
+#ifndef UTIL_LIKELY_CONDITION
+#  define UTIL_LIKELY_CONDITION(__C) (__C)
+#endif
 
 #if !defined(UTIL_UNLIKELY_IF) && defined(__cplusplus)
 // GCC 9 has likely attribute but do not support declare it at the beginning of statement
@@ -31,6 +45,20 @@
 #endif
 #ifndef UTIL_UNLIKELY_IF
 #  define UTIL_UNLIKELY_IF(...) if (__VA_ARGS__)
+#endif
+#if !defined(UTIL_UNLIKELY_CONDITION) && defined(__cplusplus)
+// GCC 9 has likely attribute but do not support declare it at the beginning of statement
+#  if defined(__has_cpp_attribute) && (defined(__clang__) || !defined(__GNUC__) || __GNUC__ > 9)
+#    if __has_cpp_attribute(likely)
+#      define UTIL_UNLIKELY_CONDITION(__C) (__C) [[unlikely]]
+#    endif
+#  endif
+#endif
+#if !defined(UTIL_UNLIKELY_CONDITION) && (defined(__clang__) || defined(__GNUC__))
+#  define UTIL_UNLIKELY_CONDITION(__C) (__builtin_expect(!!(__C), false))
+#endif
+#ifndef UTIL_UNLIKELY_CONDITION
+#  define UTIL_UNLIKELY_CONDITION(__C) (__C)
 #endif
 
 // ---------------- branch prediction information ----------------

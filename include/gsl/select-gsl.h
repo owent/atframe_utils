@@ -191,13 +191,13 @@ EXPLICIT_NODISCARD_ATTR inline constexpr span<const T> make_span(std::array<T, N
   return span<const T>(arr);
 }
 
-template <class Container, class EP = decltype(std17::data(std::declval<Container&>()))>
+template <class Container, class EP = decltype(data(std::declval<Container&>()))>
 EXPLICIT_NODISCARD_ATTR inline constexpr auto make_span(Container& cont)
     -> span<typename std::remove_pointer<EP>::type> {
   return span<typename std::remove_pointer<EP>::type>(cont);
 }
 
-template <class Container, class EP = decltype(std17::data(std::declval<Container&>()))>
+template <class Container, class EP = decltype(data(std::declval<Container&>()))>
 EXPLICIT_NODISCARD_ATTR inline constexpr auto make_span(Container const& cont)
     -> span<const typename std::remove_pointer<EP>::type> {
   return span<const typename std::remove_pointer<EP>::type>(cont);
