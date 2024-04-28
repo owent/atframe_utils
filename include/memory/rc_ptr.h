@@ -199,7 +199,12 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY __strong_rc_counter {
 
   template <class... Args>
   __strong_rc_counter(T*& __p, __strong_rc_alloc_shared_tag<T>, Args&&... args) : pi_(nullptr) {
-    __rc_ptr_counted_data_inplace<T>* tpi_ = ::new __rc_ptr_counted_data_inplace<T>(std::forward<Args>(args)...);
+    constexpr const std::size_t inplace_size =
+        sizeof(typename nostd::aligned_storage<sizeof(__rc_ptr_counted_data_inplace<T>),
+                                               alignof(__rc_ptr_counted_data_inplace<T>)>::type);
+    void* inplace__address = reinterpret_cast<void*>(::new unsigned char[inplace_size]);
+    __rc_ptr_counted_data_inplace<T>* tpi_ =
+        ::new (inplace__address) __rc_ptr_counted_data_inplace<T>(std::forward<Args>(args)...);
     pi_ = tpi_;
     __p = tpi_->ptr();
   }
