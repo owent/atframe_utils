@@ -46,6 +46,8 @@ struct LIBATFRAME_UTILS_API_HEAD_ONLY lru_map_type_traits {
   using list_type = std::list<value_type>;
   using iterator = typename list_type::iterator;
   using const_iterator = typename list_type::const_iterator;
+  using reverse_iterator = typename list_type::reverse_iterator;
+  using const_reverse_iterator = typename list_type::const_reverse_iterator;
 };
 
 template <class TKEY, class TVALUE, class THasher = std::hash<TKEY>, class TKeyEQ = std::equal_to<TKEY>,
@@ -68,6 +70,8 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY lru_map {
   using lru_history_list_type = typename lru_map_type_traits<TKEY, TVALUE, TOption>::list_type;
   using iterator = typename lru_map_type_traits<TKEY, TVALUE, TOption>::iterator;
   using const_iterator = typename lru_map_type_traits<TKEY, TVALUE, TOption>::const_iterator;
+  using reverse_iterator = typename lru_map_type_traits<TKEY, TVALUE, TOption>::reverse_iterator;
+  using const_reverse_iterator = typename lru_map_type_traits<TKEY, TVALUE, TOption>::const_reverse_iterator;
 
   using lru_key_value_map_type = std::unordered_map<TKEY, iterator, THasher, TKeyEQ, TAlloc>;
   using self_type = lru_map<TKEY, TVALUE, THasher, TKeyEQ, TOption, TAlloc>;
@@ -86,6 +90,11 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY lru_map {
   inline const_iterator cbegin() const { return visit_history_.cbegin(); }
   inline iterator end() { return visit_history_.end(); }
   inline const_iterator cend() const { return visit_history_.cend(); }
+
+  inline reverse_iterator rbegin() { return visit_history_.rbegin(); }
+  inline const_reverse_iterator crbegin() const { return visit_history_.crbegin(); }
+  inline reverse_iterator rend() { return visit_history_.rend(); }
+  inline const_reverse_iterator crend() const { return visit_history_.crend(); }
 
   inline value_type &front() { return visit_history_.front(); }
   inline const value_type &front() const { return visit_history_.front(); }
