@@ -20,6 +20,7 @@
 #  pragma warning(disable : 4251)
 #  pragma warning(disable : 4267)
 #  pragma warning(disable : 4668)
+#  pragma warning(disable : 4702)
 #  pragma warning(disable : 4715)
 #  pragma warning(disable : 4800)
 #  pragma warning(disable : 4946)
