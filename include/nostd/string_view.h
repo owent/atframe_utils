@@ -12,6 +12,7 @@
 #include <iterator>
 #include <limits>
 #include <string>
+#include <utility>
 
 #ifdef __cpp_impl_three_way_comparison
 #  include <compare>
@@ -72,7 +73,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY basic_string_view {
 
   template <typename Allocator>
   basic_string_view(  // NOLINT(runtime/explicit)
-      const std::basic_string<CharT, Traits, Allocator>& str) noexcept
+      const std::basic_string<CharT, Traits, Allocator>& str UTIL_ATTRIBUTE_LIFETIME_BOUND) noexcept
       // This is implemented in terms of `basic_string_view(p, n)` so `str.size()`
       // doesn't need to be reevaluated after `ptr_` is set.
       : basic_string_view(str.data(), str.size()) {}
@@ -93,7 +94,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY basic_string_view {
   constexpr basic_string_view(It first, End last) : ptr_(first), length_(static_cast<size_type>(last - first)) {}
 
   // Just like std::basic_string_view in C++23
-  constexpr basic_string_view(std::nullptr_t) = delete;
+  constexpr basic_string_view(std::nullptr_t) = delete;  // NOLINT(runtime/explicit)
 
 #if defined(LIBATFRAME_UTILS_GSL_TEST_STL_STRING_VIEW) && LIBATFRAME_UTILS_GSL_TEST_STL_STRING_VIEW
   constexpr basic_string_view(  // NOLINT(runtime/explicit)
