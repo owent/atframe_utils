@@ -1,6 +1,41 @@
-// Copyright 2022 atframework
+// Copyright 2024 atframework
 
 #pragma once
+
+// ================ has feature ================
+// UTIL_HAVE_ATTRIBUTE
+//
+// A function-like feature checking macro that is a wrapper around
+// `__has_attribute`, which is defined by GCC 5+ and Clang and evaluates to a
+// nonzero constant integer if the attribute is supported or 0 if not.
+//
+// It evaluates to zero if `__has_attribute` is not defined by the compiler.
+//
+// GCC: https://gcc.gnu.org/gcc-5/changes.html
+// Clang: https://clang.llvm.org/docs/LanguageExtensions.html
+#if !defined(UTIL_HAVE_ATTRIBUTE)
+#  ifdef __has_attribute
+#    define UTIL_HAVE_ATTRIBUTE(x) __has_attribute(x)
+#  else
+#    define UTIL_HAVE_ATTRIBUTE(x) 0
+#  endif
+#endif
+
+// UTIL_HAVE_CPP_ATTRIBUTE
+//
+// A function-like feature checking macro that accepts C++11 style attributes.
+// It's a wrapper around `__has_cpp_attribute`, defined by ISO C++ SD-6
+// (https://en.cppreference.com/w/cpp/experimental/feature_test). If we don't
+// find `__has_cpp_attribute`, will evaluate to 0.
+#if !defined(UTIL_HAVE_CPP_ATTRIBUTE)
+#  if defined(__cplusplus) && defined(__has_cpp_attribute)
+// NOTE: requiring __cplusplus above should not be necessary, but
+// works around https://bugs.llvm.org/show_bug.cgi?id=23435.
+#    define UTIL_HAVE_CPP_ATTRIBUTE(x) __has_cpp_attribute(x)
+#  else
+#    define UTIL_HAVE_CPP_ATTRIBUTE(x) 0
+#  endif
+#endif
 
 // ================ branch prediction information ================
 #if !defined(UTIL_LIKELY_IF) && defined(__cplusplus)
@@ -220,16 +255,6 @@
 #  endif
 #endif
 
-#ifndef UTIL_HAVE_CPP_ATTRIBUTE
-#  if defined(__cplusplus) && defined(__has_cpp_attribute)
-// NOTE: requiring __cplusplus above should not be necessary, but
-// works around https://bugs.llvm.org/show_bug.cgi?id=23435.
-#    define UTIL_HAVE_CPP_ATTRIBUTE(x) __has_cpp_attribute(x)
-#  else
-#    define UTIL_HAVE_CPP_ATTRIBUTE(x) 0
-#  endif
-#endif
-
 #ifndef UTIL_CONST_INIT
 #  if defined(__cpp_constinit) && __cpp_constinit >= 201907L
 #    if defined(_MSC_VER)
@@ -241,5 +266,29 @@
 #    define UTIL_CONST_INIT [[clang::require_constant_initialization]]
 #  else
 #    define UTIL_CONST_INIT
+#  endif
+#endif
+
+// UTIL_ATTRIBUTE_LIFETIME_BOUND indicates that a resource owned by a function
+// parameter or implicit object parameter is retained by the return value of the
+// annotated function (or, for a parameter of a constructor, in the value of the
+// constructed object). This attribute causes warnings to be produced if a
+// temporary object does not live long enough.
+//
+// When applied to a reference parameter, the referenced object is assumed to be
+// retained by the return value of the function. When applied to a non-reference
+// parameter (for example, a pointer or a class type), all temporaries
+// referenced by the parameter are assumed to be retained by the return value of
+// the function.
+//
+// See also the upstream documentation:
+// https://clang.llvm.org/docs/AttributeReference.html#lifetimebound
+#ifndef UTIL_ATTRIBUTE_LIFETIME_BOUND
+#  if UTIL_HAVE_CPP_ATTRIBUTE(clang::lifetimebound)
+#    define UTIL_ATTRIBUTE_LIFETIME_BOUND [[clang::lifetimebound]]
+#  elif UTIL_HAVE_ATTRIBUTE(lifetimebound)
+#    define UTIL_ATTRIBUTE_LIFETIME_BOUND __attribute__((lifetimebound))
+#  else
+#    define UTIL_ATTRIBUTE_LIFETIME_BOUND
 #  endif
 #endif
