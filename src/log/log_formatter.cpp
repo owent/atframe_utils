@@ -4,8 +4,10 @@
 
 #include <cstdio>
 #include <cstring>
+#include <string>
 
 #include "common/string_oprs.h"
+#include "std/thread.h"
 
 #include "time/time_utility.h"
 
@@ -14,7 +16,7 @@
 LIBATFRAME_UTILS_NAMESPACE_BEGIN
 namespace log {
 namespace detail {
-static const char *log_formatter_get_level_name(int l) {
+UTIL_SANITIZER_NO_THREAD static const char *log_formatter_get_level_name(int l) {
   static const char *all_level_name[log_formatter::level_t::LOG_LW_TRACE + 1] = {nullptr};
 
   if (l > log_formatter::level_t::LOG_LW_TRACE || l < 0) {
@@ -42,8 +44,8 @@ LIBATFRAME_UTILS_API bool log_formatter::check_flag(int32_t flags, int32_t check
 }
 
 LIBATFRAME_UTILS_API struct tm *log_formatter::get_iso_tm() {
-  static time_t tm_tp = 0;
-  static struct tm tm_obj;
+  static THREAD_TLS time_t tm_tp = 0;
+  static THREAD_TLS struct tm tm_obj;
   if (tm_tp != LIBATFRAME_UTILS_NAMESPACE_ID::time::time_utility::get_sys_now()) {
     tm_tp = LIBATFRAME_UTILS_NAMESPACE_ID::time::time_utility::get_sys_now();
     UTIL_STRFUNC_LOCALTIME_S(&tm_tp, &tm_obj);  // lgtm [cpp/potentially-dangerous-function]
@@ -419,7 +421,8 @@ LIBATFRAME_UTILS_API bool log_formatter::has_format(const char *fmt, size_t fmtz
   return false;
 }
 
-LIBATFRAME_UTILS_API void log_formatter::set_project_directory(const char *dirbuf, size_t dirsz) {
+LIBATFRAME_UTILS_API UTIL_SANITIZER_NO_THREAD void log_formatter::set_project_directory(const char *dirbuf,
+                                                                                        size_t dirsz) {
   if (nullptr == dirbuf) {
     project_dir_.clear();
   } else if (dirsz <= 0) {

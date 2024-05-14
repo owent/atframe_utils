@@ -51,8 +51,8 @@ class log_sink_file_backend {
    */
   LIBATFRAME_UTILS_API const std::string &get_writing_alias_pattern(const std::string &file_name_pattern);
 
-  LIBATFRAME_UTILS_API void operator()(const log_formatter::caller_info_t &caller, const char *content,
-                                       size_t content_size);
+  LIBATFRAME_UTILS_API UTIL_SANITIZER_NO_THREAD void operator()(const log_formatter::caller_info_t &caller,
+                                                                const char *content, size_t content_size);
 
   LIBATFRAME_UTILS_API time_t get_check_interval() const;
 
@@ -97,11 +97,11 @@ class log_sink_file_backend {
   LIBATFRAME_UTILS_API log_sink_file_backend &set_rotate_size(uint32_t sz);
 
  private:
-  LIBATFRAME_UTILS_API void init();
+  LIBATFRAME_UTILS_API UTIL_SANITIZER_NO_THREAD void init();
 
   LIBATFRAME_UTILS_API std::shared_ptr<std::ofstream> open_log_file(bool destroy_content);
 
-  LIBATFRAME_UTILS_API void rotate_log();
+  LIBATFRAME_UTILS_API UTIL_SANITIZER_NO_THREAD void rotate_log();
 
   LIBATFRAME_UTILS_API void check_update();
 

@@ -13,7 +13,7 @@ LIBATFRAME_UTILS_API std::chrono::system_clock::duration time_utility::global_no
 time_utility::time_utility() {}
 time_utility::~time_utility() {}
 
-LIBATFRAME_UTILS_API void time_utility::update(raw_time_t *t) {
+LIBATFRAME_UTILS_API UTIL_SANITIZER_NO_THREAD void time_utility::update(raw_time_t *t) {
   // raw_time_t prev_tp = now_;
   if (nullptr != t) {
     now_ = *t + global_now_offset_;
@@ -38,34 +38,40 @@ LIBATFRAME_UTILS_API void time_utility::update(raw_time_t *t) {
   }
 }
 
-LIBATFRAME_UTILS_API time_utility::raw_time_t time_utility::now() { return now_; }
+LIBATFRAME_UTILS_API UTIL_SANITIZER_NO_THREAD time_utility::raw_time_t time_utility::now() { return now_; }
 
-LIBATFRAME_UTILS_API time_t time_utility::get_now_usec() { return now_usec_; }
+LIBATFRAME_UTILS_API UTIL_SANITIZER_NO_THREAD time_t time_utility::get_now_usec() { return now_usec_; }
 
-LIBATFRAME_UTILS_API time_t time_utility::get_now() { return now_unix_; }
+LIBATFRAME_UTILS_API UTIL_SANITIZER_NO_THREAD time_t time_utility::get_now() { return now_unix_; }
 
-LIBATFRAME_UTILS_API time_utility::raw_time_t time_utility::sys_now() { return now_ - global_now_offset_; }
+LIBATFRAME_UTILS_API UTIL_SANITIZER_NO_THREAD time_utility::raw_time_t time_utility::sys_now() {
+  return now_ - global_now_offset_;
+}
 
-LIBATFRAME_UTILS_API time_t time_utility::get_sys_now() { return std::chrono::system_clock::to_time_t(sys_now()); }
+LIBATFRAME_UTILS_API UTIL_SANITIZER_NO_THREAD time_t time_utility::get_sys_now() {
+  return std::chrono::system_clock::to_time_t(sys_now());
+}
 
-LIBATFRAME_UTILS_API void time_utility::set_global_now_offset(const std::chrono::system_clock::duration &offset) {
+LIBATFRAME_UTILS_API UTIL_SANITIZER_NO_THREAD void time_utility::set_global_now_offset(
+    const std::chrono::system_clock::duration &offset) {
   raw_time_t old_now = now() - global_now_offset_;
   global_now_offset_ = offset;
   update(&old_now);
 }
 
-LIBATFRAME_UTILS_API std::chrono::system_clock::duration time_utility::get_global_now_offset() {
+LIBATFRAME_UTILS_API UTIL_SANITIZER_NO_THREAD std::chrono::system_clock::duration
+time_utility::get_global_now_offset() {
   return global_now_offset_;
 }
 
-LIBATFRAME_UTILS_API void time_utility::reset_global_now_offset() {
+LIBATFRAME_UTILS_API UTIL_SANITIZER_NO_THREAD void time_utility::reset_global_now_offset() {
   raw_time_t old_now = now() - global_now_offset_;
   global_now_offset_ = std::chrono::system_clock::duration::zero();
   update(&old_now);
 }
 
 // ====================== 后面的函数都和时区相关 ======================
-LIBATFRAME_UTILS_API time_t time_utility::get_sys_zone_offset() {
+LIBATFRAME_UTILS_API UTIL_SANITIZER_NO_THREAD time_t time_utility::get_sys_zone_offset() {
   // 部分地区当前时间时区和70年不一样，所以要基于当前时间算
   time_t utc_timepoint = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
   tm t;
@@ -74,7 +80,7 @@ LIBATFRAME_UTILS_API time_t time_utility::get_sys_zone_offset() {
   return local_timepoint - utc_timepoint;
 }
 
-LIBATFRAME_UTILS_API time_t time_utility::get_zone_offset() {
+LIBATFRAME_UTILS_API UTIL_SANITIZER_NO_THREAD time_t time_utility::get_zone_offset() {
   if (custom_zone_offset_ <= -YEAR_SECONDS) {
     return custom_zone_offset_ = get_sys_zone_offset();
   }
@@ -82,9 +88,9 @@ LIBATFRAME_UTILS_API time_t time_utility::get_zone_offset() {
   return custom_zone_offset_;
 }
 
-LIBATFRAME_UTILS_API void time_utility::set_zone_offset(time_t t) { custom_zone_offset_ = t; }
+LIBATFRAME_UTILS_API UTIL_SANITIZER_NO_THREAD void time_utility::set_zone_offset(time_t t) { custom_zone_offset_ = t; }
 
-LIBATFRAME_UTILS_API time_t time_utility::get_today_now_offset() {
+LIBATFRAME_UTILS_API UTIL_SANITIZER_NO_THREAD time_t time_utility::get_today_now_offset() {
   time_t curr_time = get_now();
   curr_time -= get_zone_offset();
 

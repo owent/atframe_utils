@@ -2,6 +2,31 @@
 
 #pragma once
 
+// UTIL_HAVE_BUILTIN&UTIL_HAVE_FEATURE
+//
+// Checks whether the compiler supports a Clang Feature Checking Macro, and if
+// so, checks whether it supports the provided builtin function "x" where x
+// is one of the functions noted in
+// https://clang.llvm.org/docs/LanguageExtensions.html
+//
+// Note: Use this macro to avoid an extra level of #ifdef __has_builtin check.
+// http://releases.llvm.org/3.3/tools/clang/docs/LanguageExtensions.html
+#if !defined(UTIL_HAVE_BUILTIN)
+#  ifdef __has_builtin
+#    define UTIL_HAVE_BUILTIN(x) __has_builtin(x)
+#  else
+#    define UTIL_HAVE_BUILTIN(x) 0
+#  endif
+#endif
+
+#if !defined(UTIL_HAVE_FEATURE)
+#  ifdef __has_feature
+#    define UTIL_HAVE_FEATURE(f) __has_feature(f)
+#  else
+#    define UTIL_HAVE_FEATURE(f) 0
+#  endif
+#endif
+
 // ================ has feature ================
 // UTIL_HAVE_ATTRIBUTE
 //
@@ -291,4 +316,131 @@
 #  else
 #    define UTIL_ATTRIBUTE_LIFETIME_BOUND
 #  endif
+#endif
+
+// UTIL_HAVE_MEMORY_SANITIZER
+//
+// MemorySanitizer (MSan) is a detector of uninitialized reads. It consists of
+// a compiler instrumentation module and a run-time library.
+#ifndef UTIL_HAVE_MEMORY_SANITIZER
+#  if !defined(__native_client__) && UTIL_HAVE_FEATURE(memory_sanitizer)
+#    define UTIL_HAVE_MEMORY_SANITIZER 1
+#  else
+#    define UTIL_HAVE_MEMORY_SANITIZER 0
+#  endif
+#endif
+
+#if UTIL_HAVE_MEMORY_SANITIZER && UTIL_HAVE_ATTRIBUTE(no_sanitize_memory)
+#  define UTIL_SANITIZER_NO_MEMORY __attribute__((no_sanitize_memory))  // __attribute__((no_sanitize("memory")))
+#else
+#  define UTIL_SANITIZER_NO_MEMORY
+#endif
+
+// UTIL_HAVE_THREAD_SANITIZER
+//
+// ThreadSanitizer (TSan) is a fast data race detector.
+#ifndef UTIL_HAVE_THREAD_SANITIZER
+#  if defined(__SANITIZE_THREAD__)
+#    define UTIL_HAVE_THREAD_SANITIZER 1
+#  elif UTIL_HAVE_FEATURE(thread_sanitizer)
+#    define UTIL_HAVE_THREAD_SANITIZER 1
+#  else
+#    define UTIL_HAVE_THREAD_SANITIZER 0
+#  endif
+#endif
+
+#if UTIL_HAVE_THREAD_SANITIZER && UTIL_HAVE_ATTRIBUTE(no_sanitize_thread)
+#  define UTIL_SANITIZER_NO_THREAD __attribute__((no_sanitize_thread))  // __attribute__((no_sanitize("thread")))
+#else
+#  define UTIL_SANITIZER_NO_THREAD
+#endif
+
+// UTIL_HAVE_ADDRESS_SANITIZER
+//
+// AddressSanitizer (ASan) is a fast memory error detector.
+#ifndef UTIL_HAVE_ADDRESS_SANITIZER
+#  if defined(__SANITIZE_ADDRESS__)
+#    define UTIL_HAVE_ADDRESS_SANITIZER 1
+#  elif UTIL_HAVE_FEATURE(address_sanitizer)
+#    define UTIL_HAVE_ADDRESS_SANITIZER 1
+#  else
+#    define UTIL_HAVE_ADDRESS_SANITIZER 0
+#  endif
+#endif
+
+// UTIL_HAVE_HWADDRESS_SANITIZER
+//
+// Hardware-Assisted AddressSanitizer (or HWASAN) is even faster than asan
+// memory error detector which can use CPU features like ARM TBI, Intel LAM or
+// AMD UAI.
+#ifndef UTIL_HAVE_HWADDRESS_SANITIZER
+#  if defined(__SANITIZE_HWADDRESS__)
+#    define UTIL_HAVE_HWADDRESS_SANITIZER 1
+#  elif UTIL_HAVE_FEATURE(hwaddress_sanitizer)
+#    define UTIL_HAVE_HWADDRESS_SANITIZER 1
+#  else
+#    define UTIL_HAVE_HWADDRESS_SANITIZER 0
+#  endif
+#endif
+
+#if UTIL_HAVE_ADDRESS_SANITIZER && UTIL_HAVE_ATTRIBUTE(no_sanitize_address)
+#  define UTIL_SANITIZER_NO_ADDRESS __attribute__((no_sanitize_address))  // __attribute__((no_sanitize("address")))
+#elif UTIL_HAVE_ADDRESS_SANITIZER && defined(_MSC_VER) && _MSC_VER >= 1928
+#  define UTIL_SANITIZER_NO_ADDRESS __declspec(no_sanitize_address)
+#elif UTIL_HAVE_HWADDRESS_SANITIZER && UTIL_HAVE_ATTRIBUTE(no_sanitize)
+#  define UTIL_SANITIZER_NO_ADDRESS __attribute__((no_sanitize("hwaddress")))
+#else
+#  define UTIL_SANITIZER_NO_ADDRESS
+#endif
+
+// UTIL_HAVE_DATAFLOW_SANITIZER
+//
+// Dataflow Sanitizer (or DFSAN) is a generalised dynamic data flow analysis.
+#ifndef UTIL_HAVE_DATAFLOW_SANITIZER
+#  if defined(DATAFLOW_SANITIZER)
+// GCC provides no method for detecting the presence of the standalone
+// DataFlowSanitizer (-fsanitize=dataflow), so GCC users of -fsanitize=dataflow
+// should also use -DDATAFLOW_SANITIZER.
+#    define UTIL_HAVE_DATAFLOW_SANITIZER 1
+#  elif UTIL_HAVE_FEATURE(dataflow_sanitizer)
+#    define UTIL_HAVE_DATAFLOW_SANITIZER 1
+#  else
+#    define UTIL_HAVE_DATAFLOW_SANITIZER 0
+#  endif
+#endif
+
+// UTIL_HAVE_LEAK_SANITIZER
+//
+// LeakSanitizer (or lsan) is a detector of memory leaks.
+// https://clang.llvm.org/docs/LeakSanitizer.html
+// https://github.com/google/sanitizers/wiki/AddressSanitizerLeakSanitizer
+//
+// The macro UTIL_HAVE_LEAK_SANITIZER can be used to detect at compile-time
+// whether the LeakSanitizer is potentially available. However, just because the
+// LeakSanitizer is available does not mean it is active. Use the
+// always-available run-time interface in //absl/debugging/leak_check.h for
+// interacting with LeakSanitizer.
+#ifndef UTIL_HAVE_LEAK_SANITIZER
+#  if defined(LEAK_SANITIZER)
+// GCC provides no method for detecting the presence of the standalone
+// LeakSanitizer (-fsanitize=leak), so GCC users of -fsanitize=leak should also
+// use -DLEAK_SANITIZER.
+#    define UTIL_HAVE_LEAK_SANITIZER 1
+// Clang standalone LeakSanitizer (-fsanitize=leak)
+#  elif UTIL_HAVE_FEATURE(leak_sanitizer)
+#    define UTIL_HAVE_LEAK_SANITIZER 1
+#  elif defined(ABSL_HAVE_ADDRESS_SANITIZER)
+// GCC or Clang using the LeakSanitizer integrated into AddressSanitizer.
+#    define UTIL_HAVE_LEAK_SANITIZER 1
+#  else
+#    define UTIL_HAVE_LEAK_SANITIZER 0
+#  endif
+#endif
+
+#if UTIL_HAVE_ATTRIBUTE(no_sanitize_undefined)
+#  define UTIL_SANITIZER_NO_UNDEFINED __attribute__((no_sanitize_undefined))
+#elif UTIL_HAVE_ATTRIBUTE(no_sanitize)
+#  define UTIL_SANITIZER_NO_UNDEFINED __attribute__((no_sanitize("undefined")))
+#else
+#  define UTIL_SANITIZER_NO_UNDEFINED
 #endif

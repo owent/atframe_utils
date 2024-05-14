@@ -79,21 +79,21 @@ LIBATFRAME_UTILS_API void log_sink_file_backend::set_file_pattern(const std::str
   static time_t check_interval[128] = {0};
   // @see log_formatter::format
   // 计算检查周期，考虑到某些地区有夏令时，所以最大是小时。Unix时间戳会抹平闰秒，所以可以不考虑闰秒
-  if (check_interval[(int)'S'] == 0) {
-    check_interval[(int)'f'] = 1;
-    check_interval[(int)'R'] = LIBATFRAME_UTILS_NAMESPACE_ID::time::time_utility::MINITE_SECONDS;
-    check_interval[(int)'T'] = 1;
-    check_interval[(int)'F'] = LIBATFRAME_UTILS_NAMESPACE_ID::time::time_utility::HOUR_SECONDS;
-    check_interval[(int)'S'] = 1;
-    check_interval[(int)'M'] = LIBATFRAME_UTILS_NAMESPACE_ID::time::time_utility::MINITE_SECONDS;
-    check_interval[(int)'I'] = LIBATFRAME_UTILS_NAMESPACE_ID::time::time_utility::HOUR_SECONDS;
-    check_interval[(int)'H'] = LIBATFRAME_UTILS_NAMESPACE_ID::time::time_utility::HOUR_SECONDS;
-    check_interval[(int)'w'] = LIBATFRAME_UTILS_NAMESPACE_ID::time::time_utility::HOUR_SECONDS;
-    check_interval[(int)'d'] = LIBATFRAME_UTILS_NAMESPACE_ID::time::time_utility::HOUR_SECONDS;
-    check_interval[(int)'j'] = LIBATFRAME_UTILS_NAMESPACE_ID::time::time_utility::HOUR_SECONDS;
-    check_interval[(int)'m'] = LIBATFRAME_UTILS_NAMESPACE_ID::time::time_utility::HOUR_SECONDS;
-    check_interval[(int)'y'] = LIBATFRAME_UTILS_NAMESPACE_ID::time::time_utility::HOUR_SECONDS;
-    check_interval[(int)'Y'] = LIBATFRAME_UTILS_NAMESPACE_ID::time::time_utility::HOUR_SECONDS;
+  if (check_interval[static_cast<int>('S')] == 0) {
+    check_interval[static_cast<int>('f')] = 1;
+    check_interval[static_cast<int>('R')] = LIBATFRAME_UTILS_NAMESPACE_ID::time::time_utility::MINITE_SECONDS;
+    check_interval[static_cast<int>('T')] = 1;
+    check_interval[static_cast<int>('F')] = LIBATFRAME_UTILS_NAMESPACE_ID::time::time_utility::HOUR_SECONDS;
+    check_interval[static_cast<int>('S')] = 1;
+    check_interval[static_cast<int>('M')] = LIBATFRAME_UTILS_NAMESPACE_ID::time::time_utility::MINITE_SECONDS;
+    check_interval[static_cast<int>('I')] = LIBATFRAME_UTILS_NAMESPACE_ID::time::time_utility::HOUR_SECONDS;
+    check_interval[static_cast<int>('H')] = LIBATFRAME_UTILS_NAMESPACE_ID::time::time_utility::HOUR_SECONDS;
+    check_interval[static_cast<int>('w')] = LIBATFRAME_UTILS_NAMESPACE_ID::time::time_utility::HOUR_SECONDS;
+    check_interval[static_cast<int>('d')] = LIBATFRAME_UTILS_NAMESPACE_ID::time::time_utility::HOUR_SECONDS;
+    check_interval[static_cast<int>('j')] = LIBATFRAME_UTILS_NAMESPACE_ID::time::time_utility::HOUR_SECONDS;
+    check_interval[static_cast<int>('m')] = LIBATFRAME_UTILS_NAMESPACE_ID::time::time_utility::HOUR_SECONDS;
+    check_interval[static_cast<int>('y')] = LIBATFRAME_UTILS_NAMESPACE_ID::time::time_utility::HOUR_SECONDS;
+    check_interval[static_cast<int>('Y')] = LIBATFRAME_UTILS_NAMESPACE_ID::time::time_utility::HOUR_SECONDS;
   }
 
   {
@@ -132,8 +132,8 @@ LIBATFRAME_UTILS_API const std::string &log_sink_file_backend::get_writing_alias
   return file_name_pattern;
 }
 
-LIBATFRAME_UTILS_API void log_sink_file_backend::operator()(const log_formatter::caller_info_t &caller,
-                                                            const char *content, size_t content_size) {
+LIBATFRAME_UTILS_API UTIL_SANITIZER_NO_THREAD void log_sink_file_backend::operator()(
+    const log_formatter::caller_info_t &caller, const char *content, size_t content_size) {
   if (!inited_) {
     init();
   }
@@ -208,7 +208,7 @@ LIBATFRAME_UTILS_API log_sink_file_backend &log_sink_file_backend::set_rotate_si
   return *this;
 }
 
-LIBATFRAME_UTILS_API void log_sink_file_backend::init() {
+LIBATFRAME_UTILS_API UTIL_SANITIZER_NO_THREAD void log_sink_file_backend::init() {
   if (inited_) {
     return;
   }
@@ -344,7 +344,7 @@ LIBATFRAME_UTILS_API std::shared_ptr<std::ofstream> log_sink_file_backend::open_
   return log_file_.opened_file;
 }
 
-LIBATFRAME_UTILS_API void log_sink_file_backend::rotate_log() {
+LIBATFRAME_UTILS_API UTIL_SANITIZER_NO_THREAD void log_sink_file_backend::rotate_log() {
   if (rotation_size_ > 0) {
     log_file_.rotation_index = (log_file_.rotation_index + 1) % rotation_size_;
   } else {

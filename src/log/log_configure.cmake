@@ -18,7 +18,8 @@ endif()
 # traceback 检测 gcc可能需要加 -funwind-tables 选项，尽可能不要用 -fvisibility=hidden Android下需要 APP_STL := gnustl_static or
 # gnustl_shared
 if(LOG_WRAPPER_ENABLE_STACKTRACE)
-  if(LIBUNWIND_ENABLED)
+  # Libunwind may be in deadlock when using sanitizer
+  if(LIBUNWIND_ENABLED AND NOT PROJECT_COMPILER_OPTIONS_TARGET_USE_SANITIZER)
     if(Libunwind_FOUND AND Libunwind_HAS_UNW_INIT_LOCAL)
       set(LOG_STACKTRACE_USING_LIBUNWIND 1)
       if(TARGET Libunwind::libunwind)
