@@ -20,20 +20,49 @@ struct __is_nullability_compatible : ::std::false_type {};
 template <typename T>
 struct __is_nullability_compatible<T, void_t<typename T::nullability_compatible_type>> : std::true_type {};
 
+#if (defined(__cplusplus) && __cplusplus >= 201703L) || (defined(_MSVC_LANG) && _MSVC_LANG >= 201703L)
 template <class T>
-constexpr bool __is_nullability_support_v = __is_nullability_compatible<T>::value;
+UTIL_MACRO_INLINE_VARIABLE constexpr bool __is_nullability_support_v = __is_nullability_compatible<T>::value;
 
 template <typename T>
-constexpr bool __is_nullability_support_v<T*> = true;
+UTIL_MACRO_INLINE_VARIABLE constexpr bool __is_nullability_support_v<T*> = true;
 
 template <typename T, typename U>
-constexpr bool __is_nullability_support_v<T U::*> = true;
+UTIL_MACRO_INLINE_VARIABLE constexpr bool __is_nullability_support_v<T U::*> = true;
 
 template <typename T, typename... Deleter>
-constexpr bool __is_nullability_support_v<std::unique_ptr<T, Deleter...>> = true;
+UTIL_MACRO_INLINE_VARIABLE constexpr bool __is_nullability_support_v<std::unique_ptr<T, Deleter...>> = true;
 
 template <typename T>
-constexpr bool __is_nullability_support_v<std::shared_ptr<T>> = true;
+UTIL_MACRO_INLINE_VARIABLE constexpr bool __is_nullability_support_v<std::shared_ptr<T>> = true;
+#else
+
+template <class T>
+struct __is_nullability_support_v {
+  inline static constexpr bool value = __is_nullability_compatible<T>::value;
+};
+
+template <class T>
+struct __is_nullability_support_v<T*> {
+  inline static constexpr bool value = true;
+};
+
+template <class T, class U>
+struct __is_nullability_support_v<T U::*> {
+  inline static constexpr bool value = true;
+};
+
+template <class T, class... Deleter>
+struct __is_nullability_support_v<std::unique_ptr<T, Deleter...>> {
+  inline static constexpr bool value = true;
+};
+
+template <class T>
+struct __is_nullability_support_v<std::shared_ptr<T>> {
+  inline static constexpr bool value = true;
+};
+
+#endif
 
 template <typename T>
 struct __enable_nullable {

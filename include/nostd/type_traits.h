@@ -4,6 +4,7 @@
 #pragma once
 
 #include <config/atframe_utils_build_feature.h>
+#include <config/compile_optimize.h>
 
 #include <algorithm>
 #include <cstddef>
@@ -67,20 +68,7 @@ using remove_all_extents_t = typename ::std::remove_all_extents<T>::type;
 template <bool B, class T = void>
 using enable_if_t = typename ::std::enable_if<B, T>::type;
 
-template <class T, class U>
-constexpr bool is_same_v = ::std::is_same<T, U>::value;
-
-template <class Base, class Derived>
-constexpr bool is_base_of_v = ::std::is_base_of<Base, Derived>::value;
-
-template <class From, class To>
-constexpr bool is_convertible_v = ::std::is_convertible<From, To>::value;
-
-template <class T>
-constexpr ::std::size_t rank_v = ::std::rank<T>::value;
-
-template <class T, unsigned N = 0>
-constexpr ::std::size_t extent_v = ::std::extent<T, N>::value;
+// GCC 4.8 do not support variable template
 
 // std::aligned_union is deprecated in C++23, which will be warned by MSVC with C++20 only
 #if ((defined(__cplusplus) && __cplusplus >= 201703L) || (defined(_MSVC_LANG) && _MSVC_LANG >= 201703L)) && \

@@ -437,10 +437,20 @@
 #  endif
 #endif
 
-#if UTIL_HAVE_ATTRIBUTE(no_sanitize_undefined)
-#  define UTIL_SANITIZER_NO_UNDEFINED __attribute__((no_sanitize_undefined))
-#elif UTIL_HAVE_ATTRIBUTE(no_sanitize)
-#  define UTIL_SANITIZER_NO_UNDEFINED __attribute__((no_sanitize("undefined")))
-#else
-#  define UTIL_SANITIZER_NO_UNDEFINED
+#ifndef UTIL_SANITIZER_NO_UNDEFINED
+#  if UTIL_HAVE_ATTRIBUTE(no_sanitize_undefined)
+#    define UTIL_SANITIZER_NO_UNDEFINED __attribute__((no_sanitize_undefined))
+#  elif UTIL_HAVE_ATTRIBUTE(no_sanitize)
+#    define UTIL_SANITIZER_NO_UNDEFINED __attribute__((no_sanitize("undefined")))
+#  else
+#    define UTIL_SANITIZER_NO_UNDEFINED
+#  endif
+#endif
+
+#ifndef UTIL_MACRO_INLINE_VARIABLE
+#  if defined(__cplusplus) && __cplusplus >= 201703L
+#    define UTIL_MACRO_INLINE_VARIABLE inline
+#  else
+#    define UTIL_MACRO_INLINE_VARIABLE
+#  endif
 #endif
