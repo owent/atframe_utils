@@ -21,19 +21,19 @@ template <typename T>
 struct __is_nullability_compatible<T, void_t<typename T::nullability_compatible_type>> : std::true_type {};
 
 template <class T>
-inline constexpr bool __is_nullability_support_v = __is_nullability_compatible<T>::value;
+constexpr bool __is_nullability_support_v = __is_nullability_compatible<T>::value;
 
 template <typename T>
-inline constexpr bool __is_nullability_support_v<T*> = true;
+constexpr bool __is_nullability_support_v<T*> = true;
 
 template <typename T, typename U>
-inline constexpr bool __is_nullability_support_v<T U::*> = true;
+constexpr bool __is_nullability_support_v<T U::*> = true;
 
 template <typename T, typename... Deleter>
-inline constexpr bool __is_nullability_support_v<std::unique_ptr<T, Deleter...>> = true;
+constexpr bool __is_nullability_support_v<std::unique_ptr<T, Deleter...>> = true;
 
 template <typename T>
-inline constexpr bool __is_nullability_support_v<std::shared_ptr<T>> = true;
+constexpr bool __is_nullability_support_v<std::shared_ptr<T>> = true;
 
 template <typename T>
 struct __enable_nullable {

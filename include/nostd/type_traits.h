@@ -68,19 +68,19 @@ template <bool B, class T = void>
 using enable_if_t = typename ::std::enable_if<B, T>::type;
 
 template <class T, class U>
-inline constexpr bool is_same_v = ::std::is_same<T, U>::value;
+constexpr bool is_same_v = ::std::is_same<T, U>::value;
 
 template <class Base, class Derived>
-inline constexpr bool is_base_of_v = ::std::is_base_of<Base, Derived>::value;
+constexpr bool is_base_of_v = ::std::is_base_of<Base, Derived>::value;
 
 template <class From, class To>
-inline constexpr bool is_convertible_v = ::std::is_convertible<From, To>::value;
+constexpr bool is_convertible_v = ::std::is_convertible<From, To>::value;
 
 template <class T>
-inline constexpr ::std::size_t rank_v = ::std::rank<T>::value;
+constexpr ::std::size_t rank_v = ::std::rank<T>::value;
 
 template <class T, unsigned N = 0>
-inline constexpr ::std::size_t extent_v = ::std::extent<T, N>::value;
+constexpr ::std::size_t extent_v = ::std::extent<T, N>::value;
 
 // std::aligned_union is deprecated in C++23, which will be warned by MSVC with C++20 only
 #if ((defined(__cplusplus) && __cplusplus >= 201703L) || (defined(_MSVC_LANG) && _MSVC_LANG >= 201703L)) && \
