@@ -14,11 +14,11 @@
 LIBATFRAME_UTILS_NAMESPACE_BEGIN
 namespace nostd {
 template <typename, typename = void>
-struct __is_nullability_compatible : ::std::false_type {};
+struct __is_nullability_compatible : public ::std::false_type {};
 
 // Allow custom to supoort nullability by define nullability_compatible_type as void
 template <typename T>
-struct __is_nullability_compatible<T, void_t<typename T::nullability_compatible_type>> : std::true_type {};
+struct __is_nullability_compatible<T, void_t<typename T::nullability_compatible_type>> : public ::std::true_type {};
 
 template <class T>
 struct __is_nullability_support {
