@@ -15,6 +15,73 @@
 
 LIBATFRAME_UTILS_NAMESPACE_BEGIN
 namespace nostd {
+
+template <class...>
+using void_t = void;
+
+template <typename T>
+using add_const_t = typename ::std::add_const<T>::type;
+
+template <typename T>
+using remove_const_t = typename ::std::remove_const<T>::type;
+
+template <typename T>
+using add_volatile_t = typename ::std::add_volatile<T>::type;
+
+template <typename T>
+using remove_volatile_t = typename ::std::remove_volatile<T>::type;
+
+template <typename T>
+using add_cv_t = typename ::std::add_cv<T>::type;
+
+template <typename T>
+using remove_cv_t = typename ::std::remove_cv<T>::type;
+
+template <typename T>
+using add_pointer_t = typename ::std::add_pointer<T>::type;
+
+template <typename T>
+using remove_pointer_t = typename ::std::remove_pointer<T>::type;
+
+template <typename T>
+using remove_reference_t = typename ::std::remove_reference<T>::type;
+
+template <typename T>
+using remove_cvref_t = remove_cv_t<remove_reference_t<T>>;
+
+template <typename T>
+using decay_t = typename ::std::decay<T>::type;
+
+template <class... T>
+using common_type_t = typename ::std::common_type<T...>::type;
+
+template <class T>
+using underlying_type_t = typename ::std::underlying_type<T>::type;
+
+template <class T>
+using remove_extent_t = typename ::std::remove_extent<T>::type;
+
+template <class T>
+using remove_all_extents_t = typename ::std::remove_all_extents<T>::type;
+
+template <bool B, class T = void>
+using enable_if_t = typename ::std::enable_if<B, T>::type;
+
+template <class T, class U>
+inline constexpr bool is_same_v = ::std::is_same<T, U>::value;
+
+template <class Base, class Derived>
+inline constexpr bool is_base_of_v = ::std::is_base_of<Base, Derived>::value;
+
+template <class From, class To>
+inline constexpr bool is_convertible_v = ::std::is_convertible<From, To>::value;
+
+template <class T>
+inline constexpr ::std::size_t rank_v = ::std::rank<T>::value;
+
+template <class T, unsigned N = 0>
+inline constexpr ::std::size_t extent_v = ::std::extent<T, N>::value;
+
 // std::aligned_union is deprecated in C++23, which will be warned by MSVC with C++20 only
 #if ((defined(__cplusplus) && __cplusplus >= 201703L) || (defined(_MSVC_LANG) && _MSVC_LANG >= 201703L)) && \
     !((defined(__cplusplus) && __cplusplus >= 202004L) || (defined(_MSVC_LANG) && _MSVC_LANG >= 202004L))

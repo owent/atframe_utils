@@ -518,6 +518,10 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY strong_rc_ptr : public strong_rc_ptr_access
   using element_type = typename std::remove_extent<T>::type;
   using weak_type = weak_rc_ptr<T>;
 
+  // Allow nostd::nullable<T> to be used as a strong_rc_ptr<T>
+  using nullability_compatible_type = void;
+  using absl_nullability_compatible = void;
+
  public:
   UTIL_CONFIG_CONSTEXPR strong_rc_ptr() noexcept : ptr_(nullptr), ref_counter_() {}
 
