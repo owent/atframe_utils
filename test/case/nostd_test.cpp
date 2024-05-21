@@ -708,11 +708,14 @@ CASE_TEST(nostd_string_view, ostream) {
 }
 
 CASE_TEST(nostd_nullability, nullable) {
+  // 老版本不支持，所以不测试nonnull可用性
+#if (defined(__cplusplus) && __cplusplus >= 201703L) && (defined(_MSVC_LANG) && _MSVC_LANG >= 201703L)
   {
     constexpr auto nullability_compatible_test =
         LIBATFRAME_UTILS_NAMESPACE_ID::nostd::__is_nullability_compatible<void>::value;
     CASE_EXPECT_FALSE(nullability_compatible_test);
   }
+#endif
 
   {
     constexpr auto nullable_test = std::is_same<LIBATFRAME_UTILS_NAMESPACE_ID::nostd::nullable<void*>, void*>::value;
@@ -752,13 +755,10 @@ CASE_TEST(nostd_nullability, nullable) {
 }
 
 CASE_TEST(nostd_nullability, nonnull) {
-  // 老版本不支持，所以不测试nonnull可用性
-#if (defined(__cplusplus) && __cplusplus >= 201703L) && (defined(_MSVC_LANG) && _MSVC_LANG >= 201703L)
   {
     constexpr auto nullable_test = std::is_same<LIBATFRAME_UTILS_NAMESPACE_ID::nostd::nonnull<void*>, void*>::value;
     CASE_EXPECT_TRUE(nullable_test);
   }
-#endif
 
   {
     constexpr auto nullable_test =
