@@ -16,7 +16,7 @@
 #include <vector>
 
 #include "lock/spin_lock.h"
-#include "log_formatter.h"
+#include "log/log_formatter.h"
 
 LIBATFRAME_UTILS_NAMESPACE_BEGIN
 namespace log {
@@ -51,8 +51,8 @@ class log_sink_file_backend {
    */
   LIBATFRAME_UTILS_API const std::string &get_writing_alias_pattern(const std::string &file_name_pattern);
 
-  LIBATFRAME_UTILS_API UTIL_SANITIZER_NO_THREAD void operator()(const log_formatter::caller_info_t &caller,
-                                                                const char *content, size_t content_size);
+  LIBATFRAME_UTILS_API void operator()(const log_formatter::caller_info_t &caller, const char *content,
+                                       size_t content_size);
 
   LIBATFRAME_UTILS_API time_t get_check_interval() const;
 
@@ -99,7 +99,7 @@ class log_sink_file_backend {
  private:
   LIBATFRAME_UTILS_API UTIL_SANITIZER_NO_THREAD void init();
 
-  LIBATFRAME_UTILS_API std::shared_ptr<std::ofstream> open_log_file(bool destroy_content);
+  LIBATFRAME_UTILS_API std::shared_ptr<std::FILE> open_log_file(bool destroy_content);
 
   LIBATFRAME_UTILS_API UTIL_SANITIZER_NO_THREAD void rotate_log();
 
@@ -126,7 +126,7 @@ class log_sink_file_backend {
     uint32_t auto_flush;  // 当日记级别高于或等于这个时，将会强制执行一次flush
     uint32_t rotation_index;
     size_t written_size;
-    std::shared_ptr<std::ofstream> opened_file;
+    std::shared_ptr<std::FILE> opened_file;
     time_t opened_file_point_;  // 打开文件的时间点
     time_t last_flush_timepoint_;
     std::string file_path;
