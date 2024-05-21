@@ -3,10 +3,13 @@
 #include <cstdlib>
 #include <cstring>
 #include <map>
+#include <memory>
 #include <string>
 
 #include "frame/test_macros.h"
 
+#include "memory/rc_ptr.h"
+#include "nostd/nullability.h"
 #include "nostd/string_view.h"
 
 CASE_TEST(nostd_string_view, ctor) {
@@ -702,4 +705,89 @@ CASE_TEST(nostd_string_view, ostream) {
   oss << s << " ostream";
 
   CASE_EXPECT_EQ(std::string("hi ostream"), oss.str());
+}
+
+CASE_TEST(nostd_nullability, nullable) {
+  // 老版本不支持，所以不测试nonnull可用性
+#if (defined(__cplusplus) && __cplusplus >= 201703L) && (defined(_MSVC_LANG) && _MSVC_LANG >= 201703L)
+  {
+    constexpr auto nullability_compatible_test =
+        LIBATFRAME_UTILS_NAMESPACE_ID::nostd::__is_nullability_compatible<void>::value;
+    CASE_EXPECT_FALSE(nullability_compatible_test);
+  }
+#endif
+
+  {
+    constexpr auto nullable_test = std::is_same<LIBATFRAME_UTILS_NAMESPACE_ID::nostd::nullable<void*>, void*>::value;
+    CASE_EXPECT_TRUE(nullable_test);
+  }
+
+  {
+    constexpr auto nullable_test =
+        std::is_same<LIBATFRAME_UTILS_NAMESPACE_ID::nostd::nullable<const char*>, const char*>::value;
+    CASE_EXPECT_TRUE(nullable_test);
+  }
+
+  {
+    constexpr auto nullable_test =
+        std::is_same<LIBATFRAME_UTILS_NAMESPACE_ID::nostd::nullable<void (*)()>, void (*)()>::value;
+    CASE_EXPECT_TRUE(nullable_test);
+  }
+
+  {
+    constexpr auto nullable_test =
+        std::is_same<LIBATFRAME_UTILS_NAMESPACE_ID::nostd::nullable<std::shared_ptr<int>>, std::shared_ptr<int>>::value;
+    CASE_EXPECT_TRUE(nullable_test);
+  }
+
+  {
+    constexpr auto nullable_test =
+        std::is_same<LIBATFRAME_UTILS_NAMESPACE_ID::nostd::nullable<std::unique_ptr<int>>, std::unique_ptr<int>>::value;
+    CASE_EXPECT_TRUE(nullable_test);
+  }
+
+  {
+    constexpr auto nullable_test = std::is_same<
+        LIBATFRAME_UTILS_NAMESPACE_ID::nostd::nullable<LIBATFRAME_UTILS_NAMESPACE_ID::memory::strong_rc_ptr<int>>,
+        LIBATFRAME_UTILS_NAMESPACE_ID::memory::strong_rc_ptr<int>>::value;
+    CASE_EXPECT_TRUE(nullable_test);
+  }
+}
+
+CASE_TEST(nostd_nullability, nonnull) {
+  {
+    constexpr auto nullable_test = std::is_same<LIBATFRAME_UTILS_NAMESPACE_ID::nostd::nonnull<void*>, void*>::value;
+    CASE_EXPECT_TRUE(nullable_test);
+  }
+
+  {
+    constexpr auto nullable_test =
+        std::is_same<LIBATFRAME_UTILS_NAMESPACE_ID::nostd::nonnull<const char*>, const char*>::value;
+    CASE_EXPECT_TRUE(nullable_test);
+  }
+
+  {
+    constexpr auto nullable_test =
+        std::is_same<LIBATFRAME_UTILS_NAMESPACE_ID::nostd::nonnull<void (*)()>, void (*)()>::value;
+    CASE_EXPECT_TRUE(nullable_test);
+  }
+
+  {
+    constexpr auto nullable_test =
+        std::is_same<LIBATFRAME_UTILS_NAMESPACE_ID::nostd::nonnull<std::shared_ptr<int>>, std::shared_ptr<int>>::value;
+    CASE_EXPECT_TRUE(nullable_test);
+  }
+
+  {
+    constexpr auto nullable_test =
+        std::is_same<LIBATFRAME_UTILS_NAMESPACE_ID::nostd::nonnull<std::unique_ptr<int>>, std::unique_ptr<int>>::value;
+    CASE_EXPECT_TRUE(nullable_test);
+  }
+
+  {
+    constexpr auto nullable_test = std::is_same<
+        LIBATFRAME_UTILS_NAMESPACE_ID::nostd::nonnull<LIBATFRAME_UTILS_NAMESPACE_ID::memory::strong_rc_ptr<int>>,
+        LIBATFRAME_UTILS_NAMESPACE_ID::memory::strong_rc_ptr<int>>::value;
+    CASE_EXPECT_TRUE(nullable_test);
+  }
 }

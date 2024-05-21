@@ -2272,7 +2272,8 @@ void test() {
   CASE_EXPECT_TRUE(X_instances == 0);
 
   {
-    util::memory::strong_rc_ptr<X> px(new X[4], checked_array_deleter<X>());
+    auto p = new X[4];
+    util::memory::strong_rc_ptr<X> px(p, checked_array_deleter<X>());
     CASE_EXPECT_TRUE(X_instances == 4);
   }
 

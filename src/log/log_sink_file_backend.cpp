@@ -69,8 +69,8 @@ LIBATFRAME_UTILS_API log_sink_file_backend::log_sink_file_backend(const log_sink
 }
 
 LIBATFRAME_UTILS_API log_sink_file_backend::~log_sink_file_backend() {
-  if (log_file_.opened_file && log_file_.opened_file->is_open() && !log_file_.opened_file->bad()) {
-    log_file_.opened_file->flush();
+  if (log_file_.opened_file) {
+    fflush(log_file_.opened_file.get());
   }
 }
 
@@ -132,8 +132,8 @@ LIBATFRAME_UTILS_API const std::string &log_sink_file_backend::get_writing_alias
   return file_name_pattern;
 }
 
-LIBATFRAME_UTILS_API UTIL_SANITIZER_NO_THREAD void log_sink_file_backend::operator()(
-    const log_formatter::caller_info_t &caller, const char *content, size_t content_size) {
+LIBATFRAME_UTILS_API void log_sink_file_backend::operator()(const log_formatter::caller_info_t &caller,
+                                                            const char *content, size_t content_size) {
   if (!inited_) {
     init();
   }
@@ -143,27 +143,27 @@ LIBATFRAME_UTILS_API UTIL_SANITIZER_NO_THREAD void log_sink_file_backend::operat
   }
   check_update();
 
-  std::shared_ptr<std::ofstream> f = open_log_file(true);
+  std::shared_ptr<std::FILE> f = open_log_file(true);
 
   if (!f) {
     return;
   }
 
-  f->write(content, static_cast<std::streamsize>(content_size));
-  f->put('\n');
+  fwrite(content, 1, content_size, f.get());
+  fputc('\n', f.get());
   time_t now = LIBATFRAME_UTILS_NAMESPACE_ID::time::time_utility::get_sys_now();
 
   // 日志级别高于指定级别，需要刷入
   if (static_cast<uint32_t>(caller.level_id) <= log_file_.auto_flush) {
     log_file_.last_flush_timepoint_ = now;
-    f->flush();
+    fflush(f.get());
   }
 
   // 定期刷入
   if (flush_interval_ > 0 && (log_file_.last_flush_timepoint_ > now  // 说明系统时间被改小了
                               || log_file_.last_flush_timepoint_ + flush_interval_ <= now)) {
     log_file_.last_flush_timepoint_ = now;
-    f->flush();
+    fflush(f.get());
   }
 
   log_file_.written_size += content_size + 1;
@@ -242,8 +242,8 @@ LIBATFRAME_UTILS_API UTIL_SANITIZER_NO_THREAD void log_sink_file_backend::init()
   open_log_file(false);
 }
 
-LIBATFRAME_UTILS_API std::shared_ptr<std::ofstream> log_sink_file_backend::open_log_file(bool destroy_content) {
-  if (log_file_.opened_file && log_file_.opened_file->good()) {
+LIBATFRAME_UTILS_API std::shared_ptr<std::FILE> log_sink_file_backend::open_log_file(bool destroy_content) {
+  if (log_file_.opened_file) {
     return log_file_.opened_file;
   }
 
@@ -259,18 +259,13 @@ LIBATFRAME_UTILS_API std::shared_ptr<std::ofstream> log_sink_file_backend::open_
       log_formatter::format(log_file, sizeof(log_file), path_pattern_.c_str(), path_pattern_.size(), caller);
   if (file_path_len <= 0) {
     std::cerr << "log.format " << path_pattern_ << " failed" << std::endl;
-    return std::shared_ptr<std::ofstream>();
+    return nullptr;
   }
   if (file_path_len < sizeof(log_file)) {
     log_file[file_path_len] = 0;
   }
 
-  std::shared_ptr<std::ofstream> of = std::make_shared<std::ofstream>();
-  if (!of) {
-    std::cerr << "log.file malloc failed: " << path_pattern_ << std::endl;
-    return std::shared_ptr<std::ofstream>();
-  }
-
+  std::shared_ptr<std::FILE> of;
   std::string dir_name;
   LIBATFRAME_UTILS_NAMESPACE_ID::file_system::dirname(log_file, file_path_len, dir_name);
   if (!dir_name.empty() && !LIBATFRAME_UTILS_NAMESPACE_ID::file_system::is_exist(dir_name.c_str())) {
@@ -279,22 +274,25 @@ LIBATFRAME_UTILS_API std::shared_ptr<std::ofstream> log_sink_file_backend::open_
 
   // 销毁原先的内容
   if (destroy_content) {
-    of->open(log_file, std::ios::binary | std::ios::out | std::ios::trunc);
-    if (!of->is_open()) {
+    std::FILE *destroy_file = nullptr;
+    UTIL_FS_OPEN(dfe, destroy_file, log_file, "wb");
+    if (nullptr == destroy_file) {
       std::cerr << "log.file open " << static_cast<const char *>(log_file) << " failed: " << path_pattern_ << std::endl;
-      return std::shared_ptr<std::ofstream>();
+      return nullptr;
     }
-    of->close();
+    std::fclose(destroy_file);
   }
 
-  of->open(log_file, std::ios::binary | std::ios::out | std::ios::app);
-  if (!of->is_open()) {
+  std::FILE *new_file = nullptr;
+  UTIL_FS_OPEN(nfe, new_file, log_file, "ab");
+  if (nullptr == new_file) {
     std::cerr << "log.file open " << static_cast<const char *>(log_file) << " failed: " << path_pattern_ << std::endl;
-    return std::shared_ptr<std::ofstream>();
+    return nullptr;
   }
+  of = std::shared_ptr<std::FILE>(new_file, std::fclose);
 
-  of->seekp(0, std::ios_base::end);
-  log_file_.written_size = static_cast<size_t>(of->tellp());
+  fseek(of.get(), 0, SEEK_END);
+  log_file_.written_size = static_cast<size_t>(ftell(of.get()));
 
   log_file_.opened_file = of;
   log_file_.opened_file_point_ = LIBATFRAME_UTILS_NAMESPACE_ID::time::time_utility::get_sys_now();
@@ -373,18 +371,19 @@ LIBATFRAME_UTILS_API void log_sink_file_backend::check_update() {
   std::string new_file_path;
   std::string old_file_path;
 
+  new_file_path.assign(log_file, file_path_len);
+
   {
     // 短时间加锁，防止文件路径变更
     lock::lock_holder<lock::spin_lock> lkholder(fs_lock_);
-    old_file_path = log_file_.file_path;
-  }
+    if (new_file_path == log_file_.file_path) {
+      // 本次刷新周期内的文件名未变化，说明检测周期小于实际周期，所以这个周期内不需要再检测了
+      // 因为考虑到夏时令，只要大于小时的配置检测周期都设置为小时，必然会小于实际周期然后走到这里
+      log_file_.opened_file_point_ = LIBATFRAME_UTILS_NAMESPACE_ID::time::time_utility::get_sys_now();
+      return;
+    }
 
-  new_file_path.assign(log_file, file_path_len);
-  if (new_file_path == old_file_path) {
-    // 本次刷新周期内的文件名未变化，说明检测周期小于实际周期，所以这个周期内不需要再检测了
-    // 因为考虑到夏时令，只要大于小时的配置检测周期都设置为小时，必然会小于实际周期然后走到这里
-    log_file_.opened_file_point_ = LIBATFRAME_UTILS_NAMESPACE_ID::time::time_utility::get_sys_now();
-    return;
+    old_file_path = log_file_.file_path;
   }
 
   std::string new_dir;
