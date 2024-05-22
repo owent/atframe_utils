@@ -154,19 +154,25 @@ LIBATFRAME_UTILS_API void log_sink_file_backend::operator()(const log_formatter:
 
   fwrite(content, 1, content_size, f.get());
   fputc('\n', f.get());
+
+  after_write_log(caller, *f, content_size);
+}
+
+LIBATFRAME_UTILS_API UTIL_SANITIZER_NO_THREAD void log_sink_file_backend::after_write_log(
+    const log_formatter::caller_info_t &caller, FILE &f, size_t content_size) {
   time_t now = LIBATFRAME_UTILS_NAMESPACE_ID::time::time_utility::get_sys_now();
 
   // 日志级别高于指定级别，需要刷入
   if (static_cast<uint32_t>(caller.level_id) <= log_file_.auto_flush) {
     log_file_.last_flush_timepoint_ = now;
-    fflush(f.get());
+    fflush(&f);
   }
 
   // 定期刷入
   if (flush_interval_ > 0 && (log_file_.last_flush_timepoint_ > now  // 说明系统时间被改小了
                               || log_file_.last_flush_timepoint_ + flush_interval_ <= now)) {
     log_file_.last_flush_timepoint_ = now;
-    fflush(f.get());
+    fflush(&f);
   }
 
   log_file_.written_size += content_size + 1;

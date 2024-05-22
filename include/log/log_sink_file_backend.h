@@ -105,6 +105,9 @@ class log_sink_file_backend {
 
   LIBATFRAME_UTILS_API UTIL_SANITIZER_NO_THREAD void rotate_log();
 
+  LIBATFRAME_UTILS_API UTIL_SANITIZER_NO_THREAD void after_write_log(const log_formatter::caller_info_t &caller,
+                                                                     FILE &f, size_t content_size);
+
   LIBATFRAME_UTILS_API void check_update();
 
   LIBATFRAME_UTILS_API void reset_log_file();
