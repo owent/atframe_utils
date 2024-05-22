@@ -101,6 +101,8 @@ class log_sink_file_backend {
 
   LIBATFRAME_UTILS_API std::shared_ptr<std::FILE> open_log_file(bool destroy_content);
 
+  LIBATFRAME_UTILS_API UTIL_SANITIZER_NO_THREAD void maybe_rotate_log();
+
   LIBATFRAME_UTILS_API UTIL_SANITIZER_NO_THREAD void rotate_log();
 
   LIBATFRAME_UTILS_API void check_update();

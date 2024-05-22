@@ -132,17 +132,20 @@ LIBATFRAME_UTILS_API const std::string &log_sink_file_backend::get_writing_alias
   return file_name_pattern;
 }
 
+LIBATFRAME_UTILS_API UTIL_SANITIZER_NO_THREAD void log_sink_file_backend::maybe_rotate_log() {
+  if (log_file_.written_size > 0 && log_file_.written_size >= max_file_size_) {
+    rotate_log();
+  }
+  check_update();
+}
+
 LIBATFRAME_UTILS_API void log_sink_file_backend::operator()(const log_formatter::caller_info_t &caller,
                                                             const char *content, size_t content_size) {
   if (!inited_) {
     init();
   }
 
-  if (log_file_.written_size > 0 && log_file_.written_size >= max_file_size_) {
-    rotate_log();
-  }
-  check_update();
-
+  maybe_rotate_log();
   std::shared_ptr<std::FILE> f = open_log_file(true);
 
   if (!f) {
