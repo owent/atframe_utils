@@ -523,8 +523,9 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_publisher {
     // No more to broadcast
     std::pair<log_const_iterator, log_const_iterator> logs;
     if (broadcast_key_bound_) {
-      logs = std::pair<log_const_iterator, log_const_iterator>(wal_object_->log_upper_bound(*broadcast_key_bound_),
-                                                               wal_object_->log_cend());
+      logs = std::pair<log_const_iterator, log_const_iterator>(
+          const_cast<const object_type*>(wal_object_.get())->log_upper_bound(*broadcast_key_bound_),
+          wal_object_->log_cend());
     } else {
       logs = wal_object_->log_all_range();
     }
