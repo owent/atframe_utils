@@ -7,7 +7,7 @@
 #include <config/compile_optimize.h>
 
 #include <cstddef>
-#include <tuple>
+#include <utility>
 
 LIBATFRAME_UTILS_NAMESPACE_BEGIN
 namespace nostd {
