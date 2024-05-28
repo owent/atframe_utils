@@ -41,24 +41,24 @@ struct __build_index_tuple<0> {
 };
 
 /// Class template integer_sequence
-template <typename TSize, TSize... Idx>
+template <class TSize, TSize... Idx>
 struct integer_sequence {
   using value_type = TSize;
   static constexpr size_t size() noexcept { return sizeof...(Idx); }
 };
 
-template <typename TSize, TSize Num, typename ISeq = typename __build_index_tuple<Num>::__type>
+template <class TSize, TSize Num, class ISeq = typename __build_index_tuple<Num>::__type>
 struct __make_integer_sequence;
 
-template <typename TSize, TSize Num, size_t... Idx>
+template <class TSize, TSize Num, size_t... Idx>
 struct __make_integer_sequence<TSize, Num, __index_tuple<Idx...> > {
   static_assert(Num >= 0, "Cannot make integer sequence of negative length");
 
   using __type = integer_sequence<TSize, static_cast<TSize>(Idx)...>;
 };
 
-template <typename TSize, TSize Num>
-using make_integer_sequence = __make_integer_sequence<TSize, Num>::__type;
+template <class TSize, TSize Num>
+using make_integer_sequence = typename __make_integer_sequence<TSize, Num>::__type;
 
 template <size_t... Idx>
 using index_sequence = integer_sequence<size_t, Idx...>;
@@ -68,8 +68,8 @@ template <size_t Num>
 using make_index_sequence = make_integer_sequence<size_t, Num>;
 
 /// Alias template index_sequence_for
-template <typename... _Types>
-using index_sequence_for = make_index_sequence<sizeof...(_Types)>;
+template <class... Types>
+using index_sequence_for = make_index_sequence<sizeof...(Types)>;
 
 #endif
 
