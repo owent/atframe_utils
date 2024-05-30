@@ -14,7 +14,7 @@
  *   2015.01.10 改为使用双检锁实现线程安全
  *   2015.11.02 增加内存屏障，保证极端情况下多线程+编译优化导致的指令乱序问题
  *   2019-12-05 移除对noncopyable的继承链，以适应用于dllexport时自带的
- * LIBATFRAME_UTILS_NAMESPACE_ID::design_pattern::noncopyable 未导出的问题 增加nomovable实现 2020-11-27
+ * util::design_pattern::noncopyable 未导出的问题 增加nomovable实现 2020-11-27
  * 增加基于C++11标准 N2660 的实现 优化销毁判定内存区的放置 优化初始化顺序 增加符号不导出的单例基类 local_singleton<T>
  *              单例接口返回const的智能指针，不再允许替换单例对象
  *   2023-07-09 修订宏接口，修订更严谨的符号导出问题
@@ -33,7 +33,7 @@
  *       如果单例对象不需要导出则也可以直接util::design_pattern::singleton<类名>或者用VISIBLE导出规则
  * @example
  *      // singleton_class.h
- *      class singleton_class : public LIBATFRAME_UTILS_NAMESPACE_ID::design_pattern::singleton<singleton_class> {};
+ *      class singleton_class : public util::design_pattern::singleton<singleton_class> {};
  * @example
  *      // singleton_class.h
  *      class singleton_class {
