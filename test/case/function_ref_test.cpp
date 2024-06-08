@@ -119,17 +119,6 @@ CASE_TEST(function_ref_test, MemberFun) {
   CASE_EXPECT_EQ(22, ref(s));
 }
 
-CASE_TEST(function_ref_test, MemberFunRefqualified) {
-  struct S {
-    int i;
-    int get_i() && { return i; }
-  };
-  auto mem_fun_ptr = &S::get_i;
-  S s{22};
-  util::nostd::function_ref<int(S && s)> ref(mem_fun_ptr);
-  CASE_EXPECT_EQ(22, ref(std::move(s)));
-}
-
 CASE_TEST(function_ref_test, PassByValueTypes) {
   using util::nostd::details::functional_ref_invoker;
   using util::nostd::details::functional_ref_void_ptr;

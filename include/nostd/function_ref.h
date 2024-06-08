@@ -61,22 +61,14 @@ template <typename Obj, typename R, typename... Args>
 UTIL_SYMBOL_VISIBLE R functional_ref_invoke_object(functional_ref_void_ptr ptr,
                                                    typename functional_ref_forward_type<Args>::type... args) {
   auto o = static_cast<const Obj*>(ptr.obj);
-#if (defined(__cplusplus) && __cplusplus >= 201703L) || ((defined(_MSVC_LANG) && _MSVC_LANG >= 201703L))
-  return static_cast<R>(::std::invoke(*o, ::std::forward<Args>(args)...));
-#else
-  return static_cast<R>((*o)(::std::forward<Args>(args)...));
-#endif
+  return static_cast<R>(invoke(*o, ::std::forward<Args>(args)...));
 }
 
 template <typename Fun, typename R, typename... Args>
 UTIL_SYMBOL_VISIBLE R functional_ref_invoke_function(functional_ref_void_ptr ptr,
                                                      typename functional_ref_forward_type<Args>::type... args) {
   auto f = reinterpret_cast<Fun>(ptr.fn);
-#if (defined(__cplusplus) && __cplusplus >= 201703L) || ((defined(_MSVC_LANG) && _MSVC_LANG >= 201703L))
-  return static_cast<R>(::std::invoke(f, ::std::forward<Args>(args)...));
-#else
-  return static_cast<R>((*f)(::std::forward<Args>(args)...));
-#endif
+  return static_cast<R>(invoke(f, ::std::forward<Args>(args)...));
 }
 
 template <typename Sig>
