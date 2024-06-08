@@ -157,7 +157,7 @@ class UTIL_SYMBOL_VISIBLE function_ref<R(Args...)> {
   //
   // This overload is also used for references to functions, since references to
   // functions can decay to function pointers implicitly.
-  template <class F, class = enable_if_compatible<F*>, ::std::enable_if<::std::is_function<F>::value, int> = 0>
+  template <class F, class = enable_if_compatible<F*>, enable_if_t<is_function<F>::value, int> = 0>
   function_ref(F* f)  // NOLINT(runtime/explicit)
       : invoker_(&details::functional_ref_invoke_function<F*, R, Args...>) {
     assert(f != nullptr);
