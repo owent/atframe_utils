@@ -52,61 +52,32 @@ using functional_ref_invoker = R (*)(functional_ref_void_ptr, typename functiona
 template <class R>
 struct UTIL_SYMBOL_VISIBLE functional_ref_invoker_action;
 
-template <>
-struct UTIL_SYMBOL_VISIBLE functional_ref_invoker_action<void> {
-  //
-  // invoke_object and invoke_function provide static "Invoke" functions that can be
-  // used as Invokers for objects or functions respectively.
-  //
-  // static_cast<R> handles the case the return type is void.
-  template <class Obj, class... Args>
-  static void invoke_object(functional_ref_void_ptr ptr, typename functional_ref_forward_type<Args>::type... args) {
-    auto o = static_cast<const Obj*>(ptr.obj);
+//
+// InvokeObject and InvokeFunction provide static "Invoke" functions that can be
+// used as Invokers for objects or functions respectively.
+//
+// static_cast<R> handles the case the return type is void.
+template <typename Obj, typename R, typename... Args>
+UTIL_SYMBOL_VISIBLE R functional_ref_invoke_object(functional_ref_void_ptr ptr,
+                                                   typename functional_ref_forward_type<Args>::type... args) {
+  auto o = static_cast<const Obj*>(ptr.obj);
 #if (defined(__cplusplus) && __cplusplus >= 201703L) || ((defined(_MSVC_LANG) && _MSVC_LANG >= 201703L))
-    ::std::invoke(*o, ::std::forward<Args>(args)...);
+  return static_cast<R>(::std::invoke(*o, ::std::forward<Args>(args)...));
 #else
-    (*o)(::std::forward<Args>(args)...);
+  return static_cast<R>((*o)(::std::forward<Args>(args)...));
 #endif
-  }
+}
 
-  template <class Fun, class... Args>
-  static void invoke_function(functional_ref_void_ptr ptr, typename functional_ref_forward_type<Args>::type... args) {
-    auto f = reinterpret_cast<Fun>(ptr.fn);
+template <typename Fun, typename R, typename... Args>
+UTIL_SYMBOL_VISIBLE R functional_ref_invoke_function(functional_ref_void_ptr ptr,
+                                                     typename functional_ref_forward_type<Args>::type... args) {
+  auto f = reinterpret_cast<Fun>(ptr.fn);
 #if (defined(__cplusplus) && __cplusplus >= 201703L) || ((defined(_MSVC_LANG) && _MSVC_LANG >= 201703L))
-    ::std::invoke(f, ::std::forward<Args>(args)...);
+  return static_cast<R>(::std::invoke(f, ::std::forward<Args>(args)...));
 #else
-    (*f)(::std::forward<Args>(args)...);
+  return static_cast<R>((*f)(::std::forward<Args>(args)...));
 #endif
-  }
-};
-
-template <class R>
-struct UTIL_SYMBOL_VISIBLE functional_ref_invoker_action {
-  //
-  // invoke_object and invoke_function provide static "Invoke" functions that can be
-  // used as Invokers for objects or functions respectively.
-  //
-  // static_cast<R> handles the case the return type is void.
-  template <class Obj, class... Args>
-  static R invoke_object(functional_ref_void_ptr ptr, typename functional_ref_forward_type<Args>::type... args) {
-    auto o = static_cast<const Obj*>(ptr.obj);
-#if (defined(__cplusplus) && __cplusplus >= 201703L) || ((defined(_MSVC_LANG) && _MSVC_LANG >= 201703L))
-    return static_cast<R>(::std::invoke(*o, ::std::forward<Args>(args)...));
-#else
-    return static_cast<R>((*o)(::std::forward<Args>(args)...));
-#endif
-  }
-
-  template <class Fun, class... Args>
-  static R invoke_function(functional_ref_void_ptr ptr, typename functional_ref_forward_type<Args>::type... args) {
-    auto f = reinterpret_cast<Fun>(ptr.fn);
-#if (defined(__cplusplus) && __cplusplus >= 201703L) || ((defined(_MSVC_LANG) && _MSVC_LANG >= 201703L))
-    return static_cast<R>(::std::invoke(f, ::std::forward<Args>(args)...));
-#else
-    return static_cast<R>((*f)(::std::forward<Args>(args)...));
-#endif
-  }
-};
+}
 
 template <typename Sig>
 UTIL_SYMBOL_VISIBLE void functional_ref_assert_non_null(const std::function<Sig>& f) {
@@ -160,7 +131,8 @@ class UTIL_SYMBOL_VISIBLE function_ref<R(Args...)> {
   // Used to disable constructors for objects that are not compatible with the
   // signature of this function_ref.
   template <class F, class FR = invoke_result_t<F, Args&&...>>
-  using enable_if_compatible = typename ::std::enable_if<::std::is_convertible<FR, R>::value, void>::type;
+  using enable_if_compatible =
+      typename ::std::enable_if<std::is_void<R>::value || ::std::is_convertible<FR, R>::value, void>::type;
 
  public:
   function_ref(std::nullptr_t) = delete;  // NOLINTNEXTLINE(runtime/explicit)
@@ -174,7 +146,7 @@ class UTIL_SYMBOL_VISIBLE function_ref<R(Args...)> {
   template <class F, class = enable_if_compatible<const F&>>
   // NOLINTNEXTLINE(runtime/explicit)
   function_ref(const F& f UTIL_ATTRIBUTE_LIFETIME_BOUND)
-      : invoker_(&details::functional_ref_invoker_action<R>::template invoke_object<F, Args...>) {
+      : invoker_(&details::functional_ref_invoke_object<F, R, Args...>) {
     details::functional_ref_assert_non_null(f);
     ptr_.obj = &f;
   }
@@ -187,7 +159,7 @@ class UTIL_SYMBOL_VISIBLE function_ref<R(Args...)> {
   // functions can decay to function pointers implicitly.
   template <class F, class = enable_if_compatible<F*>, ::std::enable_if<::std::is_function<F>::value, int> = 0>
   function_ref(F* f)  // NOLINT(runtime/explicit)
-      : invoker_(&details::functional_ref_invoker_action<R>::template invoke_function<F*, Args...>) {
+      : invoker_(&details::functional_ref_invoke_function<F*, R, Args...>) {
     assert(f != nullptr);
     ptr_.fn = reinterpret_cast<decltype(ptr_.fn)>(f);
   }
@@ -198,51 +170,6 @@ class UTIL_SYMBOL_VISIBLE function_ref<R(Args...)> {
  private:
   details::functional_ref_void_ptr ptr_;
   details::functional_ref_invoker<R, Args...> invoker_;
-};
-
-template <class... Args>
-class UTIL_SYMBOL_VISIBLE function_ref<void(Args...)> {
- private:
-  // always true if F can be called with Args...
-  template <class F, class FR = invoke_result_t<F, Args&&...>>
-  using enable_if_compatible = typename ::std::enable_if<true, void>::type;
-
- public:
-  function_ref(std::nullptr_t) = delete;  // NOLINTNEXTLINE(runtime/explicit)
-
-  // To help prevent subtle lifetime bugs, function_ref is not assignable.
-  // Typically, it should only be used as an argument type.
-  function_ref& operator=(const function_ref& rhs) = delete;
-  function_ref(const function_ref& rhs) = default;
-
-  // Constructs a function_ref from any invocable type.
-  template <class F, class = enable_if_compatible<const F&>>
-  // NOLINTNEXTLINE(runtime/explicit)
-  function_ref(const F& f UTIL_ATTRIBUTE_LIFETIME_BOUND)
-      : invoker_(&details::functional_ref_invoker_action<void>::template invoke_object<F, Args...>) {
-    details::functional_ref_assert_non_null(f);
-    ptr_.obj = &f;
-  }
-
-  // Overload for function pointers. This eliminates a level of indirection that
-  // would happen if the above overload was used (it lets us store the pointer
-  // instead of a pointer to a pointer).
-  //
-  // This overload is also used for references to functions, since references to
-  // functions can decay to function pointers implicitly.
-  template <class F, class = enable_if_compatible<F*>, ::std::enable_if<::std::is_function<F>::value, int> = 0>
-  function_ref(F* f)  // NOLINT(runtime/explicit)
-      : invoker_(&details::functional_ref_invoker_action<void>::template invoke_function<F*, Args...>) {
-    assert(f != nullptr);
-    ptr_.fn = reinterpret_cast<decltype(ptr_.fn)>(f);
-  }
-
-  // Call the underlying object.
-  void operator()(Args... args) const { invoker_(ptr_, std::forward<Args>(args)...); }
-
- private:
-  details::functional_ref_void_ptr ptr_;
-  details::functional_ref_invoker<void, Args...> invoker_;
 };
 
 // Allow const qualified function signatures. Since FunctionRef requires
