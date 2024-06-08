@@ -68,6 +68,17 @@ using remove_all_extents_t = typename ::std::remove_all_extents<T>::type;
 template <bool B, class T = void>
 using enable_if_t = typename ::std::enable_if<B, T>::type;
 
+#if ((defined(__cplusplus) && __cplusplus >= 201703L) || (defined(_MSVC_LANG) && _MSVC_LANG >= 201703L))
+template <class F, class... ArgTypes>
+using invoke_result = ::std::invoke_result<F, ArgTypes...>;
+#else
+template <class F, class... ArgTypes>
+using invoke_result = ::std::result_of<F(ArgTypes...)>;
+#endif
+
+template <class F, class... ArgTypes>
+using invoke_result_t = typename invoke_result<F, ArgTypes...>::type;
+
 // GCC 4.8 do not support variable template
 
 // std::aligned_union is deprecated in C++23, which will be warned by MSVC with C++20 only
