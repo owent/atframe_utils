@@ -44,7 +44,7 @@ struct UTIL_SYMBOL_VISIBLE functional_ref_pass_by_value<T, /*IsLValueReference=*
 
 template <class T>
 struct UTIL_SYMBOL_VISIBLE functional_ref_forward_type
-    : ::std::conditional<functional_ref_pass_by_value<T>::value, T, T&&> {};
+    : public ::std::conditional<functional_ref_pass_by_value<T>::value, T, T&&> {};
 
 template <class R, class... Args>
 using functional_ref_invoker = R (*)(functional_ref_void_ptr, typename functional_ref_forward_type<Args>::type...);
@@ -61,14 +61,14 @@ template <typename Obj, typename R, typename... Args>
 UTIL_SYMBOL_VISIBLE R functional_ref_invoke_object(functional_ref_void_ptr ptr,
                                                    typename functional_ref_forward_type<Args>::type... args) {
   auto o = static_cast<const Obj*>(ptr.obj);
-  return static_cast<R>(invoke(*o, ::std::forward<Args>(args)...));
+  return static_cast<R>(::LIBATFRAME_UTILS_NAMESPACE_ID::nostd::invoke(*o, ::std::forward<Args>(args)...));
 }
 
 template <typename Fun, typename R, typename... Args>
 UTIL_SYMBOL_VISIBLE R functional_ref_invoke_function(functional_ref_void_ptr ptr,
                                                      typename functional_ref_forward_type<Args>::type... args) {
   auto f = reinterpret_cast<Fun>(ptr.fn);
-  return static_cast<R>(invoke(f, ::std::forward<Args>(args)...));
+  return static_cast<R>(::LIBATFRAME_UTILS_NAMESPACE_ID::nostd::invoke(f, ::std::forward<Args>(args)...));
 }
 
 template <typename Sig>
