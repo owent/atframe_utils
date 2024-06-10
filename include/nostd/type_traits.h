@@ -77,20 +77,24 @@ using remove_all_extents_t = typename ::std::remove_all_extents<T>::type;
 template <bool B, class T = void>
 using enable_if_t = typename ::std::enable_if<B, T>::type;
 
-#if ((defined(__cplusplus) && __cplusplus >= 201703L) || (defined(_MSVC_LANG) && _MSVC_LANG >= 201703L))
+#if ((defined(__cplusplus) && __cplusplus >= 201703L) || (defined(_MSVC_LANG) && _MSVC_LANG >= 201703L)) && \
+    defined(__cpp_lib_is_invocable)
 template <class F, class... ArgTypes>
 using invoke_result = ::std::invoke_result<F, ArgTypes...>;
+
+using ::std::invoke_result_t;
 #else
 template <class F, class... ArgTypes>
 using invoke_result = ::std::result_of<F(ArgTypes...)>;
-#endif
 
 template <class F, class... ArgTypes>
 using invoke_result_t = typename invoke_result<F, ArgTypes...>::type;
+#endif
 
-#if ((defined(__cplusplus) && __cplusplus >= 201703L) || (defined(_MSVC_LANG) && _MSVC_LANG >= 201703L))
-template <class F, class... ArgTypes>
-using invoke = ::std::invoke<F, ArgTypes...>;
+#if ((defined(__cplusplus) && __cplusplus >= 201703L) || (defined(_MSVC_LANG) && _MSVC_LANG >= 201703L)) && \
+    defined(__cpp_lib_invoke)
+
+using ::std::invoke;
 
 #else
 
