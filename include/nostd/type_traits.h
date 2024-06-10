@@ -9,9 +9,18 @@
 #include <algorithm>
 #include <cstddef>
 #include <type_traits>
+#include <utility>
 
 #ifdef max
 #  undef max
+#endif
+
+#ifndef UTIL_NOSTD_INVOKE_RESULT_CONSTEXPR
+#  if __cplusplus >= 202002L
+#    define UTIL_NOSTD_INVOKE_RESULT_CONSTEXPR constexpr
+#  else
+#    define UTIL_NOSTD_INVOKE_RESULT_CONSTEXPR
+#  endif
 #endif
 
 LIBATFRAME_UTILS_NAMESPACE_BEGIN
@@ -67,6 +76,138 @@ using remove_all_extents_t = typename ::std::remove_all_extents<T>::type;
 
 template <bool B, class T = void>
 using enable_if_t = typename ::std::enable_if<B, T>::type;
+
+#if ((defined(__cplusplus) && __cplusplus >= 201703L) || (defined(_MSVC_LANG) && _MSVC_LANG >= 201703L)) && \
+    defined(__cpp_lib_is_invocable)
+template <class F, class... ArgTypes>
+using invoke_result = ::std::invoke_result<F, ArgTypes...>;
+
+using ::std::invoke_result_t;
+#else
+template <class F, class... ArgTypes>
+using invoke_result = ::std::result_of<F(ArgTypes...)>;
+
+template <class F, class... ArgTypes>
+using invoke_result_t = typename invoke_result<F, ArgTypes...>::type;
+#endif
+
+#if ((defined(__cplusplus) && __cplusplus >= 201703L) || (defined(_MSVC_LANG) && _MSVC_LANG >= 201703L)) && \
+    defined(__cpp_lib_invoke)
+
+using ::std::invoke;
+
+#else
+
+namespace details {
+
+// Used by result_of, invoke etc. to unwrap a reference_wrapper.
+template <typename _Tp, typename _Up = remove_cvref_t<_Tp>>
+struct UTIL_SYMBOL_VISIBLE __inv_unwrap {
+  using type = _Tp;
+};
+
+template <typename _Tp, typename _Up>
+struct UTIL_SYMBOL_VISIBLE __inv_unwrap<_Tp, ::std::reference_wrapper<_Up>> {
+  using type = _Up&;
+};
+
+struct UTIL_SYMBOL_VISIBLE __invoke_memfun_ref {};
+struct UTIL_SYMBOL_VISIBLE __invoke_memfun_deref {};
+struct UTIL_SYMBOL_VISIBLE __invoke_memobj_ref {};
+struct UTIL_SYMBOL_VISIBLE __invoke_memobj_deref {};
+struct UTIL_SYMBOL_VISIBLE __invoke_other {};
+
+template <typename _Tp, typename _Up = typename __inv_unwrap<_Tp>::type>
+UTIL_SYMBOL_VISIBLE inline UTIL_NOSTD_INVOKE_RESULT_CONSTEXPR _Up&& __invfwd(
+    typename ::std::remove_reference<_Tp>::type& __t) noexcept {
+  return static_cast<_Up&&>(__t);
+}
+
+template <typename R, typename _Fn, typename... _Args>
+UTIL_SYMBOL_VISIBLE inline UTIL_NOSTD_INVOKE_RESULT_CONSTEXPR R __invoke_impl(__invoke_other, _Fn&& __f,
+                                                                              _Args&&... __args) {
+  return ::std::forward<_Fn>(__f)(::std::forward<_Args>(__args)...);
+}
+
+template <typename R, typename _MemFun, typename _Tp, typename... _Args>
+UTIL_SYMBOL_VISIBLE inline UTIL_NOSTD_INVOKE_RESULT_CONSTEXPR R __invoke_impl(__invoke_memfun_ref, _MemFun&& __f,
+                                                                              _Tp&& __t, _Args&&... __args) {
+  return (__invfwd<_Tp>(__t).*__f)(::std::forward<_Args>(__args)...);
+}
+
+template <typename R, typename _MemFun, typename _Tp, typename... _Args>
+UTIL_SYMBOL_VISIBLE inline UTIL_NOSTD_INVOKE_RESULT_CONSTEXPR R __invoke_impl(__invoke_memfun_deref, _MemFun&& __f,
+                                                                              _Tp&& __t, _Args&&... __args) {
+  return ((*::std::forward<_Tp>(__t)).*__f)(::std::forward<_Args>(__args)...);
+}
+
+template <typename R, typename _MemPtr, typename _Tp>
+UTIL_SYMBOL_VISIBLE inline UTIL_NOSTD_INVOKE_RESULT_CONSTEXPR R __invoke_impl(__invoke_memobj_ref, _MemPtr&& __f,
+                                                                              _Tp&& __t) {
+  return __invfwd<_Tp>(__t).*__f;
+}
+
+template <typename R, typename _MemPtr, typename _Tp>
+UTIL_SYMBOL_VISIBLE inline UTIL_NOSTD_INVOKE_RESULT_CONSTEXPR R __invoke_impl(__invoke_memobj_deref, _MemPtr&& __f,
+                                                                              _Tp&& __t) {
+  return (*::std::forward<_Tp>(__t)).*__f;
+}
+
+template <bool, bool, typename _Functor, typename... _ArgTypes>
+struct __result_of_tag_impl {
+  using type = __invoke_other;
+};
+
+template <typename _MemPtr, typename _Clazz, typename... _ArgTypes>
+struct __result_of_tag_impl<true, false, _MemPtr, _Clazz, _ArgTypes...> {
+  using type =
+      typename ::std::conditional<::std::is_pointer<_Clazz>::value, __invoke_memobj_deref, __invoke_memobj_ref>::type;
+};
+
+template <typename _MemPtr, typename _Clazz, typename... _ArgTypes>
+struct __result_of_tag_impl<false, true, _MemPtr, _Clazz, _ArgTypes...> {
+  using type =
+      typename ::std::conditional<::std::is_pointer<_Clazz>::value, __invoke_memfun_deref, __invoke_memfun_ref>::type;
+};
+
+// __invoke_result (std::invoke_result for C++11)
+template <typename _Functor, typename... _ArgTypes>
+struct __invoke_tag : public __result_of_tag_impl<
+                          ::std::is_member_object_pointer<typename ::std::remove_reference<_Functor>::type>::value,
+                          ::std::is_member_function_pointer<typename ::std::remove_reference<_Functor>::type>::value,
+                          _Functor, _ArgTypes...> {};
+
+template <typename F, typename... ArgTypes>
+UTIL_SYMBOL_VISIBLE inline UTIL_NOSTD_INVOKE_RESULT_CONSTEXPR invoke_result_t<F, ArgTypes...> __invoke(
+    F&& __fn, ArgTypes&&... __args) {
+  using __tag = typename __invoke_tag<F, ArgTypes...>::type;
+  return __invoke_impl<invoke_result_t<F, ArgTypes...>>(__tag{}, std::forward<F>(__fn),
+                                                        std::forward<ArgTypes>(__args)...);
+}
+}  // namespace details
+
+template <typename F, typename... ArgTypes>
+UTIL_SYMBOL_VISIBLE inline UTIL_NOSTD_INVOKE_RESULT_CONSTEXPR invoke_result_t<F, ArgTypes...> invoke(
+    F&& __fn, ArgTypes&&... __args) {
+  return details::__invoke(std::forward<F>(__fn), std::forward<ArgTypes>(__args)...);
+}
+
+#endif
+
+// is_function()
+//
+// Determines whether the passed type `T` is a function type.
+//
+// This metafunction is designed to be a drop-in replacement for the C++11
+// `std::is_function()` metafunction for platforms that have incomplete C++11
+// support (such as libstdc++ 4.x).
+//
+// This metafunction works because appending `const` to a type does nothing to
+// function types and reference types (and forms a const-qualified type
+// otherwise).
+template <class T>
+struct is_function : ::std::integral_constant<bool, !(::std::is_reference<T>::value ||
+                                                      ::std::is_const<typename ::std::add_const<T>::type>::value)> {};
 
 // GCC 4.8 do not support variable template
 
