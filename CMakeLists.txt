@@ -258,9 +258,7 @@ if(PROJECT_ATFRAME_UTILS_PUBLIC_DEFINITIONS)
   target_compile_definitions(${PROJECT_NAME} PUBLIC ${PROJECT_ATFRAME_UTILS_PUBLIC_DEFINITIONS})
 endif()
 
-if(MSVC)
-  set_property(TARGET ${PROJECT_NAME} PROPERTY FOLDER "atframework")
-endif(MSVC)
+set_property(TARGET ${PROJECT_NAME} PROPERTY FOLDER "atframework")
 
 include(AtframeworkToolsetCommonDefinitions)
 if(BUILD_SHARED_LIBS OR ATFRAMEWORK_USE_DYNAMIC_LIBRARY)

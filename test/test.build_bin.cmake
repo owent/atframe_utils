@@ -46,10 +46,8 @@ function(atframe_add_test_executable TARGET_NAME)
   endif()
 
   add_executable(${TARGET_NAME} ${ARGN})
-  if(MSVC)
-    set_property(TARGET ${TARGET_NAME} PROPERTY FOLDER "atframework/test")
-    # add_target_properties(${TARGET_NAME} LINK_FLAGS /NODEFAULTLIB:library)
-  endif()
+  set_property(TARGET ${TARGET_NAME} PROPERTY FOLDER "atframework/test")
+  # add_target_properties(${TARGET_NAME} LINK_FLAGS /NODEFAULTLIB:library)
   set_target_properties(
     ${TARGET_NAME}
     PROPERTIES INSTALL_RPATH_USE_LINK_PATH YES

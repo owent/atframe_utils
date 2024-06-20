@@ -18,9 +18,7 @@ set_target_properties(
              BUILD_WITH_INSTALL_RPATH NO
              BUILD_RPATH_USE_ORIGIN YES)
 
-if(MSVC)
-  set_property(TARGET ${BIN_NAME} PROPERTY FOLDER "atframework/sample")
-endif(MSVC)
+set_property(TARGET ${BIN_NAME} PROPERTY FOLDER "atframework/sample")
 
 add_test(NAME "atframe_utils.sample" COMMAND "$<TARGET_FILE:${BIN_NAME}>")
 set_tests_properties("atframe_utils.sample" PROPERTIES LABELS "atframe_utils;atframe_utils.sample")

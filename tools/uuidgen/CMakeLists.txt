@@ -14,8 +14,8 @@ target_link_libraries(${BIN_NAME} ${PROJECT_NAME})
 
 target_compile_options(${BIN_NAME} PRIVATE ${COMPILER_STRICT_EXTRA_CFLAGS} ${COMPILER_STRICT_CFLAGS})
 
+set_property(TARGET ${BIN_NAME} PROPERTY FOLDER "atframework/tools")
 if(MSVC)
-  set_property(TARGET ${BIN_NAME} PROPERTY FOLDER "atframework/tools")
   add_target_properties(${BIN_NAME} LINK_FLAGS /NODEFAULTLIB:library)
 endif(MSVC)
 
