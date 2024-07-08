@@ -163,7 +163,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY __rc_ptr_counted_data_inplace_alloc : publi
   template <class AllocInput, class... Args>
   explicit __rc_ptr_counted_data_inplace_alloc(AllocInput&& a, Args&&... args) {
     // construct allocator first
-    using alloc_type_a = ::std::allocator_traits<Alloc>::template rebind_alloc<Alloc>;
+    using alloc_type_a = typename ::std::allocator_traits<Alloc>::template rebind_alloc<Alloc>;
     using alloc_traits_a = ::std::allocator_traits<alloc_type_a>;
     alloc_type_a aa;
     alloc_traits_a::construct(aa, alloc_ptr(), std::forward<AllocInput>(a));
@@ -190,11 +190,11 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY __rc_ptr_counted_data_inplace_alloc : publi
 
   void destroy() noexcept override {
     using alloc_type_self =
-        ::std::allocator_traits<Alloc>::template rebind_alloc<__rc_ptr_counted_data_inplace_alloc<T, Alloc>>;
+        typename ::std::allocator_traits<Alloc>::template rebind_alloc<__rc_ptr_counted_data_inplace_alloc<T, Alloc>>;
     using alloc_traits_self = ::std::allocator_traits<alloc_type_self>;
 
     // destroy allocator first
-    using alloc_type_a = ::std::allocator_traits<Alloc>::template rebind_alloc<Alloc>;
+    using alloc_type_a = typename ::std::allocator_traits<Alloc>::template rebind_alloc<Alloc>;
     using alloc_traits_a = ::std::allocator_traits<alloc_type_a>;
     alloc_type_a aa;
     alloc_traits_a::destroy(aa, alloc_ptr());
@@ -248,7 +248,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY __rc_ptr_counted_data_with_deleter_allocato
   void dispose() noexcept override { deleter_(ptr_); }
 
   void destroy() noexcept override {
-    using alloc_type = ::std::allocator_traits<Alloc>::template rebind_alloc<
+    using alloc_type = typename ::std::allocator_traits<Alloc>::template rebind_alloc<
         __rc_ptr_counted_data_with_deleter_allocator<T, Deleter, Alloc>>;
     using alloc_traits = ::std::allocator_traits<alloc_type>;
     alloc_type alloc;
