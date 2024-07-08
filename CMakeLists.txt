@@ -160,6 +160,7 @@ set(HEADER_LIST
     "${CMAKE_CURRENT_LIST_DIR}/include/memory/lru_map.h"
     "${CMAKE_CURRENT_LIST_DIR}/include/memory/rc_ptr.h"
     "${CMAKE_CURRENT_LIST_DIR}/include/memory/lru_object_pool.h"
+    "${CMAKE_CURRENT_LIST_DIR}/include/memory/allocator_ptr.h"
     "${CMAKE_CURRENT_LIST_DIR}/include/network/http_content_type.h"
     "${CMAKE_CURRENT_LIST_DIR}/include/network/http_request.h"
     "${CMAKE_CURRENT_LIST_DIR}/include/nostd/function_ref.h"

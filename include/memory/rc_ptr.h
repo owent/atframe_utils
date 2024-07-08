@@ -18,6 +18,7 @@
 
 #include <config/compile_optimize.h>
 #include <config/compiler_features.h>
+#include <memory/allocator_ptr.h>
 #include <nostd/type_traits.h>
 
 LIBATFRAME_UTILS_NAMESPACE_BEGIN
@@ -96,7 +97,7 @@ class UTIL_SYMBOL_VISIBLE __rc_ptr_counted_data_base {
 };
 
 template <class T>
-class LIBATFRAME_UTILS_API_HEAD_ONLY __rc_ptr_counted_data_default : public __rc_ptr_counted_data_base {
+class LIBATFRAME_UTILS_API_HEAD_ONLY __rc_ptr_counted_data_default final : public __rc_ptr_counted_data_base {
  public:
   explicit __rc_ptr_counted_data_default(T* p) noexcept : ptr_(p) {}
 
@@ -113,10 +114,9 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY __rc_ptr_counted_data_default : public __rc
 
   void destroy() noexcept override {
     using alloc_type = ::std::allocator<__rc_ptr_counted_data_default<T>>;
-    using alloc_traits = ::std::allocator_traits<alloc_type>;
     alloc_type alloc;
-    alloc_traits::destroy(alloc, this);
-    alloc_traits::deallocate(alloc, this, 1);
+    allocated_ptr<alloc_type> guard_ptr{alloc, this};
+    this->~__rc_ptr_counted_data_default();
   }
 
  private:
@@ -124,7 +124,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY __rc_ptr_counted_data_default : public __rc
 };
 
 template <class T>
-class LIBATFRAME_UTILS_API_HEAD_ONLY __rc_ptr_counted_data_inplace : public __rc_ptr_counted_data_base {
+class LIBATFRAME_UTILS_API_HEAD_ONLY __rc_ptr_counted_data_inplace final : public __rc_ptr_counted_data_base {
  public:
   template <class... Args>
   explicit __rc_ptr_counted_data_inplace(Args&&... args) {
@@ -143,10 +143,9 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY __rc_ptr_counted_data_inplace : public __rc
 
   void destroy() noexcept override {
     using alloc_type = ::std::allocator<__rc_ptr_counted_data_inplace<T>>;
-    using alloc_traits = ::std::allocator_traits<alloc_type>;
     alloc_type alloc;
-    alloc_traits::destroy(alloc, this);
-    alloc_traits::deallocate(alloc, this, 1);
+    allocated_ptr<alloc_type> guard_ptr{alloc, this};
+    this->~__rc_ptr_counted_data_inplace();
   }
 
   inline T* ptr() noexcept { return reinterpret_cast<T*>(addr()); }
@@ -158,7 +157,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY __rc_ptr_counted_data_inplace : public __rc
 };
 
 template <class T, class Alloc>
-class LIBATFRAME_UTILS_API_HEAD_ONLY __rc_ptr_counted_data_inplace_alloc : public __rc_ptr_counted_data_base {
+class LIBATFRAME_UTILS_API_HEAD_ONLY __rc_ptr_counted_data_inplace_alloc final : public __rc_ptr_counted_data_base {
  public:
   template <class AllocInput, class... Args>
   explicit __rc_ptr_counted_data_inplace_alloc(AllocInput&& a, Args&&... args) {
@@ -196,13 +195,13 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY __rc_ptr_counted_data_inplace_alloc : publi
     // destroy allocator first
     using alloc_type_a = typename ::std::allocator_traits<Alloc>::template rebind_alloc<Alloc>;
     using alloc_traits_a = ::std::allocator_traits<alloc_type_a>;
-    alloc_type_a aa;
+    alloc_type_a aa{*alloc_ptr()};
     alloc_traits_a::destroy(aa, alloc_ptr());
 
     // then, destroy and deallocate this
-    alloc_type_self as;
-    alloc_traits_self::destroy(as, this);
-    alloc_traits_self::deallocate(as, this, 1);
+    alloc_type_self as{*alloc_ptr()};
+    allocated_ptr<alloc_type_self> guard_ptr{as, this};
+    this->~__rc_ptr_counted_data_inplace_alloc();
   }
 
   inline T* value_ptr() noexcept { return reinterpret_cast<T*>(value_addr()); }
@@ -217,7 +216,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY __rc_ptr_counted_data_inplace_alloc : publi
 };
 
 template <class T, class Deleter>
-class LIBATFRAME_UTILS_API_HEAD_ONLY __rc_ptr_counted_data_with_deleter : public __rc_ptr_counted_data_base {
+class LIBATFRAME_UTILS_API_HEAD_ONLY __rc_ptr_counted_data_with_deleter final : public __rc_ptr_counted_data_base {
  public:
   template <class DeleterInput>
   inline __rc_ptr_counted_data_with_deleter(T* p, DeleterInput&& d) noexcept
@@ -227,10 +226,9 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY __rc_ptr_counted_data_with_deleter : public
 
   void destroy() noexcept override {
     using alloc_type = ::std::allocator<__rc_ptr_counted_data_with_deleter<T, Deleter>>;
-    using alloc_traits = ::std::allocator_traits<alloc_type>;
     alloc_type alloc;
-    alloc_traits::destroy(alloc, this);
-    alloc_traits::deallocate(alloc, this, 1);
+    allocated_ptr<alloc_type> guard_ptr{alloc, this};
+    this->~__rc_ptr_counted_data_with_deleter();
   }
 
  private:
@@ -239,7 +237,8 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY __rc_ptr_counted_data_with_deleter : public
 };
 
 template <class T, class Deleter, class Alloc>
-class LIBATFRAME_UTILS_API_HEAD_ONLY __rc_ptr_counted_data_with_deleter_allocator : public __rc_ptr_counted_data_base {
+class LIBATFRAME_UTILS_API_HEAD_ONLY __rc_ptr_counted_data_with_deleter_allocator final
+    : public __rc_ptr_counted_data_base {
  public:
   template <class DeleterInput, class AllocInput>
   inline __rc_ptr_counted_data_with_deleter_allocator(T* p, DeleterInput&& d, AllocInput&& a) noexcept
@@ -251,9 +250,9 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY __rc_ptr_counted_data_with_deleter_allocato
     using alloc_type = typename ::std::allocator_traits<Alloc>::template rebind_alloc<
         __rc_ptr_counted_data_with_deleter_allocator<T, Deleter, Alloc>>;
     using alloc_traits = ::std::allocator_traits<alloc_type>;
-    alloc_type alloc;
-    alloc_traits::destroy(alloc, this);
-    alloc_traits::deallocate(alloc, this, 1);
+    alloc_type alloc{alloc_};
+    allocated_ptr<alloc_type> guard_ptr{alloc, this};
+    this->~__rc_ptr_counted_data_with_deleter_allocator();
   }
 
  private:
@@ -294,19 +293,16 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY __strong_rc_counter {
     using alloc_type = ::std::allocator<__rc_ptr_counted_data_default<Y>>;
     using alloc_traits = ::std::allocator_traits<alloc_type>;
     alloc_type alloc;
-    __rc_ptr_counted_data_default<Y>* pi = nullptr;
+    auto guard = allocate_guarded(alloc);
 #if defined(LIBATFRAME_UTILS_ENABLE_EXCEPTION) && LIBATFRAME_UTILS_ENABLE_EXCEPTION
     try {
 #endif
-      pi = alloc_traits::allocate(alloc, 1);
-      alloc_traits::construct(alloc, pi, p);
-      pi_ = pi;
+      alloc_traits::construct(alloc, guard.get(), p);
+      pi_ = guard.get();
+      guard = nullptr;
 
 #if defined(LIBATFRAME_UTILS_ENABLE_EXCEPTION) && LIBATFRAME_UTILS_ENABLE_EXCEPTION
     } catch (...) {
-      if (nullptr != pi) {
-        alloc_traits::deallocate(alloc, pi, 1);
-      }
       using alloc_type_y = ::std::allocator<nostd::remove_cv_t<Y>>;
       using alloc_traits_y = ::std::allocator_traits<alloc_type_y>;
       alloc_type_y alloc_y;
@@ -325,18 +321,15 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY __strong_rc_counter {
     using alloc_type = ::std::allocator<__rc_ptr_counted_data_with_deleter<Y, nostd::remove_cvref_t<Deleter>>>;
     using alloc_traits = ::std::allocator_traits<alloc_type>;
     alloc_type alloc;
-    typename alloc_traits::pointer pi = nullptr;
+    auto guard = allocate_guarded(alloc);
 #if defined(LIBATFRAME_UTILS_ENABLE_EXCEPTION) && LIBATFRAME_UTILS_ENABLE_EXCEPTION
     try {
 #endif
-      pi = alloc_traits::allocate(alloc, 1);
-      alloc_traits::construct(alloc, pi, p, std::forward<Deleter>(d));
-      pi_ = pi;
+      alloc_traits::construct(alloc, guard.get(), p, std::forward<Deleter>(d));
+      pi_ = guard.get();
+      guard = nullptr;
 #if defined(LIBATFRAME_UTILS_ENABLE_EXCEPTION) && LIBATFRAME_UTILS_ENABLE_EXCEPTION
     } catch (...) {
-      if (nullptr != pi) {
-        alloc_traits::deallocate(alloc, pi, 1);
-      }
       d(p);
       throw;
     }
@@ -350,19 +343,16 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY __strong_rc_counter {
     using alloc_type = typename origin_alloc_traits::template rebind_alloc<
         __rc_ptr_counted_data_with_deleter_allocator<Y, nostd::remove_cvref_t<Deleter>, nostd::remove_cvref_t<Alloc>>>;
     using alloc_traits = ::std::allocator_traits<alloc_type>;
-    alloc_type alloc;
-    typename alloc_traits::pointer pi = nullptr;
+    alloc_type alloc{a};
+    auto guard = allocate_guarded(alloc);
 #if defined(LIBATFRAME_UTILS_ENABLE_EXCEPTION) && LIBATFRAME_UTILS_ENABLE_EXCEPTION
     try {
 #endif
-      pi = alloc_traits::allocate(alloc, 1);
-      alloc_traits::construct(alloc, pi, p, std::forward<Deleter>(d), std::forward<Alloc>(a));
-      pi_ = pi;
+      alloc_traits::construct(alloc, guard.get(), p, std::forward<Deleter>(d), std::forward<Alloc>(a));
+      pi_ = guard.get();
+      guard = nullptr;
 #if defined(LIBATFRAME_UTILS_ENABLE_EXCEPTION) && LIBATFRAME_UTILS_ENABLE_EXCEPTION
     } catch (...) {
-      if (nullptr != pi) {
-        alloc_traits::deallocate(alloc, pi, 1);
-      }
       d(p);
       throw;
     }
@@ -374,21 +364,20 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY __strong_rc_counter {
     using alloc_type = ::std::allocator<__rc_ptr_counted_data_inplace<T>>;
     using alloc_traits = ::std::allocator_traits<alloc_type>;
     alloc_type alloc;
-    typename alloc_traits::pointer tpi_ = alloc_traits::allocate(alloc, 1);
+    auto guard = allocate_guarded(alloc);
 
 #if defined(LIBATFRAME_UTILS_ENABLE_EXCEPTION) && LIBATFRAME_UTILS_ENABLE_EXCEPTION
     try {
 #endif
-      alloc_traits::construct(alloc, tpi_, std::forward<Args>(args)...);
+      alloc_traits::construct(alloc, guard.get(), std::forward<Args>(args)...);
+      pi_ = guard.get();
+      __p = guard.get()->ptr();
+      guard = nullptr;
 #if defined(LIBATFRAME_UTILS_ENABLE_EXCEPTION) && LIBATFRAME_UTILS_ENABLE_EXCEPTION
     } catch (...) {
-      alloc_traits::deallocate(alloc, tpi_, 1);
       throw;
     }
 #endif
-
-    pi_ = tpi_;
-    __p = tpi_->ptr();
   }
 
   template <class Alloc, class... Args>
@@ -398,22 +387,21 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY __strong_rc_counter {
     using alloc_type = typename origin_alloc_traits::template rebind_alloc<
         __rc_ptr_counted_data_inplace_alloc<T, nostd::remove_cvref_t<Alloc>>>;
     using alloc_traits = ::std::allocator_traits<alloc_type>;
-    alloc_type alloc;
-    typename alloc_traits::pointer tpi_ = alloc_traits::allocate(alloc, 1);
+    alloc_type alloc{a};
+    auto guard = allocate_guarded(alloc);
 
 #if defined(LIBATFRAME_UTILS_ENABLE_EXCEPTION) && LIBATFRAME_UTILS_ENABLE_EXCEPTION
     try {
 #endif
-      alloc_traits::construct(alloc, tpi_, std::forward<Alloc>(a), std::forward<Args>(args)...);
+      alloc_traits::construct(alloc, guard.get(), std::forward<Alloc>(a), std::forward<Args>(args)...);
+      pi_ = guard.get();
+      __p = guard.get()->value_ptr();
+      guard = nullptr;
 #if defined(LIBATFRAME_UTILS_ENABLE_EXCEPTION) && LIBATFRAME_UTILS_ENABLE_EXCEPTION
     } catch (...) {
-      alloc_traits::deallocate(alloc, tpi_, 1);
       throw;
     }
 #endif
-
-    pi_ = tpi_;
-    __p = tpi_->value_ptr();
   }
 
   template <class UT, class UDeleter>
@@ -425,20 +413,18 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY __strong_rc_counter {
     using alloc_type = ::std::allocator<__rc_ptr_counted_data_with_deleter<UT, nostd::remove_cvref_t<UDeleter>>>;
     using alloc_traits = ::std::allocator_traits<alloc_type>;
     alloc_type alloc;
-    typename alloc_traits::pointer pi = nullptr;
+    auto guard = allocate_guarded(alloc);
+
 #if defined(LIBATFRAME_UTILS_ENABLE_EXCEPTION) && LIBATFRAME_UTILS_ENABLE_EXCEPTION
     try {
 #endif
-      pi = alloc_traits::allocate(alloc, 1);
-      alloc_traits::construct(alloc, pi, r.get(), std::forward<UDeleter>(r.get_deleter()));
-      pi_ = pi;
+      alloc_traits::construct(alloc, guard.get(), r.get(), std::forward<UDeleter>(r.get_deleter()));
+      pi_ = guard.get();
+      guard = nullptr;
 
       r.release();
 #if defined(LIBATFRAME_UTILS_ENABLE_EXCEPTION) && LIBATFRAME_UTILS_ENABLE_EXCEPTION
     } catch (...) {
-      if (nullptr != pi) {
-        alloc_traits::deallocate(alloc, pi, 1);
-      }
       throw;
     }
 #endif
