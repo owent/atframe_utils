@@ -13,17 +13,16 @@
  * @history
  */
 
-#ifndef UTIL_LOG_LOG_STACKTRACE_H
-#define UTIL_LOG_LOG_STACKTRACE_H
-
 #pragma once
 
+#include <config/atframe_utils_build_feature.h>
+#include <config/compile_optimize.h>
+#include <config/compiler_features.h>
+
 #include <stdint.h>
+#include <chrono>
 #include <cstddef>
 #include <cstring>
-
-#include <config/atframe_utils_build_feature.h>
-#include <config/compiler_features.h>
 
 LIBATFRAME_UTILS_NAMESPACE_BEGIN
 namespace log {
@@ -35,8 +34,16 @@ struct LIBATFRAME_UTILS_API stacktrace_options {
 
 LIBATFRAME_UTILS_API bool is_stacktrace_enabled() noexcept;
 
+LIBATFRAME_UTILS_API void set_stacktrace_lru_cache_size(size_t sz) noexcept;
+
+LIBATFRAME_UTILS_API size_t get_stacktrace_lru_cache_size() noexcept;
+
+LIBATFRAME_UTILS_API void set_stacktrace_lru_cache_timeout(std::chrono::microseconds timeout) noexcept;
+
+LIBATFRAME_UTILS_API std::chrono::microseconds get_stacktrace_lru_cache_timeout() noexcept;
+
+LIBATFRAME_UTILS_API void clear_stacktrace_lru_cache() noexcept;
+
 LIBATFRAME_UTILS_API size_t stacktrace_write(char *buf, size_t bufsz, const stacktrace_options *options = nullptr);
 }  // namespace log
 LIBATFRAME_UTILS_NAMESPACE_END
-
-#endif

@@ -11,6 +11,7 @@
 #include "memory/rc_ptr.h"
 #include "nostd/nullability.h"
 #include "nostd/string_view.h"
+#include "nostd/type_traits.h"
 
 CASE_TEST(nostd_string_view, ctor) {
   {
@@ -791,3 +792,16 @@ CASE_TEST(nostd_nullability, nonnull) {
     CASE_EXPECT_TRUE(nullable_test);
   }
 }
+
+namespace test {
+struct test_nostd_type_traits_a {
+  using type1 = int;
+};
+
+struct test_nostd_type_traits_b {
+  UTIL_NOSTD_TYPE_TRAITS_CONDITION_NESTED_TYPE_AS_MEMBER(test_nostd_type_traits_a, type1, type1, bool);
+  UTIL_NOSTD_TYPE_TRAITS_CONDITION_NESTED_TYPE_AS_MEMBER(test_nostd_type_traits_a, type2, type2, bool);
+};
+}  // namespace test
+
+CASE_TEST(nostd_type_traits, detected_or) {}

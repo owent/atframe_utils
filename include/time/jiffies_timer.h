@@ -230,7 +230,8 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY jiffies_timer {
     timer_inst->owner = nullptr;
     timer_inst->owner_idx = static_cast<size_t>(-1);
     // timer_inst->owner_iter = ...
-    while (0 == ++seq_alloc_);
+    while (0 == ++seq_alloc_) {
+    }
     timer_inst->sequence = seq_alloc_;
 
     timer_inst->fn = std::move(fn);
@@ -326,8 +327,8 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY jiffies_timer {
   UTIL_FORCEINLINE time_t get_last_tick() const { return last_tick_; }
 
   /**
-   * @brief 获取最后一次定时器滴答时间（当前定时器时间）
-   * @return 最后一次定时器滴答时间（当前定时器时间）
+   * @brief 获取定时器数量
+   * @return 定时器数量
    */
   UTIL_FORCEINLINE size_t size() const { return size_; }
 

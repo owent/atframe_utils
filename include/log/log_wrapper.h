@@ -11,7 +11,9 @@
 #include <functional>
 #include <list>
 #include <memory>
+#include <string>
 #include <type_traits>
+#include <utility>
 
 #include "config/compiler/template_prefix.h"
 
@@ -19,10 +21,13 @@
 
 #include "lock/spin_rw_lock.h"
 
-#include "log_formatter.h"
+#include "log/log_formatter.h"
 
 LIBATFRAME_UTILS_NAMESPACE_BEGIN
 namespace log {
+
+template <class OutputIt>
+using format_to_n_result = LOG_WRAPPER_FWAPI_NAMESPACE format_to_n_result<OutputIt>;
 
 #if defined(LOG_WRAPPER_ENABLE_FWAPI) && LOG_WRAPPER_ENABLE_FWAPI
 template <class TCONTEXT = LOG_WRAPPER_FWAPI_NAMESPACE format_context, class... TARGS>
@@ -145,7 +150,7 @@ LIBATFRAME_UTILS_API_HEAD_ONLY LOG_WRAPPER_FWAPI_NAMESPACE format_to_n_result<Ou
 #    else
         LOG_WRAPPER_FWAPI_NAMESPACE make_format_args(std::forward<TARGS>(args)...)
 #    endif
-    );
+    );  // NOLINT: whitespace/parens
 #  elif defined(LIBATFRAME_UTILS_ENABLE_FORWARD_FMTTEXT) && LIBATFRAME_UTILS_ENABLE_FORWARD_FMTTEXT
   return LOG_WRAPPER_FWAPI_NAMESPACE format_to_n(
       out, static_cast<typename details::truncating_iterator<OutputIt>::size_type>(n), std::forward<TFMT>(fmt_text),
@@ -159,7 +164,7 @@ LIBATFRAME_UTILS_API_HEAD_ONLY LOG_WRAPPER_FWAPI_NAMESPACE format_to_n_result<Ou
 #    else
                                          LOG_WRAPPER_FWAPI_NAMESPACE make_format_args(std::forward<TARGS>(args)...)
 #    endif
-  );
+  );  // NOLINT: whitespace/parens
   LOG_WRAPPER_FWAPI_NAMESPACE format_to_n_result<OutputIt> ret;
   ret.out = buf.base();
   ret.size = static_cast<decltype(ret.size)>(buf.count());
@@ -336,7 +341,7 @@ class log_wrapper {
                                                              LOG_WRAPPER_FWAPI_NAMESPACE make_format_args(
                                                                  std::forward<TARGS>(args)...)
 #    endif
-            );
+            );  // NOLINT: whitespace/parens
 #  else
           util::log::format_to_n<char *>(writer.buffer + writer.writen_size, writer.total_size - writer.writen_size - 1,
                                          std::forward<TARGS>(args)...);
@@ -421,7 +426,7 @@ class log_wrapper {
     }
 
     return options_.test(t);
-  };
+  }
 
   UTIL_FORCEINLINE void set_option(options_t::type t, bool v) {
     if (t >= options_t::OPT_USER_MAX) {
@@ -429,7 +434,7 @@ class log_wrapper {
     }
 
     options_.set(t, v);
-  };
+  }
 
   LIBATFRAME_UTILS_API void set_stacktrace_level(level_t::type level_max = level_t::LOG_LW_DISABLED,
                                                  level_t::type level_min = level_t::LOG_LW_DISABLED);
@@ -459,7 +464,7 @@ class log_wrapper {
   std::bitset<options_t::OPT_MAX> options_;
   std::list<log_router_t> log_sinks_;
   mutable LIBATFRAME_UTILS_NAMESPACE_ID::lock::spin_rw_lock log_sinks_lock_;
-};
+}; // NOLINT: readability/braces
 }  // namespace log
 LIBATFRAME_UTILS_NAMESPACE_END
 
