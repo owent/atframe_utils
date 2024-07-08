@@ -342,7 +342,7 @@ class allocator_rebind_helper {
 
 #if !((defined(__cplusplus) && __cplusplus >= 201703L) || (defined(_MSVC_LANG) && _MSVC_LANG >= 201703L))
 template <class Allocator, class T>
-const bool allocator_rebind_helper<Allocator, T>::__value;
+UTIL_CONFIG_CONSTEXPR const bool allocator_rebind_helper<Allocator, T>::__value;
 #endif
 
 template <class Allocator, class T, bool = allocator_rebind_helper<Allocator, T>::__value>
