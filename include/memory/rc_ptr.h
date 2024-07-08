@@ -18,6 +18,7 @@
 
 #include <config/compile_optimize.h>
 #include <config/compiler_features.h>
+#include <memory/allocator_ptr.h>
 #include <nostd/type_traits.h>
 
 LIBATFRAME_UTILS_NAMESPACE_BEGIN
@@ -96,33 +97,55 @@ class UTIL_SYMBOL_VISIBLE __rc_ptr_counted_data_base {
 };
 
 template <class T>
-class LIBATFRAME_UTILS_API_HEAD_ONLY __rc_ptr_counted_data_default : public __rc_ptr_counted_data_base {
+class LIBATFRAME_UTILS_API_HEAD_ONLY __rc_ptr_counted_data_default final : public __rc_ptr_counted_data_base {
  public:
   explicit __rc_ptr_counted_data_default(T* p) noexcept : ptr_(p) {}
 
-  void dispose() noexcept override { delete ptr_; }
+  void dispose() noexcept override {
+    using alloc_type = ::std::allocator<nostd::remove_cv_t<T>>;
+    using alloc_traits = ::std::allocator_traits<alloc_type>;
+    alloc_type alloc;
+    if (nullptr != ptr_) {
+      alloc_traits::destroy(alloc, const_cast<nostd::remove_cv_t<T>*>(ptr_));
+      alloc_traits::deallocate(alloc, const_cast<nostd::remove_cv_t<T>*>(ptr_), 1);
+      ptr_ = nullptr;
+    }
+  }
 
-  void destroy() noexcept override { delete this; }
+  void destroy() noexcept override {
+    using alloc_type = ::std::allocator<__rc_ptr_counted_data_default<T>>;
+    alloc_type alloc;
+    allocated_ptr<alloc_type> guard_ptr{alloc, this};
+    this->~__rc_ptr_counted_data_default();
+  }
 
  private:
   T* ptr_;
 };
 
 template <class T>
-class LIBATFRAME_UTILS_API_HEAD_ONLY __rc_ptr_counted_data_inplace : public __rc_ptr_counted_data_base {
+class LIBATFRAME_UTILS_API_HEAD_ONLY __rc_ptr_counted_data_inplace final : public __rc_ptr_counted_data_base {
  public:
   template <class... Args>
   explicit __rc_ptr_counted_data_inplace(Args&&... args) {
-    // allocator_traits<_Alloc>::construct(__a, addr(), std::forward<Args>(args)...);
-    ::new (addr()) T(std::forward<Args>(args)...);
+    using alloc_type = ::std::allocator<nostd::remove_cv_t<T>>;
+    using alloc_traits = ::std::allocator_traits<alloc_type>;
+    alloc_type alloc;
+    alloc_traits::construct(alloc, const_cast<nostd::remove_cv_t<T>*>(ptr()), std::forward<Args>(args)...);
   }
 
-  void dispose() noexcept override { reinterpret_cast<T*>(addr())->~T(); }
+  void dispose() noexcept override {
+    using alloc_type = ::std::allocator<nostd::remove_cv_t<T>>;
+    using alloc_traits = ::std::allocator_traits<alloc_type>;
+    alloc_type alloc;
+    alloc_traits::destroy(alloc, const_cast<nostd::remove_cv_t<T>*>(ptr()));
+  }
 
   void destroy() noexcept override {
+    using alloc_type = ::std::allocator<__rc_ptr_counted_data_inplace<T>>;
+    alloc_type alloc;
+    allocated_ptr<alloc_type> guard_ptr{alloc, this};
     this->~__rc_ptr_counted_data_inplace();
-    unsigned char* p = reinterpret_cast<unsigned char*>(this);
-    delete[] p;
   }
 
   inline T* ptr() noexcept { return reinterpret_cast<T*>(addr()); }
@@ -130,65 +153,204 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY __rc_ptr_counted_data_inplace : public __rc
  private:
   inline void* addr() { return reinterpret_cast<void*>(&storage_); }
 
-  typename nostd::aligned_storage<sizeof(T), alignof(T)>::type storage_;
+  nostd::aligned_storage_t<sizeof(T), alignof(T)> storage_;
+};
+
+template <class T, class Alloc>
+class LIBATFRAME_UTILS_API_HEAD_ONLY __rc_ptr_counted_data_inplace_alloc final : public __rc_ptr_counted_data_base {
+ public:
+  template <class AllocInput, class... Args>
+  explicit __rc_ptr_counted_data_inplace_alloc(AllocInput&& a, Args&&... args) {
+    // construct allocator first
+    using alloc_type_a = typename ::std::allocator_traits<Alloc>::template rebind_alloc<Alloc>;
+    using alloc_traits_a = ::std::allocator_traits<alloc_type_a>;
+    alloc_type_a aa;
+    alloc_traits_a::construct(aa, alloc_ptr(), std::forward<AllocInput>(a));
+
+// and then value
+#if defined(LIBATFRAME_UTILS_ENABLE_EXCEPTION) && LIBATFRAME_UTILS_ENABLE_EXCEPTION
+    try {
+#endif
+      using alloc_traits_v = ::std::allocator_traits<Alloc>;
+      alloc_traits_v::construct(*alloc_ptr(), const_cast<nostd::remove_cv_t<T>*>(value_ptr()),
+                                std::forward<Args>(args)...);
+#if defined(LIBATFRAME_UTILS_ENABLE_EXCEPTION) && LIBATFRAME_UTILS_ENABLE_EXCEPTION
+    } catch (...) {
+      alloc_traits_a::destroy(aa, alloc_ptr());
+      throw;
+    }
+#endif
+  }
+
+  void dispose() noexcept override {
+    using alloc_traits_v = ::std::allocator_traits<Alloc>;
+    alloc_traits_v::destroy(*alloc_ptr(), const_cast<nostd::remove_cv_t<T>*>(value_ptr()));
+  }
+
+  void destroy() noexcept override {
+    using alloc_type_self =
+        typename ::std::allocator_traits<Alloc>::template rebind_alloc<__rc_ptr_counted_data_inplace_alloc<T, Alloc>>;
+    using alloc_traits_self = ::std::allocator_traits<alloc_type_self>;
+
+    // destroy allocator first
+    using alloc_type_a = typename ::std::allocator_traits<Alloc>::template rebind_alloc<Alloc>;
+    using alloc_traits_a = ::std::allocator_traits<alloc_type_a>;
+    alloc_type_a aa{*alloc_ptr()};
+    alloc_traits_a::destroy(aa, alloc_ptr());
+
+    // then, destroy and deallocate this
+    alloc_type_self as{*alloc_ptr()};
+    allocated_ptr<alloc_type_self> guard_ptr{as, this};
+    this->~__rc_ptr_counted_data_inplace_alloc();
+  }
+
+  inline T* value_ptr() noexcept { return reinterpret_cast<T*>(value_addr()); }
+  inline Alloc* alloc_ptr() noexcept { return reinterpret_cast<Alloc*>(alloc_addr()); }
+
+ private:
+  inline void* value_addr() { return reinterpret_cast<void*>(&storage_); }
+  inline void* alloc_addr() { return reinterpret_cast<void*>(&alloc_); }
+
+  nostd::aligned_storage_t<sizeof(T), alignof(T)> storage_;
+  nostd::aligned_storage_t<sizeof(Alloc), alignof(Alloc)> alloc_;
 };
 
 template <class T, class Deleter>
-class LIBATFRAME_UTILS_API_HEAD_ONLY __rc_ptr_counted_data_with_deleter : public __rc_ptr_counted_data_base {
+class LIBATFRAME_UTILS_API_HEAD_ONLY __rc_ptr_counted_data_with_deleter final : public __rc_ptr_counted_data_base {
  public:
-  __rc_ptr_counted_data_with_deleter(T* p, const Deleter& d) noexcept : ptr_(p), deleter_(d) {}
-  __rc_ptr_counted_data_with_deleter(T* p, Deleter&& d) noexcept : ptr_(p), deleter_(std::move(d)) {}
+  template <class DeleterInput>
+  inline __rc_ptr_counted_data_with_deleter(T* p, DeleterInput&& d) noexcept
+      : ptr_(p), deleter_(std::forward<DeleterInput>(d)) {}
 
   void dispose() noexcept override { deleter_(ptr_); }
 
-  void destroy() noexcept override { delete this; }
+  void destroy() noexcept override {
+    using alloc_type = ::std::allocator<__rc_ptr_counted_data_with_deleter<T, Deleter>>;
+    alloc_type alloc;
+    allocated_ptr<alloc_type> guard_ptr{alloc, this};
+    this->~__rc_ptr_counted_data_with_deleter();
+  }
 
  private:
   T* ptr_;
   Deleter deleter_;
 };
 
+template <class T, class Deleter, class Alloc>
+class LIBATFRAME_UTILS_API_HEAD_ONLY __rc_ptr_counted_data_with_deleter_allocator final
+    : public __rc_ptr_counted_data_base {
+ public:
+  template <class DeleterInput, class AllocInput>
+  inline __rc_ptr_counted_data_with_deleter_allocator(T* p, DeleterInput&& d, AllocInput&& a) noexcept
+      : ptr_(p), deleter_(std::forward<DeleterInput>(d)), alloc_(std::forward<AllocInput>(a)) {}
+
+  void dispose() noexcept override { deleter_(ptr_); }
+
+  void destroy() noexcept override {
+    using alloc_type = typename ::std::allocator_traits<Alloc>::template rebind_alloc<
+        __rc_ptr_counted_data_with_deleter_allocator<T, Deleter, Alloc>>;
+    using alloc_traits = ::std::allocator_traits<alloc_type>;
+    alloc_type alloc{alloc_};
+    allocated_ptr<alloc_type> guard_ptr{alloc, this};
+    this->~__rc_ptr_counted_data_with_deleter_allocator();
+  }
+
+ private:
+  T* ptr_;
+  Deleter deleter_;
+  Alloc alloc_;
+};
+
 template <class T>
-struct LIBATFRAME_UTILS_API_HEAD_ONLY __strong_rc_alloc_shared_tag {};
+struct LIBATFRAME_UTILS_API_HEAD_ONLY __strong_rc_default_alloc_shared_tag {};
+
+template <class T>
+struct LIBATFRAME_UTILS_API_HEAD_ONLY __strong_rc_with_alloc_shared_tag {};
 
 template <class T>
 class LIBATFRAME_UTILS_API_HEAD_ONLY __weak_rc_counter;
 
 template <class T>
 class LIBATFRAME_UTILS_API_HEAD_ONLY __strong_rc_counter {
-  // Prevent __strong_rc_alloc_shared_tag from matching the shared_ptr(P, D) ctor.
+  // Prevent __strong_rc_default_alloc_shared_tag and __strong_rc_with_alloc_shared_tag from matching the shared_ptr(P,
+  // D) ctor.
   template <class>
   struct __not_alloc_shared_tag {
     using type = void;
   };
 
   template <class Y>
-  struct __not_alloc_shared_tag<__strong_rc_alloc_shared_tag<Y>> {};
+  struct __not_alloc_shared_tag<__strong_rc_default_alloc_shared_tag<Y>> {};
+
+  template <class Y>
+  struct __not_alloc_shared_tag<__strong_rc_with_alloc_shared_tag<Y>> {};
 
  public:
   UTIL_CONFIG_CONSTEXPR __strong_rc_counter() noexcept : pi_(nullptr) {}
 
   template <class Y>
   explicit __strong_rc_counter(Y* p) : pi_(nullptr) {
+    using alloc_type = ::std::allocator<__rc_ptr_counted_data_default<Y>>;
+    using alloc_traits = ::std::allocator_traits<alloc_type>;
+    alloc_type alloc;
+    auto guard = allocate_guarded(alloc);
 #if defined(LIBATFRAME_UTILS_ENABLE_EXCEPTION) && LIBATFRAME_UTILS_ENABLE_EXCEPTION
     try {
 #endif
-      pi_ = new __rc_ptr_counted_data_default<Y>(p);
+      alloc_traits::construct(alloc, guard.get(), p);
+      pi_ = guard.get();
+      guard = nullptr;
+
 #if defined(LIBATFRAME_UTILS_ENABLE_EXCEPTION) && LIBATFRAME_UTILS_ENABLE_EXCEPTION
     } catch (...) {
-      delete p;
+      using alloc_type_y = ::std::allocator<nostd::remove_cv_t<Y>>;
+      using alloc_traits_y = ::std::allocator_traits<alloc_type_y>;
+      alloc_type_y alloc_y;
+
+      if (nullptr != p) {
+        alloc_traits_y::destroy(alloc_y, p);
+        alloc_traits_y::deallocate(alloc_y, const_cast<nostd::remove_cv_t<Y>*>(p), 1);
+      }
       throw;
     }
 #endif
   }
 
-  template <class Y, class Deleter, class = typename __not_alloc_shared_tag<Deleter>::type>
+  template <class Y, class Deleter, class = typename __not_alloc_shared_tag<nostd::remove_cvref_t<Deleter>>::type>
   __strong_rc_counter(Y* p, Deleter&& d) : pi_(nullptr) {
+    using alloc_type = ::std::allocator<__rc_ptr_counted_data_with_deleter<Y, nostd::remove_cvref_t<Deleter>>>;
+    using alloc_traits = ::std::allocator_traits<alloc_type>;
+    alloc_type alloc;
+    auto guard = allocate_guarded(alloc);
 #if defined(LIBATFRAME_UTILS_ENABLE_EXCEPTION) && LIBATFRAME_UTILS_ENABLE_EXCEPTION
     try {
 #endif
-      pi_ = new __rc_ptr_counted_data_with_deleter<
-          Y, typename std::remove_cv<typename std::remove_reference<Deleter>::type>::type>(p, std::move(d));
+      alloc_traits::construct(alloc, guard.get(), p, std::forward<Deleter>(d));
+      pi_ = guard.get();
+      guard = nullptr;
+#if defined(LIBATFRAME_UTILS_ENABLE_EXCEPTION) && LIBATFRAME_UTILS_ENABLE_EXCEPTION
+    } catch (...) {
+      d(p);
+      throw;
+    }
+#endif
+  }
+
+  template <class Y, class Deleter, class Alloc,
+            class = typename __not_alloc_shared_tag<nostd::remove_cvref_t<Deleter>>::type>
+  __strong_rc_counter(Y* p, Deleter&& d, Alloc&& a) : pi_(nullptr) {
+    using origin_alloc_traits = ::std::allocator_traits<nostd::remove_cvref_t<Alloc>>;
+    using alloc_type = typename origin_alloc_traits::template rebind_alloc<
+        __rc_ptr_counted_data_with_deleter_allocator<Y, nostd::remove_cvref_t<Deleter>, nostd::remove_cvref_t<Alloc>>>;
+    using alloc_traits = ::std::allocator_traits<alloc_type>;
+    alloc_type alloc{a};
+    auto guard = allocate_guarded(alloc);
+#if defined(LIBATFRAME_UTILS_ENABLE_EXCEPTION) && LIBATFRAME_UTILS_ENABLE_EXCEPTION
+    try {
+#endif
+      alloc_traits::construct(alloc, guard.get(), p, std::forward<Deleter>(d), std::forward<Alloc>(a));
+      pi_ = guard.get();
+      guard = nullptr;
 #if defined(LIBATFRAME_UTILS_ENABLE_EXCEPTION) && LIBATFRAME_UTILS_ENABLE_EXCEPTION
     } catch (...) {
       d(p);
@@ -198,15 +360,48 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY __strong_rc_counter {
   }
 
   template <class... Args>
-  __strong_rc_counter(T*& __p, __strong_rc_alloc_shared_tag<T>, Args&&... args) : pi_(nullptr) {
-    constexpr const std::size_t inplace_size =
-        sizeof(typename nostd::aligned_storage<sizeof(__rc_ptr_counted_data_inplace<T>),
-                                               alignof(__rc_ptr_counted_data_inplace<T>)>::type);
-    void* inplace__address = reinterpret_cast<void*>(::new unsigned char[inplace_size]);
-    __rc_ptr_counted_data_inplace<T>* tpi_ =
-        ::new (inplace__address) __rc_ptr_counted_data_inplace<T>(std::forward<Args>(args)...);
-    pi_ = tpi_;
-    __p = tpi_->ptr();
+  __strong_rc_counter(T*& __p, __strong_rc_default_alloc_shared_tag<T>, Args&&... args) : pi_(nullptr) {
+    using alloc_type = ::std::allocator<__rc_ptr_counted_data_inplace<T>>;
+    using alloc_traits = ::std::allocator_traits<alloc_type>;
+    alloc_type alloc;
+    auto guard = allocate_guarded(alloc);
+
+#if defined(LIBATFRAME_UTILS_ENABLE_EXCEPTION) && LIBATFRAME_UTILS_ENABLE_EXCEPTION
+    try {
+#endif
+      alloc_traits::construct(alloc, guard.get(), std::forward<Args>(args)...);
+      pi_ = guard.get();
+      __p = guard.get()->ptr();
+      guard = nullptr;
+#if defined(LIBATFRAME_UTILS_ENABLE_EXCEPTION) && LIBATFRAME_UTILS_ENABLE_EXCEPTION
+    } catch (...) {
+      throw;
+    }
+#endif
+  }
+
+  template <class Alloc, class... Args>
+  __strong_rc_counter(T*& __p, __strong_rc_with_alloc_shared_tag<T>, Alloc&& a, Args&&... args) : pi_(nullptr) {
+    using origin_alloc_traits = ::std::allocator_traits<nostd::remove_cvref_t<Alloc>>;
+
+    using alloc_type = typename origin_alloc_traits::template rebind_alloc<
+        __rc_ptr_counted_data_inplace_alloc<T, nostd::remove_cvref_t<Alloc>>>;
+    using alloc_traits = ::std::allocator_traits<alloc_type>;
+    alloc_type alloc{a};
+    auto guard = allocate_guarded(alloc);
+
+#if defined(LIBATFRAME_UTILS_ENABLE_EXCEPTION) && LIBATFRAME_UTILS_ENABLE_EXCEPTION
+    try {
+#endif
+      alloc_traits::construct(alloc, guard.get(), std::forward<Alloc>(a), std::forward<Args>(args)...);
+      pi_ = guard.get();
+      __p = guard.get()->value_ptr();
+      guard = nullptr;
+#if defined(LIBATFRAME_UTILS_ENABLE_EXCEPTION) && LIBATFRAME_UTILS_ENABLE_EXCEPTION
+    } catch (...) {
+      throw;
+    }
+#endif
   }
 
   template <class UT, class UDeleter>
@@ -215,12 +410,17 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY __strong_rc_counter {
       return;
     }
 
+    using alloc_type = ::std::allocator<__rc_ptr_counted_data_with_deleter<UT, nostd::remove_cvref_t<UDeleter>>>;
+    using alloc_traits = ::std::allocator_traits<alloc_type>;
+    alloc_type alloc;
+    auto guard = allocate_guarded(alloc);
+
 #if defined(LIBATFRAME_UTILS_ENABLE_EXCEPTION) && LIBATFRAME_UTILS_ENABLE_EXCEPTION
     try {
 #endif
-      pi_ = new __rc_ptr_counted_data_with_deleter<
-          UT, typename std::remove_cv<typename std::remove_reference<UDeleter>::type>::type>(
-          r.get(), std::forward<UDeleter>(r.get_deleter()));
+      alloc_traits::construct(alloc, guard.get(), r.get(), std::forward<UDeleter>(r.get_deleter()));
+      pi_ = guard.get();
+      guard = nullptr;
 
       r.release();
 #if defined(LIBATFRAME_UTILS_ENABLE_EXCEPTION) && LIBATFRAME_UTILS_ENABLE_EXCEPTION
@@ -469,7 +669,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY strong_rc_ptr_access<T, false, true> {
 template <class T>
 class LIBATFRAME_UTILS_API_HEAD_ONLY strong_rc_ptr_access<T, true, false> {
  public:
-  using element_type = typename std::remove_extent<T>::type;
+  using element_type = nostd::remove_extent_t<T>;
 
   element_type& operator[](std::ptrdiff_t __i) const noexcept {
     element_type* ret = get();
@@ -494,6 +694,16 @@ LIBATFRAME_UTILS_API_HEAD_ONLY inline void __enable_shared_from_this_with(const 
   }
 }
 
+template <class T1, class T2, class T3, size_t T3SIZE>
+LIBATFRAME_UTILS_API_HEAD_ONLY inline void __enable_shared_from_this_with(
+    const __strong_rc_counter<T1>* __n, const T2* __py, const enable_shared_rc_from_this<T3[T3SIZE]>* __p) {
+  if (nullptr != __p) {
+    for (auto& p : *__p) {
+      p->__internal_weak_assign(const_cast<T2*>(__py), *__n);
+    }
+  }
+}
+
 #ifdef _MANAGED
 
 // Avoid C4793, ... causes native code generation
@@ -515,7 +725,7 @@ LIBATFRAME_UTILS_API_HEAD_ONLY inline void __enable_shared_from_this_with(...) {
 template <class T>
 class LIBATFRAME_UTILS_API_HEAD_ONLY strong_rc_ptr : public strong_rc_ptr_access<T> {
  public:
-  using element_type = typename std::remove_extent<T>::type;
+  using element_type = nostd::remove_extent_t<T>;
   using weak_type = weak_rc_ptr<T>;
 
   // Allow nostd::nullable<T> to be used as a strong_rc_ptr<T>
@@ -540,8 +750,16 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY strong_rc_ptr : public strong_rc_ptr_access
     __enable_shared_from_this_with(&ref_counter_, ptr, ptr);
   }
 
+  template <class Y, class Deleter, class Alloc>
+  strong_rc_ptr(Y* ptr, Deleter d, Alloc a) : ptr_(ptr), ref_counter_(ptr, std::move(d), std::move(a)) {
+    __enable_shared_from_this_with(&ref_counter_, ptr, ptr);
+  }
+
   template <class Deleter>
   strong_rc_ptr(std::nullptr_t ptr, Deleter d) : ptr_(ptr), ref_counter_(ptr, std::move(d)) {}
+
+  template <class Y, class Deleter, class Alloc>
+  strong_rc_ptr(std::nullptr_t ptr, Deleter d, Alloc a) : ptr_(ptr), ref_counter_(ptr, std::move(d), std::move(a)) {}
 
   template <class Y>
   strong_rc_ptr(const strong_rc_ptr<Y>& other) noexcept : ptr_(other.ptr_), ref_counter_(other.ref_counter_) {}
@@ -586,7 +804,13 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY strong_rc_ptr : public strong_rc_ptr_access
   }
 
   template <class... Args>
-  strong_rc_ptr(__strong_rc_alloc_shared_tag<T> __tag, Args&&... args)  // NOLINT: runtime/explicit
+  strong_rc_ptr(__strong_rc_default_alloc_shared_tag<T> __tag, Args&&... args)  // NOLINT: runtime/explicit
+      : ptr_(nullptr), ref_counter_(ptr_, __tag, std::forward<Args>(args)...) {
+    __enable_shared_from_this_with(&ref_counter_, ptr_, ptr_);
+  }
+
+  template <class... Args>
+  strong_rc_ptr(__strong_rc_with_alloc_shared_tag<T> __tag, Args&&... args)  // NOLINT: runtime/explicit
       : ptr_(nullptr), ref_counter_(ptr_, __tag, std::forward<Args>(args)...) {
     __enable_shared_from_this_with(&ref_counter_, ptr_, ptr_);
   }
@@ -638,6 +862,11 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY strong_rc_ptr : public strong_rc_ptr_access
   template <class Y, class Deleter>
   inline void reset(Y* ptr, Deleter d) noexcept {
     strong_rc_ptr{ptr, std::move(d)}.swap(*this);
+  }
+
+  template <class Y, class Deleter, class Alloc>
+  inline void reset(Y* ptr, Deleter d, Alloc a) noexcept {
+    strong_rc_ptr{ptr, std::move(d), std::move(a)}.swap(*this);
   }
 
   inline void swap(strong_rc_ptr& other) noexcept {
@@ -707,7 +936,7 @@ struct __strong_rc_ptr_compare_common_type<T1, T2, true> {
   using left_type = T1*;
   using right_type = T2*;
 
-  using common_type = typename std::common_type<left_type, right_type>::type;
+  using common_type = nostd::common_type_t<left_type, right_type>;
 };
 
 template <class T1, class T2>
@@ -821,7 +1050,7 @@ LIBATFRAME_UTILS_API_HEAD_ONLY inline bool operator>=(::std::nullptr_t, const st
 template <typename T>
 class LIBATFRAME_UTILS_API_HEAD_ONLY weak_rc_ptr {
  public:
-  using element_type = typename std::remove_extent<T>::type;
+  using element_type = nostd::remove_extent_t<T>;
 
  public:
   UTIL_CONFIG_CONSTEXPR weak_rc_ptr() noexcept : ptr_(nullptr), ref_counter_() {}
@@ -984,12 +1213,25 @@ class enable_shared_rc_from_this {
 };
 
 template <class T, class... TArgs>
-strong_rc_ptr<T> make_strong_rc(TArgs&&... args) {
-  static_assert(!std::is_array<T>::value, "make_strong_rc<T[]> not supported");
+nostd::enable_if_t<!::std::is_array<T>::value, strong_rc_ptr<T>> make_strong_rc(TArgs&&... args) {
+  return strong_rc_ptr<T>(__strong_rc_default_alloc_shared_tag<T>{}, std::forward<TArgs>(args)...);
+}
 
-  using strong_rc_ptr_element = typename std::remove_const<T>::type;
+template <class T, class... TArgs>
+nostd::enable_if_t<nostd::is_bounded_array<T>::value, strong_rc_ptr<T>> make_strong_rc(TArgs&&... args) {
+  return strong_rc_ptr<T>(__strong_rc_default_alloc_shared_tag<T>{}, std::forward<TArgs>(args)...);
+}
 
-  return strong_rc_ptr<T>(__strong_rc_alloc_shared_tag<T>{}, std::forward<TArgs>(args)...);
+template <class T, class Alloc, class... TArgs>
+nostd::enable_if_t<!::std::is_array<T>::value, strong_rc_ptr<T>> allocate_strong_rc(const Alloc& alloc,
+                                                                                    TArgs&&... args) {
+  return strong_rc_ptr<T>(__strong_rc_with_alloc_shared_tag<T>{}, alloc, std::forward<TArgs>(args)...);
+}
+
+template <class T, class Alloc, class... TArgs>
+nostd::enable_if_t<nostd::is_bounded_array<T>::value, strong_rc_ptr<T>> allocate_strong_rc(const Alloc& alloc,
+                                                                                           TArgs&&... args) {
+  return strong_rc_ptr<T>(__strong_rc_with_alloc_shared_tag<T>{}, alloc, std::forward<TArgs>(args)...);
 }
 
 template <class T, class Y>

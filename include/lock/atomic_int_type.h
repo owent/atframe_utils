@@ -105,7 +105,11 @@ using ::std::memory_order_relaxed;
 using ::std::memory_order_release;
 using ::std::memory_order_seq_cst;
 
-#  define UTIL_LOCK_ATOMIC_THREAD_FENCE(order) ::std::atomic_thread_fence(order)
+#  if UTIL_HAVE_THREAD_SANITIZER
+#    define UTIL_LOCK_ATOMIC_THREAD_FENCE(order) ::std::atomic_thread_fence(order)
+#  else
+#    define UTIL_LOCK_ATOMIC_THREAD_FENCE(order)
+#  endif
 #  define UTIL_LOCK_ATOMIC_SIGNAL_FENCE(order) ::std::atomic_signal_fence(order)
 
 /**
@@ -318,7 +322,11 @@ enum memory_order {
   memory_order_seq_cst = __ATOMIC_SEQ_CST
 };
 
-#    define UTIL_LOCK_ATOMIC_THREAD_FENCE(order) __atomic_thread_fence(order)
+#    if UTIL_HAVE_THREAD_SANITIZER
+#      define UTIL_LOCK_ATOMIC_THREAD_FENCE(order) __atomic_thread_fence(order)
+#    else
+#      define UTIL_LOCK_ATOMIC_THREAD_FENCE(order)
+#    endif
 #    define UTIL_LOCK_ATOMIC_SIGNAL_FENCE(order) __atomic_signal_fence(order)
 
 #  else  // old gcc and old msvc use this
@@ -355,7 +363,8 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY atomic_int_type {
 
  public:
   atomic_int_type() noexcept : data_() {}
-  atomic_int_type(value_type desired) noexcept : data_(desired) {}
+  atomic_int_type(value_type desired) noexcept  // NOLINT: runtime/explicit
+      : data_(desired) {}
 
   inline void store(value_type desired, EXPLICIT_UNUSED_ATTR LIBATFRAME_UTILS_NAMESPACE_ID::lock::memory_order order =
                                             LIBATFRAME_UTILS_NAMESPACE_ID::lock::memory_order_seq_cst) noexcept {
@@ -688,7 +697,8 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY atomic_int_type<unsafe_int_type<Ty> > {
 
  public:
   atomic_int_type() : data_() {}
-  atomic_int_type(value_type desired) : data_(desired) {}
+  atomic_int_type(value_type desired)  // NOLINT: runtime/explicit
+      : data_(desired) {}
 
   inline void store(value_type desired, EXPLICIT_UNUSED_ATTR LIBATFRAME_UTILS_NAMESPACE_ID::lock::memory_order order =
                                             LIBATFRAME_UTILS_NAMESPACE_ID::lock::memory_order_seq_cst) noexcept {
@@ -747,7 +757,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY atomic_int_type<unsafe_int_type<Ty> > {
 
  private:
   inline bool cas(value_type &expected, value_type desired) noexcept {
-    UTIL_LIKELY_IF (data_ == expected) {
+    if UTIL_LIKELY_CONDITION (data_ == expected) {
       data_ = desired;
       return true;
     } else {

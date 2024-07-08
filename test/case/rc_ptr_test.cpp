@@ -4595,6 +4595,417 @@ CASE_TEST(rc_ptr, compat) {
                 "check make_shared failed");
 }
 
+namespace allocate_strong_rc_test {
+class X {
+ private:
+  X(X const &);
+  X &operator=(X const &);
+
+  void *operator new(std::size_t n) {
+    // lack of this definition causes link errors on Comeau C++
+    CASE_EXPECT_ERROR("private X::new called");
+    return ::operator new(n);
+  }
+
+  void operator delete(void *p) {
+    // lack of this definition causes link errors on MSVC
+    CASE_EXPECT_ERROR("private X::delete called");
+    ::operator delete(p);
+  }
+
+ public:
+  static int instances;
+
+  int v;
+
+  explicit X(int a1 = 0, int a2 = 0, int a3 = 0, int a4 = 0, int a5 = 0, int a6 = 0, int a7 = 0, int a8 = 0, int a9 = 0)
+      : v(a1 + a2 + a3 + a4 + a5 + a6 + a7 + a8 + a9) {
+    ++instances;
+  }
+
+  ~X() { --instances; }
+};
+
+int X::instances = 0;
+
+CASE_TEST(rc_ptr, allocate_strong_rc_test) {
+  {
+    util::memory::strong_rc_ptr<int> pi = util::memory::allocate_strong_rc<int>(std::allocator<int>());
+
+    CASE_EXPECT_TRUE(pi.get() != 0);
+    CASE_EXPECT_TRUE(*pi == 0);
+  }
+
+  {
+    util::memory::strong_rc_ptr<int> pi = util::memory::allocate_strong_rc<int>(std::allocator<int>(), 5);
+
+    CASE_EXPECT_TRUE(pi.get() != 0);
+    CASE_EXPECT_TRUE(*pi == 5);
+  }
+
+  CASE_EXPECT_TRUE(X::instances == 0);
+
+  {
+    util::memory::strong_rc_ptr<X> pi = util::memory::allocate_strong_rc<X>(std::allocator<void>());
+    util::memory::weak_rc_ptr<X> wp(pi);
+
+    CASE_EXPECT_TRUE(X::instances == 1);
+    CASE_EXPECT_TRUE(pi.get() != 0);
+    CASE_EXPECT_TRUE(pi->v == 0);
+
+    pi.reset();
+
+    CASE_EXPECT_TRUE(X::instances == 0);
+  }
+
+  {
+    util::memory::strong_rc_ptr<X> pi = util::memory::allocate_strong_rc<X>(std::allocator<void>(), 1);
+    util::memory::weak_rc_ptr<X> wp(pi);
+
+    CASE_EXPECT_TRUE(X::instances == 1);
+    CASE_EXPECT_TRUE(pi.get() != 0);
+    CASE_EXPECT_TRUE(pi->v == 1);
+
+    pi.reset();
+
+    CASE_EXPECT_TRUE(X::instances == 0);
+  }
+
+  {
+    util::memory::strong_rc_ptr<X> pi = util::memory::allocate_strong_rc<X>(std::allocator<void>(), 1, 2);
+    util::memory::weak_rc_ptr<X> wp(pi);
+
+    CASE_EXPECT_TRUE(X::instances == 1);
+    CASE_EXPECT_TRUE(pi.get() != 0);
+    CASE_EXPECT_TRUE(pi->v == 1 + 2);
+
+    pi.reset();
+
+    CASE_EXPECT_TRUE(X::instances == 0);
+  }
+
+  {
+    util::memory::strong_rc_ptr<X> pi = util::memory::allocate_strong_rc<X>(std::allocator<void>(), 1, 2, 3);
+    util::memory::weak_rc_ptr<X> wp(pi);
+
+    CASE_EXPECT_TRUE(X::instances == 1);
+    CASE_EXPECT_TRUE(pi.get() != 0);
+    CASE_EXPECT_TRUE(pi->v == 1 + 2 + 3);
+
+    pi.reset();
+
+    CASE_EXPECT_TRUE(X::instances == 0);
+  }
+
+  {
+    util::memory::strong_rc_ptr<X> pi = util::memory::allocate_strong_rc<X>(std::allocator<void>(), 1, 2, 3, 4);
+    util::memory::weak_rc_ptr<X> wp(pi);
+
+    CASE_EXPECT_TRUE(X::instances == 1);
+    CASE_EXPECT_TRUE(pi.get() != 0);
+    CASE_EXPECT_TRUE(pi->v == 1 + 2 + 3 + 4);
+
+    pi.reset();
+
+    CASE_EXPECT_TRUE(X::instances == 0);
+  }
+
+  {
+    util::memory::strong_rc_ptr<X> pi = util::memory::allocate_strong_rc<X>(std::allocator<void>(), 1, 2, 3, 4, 5);
+    util::memory::weak_rc_ptr<X> wp(pi);
+
+    CASE_EXPECT_TRUE(X::instances == 1);
+    CASE_EXPECT_TRUE(pi.get() != 0);
+    CASE_EXPECT_TRUE(pi->v == 1 + 2 + 3 + 4 + 5);
+
+    pi.reset();
+
+    CASE_EXPECT_TRUE(X::instances == 0);
+  }
+
+  {
+    util::memory::strong_rc_ptr<X> pi = util::memory::allocate_strong_rc<X>(std::allocator<void>(), 1, 2, 3, 4, 5, 6);
+    util::memory::weak_rc_ptr<X> wp(pi);
+
+    CASE_EXPECT_TRUE(X::instances == 1);
+    CASE_EXPECT_TRUE(pi.get() != 0);
+    CASE_EXPECT_TRUE(pi->v == 1 + 2 + 3 + 4 + 5 + 6);
+
+    pi.reset();
+
+    CASE_EXPECT_TRUE(X::instances == 0);
+  }
+
+  {
+    util::memory::strong_rc_ptr<X> pi =
+        util::memory::allocate_strong_rc<X>(std::allocator<void>(), 1, 2, 3, 4, 5, 6, 7);
+    util::memory::weak_rc_ptr<X> wp(pi);
+
+    CASE_EXPECT_TRUE(X::instances == 1);
+    CASE_EXPECT_TRUE(pi.get() != 0);
+    CASE_EXPECT_TRUE(pi->v == 1 + 2 + 3 + 4 + 5 + 6 + 7);
+
+    pi.reset();
+
+    CASE_EXPECT_TRUE(X::instances == 0);
+  }
+
+  {
+    util::memory::strong_rc_ptr<X> pi =
+        util::memory::allocate_strong_rc<X>(std::allocator<void>(), 1, 2, 3, 4, 5, 6, 7, 8);
+    util::memory::weak_rc_ptr<X> wp(pi);
+
+    CASE_EXPECT_TRUE(X::instances == 1);
+    CASE_EXPECT_TRUE(pi.get() != 0);
+    CASE_EXPECT_TRUE(pi->v == 1 + 2 + 3 + 4 + 5 + 6 + 7 + 8);
+
+    pi.reset();
+
+    CASE_EXPECT_TRUE(X::instances == 0);
+  }
+
+  {
+    util::memory::strong_rc_ptr<X> pi =
+        util::memory::allocate_strong_rc<X>(std::allocator<void>(), 1, 2, 3, 4, 5, 6, 7, 8, 9);
+    util::memory::weak_rc_ptr<X> wp(pi);
+
+    CASE_EXPECT_TRUE(X::instances == 1);
+    CASE_EXPECT_TRUE(pi.get() != 0);
+    CASE_EXPECT_TRUE(pi->v == 1 + 2 + 3 + 4 + 5 + 6 + 7 + 8 + 9);
+
+    pi.reset();
+
+    CASE_EXPECT_TRUE(X::instances == 0);
+  }
+}
+}  // namespace allocate_strong_rc_test
+
+namespace allocate_strong_rc_esft_test {
+class X : public util::memory::enable_shared_rc_from_this<X> {
+ private:
+  X(X const &);
+  X &operator=(X const &);
+
+ public:
+  static int instances;
+
+  explicit X(int = 0, int = 0, int = 0, int = 0, int = 0, int = 0, int = 0, int = 0, int = 0) { ++instances; }
+
+  ~X() { --instances; }
+};
+
+int X::instances = 0;
+
+CASE_TEST(rc_ptr, allocate_strong_rc_esft_test) {
+  CASE_EXPECT_TRUE(X::instances == 0);
+
+  {
+    util::memory::strong_rc_ptr<X> px = util::memory::allocate_strong_rc<X>(std::allocator<void>());
+    CASE_EXPECT_TRUE(X::instances == 1);
+#if defined(LIBATFRAME_UTILS_ENABLE_EXCEPTION) && LIBATFRAME_UTILS_ENABLE_EXCEPTION
+    try {
+      util::memory::strong_rc_ptr<X> qx = px->shared_from_this();
+
+      CASE_EXPECT_TRUE(px == qx);
+      CASE_EXPECT_TRUE(!(px < qx) && !(qx < px));
+
+      px.reset();
+      CASE_EXPECT_TRUE(X::instances == 1);
+    } catch (std::bad_weak_ptr const &) {
+      CASE_EXPECT_ERROR("px->shared_from_this() failed");
+    }
+#endif
+  }
+
+  CASE_EXPECT_TRUE(X::instances == 0);
+
+  CASE_EXPECT_TRUE(X::instances == 0);
+
+  {
+    util::memory::strong_rc_ptr<X> px = util::memory::allocate_strong_rc<X>(std::allocator<void>(), 1);
+    CASE_EXPECT_TRUE(X::instances == 1);
+#if defined(LIBATFRAME_UTILS_ENABLE_EXCEPTION) && LIBATFRAME_UTILS_ENABLE_EXCEPTION
+    try {
+      util::memory::strong_rc_ptr<X> qx = px->shared_from_this();
+
+      CASE_EXPECT_TRUE(px == qx);
+      CASE_EXPECT_TRUE(!(px < qx) && !(qx < px));
+
+      px.reset();
+      CASE_EXPECT_TRUE(X::instances == 1);
+    } catch (std::bad_weak_ptr const &) {
+      CASE_EXPECT_ERROR("px->shared_from_this() failed");
+    }
+#endif
+  }
+
+  CASE_EXPECT_TRUE(X::instances == 0);
+
+  {
+    util::memory::strong_rc_ptr<X> px = util::memory::allocate_strong_rc<X>(std::allocator<void>(), 1, 2);
+    CASE_EXPECT_TRUE(X::instances == 1);
+#if defined(LIBATFRAME_UTILS_ENABLE_EXCEPTION) && LIBATFRAME_UTILS_ENABLE_EXCEPTION
+    try {
+      util::memory::strong_rc_ptr<X> qx = px->shared_from_this();
+
+      CASE_EXPECT_TRUE(px == qx);
+      CASE_EXPECT_TRUE(!(px < qx) && !(qx < px));
+
+      px.reset();
+      CASE_EXPECT_TRUE(X::instances == 1);
+    } catch (std::bad_weak_ptr const &) {
+      CASE_EXPECT_ERROR("px->shared_from_this() failed");
+    }
+#endif
+  }
+
+  CASE_EXPECT_TRUE(X::instances == 0);
+
+  {
+    util::memory::strong_rc_ptr<X> px = util::memory::allocate_strong_rc<X>(std::allocator<void>(), 1, 2, 3);
+    CASE_EXPECT_TRUE(X::instances == 1);
+#if defined(LIBATFRAME_UTILS_ENABLE_EXCEPTION) && LIBATFRAME_UTILS_ENABLE_EXCEPTION
+    try {
+      util::memory::strong_rc_ptr<X> qx = px->shared_from_this();
+
+      CASE_EXPECT_TRUE(px == qx);
+      CASE_EXPECT_TRUE(!(px < qx) && !(qx < px));
+
+      px.reset();
+      CASE_EXPECT_TRUE(X::instances == 1);
+    } catch (std::bad_weak_ptr const &) {
+      CASE_EXPECT_ERROR("px->shared_from_this() failed");
+    }
+#endif
+  }
+
+  CASE_EXPECT_TRUE(X::instances == 0);
+
+  {
+    util::memory::strong_rc_ptr<X> px = util::memory::allocate_strong_rc<X>(std::allocator<void>(), 1, 2, 3, 4);
+    CASE_EXPECT_TRUE(X::instances == 1);
+#if defined(LIBATFRAME_UTILS_ENABLE_EXCEPTION) && LIBATFRAME_UTILS_ENABLE_EXCEPTION
+    try {
+      util::memory::strong_rc_ptr<X> qx = px->shared_from_this();
+
+      CASE_EXPECT_TRUE(px == qx);
+      CASE_EXPECT_TRUE(!(px < qx) && !(qx < px));
+
+      px.reset();
+      CASE_EXPECT_TRUE(X::instances == 1);
+    } catch (std::bad_weak_ptr const &) {
+      CASE_EXPECT_ERROR("px->shared_from_this() failed");
+    }
+#endif
+  }
+
+  CASE_EXPECT_TRUE(X::instances == 0);
+
+  {
+    util::memory::strong_rc_ptr<X> px = util::memory::allocate_strong_rc<X>(std::allocator<void>(), 1, 2, 3, 4, 5);
+    CASE_EXPECT_TRUE(X::instances == 1);
+#if defined(LIBATFRAME_UTILS_ENABLE_EXCEPTION) && LIBATFRAME_UTILS_ENABLE_EXCEPTION
+    try {
+      util::memory::strong_rc_ptr<X> qx = px->shared_from_this();
+
+      CASE_EXPECT_TRUE(px == qx);
+      CASE_EXPECT_TRUE(!(px < qx) && !(qx < px));
+
+      px.reset();
+      CASE_EXPECT_TRUE(X::instances == 1);
+    } catch (std::bad_weak_ptr const &) {
+      CASE_EXPECT_ERROR("px->shared_from_this() failed");
+    }
+#endif
+  }
+
+  CASE_EXPECT_TRUE(X::instances == 0);
+
+  {
+    util::memory::strong_rc_ptr<X> px = util::memory::allocate_strong_rc<X>(std::allocator<void>(), 1, 2, 3, 4, 5, 6);
+    CASE_EXPECT_TRUE(X::instances == 1);
+#if defined(LIBATFRAME_UTILS_ENABLE_EXCEPTION) && LIBATFRAME_UTILS_ENABLE_EXCEPTION
+    try {
+      util::memory::strong_rc_ptr<X> qx = px->shared_from_this();
+
+      CASE_EXPECT_TRUE(px == qx);
+      CASE_EXPECT_TRUE(!(px < qx) && !(qx < px));
+
+      px.reset();
+      CASE_EXPECT_TRUE(X::instances == 1);
+    } catch (std::bad_weak_ptr const &) {
+      CASE_EXPECT_ERROR("px->shared_from_this() failed");
+    }
+#endif
+  }
+
+  CASE_EXPECT_TRUE(X::instances == 0);
+
+  {
+    util::memory::strong_rc_ptr<X> px =
+        util::memory::allocate_strong_rc<X>(std::allocator<void>(), 1, 2, 3, 4, 5, 6, 7);
+    CASE_EXPECT_TRUE(X::instances == 1);
+#if defined(LIBATFRAME_UTILS_ENABLE_EXCEPTION) && LIBATFRAME_UTILS_ENABLE_EXCEPTION
+    try {
+      util::memory::strong_rc_ptr<X> qx = px->shared_from_this();
+
+      CASE_EXPECT_TRUE(px == qx);
+      CASE_EXPECT_TRUE(!(px < qx) && !(qx < px));
+
+      px.reset();
+      CASE_EXPECT_TRUE(X::instances == 1);
+    } catch (std::bad_weak_ptr const &) {
+      CASE_EXPECT_ERROR("px->shared_from_this() failed");
+    }
+#endif
+  }
+
+  CASE_EXPECT_TRUE(X::instances == 0);
+
+  {
+    util::memory::strong_rc_ptr<X> px =
+        util::memory::allocate_strong_rc<X>(std::allocator<void>(), 1, 2, 3, 4, 5, 6, 7, 8);
+    CASE_EXPECT_TRUE(X::instances == 1);
+#if defined(LIBATFRAME_UTILS_ENABLE_EXCEPTION) && LIBATFRAME_UTILS_ENABLE_EXCEPTION
+    try {
+      util::memory::strong_rc_ptr<X> qx = px->shared_from_this();
+
+      CASE_EXPECT_TRUE(px == qx);
+      CASE_EXPECT_TRUE(!(px < qx) && !(qx < px));
+
+      px.reset();
+      CASE_EXPECT_TRUE(X::instances == 1);
+    } catch (std::bad_weak_ptr const &) {
+      CASE_EXPECT_ERROR("px->shared_from_this() failed");
+    }
+#endif
+  }
+
+  CASE_EXPECT_TRUE(X::instances == 0);
+
+  {
+    util::memory::strong_rc_ptr<X> px =
+        util::memory::allocate_strong_rc<X>(std::allocator<void>(), 1, 2, 3, 4, 5, 6, 7, 8, 9);
+    CASE_EXPECT_TRUE(X::instances == 1);
+#if defined(LIBATFRAME_UTILS_ENABLE_EXCEPTION) && LIBATFRAME_UTILS_ENABLE_EXCEPTION
+    try {
+      util::memory::strong_rc_ptr<X> qx = px->shared_from_this();
+
+      CASE_EXPECT_TRUE(px == qx);
+      CASE_EXPECT_TRUE(!(px < qx) && !(qx < px));
+
+      px.reset();
+      CASE_EXPECT_TRUE(X::instances == 1);
+    } catch (std::bad_weak_ptr const &) {
+      CASE_EXPECT_ERROR("px->shared_from_this() failed");
+    }
+#endif
+  }
+
+  CASE_EXPECT_TRUE(X::instances == 0);
+}
+}  // namespace allocate_strong_rc_esft_test
+
 #if defined(__GNUC__) && !defined(__clang__) && !defined(__apple_build_version__)
 #  if (__GNUC__ * 100 + __GNUC_MINOR__ * 10) >= 460
 #    pragma GCC diagnostic pop
