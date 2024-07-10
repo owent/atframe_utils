@@ -66,7 +66,7 @@ LIBATFRAME_UTILS_API bool file_system::get_file_content(std::string &out, const 
   }
 
   fseek(f, 0, SEEK_END);
-  long len = ftell(f);
+  auto len = ftell(f);
   fseek(f, 0, SEEK_SET);
 
   bool ret = true;
