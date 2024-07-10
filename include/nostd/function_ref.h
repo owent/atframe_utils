@@ -58,30 +58,31 @@ struct UTIL_SYMBOL_VISIBLE functional_ref_invoker_action;
 //
 // static_cast<R> handles the case the return type is void.
 template <typename Obj, typename R, typename... Args>
-UTIL_SYMBOL_VISIBLE R functional_ref_invoke_object(functional_ref_void_ptr ptr,
-                                                   typename functional_ref_forward_type<Args>::type... args) {
+UTIL_SYMBOL_VISIBLE UTIL_NOSTD_INVOKE_RESULT_CONSTEXPR R
+functional_ref_invoke_object(functional_ref_void_ptr ptr, typename functional_ref_forward_type<Args>::type... args) {
   auto o = static_cast<const Obj*>(ptr.obj);
   return static_cast<R>(::LIBATFRAME_UTILS_NAMESPACE_ID::nostd::invoke(*o, ::std::forward<Args>(args)...));
 }
 
 template <typename Fun, typename R, typename... Args>
-UTIL_SYMBOL_VISIBLE R functional_ref_invoke_function(functional_ref_void_ptr ptr,
-                                                     typename functional_ref_forward_type<Args>::type... args) {
+UTIL_SYMBOL_VISIBLE UTIL_NOSTD_INVOKE_RESULT_CONSTEXPR R
+functional_ref_invoke_function(functional_ref_void_ptr ptr, typename functional_ref_forward_type<Args>::type... args) {
   auto f = reinterpret_cast<Fun>(ptr.fn);
   return static_cast<R>(::LIBATFRAME_UTILS_NAMESPACE_ID::nostd::invoke(f, ::std::forward<Args>(args)...));
 }
 
 template <typename Sig>
-UTIL_SYMBOL_VISIBLE void functional_ref_assert_non_null(const std::function<Sig>& f) {
+UTIL_SYMBOL_VISIBLE UTIL_NOSTD_INVOKE_RESULT_CONSTEXPR void functional_ref_assert_non_null(
+    const std::function<Sig>& f) {
   assert(f != nullptr);
   (void)f;
 }
 
 template <typename F>
-UTIL_SYMBOL_VISIBLE void functional_ref_assert_non_null(const F&) {}
+UTIL_SYMBOL_VISIBLE UTIL_NOSTD_INVOKE_RESULT_CONSTEXPR void functional_ref_assert_non_null(const F&) {}
 
 template <typename F, typename C>
-UTIL_SYMBOL_VISIBLE void functional_ref_assert_non_null(F C::*f) {
+UTIL_SYMBOL_VISIBLE UTIL_NOSTD_INVOKE_RESULT_CONSTEXPR void functional_ref_assert_non_null(F C::*f) {
   assert(f != nullptr);
   (void)f;
 }
@@ -137,7 +138,7 @@ class UTIL_SYMBOL_VISIBLE function_ref<R(Args...)> {
   // Constructs a function_ref from any invocable type.
   template <class F, class = enable_if_compatible<const F&>>
   // NOLINTNEXTLINE(runtime/explicit)
-  function_ref(const F& f UTIL_ATTRIBUTE_LIFETIME_BOUND)
+  UTIL_NOSTD_INVOKE_RESULT_CONSTEXPR function_ref(const F& f UTIL_ATTRIBUTE_LIFETIME_BOUND)
       : invoker_(&details::functional_ref_invoke_object<F, R, Args...>) {
     details::functional_ref_assert_non_null(f);
     ptr_.obj = &f;
@@ -150,14 +151,16 @@ class UTIL_SYMBOL_VISIBLE function_ref<R(Args...)> {
   // This overload is also used for references to functions, since references to
   // functions can decay to function pointers implicitly.
   template <class F, class = enable_if_compatible<F*>, enable_if_t<is_function<F>::value, int> = 0>
-  function_ref(F* f)  // NOLINT(runtime/explicit)
+  UTIL_NOSTD_INVOKE_RESULT_CONSTEXPR function_ref(F* f)  // NOLINT(runtime/explicit)
       : invoker_(&details::functional_ref_invoke_function<F*, R, Args...>) {
     assert(f != nullptr);
     ptr_.fn = reinterpret_cast<decltype(ptr_.fn)>(f);
   }
 
   // Call the underlying object.
-  R operator()(Args... args) const { return invoker_(ptr_, std::forward<Args>(args)...); }
+  UTIL_NOSTD_INVOKE_RESULT_CONSTEXPR R operator()(Args... args) const {
+    return invoker_(ptr_, std::forward<Args>(args)...);
+  }
 
  private:
   details::functional_ref_void_ptr ptr_;
