@@ -990,7 +990,7 @@ LIBATFRAME_UTILS_API int dh::shared_context::init(const char *name) {
       fseek(pem, 0, SEEK_END);
       size_t pem_sz = 0;
       {
-        long pem_sz_l = ftell(pem);
+        auto pem_sz_l = ftell(pem);
         if (pem_sz_l >= 0) {
           pem_sz = static_cast<size_t>(pem_sz_l);
         }
@@ -1001,7 +1001,7 @@ LIBATFRAME_UTILS_API int dh::shared_context::init(const char *name) {
 #    if defined(CRYPTO_USE_OPENSSL) || defined(CRYPTO_USE_LIBRESSL)
       do {
         dh_param_.param_buffer.resize(pem_sz);
-        if (0 == fread(&dh_param_.param_buffer[0], sizeof(unsigned char), pem_sz, pem)) {
+        if (pem_sz > 0 && 0 == fread(&dh_param_.param_buffer[0], sizeof(unsigned char), pem_sz, pem)) {
           ret = error_code_t::READ_DHPARAM_FILE;
           break;
         }

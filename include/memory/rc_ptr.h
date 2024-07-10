@@ -143,9 +143,10 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY __rc_ptr_counted_data_inplace final : publi
 
   void destroy() noexcept override {
     using alloc_type = ::std::allocator<__rc_ptr_counted_data_inplace<T>>;
+    using alloc_traits = ::std::allocator_traits<alloc_type>;
     alloc_type alloc;
     allocated_ptr<alloc_type> guard_ptr{alloc, this};
-    this->~__rc_ptr_counted_data_inplace();
+    alloc_traits::destroy(alloc, this);
   }
 
   inline T* ptr() noexcept { return reinterpret_cast<T*>(addr()); }
@@ -201,7 +202,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY __rc_ptr_counted_data_inplace_alloc final :
     // then, destroy and deallocate this
     alloc_type_self as{*alloc_ptr()};
     allocated_ptr<alloc_type_self> guard_ptr{as, this};
-    this->~__rc_ptr_counted_data_inplace_alloc();
+    alloc_traits_self::destroy(as, this);
   }
 
   inline T* value_ptr() noexcept { return reinterpret_cast<T*>(value_addr()); }
@@ -226,9 +227,10 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY __rc_ptr_counted_data_with_deleter final : 
 
   void destroy() noexcept override {
     using alloc_type = ::std::allocator<__rc_ptr_counted_data_with_deleter<T, Deleter>>;
+    using alloc_traits = ::std::allocator_traits<alloc_type>;
     alloc_type alloc;
     allocated_ptr<alloc_type> guard_ptr{alloc, this};
-    this->~__rc_ptr_counted_data_with_deleter();
+    alloc_traits::destroy(alloc, this);
   }
 
  private:
@@ -252,7 +254,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY __rc_ptr_counted_data_with_deleter_allocato
     using alloc_traits = ::std::allocator_traits<alloc_type>;
     alloc_type alloc{alloc_};
     allocated_ptr<alloc_type> guard_ptr{alloc, this};
-    this->~__rc_ptr_counted_data_with_deleter_allocator();
+    alloc_traits::destroy(alloc, this);
   }
 
  private:
