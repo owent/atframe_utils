@@ -5,7 +5,8 @@ LIBATFRAME_UTILS_NAMESPACE_BEGIN
 namespace time {
 LIBATFRAME_UTILS_API time_utility::raw_time_t time_utility::now_;
 LIBATFRAME_UTILS_API time_t time_utility::now_unix_;
-LIBATFRAME_UTILS_API time_t time_utility::now_usec_ = 0;
+LIBATFRAME_UTILS_API int32_t time_utility::now_usec_ = 0;
+LIBATFRAME_UTILS_API int32_t time_utility::now_nanos_ = 0;
 LIBATFRAME_UTILS_API time_t time_utility::custom_zone_offset_ = -time_utility::YEAR_SECONDS;
 LIBATFRAME_UTILS_API std::chrono::system_clock::duration time_utility::global_now_offset_ =
     std::chrono::system_clock::duration::zero();
@@ -27,20 +28,24 @@ LIBATFRAME_UTILS_API UTIL_SANITIZER_NO_THREAD void time_utility::update(raw_time
   // reset usec
   LIBATFRAME_UTILS_NAMESPACE_ID::time::time_utility::raw_time_t padding_time =
       LIBATFRAME_UTILS_NAMESPACE_ID::time::time_utility::raw_time_t::clock::from_time_t(now_unix_);
-  now_usec_ = static_cast<time_t>(std::chrono::duration_cast<std::chrono::microseconds>(
-                                      LIBATFRAME_UTILS_NAMESPACE_ID::time::time_utility::now() - padding_time)
-                                      .count());
-  if (now_usec_ < 0) {
-    now_usec_ = 0;
+  std::chrono::nanoseconds::rep nanos = std::chrono::duration_cast<std::chrono::nanoseconds>(
+                                            LIBATFRAME_UTILS_NAMESPACE_ID::time::time_utility::now() - padding_time)
+                                            .count();
+
+  if (nanos < 0) {
+    nanos = 0;
+  } else if (nanos >= 1000000000) {
+    nanos = 999999999;
   }
-  if (now_usec_ >= 1000000) {
-    now_usec_ = 999999;
-  }
+  now_nanos_ = static_cast<int32_t>(nanos);
+  now_usec_ = static_cast<int32_t>(nanos) / 1000;
 }
 
 LIBATFRAME_UTILS_API UTIL_SANITIZER_NO_THREAD time_utility::raw_time_t time_utility::now() { return now_; }
 
-LIBATFRAME_UTILS_API UTIL_SANITIZER_NO_THREAD time_t time_utility::get_now_usec() { return now_usec_; }
+LIBATFRAME_UTILS_API UTIL_SANITIZER_NO_THREAD int32_t time_utility::get_now_usec() { return now_usec_; }
+
+LIBATFRAME_UTILS_API UTIL_SANITIZER_NO_THREAD int32_t time_utility::get_now_nanos() { return now_nanos_; }
 
 LIBATFRAME_UTILS_API UTIL_SANITIZER_NO_THREAD time_t time_utility::get_now() { return now_unix_; }
 

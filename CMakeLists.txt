@@ -174,7 +174,6 @@ set(HEADER_LIST
     "${CMAKE_CURRENT_LIST_DIR}/include/random/random_xoshiro_core.h"
     "${CMAKE_CURRENT_LIST_DIR}/include/random/uuid_generator.h"
     "${CMAKE_CURRENT_LIST_DIR}/include/std/array.h"
-    "${CMAKE_CURRENT_LIST_DIR}/include/std/atomic.h"
     "${CMAKE_CURRENT_LIST_DIR}/include/std/chrono.h"
     "${CMAKE_CURRENT_LIST_DIR}/include/std/explicit_declare.h"
     "${CMAKE_CURRENT_LIST_DIR}/include/std/functional.h"

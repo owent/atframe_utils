@@ -15,14 +15,14 @@
 #  define __STDC_WANT_LIB_EXT1__ 1
 #endif
 
+#include <config/atframe_utils_build_feature.h>
+
 #include <stdint.h>
 #include <cstddef>
 #include <cstring>
 #include <ctime>
 
 #include "std/chrono.h"
-
-#include <config/atframe_utils_build_feature.h>
 
 #if (defined(__STDC_VERSION__) && __STDC_VERSION__ >= 201112L) || defined(__STDC_LIB_EXT1__)
 #  define UTIL_STRFUNC_LOCALTIME_S(time_t_ptr, tm_ptr) localtime_s(time_t_ptr, tm_ptr)
@@ -37,8 +37,9 @@
 #  define UTIL_STRFUNC_GMTIME_S(time_t_ptr, tm_ptr) gmtime_r(time_t_ptr, tm_ptr)
 
 #else
-#  define UTIL_STRFUNC_LOCALTIME_S(time_t_ptr, tm_ptr) (*(tm_ptr) = *localtime(time_t_ptr))
-#  define UTIL_STRFUNC_GMTIME_S(time_t_ptr, tm_ptr) (*(tm_ptr) = *gmtime(time_t_ptr))
+#  define UTIL_STRFUNC_LOCALTIME_S(time_t_ptr, tm_ptr) \
+    (*(tm_ptr) = *localtime(time_t_ptr))                                               // NOLINT: runtime/threadsafe_fn
+#  define UTIL_STRFUNC_GMTIME_S(time_t_ptr, tm_ptr) (*(tm_ptr) = *gmtime(time_t_ptr))  // NOLINT: runtime/threadsafe_fn
 
 #endif
 
@@ -85,12 +86,20 @@ class time_utility {
   /**
    * @brief 获取当前时间的微秒部分
    * @note 为了减少系统调用，这里仅在update时更新缓存，并且使用偏移值进行计算，所以大部分情况下都会偏小一些。
-   *       这里仅为能够容忍误差的时间相关的功能提供一个时间参考，如果需要使用精确时间，请使用系统调用
-   * @note update接口不加锁，所以一般情况下，返回值在[0,
-   * 1000000)之间，极端情况下（特别是多线程调用时）可能出现大于1000000
+   *       这里仅为能够容忍误差的时间相关的功能提供一个时间参考，如果需要使用精确时间，请使用系统接口或STL接口
+   * @note update接口不加锁，所以一般情况下，返回值在[0, 1000000)之间
    * @return 当前时间的微妙部分
    */
-  static LIBATFRAME_UTILS_API UTIL_SANITIZER_NO_THREAD time_t get_now_usec();
+  static LIBATFRAME_UTILS_API UTIL_SANITIZER_NO_THREAD int32_t get_now_usec();
+
+  /**
+   * @brief 获取当前时间的纳秒部分
+   * @note 为了减少系统调用，这里仅在update时更新缓存，并且使用偏移值进行计算，所以大部分情况下都会偏小一些。
+   *       这里仅为能够容忍误差的时间相关的功能提供一个时间参考，如果需要使用精确时间，请使用系统接口或STL接口
+   * @note update接口不加锁，所以一般情况下，返回值在[0, 1000000000)之间
+   * @return 当前时间的微秒部分
+   */
+  static LIBATFRAME_UTILS_API UTIL_SANITIZER_NO_THREAD int32_t get_now_nanos();
 
   /**
    * @brief 获取原始系统时间对象,不受set_global_now_offset()影响
@@ -308,7 +317,10 @@ class time_utility {
   static LIBATFRAME_UTILS_API time_t now_unix_;
 
   // 当前时间(微妙，非精确)
-  static LIBATFRAME_UTILS_API time_t now_usec_;
+  static LIBATFRAME_UTILS_API int32_t now_usec_;
+
+  // 当前时间(纳秒，非精确)
+  static LIBATFRAME_UTILS_API int32_t now_nanos_;
 
   // 时区时间的人为偏移
   static LIBATFRAME_UTILS_API time_t custom_zone_offset_;
