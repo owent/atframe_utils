@@ -1304,6 +1304,11 @@ struct LIBATFRAME_UTILS_API_HEAD_ONLY compat_strong_ptr_function_trait<compat_st
     return memory::make_strong_rc<Y>(std::forward<ArgsT>(args)...);
   }
 
+  template <class Y, class Alloc, class... TArgs>
+  static inline memory::strong_rc_ptr<Y> allocate_shared(const Alloc& alloc, TArgs&&... args) {
+    return memory::allocate_strong_rc<Y>(alloc, std::forward<TArgs>(args)...);
+  }
+
   template <class Y, class F>
   static inline memory::strong_rc_ptr<Y> static_pointer_cast(F&& f) {
     return memory::static_pointer_cast<Y>(std::forward<F>(f));
@@ -1336,6 +1341,11 @@ struct LIBATFRAME_UTILS_API_HEAD_ONLY compat_strong_ptr_function_trait<compat_st
   template <class Y, class... ArgsT>
   static inline std::shared_ptr<Y> make_shared(ArgsT&&... args) {
     return std::make_shared<Y>(std::forward<ArgsT>(args)...);
+  }
+
+  template <class Y, class Alloc, class... TArgs>
+  static inline std::shared_ptr<Y> allocate_shared(const Alloc& alloc, TArgs&&... args) {
+    return std::allocate_shared<Y>(alloc, std::forward<TArgs>(args)...);
   }
 
   template <class Y, class F>
