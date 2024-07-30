@@ -23,6 +23,7 @@
 #include <functional>
 #include <list>
 #include <memory>
+#include <type_traits>
 #include <unordered_map>
 #include <utility>
 
@@ -76,7 +77,8 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY lru_map {
   using lru_key_value_map_type = std::unordered_map<TKEY, iterator, THasher, TKeyEQ, TAlloc>;
   using self_type = lru_map<TKEY, TVALUE, THasher, TKeyEQ, TOption, TAlloc>;
 
-  lru_map() {}
+  lru_map() noexcept(std::is_nothrow_constructible<lru_history_list_type>::value &&
+                     std::is_nothrow_constructible<lru_key_value_map_type>::value) {}
 
   template <class TCONTAINER>
   LIBATFRAME_UTILS_API_HEAD_ONLY lru_map(const TCONTAINER &other) {
@@ -84,7 +86,31 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY lru_map {
     insert(other.begin(), other.end());
   }
 
-  lru_map(lru_map &&other) { swap(other); }
+  lru_map(const lru_map &other) {
+    reserve(static_cast<size_type>(other.size()));
+    insert(other.cbegin(), other.cend());
+  }
+
+  lru_map(lru_map &&other) noexcept(
+      std::is_nothrow_constructible<lru_history_list_type, lru_history_list_type &&>::value &&
+      std::is_nothrow_constructible<lru_key_value_map_type, lru_key_value_map_type &&>::value) {
+    swap(other);
+  }
+
+  lru_map &operator=(const lru_map &other) {
+    clear();
+    reserve(static_cast<size_type>(other.size()));
+    insert(other.cbegin(), other.cend());
+    return *this;
+  }
+
+  lru_map &operator=(lru_map &&other) noexcept(
+      std::is_nothrow_constructible<lru_history_list_type, lru_history_list_type &&>::value &&
+      std::is_nothrow_constructible<lru_key_value_map_type, lru_key_value_map_type &&>::value) {
+    swap(other);
+    other.clear();
+    return *this;
+  }
 
   inline iterator begin() { return visit_history_.begin(); }
   inline const_iterator cbegin() const { return visit_history_.cbegin(); }
