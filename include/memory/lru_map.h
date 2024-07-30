@@ -164,8 +164,10 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY lru_map {
   template <class TPARAMKEY, class TPARAMVALUE>
   LIBATFRAME_UTILS_API_HEAD_ONLY std::pair<iterator, bool> insert_key_value(const TPARAMKEY &key,
                                                                             const TPARAMVALUE &copy_value) {
+    using alloc_type = typename std::allocator_traits<allocator_type>::template rebind_alloc<mapped_type>;
     return insert_key_value(
-        key, compat_strong_ptr_function_trait<option_type::ptr_mode>::template make_shared<mapped_type>(copy_value));
+        key, compat_strong_ptr_function_trait<option_type::ptr_mode>::template allocate_shared<mapped_type>(
+                 alloc_type(), copy_value));
   }
 
   template <class TPARAMKEY, class TPARAMVALUE>
@@ -221,9 +223,11 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY lru_map {
 
   template <class TPARAMKEY, class TPARAMVALUE>
   LIBATFRAME_UTILS_API_HEAD_ONLY std::pair<iterator, bool> insert_key_value(TPARAMKEY &&key, TPARAMVALUE &&copy_value) {
-    return insert(value_type(std::forward<TPARAMKEY>(key),
-                             compat_strong_ptr_function_trait<option_type::ptr_mode>::template make_shared<mapped_type>(
-                                 std::forward<TPARAMVALUE>(copy_value))));
+    using alloc_type = typename std::allocator_traits<allocator_type>::template rebind_alloc<mapped_type>;
+    return insert(
+        value_type(std::forward<TPARAMKEY>(key),
+                   compat_strong_ptr_function_trait<option_type::ptr_mode>::template allocate_shared<mapped_type>(
+                       alloc_type(), std::forward<TPARAMVALUE>(copy_value))));
   }
 
   template <class InputIt>
@@ -283,10 +287,13 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY lru_map {
   }
 
   mapped_type &operator[](const key_type &key) {
+    using alloc_type = typename std::allocator_traits<allocator_type>::template rebind_alloc<mapped_type>;
+
     iterator it = find(key);
     if (it == end()) {
       std::pair<iterator, bool> res = insert(value_type(
-          key, compat_strong_ptr_function_trait<option_type::ptr_mode>::template make_shared<mapped_type>()));
+          key, compat_strong_ptr_function_trait<option_type::ptr_mode>::template allocate_shared<mapped_type>(
+                   alloc_type())));
       return *(*res.first).second;
     }
 
