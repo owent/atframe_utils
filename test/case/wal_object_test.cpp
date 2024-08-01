@@ -1462,14 +1462,21 @@ struct test_allocator : public ::std::allocator<T> {
     std::allocator<T>::deallocate(p, n);
   }
 
-  ::std::size_t allocate_counter = 0;
-  ::std::size_t deallocate_counter = 0;
+  static ::std::size_t allocate_counter;
+  static ::std::size_t deallocate_counter;
 
   inline test_allocator() noexcept {}
 
   template <class Alloc>
-  inline test_allocator(Alloc&&) noexcept {}
+  inline test_allocator(Alloc&&) noexcept {}  // NOLINT: runtime/explicit
 };
+
+template <class T>
+::std::size_t test_allocator<T>::allocate_counter = 0;
+
+template <class T>
+::std::size_t test_allocator<T>::deallocate_counter = 0;
+
 }  // namespace
 
 CASE_TEST(wal_object, with_allocator) {
