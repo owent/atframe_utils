@@ -1445,7 +1445,7 @@ namespace {
 
 template <class T>
 struct test_allocator : public ::std::allocator<T> {
-  T* allocate(::std::size_t n) {
+  WAL_TEST_ALLOCATOR_CONSTEXPR T* allocate(::std::size_t n) {
     allocate_counter += n;
     return ::std::allocator<T>::allocate(n);
   }
