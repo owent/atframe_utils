@@ -1487,7 +1487,12 @@ struct test_wal_object_test_allocator : public ::std::allocator<T> {
 namespace std {
 template <class T>
 struct allocator_traits<st::test_wal_object_test_allocator<T>>
-    : public ::util::memory::allocator_traits<st::test_wal_object_test_allocator<T>> {};
+    : public ::util::memory::allocator_traits<st::test_wal_object_test_allocator<T>> {
+  template <class U>
+  struct rebind {
+    using other = allocator_traits<U>;
+  };
+};
 }  // namespace std
 
 namespace st {
