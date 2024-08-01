@@ -45,7 +45,9 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_object {
   using action_case_type = typename log_operator_type::action_case_type;
   using log_key_result_type = typename log_operator_type::log_key_result_type;
 
-  using log_container_type = std::deque<log_pointer>;
+  using log_allocator = typename log_operator_type::log_allocator;
+  using log_pointer_allocator = typename log_operator_type::log_pointer_allocator;
+  using log_container_type = std::deque<log_pointer, log_pointer_allocator>;
   using log_iterator = typename log_container_type::iterator;
   using log_const_iterator = typename log_container_type::const_iterator;
   using callback_param_type = CallbackParamT;
@@ -247,6 +249,32 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_object {
     }
 
     log_pointer ret = log_operator_type::template make_strong<log_type>(std::forward<ArgsT>(args)...);
+    if (!ret) {
+      return ret;
+    }
+
+    log_key_result_type new_key = vtable_->allocate_log_key(*this, *ret, param);
+    if (!new_key.is_success()) {
+      return nullptr;
+    }
+
+    meta_type meta;
+    meta.timepoint = now;
+    meta.log_key = *new_key.get_success();
+    meta.action_case = action_case;
+    vtable_->set_meta(*this, *ret, meta);
+
+    return ret;
+  }
+
+  template <class Alloc, class... ArgsT>
+  log_pointer allocate_log(const Alloc& alloc, time_point now, action_case_type action_case, callback_param_type param,
+                           ArgsT&&... args) {
+    if (!configure_ || !vtable_ || !vtable_->allocate_log_key || !vtable_->set_meta) {
+      return nullptr;
+    }
+
+    log_pointer ret = log_operator_type::template allocate_strong<log_type>(alloc, std::forward<ArgsT>(args)...);
     if (!ret) {
       return ret;
     }
@@ -748,7 +776,9 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_object {
 
   // logs(libstdc++ is 512Byte for each block and maintain block index just like std::vector)
   log_container_type logs_;
-  std::list<std::pair<log_pointer, callback_param_storage_type> > pending_logs_;
+  using pending_log_allocator = typename std::allocator_traits<log_allocator>::template rebind_alloc<
+      std::pair<log_pointer, callback_param_storage_type>>;
+  std::list<std::pair<log_pointer, callback_param_storage_type>, pending_log_allocator> pending_logs_;
 
   // internal events
   callback_log_event_on_assign_fn_t internal_event_on_assign_;

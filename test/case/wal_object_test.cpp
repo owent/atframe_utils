@@ -1434,4 +1434,68 @@ CASE_TEST(wal_object, reorder_st) {
   ++iter;
   CASE_EXPECT_EQ(log2.get(), (*iter).get());
 }
+
+namespace {
+#if (!defined(__cplusplus) && !defined(_MSVC_LANG)) || \
+    !((defined(__cplusplus) && __cplusplus >= 202002L) || (defined(_MSVC_LANG) && _MSVC_LANG >= 202002L))
+#  define WAL_TEST_ALLOCATOR_CONSTEXPR
+#else
+#  define WAL_TEST_ALLOCATOR_CONSTEXPR constexpr
+#endif
+
+template <class T>
+struct test_allocator : public ::std::allocator<T> {
+  T* allocate(::std::size_t n) {
+    allocate_counter += n;
+    return ::std::allocator<T>::allocate(n);
+  }
+
+#if !((defined(__cplusplus) && __cplusplus >= 202002L) || (defined(_MSVC_LANG) && _MSVC_LANG >= 202002L))
+  T* allocate(::std::size_t n, const void* hint) {
+    allocate_counter += n;
+    return std::allocator<T>::allocate(n, hint);
+  }
+#endif
+
+  void deallocate(T* p, ::std::size_t n) {
+    deallocate_counter += n;
+    std::allocator<T>::deallocate(p, n);
+  }
+
+  ::std::size_t allocate_counter = 0;
+  ::std::size_t deallocate_counter = 0;
+
+  inline test_allocator() noexcept {}
+
+  template <class Alloc>
+  inline test_allocator(Alloc&&) noexcept {}
+};
+}  // namespace
+
+CASE_TEST(wal_object, with_allocator) {
+  test_wal_object_log_storage_type storage;
+  test_wal_object_context ctx;
+  LIBATFRAME_UTILS_NAMESPACE_ID::distributed_system::wal_time_point now = std::chrono::system_clock::now();
+
+  auto conf = create_configure();
+  auto vtable = create_vtable();
+  auto wal_obj = test_wal_object_type::create(vtable, conf, &storage);
+  CASE_EXPECT_TRUE(!!wal_obj);
+  if (!wal_obj) {
+    return;
+  }
+
+  test_allocator<test_wal_object_type::log_type> alloc;
+  test_wal_object_type::log_pointer log1;
+  do {
+    CASE_EXPECT_EQ(alloc.allocate_counter, 0);
+    log1 = wal_obj->allocate_log(alloc, now, test_wal_object_log_action::kDoNothing, ctx);
+    CASE_EXPECT_TRUE(!!log1);
+    if (!log1) {
+      break;
+    }
+    CASE_EXPECT_EQ(alloc.allocate_counter, 1);
+  } while (false);
+}
+
 }  // namespace st

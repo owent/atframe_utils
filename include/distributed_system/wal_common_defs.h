@@ -100,9 +100,9 @@ struct LIBATFRAME_UTILS_API_HEAD_ONLY wal_mt_mode_func_trait<wal_mt_mode::kSingl
   template <class Y>
   using enable_shared_from_this = memory::enable_shared_rc_from_this<Y>;
 
-  template <class Y, class... ArgsT>
-  static inline memory::strong_rc_ptr<Y> make_strong(ArgsT&&... args) {
-    return memory::make_strong_rc<Y>(std::forward<ArgsT>(args)...);
+  template <class Y, class Alloc, class... ArgsT>
+  static inline memory::strong_rc_ptr<Y> allocate_strong(const Alloc& alloc, ArgsT&&... args) {
+    return memory::allocate_strong_rc<Y>(alloc, std::forward<ArgsT>(args)...);
   }
 
   template <class Y, class F>
@@ -128,9 +128,9 @@ struct LIBATFRAME_UTILS_API_HEAD_ONLY wal_mt_mode_func_trait<wal_mt_mode::kMulti
   template <class Y>
   using enable_shared_from_this = std::enable_shared_from_this<Y>;
 
-  template <class Y, class... ArgsT>
-  static inline std::shared_ptr<Y> make_strong(ArgsT&&... args) {
-    return std::make_shared<Y>(std::forward<ArgsT>(args)...);
+  template <class Y, class Alloc, class... ArgsT>
+  static inline std::shared_ptr<Y> allocate_strong(const Alloc& alloc, ArgsT&&... args) {
+    return std::allocate_shared<Y>(alloc, std::forward<ArgsT>(args)...);
   }
 
   template <class Y, class F>
@@ -154,11 +154,12 @@ struct LIBATFRAME_UTILS_API_HEAD_ONLY wal_mt_mode_func_trait<wal_mt_mode::kMulti
 template <class LogKeyT, class LogT, class ActionGetter, class CompareLogKeyT = std::less<LogKeyT>,
           class HashActionCaseT = std::hash<typename wal_log_action_getter_trait<LogT, ActionGetter>::type>,
           class EqualActionCaseT = std::equal_to<typename wal_log_action_getter_trait<LogT, ActionGetter>::type>,
-          wal_mt_mode MTMode = wal_mt_mode::kMultiThread>
+          class Allocator = std::allocator<LogT>, wal_mt_mode MTMode = wal_mt_mode::kMultiThread>
 class LIBATFRAME_UTILS_API_HEAD_ONLY wal_log_operator {
  public:
   using log_key_type = LogKeyT;
   using log_type = LogT;
+  using log_allocator = Allocator;
   using action_getter_trait = wal_log_action_getter_trait<LogT, ActionGetter>;
   using action_getter_type = ActionGetter;
   using action_case_type = typename action_getter_trait::type;
@@ -170,11 +171,19 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_log_operator {
 
   using log_pointer = typename wal_mt_mode_data_trait<log_type, mt_mode>::strong_ptr;
   using log_const_pointer = typename wal_mt_mode_data_trait<const log_type, mt_mode>::strong_ptr;
+  using log_pointer_allocator = typename std::allocator_traits<log_allocator>::template rebind_alloc<log_pointer>;
   using log_key_result_type = LIBATFRAME_UTILS_NAMESPACE_ID::design_pattern::result_type<log_key_type, wal_result_code>;
 
   template <class Y, class... ArgsT>
   static inline typename wal_mt_mode_data_trait<Y, mt_mode>::strong_ptr make_strong(ArgsT&&... args) {
-    return wal_mt_mode_func_trait<mt_mode>::template make_strong<Y>(std::forward<ArgsT>(args)...);
+    using alloc_type = typename std::allocator_traits<log_allocator>::template rebind_alloc<Y>;
+    return wal_mt_mode_func_trait<mt_mode>::template allocate_strong<Y>(alloc_type(), std::forward<ArgsT>(args)...);
+  }
+
+  template <class Y, class Alloc, class... ArgsT>
+  static inline typename wal_mt_mode_data_trait<Y, mt_mode>::strong_ptr allocate_strong(const Alloc& alloc,
+                                                                                        ArgsT&&... args) {
+    return wal_mt_mode_func_trait<mt_mode>::template allocate_strong<Y>(alloc, std::forward<ArgsT>(args)...);
   }
 
   template <class Y, class F>
@@ -204,9 +213,10 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_log_operator {
 
 template <class LogKeyT, class LogT, class ActionGetter, wal_mt_mode MTMode, class CompareLogKeyT = std::less<LogKeyT>,
           class HashActionCaseT = std::hash<typename wal_log_action_getter_trait<LogT, ActionGetter>::type>,
-          class EqualActionCaseT = std::equal_to<typename wal_log_action_getter_trait<LogT, ActionGetter>::type>>
+          class EqualActionCaseT = std::equal_to<typename wal_log_action_getter_trait<LogT, ActionGetter>::type>,
+          class Allocator = std::allocator<LogT>>
 using wal_log_operator_with_mt_mode =
-    wal_log_operator<LogKeyT, LogT, ActionGetter, CompareLogKeyT, HashActionCaseT, EqualActionCaseT, MTMode>;
+    wal_log_operator<LogKeyT, LogT, ActionGetter, CompareLogKeyT, HashActionCaseT, EqualActionCaseT, Allocator, MTMode>;
 
 }  // namespace distributed_system
 LIBATFRAME_UTILS_NAMESPACE_END
