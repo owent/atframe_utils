@@ -1456,6 +1456,11 @@ struct test_wal_object_test_allocator_storage {
 
 template <class T>
 struct test_wal_object_test_allocator : public ::std::allocator<T> {
+  template <class U>
+  struct rebind {
+    using other = test_wal_object_test_allocator<U>;
+  };
+
   WAL_TEST_ALLOCATOR_CONSTEXPR T* allocate(::std::size_t n) {
     storage->allocate_counter += n;
     return ::std::allocator<T>::allocate(n);
@@ -1487,12 +1492,7 @@ struct test_wal_object_test_allocator : public ::std::allocator<T> {
 namespace std {
 template <class T>
 struct allocator_traits<st::test_wal_object_test_allocator<T>>
-    : public ::util::memory::allocator_traits<st::test_wal_object_test_allocator<T>> {
-  template <class U>
-  struct rebind {
-    using other = allocator_traits<U>;
-  };
-};
+    : public ::util::memory::allocator_traits<st::test_wal_object_test_allocator<T>> {};
 }  // namespace std
 
 namespace st {
