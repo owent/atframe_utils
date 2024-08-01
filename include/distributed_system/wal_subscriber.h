@@ -20,7 +20,8 @@ LIBATFRAME_UTILS_NAMESPACE_BEGIN
 namespace distributed_system {
 
 template <class PrivateDataT, class KeyT, class HashSubscriberKeyT = std::hash<KeyT>,
-          class EqualSubscriberKeyT = std::equal_to<KeyT>, wal_mt_mode MTMode = wal_mt_mode::kMultiThread>
+          class EqualSubscriberKeyT = std::equal_to<KeyT>, class Allocator = std::allocator<KeyT>,
+          wal_mt_mode MTMode = wal_mt_mode::kMultiThread>
 class LIBATFRAME_UTILS_API_HEAD_ONLY wal_subscriber {
  public:
   using pointer = typename wal_mt_mode_data_trait<wal_subscriber, MTMode>::strong_ptr;
@@ -33,7 +34,9 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_subscriber {
   using time_point = wal_time_point;
   using duration = wal_duration;
 
-  using subscriber_collector_type = std::unordered_map<key_type, pointer, key_hash, key_equal>;
+  using collector_allocator =
+      typename std::allocator_traits<Allocator>::template rebind_alloc<std::pair<const key_type, pointer>>;
+  using subscriber_collector_type = std::unordered_map<key_type, pointer, key_hash, key_equal, collector_allocator>;
   using subscriber_iterator = typename subscriber_collector_type::iterator;
   using subscriber_const_iterator = typename subscriber_collector_type::const_iterator;
 
@@ -163,8 +166,9 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_subscriber {
       return subscriber;
     }
 
-    template <class... ArgsT>
-    pointer create(const key_type& key, const time_point& now, const duration& timeout, ArgsT&&... args) {
+    template <class Alloc, class... ArgsT>
+    pointer allocate(const Alloc& alloc, const key_type& key, const time_point& now, const duration& timeout,
+                     ArgsT&&... args) {
       auto old = subscribers_.find(key);
       if (old != subscribers_.end()) {
         if (!old->second) {
@@ -177,8 +181,8 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_subscriber {
       }
 
       construct_helper guard;
-      auto ret = wal_mt_mode_func_trait<MTMode>::template make_strong<wal_subscriber>(
-          guard, *this, key, now, timeout, subscribers_timer_.end(), std::forward<ArgsT>(args)...);
+      auto ret = wal_mt_mode_func_trait<MTMode>::template allocate_strong<wal_subscriber>(
+          alloc, guard, *this, key, now, timeout, subscribers_timer_.end(), std::forward<ArgsT>(args)...);
       if (!ret) {
         return ret;
       }
@@ -187,6 +191,12 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_subscriber {
       insert_subscriber_timer(now, ret);
 
       return ret;
+    }
+
+    template <class... ArgsT>
+    pointer create(const key_type& key, const time_point& now, const duration& timeout, ArgsT&&... args) {
+      using subscriber_allocator = typename std::allocator_traits<Allocator>::template rebind_alloc<wal_subscriber>;
+      return allocate(subscriber_allocator(), key, now, timeout, std::forward<ArgsT>(args)...);
     }
 
     pointer find(const key_type& key) noexcept {
@@ -259,7 +269,8 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_subscriber {
     }
 
    private:
-    std::list<timer_type> subscribers_timer_;
+    using timer_allocator = typename std::allocator_traits<Allocator>::template rebind_alloc<timer_type>;
+    std::list<timer_type, timer_allocator> subscribers_timer_;
     subscriber_collector_type subscribers_;
   };
 
@@ -300,8 +311,9 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_subscriber {
 };
 
 template <class PrivateDataT, class KeyT, wal_mt_mode MTMode, class HashSubscriberKeyT = std::hash<KeyT>,
-          class EqualSubscriberKeyT = std::equal_to<KeyT>>
-using wal_subscriber_with_mt_mode = wal_subscriber<PrivateDataT, KeyT, HashSubscriberKeyT, EqualSubscriberKeyT, MTMode>;
+          class EqualSubscriberKeyT = std::equal_to<KeyT>, class Allocator = std::allocator<KeyT>>
+using wal_subscriber_with_mt_mode =
+    wal_subscriber<PrivateDataT, KeyT, HashSubscriberKeyT, EqualSubscriberKeyT, Allocator, MTMode>;
 
 }  // namespace distributed_system
 LIBATFRAME_UTILS_NAMESPACE_END

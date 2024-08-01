@@ -38,6 +38,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_publisher {
   using action_case_type = typename log_operator_type::action_case_type;
   using log_key_result_type = typename log_operator_type::log_key_result_type;
 
+  using log_allocator = typename object_type::log_allocator;
   using log_container_type = typename object_type::log_container_type;
   using log_iterator = typename object_type::log_iterator;
   using log_const_iterator = typename object_type::log_const_iterator;
