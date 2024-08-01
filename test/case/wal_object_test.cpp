@@ -1,17 +1,23 @@
 // Copyright 2024 atframework
 
+#include <distributed_system/wal_object.h>
+#include <memory/allocator_traits.h>
+
 #include <algorithm>
 #include <chrono>
 #include <cstring>
 #include <ctime>
+#include <limits>
 #include <memory>
 #include <sstream>
 #include <type_traits>
 #include <vector>
 
-#include <distributed_system/wal_object.h>
-
 #include "frame/test_macros.h"
+
+#ifdef max
+#  undef max
+#endif
 
 enum class test_wal_object_log_action {
   kDoNothing = 0,
@@ -1435,7 +1441,6 @@ CASE_TEST(wal_object, reorder_st) {
   CASE_EXPECT_EQ(log2.get(), (*iter).get());
 }
 
-namespace {
 #if (!defined(__cplusplus) && !defined(_MSVC_LANG)) || \
     !((defined(__cplusplus) && __cplusplus >= 202002L) || (defined(_MSVC_LANG) && _MSVC_LANG >= 202002L))
 #  define WAL_TEST_ALLOCATOR_CONSTEXPR
@@ -1443,66 +1448,78 @@ namespace {
 #  define WAL_TEST_ALLOCATOR_CONSTEXPR constexpr
 #endif
 
+struct test_wal_object_test_allocator_storage {
+  ::std::size_t allocate_counter = 0;
+  ::std::size_t deallocate_counter = 0;
+  inline test_wal_object_test_allocator_storage() {}
+};
+
 template <class T>
-struct test_allocator : public ::std::allocator<T> {
+struct test_wal_object_test_allocator : public ::std::allocator<T> {
   WAL_TEST_ALLOCATOR_CONSTEXPR T* allocate(::std::size_t n) {
-    allocate_counter += n;
+    storage->allocate_counter += n;
     return ::std::allocator<T>::allocate(n);
   }
 
 #if !((defined(__cplusplus) && __cplusplus >= 202002L) || (defined(_MSVC_LANG) && _MSVC_LANG >= 202002L))
   T* allocate(::std::size_t n, const void* hint) {
-    allocate_counter += n;
+    storage->allocate_counter += n;
     return std::allocator<T>::allocate(n, hint);
   }
 #endif
 
   void deallocate(T* p, ::std::size_t n) {
-    deallocate_counter += n;
+    storage->deallocate_counter += n;
     std::allocator<T>::deallocate(p, n);
   }
 
-  static ::std::size_t allocate_counter;
-  static ::std::size_t deallocate_counter;
+  std::shared_ptr<test_wal_object_test_allocator_storage> storage;
 
-  inline test_allocator() noexcept {}
+  inline test_wal_object_test_allocator() noexcept
+      : storage(std::make_shared<test_wal_object_test_allocator_storage>()) {}
 
-  template <class Alloc>
-  inline test_allocator(Alloc&&) noexcept {}  // NOLINT: runtime/explicit
+  template <class U>
+  inline test_wal_object_test_allocator(const test_wal_object_test_allocator<U>& other) noexcept
+      : storage(other.storage) {}  // NOLINT: runtime/explicit
 };
 
+}  // namespace st
+namespace std {
 template <class T>
-::std::size_t test_allocator<T>::allocate_counter = 0;
+struct allocator_traits<st::test_wal_object_test_allocator<T>>
+    : public ::util::memory::allocator_traits<st::test_wal_object_test_allocator<T>> {};
+}  // namespace std
 
-template <class T>
-::std::size_t test_allocator<T>::deallocate_counter = 0;
-
-}  // namespace
-
+namespace st {
 CASE_TEST(wal_object, with_allocator) {
   test_wal_object_log_storage_type storage;
   test_wal_object_context ctx;
   LIBATFRAME_UTILS_NAMESPACE_ID::distributed_system::wal_time_point now = std::chrono::system_clock::now();
 
-  auto conf = create_configure();
-  auto vtable = create_vtable();
-  auto wal_obj = test_wal_object_type::create(vtable, conf, &storage);
-  CASE_EXPECT_TRUE(!!wal_obj);
-  if (!wal_obj) {
-    return;
-  }
+  test_wal_object_test_allocator<test_wal_object_type::log_type> alloc;
 
-  test_allocator<test_wal_object_type::log_type> alloc;
-  test_wal_object_type::log_pointer log1;
-  do {
-    CASE_EXPECT_EQ(alloc.allocate_counter, 0);
-    log1 = wal_obj->allocate_log(alloc, now, test_wal_object_log_action::kDoNothing, ctx);
-    CASE_EXPECT_TRUE(!!log1);
-    if (!log1) {
-      break;
+  {
+    auto conf = create_configure();
+    auto vtable = create_vtable();
+    auto wal_obj = test_wal_object_type::create(vtable, conf, &storage);
+    CASE_EXPECT_TRUE(!!wal_obj);
+    if (!wal_obj) {
+      return;
     }
-    CASE_EXPECT_EQ(alloc.allocate_counter, 1);
-  } while (false);
+
+    test_wal_object_type::log_pointer log1;
+    do {
+      CASE_EXPECT_EQ(alloc.storage->allocate_counter, 0);
+      CASE_EXPECT_EQ(alloc.storage->deallocate_counter, 0);
+      log1 = wal_obj->allocate_log(alloc, now, test_wal_object_log_action::kDoNothing, ctx);
+      CASE_EXPECT_TRUE(!!log1);
+      if (!log1) {
+        break;
+      }
+      CASE_EXPECT_EQ(alloc.storage->allocate_counter, 1);
+    } while (false);
+  }
+  CASE_EXPECT_EQ(alloc.storage->deallocate_counter, 1);
 }
 
 }  // namespace st
