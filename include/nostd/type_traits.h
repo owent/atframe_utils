@@ -83,7 +83,8 @@ using enable_if_t = typename ::std::enable_if<B, T>::type;
 template <class F, class... ArgTypes>
 using invoke_result = ::std::invoke_result<F, ArgTypes...>;
 
-using ::std::invoke_result_t;
+template <class F, class... ArgTypes>
+using invoke_result_t = ::std::invoke_result_t<F, ArgTypes...>;
 #else
 template <class F, class... ArgTypes>
 using invoke_result = ::std::result_of<F(ArgTypes...)>;

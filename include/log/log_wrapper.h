@@ -464,7 +464,7 @@ class log_wrapper {
   std::bitset<options_t::OPT_MAX> options_;
   std::list<log_router_t> log_sinks_;
   mutable LIBATFRAME_UTILS_NAMESPACE_ID::lock::spin_rw_lock log_sinks_lock_;
-}; // NOLINT: readability/braces
+};  // NOLINT: readability/braces
 }  // namespace log
 LIBATFRAME_UTILS_NAMESPACE_END
 

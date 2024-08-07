@@ -69,7 +69,11 @@
 LIBATFRAME_UTILS_NAMESPACE_BEGIN
 class file_system {
  public:
+#if ((defined(__cplusplus) && __cplusplus >= 201703L) || (defined(_MSVC_LANG) && _MSVC_LANG >= 201703L))
   static constexpr const char DIRECTORY_SEPARATOR =
+#else
+  LIBATFRAME_UTILS_API static constexpr const char DIRECTORY_SEPARATOR =
+#endif
 #ifdef _WIN32
       '\\';
 #else
@@ -79,15 +83,19 @@ class file_system {
   // When LongPathsEnabled on Windows, it allow 32767 characters in a absolute path.But it still only allow 260
   // characters in a relative path.
   // See https://docs.microsoft.com/en-us/windows/win32/fileio/maximum-file-path-limitation
+#if ((defined(__cplusplus) && __cplusplus >= 201703L) || (defined(_MSVC_LANG) && _MSVC_LANG >= 201703L))
   static constexpr const size_t MAX_PATH_LEN =
+#else
+  LIBATFRAME_UTILS_API static constexpr const size_t MAX_PATH_LEN =
+#endif
 #if defined(MAX_PATH)
       MAX_PATH;
 #elif defined(_MAX_PATH)
       _MAX_PATH;
 #elif defined(PATH_MAX)
-          PATH_MAX;
+  PATH_MAX;
 #else
-          260;
+  260;
 #endif
 
   struct dir_opt_t {

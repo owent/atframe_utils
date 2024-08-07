@@ -51,6 +51,12 @@
 #endif
 
 LIBATFRAME_UTILS_NAMESPACE_BEGIN
+
+#if !((defined(__cplusplus) && __cplusplus >= 201703L) || (defined(_MSVC_LANG) && _MSVC_LANG >= 201703L))
+LIBATFRAME_UTILS_API constexpr const char file_system::DIRECTORY_SEPARATOR;
+LIBATFRAME_UTILS_API constexpr const size_t file_system::MAX_PATH_LEN;
+#endif
+
 LIBATFRAME_UTILS_API bool file_system::get_file_content(std::string &out, const char *file_path, bool is_binary) {
   FILE *f = nullptr;
   if (is_binary) {
