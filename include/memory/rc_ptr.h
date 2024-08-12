@@ -1340,12 +1340,16 @@ struct LIBATFRAME_UTILS_API_HEAD_ONLY compat_strong_ptr_function_trait<compat_st
 
   template <class Y, class... ArgsT>
   static inline std::shared_ptr<Y> make_shared(ArgsT&&... args) {
+#include "config/compiler/internal/stl_compact_prefix.h.inc"  // NOLINT: build/include
     return std::make_shared<Y>(std::forward<ArgsT>(args)...);
+#include "config/compiler/internal/stl_compact_suffix.h.inc"  // NOLINT: build/include
   }
 
   template <class Y, class Alloc, class... TArgs>
   static inline std::shared_ptr<Y> allocate_shared(const Alloc& alloc, TArgs&&... args) {
+#include "config/compiler/internal/stl_compact_prefix.h.inc"  // NOLINT: build/include
     return std::allocate_shared<Y>(alloc, std::forward<TArgs>(args)...);
+#include "config/compiler/internal/stl_compact_suffix.h.inc"  // NOLINT: build/include
   }
 
   template <class Y, class F>

@@ -65,9 +65,23 @@
 
 #include <cstddef>
 #include <memory>
+#include <utility>
 
 #include "lock/lock_holder.h"
 #include "lock/spin_lock.h"
+
+LIBATFRAME_UTILS_NAMESPACE_BEGIN
+namespace design_pattern {
+namespace details {
+template <class T, class Deletor>
+UTIL_SYMBOL_VISIBLE inline std::shared_ptr<T> create_shared_ptr(T *ptr, Deletor &&deletor) {
+#include "config/compiler/internal/stl_compact_prefix.h.inc"  // NOLINT: build/include
+  return std::shared_ptr<T>(ptr, std::forward<Deletor>(deletor));
+#include "config/compiler/internal/stl_compact_suffix.h.inc"  // NOLINT: build/include
+}
+}  // namespace details
+}  // namespace design_pattern
+LIBATFRAME_UTILS_NAMESPACE_END
 
 /**
  * @brief if you are under Windows, you may want to declare import/export of singleton<T>
@@ -114,31 +128,32 @@
 #if defined(UTIL_DESIGN_PATTERN_SINGLETON_DATA_IMPL_N2660) && UTIL_DESIGN_PATTERN_SINGLETON_DATA_IMPL_N2660
 
 // @see https://wg21.link/n2660
-#  define UTIL_DESIGN_PATTERN_SINGLETON_DATA_IMPL(LABEL, CLAZZ, BASE_CLAZZ)                                            \
-   private:                                                                                                            \
-    template <class TCLASS>                                                                                            \
-    class singleton_wrapper_permission_t : public TCLASS {};                                                           \
-    class LABEL singleton_wrapper_t {                                                                                  \
-     public:                                                                                                           \
-      using ptr_permission_t = std::shared_ptr<singleton_wrapper_permission_t<CLAZZ> >;                                \
-      using ptr_t = std::shared_ptr<CLAZZ>;                                                                            \
-      static bool __is_destroyed;                                                                                      \
-      struct deleter {                                                                                                 \
-        void operator()(singleton_wrapper_permission_t<CLAZZ> *p) const {                                              \
-          __is_destroyed = true;                                                                                       \
-          UTIL_LOCK_ATOMIC_THREAD_FENCE(LIBATFRAME_UTILS_NAMESPACE_ID::lock::memory_order_release);                    \
-          delete p;                                                                                                    \
-        }                                                                                                              \
-      };                                                                                                               \
-      friend struct deleter;                                                                                           \
-      static const ptr_t &me() {                                                                                       \
-        static ptr_t data =                                                                                            \
-            std::static_pointer_cast<CLAZZ>(ptr_permission_t(new singleton_wrapper_permission_t<CLAZZ>(), deleter())); \
-        return data;                                                                                                   \
-      }                                                                                                                \
-    };                                                                                                                 \
-                                                                                                                       \
-   private:                                                                                                            \
+#  define UTIL_DESIGN_PATTERN_SINGLETON_DATA_IMPL(LABEL, CLAZZ, BASE_CLAZZ)                         \
+   private:                                                                                         \
+    template <class TCLASS>                                                                         \
+    class singleton_wrapper_permission_t : public TCLASS {};                                        \
+    class LABEL singleton_wrapper_t {                                                               \
+     public:                                                                                        \
+      using ptr_permission_t = std::shared_ptr<singleton_wrapper_permission_t<CLAZZ> >;             \
+      using ptr_t = std::shared_ptr<CLAZZ>;                                                         \
+      static bool __is_destroyed;                                                                   \
+      struct deleter {                                                                              \
+        void operator()(singleton_wrapper_permission_t<CLAZZ> *p) const {                           \
+          __is_destroyed = true;                                                                    \
+          UTIL_LOCK_ATOMIC_THREAD_FENCE(LIBATFRAME_UTILS_NAMESPACE_ID::lock::memory_order_release); \
+          delete p;                                                                                 \
+        }                                                                                           \
+      };                                                                                            \
+      friend struct deleter;                                                                        \
+      static const ptr_t &me() {                                                                    \
+        static ptr_t data = std::static_pointer_cast<CLAZZ>(                                        \
+            ::LIBATFRAME_UTILS_NAMESPACE_ID::design_pattern::details::create_shared_ptr(            \
+                new singleton_wrapper_permission_t<CLAZZ>(), deleter()));                           \
+        return data;                                                                                \
+      }                                                                                             \
+    };                                                                                              \
+                                                                                                    \
+   private:                                                                                         \
     friend class singleton_wrapper_t;
 
 #  define UTIL_DESIGN_PATTERN_SINGLETON_MEMBER_DECL_IMPL(LABEL, CLAZZ) \
@@ -173,7 +188,8 @@
       delete p;                                                                                                       \
     }                                                                                                                 \
     UTIL_SYMBOL_LOCAL const CLAZZ::singleton_wrapper_type::ptr_t &CLAZZ::singleton_wrapper_type::me() {               \
-      static ptr_t data = ptr_t(new CLAZZ(), deleter());                                                              \
+      static ptr_t data =                                                                                             \
+          ::LIBATFRAME_UTILS_NAMESPACE_ID::design_pattern::details::create_shared_ptr(new CLAZZ(), deleter());        \
       return data;                                                                                                    \
     }                                                                                                                 \
     UTIL_SYMBOL_LOCAL bool CLAZZ::singleton_wrapper_type::is_instance_destroyed() noexcept { return __is_destroyed; } \
@@ -213,7 +229,8 @@
               break;                                                                                                 \
             }                                                                                                        \
             ptr_t new_data = std::static_pointer_cast<CLAZZ>(                                                        \
-                ptr_permission_t(new singleton_wrapper_permission_t<CLAZZ>(), deleter()));                           \
+                ::LIBATFRAME_UTILS_NAMESPACE_ID::design_pattern::details::create_shared_ptr(                         \
+                    new singleton_wrapper_permission_t<CLAZZ>(), deleter()));                                        \
             __data().instance = new_data;                                                                            \
           } while (false);                                                                                           \
           UTIL_LOCK_ATOMIC_THREAD_FENCE(LIBATFRAME_UTILS_NAMESPACE_ID::lock::memory_order_release);                  \
@@ -278,7 +295,8 @@
           if (__data().instance) {                                                                                 \
             break;                                                                                                 \
           }                                                                                                        \
-          ptr_t new_data = ptr_t(new CLAZZ(), deleter());                                                          \
+          ptr_t new_data =                                                                                         \
+              ::LIBATFRAME_UTILS_NAMESPACE_ID::design_pattern::details::create_shared_ptr(new CLAZZ(), deleter()); \
           __data().instance = new_data;                                                                            \
         } while (false);                                                                                           \
         UTIL_LOCK_ATOMIC_THREAD_FENCE(LIBATFRAME_UTILS_NAMESPACE_ID::lock::memory_order_release);                  \

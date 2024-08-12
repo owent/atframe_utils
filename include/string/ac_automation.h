@@ -11,21 +11,21 @@
  *
  */
 
-#ifndef UTIL_STRING_AC_AUTOMATION_H
-#define UTIL_STRING_AC_AUTOMATION_H
-
 #pragma once
+
+#include <config/atframe_utils_build_feature.h>
 
 #include <assert.h>
 #include <algorithm>
 #include <list>
 #include <map>
+#include <memory>
 #include <set>
+#include <string>
+#include <utility>
 #include <vector>
 
 #include "string/utf8_char_t.h"
-
-#include <config/atframe_utils_build_feature.h>
 
 LIBATFRAME_UTILS_NAMESPACE_BEGIN
 namespace string {
@@ -114,19 +114,22 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY actrie_skip_charset<CH, 1> {
   template <typename OCH, typename OTCTT>
   LIBATFRAME_UTILS_API_HEAD_ONLY friend std::basic_ostream<OCH, OTCTT> &operator<<(std::basic_ostream<OCH, OTCTT> &os,
                                                                                    const self_t &self) {
-    os.write((CH *)self.skip_code_, sizeof(self.skip_code_));
+    os.write((CH *)self.skip_code_, sizeof(self.skip_code_));  // NOLINT: readability/casting
     return os;
   }
 
   template <typename OCH, typename OTCTT>
   LIBATFRAME_UTILS_API_HEAD_ONLY friend std::basic_istream<OCH, OTCTT> &operator>>(std::basic_istream<OCH, OTCTT> &is,
                                                                                    self_t &self) {
-    is.read((CH *)self.skip_code_, sizeof(self.skip_code_));
+    is.read((CH *)self.skip_code_, sizeof(self.skip_code_));  // NOLINT: readability/casting
     return is;
   }
 
  private:
-  uint8_t skip_code_[(static_cast<size_t>(1) << (sizeof(CH) * 8)) / 8];
+  enum {
+    kSkipCodeSize = (static_cast<size_t>(1) << (sizeof(CH) * 8)) / 8,
+  };
+  uint8_t skip_code_[kSkipCodeSize];
 };
 
 template <typename CH, size_t CHSZ>
@@ -303,7 +306,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY actrie {
   }
 
  private:
-  actrie(storage_t &, uint32_t failed_idx = 0) : idx_(0), failed_(failed_idx) {}
+  explicit actrie(storage_t &, uint32_t failed_idx = 0) : idx_(0), failed_(failed_idx) {}
 
   struct protect_constructor_helper {};
 
@@ -318,7 +321,9 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY actrie {
    * @param failed_idx 失败节点ID
    */
   static ptr_type create(storage_t &storage, uint32_t failed_idx = 0) {
+#include "config/compiler/internal/stl_compact_prefix.h.inc"  // NOLINT: build/include
     ptr_type ret = std::make_shared<self_t>(protect_constructor_helper(), storage, failed_idx);
+#include "config/compiler/internal/stl_compact_suffix.h.inc"  // NOLINT: build/include
     if (!ret) {
       return ret;
     }
@@ -596,7 +601,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY actrie {
 
         --midx;
       }
-    };
+    }
 
     return ret;
   }
@@ -838,5 +843,3 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY ac_automation {
 };
 }  // namespace string
 LIBATFRAME_UTILS_NAMESPACE_END
-
-#endif
