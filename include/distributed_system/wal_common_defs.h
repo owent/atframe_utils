@@ -176,14 +176,18 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_log_operator {
 
   template <class Y, class... ArgsT>
   static inline typename wal_mt_mode_data_trait<Y, mt_mode>::strong_ptr make_strong(ArgsT&&... args) {
+#include "config/compiler/internal/fix_gcc_14_2_prefix.h.inc"  // NOLINT: build/include
     using alloc_type = typename std::allocator_traits<log_allocator>::template rebind_alloc<Y>;
     return wal_mt_mode_func_trait<mt_mode>::template allocate_strong<Y>(alloc_type(), std::forward<ArgsT>(args)...);
+#include "config/compiler/internal/fix_gcc_14_2_suffix.h.inc"  // NOLINT: build/include
   }
 
   template <class Y, class Alloc, class... ArgsT>
   static inline typename wal_mt_mode_data_trait<Y, mt_mode>::strong_ptr allocate_strong(const Alloc& alloc,
                                                                                         ArgsT&&... args) {
+#include "config/compiler/internal/fix_gcc_14_2_prefix.h.inc"  // NOLINT: build/include
     return wal_mt_mode_func_trait<mt_mode>::template allocate_strong<Y>(alloc, std::forward<ArgsT>(args)...);
+#include "config/compiler/internal/fix_gcc_14_2_suffix.h.inc"  // NOLINT: build/include
   }
 
   template <class Y, class F>
