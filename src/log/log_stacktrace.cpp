@@ -441,7 +441,7 @@ static stacktrace_handle unw_mutable_symbol_from_cache(unw_word_t key, unw_curso
   unw_get_proc_name(&unw_cur, &func_name_cache[0], func_name_cache.size() - 1, &unw_offset);
 
   auto symbol = std::make_shared<stacktrace_symbol_impl>(
-      reinterpret_cast<const void *>(key), demangle(func_name_cache.data()), func_name_cache.data(),
+      static_cast<uintptr_t>(key), demangle(func_name_cache.data()), func_name_cache.data(),
       util::log::format("+{:#x}", unw_offset),
       std::chrono::system_clock::now() + internal_get_stacktrace_lru_cache_timeout());
   handle_impl->symbol = std::static_pointer_cast<stacktrace_symbol>(symbol);

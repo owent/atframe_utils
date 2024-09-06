@@ -398,8 +398,9 @@ String Demangler::read_string(bool memorize) {
     return ret;
   }
 
-  if (error.empty()) error = "read_string: missing '@': " + input.str();
-  return "";
+  String ret = input;
+  input.trim(input.len);
+  return ret;
 }
 
 // First 10 strings can be referenced by special names ?0, ?1, ..., ?9.
@@ -415,7 +416,7 @@ void Demangler::memorize_string(String s) {
 Name *Demangler::read_name() {
   Name *head = nullptr;
 
-  while (!consume("@")) {
+  while (!input.empty() && !consume("@")) {
     Name *elem = new (arena.alloc(sizeof(Name))) Name;
 
     if (input.startswith_digit()) {
