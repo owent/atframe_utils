@@ -28,7 +28,7 @@ enable_testing()
 
 project(
   atframe_utils
-  VERSION "2.6.1"
+  VERSION "2.7.0"
   HOMEPAGE_URL "https://github.com/atframework/atframe_utils"
   LANGUAGES C CXX)
 
@@ -88,6 +88,9 @@ set(SRC_LIST
     "${CMAKE_CURRENT_LIST_DIR}/src/cli/cmd_option_list.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/src/cli/cmd_option_value.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/src/cli/shell_font.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/src/common/demangle.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/src/common/demangle_cxx_abi.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/src/common/demangle_windows.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/src/common/file_system.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/src/common/platform_compat.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/src/common/string_oprs.cpp"

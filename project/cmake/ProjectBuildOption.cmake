@@ -98,7 +98,7 @@ else()
 endif()
 option(LIBATFRAME_UTILS_LOCK_DISABLE_MT "Disable multi-thread support lua support." OFF)
 set(LOG_STACKTRACE_MAX_STACKS
-    "100"
+    "510"
     CACHE STRING "Max stacks when stacktracing.")
 
 # 内存混淆int
