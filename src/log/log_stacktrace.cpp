@@ -446,7 +446,8 @@ static stacktrace_handle unw_mutable_symbol_from_cache(unw_word_t key, unw_curso
       std::chrono::system_clock::now() + internal_get_stacktrace_lru_cache_timeout());
   handle_impl->symbol = std::static_pointer_cast<stacktrace_symbol>(symbol);
 
-  std::pair<stacktrace_handle, std::shared_ptr<stacktrace_symbol>> data[1] = {handle, handle_impl->symbol};
+  std::pair<stacktrace_handle, std::shared_ptr<stacktrace_symbol>> data[1] = {
+      std::pair<stacktrace_handle, std::shared_ptr<stacktrace_symbol>>{handle, handle_impl->symbol}};
   internal_replace_stacktrace_symbol(gsl::make_span(data));
 
   return handle;
