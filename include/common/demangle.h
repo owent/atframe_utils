@@ -12,16 +12,14 @@
  *
  */
 
-#ifndef UTIL_COMMON_DEMANGLE_H
-#define UTIL_COMMON_DEMANGLE_H
+#pragma once
 
+#include <config/atframe_utils_build_feature.h>
 #include <config/compiler_features.h>
 #include <design_pattern/noncopyable.h>
 
 #include <cstring>
 #include <string>
-
-#pragma once
 
 // __has_include is currently supported by GCC and Clang. However GCC 4.9 may have issues and
 // returns 1 for 'defined( __has_include )', while '__has_include' is actually not supported:
@@ -29,29 +27,21 @@
 #if defined(__has_include) && \
     (!(defined(UTIL_CONFIG_COMPILER_IS_GNU) && UTIL_CONFIG_COMPILER_IS_GNU) || (__GNUC__ + 0) >= 5)
 #  if __has_include(<cxxabi.h>)
-#    define UTIL_COMMON_DEMANGLE_USING_CXX_ABI
+#    define LIBATFRAME_UTILS_DEMANGLE_USING_CXX_ABI
 #  endif
 #elif defined(__GLIBCXX__) || defined(__GLIBCPP__)
-#  define UTIL_COMMON_DEMANGLE_USING_CXX_ABI
+#  define LIBATFRAME_UTILS_DEMANGLE_USING_CXX_ABI
 #endif
 
-#if defined(UTIL_COMMON_DEMANGLE_USING_CXX_ABI)
-#  include <cxxabi.h>
-// For some archtectures (mips, mips64, x86, x86_64) cxxabi.h in Android NDK is implemented by gabi++ library
-// (https://android.googlesource.com/platform/ndk/+/master/sources/cxx-stl/gabi++/), which does not implement
-// abi::__cxa_demangle(). We detect this implementation by checking the include guard here.
-#  if defined(__GABIXX_CXXABI_H__)
-#    undef UTIL_COMMON_DEMANGLE_USING_CXX_ABI
-#  else
-#    include <cstddef>
-#    include <cstdlib>
-#  endif
+#if !defined(LIBATFRAME_UTILS_DEMANGLE_USING_CXX_ABI) && defined(_WIN32)
+#  define LIBATFRAME_UTILS_DEMANGLE_USING_WINDOWS
 #endif
 
 LIBATFRAME_UTILS_NAMESPACE_BEGIN
 
-inline const char *demangle_alloc(const char *name) noexcept;
-inline void demangle_free(const char *name) noexcept;
+LIBATFRAME_UTILS_API const char *demangle_alloc(const char *name) noexcept;
+LIBATFRAME_UTILS_API void demangle_free(const char *name) noexcept;
+LIBATFRAME_UTILS_API std::string demangle(const char *name);
 
 class scoped_demangled_name {
  private:
@@ -59,57 +49,14 @@ class scoped_demangled_name {
   UTIL_DESIGN_PATTERN_NOCOPYABLE(scoped_demangled_name)
 
  public:
-  explicit scoped_demangled_name(const char *name) noexcept : m_p(demangle_alloc(name)) {}
+  LIBATFRAME_UTILS_API explicit scoped_demangled_name(const char *name) noexcept;
 
-  ~scoped_demangled_name() noexcept {
-    if (nullptr != m_p) {
-      demangle_free(m_p);
-    }
-  }
+  LIBATFRAME_UTILS_API ~scoped_demangled_name() noexcept;
 
-  scoped_demangled_name(scoped_demangled_name &&other) : m_p(other.m_p) { other.m_p = nullptr; }
-  scoped_demangled_name &operator=(scoped_demangled_name &&other) {
-    const char *tmp = m_p;
-    m_p = other.m_p;
-    other.m_p = tmp;
-    return *this;
-  }
+  LIBATFRAME_UTILS_API scoped_demangled_name(scoped_demangled_name &&other) noexcept;
+  LIBATFRAME_UTILS_API scoped_demangled_name &operator=(scoped_demangled_name &&other) noexcept;
 
-  const char *get() const noexcept { return m_p; }
+  UTIL_FORCEINLINE const char *get() const noexcept { return m_p; }
 };
 
-#if defined(UTIL_COMMON_DEMANGLE_USING_CXX_ABI)
-
-inline const char *demangle_alloc(const char *name) noexcept {
-  if (nullptr == name) {
-    return nullptr;
-  }
-  int status = 0;
-  std::size_t size = 0;
-  return abi::__cxa_demangle(name, nullptr, &size, &status);
-}
-
-inline void demangle_free(const char *name) noexcept { std::free(const_cast<char *>(name)); }
-
-inline std::string demangle(const char *name) {
-  scoped_demangled_name demangled_name(name);
-  const char *p = demangled_name.get();
-  if (!p) {
-    p = name;
-  }
-  return p;
-}
-
-#else
-
-inline const char *demangle_alloc(const char *name) noexcept { return name; }
-inline void demangle_free(const char *) noexcept {}
-inline std::string demangle(const char *name) { return name; }
-
-#endif
-
 LIBATFRAME_UTILS_NAMESPACE_END
-
-#undef UTIL_COMMON_DEMANGLE_USING_CXX_ABI
-
-#endif  // #ifndef UTIL_COMMON_DEMANGLE_H

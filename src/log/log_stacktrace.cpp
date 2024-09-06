@@ -8,8 +8,10 @@
 #include <string>
 #include <vector>
 
+#include "design_pattern/singleton.h"
 #include "memory/lru_map.h"
 
+#include "common/demangle.h"
 #include "common/string_oprs.h"
 #include "log/log_wrapper.h"
 
@@ -152,6 +154,37 @@ class log_stacktrace_com_holder {
 
 LIBATFRAME_UTILS_NAMESPACE_BEGIN
 namespace log {
+
+class UTIL_SYMBOL_LOCAL stacktrace_symbol_impl : public stacktrace_symbol {
+ public:
+  stacktrace_symbol_impl(uintptr_t address, std::string demangle_name, std::string raw_name, std::string offset_hint,
+                         std::chrono::system_clock::time_point timeout) noexcept
+      : address_(address),
+        demangle_name_(std::move(demangle_name)),
+        raw_name_(std::move(raw_name)),
+        offset_hint_(std::move(offset_hint)),
+        timeout_(timeout) {}
+
+  ~stacktrace_symbol_impl() override {}
+
+  nostd::string_view get_demangle_name() const noexcept override { return demangle_name_; }
+
+  nostd::string_view get_raw_name() const noexcept override { return raw_name_; }
+
+  nostd::string_view get_offset_hint() const noexcept override { return offset_hint_; }
+
+  uintptr_t get_address() const noexcept override { return address_; }
+
+  std::chrono::system_clock::time_point get_timeout() const noexcept override { return timeout_; }
+
+ private:
+  uintptr_t address_;
+  std::string demangle_name_;
+  std::string raw_name_;
+  std::string offset_hint_;
+  std::chrono::system_clock::time_point timeout_;
+};
+
 namespace {
 
 struct UTIL_SYMBOL_LOCAL stacktrace_global_settings {
@@ -160,6 +193,12 @@ struct UTIL_SYMBOL_LOCAL stacktrace_global_settings {
   std::chrono::microseconds lru_cache_timeout =
       std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::seconds{14400});
   inline stacktrace_global_settings() noexcept {}
+};
+
+struct UTIL_SYMBOL_LOCAL stacktrace_global_manager
+    : public util::design_pattern::local_singleton<stacktrace_global_manager> {
+  std::mutex lock;
+  memory::lru_map<stacktrace_handle, stacktrace_symbol> stack_caches;
 };
 
 static const stacktrace_options &default_stacktrace_options() {
@@ -197,45 +236,202 @@ static UTIL_SANITIZER_NO_THREAD bool internal_get_clear_stacktrace_lru_cache() n
   return get_stacktrace_settings().need_clear;
 }
 
-#if defined(LOG_STACKTRACE_USING_LIBUNWIND) && LOG_STACKTRACE_USING_LIBUNWIND
-struct UTIL_SYMBOL_LOCAL stacktrace_symbol_group_t {
-  std::string demangle_name;
-  std::string func_name;
-  std::string func_offset;
+static std::shared_ptr<stacktrace_symbol> internal_find_stacktrace_symbol(const stacktrace_handle &handle) {
+  if (stacktrace_global_manager::is_instance_destroyed()) {
+    return nullptr;
+  }
 
-  std::chrono::system_clock::time_point timeout;
-};
+  std::lock_guard<std::mutex> lock_guard{stacktrace_global_manager::me()->lock};
+  auto &stack_caches = stacktrace_global_manager::me()->stack_caches;
 
-static stacktrace_symbol_group_t unw_mutable_symbol_from_cache(unw_word_t key, unw_cursor_t &unw_cur) {
-  static std::mutex lock;
-  static memory::lru_map<unw_word_t, stacktrace_symbol_group_t> stack_caches;
-
-  // First step: load from cache
-  {
-    std::lock_guard<std::mutex> lock_guard{lock};
-
-    if (internal_get_clear_stacktrace_lru_cache()) {
-      stack_caches.clear();
-      internal_set_clear_stacktrace_lru_cache(false);
-    } else {
-      std::chrono::system_clock::time_point now = std::chrono::system_clock::now();
-      while (!stack_caches.empty()) {
-        if (!stack_caches.front().second) {
-          stack_caches.pop_front();
-          continue;
-        }
-        if (now > stack_caches.front().second->timeout) {
-          stack_caches.pop_front();
-        } else {
-          break;
-        }
+  if (internal_get_clear_stacktrace_lru_cache()) {
+    stack_caches.clear();
+    internal_set_clear_stacktrace_lru_cache(false);
+  } else {
+    std::chrono::system_clock::time_point now = std::chrono::system_clock::now();
+    while (!stack_caches.empty()) {
+      if (!stack_caches.front().second) {
+        stack_caches.pop_front();
+        continue;
+      }
+      if (now > stack_caches.front().second->get_timeout()) {
+        stack_caches.pop_front();
+      } else {
+        break;
       }
     }
+  }
 
-    auto iter = stack_caches.find(key, false);
-    if (iter != stack_caches.end() && iter->second) {
-      return *iter->second;
+  auto iter = stack_caches.find(handle, false);
+  if (iter != stack_caches.end()) {
+    return iter->second;
+  }
+
+  return nullptr;
+}
+
+static void internal_replace_stacktrace_symbol(
+    gsl::span<std::pair<stacktrace_handle, std::shared_ptr<stacktrace_symbol>>> values) {
+  if (values.empty()) {
+    return;
+  }
+
+  if (stacktrace_global_manager::is_instance_destroyed()) {
+    return;
+  }
+
+  std::lock_guard<std::mutex> lock_guard{stacktrace_global_manager::me()->lock};
+  auto &stack_caches = stacktrace_global_manager::me()->stack_caches;
+
+  if (internal_get_clear_stacktrace_lru_cache()) {
+    stack_caches.clear();
+    internal_set_clear_stacktrace_lru_cache(false);
+  }
+
+  for (auto &val : values) {
+    if (val.first && val.second) {
+      stack_caches.insert_key_value(val.first, val.second);
     }
+  }
+
+  // Append into LRU cache
+  size_t lru_cache_size_limit = get_stacktrace_lru_cache_size();
+  while (stack_caches.size() > lru_cache_size_limit) {
+    stack_caches.pop_front();
+  }
+}
+}  // namespace
+
+#if LOG_STACKTRACE_USING_TRIVALLY_HANDLE
+LIBATFRAME_UTILS_API stacktrace_handle::stacktrace_handle(uintptr_t address) noexcept : address_(address) {}
+#else
+LIBATFRAME_UTILS_API stacktrace_handle::stacktrace_handle(const util::memory::strong_rc_ptr<impl_type> &impl) noexcept
+    : impl_(impl) {}
+
+LIBATFRAME_UTILS_API stacktrace_handle::stacktrace_handle(util::memory::strong_rc_ptr<impl_type> &&impl) noexcept
+    : impl_(std::move(impl)) {}
+#endif
+
+LIBATFRAME_UTILS_API stacktrace_handle::~stacktrace_handle() {}
+
+LIBATFRAME_UTILS_API stacktrace_handle::stacktrace_handle(const stacktrace_handle &other) noexcept
+    :
+#if LOG_STACKTRACE_USING_TRIVALLY_HANDLE
+      address_(other.address_)
+#else
+      impl_(other.impl_)
+#endif
+{
+}
+
+LIBATFRAME_UTILS_API stacktrace_handle::stacktrace_handle(stacktrace_handle &&other) noexcept
+    :
+#if LOG_STACKTRACE_USING_TRIVALLY_HANDLE
+      address_(other.address_)
+#else
+      impl_(std::move(other.impl_))
+#endif
+{
+}
+
+LIBATFRAME_UTILS_API stacktrace_handle &stacktrace_handle::operator=(const stacktrace_handle &other) noexcept {
+#if LOG_STACKTRACE_USING_TRIVALLY_HANDLE
+  address_ = other.address_;
+#else
+  impl_ = other.impl_;
+#endif
+
+  return *this;
+}
+
+LIBATFRAME_UTILS_API stacktrace_handle &stacktrace_handle::operator=(stacktrace_handle &&other) noexcept {
+#if LOG_STACKTRACE_USING_TRIVALLY_HANDLE
+  address_ = other.address_;
+  other.address_ = 0;
+#else
+  impl_ = std::move(other.impl_);
+#endif
+
+  return *this;
+}
+
+LIBATFRAME_UTILS_API stacktrace_handle::operator bool() const noexcept {
+#if LOG_STACKTRACE_USING_TRIVALLY_HANDLE
+  return 0 != address_;
+#else
+  return !!impl_;
+#endif
+}
+
+LIBATFRAME_UTILS_API void stacktrace_handle::swap(stacktrace_handle &other) noexcept {
+#if LOG_STACKTRACE_USING_TRIVALLY_HANDLE
+  std::swap(address_, other.address_);
+#else
+  impl_.swap(other.impl_);
+#endif
+}
+
+#if LOG_STACKTRACE_USING_TRIVALLY_HANDLE
+LIBATFRAME_UTILS_API size_t stacktrace_handle::hash_code() const noexcept { return std::hash<uintptr_t>()(address_); }
+
+LIBATFRAME_UTILS_API bool stacktrace_handle::operator==(const stacktrace_handle &other) const noexcept {
+  return address_ == other.address_;
+}
+
+LIBATFRAME_UTILS_API bool stacktrace_handle::operator<(const stacktrace_handle &other) const noexcept {
+  return address_ < other.address_;
+}
+#endif
+
+#if defined(LOG_STACKTRACE_USING_LIBUNWIND) && LOG_STACKTRACE_USING_LIBUNWIND
+struct stacktrace_handle::impl_type {
+  unw_word_t unw_word;
+  std::shared_ptr<stacktrace_symbol> symbol;
+};
+
+LIBATFRAME_UTILS_API size_t stacktrace_handle::hash_code() const noexcept {
+  if (!impl_) {
+    return 0;
+  }
+
+  return std::hash<unw_word_t>()(impl_->unw_word);
+}
+
+LIBATFRAME_UTILS_API bool stacktrace_handle::operator==(const stacktrace_handle &other) const noexcept {
+  if (impl_ == other.impl_) {
+    return true;
+  }
+
+  if (!impl_ != !other.impl_) {
+    return false;
+  }
+
+  return impl_->unw_word == other.impl_->unw_word;
+}
+
+LIBATFRAME_UTILS_API bool stacktrace_handle::operator<(const stacktrace_handle &other) const noexcept {
+  if (impl_ == other.impl_) {
+    return false;
+  }
+
+  if (!impl_ != !other.impl_) {
+    return !impl_;
+  }
+
+  return impl_->unw_word < other.impl_->unw_word;
+}
+#endif
+
+namespace {
+
+#if defined(LOG_STACKTRACE_USING_LIBUNWIND) && LOG_STACKTRACE_USING_LIBUNWIND
+static stacktrace_handle unw_mutable_symbol_from_cache(unw_word_t key, unw_cursor_t &unw_cur) {
+  auto handle_impl = util::memory::make_strong_rc<stacktrace_handle::impl_type>();
+  handle_impl->unw_word = key;
+  stacktrace_handle handle{handle_impl};
+  handle_impl->symbol = internal_find_stacktrace_symbol(handle);
+  if (handle_impl->symbol) {
+    return handle;
   }
 
   std::vector<char> func_name_cache;
@@ -244,44 +440,20 @@ static stacktrace_symbol_group_t unw_mutable_symbol_from_cache(unw_word_t key, u
 
   unw_get_proc_name(&unw_cur, &func_name_cache[0], func_name_cache.size() - 1, &unw_offset);
 
-  stacktrace_symbol_group_t result;
-  result.func_name = func_name_cache.data();
-  result.func_offset = util::log::format("+{:#x}", unw_offset);
-  result.timeout = std::chrono::system_clock::now() + internal_get_stacktrace_lru_cache_timeout();
+  auto symbol = std::make_shared<stacktrace_symbol_impl>(
+      static_cast<uintptr_t>(key), demangle(func_name_cache.data()), func_name_cache.data(),
+      util::log::format("+{:#x}", unw_offset),
+      std::chrono::system_clock::now() + internal_get_stacktrace_lru_cache_timeout());
+  handle_impl->symbol = std::static_pointer_cast<stacktrace_symbol>(symbol);
 
-#  if defined(USING_LIBSTDCXX_ABI) || defined(USING_LIBCXX_ABI)
-  int cxx_abi_status;
-  char *realfunc_name = abi::__cxa_demangle(&func_name_cache[0], 0, 0, &cxx_abi_status);
-  if (nullptr != realfunc_name) {
-    result.demangle_name = realfunc_name;
-    free(realfunc_name);
-  }
-#  endif
+  std::pair<stacktrace_handle, std::shared_ptr<stacktrace_symbol>> data[1] = {
+      std::pair<stacktrace_handle, std::shared_ptr<stacktrace_symbol>>{handle, handle_impl->symbol}};
+  internal_replace_stacktrace_symbol(gsl::make_span(data));
 
-  {
-    // Append into LRU cache
-    std::lock_guard<std::mutex> lock_guard{lock};
-    stack_caches.insert_key_value(key, result);
-
-    size_t lru_cache_size_limit = get_stacktrace_lru_cache_size();
-    while (stack_caches.size() > lru_cache_size_limit) {
-      stack_caches.pop_front();
-    }
-  }
-
-  return result;
+  return handle;
 }
 
 #elif defined(LOG_STACKTRACE_USING_EXECINFO) && LOG_STACKTRACE_USING_EXECINFO
-struct UTIL_SYMBOL_LOCAL stacktrace_symbol_group_t {
-  std::string module_name;
-  std::string demangle_name;
-  std::string func_name;
-  std::string func_offset;
-  std::string func_address;
-
-  std::chrono::system_clock::time_point timeout;
-};
 
 inline bool stacktrace_is_space_char(char c) noexcept { return ' ' == c || '\r' == c || '\t' == c || '\n' == c; }
 
@@ -359,15 +531,15 @@ static void stacktrace_fix_number(std::string &num) noexcept {
   num.resize(fixed_len);
 }
 
-static void stacktrace_pick_symbol_info(const char *name, stacktrace_symbol_group_t &out) {
-  out.module_name.clear();
-  out.func_name.clear();
-  out.func_offset.clear();
-  out.func_address.clear();
-
+static std::shared_ptr<stacktrace_symbol> stacktrace_create_symbol(const stacktrace_handle &handle, const char *name) {
   if (nullptr == name || 0 == *name) {
-    return;
+    return nullptr;
   }
+
+  std::string module_name;
+  std::string demangle_name;
+  std::string raw_name;
+  std::string offset_hint;
 
   name = stacktrace_skip_space(name);
   while (name) {
@@ -378,137 +550,158 @@ static void stacktrace_pick_symbol_info(const char *name, stacktrace_symbol_grou
     if (stacktrace_pick_ident(name, start, name, previous_c, clear_sym)) {
       if (stacktrace_is_number_char(*start)) {
         if (clear_sym) {
-          out.func_name.clear();
+          raw_name.clear();
         }
 
         if ('+' == previous_c) {
-          out.func_offset = "+";
-          out.func_offset.insert(out.func_offset.end(), start, name);
-          stacktrace_fix_number(out.func_offset);
-        } else {
-          out.func_address.assign(start, name);
-          stacktrace_fix_number(out.func_address);
+          offset_hint = "+";
+          offset_hint.insert(offset_hint.end(), start, name);
+          stacktrace_fix_number(offset_hint);
         }
       } else {
-        if (out.module_name.empty()) {
-          out.module_name.assign(start, name);
+        if (module_name.empty()) {
+          module_name.assign(start, name);
         } else {
-          out.func_name.assign(start, name);
+          raw_name.assign(start, name);
         }
       }
     } else {
       if (clear_sym) {
-        out.func_name.clear();
+        raw_name.clear();
       }
       break;
     }
 
     name = stacktrace_skip_space(name);
   }
+  if (raw_name.empty()) {
+    return nullptr;
+  }
+
+  auto symbol = std::make_shared<stacktrace_symbol_impl>(
+      handle.get_address(), demangle(raw_name.c_str()), raw_name, offset_hint,
+      std::chrono::system_clock::now() + internal_get_stacktrace_lru_cache_timeout());
+  return std::static_pointer_cast<stacktrace_symbol>(symbol);
 }
 
-void stacktrace_fill_symbol_info(void *const *stacks, size_t stack_size, std::vector<stacktrace_symbol_group_t> &out) {
-  if (stack_size <= 0) {
+static void stacktrace_fill_symbol_info(gsl::span<stacktrace_handle> stack_handles,
+                                        std::vector<std::shared_ptr<stacktrace_symbol>> &symbols) {
+  if (stack_handles.empty()) {
     return;
   }
-  out.reserve(stack_size);
-  out.resize(stack_size);
 
+  std::vector<std::pair<stacktrace_handle, std::shared_ptr<stacktrace_symbol>>> new_handle_pairs;
   std::vector<size_t> parse_symbols_idx;
   std::vector<void *> parse_symbols_ptr;
-  parse_symbols_idx.reserve((stack_size + 1) / 2);
-  parse_symbols_ptr.reserve((stack_size + 1) / 2);
+  parse_symbols_idx.reserve((stack_handles.size() + 1) / 2);
+  parse_symbols_ptr.reserve((stack_handles.size() + 1) / 2);
 
-  static std::mutex lock;
-  static memory::lru_map<void *, stacktrace_symbol_group_t> stack_caches;
-
-  // First step: load from cache
-  {
-    std::lock_guard<std::mutex> lock_guard{lock};
-
-    if (internal_get_clear_stacktrace_lru_cache()) {
-      stack_caches.clear();
-      internal_set_clear_stacktrace_lru_cache(false);
-    } else {
-      std::chrono::system_clock::time_point now = std::chrono::system_clock::now();
-      while (!stack_caches.empty()) {
-        if (!stack_caches.front().second) {
-          stack_caches.pop_front();
-          continue;
-        }
-        if (now > stack_caches.front().second->timeout) {
-          stack_caches.pop_front();
-        } else {
-          break;
-        }
-      }
+  for (auto &handle : stack_handles) {
+    std::shared_ptr<stacktrace_symbol> symbol = internal_find_stacktrace_symbol(handle);
+    if (!symbol) {
+      parse_symbols_idx.push_back(symbols.size());
+      parse_symbols_ptr.push_back(reinterpret_cast<void *>(handle.get_address()));
+      new_handle_pairs.push_back(std::pair<stacktrace_handle, std::shared_ptr<stacktrace_symbol>>{handle, nullptr});
     }
 
-    for (size_t i = 0; i < stack_size; ++i) {
-      auto iter = stack_caches.find(stacks[i], false);
-      if (iter != stack_caches.end() && iter->second) {
-        out[i] = *iter->second;
-        continue;
-      }
-
-      parse_symbols_idx.push_back(i);
-      parse_symbols_ptr.push_back(stacks[i]);
-    }
+    symbols.emplace_back(std::move(symbol));
   }
 
   // Second step: load from symbol
   if (!parse_symbols_ptr.empty()) {
     char **func_name_cache = backtrace_symbols(parse_symbols_ptr.data(), static_cast<int>(parse_symbols_ptr.size()));
-    for (size_t i = 0; nullptr != func_name_cache && i < parse_symbols_ptr.size() && i < parse_symbols_idx.size();
+    for (size_t i = 0; nullptr != func_name_cache && i < parse_symbols_ptr.size() && i < parse_symbols_idx.size() &&
+                       i < new_handle_pairs.size();
          ++i) {
-      stacktrace_symbol_group_t &out_symbol = out[parse_symbols_idx[i]];
-
-      if (func_name_cache[i] == nullptr) {
-        continue;
-      }
-
-      stacktrace_pick_symbol_info(func_name_cache[i], out_symbol);
-
-#  if defined(USING_LIBSTDCXX_ABI) || defined(USING_LIBCXX_ABI)
-      if (!out_symbol.func_name.empty()) {
-        int cxx_abi_status;
-        char *realfunc_name = abi::__cxa_demangle(out_symbol.func_name.c_str(), 0, 0, &cxx_abi_status);
-        if (nullptr != realfunc_name) {
-          out_symbol.demangle_name = realfunc_name;
-        }
-
-        if (nullptr != realfunc_name) {
-          free(realfunc_name);
-        }
-      }
-#  endif
-    }
-
-    if (nullptr != func_name_cache) {
-      ::free(func_name_cache);
-    }
-
-    // Append into LRU cache
-    std::lock_guard<std::mutex> lock_guard{lock};
-    for (size_t i = 0; i < parse_symbols_ptr.size() && i < parse_symbols_idx.size(); ++i) {
-      void *key = parse_symbols_ptr[i];
-      stacktrace_symbol_group_t &out_symbol = out[parse_symbols_idx[i]];
-      out_symbol.timeout = std::chrono::system_clock::now() + internal_get_stacktrace_lru_cache_timeout();
-      stack_caches.insert_key_value(key, out_symbol);
-    }
-
-    size_t lru_cache_size_limit = get_stacktrace_lru_cache_size();
-    while (stack_caches.size() > lru_cache_size_limit) {
-      stack_caches.pop_front();
+      symbols[parse_symbols_idx[i]] = stacktrace_create_symbol(new_handle_pairs[i].first, func_name_cache[i]);
+      new_handle_pairs[i].second = symbols[parse_symbols_idx[i]];
     }
   }
+
+  internal_replace_stacktrace_symbol(gsl::make_span(new_handle_pairs));
 }
 
-#elif (defined(LOG_STACKTRACE_USING_DBGHELP) && LOG_STACKTRACE_USING_DBGHELP)
+#elif defined(LOG_STACKTRACE_USING_UNWIND) && LOG_STACKTRACE_USING_UNWIND
+
+static void stacktrace_fill_symbol_info(gsl::span<stacktrace_handle> stack_handles,
+                                        std::vector<std::shared_ptr<stacktrace_symbol>> &symbols) {
+  if (stack_handles.empty()) {
+    return;
+  }
+
+  std::vector<std::pair<stacktrace_handle, std::shared_ptr<stacktrace_symbol>>> new_handle_pairs;
+  std::vector<size_t> parse_symbols_idx;
+  parse_symbols_idx.reserve((stack_handles.size() + 1) / 2);
+
+  for (auto &handle : stack_handles) {
+    std::shared_ptr<stacktrace_symbol> symbol = internal_find_stacktrace_symbol(handle);
+    if (!symbol) {
+      parse_symbols_idx.push_back(symbols.size());
+      new_handle_pairs.push_back(std::pair<stacktrace_handle, std::shared_ptr<stacktrace_symbol>>{handle, nullptr});
+    }
+
+    symbols.emplace_back(std::move(symbol));
+  }
+
+  // Second step: load from symbol
+  if (!new_handle_pairs.empty()) {
+    for (size_t i = 0; i < parse_symbols_idx.size() && i < new_handle_pairs.size(); ++i) {
+      std::string fake_name = util::log::format("{:#x}", new_handle_pairs[i].first.get_address());
+      std::shared_ptr<stacktrace_symbol> symbol =
+          std::static_pointer_cast<stacktrace_symbol>(std::make_shared<stacktrace_symbol_impl>(
+              new_handle_pairs[i].first.get_address(), fake_name, fake_name, "",
+              std::chrono::system_clock::now() + internal_get_stacktrace_lru_cache_timeout()));
+      symbols[parse_symbols_idx[i]] = symbol;
+      new_handle_pairs[i].second = symbol;
+    }
+  }
+
+  internal_replace_stacktrace_symbol(gsl::make_span(new_handle_pairs));
+}
+
+#elif (defined(LOG_STACKTRACE_USING_DBGHELP) && LOG_STACKTRACE_USING_DBGHELP) || \
+    (defined(LOG_STACKTRACE_USING_DBGENG) && LOG_STACKTRACE_USING_DBGENG)
+#  if !defined(_MSC_VER)
+static void stacktrace_fill_symbol_info(gsl::span<stacktrace_handle> stack_handles,
+                                        std::vector<std::shared_ptr<stacktrace_symbol>> &symbols) {
+  if (stack_handles.empty()) {
+    return;
+  }
+
+  std::vector<std::pair<stacktrace_handle, std::shared_ptr<stacktrace_symbol>>> new_handle_pairs;
+  std::vector<size_t> parse_symbols_idx;
+  parse_symbols_idx.reserve((stack_handles.size() + 1) / 2);
+
+  for (auto &handle : stack_handles) {
+    std::shared_ptr<stacktrace_symbol> symbol = internal_find_stacktrace_symbol(handle);
+    if (!symbol) {
+      parse_symbols_idx.push_back(symbols.size());
+      new_handle_pairs.push_back(std::pair<stacktrace_handle, std::shared_ptr<stacktrace_symbol>>{handle, nullptr});
+    }
+
+    symbols.emplace_back(std::move(symbol));
+  }
+
+  // Second step: load from symbol
+  if (!new_handle_pairs.empty()) {
+    for (size_t i = 0; i < parse_symbols_idx.size() && i < new_handle_pairs.size(); ++i) {
+      std::string fake_name = util::log::format("{:#x}", new_handle_pairs[i].first.get_address());
+      std::shared_ptr<stacktrace_symbol> symbol =
+          std::static_pointer_cast<stacktrace_symbol>(std::make_shared<stacktrace_symbol_impl>(
+              new_handle_pairs[i].first.get_address(), fake_name, fake_name, "",
+              std::chrono::system_clock::now() + internal_get_stacktrace_lru_cache_timeout()));
+      symbols[parse_symbols_idx[i]] = symbol;
+      new_handle_pairs[i].second = symbol;
+    }
+  }
+
+  internal_replace_stacktrace_symbol(gsl::make_span(new_handle_pairs));
+}
+#  elif (defined(LOG_STACKTRACE_USING_DBGHELP) && LOG_STACKTRACE_USING_DBGHELP)
 struct UTIL_SYMBOL_LOCAL stacktrace_symbol_group_t {
-  std::string address;
-  std::string func_name;
-  std::string func_offset;
+  std::string demangle_name;
+  std::string raw_name;
+  std::string offset_hint;
 
   std::chrono::system_clock::time_point timeout;
 };
@@ -522,42 +715,11 @@ struct UTIL_SYMBOL_LOCAL dbghelper_cache_key_hash {
 };
 
 static stacktrace_symbol_group_t dbghelper_mutable_symbol_from_cache(HANDLE process, PVOID stack) {
-  static std::mutex lock;
-  static memory::lru_map<std::pair<HANDLE, PVOID>, stacktrace_symbol_group_t, dbghelper_cache_key_hash> stack_caches;
-
   std::pair<HANDLE, PVOID> key{process, stack};
 
-  // First step: load from cache
-  {
-    std::lock_guard<std::mutex> lock_guard{lock};
-
-    if (internal_get_clear_stacktrace_lru_cache()) {
-      stack_caches.clear();
-      internal_set_clear_stacktrace_lru_cache(false);
-    } else {
-      std::chrono::system_clock::time_point now = std::chrono::system_clock::now();
-      while (!stack_caches.empty()) {
-        if (!stack_caches.front().second) {
-          stack_caches.pop_front();
-          continue;
-        }
-        if (now > stack_caches.front().second->timeout) {
-          stack_caches.pop_front();
-        } else {
-          break;
-        }
-      }
-    }
-
-    auto iter = stack_caches.find(key, false);
-    if (iter != stack_caches.end() && iter->second) {
-      return *iter->second;
-    }
-  }
-
-#  ifdef UNICODE
+#    ifdef UNICODE
   USES_CONVERSION;
-#  endif
+#    endif
 
   SYMBOL_INFO *symbol;
   DWORD64 displacement = 0;
@@ -569,30 +731,188 @@ static stacktrace_symbol_group_t dbghelper_mutable_symbol_from_cache(HANDLE proc
   symbol->SizeOfStruct = sizeof(SYMBOL_INFO);
 
   if (SymFromAddr(SymInitializeHelper::Inst().process, reinterpret_cast<ULONG64>(stack), &displacement, symbol)) {
-    result.func_name = LOG_STACKTRACE_VC_W2A(symbol->Name);
-    result.func_offset = util::log::format("+{:#x}", displacement);
-    result.address = util::log::format("{:#x}", symbol->Address);
+    result.raw_name = LOG_STACKTRACE_VC_W2A(symbol->Name);
+    result.offset_hint = util::log::format("+{:#x}", displacement);
+    result.demangle_name = demangle(result.raw_name.c_str());
   } else {
-    result.address = util::log::format("{}", reinterpret_cast<const void *>(stack));
+    result.raw_name = util::log::format("{}", reinterpret_cast<const void *>(stack));
+    result.demangle_name = demangle(result.raw_name.c_str());
   }
   free(symbol);
 
-  {
-    // Append into LRU cache
-    std::lock_guard<std::mutex> lock_guard{lock};
-    stack_caches.insert_key_value(key, result);
+  return result;
+}
 
-    size_t lru_cache_size_limit = get_stacktrace_lru_cache_size();
-    while (stack_caches.size() > lru_cache_size_limit) {
-      stack_caches.pop_front();
+static void stacktrace_fill_symbol_info(gsl::span<stacktrace_handle> stack_handles,
+                                        std::vector<std::shared_ptr<stacktrace_symbol>> &symbols) {
+  if (stack_handles.empty()) {
+    return;
+  }
+
+  std::vector<std::pair<stacktrace_handle, std::shared_ptr<stacktrace_symbol>>> new_handle_pairs;
+  std::vector<size_t> parse_symbols_idx;
+  parse_symbols_idx.reserve((stack_handles.size() + 1) / 2);
+
+  for (auto &handle : stack_handles) {
+    std::shared_ptr<stacktrace_symbol> symbol = internal_find_stacktrace_symbol(handle);
+    if (!symbol) {
+      parse_symbols_idx.push_back(symbols.size());
+      new_handle_pairs.push_back(std::pair<stacktrace_handle, std::shared_ptr<stacktrace_symbol>>{handle, nullptr});
+    }
+
+    symbols.emplace_back(std::move(symbol));
+  }
+
+  // Second step: load from symbol
+  if (!new_handle_pairs.empty()) {
+    for (size_t i = 0; i < parse_symbols_idx.size() && i < new_handle_pairs.size(); ++i) {
+      stacktrace_symbol_group_t symbol_group = dbghelper_mutable_symbol_from_cache(
+          SymInitializeHelper::Inst().process, reinterpret_cast<PVOID>(new_handle_pairs[i].first.get_address()));
+      std::shared_ptr<stacktrace_symbol> symbol =
+          std::static_pointer_cast<stacktrace_symbol>(std::make_shared<stacktrace_symbol_impl>(
+              new_handle_pairs[i].first.get_address(), symbol_group.raw_name, symbol_group.raw_name,
+              symbol_group.offset_hint,
+              std::chrono::system_clock::now() + internal_get_stacktrace_lru_cache_timeout()));
+      symbols[parse_symbols_idx[i]] = symbol;
+      new_handle_pairs[i].second = symbol;
     }
   }
 
-  return result;
+  internal_replace_stacktrace_symbol(gsl::make_span(new_handle_pairs));
 }
+
+#  else
+
+static void stacktrace_fill_symbol_info(gsl::span<stacktrace_handle> stack_handles,
+                                        std::vector<std::shared_ptr<stacktrace_symbol>> &symbols) {
+  if (stack_handles.empty()) {
+    return;
+  }
+
+  std::vector<std::pair<stacktrace_handle, std::shared_ptr<stacktrace_symbol>>> new_handle_pairs;
+  std::vector<size_t> parse_symbols_idx;
+  parse_symbols_idx.reserve((stack_handles.size() + 1) / 2);
+
+  for (auto &handle : stack_handles) {
+    std::shared_ptr<stacktrace_symbol> symbol = internal_find_stacktrace_symbol(handle);
+    if (!symbol) {
+      parse_symbols_idx.push_back(symbols.size());
+      new_handle_pairs.push_back(std::pair<stacktrace_handle, std::shared_ptr<stacktrace_symbol>>{handle, nullptr});
+    }
+
+    symbols.emplace_back(std::move(symbol));
+  }
+
+  if (new_handle_pairs.empty()) {
+    return;
+  }
+
+#    ifdef UNICODE
+  USES_CONVERSION;
+#    endif
+
+  log_stacktrace_com_holder<IDebugClient> dbg_cli;
+  log_stacktrace_com_holder<IDebugControl> dbg_ctrl;
+  log_stacktrace_com_holder<IDebugSymbols> dbg_sym;
+
+  const char *error_msg = nullptr;
+  do {
+    if (S_OK != ::DebugCreate(__uuidof(IDebugClient), dbg_cli.to_pvoid_ptr())) {
+      error_msg = "DebugCreate(IDebugClient) failed";
+      break;
+    }
+
+    if (S_OK != dbg_cli->QueryInterface(__uuidof(IDebugControl), dbg_ctrl.to_pvoid_ptr())) {
+      error_msg = "IDebugClient.QueryInterface(IDebugControl) failed";
+      break;
+    }
+
+    if (S_OK != dbg_cli->AttachProcess(0, ::GetCurrentProcessId(),
+                                       DEBUG_ATTACH_NONINVASIVE | DEBUG_ATTACH_NONINVASIVE_NO_SUSPEND)) {
+      error_msg = "IDebugClient.AttachProcess(GetCurrentProcessId()) failed";
+      break;
+    }
+
+    if (S_OK != dbg_ctrl->WaitForEvent(DEBUG_WAIT_DEFAULT, INFINITE)) {
+      error_msg = "IDebugClient.WaitForEvent(DEBUG_WAIT_DEFAULT) failed";
+      break;
+    }
+
+    // No cheking: QueryInterface sets the output parameter to nullptr in case of error.
+    dbg_cli->QueryInterface(__uuidof(IDebugSymbols), dbg_sym.to_pvoid_ptr());
+
+    if (!dbg_sym.is_inited()) {
+      error_msg = "IDebugClient.QueryInterface(IDebugSymbols) failed";
+    }
+  } while (false);
+
+  if (nullptr != error_msg) {
+    std::shared_ptr<stacktrace_symbol> symbol =
+        std::static_pointer_cast<stacktrace_symbol>(std::make_shared<stacktrace_symbol_impl>(
+            0, error_msg, error_msg, "",
+            std::chrono::system_clock::now() + internal_get_stacktrace_lru_cache_timeout()));
+    symbols.emplace_back(std::move(symbol));
+    return;
+  }
+
+  // Second step: load from symbol
+  if (!new_handle_pairs.empty()) {
+    bool try_read_sym = true;
+    for (size_t i = 0; i < parse_symbols_idx.size() && i < new_handle_pairs.size(); ++i) {
+      const ULONG64 offset = static_cast<ULONG64>(new_handle_pairs[i].first.get_address());
+
+      std::string raw_symbol_name;
+      if (try_read_sym) {
+        // 先尝试用栈上的缓冲区
+        TCHAR raw_name_buffer[4000] = {0};
+        ULONG size = 0;
+        bool res_get_name =
+            (S_OK == dbg_sym->GetNameByOffset(offset, raw_name_buffer,
+                                              (ULONG)(sizeof(raw_name_buffer) / sizeof(raw_name_buffer[0])), &size, 0));
+        if (!res_get_name && size != 0) {  // 栈上的缓冲区不够再用堆内存
+          std::string result;
+          result.resize((size + 1) * sizeof(raw_name_buffer[0]));
+          res_get_name =
+              (S_OK == dbg_sym->GetNameByOffset(offset, (PSTR)&result[0],
+                                                (ULONG)(result.size() / sizeof(raw_name_buffer[0])), &size, 0));
+
+          if (res_get_name) {
+            raw_symbol_name = LOG_STACKTRACE_VC_W2A(result.c_str());
+          }
+        } else if (res_get_name) {
+          raw_symbol_name = LOG_STACKTRACE_VC_W2A(raw_name_buffer);
+        }
+
+        if (!res_get_name) {
+          try_read_sym = false;
+        }
+      }
+
+      // 读不到符号，就只写出地址
+      if (!try_read_sym) {
+        raw_symbol_name = util::log::format("{:#x}", offset);
+      }
+
+      std::shared_ptr<stacktrace_symbol> symbol =
+          std::static_pointer_cast<stacktrace_symbol>(std::make_shared<stacktrace_symbol_impl>(
+              new_handle_pairs[i].first.get_address(), demangle(raw_symbol_name.c_str()), raw_symbol_name, "",
+              std::chrono::system_clock::now() + internal_get_stacktrace_lru_cache_timeout()));
+      symbols[parse_symbols_idx[i]] = symbol;
+      new_handle_pairs[i].second = symbol;
+    }
+  }
+
+  internal_replace_stacktrace_symbol(gsl::make_span(new_handle_pairs));
+}
+
+#  endif
 #endif
 
 }  // namespace
+
+LIBATFRAME_UTILS_API stacktrace_symbol::stacktrace_symbol() {}
+
+LIBATFRAME_UTILS_API stacktrace_symbol::~stacktrace_symbol() {}
 
 LIBATFRAME_UTILS_API bool is_stacktrace_enabled() noexcept {
 #if defined(LOG_STACKTRACE_USING_LIBUNWIND) && LOG_STACKTRACE_USING_LIBUNWIND
@@ -629,11 +949,9 @@ LIBATFRAME_UTILS_API std::chrono::microseconds get_stacktrace_lru_cache_timeout(
 LIBATFRAME_UTILS_API void clear_stacktrace_lru_cache() noexcept { internal_set_clear_stacktrace_lru_cache(true); }
 
 #if defined(LOG_STACKTRACE_USING_LIBUNWIND) && LOG_STACKTRACE_USING_LIBUNWIND
-LIBATFRAME_UTILS_API size_t stacktrace_write(char *buf, size_t bufsz, const stacktrace_options *options) {
-  if (nullptr == buf || bufsz <= 0) {
-    return 0;
-  }
 
+LIBATFRAME_UTILS_API void stacktrace_get_context(std::vector<stacktrace_handle> &stack_handles,
+                                                 const stacktrace_options *options) noexcept {
   if (nullptr == options) {
     options = &default_stacktrace_options();
   }
@@ -664,8 +982,7 @@ LIBATFRAME_UTILS_API size_t stacktrace_write(char *buf, size_t bufsz, const stac
     }
   }
 
-  size_t ret = 0;
-  do {
+  while (true) {
     if (frames_count <= 0) {
       break;
     }
@@ -680,20 +997,10 @@ LIBATFRAME_UTILS_API size_t stacktrace_write(char *buf, size_t bufsz, const stac
       if (0 == unw_proc.start_ip) {
         break;
       }
-      stacktrace_symbol_group_t stack_symbol = unw_mutable_symbol_from_cache(unw_proc.start_ip, unw_cur);
-
-      auto res = util::log::format_to_n(
-          buf, bufsz, "Frame #{:#02}: ({}{}) [{:#x}]\r\n", frame_id,
-          stack_symbol.demangle_name.empty() ? stack_symbol.func_name : stack_symbol.demangle_name,
-          stack_symbol.func_offset, unw_proc.start_ip);
-
-      if (res.size <= 0) {
-        break;
+      stacktrace_handle handle = unw_mutable_symbol_from_cache(unw_proc.start_ip, unw_cur);
+      if (handle) {
+        stack_handles.emplace_back(std::move(handle));
       }
-
-      ret += res.size;
-      buf += res.size;
-      bufsz -= res.size;
     }
 
     if (unw_step(&unw_cur) <= 0) {
@@ -705,22 +1012,27 @@ LIBATFRAME_UTILS_API size_t stacktrace_write(char *buf, size_t bufsz, const stac
     } else {
       ++frame_id;
     }
-  } while (true);
+  }
+}
 
-  return ret;
+LIBATFRAME_UTILS_API void stacktrace_parse_symbols(gsl::span<stacktrace_handle> stack_handles,
+                                                   std::vector<std::shared_ptr<stacktrace_symbol>> &symbols) noexcept {
+  symbols.reserve(symbols.size() + stack_handles.size());
+  for (auto &handle : stack_handles) {
+    if (handle.get_internal_impl() && handle.get_internal_impl()->symbol) {
+      symbols.push_back(handle.get_internal_impl()->symbol);
+    }
+  }
 }
 
 #elif defined(LOG_STACKTRACE_USING_EXECINFO) && LOG_STACKTRACE_USING_EXECINFO
-LIBATFRAME_UTILS_API size_t stacktrace_write(char *buf, size_t bufsz, const stacktrace_options *options) {
-  if (nullptr == buf || bufsz <= 0) {
-    return 0;
-  }
 
+LIBATFRAME_UTILS_API void stacktrace_get_context(std::vector<stacktrace_handle> &stack_handles,
+                                                 const stacktrace_options *options) noexcept {
   if (nullptr == options) {
     options = &default_stacktrace_options();
   }
 
-  size_t ret = 0;
   void *stacks[LOG_STACKTRACE_MAX_STACKS_ARRAY_SIZE] = {nullptr};
   size_t frames_count = static_cast<size_t>(backtrace(stacks, LOG_STACKTRACE_MAX_STACKS_ARRAY_SIZE));
   size_t skip_frames = 1 + static_cast<size_t>(options->skip_start_frames);
@@ -731,12 +1043,9 @@ LIBATFRAME_UTILS_API size_t stacktrace_write(char *buf, size_t bufsz, const stac
     frames_count -= options->skip_end_frames;
   }
 
-  std::vector<stacktrace_symbol_group_t> frame_symbols;
-  stacktrace_fill_symbol_info(stacks + skip_frames, frames_count - skip_frames, frame_symbols);
-
   for (size_t i = skip_frames; i < frames_count; i++) {
-    int frame_id = static_cast<int>(i - skip_frames);
-    if (0 != options->max_frames && frame_id >= static_cast<int>(options->max_frames)) {
+    size_t frame_id = i - skip_frames;
+    if (0 != options->max_frames && frame_id >= options->max_frames) {
       break;
     }
 
@@ -744,26 +1053,14 @@ LIBATFRAME_UTILS_API size_t stacktrace_write(char *buf, size_t bufsz, const stac
       break;
     }
 
-    util::log::format_to_n_result<char *> res;
-    if (i - skip_frames < frame_symbols.size()) {
-      stacktrace_symbol_group_t &symbol = frame_symbols[i - skip_frames];
-      res = util::log::format_to_n(buf, bufsz, "Frame #{:#02}: ({}{}) [{}]\r\n", frame_id,
-                                   symbol.demangle_name.empty() ? symbol.func_name : symbol.demangle_name,
-                                   symbol.func_offset, symbol.func_address);
-    } else {
-      res = util::log::format_to_n(buf, bufsz, "Frame #{:#02}: [{}]\r\n", frame_id, stacks[i]);
-    }
-
-    if (res.size <= 0) {
-      break;
-    }
-
-    ret += res.size;
-    buf += res.size;
-    bufsz -= res.size;
+    stack_handles.emplace_back(stacktrace_handle{reinterpret_cast<uintptr_t>(stacks[i])});
   }
+}
 
-  return ret;
+LIBATFRAME_UTILS_API void stacktrace_parse_symbols(gsl::span<stacktrace_handle> stack_handles,
+                                                   std::vector<std::shared_ptr<stacktrace_symbol>> &symbols) noexcept {
+  symbols.reserve(symbols.size() + stack_handles.size());
+  stacktrace_fill_symbol_info(stack_handles, symbols);
 }
 
 #elif defined(LOG_STACKTRACE_USING_UNWIND) && LOG_STACKTRACE_USING_UNWIND
@@ -792,16 +1089,11 @@ static _Unwind_Reason_Code stacktrace_unwind_callback(::_Unwind_Context *context
   return ::_URC_NO_REASON;
 }
 
-LIBATFRAME_UTILS_API size_t stacktrace_write(char *buf, size_t bufsz, const stacktrace_options *options) {
-  if (nullptr == buf || bufsz <= 0) {
-    return 0;
-  }
-
+LIBATFRAME_UTILS_API void stacktrace_get_context(std::vector<stacktrace_handle> &stack_handles,
+                                                 const stacktrace_options *options) noexcept {
   if (nullptr == options) {
     options = &default_stacktrace_options();
   }
-
-  size_t ret = 0;
 
   _Unwind_Word stacks[LOG_STACKTRACE_MAX_STACKS_ARRAY_SIZE];
   stacktrace_unwind_state_t state;
@@ -810,7 +1102,7 @@ LIBATFRAME_UTILS_API size_t stacktrace_write(char *buf, size_t bufsz, const stac
   state.end = stacks + LOG_STACKTRACE_MAX_STACKS_ARRAY_SIZE;
 
   ::_Unwind_Backtrace(&stacktrace_unwind_callback, &state);
-  size_t frames_count = state.current - &stacks[0];
+  size_t frames_count = static_cast<size_t>(state.current - &stacks[0]);
   size_t skip_frames = 1 + static_cast<size_t>(options->skip_start_frames);
 
   if (frames_count <= skip_frames + options->skip_end_frames) {
@@ -830,28 +1122,21 @@ LIBATFRAME_UTILS_API size_t stacktrace_write(char *buf, size_t bufsz, const stac
       break;
     }
 
-    int res = UTIL_STRFUNC_SNPRINTF(buf, bufsz, "Frame #%02d: () [0x%llx]\r\n", frame_id,
-                                    static_cast<unsigned long long>(stacks[i]));
-
-    if (res <= 0) {
-      break;
-    }
-
-    ret += static_cast<size_t>(res);
-    buf += res;
-    bufsz -= static_cast<size_t>(res);
+    stack_handles.emplace_back(stacktrace_handle{stacks[i]});
   }
+}
 
-  return ret;
+LIBATFRAME_UTILS_API void stacktrace_parse_symbols(gsl::span<stacktrace_handle> stack_handles,
+                                                   std::vector<std::shared_ptr<stacktrace_symbol>> &symbols) noexcept {
+  symbols.reserve(symbols.size() + stack_handles.size());
+  stacktrace_fill_symbol_info(stack_handles, symbols);
 }
 
 #elif (defined(LOG_STACKTRACE_USING_DBGHELP) && LOG_STACKTRACE_USING_DBGHELP) || \
     (defined(LOG_STACKTRACE_USING_DBGENG) && LOG_STACKTRACE_USING_DBGENG)
-LIBATFRAME_UTILS_API size_t stacktrace_write(char *buf, size_t bufsz, const stacktrace_options *options) {
-  if (nullptr == buf || bufsz <= 0) {
-    return 0;
-  }
 
+LIBATFRAME_UTILS_API void stacktrace_get_context(std::vector<stacktrace_handle> &stack_handles,
+                                                 const stacktrace_options *options) noexcept {
   if (nullptr == options) {
     options = &default_stacktrace_options();
   }
@@ -859,7 +1144,6 @@ LIBATFRAME_UTILS_API size_t stacktrace_write(char *buf, size_t bufsz, const stac
   PVOID stacks[LOG_STACKTRACE_MAX_STACKS_ARRAY_SIZE];
   USHORT frames_count = CaptureStackBackTrace(0, LOG_STACKTRACE_MAX_STACKS_ARRAY_SIZE, stacks, nullptr);
 
-  size_t ret = 0;
   USHORT skip_frames = 1 + static_cast<USHORT>(options->skip_start_frames);
 
   if (frames_count <= skip_frames + static_cast<USHORT>(options->skip_end_frames)) {
@@ -868,11 +1152,10 @@ LIBATFRAME_UTILS_API size_t stacktrace_write(char *buf, size_t bufsz, const stac
     frames_count -= static_cast<USHORT>(options->skip_end_frames);
   }
 
-#  if !defined(_MSC_VER)
   for (USHORT i = skip_frames; i < frames_count; ++i) {
-    int frame_id = static_cast<int>(i - skip_frames);
+    USHORT frame_id = i - skip_frames;
 
-    if (0 != options->max_frames && frame_id >= static_cast<int>(options->max_frames)) {
+    if (0 != options->max_frames && frame_id >= static_cast<USHORT>(options->max_frames)) {
       break;
     }
 
@@ -880,40 +1163,76 @@ LIBATFRAME_UTILS_API size_t stacktrace_write(char *buf, size_t bufsz, const stac
       break;
     }
 
-    int res = UTIL_STRFUNC_SNPRINTF(buf, bufsz, "Frame #%02d: () [0x%llx]\r\n", frame_id,
-                                    reinterpret_cast<unsigned long long>(stacks[i]));
+    stack_handles.emplace_back(stacktrace_handle{reinterpret_cast<uintptr_t>(stacks[i])});
+  }
+}
 
-    if (res <= 0) {
-      break;
-    }
+LIBATFRAME_UTILS_API void stacktrace_parse_symbols(gsl::span<stacktrace_handle> stack_handles,
+                                                   std::vector<std::shared_ptr<stacktrace_symbol>> &symbols) noexcept {
+  symbols.reserve(symbols.size() + stack_handles.size());
+  stacktrace_fill_symbol_info(stack_handles, symbols);
+}
+#else
+LIBATFRAME_UTILS_API void stacktrace_get_context(std::vector<stacktrace_handle> &,
+                                                 const stacktrace_options *) noexcept {}
 
-    ret += static_cast<size_t>(res);
-    buf += res;
-    bufsz -= static_cast<size_t>(res);
+LIBATFRAME_UTILS_API void stacktrace_parse_symbols(gsl::span<stacktrace_handle> stack_handles,
+                                                   std::vector<std::shared_ptr<stacktrace_symbol>> &symbols) noexcept {
+  if (stack_handles.empty()) {
+    return;
   }
 
-#  elif (defined(LOG_STACKTRACE_USING_DBGHELP) && LOG_STACKTRACE_USING_DBGHELP)
-  for (USHORT i = skip_frames; i < frames_count; ++i) {
-    int frame_id = static_cast<int>(i - skip_frames);
+  std::shared_ptr<stacktrace_symbol> symbol = internal_find_stacktrace_symbol(stacktrace_handle{0});
+  if (!symbol) {
+    symbol = std::static_pointer_cast<stacktrace_symbol>(std::make_shared<stacktrace_symbol_impl>(
+        0, "stacktrace disabled.", "stacktrace disabled.", "",
+        std::chrono::system_clock::now() + internal_get_stacktrace_lru_cache_timeout()));
+    std::pair<stacktrace_handle, std::shared_ptr<stacktrace_symbol>> new_handle_pairs{stacktrace_handle{0}, symbol};
+    internal_replace_stacktrace_symbol(gsl::make_span(new_handle_pairs));
+  }
 
-    if (0 != options->max_frames && frame_id >= static_cast<int>(options->max_frames)) {
-      break;
+  symbols.push_back(symbol);
+}
+#endif
+
+LIBATFRAME_UTILS_API std::shared_ptr<stacktrace_symbol> stacktrace_find_symbol(
+    stacktrace_handle stack_handle) noexcept {
+  auto ret = internal_find_stacktrace_symbol(stack_handle);
+  if (ret) {
+    return ret;
+  }
+
+  std::vector<std::shared_ptr<stacktrace_symbol>> out;
+  stacktrace_parse_symbols(gsl::span<stacktrace_handle>{&stack_handle, 1}, out);
+  if (!out.empty()) {
+    return *out.begin();
+  }
+
+  return nullptr;
+}
+
+LIBATFRAME_UTILS_API size_t stacktrace_write(char *buf, size_t bufsz, const stacktrace_options *options) {
+  if (nullptr == buf || bufsz <= 0) {
+    return 0;
+  }
+
+  std::vector<stacktrace_handle> stack_handles;
+  stack_handles.reserve(64);
+
+  stacktrace_get_context(stack_handles, options);
+  std::vector<std::shared_ptr<stacktrace_symbol>> symbols;
+  stacktrace_parse_symbols(gsl::make_span(stack_handles), symbols);
+
+  int frame_id = 0;
+  size_t ret = 0;
+  for (auto &symbol : symbols) {
+    if (!symbol) {
+      ++frame_id;
+      continue;
     }
 
-    if (nullptr == stacks[i]) {
-      break;
-    }
-
-    util::log::format_to_n_result<char *> res;
-    stacktrace_symbol_group_t symbol_info =
-        dbghelper_mutable_symbol_from_cache(SymInitializeHelper::Inst().process, stacks[i]);
-
-    if (!symbol_info.func_name.empty()) {
-      res = util::log::format_to_n(buf, bufsz, "Frame #{:#02}: ({}{}) [{}]\r\n", frame_id, symbol_info.func_name,
-                                   symbol_info.func_offset, symbol_info.address);
-    } else {
-      res = util::log::format_to_n(buf, bufsz, "Frame #{:#02}: () [{}]\r\n", frame_id, symbol_info.address);
-    }
+    auto res = util::log::format_to_n(buf, bufsz, "Frame #{:#03}: ({}{}) [{:#x}]\r\n", frame_id,
+                                      symbol->get_demangle_name(), symbol->get_offset_hint(), symbol->get_address());
 
     if (res.size <= 0) {
       break;
@@ -922,124 +1241,12 @@ LIBATFRAME_UTILS_API size_t stacktrace_write(char *buf, size_t bufsz, const stac
     ret += res.size;
     buf += res.size;
     bufsz -= res.size;
+
+    ++frame_id;
   }
-#  else
-#    ifdef UNICODE
-  USES_CONVERSION;
-#    endif
 
-  log_stacktrace_com_holder<IDebugClient> dbg_cli;
-  log_stacktrace_com_holder<IDebugControl> dbg_ctrl;
-  log_stacktrace_com_holder<IDebugSymbols> dbg_sym;
-  const char *error_msg = nullptr;
-  do {
-    if (S_OK != ::DebugCreate(__uuidof(IDebugClient), dbg_cli.to_pvoid_ptr())) {
-      error_msg = "DebugCreate(IDebugClient) failed";
-      break;
-    }
-
-    if (S_OK != dbg_cli->QueryInterface(__uuidof(IDebugControl), dbg_ctrl.to_pvoid_ptr())) {
-      error_msg = "IDebugClient.QueryInterface(IDebugControl) failed";
-      break;
-    }
-
-    if (S_OK != dbg_cli->AttachProcess(0, ::GetCurrentProcessId(),
-                                       DEBUG_ATTACH_NONINVASIVE | DEBUG_ATTACH_NONINVASIVE_NO_SUSPEND)) {
-      error_msg = "IDebugClient.AttachProcess(GetCurrentProcessId()) failed";
-      break;
-    }
-
-    if (S_OK != dbg_ctrl->WaitForEvent(DEBUG_WAIT_DEFAULT, INFINITE)) {
-      error_msg = "IDebugClient.WaitForEvent(DEBUG_WAIT_DEFAULT) failed";
-      break;
-    }
-
-    // No cheking: QueryInterface sets the output parameter to nullptr in case of error.
-    dbg_cli->QueryInterface(__uuidof(IDebugSymbols), dbg_sym.to_pvoid_ptr());
-
-    bool try_read_sym = true;
-    for (USHORT i = skip_frames; i < frames_count; ++i) {
-      int frame_id = static_cast<int>(i - skip_frames);
-      if (0 != options->max_frames && frame_id >= static_cast<int>(options->max_frames)) {
-        break;
-      }
-
-      if (nullptr == stacks[i]) {
-        break;
-      }
-      const ULONG64 offset = reinterpret_cast<ULONG64>(stacks[i]);
-
-      int res = 0;
-      if (try_read_sym) {
-        if (!dbg_sym.is_inited()) {
-          error_msg = "IDebugClient.QueryInterface(IDebugSymbols) failed";
-          break;
-        }
-
-        // 先尝试用栈上的缓冲区
-        TCHAR func_name[256] = {0};
-        ULONG size = 0;
-        bool res_get_name =
-            (S_OK ==
-             dbg_sym->GetNameByOffset(offset, func_name, (ULONG)(sizeof(func_name) / sizeof(func_name[0])), &size, 0));
-        if (!res_get_name && size != 0) {  // 栈上的缓冲区不够再用堆内存
-          std::string result;
-          result.resize((size + 1) * sizeof(func_name[0]));
-          res_get_name = (S_OK == dbg_sym->GetNameByOffset(offset, (PSTR)&result[0],
-                                                           (ULONG)(result.size() / sizeof(func_name[0])), &size, 0));
-
-          if (res_get_name) {
-            res = UTIL_STRFUNC_SNPRINTF(buf, bufsz, "Frame #%02d: (%s) [0x%llx]\r\n", frame_id,
-                                        LOG_STACKTRACE_VC_W2A(result.c_str()), static_cast<unsigned long long>(offset));
-          }
-        } else if (res_get_name) {
-          res = UTIL_STRFUNC_SNPRINTF(buf, bufsz, "Frame #%02d: (%s) [0x%llx]\r\n", frame_id,
-                                      LOG_STACKTRACE_VC_W2A(func_name), static_cast<unsigned long long>(offset));
-        }
-
-        if (!res_get_name) {
-          try_read_sym = false;
-        }
-      }
-
-      // 读不到符号，就只写出地址
-      if (!try_read_sym) {
-        res = UTIL_STRFUNC_SNPRINTF(buf, bufsz, "Frame #%02d: () [0x%llx]\r\n", frame_id,
-                                    static_cast<unsigned long long>(offset));
-      }
-
-      if (res <= 0) {
-        break;
-      }
-
-      ret += static_cast<size_t>(res);
-      buf += res;
-      bufsz -= static_cast<size_t>(res);
-    }
-  } while (false);
-
-  // append error msg
-  if (error_msg != nullptr) {
-    size_t error_msg_len = strlen(error_msg);
-    if (nullptr != buf && bufsz > error_msg_len) {
-      memcpy(buf, error_msg, error_msg_len + 1);
-      ret += error_msg_len;
-    }
-  }
-#  endif
   return ret;
 }
-#else
-LIBATFRAME_UTILS_API size_t stacktrace_write(char *buf, size_t bufsz, const stacktrace_options *) {
-  const char *msg = "stacktrace disabled.";
-  if (nullptr == buf || bufsz <= strlen(msg)) {
-    return 0;
-  }
 
-  size_t ret = strlen(msg);
-  memcpy(buf, msg, ret + 1);
-  return ret;
-}
-#endif
 }  // namespace log
 LIBATFRAME_UTILS_NAMESPACE_END
