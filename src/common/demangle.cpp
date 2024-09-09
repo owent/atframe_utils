@@ -32,7 +32,7 @@ LIBATFRAME_UTILS_API scoped_demangled_name &scoped_demangled_name::operator=(sco
   return *this;
 }
 
-#if !defined(UTIL_COMMON_DEMANGLE_USING_CXX_ABI) && !defined(LIBATFRAME_UTILS_DEMANGLE_USING_WINDOWS)
+#if !defined(LIBATFRAME_UTILS_DEMANGLE_USING_CXX_ABI) && !defined(LIBATFRAME_UTILS_DEMANGLE_USING_WINDOWS)
 LIBATFRAME_UTILS_API const char *demangle_alloc(const char *name) noexcept { return name; }
 LIBATFRAME_UTILS_API void demangle_free(const char *) noexcept {}
 LIBATFRAME_UTILS_API std::string demangle(const char *name) { return name; }
