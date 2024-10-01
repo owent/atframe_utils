@@ -287,9 +287,10 @@ CASE_TEST(wal_object, load_and_dump_mt) {
   test_wal_object_log_storage_type load_storege;
   LIBATFRAME_UTILS_NAMESPACE_ID::distributed_system::wal_time_point now = std::chrono::system_clock::now();
   load_storege.global_ignore = 123;
-  load_storege.logs.push_back(test_wal_object_log_type{now, 124, test_wal_object_log_action::kDoNothing, 124});
-  load_storege.logs.push_back(test_wal_object_log_type{now, 125, test_wal_object_log_action::kFallbackDefault, 125});
-  load_storege.logs.push_back(test_wal_object_log_type{now, 126, test_wal_object_log_action::kRecursivePushBack, 126});
+  load_storege.logs.push_back(test_wal_object_log_type{now, 124, test_wal_object_log_action::kDoNothing, 124, 0});
+  load_storege.logs.push_back(test_wal_object_log_type{now, 125, test_wal_object_log_action::kFallbackDefault, 125, 0});
+  load_storege.logs.push_back(
+      test_wal_object_log_type{now, 126, test_wal_object_log_action::kRecursivePushBack, 126, 0});
 
   test_wal_object_log_storage_type storage;
   test_wal_object_context ctx;
@@ -993,9 +994,10 @@ CASE_TEST(wal_object, load_and_dump_st) {
   test_wal_object_log_storage_type load_storege;
   LIBATFRAME_UTILS_NAMESPACE_ID::distributed_system::wal_time_point now = std::chrono::system_clock::now();
   load_storege.global_ignore = 123;
-  load_storege.logs.push_back(test_wal_object_log_type{now, 124, test_wal_object_log_action::kDoNothing, 124});
-  load_storege.logs.push_back(test_wal_object_log_type{now, 125, test_wal_object_log_action::kFallbackDefault, 125});
-  load_storege.logs.push_back(test_wal_object_log_type{now, 126, test_wal_object_log_action::kRecursivePushBack, 126});
+  load_storege.logs.push_back(test_wal_object_log_type{now, 124, test_wal_object_log_action::kDoNothing, 124, 0});
+  load_storege.logs.push_back(test_wal_object_log_type{now, 125, test_wal_object_log_action::kFallbackDefault, 125, 0});
+  load_storege.logs.push_back(
+      test_wal_object_log_type{now, 126, test_wal_object_log_action::kRecursivePushBack, 126, 0});
 
   test_wal_object_log_storage_type storage;
   test_wal_object_context ctx;
