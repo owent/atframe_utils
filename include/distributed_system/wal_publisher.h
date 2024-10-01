@@ -14,6 +14,8 @@
 #include <unordered_map>
 #include <utility>
 
+#include "gsl/select-gsl.h"
+
 #include "distributed_system/wal_common_defs.h"
 #include "distributed_system/wal_object.h"
 #include "distributed_system/wal_subscriber.h"
@@ -28,6 +30,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_publisher {
   using object_type = wal_object<StorageT, LogOperatorT, CallbackParamT, PrivateDataT>;
   using subscriber_type = WalSubscriber;
 
+  using hash_code_type = typename object_type::hash_code_type;
   using storage_type = typename object_type::storage_type;
   using log_type = typename log_operator_type::log_type;
   using log_pointer = typename log_operator_type::log_pointer;
@@ -90,8 +93,8 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_publisher {
       std::function<bool(wal_publisher&, const subscriber_pointer&, callback_param_type)>;
 
   // Check if need send backup snapshot
-  using callback_subscriber_force_sync_snapshot_fn_t =
-      std::function<bool(wal_publisher&, const subscriber_pointer&, callback_param_type)>;
+  using callback_subscriber_force_sync_snapshot_fn_t = std::function<bool(
+      wal_publisher&, const subscriber_pointer&, log_key_type, const hash_code_type*, callback_param_type)>;
 
   // On subscriber request
   using callback_on_subscriber_request_fn_t =
@@ -354,7 +357,30 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_publisher {
         vtable_->on_subscriber_added(*this, subscriber, param);
       }
 
-      _receive_subscribe_request(key, last_checkpoint, now, param, false);
+      _receive_subscribe_request(key, last_checkpoint, nullptr, now, param, false);
+    }
+
+    return subscriber;
+  }
+
+  template <class... ArgsT>
+  subscriber_pointer create_subscriber(const subscriber_key_type& key, const time_point& now,
+                                       std::pair<log_key_type, hash_code_type> last_checkpoint,
+                                       callback_param_type param, ArgsT&&... args) {
+    subscriber_pointer subscriber = find_subscriber(key, param);
+    if (subscriber) {
+      subscriber->set_heartbeat_timeout(configure_->subscriber_timeout);
+      subscriber_manager_->subscribe(subscriber, now);
+      return subscriber;
+    }
+
+    subscriber = subscriber_manager_->create(key, now, configure_->subscriber_timeout, std::forward<ArgsT>(args)...);
+    if (subscriber && vtable_) {
+      if (vtable_->on_subscriber_added) {
+        vtable_->on_subscriber_added(*this, subscriber, param);
+      }
+
+      _receive_subscribe_request(key, last_checkpoint.first, &last_checkpoint.second, now, param, false);
     }
 
     return subscriber;
@@ -451,7 +477,8 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_publisher {
 
  private:
   wal_result_code _receive_subscribe_request(const subscriber_key_type& key, log_key_type last_checkpoint,
-                                             const time_point& now, callback_param_type param, bool reset_timer) {
+                                             const hash_code_type* check_hash_code, const time_point& now,
+                                             callback_param_type param, bool reset_timer) {
     subscriber_pointer subscriber = subscriber_manager_->find(key);
     if (!subscriber) {
       return wal_result_code::kSubscriberNotFound;
@@ -473,7 +500,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_publisher {
     }
 
     if (vtable_ && vtable_->subscriber_force_sync_snapshot) {
-      if (vtable_->subscriber_force_sync_snapshot(*this, subscriber, param)) {
+      if (vtable_->subscriber_force_sync_snapshot(*this, subscriber, last_checkpoint, check_hash_code, param)) {
         auto iters = subscriber_manager_->find_iterator(key);
         auto notify_result = send_snapshot(iters.first, iters.second, param);
         return send_subscribe_response(subscriber, notify_result, std::move(param));
@@ -489,8 +516,28 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_publisher {
       }
     }
 
-    log_const_iterator log_iter = wal_object_->log_upper_bound(last_checkpoint);
+    // If hash code mismatch, it should always send snapshot
+    log_const_iterator log_iter = wal_object_->log_lower_bound(last_checkpoint);
+    bool should_send_snapshot = false;
     if (log_iter != wal_object_->log_cend()) {
+      auto& log_key_compare = get_log_key_compare();
+      auto log_key = vtable_->get_log_key(*wal_object_, **log_iter);
+      if (!log_key_compare(last_checkpoint, log_key) && !log_key_compare(log_key, last_checkpoint)) {
+        if (nullptr != check_hash_code && vtable_->set_hash_code && vtable_->get_hash_code &&
+            vtable_->calculate_hash_code) {
+          if (*check_hash_code != vtable_->get_hash_code(*wal_object_, **log_iter)) {
+            should_send_snapshot = true;
+          }
+        }
+        ++log_iter;
+      }
+    }
+
+    if (should_send_snapshot) {
+      auto iters = subscriber_manager_->find_iterator(key);
+      auto notify_result = send_snapshot(iters.first, iters.second, param);
+      return send_subscribe_response(subscriber, notify_result, std::move(param));
+    } else if (log_iter != wal_object_->log_cend()) {
       auto iters = subscriber_manager_->find_iterator(key);
       auto notify_result = send_logs(log_iter, wal_object_->log_cend(), iters.first, iters.second, param);
       return send_subscribe_response(subscriber, notify_result, std::move(param));
@@ -502,7 +549,13 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_publisher {
  public:
   wal_result_code receive_subscribe_request(const subscriber_key_type& key, log_key_type last_checkpoint,
                                             const time_point& now, callback_param_type param) {
-    return _receive_subscribe_request(key, last_checkpoint, now, param, true);
+    return _receive_subscribe_request(key, last_checkpoint, nullptr, now, param, true);
+  }
+
+  wal_result_code receive_subscribe_request(const subscriber_key_type& key, log_key_type last_checkpoint,
+                                            hash_code_type check_hash_code, const time_point& now,
+                                            callback_param_type param) {
+    return _receive_subscribe_request(key, last_checkpoint, &check_hash_code, now, param, true);
   }
 
   template <class... ArgsT>

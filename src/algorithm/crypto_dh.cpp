@@ -568,6 +568,9 @@ static size_t crypto_dh_EVP_PKEY_set1_tls_encodedpoint(EVP_PKEY *pkey, const uns
   return static_cast<size_t>(EVP_PKEY_set1_tls_encodedpoint(pkey, pt, ptlen));
 #    endif
 }
+#  elif defined(CRYPTO_USE_MBEDTLS)
+
+#    include "mbedtls/ssl.h"
 
 #  endif
 
@@ -1618,8 +1621,17 @@ LIBATFRAME_UTILS_API int dh::make_params(std::vector<unsigned char> &param) {
 
 #    elif defined(CRYPTO_USE_MBEDTLS)
       // size is P,G,GX
+#      if MBEDTLS_VERSION_MAJOR >= 3
+      size_t psz = mbedtls_dhm_get_len(&dh_context_.mbedtls_dh_ctx_);
+      mbedtls_mpi ctx_G;
+      mbedtls_mpi_init(&ctx_G);
+      mbedtls_dhm_get_value(&dh_context_.mbedtls_dh_ctx_, MBEDTLS_DHM_PARAM_G, &ctx_G);
+      size_t gsz = mbedtls_mpi_size(&ctx_G);
+      mbedtls_mpi_free(&ctx_G);
+#      else
       size_t psz = mbedtls_mpi_size(&dh_context_.mbedtls_dh_ctx_.P);
       size_t gsz = mbedtls_mpi_size(&dh_context_.mbedtls_dh_ctx_.G);
+#      endif
       size_t olen = 0;
       // @see mbedtls_dhm_make_params, output P,G,GX. GX is smaller than P
       // each big number has 2 byte length
@@ -1896,7 +1908,11 @@ LIBATFRAME_UTILS_API int dh::make_public(std::vector<unsigned char> &param) {
       details::reset(self_pubkey);
 #      endif
 #    elif defined(CRYPTO_USE_MBEDTLS)
-      size_t psz = dh_context_.mbedtls_dh_ctx_.len;
+#      if MBEDTLS_VERSION_MAJOR >= 3
+      size_t psz = mbedtls_dhm_get_len(&dh_context_.mbedtls_dh_ctx_);
+#      else
+      size_t psz = mbedtls_mpi_size(&dh_context_.mbedtls_dh_ctx_.P);
+#      endif
       param.resize(psz, 0);
       int res = mbedtls_dhm_make_public(&dh_context_.mbedtls_dh_ctx_, static_cast<int>(psz), &param[0], psz,
                                         mbedtls_ctr_drbg_random, &shared_context_->get_random_engine().ctr_drbg);
@@ -2189,7 +2205,7 @@ LIBATFRAME_UTILS_API int dh::calc_secret(std::vector<unsigned char> &output) {
       output.resize(static_cast<size_t>(secret_len));
 
 #    elif defined(CRYPTO_USE_MBEDTLS)
-      size_t psz = dh_context_.mbedtls_dh_ctx_.len;
+      size_t psz = MBEDTLS_PREMASTER_SIZE;
       // generate next_secret
       output.resize(psz, 0);
       int res;
@@ -2199,6 +2215,7 @@ LIBATFRAME_UTILS_API int dh::calc_secret(std::vector<unsigned char> &output) {
         ret = details::setup_errorno(*this, res, error_code_t::INIT_DH_GENERATE_SECRET);
         break;
       }
+      output.resize(psz);
 
 #    endif
       break;

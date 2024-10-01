@@ -20,6 +20,8 @@
 #include <unordered_map>
 #include <utility>
 
+#include "gsl/select-gsl.h"
+
 #include "distributed_system/wal_common_defs.h"
 
 #ifdef max
@@ -35,6 +37,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_object {
   using storage_type = StorageT;
   using private_data_type = PrivateDataT;
   using log_operator_type = LogOperatorT;
+  using hash_code_type = size_t;
 
   using log_type = typename log_operator_type::log_type;
   using log_pointer = typename log_operator_type::log_pointer;
@@ -91,6 +94,16 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_object {
   using callback_alloc_log_key_fn_t =
       std::function<log_key_result_type(wal_object&, const log_type&, callback_param_type)>;
 
+  // Get hash code from a WAL log
+  using callback_get_hash_code_fn_t = std::function<hash_code_type(const wal_object&, const log_type&)>;
+
+  // Set hash code into a WAL log
+  using callback_set_hash_code_fn_t = std::function<void(const wal_object&, log_type&, hash_code_type)>;
+
+  // Calulate hash code from a WAL log
+  using callback_calulate_hash_code_fn_t =
+      std::function<hash_code_type(const wal_object&, hash_code_type previous, const log_type&)>;
+
   struct callback_log_fn_group_t {
     callback_log_patch_fn_t patch;
     callback_log_action_fn_t action;
@@ -109,6 +122,10 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_object {
     callback_alloc_log_key_fn_t allocate_log_key;
     callback_log_event_fn_t on_log_added;
     callback_log_event_fn_t on_log_removed;
+    callback_get_hash_code_fn_t get_hash_code;
+    callback_set_hash_code_fn_t set_hash_code;
+    callback_calulate_hash_code_fn_t calculate_hash_code;
+
     callback_log_group_map_t log_action_delegate;
     callback_log_fn_group_t default_delegate;
   };
@@ -216,6 +233,14 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_object {
     logs_.clear();
     logs_.assign(std::forward<IteratorT>(begin), std::forward<IteratorT>(end));
 
+    if (vtable_ && vtable_->get_hash_code && vtable_->set_hash_code && vtable_->calculate_hash_code) {
+      hash_code_type hash_code = 0;
+      for (auto& log : logs_) {
+        hash_code = vtable_->calculate_hash_code(*this, hash_code, *log);
+        vtable_->set_hash_code(*this, *log, hash_code);
+      }
+    }
+
     if (internal_event_on_assign_) {
       internal_event_on_assign_(*this);
     }
@@ -236,6 +261,14 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_object {
   void assign_logs(log_container_type&& source) {
     logs_.swap(source);
     source.clear();
+
+    if (vtable_ && vtable_->get_hash_code && vtable_->set_hash_code && vtable_->calculate_hash_code) {
+      hash_code_type hash_code = 0;
+      for (auto& log : logs_) {
+        hash_code = vtable_->calculate_hash_code(*this, hash_code, *log);
+        vtable_->set_hash_code(*this, *log, hash_code);
+      }
+    }
 
     if (internal_event_on_assign_) {
       internal_event_on_assign_(*this);
@@ -603,6 +636,28 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_object {
     return std::pair<log_const_iterator, log_const_iterator>(logs_.begin(), logs_.end());
   }
 
+  hash_code_type get_hash_code_before(const log_key_type& key) const noexcept {
+    if (logs_.empty()) {
+      return 0;
+    }
+
+    if (!vtable_ || !vtable_->get_hash_code || !vtable_->get_log_key) {
+      return 0;
+    }
+
+    log_key_type last_key = vtable_->get_log_key(*this, **logs_.rbegin());
+    if (log_key_compare_(last_key, key)) {
+      return vtable_->get_hash_code(*this, **logs_.rbegin());
+    }
+
+    auto iter = log_lower_bound(key);
+    if (iter == logs_.begin()) {
+      return 0;
+    }
+    --iter;
+    return vtable_->get_hash_code(*this, **iter);
+  }
+
  private:
   wal_result_code redo_log(const log_pointer& log, callback_param_type param) {
     if (!log) {
@@ -651,6 +706,19 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_object {
   }
 
   wal_result_code pusk_back_internal_uncheck(log_pointer&& log, callback_param_lvalue_reference_type param) {
+    if (vtable_ && vtable_->set_hash_code && vtable_->get_hash_code && vtable_->calculate_hash_code &&
+        vtable_->get_log_key) {
+      hash_code_type hash_code = 0;
+      for (auto iter = logs_.rbegin(); iter != logs_.rend(); ++iter) {
+        if (*iter) {
+          hash_code = vtable_->get_hash_code(*this, **iter);
+          break;
+        }
+      }
+      hash_code = vtable_->calculate_hash_code(*this, hash_code, *log);
+      vtable_->set_hash_code(*this, *log, hash_code);
+    }
+
     wal_result_code ret = redo_log(log, param);
     if (wal_result_code::kOk != ret) {
       return ret;
@@ -702,17 +770,51 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_object {
         });
 
     if (iter != logs_.end()) {
-      last_key = vtable_->get_log_key(*this, *logs_.back());
+      last_key = vtable_->get_log_key(*this, **iter);
       if (!log_key_compare_(last_key, this_key) && !log_key_compare_(this_key, last_key)) {
         if (vtable_->merge_log) {
-          vtable_->merge_log(*this, param, **iter, *log);
+          if (vtable_->set_hash_code && vtable_->get_hash_code) {
+            hash_code_type hash_code = vtable_->get_hash_code(*this, **iter);
+            vtable_->merge_log(*this, param, **iter, *log);
+            vtable_->set_hash_code(*this, **iter, hash_code);
+          } else {
+            vtable_->merge_log(*this, param, **iter, *log);
+          }
         }
         return wal_result_code::kMerge;
       }
     }
+
+    if (vtable_->set_hash_code && vtable_->get_hash_code && vtable_->calculate_hash_code) {
+      hash_code_type hash_code = 0;
+      if (iter == logs_.end()) {
+        for (auto last_iter = logs_.rbegin(); last_iter != logs_.rend(); ++last_iter) {
+          if (*last_iter) {
+            hash_code = vtable_->get_hash_code(*this, **last_iter);
+            break;
+          }
+        }
+      } else if (iter != logs_.begin()) {
+        auto previous_iter = iter;
+        --previous_iter;
+        hash_code = vtable_->get_hash_code(*this, **previous_iter);
+      }
+      hash_code = vtable_->calculate_hash_code(*this, hash_code, *log);
+      vtable_->set_hash_code(*this, *log, hash_code);
+    }
+
     wal_result_code ret = redo_log(log, param);
     if (wal_result_code::kOk != ret) {
       return ret;
+    }
+
+    if (vtable_->set_hash_code && vtable_->get_hash_code && vtable_->calculate_hash_code) {
+      // Update hash code
+      hash_code_type hash_code = vtable_->get_hash_code(*this, *log);
+      for (auto fix_iter = iter; fix_iter != logs_.end(); ++fix_iter) {
+        hash_code = vtable_->calculate_hash_code(*this, hash_code, **fix_iter);
+        vtable_->set_hash_code(*this, **fix_iter, hash_code);
+      }
     }
 
     if (internal_event_on_add_log_) {

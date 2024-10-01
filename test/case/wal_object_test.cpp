@@ -42,6 +42,8 @@ struct test_wal_object_log_type {
   int64_t log_key;
   test_wal_object_log_action action;
   int64_t data;
+
+  size_t hash_code;
 };
 
 struct test_wal_object_log_storage_type {
@@ -61,6 +63,16 @@ struct test_wal_object_private_type {
   inline test_wal_object_private_type() : storage(nullptr) {}
   inline explicit test_wal_object_private_type(test_wal_object_log_storage_type* input) : storage(input) {}
 };
+
+namespace {
+size_t test_wal_object_log_hash(size_t previous_hash_code, int64_t log_key) {
+  size_t ret = std::hash<int64_t>()(log_key + static_cast<int64_t>(previous_hash_code));
+  if (0 == ret) {
+    return 1;
+  }
+  return ret;
+}
+}  // namespace
 
 namespace mt {
 using test_wal_object_log_operator =
@@ -154,6 +166,22 @@ static test_wal_object_type::vtable_pointer create_vtable() {
   ret->allocate_log_key = [](wal_object_type&, const wal_object_type::log_type&,
                              wal_object_type::callback_param_type) -> wal_object_type::log_key_result_type {
     return wal_object_type::log_key_result_type::make_success(++details::g_test_wal_object_stats.key_alloc);
+  };
+
+  ret->get_hash_code = [](const wal_object_type&,
+                          const wal_object_type::log_type& log) -> wal_object_type::hash_code_type {
+    return log.hash_code;
+  };
+
+  ret->set_hash_code = [](const wal_object_type&, wal_object_type::log_type& log,
+                          wal_object_type::hash_code_type hash_code) {
+    // Set member
+    log.hash_code = hash_code;
+  };
+
+  ret->calculate_hash_code = [](const wal_object_type&, wal_object_type::hash_code_type previous_hash_code,
+                                const wal_object_type::log_type& log) -> wal_object_type::hash_code_type {
+    return test_wal_object_log_hash(previous_hash_code, log.log_key);
   };
 
   ret->on_log_added = [](wal_object_type&, const wal_object_type::log_pointer&) {
@@ -263,9 +291,10 @@ CASE_TEST(wal_object, load_and_dump_mt) {
   test_wal_object_log_storage_type load_storege;
   LIBATFRAME_UTILS_NAMESPACE_ID::distributed_system::wal_time_point now = std::chrono::system_clock::now();
   load_storege.global_ignore = 123;
-  load_storege.logs.push_back(test_wal_object_log_type{now, 124, test_wal_object_log_action::kDoNothing, 124});
-  load_storege.logs.push_back(test_wal_object_log_type{now, 125, test_wal_object_log_action::kFallbackDefault, 125});
-  load_storege.logs.push_back(test_wal_object_log_type{now, 126, test_wal_object_log_action::kRecursivePushBack, 126});
+  load_storege.logs.push_back(test_wal_object_log_type{now, 124, test_wal_object_log_action::kDoNothing, 124, 0});
+  load_storege.logs.push_back(test_wal_object_log_type{now, 125, test_wal_object_log_action::kFallbackDefault, 125, 0});
+  load_storege.logs.push_back(
+      test_wal_object_log_type{now, 126, test_wal_object_log_action::kRecursivePushBack, 126, 0});
 
   test_wal_object_log_storage_type storage;
   test_wal_object_context ctx;
@@ -854,6 +883,22 @@ static test_wal_object_type::vtable_pointer create_vtable() {
     ++details::g_test_wal_object_stats.event_on_log_removed;
   };
 
+  ret->get_hash_code = [](const wal_object_type&,
+                          const wal_object_type::log_type& log) -> wal_object_type::hash_code_type {
+    return log.hash_code;
+  };
+
+  ret->set_hash_code = [](const wal_object_type&, wal_object_type::log_type& log,
+                          wal_object_type::hash_code_type hash_code) {
+    // Set member
+    log.hash_code = hash_code;
+  };
+
+  ret->calculate_hash_code = [](const wal_object_type&, wal_object_type::hash_code_type previous_hash_code,
+                                const wal_object_type::log_type& log) -> wal_object_type::hash_code_type {
+    return test_wal_object_log_hash(previous_hash_code, log.log_key);
+  };
+
   ret->log_action_delegate[test_wal_object_log_action::kDoNothing].action =
       [](wal_object_type&, const wal_object_type::log_type& log,
          wal_object_type::callback_param_type) -> wal_result_code {
@@ -953,9 +998,10 @@ CASE_TEST(wal_object, load_and_dump_st) {
   test_wal_object_log_storage_type load_storege;
   LIBATFRAME_UTILS_NAMESPACE_ID::distributed_system::wal_time_point now = std::chrono::system_clock::now();
   load_storege.global_ignore = 123;
-  load_storege.logs.push_back(test_wal_object_log_type{now, 124, test_wal_object_log_action::kDoNothing, 124});
-  load_storege.logs.push_back(test_wal_object_log_type{now, 125, test_wal_object_log_action::kFallbackDefault, 125});
-  load_storege.logs.push_back(test_wal_object_log_type{now, 126, test_wal_object_log_action::kRecursivePushBack, 126});
+  load_storege.logs.push_back(test_wal_object_log_type{now, 124, test_wal_object_log_action::kDoNothing, 124, 0});
+  load_storege.logs.push_back(test_wal_object_log_type{now, 125, test_wal_object_log_action::kFallbackDefault, 125, 0});
+  load_storege.logs.push_back(
+      test_wal_object_log_type{now, 126, test_wal_object_log_action::kRecursivePushBack, 126, 0});
 
   test_wal_object_log_storage_type storage;
   test_wal_object_context ctx;
@@ -985,6 +1031,15 @@ CASE_TEST(wal_object, load_and_dump_st) {
   test_wal_object_log_storage_type dump_storege;
   CASE_EXPECT_TRUE(LIBATFRAME_UTILS_NAMESPACE_ID::distributed_system::wal_result_code::kOk ==
                    wal_obj->dump(dump_storege, ctx));
+
+  // Verify hash code
+  size_t hash_code = 0;
+  for (auto& log : wal_obj->get_all_logs()) {
+    size_t next_hash_code = test_wal_object_log_hash(hash_code, log->log_key);
+    CASE_EXPECT_EQ(next_hash_code, log->hash_code);
+
+    hash_code = next_hash_code;
+  }
 
   CASE_EXPECT_EQ(123, dump_storege.global_ignore);
   CASE_EXPECT_EQ(3, dump_storege.logs.size());
@@ -1222,6 +1277,15 @@ CASE_TEST(wal_object, add_action_st) {
     CASE_EXPECT_EQ(find_key + 102, (*iter)->data);
     CASE_EXPECT_TRUE(test_wal_object_log_action::kFallbackDefault == (*iter)->action);
   } while (false);
+
+  // Verify hash code
+  size_t hash_code = 0;
+  for (auto& log : wal_obj->get_all_logs()) {
+    size_t next_hash_code = test_wal_object_log_hash(hash_code, log->log_key);
+    CASE_EXPECT_EQ(next_hash_code, log->hash_code);
+
+    hash_code = next_hash_code;
+  }
 }
 
 CASE_TEST(wal_object, gc_st) {
@@ -1341,6 +1405,18 @@ CASE_TEST(wal_object, gc_st) {
 
   auto last_removed_key = (*wal_obj->log_cbegin())->log_key - 1;
   CASE_EXPECT_TRUE(wal_obj->get_last_removed_key() && *wal_obj->get_last_removed_key() == last_removed_key);
+
+  // Verify hash code
+  size_t hash_code = 0;
+  for (auto& log : wal_obj->get_all_logs()) {
+    size_t next_hash_code = test_wal_object_log_hash(hash_code, log->log_key);
+    if (hash_code != 0) {
+      CASE_EXPECT_EQ(next_hash_code, log->hash_code);
+      hash_code = next_hash_code;
+    } else {
+      hash_code = log->hash_code;
+    }
+  }
 }
 
 CASE_TEST(wal_object, ignore_st) {

@@ -33,6 +33,8 @@ struct test_wal_publisher_log_type {
   int64_t log_key;
   test_wal_publisher_log_action action;
 
+  size_t hash_code;
+
   union {
     int64_t data;
     void* publisher;
@@ -40,11 +42,12 @@ struct test_wal_publisher_log_type {
 
   inline explicit test_wal_publisher_log_type(LIBATFRAME_UTILS_NAMESPACE_ID::distributed_system::wal_time_point t,
                                               int64_t k, test_wal_publisher_log_action act, int64_t d)
-      : timepoint(t), log_key(k), action(act), data(d) {}
+      : timepoint(t), log_key(k), action(act), hash_code(0), data(d) {}
   inline test_wal_publisher_log_type()
       : timepoint(std::chrono::system_clock::from_time_t(0)),
         log_key(0),
         action(test_wal_publisher_log_action::kDoNothing),
+        hash_code(0),
         data(0) {}
 };
 
@@ -65,6 +68,16 @@ struct test_wal_publisher_private_type {
   inline test_wal_publisher_private_type() : storage(nullptr) {}
   inline explicit test_wal_publisher_private_type(test_wal_publisher_storage_type* input) : storage(input) {}
 };
+
+namespace {
+size_t test_wal_publisher_log_hash(size_t previous_hash_code, int64_t log_key) {
+  size_t ret = std::hash<int64_t>()(log_key + static_cast<int64_t>(previous_hash_code));
+  if (0 == ret) {
+    return 1;
+  }
+  return ret;
+}
+}  // namespace
 
 namespace mt {
 using test_wal_publisher_log_operator =
@@ -163,6 +176,22 @@ static test_wal_publisher_type::vtable_pointer create_vtable() {
     return wal_object_type::log_key_result_type::make_success(++details::g_test_wal_publisher_stats.key_alloc);
   };
 
+  ret->get_hash_code = [](const wal_object_type&,
+                          const wal_object_type::log_type& log) -> wal_object_type::hash_code_type {
+    return log.hash_code;
+  };
+
+  ret->set_hash_code = [](const wal_object_type&, wal_object_type::log_type& log,
+                          wal_object_type::hash_code_type hash_code) {
+    // Set member
+    log.hash_code = hash_code;
+  };
+
+  ret->calculate_hash_code = [](const wal_object_type&, wal_object_type::hash_code_type previous_hash_code,
+                                const wal_object_type::log_type& log) -> wal_object_type::hash_code_type {
+    return test_wal_publisher_log_hash(previous_hash_code, log.log_key);
+  };
+
   ret->on_log_added = [](wal_object_type&, const wal_object_type::log_pointer&) {
     ++details::g_test_wal_publisher_stats.event_on_log_added;
   };
@@ -233,9 +262,9 @@ static test_wal_publisher_type::vtable_pointer create_vtable() {
       ++begin;
       ++details::g_test_wal_publisher_stats.last_event_subscriber_count;
     }
-    details::g_test_wal_publisher_stats.last_event_log_count = publisher.get_private_data().storage->logs.size();
-    if (!publisher.get_private_data().storage->logs.empty()) {
-      details::g_test_wal_publisher_stats.last_log = *publisher.get_private_data().storage->logs.rbegin();
+    details::g_test_wal_publisher_stats.last_event_log_count = publisher.get_log_manager().get_all_logs().size();
+    if (!publisher.get_log_manager().get_all_logs().empty()) {
+      details::g_test_wal_publisher_stats.last_log = **publisher.get_log_manager().get_all_logs().rbegin();
     }
 
     ++details::g_test_wal_publisher_stats.send_snapshot_count;
@@ -280,6 +309,7 @@ static test_wal_publisher_type::vtable_pointer create_vtable() {
   };
 
   ret->subscriber_force_sync_snapshot = [](wal_publisher_type&, const wal_publisher_type::subscriber_pointer&,
+                                           wal_publisher_type::log_key_type, const wal_publisher_type::hash_code_type*,
                                            wal_publisher_type::callback_param_type) -> bool {
     // Always return false, use compact to sync snapshot
     return false;
@@ -653,7 +683,7 @@ CASE_TEST(wal_publisher, subscriber_send_snapshot_mt) {
 
   CASE_EXPECT_EQ(event_on_subscribe_heartbeat + 3, details::g_test_wal_publisher_stats.event_on_subscribe_heartbeat);
 
-  CASE_EXPECT_EQ(0, details::g_test_wal_publisher_stats.last_event_log_count);
+  CASE_EXPECT_EQ(4, details::g_test_wal_publisher_stats.last_event_log_count);
   CASE_EXPECT_EQ(send_logs_count + 1, details::g_test_wal_publisher_stats.send_logs_count);
   CASE_EXPECT_EQ(send_snapshot_count + 2, details::g_test_wal_publisher_stats.send_snapshot_count);
 }
@@ -702,6 +732,76 @@ CASE_TEST(wal_publisher, subscriber_send_logs_mt) {
   CASE_EXPECT_EQ(2, details::g_test_wal_publisher_stats.last_event_log_count);
   CASE_EXPECT_EQ(send_logs_count + 1, details::g_test_wal_publisher_stats.send_logs_count);
   CASE_EXPECT_EQ(send_snapshot_count + 1, details::g_test_wal_publisher_stats.send_snapshot_count);
+}
+
+CASE_TEST(wal_publisher, subscriber_check_hash_code_mt) {
+  LIBATFRAME_UTILS_NAMESPACE_ID::distributed_system::wal_time_point t1 = std::chrono::system_clock::now();
+  LIBATFRAME_UTILS_NAMESPACE_ID::distributed_system::wal_time_point t2 =
+      t1 + std::chrono::duration_cast<test_wal_publisher_type::duration>(std::chrono::seconds{3});
+  LIBATFRAME_UTILS_NAMESPACE_ID::distributed_system::wal_time_point t3 =
+      t1 + std::chrono::duration_cast<test_wal_publisher_type::duration>(std::chrono::seconds{6});
+  test_wal_publisher_storage_type storage;
+  test_wal_publisher_context ctx;
+
+  auto conf = create_configure();
+  if (conf) {
+    conf->subscriber_timeout = std::chrono::duration_cast<test_wal_publisher_type::duration>(std::chrono::seconds{5});
+  }
+  auto vtable = create_vtable();
+  auto publisher = test_wal_publisher_type::create(vtable, conf, &storage);
+  CASE_EXPECT_TRUE(!!publisher);
+  if (!publisher) {
+    return;
+  }
+
+  uint64_t subscriber_key_1 = 1;
+  uint64_t subscriber_key_2 = 2;
+  uint64_t subscriber_key_3 = 3;
+  uint64_t subscriber_key_4 = 4;
+
+  publisher->get_log_manager().set_last_removed_key(details::g_test_wal_publisher_stats.key_alloc);
+  test_wal_publisher_add_logs(publisher->get_log_manager(), ctx, t1, t2, t3);
+
+  auto last_hash_code = (*publisher->get_log_manager().get_all_logs().rbegin())->hash_code;
+  auto last_log_key = (*publisher->get_log_manager().get_all_logs().rbegin())->log_key;
+
+  auto event_subscribe_added = details::g_test_wal_publisher_stats.event_on_subscribe_added;
+  auto event_subscribe_removed = details::g_test_wal_publisher_stats.event_on_subscribe_removed;
+  auto send_logs_count = details::g_test_wal_publisher_stats.send_logs_count;
+  auto send_snapshot_count = details::g_test_wal_publisher_stats.send_snapshot_count;
+
+  publisher->create_subscriber(subscriber_key_1, t3, std::make_pair(last_log_key, 0), ctx, &storage);
+  publisher->create_subscriber(subscriber_key_2, t3, std::make_pair(last_log_key, last_hash_code), ctx, &storage);
+
+  CASE_EXPECT_EQ(event_subscribe_added + 2, details::g_test_wal_publisher_stats.event_on_subscribe_added);
+  CASE_EXPECT_EQ(event_subscribe_removed, details::g_test_wal_publisher_stats.event_on_subscribe_removed);
+  CASE_EXPECT_EQ(send_logs_count, details::g_test_wal_publisher_stats.send_logs_count);
+  CASE_EXPECT_EQ(send_snapshot_count + 1, details::g_test_wal_publisher_stats.send_snapshot_count);
+
+  auto from_log_iter = publisher->get_log_manager().log_cbegin();
+  ++from_log_iter;
+  auto from_key = (*from_log_iter)->log_key;
+  auto from_hash_code = (*from_log_iter)->hash_code;
+
+  publisher->create_subscriber(subscriber_key_3, t3, std::make_pair(from_key, 0), ctx, &storage);
+  publisher->create_subscriber(subscriber_key_4, t3, std::make_pair(from_key, from_hash_code), ctx, &storage);
+
+  CASE_EXPECT_EQ(event_subscribe_added + 4, details::g_test_wal_publisher_stats.event_on_subscribe_added);
+  CASE_EXPECT_EQ(event_subscribe_removed, details::g_test_wal_publisher_stats.event_on_subscribe_removed);
+  CASE_EXPECT_EQ(send_logs_count + 1, details::g_test_wal_publisher_stats.send_logs_count);
+  CASE_EXPECT_EQ(send_snapshot_count + 2, details::g_test_wal_publisher_stats.send_snapshot_count);
+
+  publisher->receive_subscribe_request(subscriber_key_1, from_key, from_hash_code, t3, ctx);
+
+  CASE_EXPECT_EQ(2, details::g_test_wal_publisher_stats.last_event_log_count);
+  CASE_EXPECT_EQ(send_logs_count + 2, details::g_test_wal_publisher_stats.send_logs_count);
+  CASE_EXPECT_EQ(send_snapshot_count + 2, details::g_test_wal_publisher_stats.send_snapshot_count);
+
+  publisher->receive_subscribe_request(subscriber_key_2, from_key, from_hash_code + 1, t3, ctx);
+
+  CASE_EXPECT_EQ(4, details::g_test_wal_publisher_stats.last_event_log_count);
+  CASE_EXPECT_EQ(send_logs_count + 2, details::g_test_wal_publisher_stats.send_logs_count);
+  CASE_EXPECT_EQ(send_snapshot_count + 3, details::g_test_wal_publisher_stats.send_snapshot_count);
 }
 
 CASE_TEST(wal_publisher, remove_subscriber_by_check_callback_mt) {
@@ -1205,6 +1305,22 @@ static test_wal_publisher_type::vtable_pointer create_vtable() {
     return wal_object_type::log_key_result_type::make_success(++details::g_test_wal_publisher_stats.key_alloc);
   };
 
+  ret->get_hash_code = [](const wal_object_type&,
+                          const wal_object_type::log_type& log) -> wal_object_type::hash_code_type {
+    return log.hash_code;
+  };
+
+  ret->set_hash_code = [](const wal_object_type&, wal_object_type::log_type& log,
+                          wal_object_type::hash_code_type hash_code) {
+    // Set member
+    log.hash_code = hash_code;
+  };
+
+  ret->calculate_hash_code = [](const wal_object_type&, wal_object_type::hash_code_type previous_hash_code,
+                                const wal_object_type::log_type& log) -> wal_object_type::hash_code_type {
+    return test_wal_publisher_log_hash(previous_hash_code, log.log_key);
+  };
+
   ret->on_log_added = [](wal_object_type&, const wal_object_type::log_pointer&) {
     ++details::g_test_wal_publisher_stats.event_on_log_added;
   };
@@ -1275,9 +1391,9 @@ static test_wal_publisher_type::vtable_pointer create_vtable() {
       ++begin;
       ++details::g_test_wal_publisher_stats.last_event_subscriber_count;
     }
-    details::g_test_wal_publisher_stats.last_event_log_count = publisher.get_private_data().storage->logs.size();
-    if (!publisher.get_private_data().storage->logs.empty()) {
-      details::g_test_wal_publisher_stats.last_log = *publisher.get_private_data().storage->logs.rbegin();
+    details::g_test_wal_publisher_stats.last_event_log_count = publisher.get_log_manager().get_all_logs().size();
+    if (!publisher.get_log_manager().get_all_logs().empty()) {
+      details::g_test_wal_publisher_stats.last_log = **publisher.get_log_manager().get_all_logs().rbegin();
     }
 
     ++details::g_test_wal_publisher_stats.send_snapshot_count;
@@ -1322,6 +1438,7 @@ static test_wal_publisher_type::vtable_pointer create_vtable() {
   };
 
   ret->subscriber_force_sync_snapshot = [](wal_publisher_type&, const wal_publisher_type::subscriber_pointer&,
+                                           wal_publisher_type::log_key_type, const wal_publisher_type::hash_code_type*,
                                            wal_publisher_type::callback_param_type) -> bool {
     // Always return false, use compact to sync snapshot
     return false;
@@ -1695,7 +1812,7 @@ CASE_TEST(wal_publisher, subscriber_send_snapshot_st) {
 
   CASE_EXPECT_EQ(event_on_subscribe_heartbeat + 3, details::g_test_wal_publisher_stats.event_on_subscribe_heartbeat);
 
-  CASE_EXPECT_EQ(0, details::g_test_wal_publisher_stats.last_event_log_count);
+  CASE_EXPECT_EQ(4, details::g_test_wal_publisher_stats.last_event_log_count);
   CASE_EXPECT_EQ(send_logs_count + 1, details::g_test_wal_publisher_stats.send_logs_count);
   CASE_EXPECT_EQ(send_snapshot_count + 2, details::g_test_wal_publisher_stats.send_snapshot_count);
 }
@@ -1744,6 +1861,76 @@ CASE_TEST(wal_publisher, subscriber_send_logs_st) {
   CASE_EXPECT_EQ(2, details::g_test_wal_publisher_stats.last_event_log_count);
   CASE_EXPECT_EQ(send_logs_count + 1, details::g_test_wal_publisher_stats.send_logs_count);
   CASE_EXPECT_EQ(send_snapshot_count + 1, details::g_test_wal_publisher_stats.send_snapshot_count);
+}
+
+CASE_TEST(wal_publisher, subscriber_check_hash_code_st) {
+  LIBATFRAME_UTILS_NAMESPACE_ID::distributed_system::wal_time_point t1 = std::chrono::system_clock::now();
+  LIBATFRAME_UTILS_NAMESPACE_ID::distributed_system::wal_time_point t2 =
+      t1 + std::chrono::duration_cast<test_wal_publisher_type::duration>(std::chrono::seconds{3});
+  LIBATFRAME_UTILS_NAMESPACE_ID::distributed_system::wal_time_point t3 =
+      t1 + std::chrono::duration_cast<test_wal_publisher_type::duration>(std::chrono::seconds{6});
+  test_wal_publisher_storage_type storage;
+  test_wal_publisher_context ctx;
+
+  auto conf = create_configure();
+  if (conf) {
+    conf->subscriber_timeout = std::chrono::duration_cast<test_wal_publisher_type::duration>(std::chrono::seconds{5});
+  }
+  auto vtable = create_vtable();
+  auto publisher = test_wal_publisher_type::create(vtable, conf, &storage);
+  CASE_EXPECT_TRUE(!!publisher);
+  if (!publisher) {
+    return;
+  }
+
+  uint64_t subscriber_key_1 = 1;
+  uint64_t subscriber_key_2 = 2;
+  uint64_t subscriber_key_3 = 3;
+  uint64_t subscriber_key_4 = 4;
+
+  publisher->get_log_manager().set_last_removed_key(details::g_test_wal_publisher_stats.key_alloc);
+  test_wal_publisher_add_logs(publisher->get_log_manager(), ctx, t1, t2, t3);
+
+  auto last_hash_code = (*publisher->get_log_manager().get_all_logs().rbegin())->hash_code;
+  auto last_log_key = (*publisher->get_log_manager().get_all_logs().rbegin())->log_key;
+
+  auto event_subscribe_added = details::g_test_wal_publisher_stats.event_on_subscribe_added;
+  auto event_subscribe_removed = details::g_test_wal_publisher_stats.event_on_subscribe_removed;
+  auto send_logs_count = details::g_test_wal_publisher_stats.send_logs_count;
+  auto send_snapshot_count = details::g_test_wal_publisher_stats.send_snapshot_count;
+
+  publisher->create_subscriber(subscriber_key_1, t3, std::make_pair(last_log_key, 0), ctx, &storage);
+  publisher->create_subscriber(subscriber_key_2, t3, std::make_pair(last_log_key, last_hash_code), ctx, &storage);
+
+  CASE_EXPECT_EQ(event_subscribe_added + 2, details::g_test_wal_publisher_stats.event_on_subscribe_added);
+  CASE_EXPECT_EQ(event_subscribe_removed, details::g_test_wal_publisher_stats.event_on_subscribe_removed);
+  CASE_EXPECT_EQ(send_logs_count, details::g_test_wal_publisher_stats.send_logs_count);
+  CASE_EXPECT_EQ(send_snapshot_count + 1, details::g_test_wal_publisher_stats.send_snapshot_count);
+
+  auto from_log_iter = publisher->get_log_manager().log_cbegin();
+  ++from_log_iter;
+  auto from_key = (*from_log_iter)->log_key;
+  auto from_hash_code = (*from_log_iter)->hash_code;
+
+  publisher->create_subscriber(subscriber_key_3, t3, std::make_pair(from_key, 0), ctx, &storage);
+  publisher->create_subscriber(subscriber_key_4, t3, std::make_pair(from_key, from_hash_code), ctx, &storage);
+
+  CASE_EXPECT_EQ(event_subscribe_added + 4, details::g_test_wal_publisher_stats.event_on_subscribe_added);
+  CASE_EXPECT_EQ(event_subscribe_removed, details::g_test_wal_publisher_stats.event_on_subscribe_removed);
+  CASE_EXPECT_EQ(send_logs_count + 1, details::g_test_wal_publisher_stats.send_logs_count);
+  CASE_EXPECT_EQ(send_snapshot_count + 2, details::g_test_wal_publisher_stats.send_snapshot_count);
+
+  publisher->receive_subscribe_request(subscriber_key_1, from_key, from_hash_code, t3, ctx);
+
+  CASE_EXPECT_EQ(2, details::g_test_wal_publisher_stats.last_event_log_count);
+  CASE_EXPECT_EQ(send_logs_count + 2, details::g_test_wal_publisher_stats.send_logs_count);
+  CASE_EXPECT_EQ(send_snapshot_count + 2, details::g_test_wal_publisher_stats.send_snapshot_count);
+
+  publisher->receive_subscribe_request(subscriber_key_2, from_key, from_hash_code + 1, t3, ctx);
+
+  CASE_EXPECT_EQ(4, details::g_test_wal_publisher_stats.last_event_log_count);
+  CASE_EXPECT_EQ(send_logs_count + 2, details::g_test_wal_publisher_stats.send_logs_count);
+  CASE_EXPECT_EQ(send_snapshot_count + 3, details::g_test_wal_publisher_stats.send_snapshot_count);
 }
 
 CASE_TEST(wal_publisher, remove_subscriber_by_check_callback_st) {
