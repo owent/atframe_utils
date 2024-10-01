@@ -1,5 +1,7 @@
 // Copyright 2021 atframework
 
+#include <distributed_system/wal_client.h>
+
 #include <algorithm>
 #include <chrono>
 #include <cstring>
@@ -7,8 +9,6 @@
 #include <memory>
 #include <sstream>
 #include <vector>
-
-#include <distributed_system/wal_client.h>
 
 #include "frame/test_macros.h"
 
@@ -31,17 +31,20 @@ struct test_wal_client_log_type {
   int64_t log_key;
   test_wal_client_log_action action;
 
+  size_t hash_code;
+
   union {
     int64_t data;
   };
 
   inline explicit test_wal_client_log_type(LIBATFRAME_UTILS_NAMESPACE_ID::distributed_system::wal_time_point t,
                                            int64_t k, test_wal_client_log_action act, int64_t d)
-      : timepoint(t), log_key(k), action(act), data(d) {}
+      : timepoint(t), log_key(k), action(act), hash_code(0), data(d) {}
   inline test_wal_client_log_type()
       : timepoint(std::chrono::system_clock::from_time_t(0)),
         log_key(0),
         action(test_wal_client_log_action::kDoNothing),
+        hash_code(0),
         data(0) {}
 };
 
@@ -61,6 +64,12 @@ struct test_wal_client_private_type {
   inline test_wal_client_private_type() : storage(nullptr) {}
   inline explicit test_wal_client_private_type(test_wal_client_storage_type* input) : storage(input) {}
 };
+
+namespace {
+size_t test_wal_client_log_hash(size_t previous_hash_code, int64_t log_key) {
+  return std::hash<size_t>()(previous_hash_code) ^ std::hash<int64_t>()(log_key);
+}
+}  // namespace
 
 namespace mt {
 using test_wal_client_log_operator =
@@ -144,6 +153,22 @@ static test_wal_client_type::vtable_pointer create_vtable() {
   ret->allocate_log_key = [](wal_object_type&, const wal_object_type::log_type&,
                              wal_object_type::callback_param_type) -> wal_object_type::log_key_result_type {
     return wal_object_type::log_key_result_type::make_success(++details::g_test_wal_client_stats.key_alloc);
+  };
+
+  ret->get_hash_code = [](const wal_object_type&,
+                          const wal_object_type::log_type& log) -> wal_object_type::hash_code_type {
+    return log.hash_code;
+  };
+
+  ret->set_hash_code = [](const wal_object_type&, wal_object_type::log_type& log,
+                          wal_object_type::hash_code_type hash_code) {
+    // Set member
+    log.hash_code = hash_code;
+  };
+
+  ret->calulate_hash_code = [](const wal_object_type&, wal_object_type::hash_code_type previous_hash_code,
+                               const wal_object_type::log_type& log) -> wal_object_type::hash_code_type {
+    return test_wal_client_log_hash(previous_hash_code, log.log_key);
   };
 
   ret->on_log_added = [](wal_object_type&, const wal_object_type::log_pointer&) {
@@ -462,6 +487,8 @@ CASE_TEST(wal_client, receive_logs_mt) {
 
   auto event_on_log_added = details::g_test_wal_client_stats.event_on_log_added;
 
+  logs[0].hash_code = test_wal_client_log_hash(0, logs[0].log_key);
+  logs[1].hash_code = test_wal_client_log_hash(logs[0].hash_code, logs[1].log_key);
   CASE_EXPECT_EQ(2, client->receive_logs(ctx, logs.begin(), logs.end()));
 
   CASE_EXPECT_EQ(event_on_log_added + 2, details::g_test_wal_client_stats.event_on_log_added);
@@ -473,6 +500,8 @@ CASE_TEST(wal_client, receive_logs_mt) {
   // ignore logs that already received
   logs.push_back(test_wal_client_log_type{now, 126, test_wal_client_log_action::kFallbackDefault, 126});
 
+  CASE_EXPECT_EQ(0, client->receive_logs(ctx, logs.begin(), logs.end()));
+  (*logs.rbegin()).hash_code = test_wal_client_log_hash(logs[1].hash_code, 126);
   CASE_EXPECT_EQ(1, client->receive_logs(ctx, logs.begin(), logs.end()));
   CASE_EXPECT_TRUE(!!client->get_last_finished_log_key());
   if (client->get_last_finished_log_key()) {
@@ -523,6 +552,9 @@ CASE_TEST(wal_client, receive_hole_logs_mt) {
 
   auto event_on_log_added = details::g_test_wal_client_stats.event_on_log_added;
 
+  logs[0].hash_code = test_wal_client_log_hash(0, logs[0].log_key);
+  logs[1].hash_code = test_wal_client_log_hash(logs[0].hash_code, logs[1].log_key);
+
   CASE_EXPECT_EQ(0, client->receive_logs(ctx, logs.begin(), logs.end()));
   CASE_EXPECT_EQ(2, client->receive_hole_logs(ctx, logs.begin(), logs.end()));
 
@@ -531,6 +563,38 @@ CASE_TEST(wal_client, receive_hole_logs_mt) {
   if (client->get_last_finished_log_key()) {
     CASE_EXPECT_EQ(126, *client->get_last_finished_log_key());
   }
+
+  test_wal_client_log_type hole_log{now, 130, test_wal_client_log_action::kDoNothing, 130};
+  hole_log.hash_code = test_wal_client_log_hash(logs[1].hash_code, hole_log.log_key) + 1;
+
+  CASE_EXPECT_EQ(
+      static_cast<int32_t>(LIBATFRAME_UTILS_NAMESPACE_ID::distributed_system::wal_result_code::kHashCodeMismatch),
+      static_cast<int32_t>(client->receive_hole_log(ctx, hole_log)));
+  if (client->get_last_finished_log_key()) {
+    CASE_EXPECT_EQ(126, *client->get_last_finished_log_key());
+  }
+
+  --hole_log.hash_code;
+  CASE_EXPECT_EQ(static_cast<int32_t>(LIBATFRAME_UTILS_NAMESPACE_ID::distributed_system::wal_result_code::kOk),
+                 static_cast<int32_t>(client->receive_hole_log(ctx, hole_log)));
+  if (client->get_last_finished_log_key()) {
+    CASE_EXPECT_EQ(130, *client->get_last_finished_log_key());
+  }
+
+  // Insert hole log
+  size_t old_hash_code = hole_log.hash_code;
+  hole_log.log_key = 128;
+  hole_log.data = 128;
+  hole_log.hash_code = test_wal_client_log_hash(logs[1].hash_code, hole_log.log_key) + 1;
+  CASE_EXPECT_EQ(
+      static_cast<int32_t>(LIBATFRAME_UTILS_NAMESPACE_ID::distributed_system::wal_result_code::kHashCodeMismatch),
+      static_cast<int32_t>(client->receive_hole_log(ctx, hole_log)));
+  --hole_log.hash_code;
+  CASE_EXPECT_EQ(static_cast<int32_t>(LIBATFRAME_UTILS_NAMESPACE_ID::distributed_system::wal_result_code::kOk),
+                 static_cast<int32_t>(client->receive_hole_log(ctx, hole_log)));
+  size_t new_hash_code = (*client->get_log_manager().get_all_logs().rbegin())->hash_code;
+  CASE_EXPECT_EQ(130, (*client->get_log_manager().get_all_logs().rbegin())->data);
+  CASE_EXPECT_NE(old_hash_code, new_hash_code);
 }
 }  // namespace mt
 
@@ -616,6 +680,22 @@ static test_wal_client_type::vtable_pointer create_vtable() {
   ret->allocate_log_key = [](wal_object_type&, const wal_object_type::log_type&,
                              wal_object_type::callback_param_type) -> wal_object_type::log_key_result_type {
     return wal_object_type::log_key_result_type::make_success(++details::g_test_wal_client_stats.key_alloc);
+  };
+
+  ret->get_hash_code = [](const wal_object_type&,
+                          const wal_object_type::log_type& log) -> wal_object_type::hash_code_type {
+    return log.hash_code;
+  };
+
+  ret->set_hash_code = [](const wal_object_type&, wal_object_type::log_type& log,
+                          wal_object_type::hash_code_type hash_code) {
+    // Set member
+    log.hash_code = hash_code;
+  };
+
+  ret->calulate_hash_code = [](const wal_object_type&, wal_object_type::hash_code_type previous_hash_code,
+                               const wal_object_type::log_type& log) -> wal_object_type::hash_code_type {
+    return test_wal_client_log_hash(previous_hash_code, log.log_key);
   };
 
   ret->on_log_added = [](wal_object_type&, const wal_object_type::log_pointer&) {
@@ -934,6 +1014,9 @@ CASE_TEST(wal_client, receive_logs_st) {
 
   auto event_on_log_added = details::g_test_wal_client_stats.event_on_log_added;
 
+  logs[0].hash_code = test_wal_client_log_hash(0, logs[0].log_key);
+  logs[1].hash_code = test_wal_client_log_hash(logs[0].hash_code, logs[1].log_key);
+
   CASE_EXPECT_EQ(2, client->receive_logs(ctx, logs.begin(), logs.end()));
 
   CASE_EXPECT_EQ(event_on_log_added + 2, details::g_test_wal_client_stats.event_on_log_added);
@@ -944,6 +1027,9 @@ CASE_TEST(wal_client, receive_logs_st) {
 
   // ignore logs that already received
   logs.push_back(test_wal_client_log_type{now, 126, test_wal_client_log_action::kFallbackDefault, 126});
+
+  CASE_EXPECT_EQ(0, client->receive_logs(ctx, logs.begin(), logs.end()));
+  logs[2].hash_code = test_wal_client_log_hash(logs[1].hash_code, logs[2].log_key);
 
   CASE_EXPECT_EQ(1, client->receive_logs(ctx, logs.begin(), logs.end()));
   CASE_EXPECT_TRUE(!!client->get_last_finished_log_key());
@@ -995,6 +1081,9 @@ CASE_TEST(wal_client, receive_hole_logs_st) {
 
   auto event_on_log_added = details::g_test_wal_client_stats.event_on_log_added;
 
+  logs[0].hash_code = test_wal_client_log_hash(0, logs[0].log_key);
+  logs[1].hash_code = test_wal_client_log_hash(logs[0].hash_code, logs[1].log_key);
+
   CASE_EXPECT_EQ(0, client->receive_logs(ctx, logs.begin(), logs.end()));
   CASE_EXPECT_EQ(2, client->receive_hole_logs(ctx, logs.begin(), logs.end()));
 
@@ -1003,5 +1092,37 @@ CASE_TEST(wal_client, receive_hole_logs_st) {
   if (client->get_last_finished_log_key()) {
     CASE_EXPECT_EQ(126, *client->get_last_finished_log_key());
   }
+
+  test_wal_client_log_type hole_log{now, 130, test_wal_client_log_action::kDoNothing, 130};
+  hole_log.hash_code = test_wal_client_log_hash(logs[1].hash_code, hole_log.log_key) + 1;
+
+  CASE_EXPECT_EQ(
+      static_cast<int32_t>(LIBATFRAME_UTILS_NAMESPACE_ID::distributed_system::wal_result_code::kHashCodeMismatch),
+      static_cast<int32_t>(client->receive_hole_log(ctx, hole_log)));
+  if (client->get_last_finished_log_key()) {
+    CASE_EXPECT_EQ(126, *client->get_last_finished_log_key());
+  }
+
+  --hole_log.hash_code;
+  CASE_EXPECT_EQ(static_cast<int32_t>(LIBATFRAME_UTILS_NAMESPACE_ID::distributed_system::wal_result_code::kOk),
+                 static_cast<int32_t>(client->receive_hole_log(ctx, hole_log)));
+  if (client->get_last_finished_log_key()) {
+    CASE_EXPECT_EQ(130, *client->get_last_finished_log_key());
+  }
+
+  // Insert hole log
+  size_t old_hash_code = hole_log.hash_code;
+  hole_log.log_key = 128;
+  hole_log.data = 128;
+  hole_log.hash_code = test_wal_client_log_hash(logs[1].hash_code, hole_log.log_key) + 1;
+  CASE_EXPECT_EQ(
+      static_cast<int32_t>(LIBATFRAME_UTILS_NAMESPACE_ID::distributed_system::wal_result_code::kHashCodeMismatch),
+      static_cast<int32_t>(client->receive_hole_log(ctx, hole_log)));
+  --hole_log.hash_code;
+  CASE_EXPECT_EQ(static_cast<int32_t>(LIBATFRAME_UTILS_NAMESPACE_ID::distributed_system::wal_result_code::kOk),
+                 static_cast<int32_t>(client->receive_hole_log(ctx, hole_log)));
+  size_t new_hash_code = (*client->get_log_manager().get_all_logs().rbegin())->hash_code;
+  CASE_EXPECT_EQ(130, (*client->get_log_manager().get_all_logs().rbegin())->data);
+  CASE_EXPECT_NE(old_hash_code, new_hash_code);
 }
 }  // namespace st

@@ -27,6 +27,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_client {
   using object_type = wal_object<StorageT, LogOperatorT, CallbackParamT, PrivateDataT>;
   using snapshot_type = SnapshotT;
 
+  using hash_code_type = typename object_type::hash_code_type;
   using storage_type = typename object_type::storage_type;
   using log_type = typename log_operator_type::log_type;
   using log_pointer = typename log_operator_type::log_pointer;
@@ -266,7 +267,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_client {
         } else {
           next_heartbeat_timepoint_ = now + get_configure().subscriber_heartbeat_interval;
         }
-        UTIL_UNLIKELY_IF (next_heartbeat_timepoint_ <= now) {
+        if UTIL_UNLIKELY_CONDITION (next_heartbeat_timepoint_ <= now) {
           next_heartbeat_timepoint_ = now + std::chrono::duration_cast<duration>(std::chrono::minutes{3});
         }
 
@@ -292,6 +293,17 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_client {
 
     if (vtable_ && vtable_->get_log_key) {
       auto log_key = vtable_->get_log_key(*wal_object_, *log);
+
+      // Check hash code
+      if (vtable_->set_hash_code && vtable_->get_hash_code && vtable_->calulate_hash_code) {
+        auto before_hash_code = wal_object_->get_hash_code_before(log_key);
+        auto current_hash_code = vtable_->get_hash_code(*wal_object_, *log);
+        if (before_hash_code != 0 &&
+            vtable_->calulate_hash_code(*wal_object_, before_hash_code, *log) != current_hash_code) {
+          return wal_result_code::kHashCodeMismatch;
+        }
+      }
+
       if (get_last_finished_log_key() && !get_log_key_compare()(*this->get_last_finished_log_key(), log_key)) {
         return wal_result_code::kIgnore;
       }
@@ -334,6 +346,17 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_client {
 
     if (vtable_ && vtable_->get_log_key) {
       auto log_key = vtable_->get_log_key(*wal_object_, *log);
+
+      // Check hash code
+      if (vtable_->set_hash_code && vtable_->get_hash_code && vtable_->calulate_hash_code) {
+        auto before_hash_code = wal_object_->get_hash_code_before(log_key);
+        auto current_hash_code = vtable_->get_hash_code(*wal_object_, *log);
+        if (before_hash_code != 0 &&
+            vtable_->calulate_hash_code(*wal_object_, before_hash_code, *log) != current_hash_code) {
+          return wal_result_code::kHashCodeMismatch;
+        }
+      }
+
       if (!(get_last_finished_log_key() && !get_log_key_compare()(*this->get_last_finished_log_key(), log_key))) {
         set_last_finished_log_key(std::move(log_key));
       }
