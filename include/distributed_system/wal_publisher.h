@@ -524,7 +524,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_publisher {
       auto log_key = vtable_->get_log_key(*wal_object_, **log_iter);
       if (!log_key_compare(last_checkpoint, log_key) && !log_key_compare(log_key, last_checkpoint)) {
         if (nullptr != check_hash_code && vtable_->set_hash_code && vtable_->get_hash_code &&
-            vtable_->calulate_hash_code) {
+            vtable_->calculate_hash_code) {
           if (*check_hash_code != vtable_->get_hash_code(*wal_object_, **log_iter)) {
             should_send_snapshot = true;
           }

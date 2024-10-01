@@ -67,7 +67,11 @@ struct test_wal_client_private_type {
 
 namespace {
 size_t test_wal_client_log_hash(size_t previous_hash_code, int64_t log_key) {
-  return std::hash<size_t>()(previous_hash_code) ^ std::hash<int64_t>()(log_key);
+  size_t ret = std::hash<int64_t>()(log_key + static_cast<int64_t>(previous_hash_code));
+  if (0 == ret) {
+    return 1;
+  }
+  return ret;
 }
 }  // namespace
 
@@ -166,8 +170,8 @@ static test_wal_client_type::vtable_pointer create_vtable() {
     log.hash_code = hash_code;
   };
 
-  ret->calulate_hash_code = [](const wal_object_type&, wal_object_type::hash_code_type previous_hash_code,
-                               const wal_object_type::log_type& log) -> wal_object_type::hash_code_type {
+  ret->calculate_hash_code = [](const wal_object_type&, wal_object_type::hash_code_type previous_hash_code,
+                                const wal_object_type::log_type& log) -> wal_object_type::hash_code_type {
     return test_wal_client_log_hash(previous_hash_code, log.log_key);
   };
 
@@ -693,8 +697,8 @@ static test_wal_client_type::vtable_pointer create_vtable() {
     log.hash_code = hash_code;
   };
 
-  ret->calulate_hash_code = [](const wal_object_type&, wal_object_type::hash_code_type previous_hash_code,
-                               const wal_object_type::log_type& log) -> wal_object_type::hash_code_type {
+  ret->calculate_hash_code = [](const wal_object_type&, wal_object_type::hash_code_type previous_hash_code,
+                                const wal_object_type::log_type& log) -> wal_object_type::hash_code_type {
     return test_wal_client_log_hash(previous_hash_code, log.log_key);
   };
 

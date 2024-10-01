@@ -124,7 +124,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_object {
     callback_log_event_fn_t on_log_removed;
     callback_get_hash_code_fn_t get_hash_code;
     callback_set_hash_code_fn_t set_hash_code;
-    callback_calulate_hash_code_fn_t calulate_hash_code;
+    callback_calulate_hash_code_fn_t calculate_hash_code;
 
     callback_log_group_map_t log_action_delegate;
     callback_log_fn_group_t default_delegate;
@@ -233,10 +233,10 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_object {
     logs_.clear();
     logs_.assign(std::forward<IteratorT>(begin), std::forward<IteratorT>(end));
 
-    if (vtable_ && vtable_->get_hash_code && vtable_->set_hash_code && vtable_->calulate_hash_code) {
+    if (vtable_ && vtable_->get_hash_code && vtable_->set_hash_code && vtable_->calculate_hash_code) {
       hash_code_type hash_code = 0;
       for (auto& log : logs_) {
-        hash_code = vtable_->calulate_hash_code(*this, hash_code, *log);
+        hash_code = vtable_->calculate_hash_code(*this, hash_code, *log);
         vtable_->set_hash_code(*this, *log, hash_code);
       }
     }
@@ -262,10 +262,10 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_object {
     logs_.swap(source);
     source.clear();
 
-    if (vtable_ && vtable_->get_hash_code && vtable_->set_hash_code && vtable_->calulate_hash_code) {
+    if (vtable_ && vtable_->get_hash_code && vtable_->set_hash_code && vtable_->calculate_hash_code) {
       hash_code_type hash_code = 0;
       for (auto& log : logs_) {
-        hash_code = vtable_->calulate_hash_code(*this, hash_code, *log);
+        hash_code = vtable_->calculate_hash_code(*this, hash_code, *log);
         vtable_->set_hash_code(*this, *log, hash_code);
       }
     }
@@ -706,7 +706,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_object {
   }
 
   wal_result_code pusk_back_internal_uncheck(log_pointer&& log, callback_param_lvalue_reference_type param) {
-    if (vtable_ && vtable_->set_hash_code && vtable_->get_hash_code && vtable_->calulate_hash_code &&
+    if (vtable_ && vtable_->set_hash_code && vtable_->get_hash_code && vtable_->calculate_hash_code &&
         vtable_->get_log_key) {
       hash_code_type hash_code = 0;
       for (auto iter = logs_.rbegin(); iter != logs_.rend(); ++iter) {
@@ -715,7 +715,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_object {
           break;
         }
       }
-      hash_code = vtable_->calulate_hash_code(*this, hash_code, *log);
+      hash_code = vtable_->calculate_hash_code(*this, hash_code, *log);
       vtable_->set_hash_code(*this, *log, hash_code);
     }
 
@@ -785,7 +785,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_object {
       }
     }
 
-    if (vtable_->set_hash_code && vtable_->get_hash_code && vtable_->calulate_hash_code) {
+    if (vtable_->set_hash_code && vtable_->get_hash_code && vtable_->calculate_hash_code) {
       hash_code_type hash_code = 0;
       if (iter == logs_.end()) {
         for (auto last_iter = logs_.rbegin(); last_iter != logs_.rend(); ++last_iter) {
@@ -799,7 +799,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_object {
         --previous_iter;
         hash_code = vtable_->get_hash_code(*this, **previous_iter);
       }
-      hash_code = vtable_->calulate_hash_code(*this, hash_code, *log);
+      hash_code = vtable_->calculate_hash_code(*this, hash_code, *log);
       vtable_->set_hash_code(*this, *log, hash_code);
     }
 
@@ -808,11 +808,11 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_object {
       return ret;
     }
 
-    if (vtable_->set_hash_code && vtable_->get_hash_code && vtable_->calulate_hash_code) {
+    if (vtable_->set_hash_code && vtable_->get_hash_code && vtable_->calculate_hash_code) {
       // Update hash code
       hash_code_type hash_code = vtable_->get_hash_code(*this, *log);
       for (auto fix_iter = iter; fix_iter != logs_.end(); ++fix_iter) {
-        hash_code = vtable_->calulate_hash_code(*this, hash_code, **fix_iter);
+        hash_code = vtable_->calculate_hash_code(*this, hash_code, **fix_iter);
         vtable_->set_hash_code(*this, **fix_iter, hash_code);
       }
     }

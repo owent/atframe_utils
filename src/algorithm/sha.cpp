@@ -150,23 +150,43 @@ static inline sha_inner_data *malloc_inner_type(LIBATFRAME_UTILS_NAMESPACE_ID::h
   switch (t) {
     case LIBATFRAME_UTILS_NAMESPACE_ID::hash::sha::EN_ALGORITHM_SHA1:
       mbedtls_sha1_init(&ret->sha1_context);
+#  if MBEDTLS_VERSION_MAJOR >= 3
+      is_success = 0 == mbedtls_sha1_starts(&ret->sha1_context);
+#  else
       is_success = 0 == mbedtls_sha1_starts_ret(&ret->sha1_context);
+#  endif
       break;
     case LIBATFRAME_UTILS_NAMESPACE_ID::hash::sha::EN_ALGORITHM_SHA224:
       mbedtls_sha256_init(&ret->sha224_context);
+#  if MBEDTLS_VERSION_MAJOR >= 3
+      is_success = 0 == mbedtls_sha256_starts(&ret->sha224_context, 1);
+#  else
       is_success = 0 == mbedtls_sha256_starts_ret(&ret->sha224_context, 1);
+#  endif
       break;
     case LIBATFRAME_UTILS_NAMESPACE_ID::hash::sha::EN_ALGORITHM_SHA256:
       mbedtls_sha256_init(&ret->sha256_context);
+#  if MBEDTLS_VERSION_MAJOR >= 3
+      is_success = 0 == mbedtls_sha256_starts(&ret->sha256_context, 0);
+#  else
       is_success = 0 == mbedtls_sha256_starts_ret(&ret->sha256_context, 0);
+#  endif
       break;
     case LIBATFRAME_UTILS_NAMESPACE_ID::hash::sha::EN_ALGORITHM_SHA384:
       mbedtls_sha512_init(&ret->sha384_context);
+#  if MBEDTLS_VERSION_MAJOR >= 3
+      is_success = 0 == mbedtls_sha512_starts(&ret->sha384_context, 1);
+#  else
       is_success = 0 == mbedtls_sha512_starts_ret(&ret->sha384_context, 1);
+#  endif
       break;
     case LIBATFRAME_UTILS_NAMESPACE_ID::hash::sha::EN_ALGORITHM_SHA512:
       mbedtls_sha512_init(&ret->sha512_context);
+#  if MBEDTLS_VERSION_MAJOR >= 3
+      is_success = 0 == mbedtls_sha512_starts(&ret->sha384_context, 0);
+#  else
       is_success = 0 == mbedtls_sha512_starts_ret(&ret->sha384_context, 0);
+#  endif
       break;
     default:
       break;
@@ -1066,15 +1086,35 @@ LIBATFRAME_UTILS_API bool sha::update(const unsigned char *in, size_t inlen) {
 #elif defined(UTIL_HASH_IMPLEMENT_SHA_USING_MBEDTLS) && UTIL_HASH_IMPLEMENT_SHA_USING_MBEDTLS
   switch (hash_type_) {
     case LIBATFRAME_UTILS_NAMESPACE_ID::hash::sha::EN_ALGORITHM_SHA1:
+#  if MBEDTLS_VERSION_MAJOR >= 3
+      return 0 == mbedtls_sha1_update(&inner_obj->sha1_context, in, inlen);
+#  else
       return 0 == mbedtls_sha1_update_ret(&inner_obj->sha1_context, in, inlen);
+#  endif
     case LIBATFRAME_UTILS_NAMESPACE_ID::hash::sha::EN_ALGORITHM_SHA224:
+#  if MBEDTLS_VERSION_MAJOR >= 3
+      return 0 == mbedtls_sha256_update(&inner_obj->sha224_context, in, inlen);
+#  else
       return 0 == mbedtls_sha256_update_ret(&inner_obj->sha224_context, in, inlen);
+#  endif
     case LIBATFRAME_UTILS_NAMESPACE_ID::hash::sha::EN_ALGORITHM_SHA256:
+#  if MBEDTLS_VERSION_MAJOR >= 3
+      return 0 == mbedtls_sha256_update(&inner_obj->sha256_context, in, inlen);
+#  else
       return 0 == mbedtls_sha256_update_ret(&inner_obj->sha256_context, in, inlen);
+#  endif
     case LIBATFRAME_UTILS_NAMESPACE_ID::hash::sha::EN_ALGORITHM_SHA384:
+#  if MBEDTLS_VERSION_MAJOR >= 3
+      return 0 == mbedtls_sha512_update(&inner_obj->sha384_context, in, inlen);
+#  else
       return 0 == mbedtls_sha512_update_ret(&inner_obj->sha384_context, in, inlen);
+#  endif
     case LIBATFRAME_UTILS_NAMESPACE_ID::hash::sha::EN_ALGORITHM_SHA512:
+#  if MBEDTLS_VERSION_MAJOR >= 3
+      return 0 == mbedtls_sha512_update(&inner_obj->sha512_context, in, inlen);
+#  else
       return 0 == mbedtls_sha512_update_ret(&inner_obj->sha512_context, in, inlen);
+#  endif
     default:
       break;
   }
@@ -1114,15 +1154,35 @@ LIBATFRAME_UTILS_API bool sha::final() {
 #elif defined(UTIL_HASH_IMPLEMENT_SHA_USING_MBEDTLS) && UTIL_HASH_IMPLEMENT_SHA_USING_MBEDTLS
   switch (hash_type_) {
     case LIBATFRAME_UTILS_NAMESPACE_ID::hash::sha::EN_ALGORITHM_SHA1:
+#  if MBEDTLS_VERSION_MAJOR >= 3
+      return 0 == mbedtls_sha1_finish(&inner_obj->sha1_context, inner_obj->output);
+#  else
       return 0 == mbedtls_sha1_finish_ret(&inner_obj->sha1_context, inner_obj->output);
+#  endif
     case LIBATFRAME_UTILS_NAMESPACE_ID::hash::sha::EN_ALGORITHM_SHA224:
+#  if MBEDTLS_VERSION_MAJOR >= 3
+      return 0 == mbedtls_sha256_finish(&inner_obj->sha224_context, inner_obj->output);
+#  else
       return 0 == mbedtls_sha256_finish_ret(&inner_obj->sha224_context, inner_obj->output);
+#  endif
     case LIBATFRAME_UTILS_NAMESPACE_ID::hash::sha::EN_ALGORITHM_SHA256:
+#  if MBEDTLS_VERSION_MAJOR >= 3
+      return 0 == mbedtls_sha256_finish(&inner_obj->sha256_context, inner_obj->output);
+#  else
       return 0 == mbedtls_sha256_finish_ret(&inner_obj->sha256_context, inner_obj->output);
+#  endif
     case LIBATFRAME_UTILS_NAMESPACE_ID::hash::sha::EN_ALGORITHM_SHA384:
+#  if MBEDTLS_VERSION_MAJOR >= 3
+      return 0 == mbedtls_sha512_finish(&inner_obj->sha384_context, inner_obj->output);
+#  else
       return 0 == mbedtls_sha512_finish_ret(&inner_obj->sha384_context, inner_obj->output);
+#  endif
     case LIBATFRAME_UTILS_NAMESPACE_ID::hash::sha::EN_ALGORITHM_SHA512:
+#  if MBEDTLS_VERSION_MAJOR >= 3
+      return 0 == mbedtls_sha512_finish(&inner_obj->sha512_context, inner_obj->output);
+#  else
       return 0 == mbedtls_sha512_finish_ret(&inner_obj->sha512_context, inner_obj->output);
+#  endif
     default:
       break;
   }

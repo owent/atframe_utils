@@ -183,21 +183,20 @@ class cipher {
    * @param ilen          length of the input data
    * @param output        buffer for the output data. Should be able to hold at
    *                      least ilen + block_size. Cannot be the same buffer as
-   *                      input!
+   *                      input, tag are append to the end of output+ilen!
    * @param olen          length of the output data, will be filled with the
    *                      actual number of bytes written.
    * @param ad            Additional data to authenticate.
    * @param ad_len        Length of ad. ad_len must not be greater than 0xFF00
-   * @param tag           buffer for the authentication tag
    * @param tag_len       desired tag length, tag_len must between [4, 16] and tag_len % 2 == 0
    * @return              0 or error code
    */
   LIBATFRAME_UTILS_API int encrypt_aead(const unsigned char *input, size_t ilen, unsigned char *output, size_t *olen,
-                                        const unsigned char *ad, size_t ad_len, unsigned char *tag, size_t tag_len);
+                                        const unsigned char *ad, size_t ad_len, size_t tag_len);
 
   /**
    * @biref               decrypt data
-   * @param input         buffer holding the input data
+   * @param input         buffer holding the input data, the tag are stored at input+ilen-tag_len
    * @param ilen          length of the input data
    * @param output        buffer for the output data. Should be able to hold at
    *                      least ilen + block_size. Cannot be the same buffer as
@@ -206,13 +205,11 @@ class cipher {
    *                      actual number of bytes written.
    * @param ad            Additional data to be authenticated.
    * @param ad_len        Length of ad. ad_len must not be greater than 0xFF00
-   * @param tag           buffer holding the authentication tag
    * @param tag_len       length of the authentication tag
    * @return              0 or error code
    */
   LIBATFRAME_UTILS_API int decrypt_aead(const unsigned char *input, size_t ilen, unsigned char *output, size_t *olen,
-                                        const unsigned char *ad, size_t ad_len, const unsigned char *tag,
-                                        size_t tag_len);
+                                        const unsigned char *ad, size_t ad_len, size_t tag_len);
 
  public:
   static LIBATFRAME_UTILS_API const cipher_kt_t *get_cipher_by_name(const char *name);

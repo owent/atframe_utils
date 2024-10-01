@@ -569,7 +569,7 @@ CASE_TEST(crypto_cipher, evp_test) {
 
     std::string buffer;
     buffer.resize((info.plaintext.size() > info.ciphertext.size() ? info.plaintext.size() : info.ciphertext.size()) +
-                  ci.get_block_size());
+                  ci.get_block_size() + 16);
 
     if (mode & LIBATFRAME_UTILS_NAMESPACE_ID::crypto::cipher::mode_t::EN_CMODE_ENCRYPT) {
       std::chrono::system_clock::time_point begin = std::chrono::system_clock::now();
@@ -588,17 +588,17 @@ CASE_TEST(crypto_cipher, evp_test) {
         size_t olen = buffer.size();
 
         if (evp_test_is_aead(info)) {
-          unsigned char aead_tag[16];
-          size_t aead_tag_len = sizeof(aead_tag);
+          size_t aead_tag_len = 16;
           if (info.tag.size() < aead_tag_len) {
             aead_tag_len = info.tag.size();
           }
           CASE_EXPECT_LE(info.tag.size(), aead_tag_len);
 
-          enc_res = ci.encrypt_aead(reinterpret_cast<const unsigned char *>(info.plaintext.c_str()),
-                                    info.plaintext.size(), reinterpret_cast<unsigned char *>(&buffer[0]), &olen,
-                                    reinterpret_cast<const unsigned char *>(info.aad.c_str()), info.aad.size(),
-                                    aead_tag, aead_tag_len);
+          enc_res =
+              ci.encrypt_aead(reinterpret_cast<const unsigned char *>(info.plaintext.c_str()), info.plaintext.size(),
+                              reinterpret_cast<unsigned char *>(&buffer[0]), &olen,
+                              reinterpret_cast<const unsigned char *>(info.aad.c_str()), info.aad.size(), aead_tag_len);
+          unsigned char *aead_tag = reinterpret_cast<unsigned char *>(&buffer[0]) + info.plaintext.size();
 
           if (info.is_final_error) {
             CASE_EXPECT_NE(0, enc_res);
@@ -649,7 +649,8 @@ CASE_TEST(crypto_cipher, evp_test) {
 
       if (0 == enc_res) {
         std::chrono::system_clock::time_point end = std::chrono::system_clock::now();
-        double ns_count = (double)std::chrono::duration_cast<std::chrono::nanoseconds>(end - begin).count();
+        double ns_count =
+            static_cast<double>(std::chrono::duration_cast<std::chrono::nanoseconds>(end - begin).count());
         CASE_MSG_INFO() << "\tCipher: " << info.cipher << " => encrypt " << info.plaintext.size() << " bytes in "
                         << ns_count << "ns." << std::endl;
       } else {
@@ -658,7 +659,7 @@ CASE_TEST(crypto_cipher, evp_test) {
                         << ")." << std::endl;
 #  if defined(CRYPTO_USE_OPENSSL) || defined(CRYPTO_USE_LIBRESSL) || defined(CRYPTO_USE_BORINGSSL)
         char err_msg[8192] = {0};
-        ERR_error_string_n((unsigned long)ci.get_last_errno(), err_msg, sizeof(err_msg));
+        ERR_error_string_n((unsigned long)ci.get_last_errno(), err_msg, sizeof(err_msg));  // NOLINT: runtime/int
         CASE_MSG_INFO() << CASE_MSG_FCOLOR(YELLOW) << "\t" << err_msg << std::endl;
 #  endif
       }
@@ -684,10 +685,15 @@ CASE_TEST(crypto_cipher, evp_test) {
           // if (info.cipher == "chacha20-poly1305") {
           //     puts("debug");
           // }
-          dec_res = ci.decrypt_aead(reinterpret_cast<const unsigned char *>(info.ciphertext.c_str()),
-                                    info.ciphertext.size(), reinterpret_cast<unsigned char *>(&buffer[0]), &olen,
-                                    reinterpret_cast<const unsigned char *>(info.aad.c_str()), info.aad.size(),
-                                    reinterpret_cast<const unsigned char *>(info.tag.c_str()), info.tag.size());
+          std::vector<unsigned char> decrypt_buffer;
+          decrypt_buffer.resize(info.ciphertext.size() + info.tag.size());
+          memcpy(&decrypt_buffer[0], reinterpret_cast<const unsigned char *>(info.ciphertext.c_str()),
+                 info.ciphertext.size());
+          memcpy(&decrypt_buffer[0] + info.ciphertext.size(), reinterpret_cast<const unsigned char *>(info.tag.c_str()),
+                 info.tag.size());
+          dec_res = ci.decrypt_aead(
+              &decrypt_buffer[0], decrypt_buffer.size(), reinterpret_cast<unsigned char *>(&buffer[0]), &olen,
+              reinterpret_cast<const unsigned char *>(info.aad.c_str()), info.aad.size(), info.tag.size());
 
           if (info.is_final_error) {
             CASE_EXPECT_NE(0, dec_res);
