@@ -27,7 +27,6 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_client {
   using object_type = wal_object<StorageT, LogOperatorT, CallbackParamT, PrivateDataT>;
   using snapshot_type = SnapshotT;
 
-  using hash_code_type = typename object_type::hash_code_type;
   using storage_type = typename object_type::storage_type;
   using log_type = typename log_operator_type::log_type;
   using log_pointer = typename log_operator_type::log_pointer;
@@ -37,6 +36,9 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_client {
   using action_getter_type = typename log_operator_type::action_getter_type;
   using action_case_type = typename log_operator_type::action_case_type;
   using log_key_result_type = typename log_operator_type::log_key_result_type;
+
+  using hash_code_traits = typename object_type::hash_code_traits;
+  using hash_code_type = typename object_type::hash_code_type;
 
   using log_allocator = typename object_type::log_allocator;
   using log_container_type = typename object_type::log_container_type;
@@ -298,8 +300,9 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_client {
       if (vtable_->set_hash_code && vtable_->get_hash_code && vtable_->calculate_hash_code) {
         auto before_hash_code = wal_object_->get_hash_code_before(log_key);
         auto current_hash_code = vtable_->get_hash_code(*wal_object_, *log);
-        if (before_hash_code != 0 &&
-            vtable_->calculate_hash_code(*wal_object_, before_hash_code, *log) != current_hash_code) {
+        if (hash_code_traits::validate(before_hash_code) &&
+            !hash_code_traits::equal(vtable_->calculate_hash_code(*wal_object_, before_hash_code, *log),
+                                     current_hash_code)) {
           return wal_result_code::kHashCodeMismatch;
         }
       }
@@ -351,8 +354,9 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_client {
       if (vtable_->set_hash_code && vtable_->get_hash_code && vtable_->calculate_hash_code) {
         auto before_hash_code = wal_object_->get_hash_code_before(log_key);
         auto current_hash_code = vtable_->get_hash_code(*wal_object_, *log);
-        if (before_hash_code != 0 &&
-            vtable_->calculate_hash_code(*wal_object_, before_hash_code, *log) != current_hash_code) {
+        if (hash_code_traits::validate(before_hash_code) &&
+            !hash_code_traits::equal(vtable_->calculate_hash_code(*wal_object_, before_hash_code, *log),
+                                     current_hash_code)) {
           return wal_result_code::kHashCodeMismatch;
         }
       }

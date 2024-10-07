@@ -30,7 +30,6 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_publisher {
   using object_type = wal_object<StorageT, LogOperatorT, CallbackParamT, PrivateDataT>;
   using subscriber_type = WalSubscriber;
 
-  using hash_code_type = typename object_type::hash_code_type;
   using storage_type = typename object_type::storage_type;
   using log_type = typename log_operator_type::log_type;
   using log_pointer = typename log_operator_type::log_pointer;
@@ -40,6 +39,9 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_publisher {
   using action_getter_type = typename log_operator_type::action_getter_type;
   using action_case_type = typename log_operator_type::action_case_type;
   using log_key_result_type = typename log_operator_type::log_key_result_type;
+
+  using hash_code_traits = typename object_type::hash_code_traits;
+  using hash_code_type = typename object_type::hash_code_type;
 
   using log_allocator = typename object_type::log_allocator;
   using log_container_type = typename object_type::log_container_type;
@@ -525,7 +527,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_publisher {
       if (!log_key_compare(last_checkpoint, log_key) && !log_key_compare(log_key, last_checkpoint)) {
         if (nullptr != check_hash_code && vtable_->set_hash_code && vtable_->get_hash_code &&
             vtable_->calculate_hash_code) {
-          if (*check_hash_code != vtable_->get_hash_code(*wal_object_, **log_iter)) {
+          if (!hash_code_traits::equal(*check_hash_code, vtable_->get_hash_code(*wal_object_, **log_iter))) {
             should_send_snapshot = true;
           }
         }
