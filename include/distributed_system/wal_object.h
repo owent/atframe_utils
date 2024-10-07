@@ -6,6 +6,7 @@
 
 #include <design_pattern/nomovable.h>
 #include <design_pattern/noncopyable.h>
+#include <nostd/type_traits.h>
 
 #include <stdint.h>
 #include <atomic>
@@ -37,7 +38,6 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_object {
   using storage_type = StorageT;
   using private_data_type = PrivateDataT;
   using log_operator_type = LogOperatorT;
-  using hash_code_type = size_t;
 
   using log_type = typename log_operator_type::log_type;
   using log_pointer = typename log_operator_type::log_pointer;
@@ -47,6 +47,10 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_object {
   using action_getter_type = typename log_operator_type::action_getter_type;
   using action_case_type = typename log_operator_type::action_case_type;
   using log_key_result_type = typename log_operator_type::log_key_result_type;
+
+  using hash_code_traits =
+      wal_log_hash_code_traits<nostd::remove_cvref_t<log_key_type>, nostd::remove_cvref_t<log_type>>;
+  using hash_code_type = typename hash_code_traits::hash_code_type;
 
   using log_allocator = typename log_operator_type::log_allocator;
   using log_pointer_allocator = typename log_operator_type::log_pointer_allocator;
@@ -234,7 +238,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_object {
     logs_.assign(std::forward<IteratorT>(begin), std::forward<IteratorT>(end));
 
     if (vtable_ && vtable_->get_hash_code && vtable_->set_hash_code && vtable_->calculate_hash_code) {
-      hash_code_type hash_code = 0;
+      hash_code_type hash_code = hash_code_traits::initial_hash_code();
       for (auto& log : logs_) {
         hash_code = vtable_->calculate_hash_code(*this, hash_code, *log);
         vtable_->set_hash_code(*this, *log, hash_code);
@@ -263,7 +267,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_object {
     source.clear();
 
     if (vtable_ && vtable_->get_hash_code && vtable_->set_hash_code && vtable_->calculate_hash_code) {
-      hash_code_type hash_code = 0;
+      hash_code_type hash_code = hash_code_traits::initial_hash_code();
       for (auto& log : logs_) {
         hash_code = vtable_->calculate_hash_code(*this, hash_code, *log);
         vtable_->set_hash_code(*this, *log, hash_code);
@@ -638,11 +642,11 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_object {
 
   hash_code_type get_hash_code_before(const log_key_type& key) const noexcept {
     if (logs_.empty()) {
-      return 0;
+      return hash_code_traits::initial_hash_code();
     }
 
     if (!vtable_ || !vtable_->get_hash_code || !vtable_->get_log_key) {
-      return 0;
+      return hash_code_traits::initial_hash_code();
     }
 
     log_key_type last_key = vtable_->get_log_key(*this, **logs_.rbegin());
@@ -652,7 +656,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_object {
 
     auto iter = log_lower_bound(key);
     if (iter == logs_.begin()) {
-      return 0;
+      return hash_code_traits::initial_hash_code();
     }
     --iter;
     return vtable_->get_hash_code(*this, **iter);
@@ -708,7 +712,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_object {
   wal_result_code pusk_back_internal_uncheck(log_pointer&& log, callback_param_lvalue_reference_type param) {
     if (vtable_ && vtable_->set_hash_code && vtable_->get_hash_code && vtable_->calculate_hash_code &&
         vtable_->get_log_key) {
-      hash_code_type hash_code = 0;
+      hash_code_type hash_code = hash_code_traits::initial_hash_code();
       for (auto iter = logs_.rbegin(); iter != logs_.rend(); ++iter) {
         if (*iter) {
           hash_code = vtable_->get_hash_code(*this, **iter);
@@ -786,7 +790,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_object {
     }
 
     if (vtable_->set_hash_code && vtable_->get_hash_code && vtable_->calculate_hash_code) {
-      hash_code_type hash_code = 0;
+      hash_code_type hash_code = hash_code_traits::initial_hash_code();
       if (iter == logs_.end()) {
         for (auto last_iter = logs_.rbegin(); last_iter != logs_.rend(); ++last_iter) {
           if (*last_iter) {

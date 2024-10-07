@@ -154,6 +154,15 @@ struct LIBATFRAME_UTILS_API_HEAD_ONLY wal_mt_mode_func_trait<wal_mt_mode::kMulti
 #endif
 };
 
+template <class /*LogKeyT*/, class /*LogT*/>
+struct LIBATFRAME_UTILS_API_HEAD_ONLY wal_log_hash_code_traits {
+  using hash_code_type = size_t;
+
+  static inline hash_code_type initial_hash_code() noexcept { return 0; }
+  static inline hash_code_type validate(const hash_code_type& hash_code) noexcept { return 0 != hash_code; }
+  static inline hash_code_type equal(const hash_code_type& l, const hash_code_type& r) noexcept { return l == r; }
+};
+
 template <class LogKeyT, class LogT, class ActionGetter, class CompareLogKeyT = std::less<LogKeyT>,
           class HashActionCaseT = std::hash<typename wal_log_action_getter_trait<LogT, ActionGetter>::type>,
           class EqualActionCaseT = std::equal_to<typename wal_log_action_getter_trait<LogT, ActionGetter>::type>,
