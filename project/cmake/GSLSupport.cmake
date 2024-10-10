@@ -58,6 +58,7 @@ for (int y{}, p{}; y != 6; ++y, p = ((p + 1) % 4)) {
 return 0;
 }"
   LIBATFRAME_UTILS_GSL_TEST_STL_STRING_VIEW)
+set(LIBATFRAME_UTILS_ENABLE_GSL_STRING_VIEW_FROM_STD ${ENABLE_CXX_GSL_STD_STRING_VIEW})
 
 if(NOT TARGET Microsoft.GSL::GSL AND NOT TARGET gsl::gsl-lite)
   check_cxx_source_compiles(

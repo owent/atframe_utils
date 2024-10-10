@@ -40,6 +40,7 @@ set(LOG_WRAPPER_CATEGORIZE_SIZE
     CACHE STRING "Default log categorize number.")
 option(ENABLE_NETWORK "Enable network support." ON)
 option(ENABLE_CXX_GSL "Enable C++ Core Guideline: The Guideline Support Library." ON)
+option(ENABLE_CXX_GSL_STD_STRING_VIEW "Enable alias gsl::string_view=std::string_view." ON)
 
 # Check pthread
 set(THREADS_PREFER_PTHREAD_FLAG TRUE)
