@@ -133,7 +133,11 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY basic_string_view {
   //   basic_string_view& operator=(const basic_string_view&) noexcept = default;
 
   constexpr basic_string_view(const basic_string_view&) noexcept = default;
+#if ((defined(__cplusplus) && __cplusplus >= 202002L) || (defined(_MSVC_LANG) && _MSVC_LANG >= 202002L))
   constexpr basic_string_view& operator=(const basic_string_view&) noexcept = default;
+#else
+  basic_string_view& operator=(const basic_string_view&) = default;
+#endif
 
   constexpr basic_string_view& operator=(nostd::nonnull<const_pointer> str) noexcept {
     basic_string_view{str}.swap(*this);
