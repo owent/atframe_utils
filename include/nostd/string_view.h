@@ -139,13 +139,6 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY basic_string_view {
   basic_string_view& operator=(const basic_string_view&) = default;
 #endif
 
-  constexpr basic_string_view& operator=(nostd::nonnull<const_pointer> str) noexcept {
-    basic_string_view{str}.swap(*this);
-    return *this;
-  }
-
-  constexpr basic_string_view& operator=(std::nullptr_t) noexcept = delete;
-
   template <class Allocator>
   constexpr basic_string_view& operator=(common_type_t<::std::basic_string<CharT, Traits, Allocator>>&& str) noexcept {
     basic_string_view(str.data(), str.size()).swap(*this);
