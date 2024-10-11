@@ -147,7 +147,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY basic_string_view {
   constexpr basic_string_view& operator=(std::nullptr_t) noexcept = delete;
 
   template <class Allocator>
-  constexpr basic_string_view& operator=(::std::basic_string<CharT, Traits, Allocator>&& str) noexcept {
+  constexpr basic_string_view& operator=(common_type_t<::std::basic_string<CharT, Traits, Allocator>>&& str) noexcept {
     basic_string_view(str.data(), str.size()).swap(*this);
     static_assert(
         __basic_string_view_lifetime_guard<CharT, Traits, ::std::basic_string<CharT, Traits, Allocator>&&>::value,
@@ -157,7 +157,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY basic_string_view {
 
   template <class Allocator>
   constexpr basic_string_view& operator=(
-      const ::std::basic_string<CharT, Traits, Allocator>& str UTIL_ATTRIBUTE_LIFETIME_BOUND) noexcept {
+      const common_type_t<::std::basic_string<CharT, Traits, Allocator>>& str UTIL_ATTRIBUTE_LIFETIME_BOUND) noexcept {
     basic_string_view(str.data(), str.size()).swap(*this);
     static_assert(
         __basic_string_view_lifetime_guard<CharT, Traits, const ::std::basic_string<CharT, Traits, Allocator>&>::value,
@@ -305,9 +305,9 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY basic_string_view {
   //
   // Swaps this `basic_string_view` with another `basic_string_view`.
   UTIL_NOSTD_STRING_VIEW_CXX14_CONSTEXPR void swap(basic_string_view& s) noexcept {
-    auto t = *this;
-    *this = s;
-    s = t;
+    using ::std::swap;
+    swap(ptr_, s.ptr_);
+    swap(length_, s.length_);
   }
 
   // Converts to `std::basic_string`.
