@@ -137,7 +137,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY basic_string_view {
     basic_string_view(str.data(), str.size()).swap(*this);
     static_assert(
         __basic_string_view_lifetime_guard<CharT, Traits, ::std::basic_string<CharT, Traits, Allocator>&&>::value,
-        "Can not assign a string_view with a temporary string");
+        "Can not assign string_view with a temporary string");
     return *this;
   }
 
@@ -147,7 +147,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY basic_string_view {
     basic_string_view(str.data(), str.size()).swap(*this);
     static_assert(
         __basic_string_view_lifetime_guard<CharT, Traits, const ::std::basic_string<CharT, Traits, Allocator>&>::value,
-        "Can not assign a string_view with a temporary string");
+        "Can not assign string_view with a temporary string");
     return *this;
   }
 
