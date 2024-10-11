@@ -172,6 +172,7 @@ set(HEADER_LIST
     "${CMAKE_CURRENT_LIST_DIR}/include/nostd/nullability.h"
     "${CMAKE_CURRENT_LIST_DIR}/include/nostd/string_view.h"
     "${CMAKE_CURRENT_LIST_DIR}/include/nostd/type_traits.h"
+    "${CMAKE_CURRENT_LIST_DIR}/include/nostd/utility_data_size.h"
     "${CMAKE_CURRENT_LIST_DIR}/include/nostd/utility_sequence.h"
     "${CMAKE_CURRENT_LIST_DIR}/include/random/random_generator.h"
     "${CMAKE_CURRENT_LIST_DIR}/include/random/random_mt_core.h"
