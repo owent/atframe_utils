@@ -18,6 +18,7 @@ using ::std::size;
 
 #else
 
+template <class TCONTAINER>
 LIBATFRAME_UTILS_API_HEAD_ONLY constexpr inline auto size(const TCONTAINER& container) -> decltype(container.size()) {
   return container.size();
 }
