@@ -187,14 +187,12 @@ jobs:
         uses: actions/cache@v3
         with:
           path: |
-            /usr/local/share/vcpkg/installed
             third_party/install
           key: ${{ runner.os }}-coverage-${ hashFiles('.github/.cache-key') }) }}
       - name: Generate coverage
         shell: bash
         env:
           USE_CC: ${{ matrix.cc }}
-          VCPKG_TARGET_TRIPLET: ${{ matrix.triplet }}
           USE_SSL: ${{ matrix.ssl }}
           GCOV_FLAGS: "${{ matrix.gcov_flags }}"
         run: |
