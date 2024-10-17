@@ -2,14 +2,12 @@
 
 cxx utils code
 
-[![ci-badge]][ci-link] [![codecov badge]][codecov status] [![lgtm-badge]][lgtm-link]
+[![ci-badge]][ci-link] [![codecov badge]][codecov status]
 
 [ci-badge]: https://github.com/atframework/atframe_utils/actions/workflows/main.yml/badge.svg "Github action build status"
 [ci-link]:  https://github.com/atframework/atframe_utils/actions/workflows/main.yml "Github action build status"
 [codecov badge]: https://codecov.io/gh/atframework/atframe_utils/branch/main/graph/badge.svg
 [codecov status]: https://codecov.io/gh/atframework/atframe_utils
-[lgtm-badge]: https://img.shields.io/lgtm/grade/cpp/g/atframework/atframe_utils.svg?logo=lgtm&logoWidth=18 "LGTM"
-[lgtm-link]:  https://lgtm.com/projects/g/atframework/atframe_utils/context:cpp "LGTM"
 
 ## CI Job Matrix
 
