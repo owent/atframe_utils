@@ -157,8 +157,11 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_client {
     }
 
     object_type::default_configure(*ret);
+    ret->accept_log_when_hash_matched = true;
+
     ret->subscriber_heartbeat_interval = std::chrono::duration_cast<duration>(std::chrono::minutes{3});
     ret->subscriber_heartbeat_retry_interval = std::chrono::duration_cast<duration>(std::chrono::minutes{1});
+
     return ret;
   }
 

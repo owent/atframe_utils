@@ -139,6 +139,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_object {
     duration gc_expire_duration;
     size_t max_log_size;
     size_t gc_log_size;
+    bool accept_log_when_hash_matched;
   };
   using configure_pointer = typename wal_mt_mode_data_trait<configure_type, log_operator_type::mt_mode>::strong_ptr;
 
@@ -190,6 +191,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_object {
     out.gc_expire_duration = std::chrono::duration_cast<duration>(std::chrono::hours(7 * 24));
     out.max_log_size = 512;
     out.gc_log_size = 128;
+    out.accept_log_when_hash_matched = false;
   }
 
   wal_result_code load(const storage_type& storage, callback_param_type param) {
@@ -724,7 +726,8 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_object {
     }
 
     wal_result_code ret = redo_log(log, param);
-    if (wal_result_code::kOk != ret) {
+    if (wal_result_code::kOk != ret && !(get_configure().accept_log_when_hash_matched && vtable_->set_hash_code &&
+                                         vtable_->get_hash_code && vtable_->calculate_hash_code)) {
       return ret;
     }
 
@@ -808,7 +811,8 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_object {
     }
 
     wal_result_code ret = redo_log(log, param);
-    if (wal_result_code::kOk != ret) {
+    if (wal_result_code::kOk != ret && !(get_configure().accept_log_when_hash_matched && vtable_->set_hash_code &&
+                                         vtable_->get_hash_code && vtable_->calculate_hash_code)) {
       return ret;
     }
 
