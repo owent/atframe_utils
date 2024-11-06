@@ -84,6 +84,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_client {
   using vtable_pointer = typename wal_mt_mode_data_trait<vtable_type, log_operator_type::mt_mode>::strong_ptr;
 
   struct configure_type : public object_type::configure_type {
+    bool require_snapshot;
     duration subscriber_heartbeat_interval;
     duration subscriber_heartbeat_retry_interval;
   };
@@ -104,7 +105,8 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_client {
       : vtable_(helper.vt),
         configure_(helper.conf),
         wal_object_(helper.wal_object),
-        next_heartbeat_timepoint_(helper.next_heartbeat) {
+        next_heartbeat_timepoint_(helper.next_heartbeat),
+        received_snapshot_(false) {
     if (wal_object_) {
       wal_object_->set_internal_event_on_assign_logs([this](object_type& wal) {
         // reset finished key
@@ -159,6 +161,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_client {
     object_type::default_configure(*ret);
     ret->accept_log_when_hash_matched = true;
 
+    ret->require_snapshot = false;
     ret->subscriber_heartbeat_interval = std::chrono::duration_cast<duration>(std::chrono::minutes{3});
     ret->subscriber_heartbeat_retry_interval = std::chrono::duration_cast<duration>(std::chrono::minutes{1});
 
@@ -296,6 +299,10 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_client {
       return wal_result_code::kInvalidParam;
     }
 
+    if (configure_ && configure_->require_snapshot && !received_snapshot_) {
+      return wal_result_code::kClientRequireSnapshot;
+    }
+
     if (vtable_ && vtable_->get_log_key) {
       auto log_key = vtable_->get_log_key(*wal_object_, *log);
 
@@ -350,6 +357,10 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_client {
       return wal_result_code::kInvalidParam;
     }
 
+    if (configure_ && configure_->require_snapshot && !received_snapshot_) {
+      return wal_result_code::kClientRequireSnapshot;
+    }
+
     if (vtable_ && vtable_->get_log_key) {
       auto log_key = vtable_->get_log_key(*wal_object_, *log);
 
@@ -396,6 +407,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_client {
   }
 
   wal_result_code receive_snapshot(const snapshot_type& snapshot, callback_param_type param) {
+    received_snapshot_ = true;
     if (vtable_ && vtable_->on_receive_snapshot) {
       return vtable_->on_receive_snapshot(*this, snapshot, param);
     }
@@ -432,6 +444,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_client {
   // publish-subscribe
   time_point next_heartbeat_timepoint_;
   std::unique_ptr<log_key_type> last_finished_log_key_;
+  bool received_snapshot_;
 };
 
 }  // namespace distributed_system

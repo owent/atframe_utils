@@ -41,6 +41,7 @@ struct LIBATFRAME_UTILS_API_HEAD_ONLY wal_meta_type {
 };
 
 enum class wal_result_code : int32_t {
+  kClientRequireSnapshot = -301,
   kSubscriberNotFound = -201,
 
   kHashCodeMismatch = -106,
