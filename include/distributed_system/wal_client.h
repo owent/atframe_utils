@@ -407,9 +407,12 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_client {
   }
 
   wal_result_code receive_snapshot(const snapshot_type& snapshot, callback_param_type param) {
-    received_snapshot_ = true;
     if (vtable_ && vtable_->on_receive_snapshot) {
-      return vtable_->on_receive_snapshot(*this, snapshot, param);
+      wal_result_code ret = vtable_->on_receive_snapshot(*this, snapshot, param);
+      if (ret >= wal_result_code::kOk) {
+        received_snapshot_ = true;
+      }
+      return ret;
     }
 
     return wal_result_code::kInitlization;
