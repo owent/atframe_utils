@@ -192,10 +192,9 @@ LIBATFRAME_UTILS_API_HEAD_ONLY void reverse(TCH *begin, TCHE end_any) {
   }
 
   --end;
+  using std::swap;
   while (begin < end) {
-    TCH c = *end;
-    *end = *begin;
-    *begin = c;
+    swap(*begin, *end);
     ++begin;
     --end;
   }
