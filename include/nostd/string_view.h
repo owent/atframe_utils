@@ -298,9 +298,13 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY basic_string_view {
   //
   // Swaps this `basic_string_view` with another `basic_string_view`.
   UTIL_NOSTD_STRING_VIEW_CXX14_CONSTEXPR void swap(basic_string_view& s) noexcept {
-    using ::std::swap;
-    swap(ptr_, s.ptr_);
-    swap(length_, s.length_);
+    const_pointer swap_ptr = ptr_;
+    ptr_ = s.ptr_;
+    s.ptr_ = swap_ptr;
+
+    size_type swap_length = length_;
+    length_ = s.length_;
+    s.length_ = swap_length;
   }
 
   // Converts to `std::basic_string`.

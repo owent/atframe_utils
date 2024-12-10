@@ -454,3 +454,29 @@
 #    define UTIL_MACRO_INLINE_VARIABLE
 #  endif
 #endif
+
+// UTIL_ATTRIBUTE_REINITIALIZES
+//
+// Indicates that a member function reinitializes the entire object to a known
+// state, independent of the previous state of the object.
+//
+// The clang-tidy check bugprone-use-after-move allows member functions marked
+// with this attribute to be called on objects that have been moved from;
+// without the attribute, this would result in a use-after-move warning.
+#ifndef UTIL_ATTRIBUTE_REINITIALIZES
+#  if UTIL_HAVE_CPP_ATTRIBUTE(clang::reinitializes)
+#    define UTIL_ATTRIBUTE_REINITIALIZES [[clang::reinitializes]]
+#  else
+#    define UTIL_ATTRIBUTE_REINITIALIZES
+#  endif
+#endif
+
+// UTIL_ATTRIBUTE_RETURNS_NONNULL
+//
+// Tells the compiler that a particular function never returns a null pointer.
+#if UTIL_HAVE_ATTRIBUTE(returns_nonnull) || \
+    (defined(__GNUC__) && (__GNUC__ > 5 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 9)) && !defined(__clang__))
+#  define UTIL_ATTRIBUTE_RETURNS_NONNULL __attribute__((returns_nonnull))
+#else
+#  define UTIL_ATTRIBUTE_RETURNS_NONNULL
+#endif
