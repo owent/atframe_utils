@@ -6,8 +6,8 @@ cxx utils code
 
 [ci-badge]: https://github.com/atframework/atframe_utils/actions/workflows/main.yml/badge.svg "Github action build status"
 [ci-link]:  https://github.com/atframework/atframe_utils/actions/workflows/main.yml "Github action build status"
-[codecov badge]: https://codecov.io/gh/atframework/atframe_utils/branch/main/graph/badge.svg
-[codecov status]: https://codecov.io/gh/atframework/atframe_utils
+[codecov badge]: https://codecov.io/gh/owent/atframe_utils/branch/main/graph/badge.svg?token=S6MBY4242I
+[codecov status]: https://codecov.io/gh/owent/atframe_utils
 
 ## CI Job Matrix
 

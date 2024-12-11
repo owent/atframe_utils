@@ -205,11 +205,11 @@ jobs:
           fi
           bash ci/do_ci.sh coverage ;
       - name: Uploaded code coverage
-        uses: codecov/codecov-action@v3
+        uses: codecov/codecov-action@v5
         with:
           token: ${{secrets.CODECOV_TOKEN}} # not required for public repos
           fail_ci_if_error: true
-          file: ${{ github.workspace }}/build_jobs_coverage/coverage.info
+          files: ${{ github.workspace }}/build_jobs_coverage/coverage.info
   codeql:
     name: CodeQL
     # This job runs on Linux
