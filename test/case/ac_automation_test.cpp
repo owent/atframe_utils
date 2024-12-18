@@ -52,6 +52,10 @@ CASE_TEST(ac_automation, basic) {
     CASE_EXPECT_EQ(3, res[1].length);
     CASE_EXPECT_EQ('b', res[1].keyword->at(0));
   }
+
+  // dump/load
+  std::stringstream dumped_data;
+  actree.dump(dumped_data);
 }
 
 CASE_TEST(ac_automation, failed) {

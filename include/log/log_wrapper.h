@@ -281,7 +281,7 @@ class log_wrapper {
   };
 
  private:
-  struct LIBATFRAME_UTILS_API construct_helper_t {};
+  struct LIBATFRAME_UTILS_API construct_helper_t{};
   struct LIBATFRAME_UTILS_API log_operation_t {
     char *buffer;
     size_t total_size;
@@ -421,7 +421,7 @@ class log_wrapper {
   UTIL_FORCEINLINE void set_prefix_format(const std::string &prefix) { prefix_format_ = prefix; }
 
   UTIL_FORCEINLINE bool get_option(options_t::type t) const {
-    if (t < options_t::OPT_MAX) {
+    if (t < 0 || t >= options_t::OPT_MAX) {
       return false;
     }
 

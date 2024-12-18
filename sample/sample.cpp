@@ -1,4 +1,6 @@
+// Copyright 2024 atframework
 
+#include <assert.h>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
@@ -45,7 +47,7 @@ struct test_auto_enum_conversation_for_log_formatter {
 struct test_exception_for_log_formatter {
   bool runtime_error;
   bool throw_exception;
-  explicit inline test_exception_for_log_formatter(bool a, bool b) : runtime_error(a), throw_exception(b){};
+  explicit inline test_exception_for_log_formatter(bool a, bool b) : runtime_error(a), throw_exception(b) {};
 };
 
 namespace LOG_WRAPPER_FWAPI_NAMESPACE_ID {
@@ -137,6 +139,14 @@ void log_sample_func1(int times) {
       ->set_stacktrace_level(LIBATFRAME_UTILS_NAMESPACE_ID::log::log_wrapper::level_t::LOG_LW_INFO);
 
   WLOG_GETCAT(LIBATFRAME_UTILS_NAMESPACE_ID::log::log_wrapper::categorize_t::DEFAULT)->clear_sinks();
+  auto test_log_wrapper_options = WLOG_GETCAT(LIBATFRAME_UTILS_NAMESPACE_ID::log::log_wrapper::categorize_t::DEFAULT)
+                                      ->get_option(util::log::log_wrapper::options_t::OPT_AUTO_UPDATE_TIME);
+  WLOG_GETCAT(LIBATFRAME_UTILS_NAMESPACE_ID::log::log_wrapper::categorize_t::DEFAULT)
+      ->set_option(util::log::log_wrapper::options_t::OPT_AUTO_UPDATE_TIME, !test_log_wrapper_options);
+  assert(WLOG_GETCAT(LIBATFRAME_UTILS_NAMESPACE_ID::log::log_wrapper::categorize_t::DEFAULT)
+             ->get_option(util::log::log_wrapper::options_t::OPT_AUTO_UPDATE_TIME) != test_log_wrapper_options);
+  WLOG_GETCAT(LIBATFRAME_UTILS_NAMESPACE_ID::log::log_wrapper::categorize_t::DEFAULT)
+      ->set_option(util::log::log_wrapper::options_t::OPT_AUTO_UPDATE_TIME, test_log_wrapper_options);
 
   std::cout << "----------------setup log_wrapper done--------------" << std::endl;
 
