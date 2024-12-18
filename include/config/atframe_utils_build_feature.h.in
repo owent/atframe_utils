@@ -7,6 +7,18 @@
 #include <config/compile_optimize.h>
 #include <config/compiler_features.h>
 
+// Import the C++20 feature-test macros
+#ifdef __has_include
+#  if __has_include(<version>)
+#    include <version>
+#  endif
+#elif defined(_MSC_VER) && ((defined(__cplusplus) && __cplusplus >= 202002L) || \
+                            (defined(_MSVC_LANG) && _MSVC_LANG >= 202002L))
+#  if _MSC_VER >= 1922
+#    include <version>
+#  endif
+#endif
+
 #cmakedefine LIBATFRAME_UTILS_VERSION_MAJOR @LIBATFRAME_UTILS_VERSION_MAJOR@
 #ifndef LIBATFRAME_UTILS_VERSION_MAJOR
 #  define LIBATFRAME_UTILS_VERSION_MAJOR 0

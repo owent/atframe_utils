@@ -39,10 +39,36 @@ class foo {
 
   void print_t2(LIBATFRAME_UTILS_NAMESPACE_ID::cli::callback_param par, int i) {
     printf("Mem Fun B2 Params Num: %d, i => %d\n", static_cast<int>(par.get_params_number()), i);
+    std::cout << "Mem Fun B2 Params[0] as bool:" << par[0]->to_bool() << "\n";
+    std::cout << "Mem Fun B2 Params[0] as char:" << par[0]->to_char() << "\n";
+    std::cout << "Mem Fun B2 Params[0] as short:" << par[0]->to_short() << "\n";
+    std::cout << "Mem Fun B2 Params[0] as int:" << par[0]->to_int() << "\n";
+    std::cout << "Mem Fun B2 Params[0] as long:" << par[0]->to_long() << "\n";
+    std::cout << "Mem Fun B2 Params[0] as longlong:" << par[0]->to_longlong() << "\n";
+    std::cout << "Mem Fun B2 Params[0] as double:" << par[0]->to_double() << "\n";
+    std::cout << "Mem Fun B2 Params[0] as float:" << par[0]->to_float() << "\n";
+    std::cout << "Mem Fun B2 Params[0] as logic_bool:" << par[0]->to_logic_bool() << "\n";
+    std::cout << "Mem Fun B2 Params[0] as uchar:" << par[0]->to_uchar() << "\n";
+    std::cout << "Mem Fun B2 Params[0] as ushort:" << par[0]->to_ushort() << "\n";
+    std::cout << "Mem Fun B2 Params[0] as uint:" << par[0]->to_uint() << "\n";
+    std::cout << "Mem Fun B2 Params[0] as ulong:" << par[0]->to_ulong() << "\n";
+    std::cout << "Mem Fun B2 Params[0] as ulonglong:" << par[0]->to_ulonglong() << "\n";
+    std::cout << "Mem Fun B2 Params[0] as int8:" << par[0]->to_int8() << "\n";
+    std::cout << "Mem Fun B2 Params[0] as int16:" << par[0]->to_int16() << "\n";
+    std::cout << "Mem Fun B2 Params[0] as int32:" << par[0]->to_int32() << "\n";
+    std::cout << "Mem Fun B2 Params[0] as int64:" << par[0]->to_int64() << "\n";
+    std::cout << "Mem Fun B2 Params[0] as uint8:" << par[0]->to_uint8() << "\n";
+    std::cout << "Mem Fun B2 Params[0] as uint16:" << par[0]->to_uint16() << "\n";
+    std::cout << "Mem Fun B2 Params[0] as uint32:" << par[0]->to_uint32() << "\n";
+    std::cout << "Mem Fun B2 Params[0] as uint64:" << par[0]->to_uint64() << "\n";
   }
 
   void print_t3(LIBATFRAME_UTILS_NAMESPACE_ID::cli::callback_param par, int i, double d) {
     printf("Mem Fun B3 Params Num: %d, i => %d, d => %lf\n", static_cast<int>(par.get_params_number()), i, d);
+    for (size_t idx = 0; idx < par.get_params_number(); ++idx) {
+      std::cout << "Mem Fun B3 Params[" << idx << "] as logic_bool:" << par[idx]->to_logic_bool()
+                << ", origin value:" << par[idx]->to_cpp_string() << "\n";
+    }
   }
 
   virtual ~foo() {}
@@ -137,7 +163,8 @@ int cmd_option_sample_main() {
   printf("-bf1 has set str=%s with parameter par1=par2\n", str.c_str());
 
   co->start(
-      "-bt btpar1 \"test end of line\\r\\n\tanother line\"-bt1 with one param --bind_class_func_param2 p1 p2 p3 -bt3 "
+      "-bt btpar1 \"test end of line\\r\\n\tanother line\"-bt1 with one param --bind_class_func_param2 33 p1 p2 p3 "
+      "-bt3 yes no true false 1 0"
       "p4");
   printf("成员函数绑定传入对象引用包装测试: %s\n", (g_test == &f) ? "通过" : "失败！！！！！！！！！！！");
 
