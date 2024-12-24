@@ -513,6 +513,11 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_object {
     return *configure_;
   }
 
+  inline const vtable_type& get_vtable() const noexcept {
+    // We can not create wal_object without vtable, so it's safe here
+    return *vtable_;
+  }
+
   log_pointer find_log(const log_key_type& key) noexcept {
     log_iterator iter = log_lower_bound(key);
     if (iter == logs_.end()) {

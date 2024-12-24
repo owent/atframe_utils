@@ -93,11 +93,13 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_client {
  private:
   UTIL_DESIGN_PATTERN_NOMOVABLE(wal_client);
   UTIL_DESIGN_PATTERN_NOCOPYABLE(wal_client);
+
+  using wal_object_ptr_type = typename wal_mt_mode_data_trait<object_type, log_operator_type::mt_mode>::strong_ptr;
   struct construct_helper {
     time_point next_heartbeat;
     vtable_pointer vt;
     configure_pointer conf;
-    typename wal_mt_mode_data_trait<object_type, log_operator_type::mt_mode>::strong_ptr wal_object;
+    wal_object_ptr_type wal_object;
   };
 
  public:
@@ -122,6 +124,9 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_client {
     }
   }
 
+  /**
+   * @brief Create wal_client instance
+   */
   template <class... ArgsT>
   static typename wal_mt_mode_data_trait<wal_client, log_operator_type::mt_mode>::strong_ptr create(
       time_point now, vtable_pointer vt, configure_pointer conf, ArgsT&&... args) {
@@ -148,6 +153,45 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_client {
     if (!helper.wal_object) {
       return nullptr;
     }
+
+    return log_operator_type::template make_strong<wal_client>(helper);
+  }
+
+  /**
+   * @brief Create wal_client with shared wal_object
+   * @note If shared wal_object with wal_publisher, logs should be push by wal_client's APIs
+   */
+  template <class... ArgsT>
+  static typename wal_mt_mode_data_trait<wal_client, log_operator_type::mt_mode>::strong_ptr create(
+      time_point now, wal_object_ptr_type shared_wal_object, vtable_pointer vt, configure_pointer conf,
+      ArgsT&&... args) {
+    if (!shared_wal_object) {
+      return create(now, vt, conf, std::forward<ArgsT>(args)...);
+    }
+
+    if (!vt || !conf) {
+      return nullptr;
+    }
+
+    // Only copy shared part of vtable in wal_object
+    static_cast<typename object_type::vtable_type&>(*vt) = shared_wal_object->get_vtable();
+
+    if (!vt->allocate_log_key) {
+      return nullptr;
+    }
+
+    if (!vt->on_receive_snapshot) {
+      return nullptr;
+    }
+
+    // Only copy shared part of configure in wal_object
+    static_cast<typename object_type::configure_type&>(*conf) = shared_wal_object->get_configure();
+
+    construct_helper helper;
+    helper.next_heartbeat = now;
+    helper.vt = vt;
+    helper.conf = conf;
+    helper.wal_object = shared_wal_object;
 
     return log_operator_type::template make_strong<wal_client>(helper);
   }
@@ -442,7 +486,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_client {
   configure_pointer configure_;
 
   // logs
-  typename wal_mt_mode_data_trait<object_type, log_operator_type::mt_mode>::strong_ptr wal_object_;
+  wal_object_ptr_type wal_object_;
 
   // publish-subscribe
   time_point next_heartbeat_timepoint_;

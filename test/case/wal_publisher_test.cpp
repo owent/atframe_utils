@@ -1,5 +1,8 @@
 // Copyright 2021 atframework
 
+#include <distributed_system/wal_client.h>
+#include <distributed_system/wal_publisher.h>
+
 #include <algorithm>
 #include <chrono>
 #include <cstring>
@@ -7,8 +10,6 @@
 #include <memory>
 #include <sstream>
 #include <vector>
-
-#include <distributed_system/wal_publisher.h>
 
 #include "frame/test_macros.h"
 
@@ -2332,4 +2333,143 @@ CASE_TEST(wal_publisher, enable_last_broadcast_disable_hole_for_removed_subscrib
   publisher->emplace_back_log(std::move(hole_log), ctx);
   CASE_EXPECT_EQ(publisher->broadcast(ctx), 0);
 }
+
+static test_wal_publisher_type::object_type::configure_pointer create_wal_object_configure() {
+  test_wal_publisher_type::object_type::configure_pointer ret =
+      test_wal_publisher_log_operator::make_strong<test_wal_publisher_type::object_type::configure_type>();
+  test_wal_publisher_type::object_type::default_configure(*ret);
+
+  ret->gc_expire_duration =
+      std::chrono::duration_cast<test_wal_publisher_type::object_type::duration>(std::chrono::seconds{8});
+  ret->max_log_size = 38;
+  ret->gc_log_size = 24;
+
+  return ret;
+}
+
+static test_wal_publisher_type::object_type::vtable_pointer create_wal_object_vtable() {
+  test_wal_publisher_type::object_type::vtable_pointer ret =
+      test_wal_publisher_log_operator::make_strong<test_wal_publisher_type::object_type::vtable_type>();
+
+  *ret = *create_vtable();
+
+  return ret;
+}
+
+using test_wal_client_type = LIBATFRAME_UTILS_NAMESPACE_ID::distributed_system::wal_client<
+    test_wal_publisher_storage_type, test_wal_publisher_log_operator, test_wal_publisher_context,
+    test_wal_publisher_private_type, test_wal_publisher_storage_type>;
+
+static test_wal_client_type::configure_pointer create_wal_client_configure() {
+  test_wal_client_type::configure_pointer ret = test_wal_client_type::make_configure();
+
+  ret->max_log_size = 68;
+  ret->gc_log_size = 54;
+
+  ret->subscriber_heartbeat_interval =
+      std::chrono::duration_cast<test_wal_client_type::duration>(std::chrono::seconds{10});
+  ret->subscriber_heartbeat_retry_interval =
+      std::chrono::duration_cast<test_wal_client_type::duration>(std::chrono::seconds{5});
+
+  return ret;
+}
+
+static test_wal_client_type::vtable_pointer create_wal_client_vtable() {
+  using wal_object_type = test_wal_client_type::object_type;
+  using wal_client_type = test_wal_client_type;
+  using wal_result_code = LIBATFRAME_UTILS_NAMESPACE_ID::distributed_system::wal_result_code;
+
+  test_wal_client_type::vtable_pointer ret =
+      test_wal_publisher_log_operator::make_strong<test_wal_client_type::vtable_type>();
+
+  static_cast<test_wal_publisher_type::object_type::vtable_type&>(*ret) =
+      static_cast<const test_wal_publisher_type::object_type::vtable_type&>(*create_vtable());
+
+  // ============ callbacks for wal_client ============
+  ret->on_receive_snapshot = [](wal_client_type&, const wal_client_type::snapshot_type&,
+                                wal_client_type::object_type::callback_param_type) -> wal_result_code {
+    return wal_result_code::kOk;
+  };
+
+  ret->on_receive_subscribe_response = [](wal_client_type&, wal_object_type::callback_param_type) -> wal_result_code {
+    return wal_result_code::kOk;
+  };
+
+  ret->subscribe_request = [](wal_client_type&, wal_object_type::callback_param_type) -> wal_result_code {
+    return wal_result_code::kOk;
+  };
+
+  return ret;
+}
+
+CASE_TEST(wal_publisher, share_wal_object_with_wal_client) {
+  test_wal_publisher_storage_type storage;
+
+  auto wal_obj =
+      test_wal_publisher_type::object_type::create(create_wal_object_vtable(), create_wal_object_configure(), &storage);
+
+  // Create wal_publisher failed
+  {
+    auto bad_vtable1 = create_vtable();
+    auto bad_vtable2 = create_vtable();
+
+    bad_vtable1->send_snapshot = test_wal_publisher_type::callback_send_snapshot_fn_t();
+    bad_vtable2->send_logs = test_wal_publisher_type::callback_send_logs_fn_t();
+
+    CASE_EXPECT_TRUE(!test_wal_publisher_type::create(wal_obj, bad_vtable1, create_configure(), &storage));
+    CASE_EXPECT_TRUE(!test_wal_publisher_type::create(wal_obj, bad_vtable2, create_configure(), &storage));
+  }
+
+  // Create wal_client failed
+  LIBATFRAME_UTILS_NAMESPACE_ID::distributed_system::wal_time_point now = std::chrono::system_clock::now();
+  {
+    auto bad_vtable1 = create_wal_client_vtable();
+    bad_vtable1->on_receive_snapshot = test_wal_client_type::callback_on_receive_snapshot_fn_t();
+    CASE_EXPECT_TRUE(!test_wal_client_type::create(now, wal_obj, bad_vtable1, create_wal_client_configure(), &storage));
+  }
+
+  // Create wal_client and wal_publisher with shared wal_object
+  {
+    auto wal_client =
+        test_wal_client_type::create(now, wal_obj, create_wal_client_vtable(), create_wal_client_configure(), &storage);
+    CASE_EXPECT_TRUE(!!wal_client);
+
+    auto wal_publisher = test_wal_publisher_type::create(wal_obj, create_vtable(), create_configure(), &storage);
+    CASE_EXPECT_TRUE(!!wal_publisher);
+
+    CASE_EXPECT_EQ(&wal_client->get_log_manager(), &wal_publisher->get_log_manager());
+    CASE_EXPECT_EQ(wal_client->get_configure().max_log_size, 38);
+    CASE_EXPECT_EQ(wal_client->get_configure().gc_log_size, 24);
+    CASE_EXPECT_EQ(wal_publisher->get_configure().max_log_size, 38);
+    CASE_EXPECT_EQ(wal_publisher->get_configure().gc_log_size, 24);
+
+    test_wal_publisher_type::log_pointer hole_log;
+    do {
+      test_wal_publisher_context ctx;
+      auto previous_key = details::g_test_wal_publisher_stats.key_alloc;
+      hole_log = wal_publisher->get_log_manager().allocate_log(now, test_wal_publisher_log_action::kDoNothing, ctx);
+      CASE_EXPECT_TRUE(!!hole_log);
+      if (!hole_log) {
+        break;
+      }
+      hole_log->data = 131;
+      CASE_EXPECT_EQ(previous_key + 1, hole_log->log_key);
+      CASE_EXPECT_TRUE(test_wal_publisher_log_action::kDoNothing == hole_log->action);
+      CASE_EXPECT_TRUE(now == hole_log->timepoint);
+
+      wal_publisher->push_back_log(hole_log, ctx);
+
+      CASE_EXPECT_EQ(1, wal_publisher->get_log_manager().get_all_logs().size());
+      CASE_EXPECT_TRUE(now == (*wal_publisher->get_log_manager().get_all_logs().begin())->timepoint);
+      CASE_EXPECT_TRUE(test_wal_publisher_log_action::kDoNothing ==
+                       (*wal_publisher->get_log_manager().get_all_logs().begin())->action);
+    } while (false);
+
+    CASE_EXPECT_EQ(1, wal_client->get_log_manager().get_all_logs().size());
+    CASE_EXPECT_TRUE(now == (*wal_client->get_log_manager().get_all_logs().begin())->timepoint);
+    CASE_EXPECT_TRUE(test_wal_publisher_log_action::kDoNothing ==
+                     (*wal_client->get_log_manager().get_all_logs().begin())->action);
+  }
+}
+
 }  // namespace st
