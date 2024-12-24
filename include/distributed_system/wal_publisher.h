@@ -173,6 +173,9 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_publisher {
     }
   }
 
+  /**
+   * @brief Create wal_publisher instance
+   */
   template <class... ArgsT>
   static typename wal_mt_mode_data_trait<wal_publisher, log_operator_type::mt_mode>::strong_ptr create(
       vtable_pointer vt, configure_pointer conf, ArgsT&&... args) {
@@ -203,6 +206,10 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_publisher {
     return log_operator_type::template make_strong<wal_publisher>(helper);
   }
 
+  /**
+   * @brief Create wal_publisher with shared wal_object
+   * @note If shared wal_object with wal_client, logs should be push by wal_client's APIs
+   */
   template <class... ArgsT>
   static typename wal_mt_mode_data_trait<wal_publisher, log_operator_type::mt_mode>::strong_ptr create(
       wal_object_ptr_type shared_wal_object, vtable_pointer vt, configure_pointer conf, ArgsT&&... args) {

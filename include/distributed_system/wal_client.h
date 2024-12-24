@@ -159,6 +159,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_client {
 
   /**
    * @brief Create wal_client with shared wal_object
+   * @note If shared wal_object with wal_publisher, logs should be push by wal_client's APIs
    */
   template <class... ArgsT>
   static typename wal_mt_mode_data_trait<wal_client, log_operator_type::mt_mode>::strong_ptr create(
