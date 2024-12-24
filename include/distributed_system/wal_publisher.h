@@ -222,7 +222,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_publisher {
     }
 
     // Only copy shared part of vtable in wal_object
-    static_cast<object_type::vtable_type&>(*vt) = shared_wal_object->get_vtable();
+    static_cast<typename object_type::vtable_type&>(*vt) = shared_wal_object->get_vtable();
 
     if (!vt->allocate_log_key) {
       return nullptr;
@@ -233,7 +233,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_publisher {
     }
 
     // Only copy shared part of configure in wal_object
-    static_cast<object_type::configure_type&>(*conf) = shared_wal_object->get_configure();
+    static_cast<typename object_type::configure_type&>(*conf) = shared_wal_object->get_configure();
 
     construct_helper helper;
     helper.vt = vt;
