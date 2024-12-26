@@ -350,6 +350,7 @@ ATFRAMEWORK_UTILS_API FILE *file_system::open_tmp_file() {
 ATFRAMEWORK_UTILS_API bool file_system::generate_tmp_file_name(std::string &inout) {
 #if (defined(ATFRAMEWORK_UTILS_ENABLE_WINDOWS_MKTEMP) && ATFRAMEWORK_UTILS_ENABLE_WINDOWS_MKTEMP) || \
     (defined(ATFRAMEWORK_UTILS_ENABLE_POSIX_MKSTEMP) && ATFRAMEWORK_UTILS_ENABLE_POSIX_MKSTEMP)
+  // 适配环境变量设置
   if (inout.empty()) {
 #  ifdef WIN32
     inout = file_system::getenv("TMP");
@@ -379,6 +380,7 @@ ATFRAMEWORK_UTILS_API bool file_system::generate_tmp_file_name(std::string &inou
 
 #  if (defined(ATFRAMEWORK_UTILS_ENABLE_WINDOWS_MKTEMP) && ATFRAMEWORK_UTILS_ENABLE_WINDOWS_MKTEMP)
 #    if defined(UTIL_FS_C11_API)
+  // Windows实现 - C11 API
   if (0 == _mktemp_s(&inout[0], inout.size())) {
     inout.pop_back();
     return true;
@@ -387,6 +389,7 @@ ATFRAMEWORK_UTILS_API bool file_system::generate_tmp_file_name(std::string &inou
     return false;
   }
 #    else
+  // Windows实现 - 传统 API
   if (nullptr != _mktemp(&inout[0])) {
     inout.pop_back();
     return true;
@@ -396,6 +399,7 @@ ATFRAMEWORK_UTILS_API bool file_system::generate_tmp_file_name(std::string &inou
   }
 #    endif
 #  else
+  // 传统 C API
   int tmp_fd = mkstemp(&inout[0]);
   if (-1 == tmp_fd) {
     inout.clear();
@@ -422,6 +426,7 @@ ATFRAMEWORK_UTILS_API bool file_system::generate_tmp_file_name(std::string &inou
 #    pragma clang diagnostic ignored "-Wdeprecated-declarations"
 #  endif
 
+  // Posix实现 - C11 API
 #  if defined(UTIL_FS_C11_API)
 #    if defined(L_tmpnam_s)
   char path_buffer[L_tmpnam_s + 1] = {0};
@@ -437,6 +442,7 @@ ATFRAMEWORK_UTILS_API bool file_system::generate_tmp_file_name(std::string &inou
     return false;
   }
 #  else
+// Posix实现 - 传统 API
 #    if defined(L_tmpnam)
   char path_buffer[L_tmpnam + 1] = {0};
   path_buffer[L_tmpnam] = 0;
@@ -478,6 +484,7 @@ ATFRAMEWORK_UTILS_API int file_system::scan_dir(const char *dir_path, std::list<
 
 #ifdef UTIL_FS_WINDOWS_API
 
+  // Windows 选项转换
   if (!base_dir.empty()) {
     base_dir += DIRECTORY_SEPARATOR;
   }

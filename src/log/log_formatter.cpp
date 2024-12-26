@@ -65,6 +65,7 @@ ATFRAMEWORK_UTILS_API size_t log_formatter::format(char *buff, size_t bufz, cons
     return 0;
   }
 
+  // Level id to level name
   gsl::string_view level_name = caller.level_name;
   if (level_name.empty()) {
     level_name = detail::log_formatter_get_level_name(caller.level_id);
@@ -100,7 +101,9 @@ ATFRAMEWORK_UTILS_API size_t log_formatter::format(char *buff, size_t bufz, cons
     }
 
     need_parse = false;
-    // 以后再优化
+    // 简化版本的 strftime 格式支持
+    // @see https://en.cppreference.com/w/cpp/chrono/c/strftime
+    // 额外支持毫秒，rotate index, log level 名称等
     switch (fmt[i]) {
       // =================== datetime ===================
       case 'Y': {

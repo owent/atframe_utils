@@ -125,6 +125,7 @@ ATFRAMEWORK_UTILS_API int http_request::start(method_t::type method, bool wait) 
     return -1;
   }
 
+  // HTTP Method转换
   switch (method) {
     case method_t::EN_MT_GET:
       curl_easy_setopt(req, CURLOPT_HTTPGET, 1L);
@@ -150,8 +151,10 @@ ATFRAMEWORK_UTILS_API int http_request::start(method_t::type method, bool wait) 
   }
 
   last_error_code_ = CURLE_OK;
+  // 构建提交表单缓存，维持生命周期
   build_http_form(method);
 
+  // 常见选项的跨版本兼容性适配
 #    if LIBCURL_VERSION_NUM >= 0x073800
   if (nullptr != http_form_.multipart) {
 #    else
@@ -206,11 +209,13 @@ ATFRAMEWORK_UTILS_API int http_request::start(method_t::type method, bool wait) 
     set_opt_long(CURLOPT_CONNECTTIMEOUT_MS, connect_timeout_ms_);
   }
 
+  // 绑定到共享的EventLoop驱动层
   if (share_context_ && nullptr != share_context_->get_share_handle()) {
     curl_easy_setopt(req, CURLOPT_SHARE, share_context_->get_share_handle());
   }
 
   int perform_result;
+  // 同时支持同步模式和异步模式
   if (wait) {
     SET_FLAG(flags_, flag_t::EN_FT_RUNNING);
     perform_result = curl_easy_perform(req);

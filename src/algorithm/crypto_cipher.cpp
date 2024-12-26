@@ -824,6 +824,7 @@ ATFRAMEWORK_UTILS_API int cipher::encrypt(const unsigned char *input, size_t ile
       defined(ATFRAMEWORK_UTILS_CRYPTO_USE_BORINGSSL)
       int outl, finish_olen;
 
+      // OpenSSL接入采用新的EVP接口
       if (!iv_.empty()) {
         if (!EVP_CipherInit_ex(cipher_context_.enc, nullptr, nullptr, nullptr, &iv_[0], -1)) {
           return details::setup_errorno(*this, static_cast<int64_t>(ERR_peek_error()),
@@ -874,6 +875,7 @@ ATFRAMEWORK_UTILS_API int cipher::encrypt(const unsigned char *input, size_t ile
     }
 
 #  if defined(ATFRAMEWORK_UTILS_CRYPTO_USE_LIBSODIUM) && ATFRAMEWORK_UTILS_CRYPTO_USE_LIBSODIUM
+    // CHACHA20系算法使用 libsodium 接入
     case EN_CIMT_LIBSODIUM_CHACHA20:
       if ((last_errorno_ = crypto_stream_chacha20_xor_ic(output, input, ilen, &iv_[LIBSODIUM_COUNTER_SIZE],
                                                          static_cast<uint64_t>(libsodium_get_counter(&iv_[0])),
@@ -955,6 +957,7 @@ ATFRAMEWORK_UTILS_API int cipher::decrypt(const unsigned char *input, size_t ile
 
 #  if defined(ATFRAMEWORK_UTILS_CRYPTO_USE_OPENSSL) || defined(ATFRAMEWORK_UTILS_CRYPTO_USE_LIBRESSL) || \
       defined(ATFRAMEWORK_UTILS_CRYPTO_USE_BORINGSSL)
+      // OpenSSL接入采用新的EVP接口
       int outl, finish_olen;
 
       if (!iv_.empty()) {
@@ -1007,6 +1010,7 @@ ATFRAMEWORK_UTILS_API int cipher::decrypt(const unsigned char *input, size_t ile
     }
 
 #  if defined(ATFRAMEWORK_UTILS_CRYPTO_USE_LIBSODIUM) && ATFRAMEWORK_UTILS_CRYPTO_USE_LIBSODIUM
+    // CHACHA20系算法使用 libsodium 接入
     case EN_CIMT_LIBSODIUM_CHACHA20:
       if ((last_errorno_ = crypto_stream_chacha20_xor_ic(output, input, ilen, &iv_[LIBSODIUM_COUNTER_SIZE],
                                                          static_cast<uint64_t>(libsodium_get_counter(&iv_[0])),
