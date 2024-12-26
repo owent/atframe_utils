@@ -41,7 +41,7 @@ namespace n_element_type {
 void f(int &) {}
 
 void test() {
-  typedef util::memory::strong_rc_ptr<int>::element_type T;
+  typedef atfw::util::memory::strong_rc_ptr<int>::element_type T;
   T t;
   f(t);
 }
@@ -54,7 +54,7 @@ class incomplete;
 
 void default_constructor() {
   {
-    util::memory::strong_rc_ptr<int> pi;
+    atfw::util::memory::strong_rc_ptr<int> pi;
     CASE_EXPECT_TRUE(pi ? false : true);
     CASE_EXPECT_TRUE(!pi);
     CASE_EXPECT_TRUE(pi.get() == 0);
@@ -62,7 +62,7 @@ void default_constructor() {
   }
 
   {
-    util::memory::strong_rc_ptr<void> pv;
+    atfw::util::memory::strong_rc_ptr<void> pv;
     CASE_EXPECT_TRUE(pv ? false : true);
     CASE_EXPECT_TRUE(!pv);
     CASE_EXPECT_TRUE(pv.get() == 0);
@@ -70,7 +70,7 @@ void default_constructor() {
   }
 
   {
-    util::memory::strong_rc_ptr<incomplete> px;
+    atfw::util::memory::strong_rc_ptr<incomplete> px;
     CASE_EXPECT_TRUE(px ? false : true);
     CASE_EXPECT_TRUE(!px);
     CASE_EXPECT_TRUE(px.get() == 0);
@@ -115,7 +115,7 @@ int64_t Y::instances = 0;
 template <class T>
 void pc0_test(T *p) {
   CASE_EXPECT_TRUE(p == 0);
-  util::memory::strong_rc_ptr<T> pt(p);
+  atfw::util::memory::strong_rc_ptr<T> pt(p);
   CASE_EXPECT_TRUE(pt ? false : true);
   CASE_EXPECT_TRUE(!pt);
   CASE_EXPECT_TRUE(pt.get() == 0);
@@ -131,7 +131,7 @@ void pointer_constructor() {
   pc0_test(static_cast<int const volatile *>(0));
 
   {
-    util::memory::strong_rc_ptr<int const> pi(static_cast<int *>(0));
+    atfw::util::memory::strong_rc_ptr<int const> pi(static_cast<int *>(0));
     CASE_EXPECT_TRUE(pi ? false : true);
     CASE_EXPECT_TRUE(!pi);
     CASE_EXPECT_TRUE(pi.get() == 0);
@@ -140,7 +140,7 @@ void pointer_constructor() {
   }
 
   {
-    util::memory::strong_rc_ptr<int volatile> pi(static_cast<int *>(0));
+    atfw::util::memory::strong_rc_ptr<int volatile> pi(static_cast<int *>(0));
     CASE_EXPECT_TRUE(pi ? false : true);
     CASE_EXPECT_TRUE(!pi);
     CASE_EXPECT_TRUE(pi.get() == 0);
@@ -149,7 +149,7 @@ void pointer_constructor() {
   }
 
   {
-    util::memory::strong_rc_ptr<void> pv(static_cast<int *>(0));
+    atfw::util::memory::strong_rc_ptr<void> pv(static_cast<int *>(0));
     CASE_EXPECT_TRUE(pv ? false : true);
     CASE_EXPECT_TRUE(!pv);
     CASE_EXPECT_TRUE(pv.get() == 0);
@@ -158,7 +158,7 @@ void pointer_constructor() {
   }
 
   {
-    util::memory::strong_rc_ptr<void const> pv(static_cast<int *>(0));
+    atfw::util::memory::strong_rc_ptr<void const> pv(static_cast<int *>(0));
     CASE_EXPECT_TRUE(pv ? false : true);
     CASE_EXPECT_TRUE(!pv);
     CASE_EXPECT_TRUE(pv.get() == 0);
@@ -172,7 +172,7 @@ void pointer_constructor() {
   pc0_test(static_cast<X const volatile *>(0));
 
   {
-    util::memory::strong_rc_ptr<X const> px(static_cast<X *>(0));
+    atfw::util::memory::strong_rc_ptr<X const> px(static_cast<X *>(0));
     CASE_EXPECT_TRUE(px ? false : true);
     CASE_EXPECT_TRUE(!px);
     CASE_EXPECT_TRUE(px.get() == 0);
@@ -181,7 +181,7 @@ void pointer_constructor() {
   }
 
   {
-    util::memory::strong_rc_ptr<X> px(static_cast<Y *>(0));
+    atfw::util::memory::strong_rc_ptr<X> px(static_cast<Y *>(0));
     CASE_EXPECT_TRUE(px ? false : true);
     CASE_EXPECT_TRUE(!px);
     CASE_EXPECT_TRUE(px.get() == 0);
@@ -190,7 +190,7 @@ void pointer_constructor() {
   }
 
   {
-    util::memory::strong_rc_ptr<X const> px(static_cast<Y *>(0));
+    atfw::util::memory::strong_rc_ptr<X const> px(static_cast<Y *>(0));
     CASE_EXPECT_TRUE(px ? false : true);
     CASE_EXPECT_TRUE(!px);
     CASE_EXPECT_TRUE(px.get() == 0);
@@ -199,7 +199,7 @@ void pointer_constructor() {
   }
 
   {
-    util::memory::strong_rc_ptr<void> pv(static_cast<X *>(0));
+    atfw::util::memory::strong_rc_ptr<void> pv(static_cast<X *>(0));
     CASE_EXPECT_TRUE(pv ? false : true);
     CASE_EXPECT_TRUE(!pv);
     CASE_EXPECT_TRUE(pv.get() == 0);
@@ -208,7 +208,7 @@ void pointer_constructor() {
   }
 
   {
-    util::memory::strong_rc_ptr<void const> pv(static_cast<X *>(0));
+    atfw::util::memory::strong_rc_ptr<void const> pv(static_cast<X *>(0));
     CASE_EXPECT_TRUE(pv ? false : true);
     CASE_EXPECT_TRUE(!pv);
     CASE_EXPECT_TRUE(pv.get() == 0);
@@ -218,7 +218,7 @@ void pointer_constructor() {
 
   {
     int *p = new int(7);
-    util::memory::strong_rc_ptr<int> pi(p);
+    atfw::util::memory::strong_rc_ptr<int> pi(p);
     CASE_EXPECT_TRUE(pi ? true : false);
     CASE_EXPECT_TRUE(!!pi);
     CASE_EXPECT_TRUE(pi.get() == p);
@@ -229,7 +229,7 @@ void pointer_constructor() {
 
   {
     int *p = new int(7);
-    util::memory::strong_rc_ptr<int const> pi(p);
+    atfw::util::memory::strong_rc_ptr<int const> pi(p);
     CASE_EXPECT_TRUE(pi ? true : false);
     CASE_EXPECT_TRUE(!!pi);
     CASE_EXPECT_TRUE(pi.get() == p);
@@ -240,7 +240,7 @@ void pointer_constructor() {
 
   {
     int *p = new int(7);
-    util::memory::strong_rc_ptr<void> pv(p);
+    atfw::util::memory::strong_rc_ptr<void> pv(p);
     CASE_EXPECT_TRUE(pv ? true : false);
     CASE_EXPECT_TRUE(!!pv);
     CASE_EXPECT_TRUE(pv.get() == p);
@@ -250,7 +250,7 @@ void pointer_constructor() {
 
   {
     int *p = new int(7);
-    util::memory::strong_rc_ptr<void const> pv(p);
+    atfw::util::memory::strong_rc_ptr<void const> pv(p);
     CASE_EXPECT_TRUE(pv ? true : false);
     CASE_EXPECT_TRUE(!!pv);
     CASE_EXPECT_TRUE(pv.get() == p);
@@ -262,7 +262,7 @@ void pointer_constructor() {
 
   {
     X *p = new X;
-    util::memory::strong_rc_ptr<X> px(p);
+    atfw::util::memory::strong_rc_ptr<X> px(p);
     CASE_EXPECT_TRUE(px ? true : false);
     CASE_EXPECT_TRUE(!!px);
     CASE_EXPECT_TRUE(px.get() == p);
@@ -275,7 +275,7 @@ void pointer_constructor() {
 
   {
     X *p = new X;
-    util::memory::strong_rc_ptr<X const> px(p);
+    atfw::util::memory::strong_rc_ptr<X const> px(p);
     CASE_EXPECT_TRUE(px ? true : false);
     CASE_EXPECT_TRUE(!!px);
     CASE_EXPECT_TRUE(px.get() == p);
@@ -288,7 +288,7 @@ void pointer_constructor() {
 
   {
     X *p = new X;
-    util::memory::strong_rc_ptr<void> pv(p);
+    atfw::util::memory::strong_rc_ptr<void> pv(p);
     CASE_EXPECT_TRUE(pv ? true : false);
     CASE_EXPECT_TRUE(!!pv);
     CASE_EXPECT_TRUE(pv.get() == p);
@@ -301,7 +301,7 @@ void pointer_constructor() {
 
   {
     X *p = new X;
-    util::memory::strong_rc_ptr<void const> pv(p);
+    atfw::util::memory::strong_rc_ptr<void const> pv(p);
     CASE_EXPECT_TRUE(pv ? true : false);
     CASE_EXPECT_TRUE(!!pv);
     CASE_EXPECT_TRUE(pv.get() == p);
@@ -315,7 +315,7 @@ void pointer_constructor() {
 
   {
     Y *p = new Y;
-    util::memory::strong_rc_ptr<X> px(p);
+    atfw::util::memory::strong_rc_ptr<X> px(p);
     CASE_EXPECT_TRUE(px ? true : false);
     CASE_EXPECT_TRUE(!!px);
     CASE_EXPECT_TRUE(px.get() == p);
@@ -330,7 +330,7 @@ void pointer_constructor() {
 
   {
     Y *p = new Y;
-    util::memory::strong_rc_ptr<X const> px(p);
+    atfw::util::memory::strong_rc_ptr<X const> px(p);
     CASE_EXPECT_TRUE(px ? true : false);
     CASE_EXPECT_TRUE(!!px);
     CASE_EXPECT_TRUE(px.get() == p);
@@ -363,7 +363,7 @@ incomplete *p0 = 0;
 
 void deleter_constructor() {
   {
-    util::memory::strong_rc_ptr<int> pi(static_cast<int *>(0), deleter);
+    atfw::util::memory::strong_rc_ptr<int> pi(static_cast<int *>(0), deleter);
     CASE_EXPECT_TRUE(pi ? false : true);
     CASE_EXPECT_TRUE(!pi);
     CASE_EXPECT_TRUE(pi.get() == 0);
@@ -372,7 +372,7 @@ void deleter_constructor() {
   }
 
   {
-    util::memory::strong_rc_ptr<void> pv(static_cast<int *>(0), &deleter);
+    atfw::util::memory::strong_rc_ptr<void> pv(static_cast<int *>(0), &deleter);
     CASE_EXPECT_TRUE(pv ? false : true);
     CASE_EXPECT_TRUE(!pv);
     CASE_EXPECT_TRUE(pv.get() == 0);
@@ -381,7 +381,7 @@ void deleter_constructor() {
   }
 
   {
-    util::memory::strong_rc_ptr<void const> pv(static_cast<int *>(0), deleter);
+    atfw::util::memory::strong_rc_ptr<void const> pv(static_cast<int *>(0), deleter);
     CASE_EXPECT_TRUE(pv ? false : true);
     CASE_EXPECT_TRUE(!pv);
     CASE_EXPECT_TRUE(pv.get() == 0);
@@ -390,7 +390,7 @@ void deleter_constructor() {
   }
 
   {
-    util::memory::strong_rc_ptr<incomplete> px(p0, deleter3());
+    atfw::util::memory::strong_rc_ptr<incomplete> px(p0, deleter3());
     CASE_EXPECT_TRUE(px ? false : true);
     CASE_EXPECT_TRUE(!px);
     CASE_EXPECT_TRUE(px.get() == 0);
@@ -399,7 +399,7 @@ void deleter_constructor() {
   }
 
   {
-    util::memory::strong_rc_ptr<void> pv(p0, deleter3());
+    atfw::util::memory::strong_rc_ptr<void> pv(p0, deleter3());
     CASE_EXPECT_TRUE(pv ? false : true);
     CASE_EXPECT_TRUE(!pv);
     CASE_EXPECT_TRUE(pv.get() == 0);
@@ -408,7 +408,7 @@ void deleter_constructor() {
   }
 
   {
-    util::memory::strong_rc_ptr<void const> pv(p0, deleter3());
+    atfw::util::memory::strong_rc_ptr<void const> pv(p0, deleter3());
     CASE_EXPECT_TRUE(pv ? false : true);
     CASE_EXPECT_TRUE(!pv);
     CASE_EXPECT_TRUE(pv.get() == 0);
@@ -419,7 +419,7 @@ void deleter_constructor() {
   CASE_EXPECT_TRUE(m == 0);
 
   {
-    util::memory::strong_rc_ptr<int> pi(&m, deleter2);
+    atfw::util::memory::strong_rc_ptr<int> pi(&m, deleter2);
     CASE_EXPECT_TRUE(pi ? true : false);
     CASE_EXPECT_TRUE(!!pi);
     CASE_EXPECT_TRUE(pi.get() == &m);
@@ -430,7 +430,7 @@ void deleter_constructor() {
   CASE_EXPECT_TRUE(m == 1);
 
   {
-    util::memory::strong_rc_ptr<int const> pi(&m, &deleter2);
+    atfw::util::memory::strong_rc_ptr<int const> pi(&m, &deleter2);
     CASE_EXPECT_TRUE(pi ? true : false);
     CASE_EXPECT_TRUE(!!pi);
     CASE_EXPECT_TRUE(pi.get() == &m);
@@ -441,7 +441,7 @@ void deleter_constructor() {
   CASE_EXPECT_TRUE(m == 2);
 
   {
-    util::memory::strong_rc_ptr<void> pv(&m, deleter2);
+    atfw::util::memory::strong_rc_ptr<void> pv(&m, deleter2);
     CASE_EXPECT_TRUE(pv ? true : false);
     CASE_EXPECT_TRUE(!!pv);
     CASE_EXPECT_TRUE(pv.get() == &m);
@@ -452,7 +452,7 @@ void deleter_constructor() {
   CASE_EXPECT_TRUE(m == 3);
 
   {
-    util::memory::strong_rc_ptr<void const> pv(&m, &deleter2);
+    atfw::util::memory::strong_rc_ptr<void const> pv(&m, &deleter2);
     CASE_EXPECT_TRUE(pv ? true : false);
     CASE_EXPECT_TRUE(!!pv);
     CASE_EXPECT_TRUE(pv.get() == &m);
@@ -465,23 +465,23 @@ void deleter_constructor() {
 
 void copy_constructor() {
   {
-    util::memory::strong_rc_ptr<int> pi;
+    atfw::util::memory::strong_rc_ptr<int> pi;
 
-    util::memory::strong_rc_ptr<int> pi2(pi);
+    atfw::util::memory::strong_rc_ptr<int> pi2(pi);
     CASE_EXPECT_TRUE(pi2 == pi);
     CASE_EXPECT_TRUE(pi2 ? false : true);
     CASE_EXPECT_TRUE(!pi2);
     CASE_EXPECT_TRUE(pi2.get() == 0);
     CASE_EXPECT_TRUE(pi2.use_count() == pi.use_count());
 
-    util::memory::strong_rc_ptr<void> pi3(pi);
+    atfw::util::memory::strong_rc_ptr<void> pi3(pi);
     CASE_EXPECT_TRUE(pi3 == pi);
     CASE_EXPECT_TRUE(pi3 ? false : true);
     CASE_EXPECT_TRUE(!pi3);
     CASE_EXPECT_TRUE(pi3.get() == 0);
     CASE_EXPECT_TRUE(pi3.use_count() == pi.use_count());
 
-    util::memory::strong_rc_ptr<void> pi4(pi3);
+    atfw::util::memory::strong_rc_ptr<void> pi4(pi3);
     CASE_EXPECT_TRUE(pi4 == pi3);
     CASE_EXPECT_TRUE(pi4 ? false : true);
     CASE_EXPECT_TRUE(!pi4);
@@ -490,9 +490,9 @@ void copy_constructor() {
   }
 
   {
-    util::memory::strong_rc_ptr<void> pv;
+    atfw::util::memory::strong_rc_ptr<void> pv;
 
-    util::memory::strong_rc_ptr<void> pv2(pv);
+    atfw::util::memory::strong_rc_ptr<void> pv2(pv);
     CASE_EXPECT_TRUE(pv2 == pv);
     CASE_EXPECT_TRUE(pv2 ? false : true);
     CASE_EXPECT_TRUE(!pv2);
@@ -501,16 +501,16 @@ void copy_constructor() {
   }
 
   {
-    util::memory::strong_rc_ptr<incomplete> px;
+    atfw::util::memory::strong_rc_ptr<incomplete> px;
 
-    util::memory::strong_rc_ptr<incomplete> px2(px);
+    atfw::util::memory::strong_rc_ptr<incomplete> px2(px);
     CASE_EXPECT_TRUE(px2 == px);
     CASE_EXPECT_TRUE(px2 ? false : true);
     CASE_EXPECT_TRUE(!px2);
     CASE_EXPECT_TRUE(px2.get() == 0);
     CASE_EXPECT_TRUE(px2.use_count() == px.use_count());
 
-    util::memory::strong_rc_ptr<void> px3(px);
+    atfw::util::memory::strong_rc_ptr<void> px3(px);
     CASE_EXPECT_TRUE(px3 == px);
     CASE_EXPECT_TRUE(px3 ? false : true);
     CASE_EXPECT_TRUE(!px3);
@@ -519,9 +519,9 @@ void copy_constructor() {
   }
 
   {
-    util::memory::strong_rc_ptr<int> pi(static_cast<int *>(0));
+    atfw::util::memory::strong_rc_ptr<int> pi(static_cast<int *>(0));
 
-    util::memory::strong_rc_ptr<int> pi2(pi);
+    atfw::util::memory::strong_rc_ptr<int> pi2(pi);
     CASE_EXPECT_TRUE(pi2 == pi);
     CASE_EXPECT_TRUE(pi2 ? false : true);
     CASE_EXPECT_TRUE(!pi2);
@@ -531,7 +531,7 @@ void copy_constructor() {
     CASE_EXPECT_TRUE(pi2.use_count() == pi.use_count());
     CASE_EXPECT_TRUE(!(pi < pi2 || pi2 < pi));  // shared ownership test
 
-    util::memory::strong_rc_ptr<void> pi3(pi);
+    atfw::util::memory::strong_rc_ptr<void> pi3(pi);
     CASE_EXPECT_TRUE(pi3 == pi);
     CASE_EXPECT_TRUE(pi3 ? false : true);
     CASE_EXPECT_TRUE(!pi3);
@@ -541,7 +541,7 @@ void copy_constructor() {
     CASE_EXPECT_TRUE(pi3.use_count() == pi.use_count());
     CASE_EXPECT_TRUE(!(pi < pi3 || pi3 < pi));  // shared ownership test
 
-    util::memory::strong_rc_ptr<void> pi4(pi2);
+    atfw::util::memory::strong_rc_ptr<void> pi4(pi2);
     CASE_EXPECT_TRUE(pi4 == pi2);
     CASE_EXPECT_TRUE(pi4 ? false : true);
     CASE_EXPECT_TRUE(!pi4);
@@ -556,9 +556,9 @@ void copy_constructor() {
   }
 
   {
-    util::memory::strong_rc_ptr<X> px(static_cast<X *>(0));
+    atfw::util::memory::strong_rc_ptr<X> px(static_cast<X *>(0));
 
-    util::memory::strong_rc_ptr<X> px2(px);
+    atfw::util::memory::strong_rc_ptr<X> px2(px);
     CASE_EXPECT_TRUE(px2 == px);
     CASE_EXPECT_TRUE(px2 ? false : true);
     CASE_EXPECT_TRUE(!px2);
@@ -568,7 +568,7 @@ void copy_constructor() {
     CASE_EXPECT_TRUE(px2.use_count() == px.use_count());
     CASE_EXPECT_TRUE(!(px < px2 || px2 < px));  // shared ownership test
 
-    util::memory::strong_rc_ptr<void> px3(px);
+    atfw::util::memory::strong_rc_ptr<void> px3(px);
     CASE_EXPECT_TRUE(px3 == px);
     CASE_EXPECT_TRUE(px3 ? false : true);
     CASE_EXPECT_TRUE(!px3);
@@ -578,7 +578,7 @@ void copy_constructor() {
     CASE_EXPECT_TRUE(px3.use_count() == px.use_count());
     CASE_EXPECT_TRUE(!(px < px3 || px3 < px));  // shared ownership test
 
-    util::memory::strong_rc_ptr<void> px4(px2);
+    atfw::util::memory::strong_rc_ptr<void> px4(px2);
     CASE_EXPECT_TRUE(px4 == px2);
     CASE_EXPECT_TRUE(px4 ? false : true);
     CASE_EXPECT_TRUE(!px4);
@@ -594,9 +594,9 @@ void copy_constructor() {
 
   {
     int *p = new int(7);
-    util::memory::strong_rc_ptr<int> pi(p);
+    atfw::util::memory::strong_rc_ptr<int> pi(p);
 
-    util::memory::strong_rc_ptr<int> pi2(pi);
+    atfw::util::memory::strong_rc_ptr<int> pi2(pi);
     CASE_EXPECT_TRUE(pi2 == pi);
     CASE_EXPECT_TRUE(pi2 ? true : false);
     CASE_EXPECT_TRUE(!!pi2);
@@ -610,10 +610,10 @@ void copy_constructor() {
 
   {
     int *p = new int(7);
-    util::memory::strong_rc_ptr<void> pv(p);
+    atfw::util::memory::strong_rc_ptr<void> pv(p);
     CASE_EXPECT_TRUE(pv.get() == p);
 
-    util::memory::strong_rc_ptr<void> pv2(pv);
+    atfw::util::memory::strong_rc_ptr<void> pv2(pv);
     CASE_EXPECT_TRUE(pv2 == pv);
     CASE_EXPECT_TRUE(pv2 ? true : false);
     CASE_EXPECT_TRUE(!!pv2);
@@ -628,10 +628,10 @@ void copy_constructor() {
 
   {
     X *p = new X;
-    util::memory::strong_rc_ptr<X> px(p);
+    atfw::util::memory::strong_rc_ptr<X> px(p);
     CASE_EXPECT_TRUE(px.get() == p);
 
-    util::memory::strong_rc_ptr<X> px2(px);
+    atfw::util::memory::strong_rc_ptr<X> px2(px);
     CASE_EXPECT_TRUE(px2 == px);
     CASE_EXPECT_TRUE(px2 ? true : false);
     CASE_EXPECT_TRUE(!!px2);
@@ -644,7 +644,7 @@ void copy_constructor() {
     CASE_EXPECT_TRUE(px2.use_count() == px.use_count());
     CASE_EXPECT_TRUE(!(px < px2 || px2 < px));  // shared ownership test
 
-    util::memory::strong_rc_ptr<void> px3(px);
+    atfw::util::memory::strong_rc_ptr<void> px3(px);
     CASE_EXPECT_TRUE(px3 == px);
     CASE_EXPECT_TRUE(px3 ? true : false);
     CASE_EXPECT_TRUE(!!px3);
@@ -654,7 +654,7 @@ void copy_constructor() {
     CASE_EXPECT_TRUE(px3.use_count() == px.use_count());
     CASE_EXPECT_TRUE(!(px < px3 || px3 < px));  // shared ownership test
 
-    util::memory::strong_rc_ptr<void> px4(px2);
+    atfw::util::memory::strong_rc_ptr<void> px4(px2);
     CASE_EXPECT_TRUE(px4 == px2);
     CASE_EXPECT_TRUE(px4 ? true : false);
     CASE_EXPECT_TRUE(!!px4);
@@ -673,10 +673,10 @@ void copy_constructor() {
 
   {
     Y *p = new Y;
-    util::memory::strong_rc_ptr<Y> py(p);
+    atfw::util::memory::strong_rc_ptr<Y> py(p);
     CASE_EXPECT_TRUE(py.get() == p);
 
-    util::memory::strong_rc_ptr<X> px(py);
+    atfw::util::memory::strong_rc_ptr<X> px(py);
     CASE_EXPECT_TRUE(px == py);
     CASE_EXPECT_TRUE(px ? true : false);
     CASE_EXPECT_TRUE(!!px);
@@ -689,7 +689,7 @@ void copy_constructor() {
     CASE_EXPECT_TRUE(X::instances == 1);
     CASE_EXPECT_TRUE(Y::instances == 1);
 
-    util::memory::strong_rc_ptr<void const> pv(px);
+    atfw::util::memory::strong_rc_ptr<void const> pv(px);
     CASE_EXPECT_TRUE(pv == px);
     CASE_EXPECT_TRUE(pv ? true : false);
     CASE_EXPECT_TRUE(!!pv);
@@ -699,7 +699,7 @@ void copy_constructor() {
     CASE_EXPECT_TRUE(pv.use_count() == px.use_count());
     CASE_EXPECT_TRUE(!(px < pv || pv < px));  // shared ownership test
 
-    util::memory::strong_rc_ptr<void const> pv2(py);
+    atfw::util::memory::strong_rc_ptr<void const> pv2(py);
     CASE_EXPECT_TRUE(pv2 == py);
     CASE_EXPECT_TRUE(pv2 ? true : false);
     CASE_EXPECT_TRUE(!!pv2);
@@ -715,19 +715,19 @@ void copy_constructor() {
 }
 
 void weak_ptr_constructor() {
-#if defined(LIBATFRAME_UTILS_ENABLE_EXCEPTION) && LIBATFRAME_UTILS_ENABLE_EXCEPTION
+#if defined(ATFRAMEWORK_UTILS_ENABLE_EXCEPTION) && ATFRAMEWORK_UTILS_ENABLE_EXCEPTION
   {
-    util::memory::weak_rc_ptr<Y> wp;
+    atfw::util::memory::weak_rc_ptr<Y> wp;
     CASE_EXPECT_TRUE(wp.use_count() == 0);
 
     try {
-      util::memory::strong_rc_ptr<Y> p2(wp);
+      atfw::util::memory::strong_rc_ptr<Y> p2(wp);
       CASE_EXPECT_ERROR("shared_ptr<Y> p2(wp) failed to throw");
     } catch (std::bad_weak_ptr const &) {
     }
 
     try {
-      util::memory::strong_rc_ptr<X> p3(wp);
+      atfw::util::memory::strong_rc_ptr<X> p3(wp);
       CASE_EXPECT_ERROR("shared_ptr<X> p3(wp) failed to throw");
     } catch (std::bad_weak_ptr const &) {
     }
@@ -735,27 +735,27 @@ void weak_ptr_constructor() {
 #endif
 
   {
-    util::memory::strong_rc_ptr<Y> p;
-    util::memory::weak_rc_ptr<Y> wp(p);
+    atfw::util::memory::strong_rc_ptr<Y> p;
+    atfw::util::memory::weak_rc_ptr<Y> wp(p);
 
     // 0 allowed but not required
     if (wp.use_count() != 0) {
-      util::memory::strong_rc_ptr<Y> p2(wp);
+      atfw::util::memory::strong_rc_ptr<Y> p2(wp);
       CASE_EXPECT_TRUE(p2.use_count() == wp.use_count());
       CASE_EXPECT_TRUE(p2.get() == 0);
 
-      util::memory::strong_rc_ptr<X> p3(wp);
+      atfw::util::memory::strong_rc_ptr<X> p3(wp);
       CASE_EXPECT_TRUE(p3.use_count() == wp.use_count());
       CASE_EXPECT_TRUE(p3.get() == 0);
     }
   }
 
   {
-    util::memory::strong_rc_ptr<Y> p(new Y);
-    util::memory::weak_rc_ptr<Y> wp(p);
+    atfw::util::memory::strong_rc_ptr<Y> p(new Y);
+    atfw::util::memory::weak_rc_ptr<Y> wp(p);
 
     {
-      util::memory::strong_rc_ptr<Y> p2(wp);
+      atfw::util::memory::strong_rc_ptr<Y> p2(wp);
       CASE_EXPECT_TRUE(p2 ? true : false);
       CASE_EXPECT_TRUE(!!p2);
       CASE_EXPECT_TRUE(p2.get() == p.get());
@@ -766,7 +766,7 @@ void weak_ptr_constructor() {
       CASE_EXPECT_TRUE(p.use_count() == p2.use_count());
       CASE_EXPECT_TRUE(!(p < p2 || p2 < p));  // shared ownership test
 
-      util::memory::strong_rc_ptr<X> p3(wp);
+      atfw::util::memory::strong_rc_ptr<X> p3(wp);
       CASE_EXPECT_TRUE(p3 ? true : false);
       CASE_EXPECT_TRUE(!!p3);
       CASE_EXPECT_TRUE(p3.get() == p.get());
@@ -780,15 +780,15 @@ void weak_ptr_constructor() {
     p.reset();
     CASE_EXPECT_TRUE(wp.use_count() == 0);
 
-#if defined(LIBATFRAME_UTILS_ENABLE_EXCEPTION) && LIBATFRAME_UTILS_ENABLE_EXCEPTION
+#if defined(ATFRAMEWORK_UTILS_ENABLE_EXCEPTION) && ATFRAMEWORK_UTILS_ENABLE_EXCEPTION
     try {
-      util::memory::strong_rc_ptr<Y> p2(wp);
+      atfw::util::memory::strong_rc_ptr<Y> p2(wp);
       CASE_EXPECT_ERROR("shared_ptr<Y> p2(wp) failed to throw");
     } catch (std::bad_weak_ptr const &) {
     }
 
     try {
-      util::memory::strong_rc_ptr<X> p3(wp);
+      atfw::util::memory::strong_rc_ptr<X> p3(wp);
       CASE_EXPECT_ERROR("shared_ptr<X> p3(wp) failed to throw");
     } catch (std::bad_weak_ptr const &) {
     }
@@ -844,7 +844,7 @@ int64_t Y::instances = 0;
 
 void copy_assignment() {
   {
-    util::memory::strong_rc_ptr<incomplete> p1;
+    atfw::util::memory::strong_rc_ptr<incomplete> p1;
 
     p1 = p1;
 
@@ -853,7 +853,7 @@ void copy_assignment() {
     CASE_EXPECT_TRUE(!p1);
     CASE_EXPECT_TRUE(p1.get() == 0);
 
-    util::memory::strong_rc_ptr<incomplete> p2;
+    atfw::util::memory::strong_rc_ptr<incomplete> p2;
 
     p1 = p2;
 
@@ -862,7 +862,7 @@ void copy_assignment() {
     CASE_EXPECT_TRUE(!p1);
     CASE_EXPECT_TRUE(p1.get() == 0);
 
-    util::memory::strong_rc_ptr<incomplete> p3(p1);
+    atfw::util::memory::strong_rc_ptr<incomplete> p3(p1);
 
     p1 = p3;
 
@@ -873,7 +873,7 @@ void copy_assignment() {
   }
 
   {
-    util::memory::strong_rc_ptr<void> p1;
+    atfw::util::memory::strong_rc_ptr<void> p1;
 
     p1 = p1;
 
@@ -882,7 +882,7 @@ void copy_assignment() {
     CASE_EXPECT_TRUE(!p1);
     CASE_EXPECT_TRUE(p1.get() == 0);
 
-    util::memory::strong_rc_ptr<void> p2;
+    atfw::util::memory::strong_rc_ptr<void> p2;
 
     p1 = p2;
 
@@ -891,7 +891,7 @@ void copy_assignment() {
     CASE_EXPECT_TRUE(!p1);
     CASE_EXPECT_TRUE(p1.get() == 0);
 
-    util::memory::strong_rc_ptr<void> p3(p1);
+    atfw::util::memory::strong_rc_ptr<void> p3(p1);
 
     p1 = p3;
 
@@ -900,7 +900,7 @@ void copy_assignment() {
     CASE_EXPECT_TRUE(!p1);
     CASE_EXPECT_TRUE(p1.get() == 0);
 
-    util::memory::strong_rc_ptr<void> p4(new int);
+    atfw::util::memory::strong_rc_ptr<void> p4(new int);
     CASE_EXPECT_TRUE(p4.use_count() == 1);
 
     p1 = p4;
@@ -917,7 +917,7 @@ void copy_assignment() {
   }
 
   {
-    util::memory::strong_rc_ptr<X> p1;
+    atfw::util::memory::strong_rc_ptr<X> p1;
 
     p1 = p1;
 
@@ -926,7 +926,7 @@ void copy_assignment() {
     CASE_EXPECT_TRUE(!p1);
     CASE_EXPECT_TRUE(p1.get() == 0);
 
-    util::memory::strong_rc_ptr<X> p2;
+    atfw::util::memory::strong_rc_ptr<X> p2;
 
     p1 = p2;
 
@@ -935,7 +935,7 @@ void copy_assignment() {
     CASE_EXPECT_TRUE(!p1);
     CASE_EXPECT_TRUE(p1.get() == 0);
 
-    util::memory::strong_rc_ptr<X> p3(p1);
+    atfw::util::memory::strong_rc_ptr<X> p3(p1);
 
     p1 = p3;
 
@@ -946,7 +946,7 @@ void copy_assignment() {
 
     CASE_EXPECT_TRUE(X::instances == 0);
 
-    util::memory::strong_rc_ptr<X> p4(new X);
+    atfw::util::memory::strong_rc_ptr<X> p4(new X);
 
     CASE_EXPECT_TRUE(X::instances == 1);
 
@@ -973,9 +973,9 @@ void copy_assignment() {
 
 void conversion_assignment() {
   {
-    util::memory::strong_rc_ptr<void> p1;
+    atfw::util::memory::strong_rc_ptr<void> p1;
 
-    util::memory::strong_rc_ptr<incomplete> p2;
+    atfw::util::memory::strong_rc_ptr<incomplete> p2;
 
     p1 = p2;
 
@@ -984,10 +984,10 @@ void conversion_assignment() {
     CASE_EXPECT_TRUE(!p1);
     CASE_EXPECT_TRUE(p1.get() == 0);
 
-    util::memory::strong_rc_ptr<int> p4(new int);
+    atfw::util::memory::strong_rc_ptr<int> p4(new int);
     CASE_EXPECT_TRUE(p4.use_count() == 1);
 
-    util::memory::strong_rc_ptr<void> p5(p4);
+    atfw::util::memory::strong_rc_ptr<void> p5(p4);
     CASE_EXPECT_TRUE(p4.use_count() == 2);
 
     p1 = p4;
@@ -1004,9 +1004,9 @@ void conversion_assignment() {
   }
 
   {
-    util::memory::strong_rc_ptr<X> p1;
+    atfw::util::memory::strong_rc_ptr<X> p1;
 
-    util::memory::strong_rc_ptr<Y> p2;
+    atfw::util::memory::strong_rc_ptr<Y> p2;
 
     p1 = p2;
 
@@ -1018,13 +1018,13 @@ void conversion_assignment() {
     CASE_EXPECT_TRUE(X::instances == 0);
     CASE_EXPECT_TRUE(Y::instances == 0);
 
-    util::memory::strong_rc_ptr<Y> p4(new Y);
+    atfw::util::memory::strong_rc_ptr<Y> p4(new Y);
 
     CASE_EXPECT_TRUE(X::instances == 1);
     CASE_EXPECT_TRUE(Y::instances == 1);
     CASE_EXPECT_TRUE(p4.use_count() == 1);
 
-    util::memory::strong_rc_ptr<X> p5(p4);
+    atfw::util::memory::strong_rc_ptr<X> p5(p4);
     CASE_EXPECT_TRUE(p4.use_count() == 2);
 
     p1 = p4;
@@ -1085,7 +1085,7 @@ int64_t X::instances = 0;
 
 void plain_reset() {
   {
-    util::memory::strong_rc_ptr<int> pi;
+    atfw::util::memory::strong_rc_ptr<int> pi;
     pi.reset();
     CASE_EXPECT_TRUE(pi ? false : true);
     CASE_EXPECT_TRUE(!pi);
@@ -1094,7 +1094,7 @@ void plain_reset() {
   }
 
   {
-    util::memory::strong_rc_ptr<int> pi(static_cast<int *>(0));
+    atfw::util::memory::strong_rc_ptr<int> pi(static_cast<int *>(0));
     pi.reset();
     CASE_EXPECT_TRUE(pi ? false : true);
     CASE_EXPECT_TRUE(!pi);
@@ -1103,7 +1103,7 @@ void plain_reset() {
   }
 
   {
-    util::memory::strong_rc_ptr<int> pi(new int);
+    atfw::util::memory::strong_rc_ptr<int> pi(new int);
     pi.reset();
     CASE_EXPECT_TRUE(pi ? false : true);
     CASE_EXPECT_TRUE(!pi);
@@ -1112,7 +1112,7 @@ void plain_reset() {
   }
 
   {
-    util::memory::strong_rc_ptr<incomplete> px;
+    atfw::util::memory::strong_rc_ptr<incomplete> px;
     px.reset();
     CASE_EXPECT_TRUE(px ? false : true);
     CASE_EXPECT_TRUE(!px);
@@ -1121,7 +1121,7 @@ void plain_reset() {
   }
 
   {
-    util::memory::strong_rc_ptr<incomplete> px(p0, deleter);
+    atfw::util::memory::strong_rc_ptr<incomplete> px(p0, deleter);
     px.reset();
     CASE_EXPECT_TRUE(px ? false : true);
     CASE_EXPECT_TRUE(!px);
@@ -1130,7 +1130,7 @@ void plain_reset() {
   }
 
   {
-    util::memory::strong_rc_ptr<X> px;
+    atfw::util::memory::strong_rc_ptr<X> px;
     px.reset();
     CASE_EXPECT_TRUE(px ? false : true);
     CASE_EXPECT_TRUE(!px);
@@ -1140,7 +1140,7 @@ void plain_reset() {
 
   {
     CASE_EXPECT_TRUE(X::instances == 0);
-    util::memory::strong_rc_ptr<X> px(new X);
+    atfw::util::memory::strong_rc_ptr<X> px(new X);
     CASE_EXPECT_TRUE(X::instances == 1);
     px.reset();
     CASE_EXPECT_TRUE(px ? false : true);
@@ -1151,7 +1151,7 @@ void plain_reset() {
   }
 
   {
-    util::memory::strong_rc_ptr<void> pv;
+    atfw::util::memory::strong_rc_ptr<void> pv;
     pv.reset();
     CASE_EXPECT_TRUE(pv ? false : true);
     CASE_EXPECT_TRUE(!pv);
@@ -1161,7 +1161,7 @@ void plain_reset() {
 
   {
     CASE_EXPECT_TRUE(X::instances == 0);
-    util::memory::strong_rc_ptr<void> pv(new X);
+    atfw::util::memory::strong_rc_ptr<void> pv(new X);
     CASE_EXPECT_TRUE(X::instances == 1);
     pv.reset();
     CASE_EXPECT_TRUE(pv ? false : true);
@@ -1192,7 +1192,7 @@ int64_t Y::instances = 0;
 
 void pointer_reset() {
   {
-    util::memory::strong_rc_ptr<int> pi;
+    atfw::util::memory::strong_rc_ptr<int> pi;
     CASE_EXPECT_TRUE(pi.use_count() == 0);
 
     pi.reset(static_cast<int *>(nullptr));
@@ -1219,7 +1219,7 @@ void pointer_reset() {
   }
 
   {
-    util::memory::strong_rc_ptr<X> px;
+    atfw::util::memory::strong_rc_ptr<X> px;
 
     px.reset(static_cast<X *>(0));
     CASE_EXPECT_TRUE(px ? false : true);
@@ -1268,7 +1268,7 @@ void pointer_reset() {
   }
 
   {
-    util::memory::strong_rc_ptr<void> pv;
+    atfw::util::memory::strong_rc_ptr<void> pv;
 
     pv.reset(static_cast<X *>(0));
     CASE_EXPECT_TRUE(pv ? false : true);
@@ -1323,7 +1323,7 @@ void deleter2(void *p) { deleted = p; }
 
 void deleter_reset() {
   {
-    util::memory::strong_rc_ptr<int> pi;
+    atfw::util::memory::strong_rc_ptr<int> pi;
 
     pi.reset(static_cast<int *>(0), deleter2);
     CASE_EXPECT_TRUE(pi ? false : true);
@@ -1356,7 +1356,7 @@ void deleter_reset() {
   }
 
   {
-    util::memory::strong_rc_ptr<X> px;
+    atfw::util::memory::strong_rc_ptr<X> px;
 
     px.reset(static_cast<X *>(0), deleter2);
     CASE_EXPECT_TRUE(px ? false : true);
@@ -1406,7 +1406,7 @@ void deleter_reset() {
   }
 
   {
-    util::memory::strong_rc_ptr<void> pv;
+    atfw::util::memory::strong_rc_ptr<void> pv;
 
     pv.reset(static_cast<X *>(0), deleter2);
     CASE_EXPECT_TRUE(pv ? false : true);
@@ -1456,7 +1456,7 @@ void deleter_reset() {
   }
 
   {
-    util::memory::strong_rc_ptr<incomplete> px;
+    atfw::util::memory::strong_rc_ptr<incomplete> px;
 
     px.reset(p0, deleter2);
     CASE_EXPECT_TRUE(px ? false : true);
@@ -1485,21 +1485,21 @@ struct X {};
 
 void test() {
   {
-    util::memory::strong_rc_ptr<X> px;
+    atfw::util::memory::strong_rc_ptr<X> px;
     CASE_EXPECT_TRUE(px.get() == 0);
     CASE_EXPECT_TRUE(px ? false : true);
     CASE_EXPECT_TRUE(!px);
   }
 
   {
-    util::memory::strong_rc_ptr<X> px(static_cast<X *>(0));
+    atfw::util::memory::strong_rc_ptr<X> px(static_cast<X *>(0));
     CASE_EXPECT_TRUE(px.get() == 0);
     CASE_EXPECT_TRUE(px ? false : true);
     CASE_EXPECT_TRUE(!px);
   }
 
   {
-    util::memory::strong_rc_ptr<X> px(static_cast<X *>(0), checked_deleter<X>());
+    atfw::util::memory::strong_rc_ptr<X> px(static_cast<X *>(0), checked_deleter<X>());
     CASE_EXPECT_TRUE(px.get() == 0);
     CASE_EXPECT_TRUE(px ? false : true);
     CASE_EXPECT_TRUE(!px);
@@ -1507,7 +1507,7 @@ void test() {
 
   {
     X *p = new X;
-    util::memory::strong_rc_ptr<X> px(p);
+    atfw::util::memory::strong_rc_ptr<X> px(p);
     CASE_EXPECT_TRUE(px.get() == p);
     CASE_EXPECT_TRUE(px ? true : false);
     CASE_EXPECT_TRUE(!!px);
@@ -1517,7 +1517,7 @@ void test() {
 
   {
     X *p = new X;
-    util::memory::strong_rc_ptr<X> px(p, checked_deleter<X>());
+    atfw::util::memory::strong_rc_ptr<X> px(p, checked_deleter<X>());
     CASE_EXPECT_TRUE(px.get() == p);
     CASE_EXPECT_TRUE(px ? true : false);
     CASE_EXPECT_TRUE(!!px);
@@ -1534,11 +1534,11 @@ struct X {};
 
 void test() {
   {
-    util::memory::strong_rc_ptr<X> px(static_cast<X *>(0));
+    atfw::util::memory::strong_rc_ptr<X> px(static_cast<X *>(0));
     CASE_EXPECT_TRUE(px.use_count() == 1);
     CASE_EXPECT_TRUE(px.unique());
 
-    util::memory::strong_rc_ptr<X> px2(px);
+    atfw::util::memory::strong_rc_ptr<X> px2(px);
     CASE_EXPECT_TRUE(px2.use_count() == 2);
     CASE_EXPECT_TRUE(!px2.unique());
     CASE_EXPECT_TRUE(px.use_count() == 2);
@@ -1546,11 +1546,11 @@ void test() {
   }
 
   {
-    util::memory::strong_rc_ptr<X> px(new X);
+    atfw::util::memory::strong_rc_ptr<X> px(new X);
     CASE_EXPECT_TRUE(px.use_count() == 1);
     CASE_EXPECT_TRUE(px.unique());
 
-    util::memory::strong_rc_ptr<X> px2(px);
+    atfw::util::memory::strong_rc_ptr<X> px2(px);
     CASE_EXPECT_TRUE(px2.use_count() == 2);
     CASE_EXPECT_TRUE(!px2.unique());
     CASE_EXPECT_TRUE(px.use_count() == 2);
@@ -1558,11 +1558,11 @@ void test() {
   }
 
   {
-    util::memory::strong_rc_ptr<X> px(new X, checked_deleter<X>());
+    atfw::util::memory::strong_rc_ptr<X> px(new X, checked_deleter<X>());
     CASE_EXPECT_TRUE(px.use_count() == 1);
     CASE_EXPECT_TRUE(px.unique());
 
-    util::memory::strong_rc_ptr<X> px2(px);
+    atfw::util::memory::strong_rc_ptr<X> px2(px);
     CASE_EXPECT_TRUE(px2.use_count() == 2);
     CASE_EXPECT_TRUE(!px2.unique());
     CASE_EXPECT_TRUE(px.use_count() == 2);
@@ -1578,8 +1578,8 @@ struct X {};
 
 void test() {
   {
-    util::memory::strong_rc_ptr<X> px;
-    util::memory::strong_rc_ptr<X> px2;
+    atfw::util::memory::strong_rc_ptr<X> px;
+    atfw::util::memory::strong_rc_ptr<X> px2;
 
     px.swap(px2);
 
@@ -1595,9 +1595,9 @@ void test() {
 
   {
     X *p = new X;
-    util::memory::strong_rc_ptr<X> px;
-    util::memory::strong_rc_ptr<X> px2(p);
-    util::memory::strong_rc_ptr<X> px3(px2);
+    atfw::util::memory::strong_rc_ptr<X> px;
+    atfw::util::memory::strong_rc_ptr<X> px2(p);
+    atfw::util::memory::strong_rc_ptr<X> px3(px2);
 
     px.swap(px2);
 
@@ -1620,9 +1620,9 @@ void test() {
   {
     X *p1 = new X;
     X *p2 = new X;
-    util::memory::strong_rc_ptr<X> px(p1);
-    util::memory::strong_rc_ptr<X> px2(p2);
-    util::memory::strong_rc_ptr<X> px3(px2);
+    atfw::util::memory::strong_rc_ptr<X> px(p1);
+    atfw::util::memory::strong_rc_ptr<X> px2(p2);
+    atfw::util::memory::strong_rc_ptr<X> px3(px2);
 
     px.swap(px2);
 
@@ -1661,12 +1661,12 @@ struct Z : public X, public virtual Y {};
 
 void test() {
   {
-    util::memory::strong_rc_ptr<X> px;
+    atfw::util::memory::strong_rc_ptr<X> px;
     CASE_EXPECT_TRUE(px == px);
     CASE_EXPECT_TRUE(!(px != px));
     CASE_EXPECT_TRUE(!(px < px));
 
-    util::memory::strong_rc_ptr<X> px2;
+    atfw::util::memory::strong_rc_ptr<X> px2;
 
     CASE_EXPECT_TRUE(px.get() == px2.get());
     CASE_EXPECT_TRUE(px == px2);
@@ -1675,8 +1675,8 @@ void test() {
   }
 
   {
-    util::memory::strong_rc_ptr<X> px;
-    util::memory::strong_rc_ptr<X> px2(px);
+    atfw::util::memory::strong_rc_ptr<X> px;
+    atfw::util::memory::strong_rc_ptr<X> px2(px);
 
     CASE_EXPECT_TRUE(px2 == px2);
     CASE_EXPECT_TRUE(!(px2 != px2));
@@ -1689,8 +1689,8 @@ void test() {
   }
 
   {
-    util::memory::strong_rc_ptr<X> px;
-    util::memory::strong_rc_ptr<X> px2(new X);
+    atfw::util::memory::strong_rc_ptr<X> px;
+    atfw::util::memory::strong_rc_ptr<X> px2(new X);
 
     CASE_EXPECT_TRUE(px2 == px2);
     CASE_EXPECT_TRUE(!(px2 != px2));
@@ -1704,8 +1704,8 @@ void test() {
   }
 
   {
-    util::memory::strong_rc_ptr<X> px(new X);
-    util::memory::strong_rc_ptr<X> px2(new X);
+    atfw::util::memory::strong_rc_ptr<X> px(new X);
+    atfw::util::memory::strong_rc_ptr<X> px2(new X);
 
     CASE_EXPECT_TRUE(px.get() != px2.get());
     CASE_EXPECT_TRUE(px != px2);
@@ -1715,8 +1715,8 @@ void test() {
   }
 
   {
-    util::memory::strong_rc_ptr<X> px(new X);
-    util::memory::strong_rc_ptr<X> px2(px);
+    atfw::util::memory::strong_rc_ptr<X> px(new X);
+    atfw::util::memory::strong_rc_ptr<X> px2(px);
 
     CASE_EXPECT_TRUE(px2 == px2);
     CASE_EXPECT_TRUE(!(px2 != px2));
@@ -1729,9 +1729,9 @@ void test() {
   }
 
   {
-    util::memory::strong_rc_ptr<X> px(new X);
-    util::memory::strong_rc_ptr<Y> py(new Y);
-    util::memory::strong_rc_ptr<Z> pz(new Z);
+    atfw::util::memory::strong_rc_ptr<X> px(new X);
+    atfw::util::memory::strong_rc_ptr<Y> py(new Y);
+    atfw::util::memory::strong_rc_ptr<Z> pz(new Z);
 
     CASE_EXPECT_TRUE(px.get() != pz.get());
     CASE_EXPECT_TRUE(px != pz);
@@ -1749,14 +1749,14 @@ void test() {
     CASE_EXPECT_TRUE(!(px < pz && pz < px));
     CASE_EXPECT_TRUE(!(py < pz && pz < py));
 
-    util::memory::strong_rc_ptr<void> pvx(px);
+    atfw::util::memory::strong_rc_ptr<void> pvx(px);
 
     CASE_EXPECT_TRUE(pvx == pvx);
     CASE_EXPECT_TRUE(!(pvx != pvx));
     CASE_EXPECT_TRUE(!(pvx < pvx));
 
-    util::memory::strong_rc_ptr<void> pvy(py);
-    util::memory::strong_rc_ptr<void> pvz(pz);
+    atfw::util::memory::strong_rc_ptr<void> pvy(py);
+    atfw::util::memory::strong_rc_ptr<void> pvz(pz);
 
     CASE_EXPECT_TRUE(pvx < pvy || pvy < pvx);
     CASE_EXPECT_TRUE(pvx < pvz || pvz < pvx);
@@ -1768,14 +1768,14 @@ void test() {
   }
 
   {
-    util::memory::strong_rc_ptr<Z> pz(new Z);
-    util::memory::strong_rc_ptr<X> px(pz);
+    atfw::util::memory::strong_rc_ptr<Z> pz(new Z);
+    atfw::util::memory::strong_rc_ptr<X> px(pz);
 
     CASE_EXPECT_TRUE(px == px);
     CASE_EXPECT_TRUE(!(px != px));
     CASE_EXPECT_TRUE(!(px < px));
 
-    util::memory::strong_rc_ptr<Y> py(pz);
+    atfw::util::memory::strong_rc_ptr<Y> py(pz);
 
     CASE_EXPECT_TRUE(px.get() == pz.get());
     CASE_EXPECT_TRUE(px == pz);
@@ -1789,9 +1789,9 @@ void test() {
     CASE_EXPECT_TRUE(!(px < pz || pz < px));
     CASE_EXPECT_TRUE(!(py < pz || pz < py));
 
-    util::memory::strong_rc_ptr<void> pvx(px);
-    util::memory::strong_rc_ptr<void> pvy(py);
-    util::memory::strong_rc_ptr<void> pvz(pz);
+    atfw::util::memory::strong_rc_ptr<void> pvx(px);
+    atfw::util::memory::strong_rc_ptr<void> pvy(py);
+    atfw::util::memory::strong_rc_ptr<void> pvz(pz);
 
     // pvx and pvy aren't equal...
     CASE_EXPECT_TRUE(pvx.get() != pvy.get());
@@ -1817,20 +1817,20 @@ struct Y : public X {};
 
 void test() {
   {
-    util::memory::strong_rc_ptr<void> pv;
+    atfw::util::memory::strong_rc_ptr<void> pv;
 
-    util::memory::strong_rc_ptr<int> pi = util::memory::static_pointer_cast<int>(pv);
+    atfw::util::memory::strong_rc_ptr<int> pi = atfw::util::memory::static_pointer_cast<int>(pv);
     CASE_EXPECT_TRUE(pi.get() == 0);
 
-    util::memory::strong_rc_ptr<X> px = util::memory::static_pointer_cast<X>(pv);
+    atfw::util::memory::strong_rc_ptr<X> px = atfw::util::memory::static_pointer_cast<X>(pv);
     CASE_EXPECT_TRUE(px.get() == 0);
   }
 
   {
-    util::memory::strong_rc_ptr<int> pi(new int);
-    util::memory::strong_rc_ptr<void> pv(pi);
+    atfw::util::memory::strong_rc_ptr<int> pi(new int);
+    atfw::util::memory::strong_rc_ptr<void> pv(pi);
 
-    util::memory::strong_rc_ptr<int> pi2 = util::memory::static_pointer_cast<int>(pv);
+    atfw::util::memory::strong_rc_ptr<int> pi2 = atfw::util::memory::static_pointer_cast<int>(pv);
     CASE_EXPECT_TRUE(pi.get() == pi2.get());
     CASE_EXPECT_TRUE(!(pi < pi2 || pi2 < pi));
     CASE_EXPECT_TRUE(pi.use_count() == 3);
@@ -1839,10 +1839,10 @@ void test() {
   }
 
   {
-    util::memory::strong_rc_ptr<X> px(new X);
-    util::memory::strong_rc_ptr<void> pv(px);
+    atfw::util::memory::strong_rc_ptr<X> px(new X);
+    atfw::util::memory::strong_rc_ptr<void> pv(px);
 
-    util::memory::strong_rc_ptr<X> px2 = util::memory::static_pointer_cast<X>(pv);
+    atfw::util::memory::strong_rc_ptr<X> px2 = atfw::util::memory::static_pointer_cast<X>(pv);
     CASE_EXPECT_TRUE(px.get() == px2.get());
     CASE_EXPECT_TRUE(!(px < px2 || px2 < px));
     CASE_EXPECT_TRUE(px.use_count() == 3);
@@ -1851,14 +1851,14 @@ void test() {
   }
 
   {
-    util::memory::strong_rc_ptr<X> px(new Y);
+    atfw::util::memory::strong_rc_ptr<X> px(new Y);
 
-    util::memory::strong_rc_ptr<Y> py = util::memory::static_pointer_cast<Y>(px);
+    atfw::util::memory::strong_rc_ptr<Y> py = atfw::util::memory::static_pointer_cast<Y>(px);
     CASE_EXPECT_TRUE(px.get() == py.get());
     CASE_EXPECT_TRUE(px.use_count() == 2);
     CASE_EXPECT_TRUE(py.use_count() == 2);
 
-    util::memory::strong_rc_ptr<X> px2(py);
+    atfw::util::memory::strong_rc_ptr<X> px2(py);
     CASE_EXPECT_TRUE(!(px < px2 || px2 < px));
   }
 }
@@ -1871,30 +1871,30 @@ struct X;
 
 void test() {
   {
-    util::memory::strong_rc_ptr<void const volatile> px;
+    atfw::util::memory::strong_rc_ptr<void const volatile> px;
 
-    util::memory::strong_rc_ptr<void> px2 = util::memory::const_pointer_cast<void>(px);
+    atfw::util::memory::strong_rc_ptr<void> px2 = atfw::util::memory::const_pointer_cast<void>(px);
     CASE_EXPECT_TRUE(px2.get() == 0);
   }
 
   {
-    util::memory::strong_rc_ptr<int const volatile> px;
+    atfw::util::memory::strong_rc_ptr<int const volatile> px;
 
-    util::memory::strong_rc_ptr<int> px2 = util::memory::const_pointer_cast<int>(px);
+    atfw::util::memory::strong_rc_ptr<int> px2 = atfw::util::memory::const_pointer_cast<int>(px);
     CASE_EXPECT_TRUE(px2.get() == 0);
   }
 
   {
-    util::memory::strong_rc_ptr<X const volatile> px;
+    atfw::util::memory::strong_rc_ptr<X const volatile> px;
 
-    util::memory::strong_rc_ptr<X> px2 = util::memory::const_pointer_cast<X>(px);
+    atfw::util::memory::strong_rc_ptr<X> px2 = atfw::util::memory::const_pointer_cast<X>(px);
     CASE_EXPECT_TRUE(px2.get() == 0);
   }
 
   {
-    util::memory::strong_rc_ptr<void const volatile> px(new int);
+    atfw::util::memory::strong_rc_ptr<void const volatile> px(new int);
 
-    util::memory::strong_rc_ptr<void> px2 = util::memory::const_pointer_cast<void>(px);
+    atfw::util::memory::strong_rc_ptr<void> px2 = atfw::util::memory::const_pointer_cast<void>(px);
     CASE_EXPECT_TRUE(px.get() == px2.get());
     CASE_EXPECT_TRUE(!(px < px2 || px2 < px));
     CASE_EXPECT_TRUE(px.use_count() == 2);
@@ -1902,9 +1902,9 @@ void test() {
   }
 
   {
-    util::memory::strong_rc_ptr<int const volatile> px(new int);
+    atfw::util::memory::strong_rc_ptr<int const volatile> px(new int);
 
-    util::memory::strong_rc_ptr<int> px2 = util::memory::const_pointer_cast<int>(px);
+    atfw::util::memory::strong_rc_ptr<int> px2 = atfw::util::memory::const_pointer_cast<int>(px);
     CASE_EXPECT_TRUE(px.get() == px2.get());
     CASE_EXPECT_TRUE(!(px < px2 || px2 < px));
     CASE_EXPECT_TRUE(px.use_count() == 2);
@@ -1914,7 +1914,7 @@ void test() {
 
 }  // namespace n_const_cast
 
-#if defined(LIBATFRAME_UTILS_ENABLE_RTTI) && LIBATFRAME_UTILS_ENABLE_RTTI
+#if defined(ATFRAMEWORK_UTILS_ENABLE_RTTI) && ATFRAMEWORK_UTILS_ENABLE_RTTI
 
 namespace n_dynamic_cast {
 
@@ -1926,50 +1926,50 @@ struct W : public V {};
 
 void test() {
   {
-    util::memory::strong_rc_ptr<V> pv;
-    util::memory::strong_rc_ptr<W> pw = util::memory::dynamic_pointer_cast<W>(pv);
+    atfw::util::memory::strong_rc_ptr<V> pv;
+    atfw::util::memory::strong_rc_ptr<W> pw = atfw::util::memory::dynamic_pointer_cast<W>(pv);
     CASE_EXPECT_TRUE(pw.get() == 0);
   }
 
   {
-    util::memory::strong_rc_ptr<V> pv(static_cast<V *>(0));
+    atfw::util::memory::strong_rc_ptr<V> pv(static_cast<V *>(0));
 
-    util::memory::strong_rc_ptr<W> pw = util::memory::dynamic_pointer_cast<W>(pv);
+    atfw::util::memory::strong_rc_ptr<W> pw = atfw::util::memory::dynamic_pointer_cast<W>(pv);
     CASE_EXPECT_TRUE(pw.get() == 0);
 
-    util::memory::strong_rc_ptr<V> pv2(pw);
+    atfw::util::memory::strong_rc_ptr<V> pv2(pw);
     CASE_EXPECT_TRUE(!(pv < pv2 || pv2 < pv));
   }
 
   {
-    util::memory::strong_rc_ptr<V> pv(static_cast<W *>(0));
+    atfw::util::memory::strong_rc_ptr<V> pv(static_cast<W *>(0));
 
-    util::memory::strong_rc_ptr<W> pw = util::memory::dynamic_pointer_cast<W>(pv);
+    atfw::util::memory::strong_rc_ptr<W> pw = atfw::util::memory::dynamic_pointer_cast<W>(pv);
     CASE_EXPECT_TRUE(pw.get() == 0);
 
-    util::memory::strong_rc_ptr<V> pv2(pw);
+    atfw::util::memory::strong_rc_ptr<V> pv2(pw);
     CASE_EXPECT_TRUE(!(pv < pv2 || pv2 < pv));
   }
 
   {
-    util::memory::strong_rc_ptr<V> pv(new V);
+    atfw::util::memory::strong_rc_ptr<V> pv(new V);
 
-    util::memory::strong_rc_ptr<W> pw = util::memory::dynamic_pointer_cast<W>(pv);
+    atfw::util::memory::strong_rc_ptr<W> pw = atfw::util::memory::dynamic_pointer_cast<W>(pv);
     CASE_EXPECT_TRUE(pw.get() == 0);
 
-    util::memory::strong_rc_ptr<V> pv2(pw);
+    atfw::util::memory::strong_rc_ptr<V> pv2(pw);
     CASE_EXPECT_TRUE(pv < pv2 || pv2 < pv);
   }
 
   {
-    util::memory::strong_rc_ptr<V> pv(new W);
+    atfw::util::memory::strong_rc_ptr<V> pv(new W);
 
-    util::memory::strong_rc_ptr<W> pw = util::memory::dynamic_pointer_cast<W>(pv);
+    atfw::util::memory::strong_rc_ptr<W> pw = atfw::util::memory::dynamic_pointer_cast<W>(pv);
     CASE_EXPECT_TRUE(pw.get() == pv.get());
     CASE_EXPECT_TRUE(pv.use_count() == 2);
     CASE_EXPECT_TRUE(pw.use_count() == 2);
 
-    util::memory::strong_rc_ptr<V> pv2(pw);
+    atfw::util::memory::strong_rc_ptr<V> pv2(pw);
     CASE_EXPECT_TRUE(!(pv < pv2 || pv2 < pv));
   }
 }
@@ -1983,12 +1983,12 @@ namespace n_map {
 struct X {};
 
 void test() {
-  std::vector<util::memory::strong_rc_ptr<int>> vi;
+  std::vector<atfw::util::memory::strong_rc_ptr<int>> vi;
 
   {
-    util::memory::strong_rc_ptr<int> pi1(new int);
-    util::memory::strong_rc_ptr<int> pi2(new int);
-    util::memory::strong_rc_ptr<int> pi3(new int);
+    atfw::util::memory::strong_rc_ptr<int> pi1(new int);
+    atfw::util::memory::strong_rc_ptr<int> pi2(new int);
+    atfw::util::memory::strong_rc_ptr<int> pi3(new int);
 
     vi.push_back(pi1);
     vi.push_back(pi1);
@@ -2003,12 +2003,12 @@ void test() {
     vi.push_back(pi1);
   }
 
-  std::vector<util::memory::strong_rc_ptr<X>> vx;
+  std::vector<atfw::util::memory::strong_rc_ptr<X>> vx;
 
   {
-    util::memory::strong_rc_ptr<X> px1(new X);
-    util::memory::strong_rc_ptr<X> px2(new X);
-    util::memory::strong_rc_ptr<X> px3(new X);
+    atfw::util::memory::strong_rc_ptr<X> px1(new X);
+    atfw::util::memory::strong_rc_ptr<X> px2(new X);
+    atfw::util::memory::strong_rc_ptr<X> px3(new X);
 
     vx.push_back(px2);
     vx.push_back(px2);
@@ -2023,22 +2023,22 @@ void test() {
     vx.push_back(px2);
   }
 
-  std::map<util::memory::strong_rc_ptr<void>, int64_t> m;
+  std::map<atfw::util::memory::strong_rc_ptr<void>, int64_t> m;
 
   {
-    for (std::vector<util::memory::strong_rc_ptr<int>>::iterator i = vi.begin(); i != vi.end(); ++i) {
+    for (std::vector<atfw::util::memory::strong_rc_ptr<int>>::iterator i = vi.begin(); i != vi.end(); ++i) {
       ++m[*i];
     }
   }
 
   {
-    for (std::vector<util::memory::strong_rc_ptr<X>>::iterator i = vx.begin(); i != vx.end(); ++i) {
+    for (std::vector<atfw::util::memory::strong_rc_ptr<X>>::iterator i = vx.begin(); i != vx.end(); ++i) {
       ++m[*i];
     }
   }
 
   {
-    for (std::map<util::memory::strong_rc_ptr<void>, int64_t>::iterator i = m.begin(); i != m.end(); ++i) {
+    for (std::map<atfw::util::memory::strong_rc_ptr<void>, int64_t>::iterator i = m.begin(); i != m.end(); ++i) {
       CASE_EXPECT_TRUE(i->first.use_count() == static_cast<std::size_t>(i->second + 1));
     }
   }
@@ -2050,12 +2050,12 @@ namespace n_transitive {
 
 struct X {
   X() : next() {}
-  util::memory::strong_rc_ptr<X> next;
+  atfw::util::memory::strong_rc_ptr<X> next;
 };
 
 void test() {
-  util::memory::strong_rc_ptr<X> p(new X);
-  p->next = util::memory::strong_rc_ptr<X>(new X);
+  atfw::util::memory::strong_rc_ptr<X> p(new X);
+  p->next = atfw::util::memory::strong_rc_ptr<X>(new X);
   CASE_EXPECT_TRUE(!p->next->next);
   p = p->next;
   CASE_EXPECT_TRUE(!p->next);
@@ -2072,7 +2072,7 @@ class foo {
   void suicide() { m_self.reset(); }
 
  private:
-  util::memory::strong_rc_ptr<foo> m_self;
+  atfw::util::memory::strong_rc_ptr<foo> m_self;
 };
 
 void test() {
@@ -2087,10 +2087,10 @@ namespace n_report_2 {
 
 class foo {
  public:
-  void setWeak(util::memory::strong_rc_ptr<foo> s) { w = s; }
+  void setWeak(atfw::util::memory::strong_rc_ptr<foo> s) { w = s; }
 
  private:
-  util::memory::weak_rc_ptr<foo> w;
+  atfw::util::memory::weak_rc_ptr<foo> w;
 };
 
 class deleter {
@@ -2110,7 +2110,7 @@ class deleter {
 };
 
 void test() {
-  util::memory::strong_rc_ptr<foo> s(new foo, deleter());
+  atfw::util::memory::strong_rc_ptr<foo> s(new foo, deleter());
   s->setWeak(s);
   s.reset();
 }
@@ -2121,8 +2121,8 @@ namespace n_spt_incomplete {
 
 class file;
 
-util::memory::strong_rc_ptr<file> fopen(char const *name, char const *mode);
-void fread(util::memory::strong_rc_ptr<file> f, void *data, int64_t size);
+atfw::util::memory::strong_rc_ptr<file> fopen(char const *name, char const *mode);
+void fread(atfw::util::memory::strong_rc_ptr<file> f, void *data, int64_t size);
 
 int file_instances = 0;
 
@@ -2130,7 +2130,7 @@ void test() {
   CASE_EXPECT_TRUE(file_instances == 0);
 
   {
-    util::memory::strong_rc_ptr<file> pf = fopen("name", "mode");
+    atfw::util::memory::strong_rc_ptr<file> pf = fopen("name", "mode");
     CASE_EXPECT_TRUE(file_instances == 1);
     fread(pf, 0, 17041);
   }
@@ -2145,7 +2145,7 @@ namespace n_spt_pimpl {
 class file {
  private:
   class impl;
-  util::memory::strong_rc_ptr<impl> pimpl_;
+  atfw::util::memory::strong_rc_ptr<impl> pimpl_;
 
  public:
   file(char const *name, char const *mode);
@@ -2197,7 +2197,7 @@ class X {
   virtual ~X() {}
 };
 
-util::memory::strong_rc_ptr<X> createX();
+atfw::util::memory::strong_rc_ptr<X> createX();
 
 int X_instances = 0;
 
@@ -2205,7 +2205,7 @@ void test() {
   CASE_EXPECT_TRUE(X_instances == 0);
 
   {
-    util::memory::strong_rc_ptr<X> px = createX();
+    atfw::util::memory::strong_rc_ptr<X> px = createX();
 
     CASE_EXPECT_TRUE(X_instances == 1);
 
@@ -2239,8 +2239,8 @@ class X {
   };
 
  public:
-  static util::memory::strong_rc_ptr<X> create() {
-    util::memory::strong_rc_ptr<X> px(new X, X::deleter());
+  static atfw::util::memory::strong_rc_ptr<X> create() {
+    atfw::util::memory::strong_rc_ptr<X> px(new X, X::deleter());
     return px;
   }
 };
@@ -2249,7 +2249,7 @@ void test() {
   CASE_EXPECT_TRUE(X_instances == 0);
 
   {
-    util::memory::strong_rc_ptr<X> px = X::create();
+    atfw::util::memory::strong_rc_ptr<X> px = X::create();
     CASE_EXPECT_TRUE(X_instances == 1);
   }
 
@@ -2273,7 +2273,7 @@ void test() {
 
   {
     auto p = new X[4];
-    util::memory::strong_rc_ptr<X> px(p, checked_array_deleter<X>());
+    atfw::util::memory::strong_rc_ptr<X> px(p, checked_array_deleter<X>());
     CASE_EXPECT_TRUE(X_instances == 4);
   }
 
@@ -2301,7 +2301,7 @@ struct null_deleter {
 
 static X x;
 
-void test() { util::memory::strong_rc_ptr<X> px(&x, null_deleter()); }
+void test() { atfw::util::memory::strong_rc_ptr<X> px(&x, null_deleter()); }
 
 }  // namespace n_spt_static
 
@@ -2330,9 +2330,9 @@ struct intrusive_deleter {
   }
 };
 
-util::memory::strong_rc_ptr<X> make_shared_from_intrusive(X *p) {
+atfw::util::memory::strong_rc_ptr<X> make_shared_from_intrusive(X *p) {
   if (p != 0) intrusive_ptr_add_ref(p);
-  util::memory::strong_rc_ptr<X> px(p, intrusive_deleter<X>());
+  atfw::util::memory::strong_rc_ptr<X> px(p, intrusive_deleter<X>());
   return px;
 }
 
@@ -2343,10 +2343,10 @@ void test() {
     X *p = new X;
     CASE_EXPECT_TRUE(X_instances == 1);
     CASE_EXPECT_TRUE(p->count == 0);
-    util::memory::strong_rc_ptr<X> px = make_shared_from_intrusive(p);
+    atfw::util::memory::strong_rc_ptr<X> px = make_shared_from_intrusive(p);
     CASE_EXPECT_TRUE(px.get() == p);
     CASE_EXPECT_TRUE(p->count == 1);
-    util::memory::strong_rc_ptr<X> px2(px);
+    atfw::util::memory::strong_rc_ptr<X> px2(px);
     CASE_EXPECT_TRUE(px2.get() == p);
     CASE_EXPECT_TRUE(p->count == 1);
   }
@@ -2359,9 +2359,9 @@ void test() {
 namespace n_spt_another_sp {
 
 template <class T>
-class another_ptr : private util::memory::strong_rc_ptr<T> {
+class another_ptr : private atfw::util::memory::strong_rc_ptr<T> {
  private:
-  typedef util::memory::strong_rc_ptr<T> base_type;
+  typedef atfw::util::memory::strong_rc_ptr<T> base_type;
 
  public:
   explicit another_ptr(T *p = 0) : base_type(p) {}
@@ -2397,9 +2397,9 @@ another_ptr<event_handler> get_event_handler() {
   return p;
 }
 
-util::memory::strong_rc_ptr<event_handler> current_handler;
+atfw::util::memory::strong_rc_ptr<event_handler> current_handler;
 
-void install_event_handler(util::memory::strong_rc_ptr<event_handler> p) {
+void install_event_handler(atfw::util::memory::strong_rc_ptr<event_handler> p) {
   p->begin();
   current_handler = p;
 }
@@ -2425,7 +2425,7 @@ class smart_pointer_deleter {
 void test() {
   another_ptr<event_handler> p = get_event_handler();
 
-  util::memory::strong_rc_ptr<event_handler> q(p.get(), smart_pointer_deleter<another_ptr<event_handler>>(p));
+  atfw::util::memory::strong_rc_ptr<event_handler> q(p.get(), smart_pointer_deleter<another_ptr<event_handler>>(p));
 
   p.reset();
 
@@ -2462,7 +2462,7 @@ class X {
 
 class Y {
  public:
-  virtual util::memory::strong_rc_ptr<X> getX() = 0;
+  virtual atfw::util::memory::strong_rc_ptr<X> getX() = 0;
 
  protected:
   virtual ~Y() {}
@@ -2470,7 +2470,7 @@ class Y {
 
 class impl : public X, public Y {
  private:
-  util::memory::weak_rc_ptr<impl> weak_this;
+  atfw::util::memory::weak_rc_ptr<impl> weak_this;
 
   impl(impl const &);
   impl &operator=(impl const &);
@@ -2478,31 +2478,31 @@ class impl : public X, public Y {
   impl() {}
 
  public:
-  static util::memory::strong_rc_ptr<impl> create() {
-    util::memory::strong_rc_ptr<impl> pi(new impl);
+  static atfw::util::memory::strong_rc_ptr<impl> create() {
+    atfw::util::memory::strong_rc_ptr<impl> pi(new impl);
     pi->weak_this = pi;
     return pi;
   }
 
   virtual void f() {}
 
-  virtual util::memory::strong_rc_ptr<X> getX() {
-    util::memory::strong_rc_ptr<X> px = weak_this.lock();
+  virtual atfw::util::memory::strong_rc_ptr<X> getX() {
+    atfw::util::memory::strong_rc_ptr<X> px = weak_this.lock();
     return px;
   }
 };
 
 void test() {
-  util::memory::strong_rc_ptr<Y> py = impl::create();
+  atfw::util::memory::strong_rc_ptr<Y> py = impl::create();
   CASE_EXPECT_TRUE(py.get() != 0);
   CASE_EXPECT_TRUE(py.use_count() == 1);
 
-  util::memory::strong_rc_ptr<X> px = py->getX();
+  atfw::util::memory::strong_rc_ptr<X> px = py->getX();
   CASE_EXPECT_TRUE(px.get() != 0);
   CASE_EXPECT_TRUE(py.use_count() == 2);
 
-#if defined(LIBATFRAME_UTILS_ENABLE_RTTI) && LIBATFRAME_UTILS_ENABLE_RTTI
-  util::memory::strong_rc_ptr<Y> py2 = util::memory::dynamic_pointer_cast<Y>(px);
+#if defined(ATFRAMEWORK_UTILS_ENABLE_RTTI) && ATFRAMEWORK_UTILS_ENABLE_RTTI
+  atfw::util::memory::strong_rc_ptr<Y> py2 = atfw::util::memory::dynamic_pointer_cast<Y>(px);
   CASE_EXPECT_TRUE(py.get() == py2.get());
   CASE_EXPECT_TRUE(!(py < py2 || py2 < py));
   CASE_EXPECT_TRUE(py.use_count() == 3);
@@ -2528,7 +2528,7 @@ CASE_TEST(rc_ptr, strong_rc_basic) {
   n_comparison::test();
   n_static_cast::test();
   n_const_cast::test();
-#if defined(LIBATFRAME_UTILS_ENABLE_RTTI) && LIBATFRAME_UTILS_ENABLE_RTTI
+#if defined(ATFRAMEWORK_UTILS_ENABLE_RTTI) && ATFRAMEWORK_UTILS_ENABLE_RTTI
   n_dynamic_cast::test();
 #endif
 
@@ -2564,12 +2564,12 @@ class file {
   bool fread_called;
 };
 
-util::memory::strong_rc_ptr<file> fopen(char const *, char const *) {
-  util::memory::strong_rc_ptr<file> pf(new file);
+atfw::util::memory::strong_rc_ptr<file> fopen(char const *, char const *) {
+  atfw::util::memory::strong_rc_ptr<file> pf(new file);
   return pf;
 }
 
-void fread(util::memory::strong_rc_ptr<file> pf, void *, int64_t) { pf->fread_called = true; }
+void fread(atfw::util::memory::strong_rc_ptr<file> pf, void *, int64_t) { pf->fread_called = true; }
 
 }  // namespace n_spt_incomplete
 
@@ -2619,8 +2619,8 @@ class X_impl : public X {
   virtual int g() { return n_; }
 };
 
-util::memory::strong_rc_ptr<X> createX() {
-  util::memory::strong_rc_ptr<X> px(new X_impl);
+atfw::util::memory::strong_rc_ptr<X> createX() {
+  atfw::util::memory::strong_rc_ptr<X> px(new X_impl);
   return px;
 }
 
@@ -2637,11 +2637,11 @@ struct null_deleter {
 };
 
 CASE_TEST(rc_ptr, strong_rc_fn) {
-  util::memory::strong_rc_ptr<void()> pf(f, null_deleter());
+  atfw::util::memory::strong_rc_ptr<void()> pf(f, null_deleter());
 
   CASE_EXPECT_EQ(f, pf.get());
 
-  util::memory::weak_rc_ptr<void()> wp(pf);
+  atfw::util::memory::weak_rc_ptr<void()> wp(pf);
 
   CASE_EXPECT_EQ(wp.lock().get(), f);
   CASE_EXPECT_EQ(wp.use_count(), 1);
@@ -2673,14 +2673,14 @@ CASE_TEST(rc_ptr, strong_rc_move) {
   CASE_EXPECT_TRUE(X::instances == 0);
 
   {
-    util::memory::strong_rc_ptr<X> p(new X);
+    atfw::util::memory::strong_rc_ptr<X> p(new X);
     CASE_EXPECT_TRUE(X::instances == 1);
 
-    util::memory::strong_rc_ptr<X> p2(std::move(p));
+    atfw::util::memory::strong_rc_ptr<X> p2(std::move(p));
     CASE_EXPECT_TRUE(X::instances == 1);
     CASE_EXPECT_TRUE(p.get() == 0);
 
-    util::memory::strong_rc_ptr<void> p3(std::move(p2));
+    atfw::util::memory::strong_rc_ptr<void> p3(std::move(p2));
     CASE_EXPECT_TRUE(X::instances == 1);
     CASE_EXPECT_TRUE(p2.get() == 0);
 
@@ -2689,15 +2689,15 @@ CASE_TEST(rc_ptr, strong_rc_move) {
   }
 
   {
-    util::memory::strong_rc_ptr<X> p(new X);
+    atfw::util::memory::strong_rc_ptr<X> p(new X);
     CASE_EXPECT_TRUE(X::instances == 1);
 
-    util::memory::strong_rc_ptr<X> p2;
+    atfw::util::memory::strong_rc_ptr<X> p2;
     p2 = std::move(p);
     CASE_EXPECT_TRUE(X::instances == 1);
     CASE_EXPECT_TRUE(p.get() == 0);
 
-    util::memory::strong_rc_ptr<void> p3;
+    atfw::util::memory::strong_rc_ptr<void> p3;
     p3 = std::move(p2);
     CASE_EXPECT_TRUE(X::instances == 1);
     CASE_EXPECT_TRUE(p2.get() == 0);
@@ -2707,16 +2707,16 @@ CASE_TEST(rc_ptr, strong_rc_move) {
   }
 
   {
-    util::memory::strong_rc_ptr<X> p(new X);
+    atfw::util::memory::strong_rc_ptr<X> p(new X);
     CASE_EXPECT_TRUE(X::instances == 1);
 
-    util::memory::strong_rc_ptr<X> p2(new X);
+    atfw::util::memory::strong_rc_ptr<X> p2(new X);
     CASE_EXPECT_TRUE(X::instances == 2);
     p2 = std::move(p);
     CASE_EXPECT_TRUE(X::instances == 1);
     CASE_EXPECT_TRUE(p.get() == 0);
 
-    util::memory::strong_rc_ptr<void> p3(new X);
+    atfw::util::memory::strong_rc_ptr<void> p3(new X);
     CASE_EXPECT_TRUE(X::instances == 2);
     p3 = std::move(p2);
     CASE_EXPECT_TRUE(X::instances == 1);
@@ -2765,7 +2765,7 @@ int X::instances = 0;
 
 CASE_TEST(rc_ptr, make_strong_rc) {
   {
-    util::memory::strong_rc_ptr<int> pi = util::memory::make_strong_rc<int>();
+    atfw::util::memory::strong_rc_ptr<int> pi = atfw::util::memory::make_strong_rc<int>();
 
     CASE_EXPECT_TRUE(pi.get() != 0);
     CASE_EXPECT_TRUE(pi.use_count() == 1);
@@ -2774,7 +2774,7 @@ CASE_TEST(rc_ptr, make_strong_rc) {
   }
 
   {
-    util::memory::strong_rc_ptr<int> pi = util::memory::make_strong_rc<int>(5);
+    atfw::util::memory::strong_rc_ptr<int> pi = atfw::util::memory::make_strong_rc<int>(5);
 
     CASE_EXPECT_TRUE(pi.get() != 0);
     CASE_EXPECT_TRUE(pi.use_count() == 1);
@@ -2785,8 +2785,8 @@ CASE_TEST(rc_ptr, make_strong_rc) {
   CASE_EXPECT_TRUE(X::instances == 0);
 
   {
-    util::memory::strong_rc_ptr<X> pi = util::memory::make_strong_rc<X>();
-    util::memory::weak_rc_ptr<X> wp(pi);
+    atfw::util::memory::strong_rc_ptr<X> pi = atfw::util::memory::make_strong_rc<X>();
+    atfw::util::memory::weak_rc_ptr<X> wp(pi);
 
     CASE_EXPECT_TRUE(X::instances == 1);
     CASE_EXPECT_TRUE(pi.get() != 0);
@@ -2799,8 +2799,8 @@ CASE_TEST(rc_ptr, make_strong_rc) {
   }
 
   {
-    util::memory::strong_rc_ptr<X> pi = util::memory::make_strong_rc<X>(1);
-    util::memory::weak_rc_ptr<X> wp(pi);
+    atfw::util::memory::strong_rc_ptr<X> pi = atfw::util::memory::make_strong_rc<X>(1);
+    atfw::util::memory::weak_rc_ptr<X> wp(pi);
 
     CASE_EXPECT_TRUE(X::instances == 1);
     CASE_EXPECT_TRUE(pi.get() != 0);
@@ -2813,8 +2813,8 @@ CASE_TEST(rc_ptr, make_strong_rc) {
   }
 
   {
-    util::memory::strong_rc_ptr<X> pi = util::memory::make_strong_rc<X>(1, 2);
-    util::memory::weak_rc_ptr<X> wp(pi);
+    atfw::util::memory::strong_rc_ptr<X> pi = atfw::util::memory::make_strong_rc<X>(1, 2);
+    atfw::util::memory::weak_rc_ptr<X> wp(pi);
 
     CASE_EXPECT_TRUE(X::instances == 1);
     CASE_EXPECT_TRUE(pi.get() != 0);
@@ -2827,8 +2827,8 @@ CASE_TEST(rc_ptr, make_strong_rc) {
   }
 
   {
-    util::memory::strong_rc_ptr<X> pi = util::memory::make_strong_rc<X>(1, 2, 3);
-    util::memory::weak_rc_ptr<X> wp(pi);
+    atfw::util::memory::strong_rc_ptr<X> pi = atfw::util::memory::make_strong_rc<X>(1, 2, 3);
+    atfw::util::memory::weak_rc_ptr<X> wp(pi);
 
     CASE_EXPECT_TRUE(X::instances == 1);
     CASE_EXPECT_TRUE(pi.get() != 0);
@@ -2841,8 +2841,8 @@ CASE_TEST(rc_ptr, make_strong_rc) {
   }
 
   {
-    util::memory::strong_rc_ptr<X> pi = util::memory::make_strong_rc<X>(1, 2, 3, 4);
-    util::memory::weak_rc_ptr<X> wp(pi);
+    atfw::util::memory::strong_rc_ptr<X> pi = atfw::util::memory::make_strong_rc<X>(1, 2, 3, 4);
+    atfw::util::memory::weak_rc_ptr<X> wp(pi);
 
     CASE_EXPECT_TRUE(X::instances == 1);
     CASE_EXPECT_TRUE(pi.get() != 0);
@@ -2855,8 +2855,8 @@ CASE_TEST(rc_ptr, make_strong_rc) {
   }
 
   {
-    util::memory::strong_rc_ptr<X> pi = util::memory::make_strong_rc<X>(1, 2, 3, 4, 5);
-    util::memory::weak_rc_ptr<X> wp(pi);
+    atfw::util::memory::strong_rc_ptr<X> pi = atfw::util::memory::make_strong_rc<X>(1, 2, 3, 4, 5);
+    atfw::util::memory::weak_rc_ptr<X> wp(pi);
 
     CASE_EXPECT_TRUE(X::instances == 1);
     CASE_EXPECT_TRUE(pi.get() != 0);
@@ -2869,8 +2869,8 @@ CASE_TEST(rc_ptr, make_strong_rc) {
   }
 
   {
-    util::memory::strong_rc_ptr<X> pi = util::memory::make_strong_rc<X>(1, 2, 3, 4, 5, 6);
-    util::memory::weak_rc_ptr<X> wp(pi);
+    atfw::util::memory::strong_rc_ptr<X> pi = atfw::util::memory::make_strong_rc<X>(1, 2, 3, 4, 5, 6);
+    atfw::util::memory::weak_rc_ptr<X> wp(pi);
 
     CASE_EXPECT_TRUE(X::instances == 1);
     CASE_EXPECT_TRUE(pi.get() != 0);
@@ -2883,8 +2883,8 @@ CASE_TEST(rc_ptr, make_strong_rc) {
   }
 
   {
-    util::memory::strong_rc_ptr<X> pi = util::memory::make_strong_rc<X>(1, 2, 3, 4, 5, 6, 7);
-    util::memory::weak_rc_ptr<X> wp(pi);
+    atfw::util::memory::strong_rc_ptr<X> pi = atfw::util::memory::make_strong_rc<X>(1, 2, 3, 4, 5, 6, 7);
+    atfw::util::memory::weak_rc_ptr<X> wp(pi);
 
     CASE_EXPECT_TRUE(X::instances == 1);
     CASE_EXPECT_TRUE(pi.get() != 0);
@@ -2897,8 +2897,8 @@ CASE_TEST(rc_ptr, make_strong_rc) {
   }
 
   {
-    util::memory::strong_rc_ptr<X> pi = util::memory::make_strong_rc<X>(1, 2, 3, 4, 5, 6, 7, 8);
-    util::memory::weak_rc_ptr<X> wp(pi);
+    atfw::util::memory::strong_rc_ptr<X> pi = atfw::util::memory::make_strong_rc<X>(1, 2, 3, 4, 5, 6, 7, 8);
+    atfw::util::memory::weak_rc_ptr<X> wp(pi);
 
     CASE_EXPECT_TRUE(X::instances == 1);
     CASE_EXPECT_TRUE(pi.get() != 0);
@@ -2911,8 +2911,8 @@ CASE_TEST(rc_ptr, make_strong_rc) {
   }
 
   {
-    util::memory::strong_rc_ptr<X> pi = util::memory::make_strong_rc<X>(1, 2, 3, 4, 5, 6, 7, 8, 9);
-    util::memory::weak_rc_ptr<X> wp(pi);
+    atfw::util::memory::strong_rc_ptr<X> pi = atfw::util::memory::make_strong_rc<X>(1, 2, 3, 4, 5, 6, 7, 8, 9);
+    atfw::util::memory::weak_rc_ptr<X> wp(pi);
 
     CASE_EXPECT_TRUE(X::instances == 1);
     CASE_EXPECT_TRUE(pi.get() != 0);
@@ -2933,7 +2933,7 @@ namespace n_element_type {
 void f(int &) {}
 
 void test() {
-  typedef util::memory::weak_rc_ptr<int>::element_type T;
+  typedef atfw::util::memory::weak_rc_ptr<int>::element_type T;
   T t;
   f(t);
 }
@@ -2942,7 +2942,7 @@ void test() {
 
 class incomplete;
 
-util::memory::strong_rc_ptr<incomplete> create_incomplete();
+atfw::util::memory::strong_rc_ptr<incomplete> create_incomplete();
 
 struct X {
   int dummy;
@@ -2958,144 +2958,144 @@ namespace n_constructors {
 
 void default_constructor() {
   {
-    util::memory::weak_rc_ptr<int> wp;
+    atfw::util::memory::weak_rc_ptr<int> wp;
     CASE_EXPECT_TRUE(wp.use_count() == 0);
   }
 
   {
-    util::memory::weak_rc_ptr<void> wp;
+    atfw::util::memory::weak_rc_ptr<void> wp;
     CASE_EXPECT_TRUE(wp.use_count() == 0);
   }
 
   {
-    util::memory::weak_rc_ptr<incomplete> wp;
+    atfw::util::memory::weak_rc_ptr<incomplete> wp;
     CASE_EXPECT_TRUE(wp.use_count() == 0);
   }
 }
 
 void shared_ptr_constructor() {
   {
-    util::memory::strong_rc_ptr<int> sp;
+    atfw::util::memory::strong_rc_ptr<int> sp;
 
-    util::memory::weak_rc_ptr<int> wp(sp);
+    atfw::util::memory::weak_rc_ptr<int> wp(sp);
     CASE_EXPECT_TRUE(wp.use_count() == sp.use_count());
 
-    util::memory::weak_rc_ptr<void> wp2(sp);
+    atfw::util::memory::weak_rc_ptr<void> wp2(sp);
     CASE_EXPECT_TRUE(wp2.use_count() == sp.use_count());
   }
 
   {
-    util::memory::strong_rc_ptr<int> sp(static_cast<int *>(0));
+    atfw::util::memory::strong_rc_ptr<int> sp(static_cast<int *>(0));
 
     {
-      util::memory::weak_rc_ptr<int> wp(sp);
+      atfw::util::memory::weak_rc_ptr<int> wp(sp);
       CASE_EXPECT_TRUE(wp.use_count() == sp.use_count());
       CASE_EXPECT_TRUE(wp.use_count() == 1);
-      util::memory::strong_rc_ptr<int> sp2(wp);
+      atfw::util::memory::strong_rc_ptr<int> sp2(wp);
       CASE_EXPECT_TRUE(wp.use_count() == 2);
       CASE_EXPECT_TRUE(!(sp < sp2 || sp2 < sp));
     }
 
     {
-      util::memory::weak_rc_ptr<void> wp(sp);
+      atfw::util::memory::weak_rc_ptr<void> wp(sp);
       CASE_EXPECT_TRUE(wp.use_count() == sp.use_count());
       CASE_EXPECT_TRUE(wp.use_count() == 1);
-      util::memory::strong_rc_ptr<void> sp2(wp);
-      CASE_EXPECT_TRUE(wp.use_count() == 2);
-      CASE_EXPECT_TRUE(!(sp < sp2 || sp2 < sp));
-    }
-  }
-
-  {
-    util::memory::strong_rc_ptr<int> sp(new int);
-
-    {
-      util::memory::weak_rc_ptr<int> wp(sp);
-      CASE_EXPECT_TRUE(wp.use_count() == sp.use_count());
-      CASE_EXPECT_TRUE(wp.use_count() == 1);
-      util::memory::strong_rc_ptr<int> sp2(wp);
-      CASE_EXPECT_TRUE(wp.use_count() == 2);
-      CASE_EXPECT_TRUE(!(sp < sp2 || sp2 < sp));
-    }
-
-    {
-      util::memory::weak_rc_ptr<void> wp(sp);
-      CASE_EXPECT_TRUE(wp.use_count() == sp.use_count());
-      CASE_EXPECT_TRUE(wp.use_count() == 1);
-      util::memory::strong_rc_ptr<void> sp2(wp);
+      atfw::util::memory::strong_rc_ptr<void> sp2(wp);
       CASE_EXPECT_TRUE(wp.use_count() == 2);
       CASE_EXPECT_TRUE(!(sp < sp2 || sp2 < sp));
     }
   }
 
   {
-    util::memory::strong_rc_ptr<void> sp;
+    atfw::util::memory::strong_rc_ptr<int> sp(new int);
 
-    util::memory::weak_rc_ptr<void> wp(sp);
+    {
+      atfw::util::memory::weak_rc_ptr<int> wp(sp);
+      CASE_EXPECT_TRUE(wp.use_count() == sp.use_count());
+      CASE_EXPECT_TRUE(wp.use_count() == 1);
+      atfw::util::memory::strong_rc_ptr<int> sp2(wp);
+      CASE_EXPECT_TRUE(wp.use_count() == 2);
+      CASE_EXPECT_TRUE(!(sp < sp2 || sp2 < sp));
+    }
+
+    {
+      atfw::util::memory::weak_rc_ptr<void> wp(sp);
+      CASE_EXPECT_TRUE(wp.use_count() == sp.use_count());
+      CASE_EXPECT_TRUE(wp.use_count() == 1);
+      atfw::util::memory::strong_rc_ptr<void> sp2(wp);
+      CASE_EXPECT_TRUE(wp.use_count() == 2);
+      CASE_EXPECT_TRUE(!(sp < sp2 || sp2 < sp));
+    }
+  }
+
+  {
+    atfw::util::memory::strong_rc_ptr<void> sp;
+
+    atfw::util::memory::weak_rc_ptr<void> wp(sp);
     CASE_EXPECT_TRUE(wp.use_count() == sp.use_count());
   }
 
   {
-    util::memory::strong_rc_ptr<void> sp(static_cast<int *>(0));
+    atfw::util::memory::strong_rc_ptr<void> sp(static_cast<int *>(0));
 
-    util::memory::weak_rc_ptr<void> wp(sp);
+    atfw::util::memory::weak_rc_ptr<void> wp(sp);
     CASE_EXPECT_TRUE(wp.use_count() == sp.use_count());
     CASE_EXPECT_TRUE(wp.use_count() == 1);
-    util::memory::strong_rc_ptr<void> sp2(wp);
+    atfw::util::memory::strong_rc_ptr<void> sp2(wp);
     CASE_EXPECT_TRUE(wp.use_count() == 2);
     CASE_EXPECT_TRUE(!(sp < sp2 || sp2 < sp));
   }
 
   {
-    util::memory::strong_rc_ptr<void> sp(new int);
+    atfw::util::memory::strong_rc_ptr<void> sp(new int);
 
-    util::memory::weak_rc_ptr<void> wp(sp);
+    atfw::util::memory::weak_rc_ptr<void> wp(sp);
     CASE_EXPECT_TRUE(wp.use_count() == sp.use_count());
     CASE_EXPECT_TRUE(wp.use_count() == 1);
-    util::memory::strong_rc_ptr<void> sp2(wp);
+    atfw::util::memory::strong_rc_ptr<void> sp2(wp);
     CASE_EXPECT_TRUE(wp.use_count() == 2);
     CASE_EXPECT_TRUE(!(sp < sp2 || sp2 < sp));
   }
 
   {
-    util::memory::strong_rc_ptr<incomplete> sp;
+    atfw::util::memory::strong_rc_ptr<incomplete> sp;
 
-    util::memory::weak_rc_ptr<incomplete> wp(sp);
+    atfw::util::memory::weak_rc_ptr<incomplete> wp(sp);
     CASE_EXPECT_TRUE(wp.use_count() == sp.use_count());
 
-    util::memory::weak_rc_ptr<void> wp2(sp);
+    atfw::util::memory::weak_rc_ptr<void> wp2(sp);
     CASE_EXPECT_TRUE(wp2.use_count() == sp.use_count());
   }
 
   {
-    util::memory::strong_rc_ptr<incomplete> sp = create_incomplete();
+    atfw::util::memory::strong_rc_ptr<incomplete> sp = create_incomplete();
 
     {
-      util::memory::weak_rc_ptr<incomplete> wp(sp);
+      atfw::util::memory::weak_rc_ptr<incomplete> wp(sp);
       CASE_EXPECT_TRUE(wp.use_count() == sp.use_count());
       CASE_EXPECT_TRUE(wp.use_count() == 1);
-      util::memory::strong_rc_ptr<incomplete> sp2(wp);
+      atfw::util::memory::strong_rc_ptr<incomplete> sp2(wp);
       CASE_EXPECT_TRUE(wp.use_count() == 2);
       CASE_EXPECT_TRUE(!(sp < sp2 || sp2 < sp));
     }
 
     {
-      util::memory::weak_rc_ptr<void> wp(sp);
+      atfw::util::memory::weak_rc_ptr<void> wp(sp);
       CASE_EXPECT_TRUE(wp.use_count() == sp.use_count());
       CASE_EXPECT_TRUE(wp.use_count() == 1);
-      util::memory::strong_rc_ptr<void> sp2(wp);
+      atfw::util::memory::strong_rc_ptr<void> sp2(wp);
       CASE_EXPECT_TRUE(wp.use_count() == 2);
       CASE_EXPECT_TRUE(!(sp < sp2 || sp2 < sp));
     }
   }
 
   {
-    util::memory::strong_rc_ptr<void> sp = create_incomplete();
+    atfw::util::memory::strong_rc_ptr<void> sp = create_incomplete();
 
-    util::memory::weak_rc_ptr<void> wp(sp);
+    atfw::util::memory::weak_rc_ptr<void> wp(sp);
     CASE_EXPECT_TRUE(wp.use_count() == sp.use_count());
     CASE_EXPECT_TRUE(wp.use_count() == 1);
-    util::memory::strong_rc_ptr<void> sp2(wp);
+    atfw::util::memory::strong_rc_ptr<void> sp2(wp);
     CASE_EXPECT_TRUE(wp.use_count() == 2);
     CASE_EXPECT_TRUE(!(sp < sp2 || sp2 < sp));
   }
@@ -3103,31 +3103,31 @@ void shared_ptr_constructor() {
 
 void copy_constructor() {
   {
-    util::memory::weak_rc_ptr<int> wp;
-    util::memory::weak_rc_ptr<int> wp2(wp);
+    atfw::util::memory::weak_rc_ptr<int> wp;
+    atfw::util::memory::weak_rc_ptr<int> wp2(wp);
     CASE_EXPECT_TRUE(wp2.use_count() == wp.use_count());
     CASE_EXPECT_TRUE(wp2.use_count() == 0);
   }
 
   {
-    util::memory::weak_rc_ptr<void> wp;
-    util::memory::weak_rc_ptr<void> wp2(wp);
+    atfw::util::memory::weak_rc_ptr<void> wp;
+    atfw::util::memory::weak_rc_ptr<void> wp2(wp);
     CASE_EXPECT_TRUE(wp2.use_count() == wp.use_count());
     CASE_EXPECT_TRUE(wp2.use_count() == 0);
   }
 
   {
-    util::memory::weak_rc_ptr<incomplete> wp;
-    util::memory::weak_rc_ptr<incomplete> wp2(wp);
+    atfw::util::memory::weak_rc_ptr<incomplete> wp;
+    atfw::util::memory::weak_rc_ptr<incomplete> wp2(wp);
     CASE_EXPECT_TRUE(wp2.use_count() == wp.use_count());
     CASE_EXPECT_TRUE(wp2.use_count() == 0);
   }
 
   {
-    util::memory::strong_rc_ptr<int> sp(static_cast<int *>(0));
-    util::memory::weak_rc_ptr<int> wp(sp);
+    atfw::util::memory::strong_rc_ptr<int> sp(static_cast<int *>(0));
+    atfw::util::memory::weak_rc_ptr<int> wp(sp);
 
-    util::memory::weak_rc_ptr<int> wp2(wp);
+    atfw::util::memory::weak_rc_ptr<int> wp2(wp);
     CASE_EXPECT_TRUE(wp2.use_count() == wp.use_count());
     CASE_EXPECT_TRUE(wp2.use_count() == 1);
     // CASE_EXPECT_TRUE(!(wp < wp2 || wp2 < wp));
@@ -3135,17 +3135,17 @@ void copy_constructor() {
     sp.reset();
     // CASE_EXPECT_TRUE(!(wp < wp2 || wp2 < wp));
 
-    util::memory::weak_rc_ptr<int> wp3(wp);
+    atfw::util::memory::weak_rc_ptr<int> wp3(wp);
     CASE_EXPECT_TRUE(wp3.use_count() == wp.use_count());
     CASE_EXPECT_TRUE(wp3.use_count() == 0);
     // CASE_EXPECT_TRUE(!(wp < wp3 || wp3 < wp));
   }
 
   {
-    util::memory::strong_rc_ptr<int> sp(new int);
-    util::memory::weak_rc_ptr<int> wp(sp);
+    atfw::util::memory::strong_rc_ptr<int> sp(new int);
+    atfw::util::memory::weak_rc_ptr<int> wp(sp);
 
-    util::memory::weak_rc_ptr<int> wp2(wp);
+    atfw::util::memory::weak_rc_ptr<int> wp2(wp);
     CASE_EXPECT_TRUE(wp2.use_count() == wp.use_count());
     CASE_EXPECT_TRUE(wp2.use_count() == 1);
     // CASE_EXPECT_TRUE(!(wp < wp2 || wp2 < wp));
@@ -3153,17 +3153,17 @@ void copy_constructor() {
     sp.reset();
     // CASE_EXPECT_TRUE(!(wp < wp2 || wp2 < wp));
 
-    util::memory::weak_rc_ptr<int> wp3(wp);
+    atfw::util::memory::weak_rc_ptr<int> wp3(wp);
     CASE_EXPECT_TRUE(wp3.use_count() == wp.use_count());
     CASE_EXPECT_TRUE(wp3.use_count() == 0);
     // CASE_EXPECT_TRUE(!(wp < wp3 || wp3 < wp));
   }
 
   {
-    util::memory::strong_rc_ptr<void> sp(static_cast<int *>(0));
-    util::memory::weak_rc_ptr<void> wp(sp);
+    atfw::util::memory::strong_rc_ptr<void> sp(static_cast<int *>(0));
+    atfw::util::memory::weak_rc_ptr<void> wp(sp);
 
-    util::memory::weak_rc_ptr<void> wp2(wp);
+    atfw::util::memory::weak_rc_ptr<void> wp2(wp);
     CASE_EXPECT_TRUE(wp2.use_count() == wp.use_count());
     CASE_EXPECT_TRUE(wp2.use_count() == 1);
     // CASE_EXPECT_TRUE(!(wp < wp2 || wp2 < wp));
@@ -3171,17 +3171,17 @@ void copy_constructor() {
     sp.reset();
     // CASE_EXPECT_TRUE(!(wp < wp2 || wp2 < wp));
 
-    util::memory::weak_rc_ptr<void> wp3(wp);
+    atfw::util::memory::weak_rc_ptr<void> wp3(wp);
     CASE_EXPECT_TRUE(wp3.use_count() == wp.use_count());
     CASE_EXPECT_TRUE(wp3.use_count() == 0);
     // CASE_EXPECT_TRUE(!(wp < wp3 || wp3 < wp));
   }
 
   {
-    util::memory::strong_rc_ptr<void> sp(new int);
-    util::memory::weak_rc_ptr<void> wp(sp);
+    atfw::util::memory::strong_rc_ptr<void> sp(new int);
+    atfw::util::memory::weak_rc_ptr<void> wp(sp);
 
-    util::memory::weak_rc_ptr<void> wp2(wp);
+    atfw::util::memory::weak_rc_ptr<void> wp2(wp);
     CASE_EXPECT_TRUE(wp2.use_count() == wp.use_count());
     CASE_EXPECT_TRUE(wp2.use_count() == 1);
     // CASE_EXPECT_TRUE(!(wp < wp2 || wp2 < wp));
@@ -3189,17 +3189,17 @@ void copy_constructor() {
     sp.reset();
     // CASE_EXPECT_TRUE(!(wp < wp2 || wp2 < wp));
 
-    util::memory::weak_rc_ptr<void> wp3(wp);
+    atfw::util::memory::weak_rc_ptr<void> wp3(wp);
     CASE_EXPECT_TRUE(wp3.use_count() == wp.use_count());
     CASE_EXPECT_TRUE(wp3.use_count() == 0);
     // CASE_EXPECT_TRUE(!(wp < wp3 || wp3 < wp));
   }
 
   {
-    util::memory::strong_rc_ptr<incomplete> sp = create_incomplete();
-    util::memory::weak_rc_ptr<incomplete> wp(sp);
+    atfw::util::memory::strong_rc_ptr<incomplete> sp = create_incomplete();
+    atfw::util::memory::weak_rc_ptr<incomplete> wp(sp);
 
-    util::memory::weak_rc_ptr<incomplete> wp2(wp);
+    atfw::util::memory::weak_rc_ptr<incomplete> wp2(wp);
     CASE_EXPECT_TRUE(wp2.use_count() == wp.use_count());
     CASE_EXPECT_TRUE(wp2.use_count() == 1);
     // CASE_EXPECT_TRUE(!(wp < wp2 || wp2 < wp));
@@ -3207,7 +3207,7 @@ void copy_constructor() {
     sp.reset();
     // CASE_EXPECT_TRUE(!(wp < wp2 || wp2 < wp));
 
-    util::memory::weak_rc_ptr<incomplete> wp3(wp);
+    atfw::util::memory::weak_rc_ptr<incomplete> wp3(wp);
     CASE_EXPECT_TRUE(wp3.use_count() == wp.use_count());
     CASE_EXPECT_TRUE(wp3.use_count() == 0);
     // CASE_EXPECT_TRUE(!(wp < wp3 || wp3 < wp));
@@ -3216,36 +3216,36 @@ void copy_constructor() {
 
 void conversion_constructor() {
   {
-    util::memory::weak_rc_ptr<int> wp;
-    util::memory::weak_rc_ptr<void> wp2(wp);
+    atfw::util::memory::weak_rc_ptr<int> wp;
+    atfw::util::memory::weak_rc_ptr<void> wp2(wp);
     CASE_EXPECT_TRUE(wp2.use_count() == wp.use_count());
     CASE_EXPECT_TRUE(wp2.use_count() == 0);
   }
 
   {
-    util::memory::weak_rc_ptr<incomplete> wp;
-    util::memory::weak_rc_ptr<void> wp2(wp);
+    atfw::util::memory::weak_rc_ptr<incomplete> wp;
+    atfw::util::memory::weak_rc_ptr<void> wp2(wp);
     CASE_EXPECT_TRUE(wp2.use_count() == wp.use_count());
     CASE_EXPECT_TRUE(wp2.use_count() == 0);
   }
 
   {
-    util::memory::weak_rc_ptr<Z> wp;
+    atfw::util::memory::weak_rc_ptr<Z> wp;
 
-    util::memory::weak_rc_ptr<X> wp2(wp);
+    atfw::util::memory::weak_rc_ptr<X> wp2(wp);
     CASE_EXPECT_TRUE(wp2.use_count() == wp.use_count());
     CASE_EXPECT_TRUE(wp2.use_count() == 0);
 
-    util::memory::weak_rc_ptr<Y> wp3(wp);
+    atfw::util::memory::weak_rc_ptr<Y> wp3(wp);
     CASE_EXPECT_TRUE(wp3.use_count() == wp.use_count());
     CASE_EXPECT_TRUE(wp3.use_count() == 0);
   }
 
   {
-    util::memory::strong_rc_ptr<int> sp(static_cast<int *>(0));
-    util::memory::weak_rc_ptr<int> wp(sp);
+    atfw::util::memory::strong_rc_ptr<int> sp(static_cast<int *>(0));
+    atfw::util::memory::weak_rc_ptr<int> wp(sp);
 
-    util::memory::weak_rc_ptr<void> wp2(wp);
+    atfw::util::memory::weak_rc_ptr<void> wp2(wp);
     CASE_EXPECT_TRUE(wp2.use_count() == wp.use_count());
     CASE_EXPECT_TRUE(wp2.use_count() == 1);
     // CASE_EXPECT_TRUE(!(wp < wp2 || wp2 < wp));
@@ -3253,35 +3253,17 @@ void conversion_constructor() {
     sp.reset();
     // CASE_EXPECT_TRUE(!(wp < wp2 || wp2 < wp));
 
-    util::memory::weak_rc_ptr<void> wp3(wp);
-    CASE_EXPECT_TRUE(wp3.use_count() == wp.use_count());
-    CASE_EXPECT_TRUE(wp3.use_count() == 0);
-    // CASE_EXPECT_TRUE(!(wp < wp3 || wp3 < wp));
-  }
-
-  {
-    util::memory::strong_rc_ptr<int> sp(new int);
-    util::memory::weak_rc_ptr<int> wp(sp);
-
-    util::memory::weak_rc_ptr<void> wp2(wp);
-    CASE_EXPECT_TRUE(wp2.use_count() == wp.use_count());
-    CASE_EXPECT_TRUE(wp2.use_count() == 1);
-    // CASE_EXPECT_TRUE(!(wp < wp2 || wp2 < wp));
-
-    sp.reset();
-    // CASE_EXPECT_TRUE(!(wp < wp2 || wp2 < wp));
-
-    util::memory::weak_rc_ptr<void> wp3(wp);
+    atfw::util::memory::weak_rc_ptr<void> wp3(wp);
     CASE_EXPECT_TRUE(wp3.use_count() == wp.use_count());
     CASE_EXPECT_TRUE(wp3.use_count() == 0);
     // CASE_EXPECT_TRUE(!(wp < wp3 || wp3 < wp));
   }
 
   {
-    util::memory::strong_rc_ptr<incomplete> sp = create_incomplete();
-    util::memory::weak_rc_ptr<incomplete> wp(sp);
+    atfw::util::memory::strong_rc_ptr<int> sp(new int);
+    atfw::util::memory::weak_rc_ptr<int> wp(sp);
 
-    util::memory::weak_rc_ptr<void> wp2(wp);
+    atfw::util::memory::weak_rc_ptr<void> wp2(wp);
     CASE_EXPECT_TRUE(wp2.use_count() == wp.use_count());
     CASE_EXPECT_TRUE(wp2.use_count() == 1);
     // CASE_EXPECT_TRUE(!(wp < wp2 || wp2 < wp));
@@ -3289,17 +3271,17 @@ void conversion_constructor() {
     sp.reset();
     // CASE_EXPECT_TRUE(!(wp < wp2 || wp2 < wp));
 
-    util::memory::weak_rc_ptr<void> wp3(wp);
+    atfw::util::memory::weak_rc_ptr<void> wp3(wp);
     CASE_EXPECT_TRUE(wp3.use_count() == wp.use_count());
     CASE_EXPECT_TRUE(wp3.use_count() == 0);
     // CASE_EXPECT_TRUE(!(wp < wp3 || wp3 < wp));
   }
 
   {
-    util::memory::strong_rc_ptr<Z> sp(static_cast<Z *>(0));
-    util::memory::weak_rc_ptr<Z> wp(sp);
+    atfw::util::memory::strong_rc_ptr<incomplete> sp = create_incomplete();
+    atfw::util::memory::weak_rc_ptr<incomplete> wp(sp);
 
-    util::memory::weak_rc_ptr<X> wp2(wp);
+    atfw::util::memory::weak_rc_ptr<void> wp2(wp);
     CASE_EXPECT_TRUE(wp2.use_count() == wp.use_count());
     CASE_EXPECT_TRUE(wp2.use_count() == 1);
     // CASE_EXPECT_TRUE(!(wp < wp2 || wp2 < wp));
@@ -3307,17 +3289,17 @@ void conversion_constructor() {
     sp.reset();
     // CASE_EXPECT_TRUE(!(wp < wp2 || wp2 < wp));
 
-    util::memory::weak_rc_ptr<X> wp3(wp);
+    atfw::util::memory::weak_rc_ptr<void> wp3(wp);
     CASE_EXPECT_TRUE(wp3.use_count() == wp.use_count());
     CASE_EXPECT_TRUE(wp3.use_count() == 0);
     // CASE_EXPECT_TRUE(!(wp < wp3 || wp3 < wp));
   }
 
   {
-    util::memory::strong_rc_ptr<Z> sp(static_cast<Z *>(0));
-    util::memory::weak_rc_ptr<Z> wp(sp);
+    atfw::util::memory::strong_rc_ptr<Z> sp(static_cast<Z *>(0));
+    atfw::util::memory::weak_rc_ptr<Z> wp(sp);
 
-    util::memory::weak_rc_ptr<Y> wp2(wp);
+    atfw::util::memory::weak_rc_ptr<X> wp2(wp);
     CASE_EXPECT_TRUE(wp2.use_count() == wp.use_count());
     CASE_EXPECT_TRUE(wp2.use_count() == 1);
     // CASE_EXPECT_TRUE(!(wp < wp2 || wp2 < wp));
@@ -3325,17 +3307,17 @@ void conversion_constructor() {
     sp.reset();
     // CASE_EXPECT_TRUE(!(wp < wp2 || wp2 < wp));
 
-    util::memory::weak_rc_ptr<Y> wp3(wp);
+    atfw::util::memory::weak_rc_ptr<X> wp3(wp);
     CASE_EXPECT_TRUE(wp3.use_count() == wp.use_count());
     CASE_EXPECT_TRUE(wp3.use_count() == 0);
     // CASE_EXPECT_TRUE(!(wp < wp3 || wp3 < wp));
   }
 
   {
-    util::memory::strong_rc_ptr<Z> sp(new Z);
-    util::memory::weak_rc_ptr<Z> wp(sp);
+    atfw::util::memory::strong_rc_ptr<Z> sp(static_cast<Z *>(0));
+    atfw::util::memory::weak_rc_ptr<Z> wp(sp);
 
-    util::memory::weak_rc_ptr<X> wp2(wp);
+    atfw::util::memory::weak_rc_ptr<Y> wp2(wp);
     CASE_EXPECT_TRUE(wp2.use_count() == wp.use_count());
     CASE_EXPECT_TRUE(wp2.use_count() == 1);
     // CASE_EXPECT_TRUE(!(wp < wp2 || wp2 < wp));
@@ -3343,17 +3325,17 @@ void conversion_constructor() {
     sp.reset();
     // CASE_EXPECT_TRUE(!(wp < wp2 || wp2 < wp));
 
-    util::memory::weak_rc_ptr<X> wp3(wp);
+    atfw::util::memory::weak_rc_ptr<Y> wp3(wp);
     CASE_EXPECT_TRUE(wp3.use_count() == wp.use_count());
     CASE_EXPECT_TRUE(wp3.use_count() == 0);
     // CASE_EXPECT_TRUE(!(wp < wp3 || wp3 < wp));
   }
 
   {
-    util::memory::strong_rc_ptr<Z> sp(new Z);
-    util::memory::weak_rc_ptr<Z> wp(sp);
+    atfw::util::memory::strong_rc_ptr<Z> sp(new Z);
+    atfw::util::memory::weak_rc_ptr<Z> wp(sp);
 
-    util::memory::weak_rc_ptr<Y> wp2(wp);
+    atfw::util::memory::weak_rc_ptr<X> wp2(wp);
     CASE_EXPECT_TRUE(wp2.use_count() == wp.use_count());
     CASE_EXPECT_TRUE(wp2.use_count() == 1);
     // CASE_EXPECT_TRUE(!(wp < wp2 || wp2 < wp));
@@ -3361,7 +3343,25 @@ void conversion_constructor() {
     sp.reset();
     // CASE_EXPECT_TRUE(!(wp < wp2 || wp2 < wp));
 
-    util::memory::weak_rc_ptr<Y> wp3(wp);
+    atfw::util::memory::weak_rc_ptr<X> wp3(wp);
+    CASE_EXPECT_TRUE(wp3.use_count() == wp.use_count());
+    CASE_EXPECT_TRUE(wp3.use_count() == 0);
+    // CASE_EXPECT_TRUE(!(wp < wp3 || wp3 < wp));
+  }
+
+  {
+    atfw::util::memory::strong_rc_ptr<Z> sp(new Z);
+    atfw::util::memory::weak_rc_ptr<Z> wp(sp);
+
+    atfw::util::memory::weak_rc_ptr<Y> wp2(wp);
+    CASE_EXPECT_TRUE(wp2.use_count() == wp.use_count());
+    CASE_EXPECT_TRUE(wp2.use_count() == 1);
+    // CASE_EXPECT_TRUE(!(wp < wp2 || wp2 < wp));
+
+    sp.reset();
+    // CASE_EXPECT_TRUE(!(wp < wp2 || wp2 < wp));
+
+    atfw::util::memory::weak_rc_ptr<Y> wp3(wp);
     CASE_EXPECT_TRUE(wp3.use_count() == wp.use_count());
     CASE_EXPECT_TRUE(wp3.use_count() == 0);
     // CASE_EXPECT_TRUE(!(wp < wp3 || wp3 < wp));
@@ -3380,25 +3380,25 @@ void test() {
 namespace n_assignment {
 
 template <class T>
-void copy_assignment(util::memory::strong_rc_ptr<T> &sp) {
+void copy_assignment(atfw::util::memory::strong_rc_ptr<T> &sp) {
   CASE_EXPECT_TRUE(sp.unique());
 
-  util::memory::weak_rc_ptr<T> p1;
+  atfw::util::memory::weak_rc_ptr<T> p1;
 
   p1 = p1;
   CASE_EXPECT_TRUE(p1.use_count() == 0);
 
-  util::memory::weak_rc_ptr<T> p2;
+  atfw::util::memory::weak_rc_ptr<T> p2;
 
   p1 = p2;
   CASE_EXPECT_TRUE(p1.use_count() == 0);
 
-  util::memory::weak_rc_ptr<T> p3(p1);
+  atfw::util::memory::weak_rc_ptr<T> p3(p1);
 
   p1 = p3;
   CASE_EXPECT_TRUE(p1.use_count() == 0);
 
-  util::memory::weak_rc_ptr<T> p4(sp);
+  atfw::util::memory::weak_rc_ptr<T> p4(sp);
 
   p4 = p4;
   CASE_EXPECT_TRUE(p4.use_count() == 1);
@@ -3420,15 +3420,15 @@ void copy_assignment(util::memory::strong_rc_ptr<T> &sp) {
 
 void conversion_assignment() {
   {
-    util::memory::weak_rc_ptr<void> p1;
+    atfw::util::memory::weak_rc_ptr<void> p1;
 
-    util::memory::weak_rc_ptr<incomplete> p2;
+    atfw::util::memory::weak_rc_ptr<incomplete> p2;
 
     p1 = p2;
     CASE_EXPECT_TRUE(p1.use_count() == 0);
 
-    util::memory::strong_rc_ptr<incomplete> sp = create_incomplete();
-    util::memory::weak_rc_ptr<incomplete> p3(sp);
+    atfw::util::memory::strong_rc_ptr<incomplete> sp = create_incomplete();
+    atfw::util::memory::weak_rc_ptr<incomplete> p3(sp);
 
     p1 = p3;
     CASE_EXPECT_TRUE(p1.use_count() == 1);
@@ -3443,15 +3443,15 @@ void conversion_assignment() {
   }
 
   {
-    util::memory::weak_rc_ptr<X> p1;
+    atfw::util::memory::weak_rc_ptr<X> p1;
 
-    util::memory::weak_rc_ptr<Z> p2;
+    atfw::util::memory::weak_rc_ptr<Z> p2;
 
     p1 = p2;
     CASE_EXPECT_TRUE(p1.use_count() == 0);
 
-    util::memory::strong_rc_ptr<Z> sp(new Z);
-    util::memory::weak_rc_ptr<Z> p3(sp);
+    atfw::util::memory::strong_rc_ptr<Z> sp(new Z);
+    atfw::util::memory::weak_rc_ptr<Z> p3(sp);
 
     p1 = p3;
     CASE_EXPECT_TRUE(p1.use_count() == 1);
@@ -3466,15 +3466,15 @@ void conversion_assignment() {
   }
 
   {
-    util::memory::weak_rc_ptr<Y> p1;
+    atfw::util::memory::weak_rc_ptr<Y> p1;
 
-    util::memory::weak_rc_ptr<Z> p2;
+    atfw::util::memory::weak_rc_ptr<Z> p2;
 
     p1 = p2;
     CASE_EXPECT_TRUE(p1.use_count() == 0);
 
-    util::memory::strong_rc_ptr<Z> sp(new Z);
-    util::memory::weak_rc_ptr<Z> p3(sp);
+    atfw::util::memory::strong_rc_ptr<Z> sp(new Z);
+    atfw::util::memory::weak_rc_ptr<Z> p3(sp);
 
     p1 = p3;
     CASE_EXPECT_TRUE(p1.use_count() == 1);
@@ -3490,13 +3490,13 @@ void conversion_assignment() {
 }
 
 template <class T, class U>
-void shared_ptr_assignment(util::memory::strong_rc_ptr<U> &sp, T * = 0) {
+void shared_ptr_assignment(atfw::util::memory::strong_rc_ptr<U> &sp, T * = 0) {
   CASE_EXPECT_TRUE(sp.unique());
 
-  util::memory::weak_rc_ptr<T> p1;
-  util::memory::weak_rc_ptr<T> p2(p1);
-  util::memory::weak_rc_ptr<T> p3(sp);
-  util::memory::weak_rc_ptr<T> p4(p3);
+  atfw::util::memory::weak_rc_ptr<T> p1;
+  atfw::util::memory::weak_rc_ptr<T> p2(p1);
+  atfw::util::memory::weak_rc_ptr<T> p3(sp);
+  atfw::util::memory::weak_rc_ptr<T> p4(p3);
 
   p1 = sp;
   CASE_EXPECT_TRUE(p1.use_count() == 1);
@@ -3522,59 +3522,59 @@ void shared_ptr_assignment(util::memory::strong_rc_ptr<U> &sp, T * = 0) {
 
 void test() {
   {
-    util::memory::strong_rc_ptr<int> p(new int);
+    atfw::util::memory::strong_rc_ptr<int> p(new int);
     copy_assignment(p);
   }
 
   {
-    util::memory::strong_rc_ptr<X> p(new X);
+    atfw::util::memory::strong_rc_ptr<X> p(new X);
     copy_assignment(p);
   }
 
   {
-    util::memory::strong_rc_ptr<void> p(new int);
+    atfw::util::memory::strong_rc_ptr<void> p(new int);
     copy_assignment(p);
   }
 
   {
-    util::memory::strong_rc_ptr<incomplete> p = create_incomplete();
+    atfw::util::memory::strong_rc_ptr<incomplete> p = create_incomplete();
     copy_assignment(p);
   }
 
   conversion_assignment();
 
   {
-    util::memory::strong_rc_ptr<int> p(new int);
+    atfw::util::memory::strong_rc_ptr<int> p(new int);
     shared_ptr_assignment<int>(p);
   }
 
   {
-    util::memory::strong_rc_ptr<int> p(new int);
+    atfw::util::memory::strong_rc_ptr<int> p(new int);
     shared_ptr_assignment<void>(p);
   }
 
   {
-    util::memory::strong_rc_ptr<X> p(new X);
+    atfw::util::memory::strong_rc_ptr<X> p(new X);
     shared_ptr_assignment<X>(p);
   }
 
   {
-    util::memory::strong_rc_ptr<X> p(new X);
+    atfw::util::memory::strong_rc_ptr<X> p(new X);
     shared_ptr_assignment<void>(p);
   }
 
   {
-    util::memory::strong_rc_ptr<void> p(new int);
+    atfw::util::memory::strong_rc_ptr<void> p(new int);
     shared_ptr_assignment<void>(p);
   }
 
   {
-    util::memory::strong_rc_ptr<incomplete> p = create_incomplete();
+    atfw::util::memory::strong_rc_ptr<incomplete> p = create_incomplete();
     shared_ptr_assignment<incomplete>(p);
   }
 
   {
-    util::memory::strong_rc_ptr<incomplete> p = create_incomplete();
+    atfw::util::memory::strong_rc_ptr<incomplete> p = create_incomplete();
     shared_ptr_assignment<void>(p);
   }
 }
@@ -3584,15 +3584,15 @@ void test() {
 namespace n_reset {
 
 template <class T, class U>
-void test2(util::memory::strong_rc_ptr<U> &sp, T * = 0) {
+void test2(atfw::util::memory::strong_rc_ptr<U> &sp, T * = 0) {
   CASE_EXPECT_TRUE(sp.unique());
 
-  util::memory::weak_rc_ptr<T> p1;
-  util::memory::weak_rc_ptr<T> p2(p1);
-  util::memory::weak_rc_ptr<T> p3(sp);
-  util::memory::weak_rc_ptr<T> p4(p3);
-  util::memory::weak_rc_ptr<T> p5(sp);
-  util::memory::weak_rc_ptr<T> p6(p5);
+  atfw::util::memory::weak_rc_ptr<T> p1;
+  atfw::util::memory::weak_rc_ptr<T> p2(p1);
+  atfw::util::memory::weak_rc_ptr<T> p3(sp);
+  atfw::util::memory::weak_rc_ptr<T> p4(p3);
+  atfw::util::memory::weak_rc_ptr<T> p5(sp);
+  atfw::util::memory::weak_rc_ptr<T> p6(p5);
 
   p1.reset();
   CASE_EXPECT_TRUE(p1.use_count() == 0);
@@ -3617,37 +3617,37 @@ void test2(util::memory::strong_rc_ptr<U> &sp, T * = 0) {
 
 void test() {
   {
-    util::memory::strong_rc_ptr<int> p(new int);
+    atfw::util::memory::strong_rc_ptr<int> p(new int);
     test2<int>(p);
   }
 
   {
-    util::memory::strong_rc_ptr<int> p(new int);
+    atfw::util::memory::strong_rc_ptr<int> p(new int);
     test2<void>(p);
   }
 
   {
-    util::memory::strong_rc_ptr<X> p(new X);
+    atfw::util::memory::strong_rc_ptr<X> p(new X);
     test2<X>(p);
   }
 
   {
-    util::memory::strong_rc_ptr<X> p(new X);
+    atfw::util::memory::strong_rc_ptr<X> p(new X);
     test2<void>(p);
   }
 
   {
-    util::memory::strong_rc_ptr<void> p(new int);
+    atfw::util::memory::strong_rc_ptr<void> p(new int);
     test2<void>(p);
   }
 
   {
-    util::memory::strong_rc_ptr<incomplete> p = create_incomplete();
+    atfw::util::memory::strong_rc_ptr<incomplete> p = create_incomplete();
     test2<incomplete>(p);
   }
 
   {
-    util::memory::strong_rc_ptr<incomplete> p = create_incomplete();
+    atfw::util::memory::strong_rc_ptr<incomplete> p = create_incomplete();
     test2<void>(p);
   }
 }
@@ -3658,15 +3658,15 @@ namespace n_use_count {
 
 void test() {
   {
-    util::memory::weak_rc_ptr<X> wp;
+    atfw::util::memory::weak_rc_ptr<X> wp;
     CASE_EXPECT_TRUE(wp.use_count() == 0);
     CASE_EXPECT_TRUE(wp.expired());
 
-    util::memory::weak_rc_ptr<X> wp2;
+    atfw::util::memory::weak_rc_ptr<X> wp2;
     CASE_EXPECT_TRUE(wp.use_count() == 0);
     CASE_EXPECT_TRUE(wp.expired());
 
-    util::memory::weak_rc_ptr<X> wp3(wp);
+    atfw::util::memory::weak_rc_ptr<X> wp3(wp);
     CASE_EXPECT_TRUE(wp.use_count() == 0);
     CASE_EXPECT_TRUE(wp.expired());
     CASE_EXPECT_TRUE(wp3.use_count() == 0);
@@ -3674,23 +3674,23 @@ void test() {
   }
 
   {
-    util::memory::strong_rc_ptr<X> sp(static_cast<X *>(0));
+    atfw::util::memory::strong_rc_ptr<X> sp(static_cast<X *>(0));
 
-    util::memory::weak_rc_ptr<X> wp(sp);
+    atfw::util::memory::weak_rc_ptr<X> wp(sp);
     CASE_EXPECT_TRUE(wp.use_count() == 1);
     CASE_EXPECT_TRUE(!wp.expired());
 
-    util::memory::weak_rc_ptr<X> wp2(sp);
+    atfw::util::memory::weak_rc_ptr<X> wp2(sp);
     CASE_EXPECT_TRUE(wp.use_count() == 1);
     CASE_EXPECT_TRUE(!wp.expired());
 
-    util::memory::weak_rc_ptr<X> wp3(wp);
+    atfw::util::memory::weak_rc_ptr<X> wp3(wp);
     CASE_EXPECT_TRUE(wp.use_count() == 1);
     CASE_EXPECT_TRUE(!wp.expired());
     CASE_EXPECT_TRUE(wp3.use_count() == 1);
     CASE_EXPECT_TRUE(!wp3.expired());
 
-    util::memory::strong_rc_ptr<X> sp2(sp);
+    atfw::util::memory::strong_rc_ptr<X> sp2(sp);
 
     CASE_EXPECT_TRUE(wp.use_count() == 2);
     CASE_EXPECT_TRUE(!wp.expired());
@@ -3699,7 +3699,7 @@ void test() {
     CASE_EXPECT_TRUE(wp3.use_count() == 2);
     CASE_EXPECT_TRUE(!wp3.expired());
 
-    util::memory::strong_rc_ptr<void> sp3(sp);
+    atfw::util::memory::strong_rc_ptr<void> sp3(sp);
 
     CASE_EXPECT_TRUE(wp.use_count() == 3);
     CASE_EXPECT_TRUE(!wp.expired());
@@ -3743,8 +3743,8 @@ namespace n_swap {
 
 void test() {
   {
-    util::memory::weak_rc_ptr<X> wp;
-    util::memory::weak_rc_ptr<X> wp2;
+    atfw::util::memory::weak_rc_ptr<X> wp;
+    atfw::util::memory::weak_rc_ptr<X> wp2;
 
     wp.swap(wp2);
 
@@ -3759,10 +3759,10 @@ void test() {
   }
 
   {
-    util::memory::strong_rc_ptr<X> sp(new X);
-    util::memory::weak_rc_ptr<X> wp;
-    util::memory::weak_rc_ptr<X> wp2(sp);
-    util::memory::weak_rc_ptr<X> wp3(sp);
+    atfw::util::memory::strong_rc_ptr<X> sp(new X);
+    atfw::util::memory::weak_rc_ptr<X> wp;
+    atfw::util::memory::weak_rc_ptr<X> wp2(sp);
+    atfw::util::memory::weak_rc_ptr<X> wp3(sp);
 
     wp.swap(wp2);
 
@@ -3793,11 +3793,11 @@ void test() {
   }
 
   {
-    util::memory::strong_rc_ptr<X> sp(new X);
-    util::memory::strong_rc_ptr<X> sp2(new X);
-    util::memory::weak_rc_ptr<X> wp(sp);
-    util::memory::weak_rc_ptr<X> wp2(sp2);
-    util::memory::weak_rc_ptr<X> wp3(sp2);
+    atfw::util::memory::strong_rc_ptr<X> sp(new X);
+    atfw::util::memory::strong_rc_ptr<X> sp2(new X);
+    atfw::util::memory::weak_rc_ptr<X> wp(sp);
+    atfw::util::memory::weak_rc_ptr<X> wp2(sp2);
+    atfw::util::memory::weak_rc_ptr<X> wp3(sp2);
 
     wp.swap(wp2);
 
@@ -3862,8 +3862,8 @@ CASE_TEST(rc_ptr, weak_rc_ptr_basic) {
 
 class incomplete {};
 
-util::memory::strong_rc_ptr<incomplete> create_incomplete() {
-  util::memory::strong_rc_ptr<incomplete> px(new incomplete);
+atfw::util::memory::strong_rc_ptr<incomplete> create_incomplete() {
+  atfw::util::memory::strong_rc_ptr<incomplete> px(new incomplete);
   return px;
 }
 
@@ -3889,17 +3889,17 @@ CASE_TEST(rc_ptr, weak_rc_ptr_move) {
   CASE_EXPECT_TRUE(X::instances == 0);
 
   {
-    util::memory::strong_rc_ptr<X> p_(new X);
-    util::memory::weak_rc_ptr<X> p(p_);
+    atfw::util::memory::strong_rc_ptr<X> p_(new X);
+    atfw::util::memory::weak_rc_ptr<X> p(p_);
     CASE_EXPECT_TRUE(X::instances == 1);
     CASE_EXPECT_TRUE(p.use_count() == 1);
 
-    util::memory::weak_rc_ptr<X> p2(std::move(p));
+    atfw::util::memory::weak_rc_ptr<X> p2(std::move(p));
     CASE_EXPECT_TRUE(X::instances == 1);
     CASE_EXPECT_TRUE(p2.use_count() == 1);
     CASE_EXPECT_TRUE(p.expired());
 
-    util::memory::weak_rc_ptr<void> p3(std::move(p2));
+    atfw::util::memory::weak_rc_ptr<void> p3(std::move(p2));
     CASE_EXPECT_TRUE(X::instances == 1);
     CASE_EXPECT_TRUE(p3.use_count() == 1);
     CASE_EXPECT_TRUE(p2.expired());
@@ -3910,18 +3910,18 @@ CASE_TEST(rc_ptr, weak_rc_ptr_move) {
   }
 
   {
-    util::memory::strong_rc_ptr<X> p_(new X);
-    util::memory::weak_rc_ptr<X> p(p_);
+    atfw::util::memory::strong_rc_ptr<X> p_(new X);
+    atfw::util::memory::weak_rc_ptr<X> p(p_);
     CASE_EXPECT_TRUE(X::instances == 1);
     CASE_EXPECT_TRUE(p.use_count() == 1);
 
-    util::memory::weak_rc_ptr<X> p2;
-    p2 = static_cast<util::memory::weak_rc_ptr<X> &&>(p);
+    atfw::util::memory::weak_rc_ptr<X> p2;
+    p2 = static_cast<atfw::util::memory::weak_rc_ptr<X> &&>(p);
     CASE_EXPECT_TRUE(X::instances == 1);
     CASE_EXPECT_TRUE(p2.use_count() == 1);
     CASE_EXPECT_TRUE(p.expired());
 
-    util::memory::weak_rc_ptr<void> p3;
+    atfw::util::memory::weak_rc_ptr<void> p3;
     p3 = std::move(p2);
     CASE_EXPECT_TRUE(X::instances == 1);
     CASE_EXPECT_TRUE(p3.use_count() == 1);
@@ -3933,13 +3933,13 @@ CASE_TEST(rc_ptr, weak_rc_ptr_move) {
   }
 
   {
-    util::memory::strong_rc_ptr<X> p_(new X);
-    util::memory::weak_rc_ptr<X> p(p_);
+    atfw::util::memory::strong_rc_ptr<X> p_(new X);
+    atfw::util::memory::weak_rc_ptr<X> p(p_);
     CASE_EXPECT_TRUE(X::instances == 1);
     CASE_EXPECT_TRUE(p.use_count() == 1);
 
-    util::memory::strong_rc_ptr<X> p_2(new X);
-    util::memory::weak_rc_ptr<X> p2(p_2);
+    atfw::util::memory::strong_rc_ptr<X> p_2(new X);
+    atfw::util::memory::weak_rc_ptr<X> p2(p_2);
     CASE_EXPECT_TRUE(X::instances == 2);
     p2 = std::move(p);
     CASE_EXPECT_TRUE(X::instances == 2);
@@ -3947,8 +3947,8 @@ CASE_TEST(rc_ptr, weak_rc_ptr_move) {
     CASE_EXPECT_TRUE(p.expired());
     CASE_EXPECT_TRUE(p2.lock() != p_2);
 
-    util::memory::strong_rc_ptr<void> p_3(new X);
-    util::memory::weak_rc_ptr<void> p3(p_3);
+    atfw::util::memory::strong_rc_ptr<void> p_3(new X);
+    atfw::util::memory::weak_rc_ptr<void> p3(p_3);
     CASE_EXPECT_TRUE(X::instances == 3);
     p3 = std::move(p2);
     CASE_EXPECT_TRUE(X::instances == 3);
@@ -3966,42 +3966,42 @@ static bool owner_before_comp(const L &l, const R &r) noexcept {
 
 CASE_TEST(rc_ptr, owner_before) {
   {
-    util::memory::strong_rc_ptr<int> x;
-    util::memory::strong_rc_ptr<int> y;
-    util::memory::weak_rc_ptr<int> w;
+    atfw::util::memory::strong_rc_ptr<int> x;
+    atfw::util::memory::strong_rc_ptr<int> y;
+    atfw::util::memory::weak_rc_ptr<int> w;
     CASE_EXPECT_TRUE(!(owner_before_comp(x, w) || owner_before_comp(w, x)));
   }
   {
-    util::memory::strong_rc_ptr<int> z(reinterpret_cast<int *>(0));
-    util::memory::weak_rc_ptr<int> w;
+    atfw::util::memory::strong_rc_ptr<int> z(reinterpret_cast<int *>(0));
+    atfw::util::memory::weak_rc_ptr<int> w;
     CASE_EXPECT_TRUE(owner_before_comp(z, w) || owner_before_comp(w, z));
     {
-      util::memory::strong_rc_ptr<int> zz(z);
-      w = util::memory::weak_rc_ptr<int>(zz);
+      atfw::util::memory::strong_rc_ptr<int> zz(z);
+      w = atfw::util::memory::weak_rc_ptr<int>(zz);
       CASE_EXPECT_TRUE(!(owner_before_comp(z, zz) || owner_before_comp(z, zz)));
       CASE_EXPECT_TRUE(!(owner_before_comp(z, w) || owner_before_comp(z, w)));
     }
     CASE_EXPECT_TRUE(!(owner_before_comp(z, w) || owner_before_comp(w, z)));
   }
   {
-    util::memory::strong_rc_ptr<int> x;
-    util::memory::strong_rc_ptr<int> z(reinterpret_cast<int *>(0));
+    atfw::util::memory::strong_rc_ptr<int> x;
+    atfw::util::memory::strong_rc_ptr<int> z(reinterpret_cast<int *>(0));
     CASE_EXPECT_TRUE(owner_before_comp(x, z) || owner_before_comp(z, x));
   }
   {
-    util::memory::strong_rc_ptr<int> a(reinterpret_cast<int *>(0));
-    util::memory::strong_rc_ptr<int> b(reinterpret_cast<int *>(0));
+    atfw::util::memory::strong_rc_ptr<int> a(reinterpret_cast<int *>(0));
+    atfw::util::memory::strong_rc_ptr<int> b(reinterpret_cast<int *>(0));
     CASE_EXPECT_TRUE(owner_before_comp(a, b) || owner_before_comp(b, a));
-    util::memory::weak_rc_ptr<int> w(a);
+    atfw::util::memory::weak_rc_ptr<int> w(a);
     CASE_EXPECT_TRUE(!(owner_before_comp(a, w) || owner_before_comp(w, a)));
     CASE_EXPECT_TRUE(owner_before_comp(b, w) || owner_before_comp(w, b));
   }
 
   {
-    util::memory::strong_rc_ptr<int> a(reinterpret_cast<int *>(0));
-    util::memory::weak_rc_ptr<int> wa(a);
-    util::memory::strong_rc_ptr<int> b(reinterpret_cast<int *>(0));
-    util::memory::weak_rc_ptr<int> wb(b);
+    atfw::util::memory::strong_rc_ptr<int> a(reinterpret_cast<int *>(0));
+    atfw::util::memory::weak_rc_ptr<int> wa(a);
+    atfw::util::memory::strong_rc_ptr<int> b(reinterpret_cast<int *>(0));
+    atfw::util::memory::weak_rc_ptr<int> wb(b);
     CASE_EXPECT_TRUE(!(owner_before_comp(a, wa) || owner_before_comp(wa, a)));
     CASE_EXPECT_TRUE(!(owner_before_comp(b, wb) || owner_before_comp(wb, b)));
     CASE_EXPECT_TRUE(owner_before_comp(wa, wb) || owner_before_comp(wb, wa));
@@ -4016,19 +4016,19 @@ static bool owner_equal_comp(const L &l, const R &r) noexcept {
 
 CASE_TEST(rc_ptr, owner_equal) {
   {
-    util::memory::strong_rc_ptr<int> p1(new int);
-    util::memory::strong_rc_ptr<int> p2(p1);
+    atfw::util::memory::strong_rc_ptr<int> p1(new int);
+    atfw::util::memory::strong_rc_ptr<int> p2(p1);
 
     CASE_EXPECT_TRUE(owner_equal_comp(p1, p2));
     CASE_EXPECT_TRUE(owner_equal_comp(p2, p1));
 
-    util::memory::strong_rc_ptr<int> p3(new int);
+    atfw::util::memory::strong_rc_ptr<int> p3(new int);
 
     CASE_EXPECT_TRUE(!owner_equal_comp(p1, p3));
     CASE_EXPECT_TRUE(!owner_equal_comp(p3, p1));
 
-    util::memory::strong_rc_ptr<int> p4;
-    util::memory::strong_rc_ptr<int> p5;
+    atfw::util::memory::strong_rc_ptr<int> p4;
+    atfw::util::memory::strong_rc_ptr<int> p5;
 
     CASE_EXPECT_TRUE(owner_equal_comp(p4, p5));
     CASE_EXPECT_TRUE(owner_equal_comp(p5, p4));
@@ -4036,17 +4036,17 @@ CASE_TEST(rc_ptr, owner_equal) {
     CASE_EXPECT_TRUE(!owner_equal_comp(p4, p3));
     CASE_EXPECT_TRUE(!owner_equal_comp(p3, p4));
 
-    util::memory::strong_rc_ptr<int> p6(static_cast<int *>(0));
+    atfw::util::memory::strong_rc_ptr<int> p6(static_cast<int *>(0));
 
     CASE_EXPECT_TRUE(!owner_equal_comp(p4, p6));
     CASE_EXPECT_TRUE(!owner_equal_comp(p6, p4));
 
-    util::memory::strong_rc_ptr<void> p7(p1);
+    atfw::util::memory::strong_rc_ptr<void> p7(p1);
 
     CASE_EXPECT_TRUE(owner_equal_comp(p1, p7));
     CASE_EXPECT_TRUE(owner_equal_comp(p7, p1));
 
-    util::memory::strong_rc_ptr<void> p8;
+    atfw::util::memory::strong_rc_ptr<void> p8;
 
     CASE_EXPECT_TRUE(!owner_equal_comp(p1, p8));
     CASE_EXPECT_TRUE(!owner_equal_comp(p8, p1));
@@ -4054,17 +4054,17 @@ CASE_TEST(rc_ptr, owner_equal) {
     CASE_EXPECT_TRUE(owner_equal_comp(p4, p8));
     CASE_EXPECT_TRUE(owner_equal_comp(p8, p4));
 
-    util::memory::weak_rc_ptr<int> q1(p1);
+    atfw::util::memory::weak_rc_ptr<int> q1(p1);
 
     CASE_EXPECT_TRUE(owner_equal_comp(p1, q1));
     CASE_EXPECT_TRUE(owner_equal_comp(q1, p1));
 
-    util::memory::weak_rc_ptr<int> q2(p1);
+    atfw::util::memory::weak_rc_ptr<int> q2(p1);
 
     CASE_EXPECT_TRUE(owner_equal_comp(q1, q2));
     CASE_EXPECT_TRUE(owner_equal_comp(q2, q1));
 
-    util::memory::weak_rc_ptr<int> q3(p3);
+    atfw::util::memory::weak_rc_ptr<int> q3(p3);
 
     CASE_EXPECT_TRUE(!owner_equal_comp(p1, q3));
     CASE_EXPECT_TRUE(!owner_equal_comp(q3, p1));
@@ -4072,7 +4072,7 @@ CASE_TEST(rc_ptr, owner_equal) {
     CASE_EXPECT_TRUE(!owner_equal_comp(q1, q3));
     CASE_EXPECT_TRUE(!owner_equal_comp(q3, q1));
 
-    util::memory::weak_rc_ptr<int> q4;
+    atfw::util::memory::weak_rc_ptr<int> q4;
 
     CASE_EXPECT_TRUE(owner_equal_comp(p4, q4));
     CASE_EXPECT_TRUE(owner_equal_comp(q4, p4));
@@ -4080,12 +4080,12 @@ CASE_TEST(rc_ptr, owner_equal) {
     CASE_EXPECT_TRUE(!owner_equal_comp(q1, q4));
     CASE_EXPECT_TRUE(!owner_equal_comp(q4, q1));
 
-    util::memory::weak_rc_ptr<void> q5;
+    atfw::util::memory::weak_rc_ptr<void> q5;
 
     CASE_EXPECT_TRUE(owner_equal_comp(q4, q5));
     CASE_EXPECT_TRUE(owner_equal_comp(q5, q4));
 
-    util::memory::weak_rc_ptr<void> q7(p7);
+    atfw::util::memory::weak_rc_ptr<void> q7(p7);
 
     CASE_EXPECT_TRUE(owner_equal_comp(p1, q7));
     CASE_EXPECT_TRUE(owner_equal_comp(q7, p1));
@@ -4123,57 +4123,57 @@ static std::size_t get_owner_hash(const P &l) noexcept {
 }
 
 CASE_TEST(rc_ptr, owner_hash) {
-  util::memory::strong_rc_ptr<int> p1(new int);
-  util::memory::strong_rc_ptr<int> p2(p1);
+  atfw::util::memory::strong_rc_ptr<int> p1(new int);
+  atfw::util::memory::strong_rc_ptr<int> p2(p1);
 
   CASE_EXPECT_EQ(get_owner_hash(p1), get_owner_hash(p2));
 
-  util::memory::strong_rc_ptr<int> p3(new int);
+  atfw::util::memory::strong_rc_ptr<int> p3(new int);
 
   CASE_EXPECT_NE(get_owner_hash(p1), get_owner_hash(p3));
 
-  util::memory::strong_rc_ptr<int> p4;
-  util::memory::strong_rc_ptr<int> p5;
+  atfw::util::memory::strong_rc_ptr<int> p4;
+  atfw::util::memory::strong_rc_ptr<int> p5;
 
   CASE_EXPECT_EQ(get_owner_hash(p4), get_owner_hash(p5));
   CASE_EXPECT_NE(get_owner_hash(p4), get_owner_hash(p3));
 
-  util::memory::strong_rc_ptr<int> p6(static_cast<int *>(0));
+  atfw::util::memory::strong_rc_ptr<int> p6(static_cast<int *>(0));
 
   CASE_EXPECT_NE(get_owner_hash(p4), get_owner_hash(p6));
 
-  util::memory::strong_rc_ptr<void> p7(p1);
+  atfw::util::memory::strong_rc_ptr<void> p7(p1);
 
   CASE_EXPECT_EQ(get_owner_hash(p1), get_owner_hash(p7));
 
-  util::memory::strong_rc_ptr<void> p8;
+  atfw::util::memory::strong_rc_ptr<void> p8;
 
   CASE_EXPECT_NE(get_owner_hash(p1), get_owner_hash(p8));
   CASE_EXPECT_EQ(get_owner_hash(p4), get_owner_hash(p8));
 
-  util::memory::weak_rc_ptr<int> q1(p1);
+  atfw::util::memory::weak_rc_ptr<int> q1(p1);
 
   CASE_EXPECT_EQ(get_owner_hash(p1), get_owner_hash(q1));
 
-  util::memory::weak_rc_ptr<int> q2(p1);
+  atfw::util::memory::weak_rc_ptr<int> q2(p1);
 
   CASE_EXPECT_EQ(get_owner_hash(q1), get_owner_hash(q2));
 
-  util::memory::weak_rc_ptr<int> q3(p3);
+  atfw::util::memory::weak_rc_ptr<int> q3(p3);
 
   CASE_EXPECT_NE(get_owner_hash(p1), get_owner_hash(q3));
   CASE_EXPECT_NE(get_owner_hash(q1), get_owner_hash(q3));
 
-  util::memory::weak_rc_ptr<int> q4;
+  atfw::util::memory::weak_rc_ptr<int> q4;
 
   CASE_EXPECT_EQ(get_owner_hash(p4), get_owner_hash(q4));
   CASE_EXPECT_NE(get_owner_hash(q1), get_owner_hash(q4));
 
-  util::memory::weak_rc_ptr<void> q5;
+  atfw::util::memory::weak_rc_ptr<void> q5;
 
   CASE_EXPECT_EQ(get_owner_hash(q4), get_owner_hash(q5));
 
-  util::memory::weak_rc_ptr<void> q7(p7);
+  atfw::util::memory::weak_rc_ptr<void> q7(p7);
 
   CASE_EXPECT_EQ(get_owner_hash(p1), get_owner_hash(q7));
   CASE_EXPECT_EQ(get_owner_hash(q1), get_owner_hash(q7));
@@ -4206,29 +4206,29 @@ class X {
 
 class Y {
  public:
-  virtual util::memory::strong_rc_ptr<X> getX() = 0;
+  virtual atfw::util::memory::strong_rc_ptr<X> getX() = 0;
 
  protected:
   virtual ~Y() {}
 };
 
-util::memory::strong_rc_ptr<Y> createY();
+atfw::util::memory::strong_rc_ptr<Y> createY();
 
 void test() {
-  util::memory::strong_rc_ptr<Y> py = createY();
+  atfw::util::memory::strong_rc_ptr<Y> py = createY();
   CASE_EXPECT_TRUE(py.get() != 0);
   CASE_EXPECT_TRUE(py.use_count() == 1);
 
-#if defined(LIBATFRAME_UTILS_ENABLE_EXCEPTION) && LIBATFRAME_UTILS_ENABLE_EXCEPTION
+#if defined(ATFRAMEWORK_UTILS_ENABLE_EXCEPTION) && ATFRAMEWORK_UTILS_ENABLE_EXCEPTION
   try {
-    util::memory::strong_rc_ptr<X> px = py->getX();
+    atfw::util::memory::strong_rc_ptr<X> px = py->getX();
     CASE_EXPECT_TRUE(px.get() != 0);
     CASE_EXPECT_TRUE(py.use_count() == 2);
 
     px->f();
 
-#  if defined(LIBATFRAME_UTILS_ENABLE_RTTI) && LIBATFRAME_UTILS_ENABLE_RTTI
-    util::memory::strong_rc_ptr<Y> py2 = util::memory::dynamic_pointer_cast<Y>(px);
+#  if defined(ATFRAMEWORK_UTILS_ENABLE_RTTI) && ATFRAMEWORK_UTILS_ENABLE_RTTI
+    atfw::util::memory::strong_rc_ptr<Y> py2 = atfw::util::memory::dynamic_pointer_cast<Y>(px);
     CASE_EXPECT_TRUE(py.get() == py2.get());
     CASE_EXPECT_TRUE(!(py < py2 || py2 < py));
     CASE_EXPECT_TRUE(py.use_count() == 3);
@@ -4251,12 +4251,12 @@ CASE_TEST(rc_ptr, shared_from_this) {
 // virtual inheritance to stress the implementation
 // (prevents Y* -> impl*, enable_shared_rc_from_this<impl>* -> impl* casts)
 
-class impl : public X, public virtual Y, public virtual util::memory::enable_shared_rc_from_this<impl> {
+class impl : public X, public virtual Y, public virtual atfw::util::memory::enable_shared_rc_from_this<impl> {
  public:
   virtual void f() {}
 
-  virtual util::memory::strong_rc_ptr<X> getX() {
-    util::memory::strong_rc_ptr<impl> pi = shared_from_this();
+  virtual atfw::util::memory::strong_rc_ptr<X> getX() {
+    atfw::util::memory::strong_rc_ptr<impl> pi = shared_from_this();
     CASE_EXPECT_TRUE(pi.get() == this);
     return pi;
   }
@@ -4266,23 +4266,23 @@ class impl : public X, public virtual Y, public virtual util::memory::enable_sha
 
 class impl2 : public impl {};
 
-util::memory::strong_rc_ptr<Y> createY() {
-  util::memory::strong_rc_ptr<Y> pi(new impl2);
+atfw::util::memory::strong_rc_ptr<Y> createY() {
+  atfw::util::memory::strong_rc_ptr<Y> pi(new impl2);
   return pi;
 }
 
-void test2() { util::memory::strong_rc_ptr<Y> pi(static_cast<impl2 *>(0)); }
+void test2() { atfw::util::memory::strong_rc_ptr<Y> pi(static_cast<impl2 *>(0)); }
 
 //
 
-struct V : public util::memory::enable_shared_rc_from_this<V> {};
+struct V : public atfw::util::memory::enable_shared_rc_from_this<V> {};
 
 void test3() {
-  util::memory::strong_rc_ptr<V> p(new V);
+  atfw::util::memory::strong_rc_ptr<V> p(new V);
 
-#if defined(LIBATFRAME_UTILS_ENABLE_EXCEPTION) && LIBATFRAME_UTILS_ENABLE_EXCEPTION
+#if defined(ATFRAMEWORK_UTILS_ENABLE_EXCEPTION) && ATFRAMEWORK_UTILS_ENABLE_EXCEPTION
   try {
-    util::memory::strong_rc_ptr<V> q = p->shared_from_this();
+    atfw::util::memory::strong_rc_ptr<V> q = p->shared_from_this();
     CASE_EXPECT_TRUE(p == q);
     CASE_EXPECT_TRUE(!(p < q) && !(q < p));
   } catch (std::bad_weak_ptr const &) {
@@ -4292,14 +4292,14 @@ void test3() {
   V v2(*p);
 
   try {
-    util::memory::strong_rc_ptr<V> r = v2.shared_from_this();
+    atfw::util::memory::strong_rc_ptr<V> r = v2.shared_from_this();
     CASE_EXPECT_ERROR("v2.shared_from_this() failed to throw");
   } catch (std::bad_weak_ptr const &) {
   }
 
   try {
     *p = V();
-    util::memory::strong_rc_ptr<V> r = p->shared_from_this();
+    atfw::util::memory::strong_rc_ptr<V> r = p->shared_from_this();
     CASE_EXPECT_ERROR("*p = V() failed to throw");
   } catch (std::bad_weak_ptr const &) {
   }
@@ -4309,7 +4309,7 @@ void test3() {
 }  // namespace shared_from_this
 
 namespace sp_unique_ptr {
-struct X : public ::util::memory::enable_shared_rc_from_this<X> {
+struct X : public ::atfw::util::memory::enable_shared_rc_from_this<X> {
   static int instances;
 
   X() { ++instances; }
@@ -4357,7 +4357,7 @@ template <class U, class T, class D>
 static void test_null_unique_ptr(std::unique_ptr<T, D> p1, std::unique_ptr<T, D> p2) {
   CASE_EXPECT_TRUE(T::instances == 0);
 
-  ::util::memory::strong_rc_ptr<U> sp(std::move(p1));
+  ::atfw::util::memory::strong_rc_ptr<U> sp(std::move(p1));
 
   CASE_EXPECT_TRUE(sp.get() == 0);
   CASE_EXPECT_TRUE(sp.use_count() == 0);
@@ -4384,11 +4384,11 @@ CASE_TEST(rc_ptr, sp_unique_ptr) {
     std::unique_ptr<X> p(new X);
     CASE_EXPECT_TRUE(X::instances == 1);
 
-    ::util::memory::strong_rc_ptr<X> p2(std::move(p));
+    ::atfw::util::memory::strong_rc_ptr<X> p2(std::move(p));
     CASE_EXPECT_TRUE(X::instances == 1);
     CASE_EXPECT_TRUE(p.get() == 0);
 
-    ::util::memory::strong_rc_ptr<X> p3 = p2->shared_from_this();
+    ::atfw::util::memory::strong_rc_ptr<X> p3 = p2->shared_from_this();
     CASE_EXPECT_TRUE(p2 == p3);
     CASE_EXPECT_TRUE(!(p2 < p3) && !(p3 < p2));
 
@@ -4412,11 +4412,11 @@ CASE_TEST(rc_ptr, sp_unique_ptr) {
     std::unique_ptr<X> p(new X);
     CASE_EXPECT_TRUE(X::instances == 1);
 
-    ::util::memory::strong_rc_ptr<X const> p2(std::move(p));
+    ::atfw::util::memory::strong_rc_ptr<X const> p2(std::move(p));
     CASE_EXPECT_TRUE(X::instances == 1);
     CASE_EXPECT_TRUE(p.get() == 0);
 
-    ::util::memory::strong_rc_ptr<X const> p3 = p2->shared_from_this();
+    ::atfw::util::memory::strong_rc_ptr<X const> p3 = p2->shared_from_this();
     CASE_EXPECT_TRUE(p2 == p3);
     CASE_EXPECT_TRUE(!(p2 < p3) && !(p3 < p2));
 
@@ -4440,7 +4440,7 @@ CASE_TEST(rc_ptr, sp_unique_ptr) {
     std::unique_ptr<X> p(new X);
     CASE_EXPECT_TRUE(X::instances == 1);
 
-    ::util::memory::strong_rc_ptr<void> p2(std::move(p));
+    ::atfw::util::memory::strong_rc_ptr<void> p2(std::move(p));
     CASE_EXPECT_TRUE(X::instances == 1);
     CASE_EXPECT_TRUE(p.get() == 0);
 
@@ -4463,7 +4463,7 @@ CASE_TEST(rc_ptr, sp_unique_ptr) {
     std::unique_ptr<Y, YD> p(new Y, YD());
     CASE_EXPECT_TRUE(Y::instances == 1);
 
-    ::util::memory::strong_rc_ptr<Y> p2(std::move(p));
+    ::atfw::util::memory::strong_rc_ptr<Y> p2(std::move(p));
     CASE_EXPECT_TRUE(Y::instances == 1);
     CASE_EXPECT_TRUE(p.get() == 0);
 
@@ -4488,7 +4488,7 @@ CASE_TEST(rc_ptr, sp_unique_ptr) {
     std::unique_ptr<Y, YD &> p(new Y, yd);
     CASE_EXPECT_TRUE(Y::instances == 1);
 
-    ::util::memory::strong_rc_ptr<Y> p2(std::move(p));
+    ::atfw::util::memory::strong_rc_ptr<Y> p2(std::move(p));
     CASE_EXPECT_TRUE(Y::instances == 1);
     CASE_EXPECT_TRUE(p.get() == 0);
 
@@ -4513,7 +4513,7 @@ CASE_TEST(rc_ptr, sp_unique_ptr) {
     std::unique_ptr<Y, YD const &> p(new Y, yd);
     CASE_EXPECT_TRUE(Y::instances == 1);
 
-    ::util::memory::strong_rc_ptr<Y> p2(std::move(p));
+    ::atfw::util::memory::strong_rc_ptr<Y> p2(std::move(p));
     CASE_EXPECT_TRUE(Y::instances == 1);
     CASE_EXPECT_TRUE(p.get() == 0);
 
@@ -4556,43 +4556,44 @@ CASE_TEST(rc_ptr, sp_unique_ptr) {
 }  // namespace sp_unique_ptr
 
 CASE_TEST(rc_ptr, compat) {
-  static_assert(
-      std::is_same<util::memory::compat_strong_ptr_type_trait<std::string,
-                                                              util::memory::compat_strong_ptr_mode::kStl>::shared_ptr,
-                   std::shared_ptr<std::string>>::value,
-      "check shared_ptr failed");
-  static_assert(std::is_same<util::memory::compat_strong_ptr_type_trait<
-                                 std::string, util::memory::compat_strong_ptr_mode::kStrongRc>::shared_ptr,
-                             util::memory::strong_rc_ptr<std::string>>::value,
+  static_assert(std::is_same<atfw::util::memory::compat_strong_ptr_type_trait<
+                                 std::string, atfw::util::memory::compat_strong_ptr_mode::kStl>::shared_ptr,
+                             std::shared_ptr<std::string>>::value,
+                "check shared_ptr failed");
+  static_assert(std::is_same<atfw::util::memory::compat_strong_ptr_type_trait<
+                                 std::string, atfw::util::memory::compat_strong_ptr_mode::kStrongRc>::shared_ptr,
+                             atfw::util::memory::strong_rc_ptr<std::string>>::value,
+                "check strong_rc_ptr failed");
+
+  static_assert(std::is_same<atfw::util::memory::compat_strong_ptr_type_trait<
+                                 std::string, atfw::util::memory::compat_strong_ptr_mode::kStl>::weak_ptr,
+                             std::weak_ptr<std::string>>::value,
+                "check weak_ptr failed");
+  static_assert(std::is_same<atfw::util::memory::compat_strong_ptr_type_trait<
+                                 std::string, atfw::util::memory::compat_strong_ptr_mode::kStrongRc>::weak_ptr,
+                             atfw::util::memory::weak_rc_ptr<std::string>>::value,
                 "check strong_rc_ptr failed");
 
   static_assert(
-      std::is_same<
-          util::memory::compat_strong_ptr_type_trait<std::string, util::memory::compat_strong_ptr_mode::kStl>::weak_ptr,
-          std::weak_ptr<std::string>>::value,
-      "check weak_ptr failed");
-  static_assert(std::is_same<util::memory::compat_strong_ptr_type_trait<
-                                 std::string, util::memory::compat_strong_ptr_mode::kStrongRc>::weak_ptr,
-                             util::memory::weak_rc_ptr<std::string>>::value,
-                "check strong_rc_ptr failed");
+      std::is_same<atfw::util::memory::compat_strong_ptr_function_trait<
+                       atfw::util::memory::compat_strong_ptr_mode::kStl>::enable_shared_from_this<std::string>,
+                   std::enable_shared_from_this<std::string>>::value,
+      "check enable_shared_from_this failed");
+  static_assert(
+      std::is_same<atfw::util::memory::compat_strong_ptr_function_trait<
+                       atfw::util::memory::compat_strong_ptr_mode::kStrongRc>::enable_shared_from_this<std::string>,
+                   atfw::util::memory::enable_shared_rc_from_this<std::string>>::value,
+      "check enable_shared_from_this failed");
 
-  static_assert(std::is_same<util::memory::compat_strong_ptr_function_trait<
-                                 util::memory::compat_strong_ptr_mode::kStl>::enable_shared_from_this<std::string>,
-                             std::enable_shared_from_this<std::string>>::value,
-                "check enable_shared_from_this failed");
-  static_assert(std::is_same<util::memory::compat_strong_ptr_function_trait<
-                                 util::memory::compat_strong_ptr_mode::kStrongRc>::enable_shared_from_this<std::string>,
-                             util::memory::enable_shared_rc_from_this<std::string>>::value,
-                "check enable_shared_from_this failed");
-
-  static_assert(std::is_same<decltype(util::memory::compat_strong_ptr_function_trait<
-                                      util::memory::compat_strong_ptr_mode::kStl>::make_shared<std::string>()),
+  static_assert(std::is_same<decltype(atfw::util::memory::compat_strong_ptr_function_trait<
+                                      atfw::util::memory::compat_strong_ptr_mode::kStl>::make_shared<std::string>()),
                              std::shared_ptr<std::string>>::value,
                 "check make_shared failed");
-  static_assert(std::is_same<decltype(util::memory::compat_strong_ptr_function_trait<
-                                      util::memory::compat_strong_ptr_mode::kStrongRc>::make_shared<std::string>()),
-                             util::memory::strong_rc_ptr<std::string>>::value,
-                "check make_shared failed");
+  static_assert(
+      std::is_same<decltype(atfw::util::memory::compat_strong_ptr_function_trait<
+                            atfw::util::memory::compat_strong_ptr_mode::kStrongRc>::make_shared<std::string>()),
+                   atfw::util::memory::strong_rc_ptr<std::string>>::value,
+      "check make_shared failed");
 }
 
 namespace allocate_strong_rc_test {
@@ -4630,14 +4631,14 @@ int X::instances = 0;
 
 CASE_TEST(rc_ptr, allocate_strong_rc_test) {
   {
-    util::memory::strong_rc_ptr<int> pi = util::memory::allocate_strong_rc<int>(std::allocator<int>());
+    atfw::util::memory::strong_rc_ptr<int> pi = atfw::util::memory::allocate_strong_rc<int>(std::allocator<int>());
 
     CASE_EXPECT_TRUE(pi.get() != 0);
     CASE_EXPECT_TRUE(*pi == 0);
   }
 
   {
-    util::memory::strong_rc_ptr<int> pi = util::memory::allocate_strong_rc<int>(std::allocator<int>(), 5);
+    atfw::util::memory::strong_rc_ptr<int> pi = atfw::util::memory::allocate_strong_rc<int>(std::allocator<int>(), 5);
 
     CASE_EXPECT_TRUE(pi.get() != 0);
     CASE_EXPECT_TRUE(*pi == 5);
@@ -4646,8 +4647,8 @@ CASE_TEST(rc_ptr, allocate_strong_rc_test) {
   CASE_EXPECT_TRUE(X::instances == 0);
 
   {
-    util::memory::strong_rc_ptr<X> pi = util::memory::allocate_strong_rc<X>(std::allocator<void>());
-    util::memory::weak_rc_ptr<X> wp(pi);
+    atfw::util::memory::strong_rc_ptr<X> pi = atfw::util::memory::allocate_strong_rc<X>(std::allocator<void>());
+    atfw::util::memory::weak_rc_ptr<X> wp(pi);
 
     CASE_EXPECT_TRUE(X::instances == 1);
     CASE_EXPECT_TRUE(pi.get() != 0);
@@ -4659,8 +4660,8 @@ CASE_TEST(rc_ptr, allocate_strong_rc_test) {
   }
 
   {
-    util::memory::strong_rc_ptr<X> pi = util::memory::allocate_strong_rc<X>(std::allocator<void>(), 1);
-    util::memory::weak_rc_ptr<X> wp(pi);
+    atfw::util::memory::strong_rc_ptr<X> pi = atfw::util::memory::allocate_strong_rc<X>(std::allocator<void>(), 1);
+    atfw::util::memory::weak_rc_ptr<X> wp(pi);
 
     CASE_EXPECT_TRUE(X::instances == 1);
     CASE_EXPECT_TRUE(pi.get() != 0);
@@ -4672,8 +4673,8 @@ CASE_TEST(rc_ptr, allocate_strong_rc_test) {
   }
 
   {
-    util::memory::strong_rc_ptr<X> pi = util::memory::allocate_strong_rc<X>(std::allocator<void>(), 1, 2);
-    util::memory::weak_rc_ptr<X> wp(pi);
+    atfw::util::memory::strong_rc_ptr<X> pi = atfw::util::memory::allocate_strong_rc<X>(std::allocator<void>(), 1, 2);
+    atfw::util::memory::weak_rc_ptr<X> wp(pi);
 
     CASE_EXPECT_TRUE(X::instances == 1);
     CASE_EXPECT_TRUE(pi.get() != 0);
@@ -4685,8 +4686,9 @@ CASE_TEST(rc_ptr, allocate_strong_rc_test) {
   }
 
   {
-    util::memory::strong_rc_ptr<X> pi = util::memory::allocate_strong_rc<X>(std::allocator<void>(), 1, 2, 3);
-    util::memory::weak_rc_ptr<X> wp(pi);
+    atfw::util::memory::strong_rc_ptr<X> pi =
+        atfw::util::memory::allocate_strong_rc<X>(std::allocator<void>(), 1, 2, 3);
+    atfw::util::memory::weak_rc_ptr<X> wp(pi);
 
     CASE_EXPECT_TRUE(X::instances == 1);
     CASE_EXPECT_TRUE(pi.get() != 0);
@@ -4698,8 +4700,9 @@ CASE_TEST(rc_ptr, allocate_strong_rc_test) {
   }
 
   {
-    util::memory::strong_rc_ptr<X> pi = util::memory::allocate_strong_rc<X>(std::allocator<void>(), 1, 2, 3, 4);
-    util::memory::weak_rc_ptr<X> wp(pi);
+    atfw::util::memory::strong_rc_ptr<X> pi =
+        atfw::util::memory::allocate_strong_rc<X>(std::allocator<void>(), 1, 2, 3, 4);
+    atfw::util::memory::weak_rc_ptr<X> wp(pi);
 
     CASE_EXPECT_TRUE(X::instances == 1);
     CASE_EXPECT_TRUE(pi.get() != 0);
@@ -4711,8 +4714,9 @@ CASE_TEST(rc_ptr, allocate_strong_rc_test) {
   }
 
   {
-    util::memory::strong_rc_ptr<X> pi = util::memory::allocate_strong_rc<X>(std::allocator<void>(), 1, 2, 3, 4, 5);
-    util::memory::weak_rc_ptr<X> wp(pi);
+    atfw::util::memory::strong_rc_ptr<X> pi =
+        atfw::util::memory::allocate_strong_rc<X>(std::allocator<void>(), 1, 2, 3, 4, 5);
+    atfw::util::memory::weak_rc_ptr<X> wp(pi);
 
     CASE_EXPECT_TRUE(X::instances == 1);
     CASE_EXPECT_TRUE(pi.get() != 0);
@@ -4724,8 +4728,9 @@ CASE_TEST(rc_ptr, allocate_strong_rc_test) {
   }
 
   {
-    util::memory::strong_rc_ptr<X> pi = util::memory::allocate_strong_rc<X>(std::allocator<void>(), 1, 2, 3, 4, 5, 6);
-    util::memory::weak_rc_ptr<X> wp(pi);
+    atfw::util::memory::strong_rc_ptr<X> pi =
+        atfw::util::memory::allocate_strong_rc<X>(std::allocator<void>(), 1, 2, 3, 4, 5, 6);
+    atfw::util::memory::weak_rc_ptr<X> wp(pi);
 
     CASE_EXPECT_TRUE(X::instances == 1);
     CASE_EXPECT_TRUE(pi.get() != 0);
@@ -4737,9 +4742,9 @@ CASE_TEST(rc_ptr, allocate_strong_rc_test) {
   }
 
   {
-    util::memory::strong_rc_ptr<X> pi =
-        util::memory::allocate_strong_rc<X>(std::allocator<void>(), 1, 2, 3, 4, 5, 6, 7);
-    util::memory::weak_rc_ptr<X> wp(pi);
+    atfw::util::memory::strong_rc_ptr<X> pi =
+        atfw::util::memory::allocate_strong_rc<X>(std::allocator<void>(), 1, 2, 3, 4, 5, 6, 7);
+    atfw::util::memory::weak_rc_ptr<X> wp(pi);
 
     CASE_EXPECT_TRUE(X::instances == 1);
     CASE_EXPECT_TRUE(pi.get() != 0);
@@ -4751,9 +4756,9 @@ CASE_TEST(rc_ptr, allocate_strong_rc_test) {
   }
 
   {
-    util::memory::strong_rc_ptr<X> pi =
-        util::memory::allocate_strong_rc<X>(std::allocator<void>(), 1, 2, 3, 4, 5, 6, 7, 8);
-    util::memory::weak_rc_ptr<X> wp(pi);
+    atfw::util::memory::strong_rc_ptr<X> pi =
+        atfw::util::memory::allocate_strong_rc<X>(std::allocator<void>(), 1, 2, 3, 4, 5, 6, 7, 8);
+    atfw::util::memory::weak_rc_ptr<X> wp(pi);
 
     CASE_EXPECT_TRUE(X::instances == 1);
     CASE_EXPECT_TRUE(pi.get() != 0);
@@ -4765,9 +4770,9 @@ CASE_TEST(rc_ptr, allocate_strong_rc_test) {
   }
 
   {
-    util::memory::strong_rc_ptr<X> pi =
-        util::memory::allocate_strong_rc<X>(std::allocator<void>(), 1, 2, 3, 4, 5, 6, 7, 8, 9);
-    util::memory::weak_rc_ptr<X> wp(pi);
+    atfw::util::memory::strong_rc_ptr<X> pi =
+        atfw::util::memory::allocate_strong_rc<X>(std::allocator<void>(), 1, 2, 3, 4, 5, 6, 7, 8, 9);
+    atfw::util::memory::weak_rc_ptr<X> wp(pi);
 
     CASE_EXPECT_TRUE(X::instances == 1);
     CASE_EXPECT_TRUE(pi.get() != 0);
@@ -4781,7 +4786,7 @@ CASE_TEST(rc_ptr, allocate_strong_rc_test) {
 }  // namespace allocate_strong_rc_test
 
 namespace allocate_strong_rc_esft_test {
-class X : public util::memory::enable_shared_rc_from_this<X> {
+class X : public atfw::util::memory::enable_shared_rc_from_this<X> {
  private:
   X(X const &);
   X &operator=(X const &);
@@ -4800,11 +4805,11 @@ CASE_TEST(rc_ptr, allocate_strong_rc_esft_test) {
   CASE_EXPECT_TRUE(X::instances == 0);
 
   {
-    util::memory::strong_rc_ptr<X> px = util::memory::allocate_strong_rc<X>(std::allocator<void>());
+    atfw::util::memory::strong_rc_ptr<X> px = atfw::util::memory::allocate_strong_rc<X>(std::allocator<void>());
     CASE_EXPECT_TRUE(X::instances == 1);
-#if defined(LIBATFRAME_UTILS_ENABLE_EXCEPTION) && LIBATFRAME_UTILS_ENABLE_EXCEPTION
+#if defined(ATFRAMEWORK_UTILS_ENABLE_EXCEPTION) && ATFRAMEWORK_UTILS_ENABLE_EXCEPTION
     try {
-      util::memory::strong_rc_ptr<X> qx = px->shared_from_this();
+      atfw::util::memory::strong_rc_ptr<X> qx = px->shared_from_this();
 
       CASE_EXPECT_TRUE(px == qx);
       CASE_EXPECT_TRUE(!(px < qx) && !(qx < px));
@@ -4822,11 +4827,11 @@ CASE_TEST(rc_ptr, allocate_strong_rc_esft_test) {
   CASE_EXPECT_TRUE(X::instances == 0);
 
   {
-    util::memory::strong_rc_ptr<X> px = util::memory::allocate_strong_rc<X>(std::allocator<void>(), 1);
+    atfw::util::memory::strong_rc_ptr<X> px = atfw::util::memory::allocate_strong_rc<X>(std::allocator<void>(), 1);
     CASE_EXPECT_TRUE(X::instances == 1);
-#if defined(LIBATFRAME_UTILS_ENABLE_EXCEPTION) && LIBATFRAME_UTILS_ENABLE_EXCEPTION
+#if defined(ATFRAMEWORK_UTILS_ENABLE_EXCEPTION) && ATFRAMEWORK_UTILS_ENABLE_EXCEPTION
     try {
-      util::memory::strong_rc_ptr<X> qx = px->shared_from_this();
+      atfw::util::memory::strong_rc_ptr<X> qx = px->shared_from_this();
 
       CASE_EXPECT_TRUE(px == qx);
       CASE_EXPECT_TRUE(!(px < qx) && !(qx < px));
@@ -4842,11 +4847,11 @@ CASE_TEST(rc_ptr, allocate_strong_rc_esft_test) {
   CASE_EXPECT_TRUE(X::instances == 0);
 
   {
-    util::memory::strong_rc_ptr<X> px = util::memory::allocate_strong_rc<X>(std::allocator<void>(), 1, 2);
+    atfw::util::memory::strong_rc_ptr<X> px = atfw::util::memory::allocate_strong_rc<X>(std::allocator<void>(), 1, 2);
     CASE_EXPECT_TRUE(X::instances == 1);
-#if defined(LIBATFRAME_UTILS_ENABLE_EXCEPTION) && LIBATFRAME_UTILS_ENABLE_EXCEPTION
+#if defined(ATFRAMEWORK_UTILS_ENABLE_EXCEPTION) && ATFRAMEWORK_UTILS_ENABLE_EXCEPTION
     try {
-      util::memory::strong_rc_ptr<X> qx = px->shared_from_this();
+      atfw::util::memory::strong_rc_ptr<X> qx = px->shared_from_this();
 
       CASE_EXPECT_TRUE(px == qx);
       CASE_EXPECT_TRUE(!(px < qx) && !(qx < px));
@@ -4862,11 +4867,12 @@ CASE_TEST(rc_ptr, allocate_strong_rc_esft_test) {
   CASE_EXPECT_TRUE(X::instances == 0);
 
   {
-    util::memory::strong_rc_ptr<X> px = util::memory::allocate_strong_rc<X>(std::allocator<void>(), 1, 2, 3);
+    atfw::util::memory::strong_rc_ptr<X> px =
+        atfw::util::memory::allocate_strong_rc<X>(std::allocator<void>(), 1, 2, 3);
     CASE_EXPECT_TRUE(X::instances == 1);
-#if defined(LIBATFRAME_UTILS_ENABLE_EXCEPTION) && LIBATFRAME_UTILS_ENABLE_EXCEPTION
+#if defined(ATFRAMEWORK_UTILS_ENABLE_EXCEPTION) && ATFRAMEWORK_UTILS_ENABLE_EXCEPTION
     try {
-      util::memory::strong_rc_ptr<X> qx = px->shared_from_this();
+      atfw::util::memory::strong_rc_ptr<X> qx = px->shared_from_this();
 
       CASE_EXPECT_TRUE(px == qx);
       CASE_EXPECT_TRUE(!(px < qx) && !(qx < px));
@@ -4882,11 +4888,12 @@ CASE_TEST(rc_ptr, allocate_strong_rc_esft_test) {
   CASE_EXPECT_TRUE(X::instances == 0);
 
   {
-    util::memory::strong_rc_ptr<X> px = util::memory::allocate_strong_rc<X>(std::allocator<void>(), 1, 2, 3, 4);
+    atfw::util::memory::strong_rc_ptr<X> px =
+        atfw::util::memory::allocate_strong_rc<X>(std::allocator<void>(), 1, 2, 3, 4);
     CASE_EXPECT_TRUE(X::instances == 1);
-#if defined(LIBATFRAME_UTILS_ENABLE_EXCEPTION) && LIBATFRAME_UTILS_ENABLE_EXCEPTION
+#if defined(ATFRAMEWORK_UTILS_ENABLE_EXCEPTION) && ATFRAMEWORK_UTILS_ENABLE_EXCEPTION
     try {
-      util::memory::strong_rc_ptr<X> qx = px->shared_from_this();
+      atfw::util::memory::strong_rc_ptr<X> qx = px->shared_from_this();
 
       CASE_EXPECT_TRUE(px == qx);
       CASE_EXPECT_TRUE(!(px < qx) && !(qx < px));
@@ -4902,11 +4909,12 @@ CASE_TEST(rc_ptr, allocate_strong_rc_esft_test) {
   CASE_EXPECT_TRUE(X::instances == 0);
 
   {
-    util::memory::strong_rc_ptr<X> px = util::memory::allocate_strong_rc<X>(std::allocator<void>(), 1, 2, 3, 4, 5);
+    atfw::util::memory::strong_rc_ptr<X> px =
+        atfw::util::memory::allocate_strong_rc<X>(std::allocator<void>(), 1, 2, 3, 4, 5);
     CASE_EXPECT_TRUE(X::instances == 1);
-#if defined(LIBATFRAME_UTILS_ENABLE_EXCEPTION) && LIBATFRAME_UTILS_ENABLE_EXCEPTION
+#if defined(ATFRAMEWORK_UTILS_ENABLE_EXCEPTION) && ATFRAMEWORK_UTILS_ENABLE_EXCEPTION
     try {
-      util::memory::strong_rc_ptr<X> qx = px->shared_from_this();
+      atfw::util::memory::strong_rc_ptr<X> qx = px->shared_from_this();
 
       CASE_EXPECT_TRUE(px == qx);
       CASE_EXPECT_TRUE(!(px < qx) && !(qx < px));
@@ -4922,11 +4930,12 @@ CASE_TEST(rc_ptr, allocate_strong_rc_esft_test) {
   CASE_EXPECT_TRUE(X::instances == 0);
 
   {
-    util::memory::strong_rc_ptr<X> px = util::memory::allocate_strong_rc<X>(std::allocator<void>(), 1, 2, 3, 4, 5, 6);
+    atfw::util::memory::strong_rc_ptr<X> px =
+        atfw::util::memory::allocate_strong_rc<X>(std::allocator<void>(), 1, 2, 3, 4, 5, 6);
     CASE_EXPECT_TRUE(X::instances == 1);
-#if defined(LIBATFRAME_UTILS_ENABLE_EXCEPTION) && LIBATFRAME_UTILS_ENABLE_EXCEPTION
+#if defined(ATFRAMEWORK_UTILS_ENABLE_EXCEPTION) && ATFRAMEWORK_UTILS_ENABLE_EXCEPTION
     try {
-      util::memory::strong_rc_ptr<X> qx = px->shared_from_this();
+      atfw::util::memory::strong_rc_ptr<X> qx = px->shared_from_this();
 
       CASE_EXPECT_TRUE(px == qx);
       CASE_EXPECT_TRUE(!(px < qx) && !(qx < px));
@@ -4942,12 +4951,12 @@ CASE_TEST(rc_ptr, allocate_strong_rc_esft_test) {
   CASE_EXPECT_TRUE(X::instances == 0);
 
   {
-    util::memory::strong_rc_ptr<X> px =
-        util::memory::allocate_strong_rc<X>(std::allocator<void>(), 1, 2, 3, 4, 5, 6, 7);
+    atfw::util::memory::strong_rc_ptr<X> px =
+        atfw::util::memory::allocate_strong_rc<X>(std::allocator<void>(), 1, 2, 3, 4, 5, 6, 7);
     CASE_EXPECT_TRUE(X::instances == 1);
-#if defined(LIBATFRAME_UTILS_ENABLE_EXCEPTION) && LIBATFRAME_UTILS_ENABLE_EXCEPTION
+#if defined(ATFRAMEWORK_UTILS_ENABLE_EXCEPTION) && ATFRAMEWORK_UTILS_ENABLE_EXCEPTION
     try {
-      util::memory::strong_rc_ptr<X> qx = px->shared_from_this();
+      atfw::util::memory::strong_rc_ptr<X> qx = px->shared_from_this();
 
       CASE_EXPECT_TRUE(px == qx);
       CASE_EXPECT_TRUE(!(px < qx) && !(qx < px));
@@ -4963,12 +4972,12 @@ CASE_TEST(rc_ptr, allocate_strong_rc_esft_test) {
   CASE_EXPECT_TRUE(X::instances == 0);
 
   {
-    util::memory::strong_rc_ptr<X> px =
-        util::memory::allocate_strong_rc<X>(std::allocator<void>(), 1, 2, 3, 4, 5, 6, 7, 8);
+    atfw::util::memory::strong_rc_ptr<X> px =
+        atfw::util::memory::allocate_strong_rc<X>(std::allocator<void>(), 1, 2, 3, 4, 5, 6, 7, 8);
     CASE_EXPECT_TRUE(X::instances == 1);
-#if defined(LIBATFRAME_UTILS_ENABLE_EXCEPTION) && LIBATFRAME_UTILS_ENABLE_EXCEPTION
+#if defined(ATFRAMEWORK_UTILS_ENABLE_EXCEPTION) && ATFRAMEWORK_UTILS_ENABLE_EXCEPTION
     try {
-      util::memory::strong_rc_ptr<X> qx = px->shared_from_this();
+      atfw::util::memory::strong_rc_ptr<X> qx = px->shared_from_this();
 
       CASE_EXPECT_TRUE(px == qx);
       CASE_EXPECT_TRUE(!(px < qx) && !(qx < px));
@@ -4984,12 +4993,12 @@ CASE_TEST(rc_ptr, allocate_strong_rc_esft_test) {
   CASE_EXPECT_TRUE(X::instances == 0);
 
   {
-    util::memory::strong_rc_ptr<X> px =
-        util::memory::allocate_strong_rc<X>(std::allocator<void>(), 1, 2, 3, 4, 5, 6, 7, 8, 9);
+    atfw::util::memory::strong_rc_ptr<X> px =
+        atfw::util::memory::allocate_strong_rc<X>(std::allocator<void>(), 1, 2, 3, 4, 5, 6, 7, 8, 9);
     CASE_EXPECT_TRUE(X::instances == 1);
-#if defined(LIBATFRAME_UTILS_ENABLE_EXCEPTION) && LIBATFRAME_UTILS_ENABLE_EXCEPTION
+#if defined(ATFRAMEWORK_UTILS_ENABLE_EXCEPTION) && ATFRAMEWORK_UTILS_ENABLE_EXCEPTION
     try {
-      util::memory::strong_rc_ptr<X> qx = px->shared_from_this();
+      atfw::util::memory::strong_rc_ptr<X> qx = px->shared_from_this();
 
       CASE_EXPECT_TRUE(px == qx);
       CASE_EXPECT_TRUE(!(px < qx) && !(qx < px));

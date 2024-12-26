@@ -23,7 +23,7 @@
 
 #include <config/atframe_utils_build_feature.h>
 
-LIBATFRAME_UTILS_NAMESPACE_BEGIN
+ATFRAMEWORK_UTILS_NAMESPACE_BEGIN
 namespace random {
 namespace core {
 /**
@@ -47,7 +47,7 @@ namespace core {
 template <typename UIntType, std::size_t MAX_STATUS_N_SIZE, std::size_t RD_M, std::size_t SPB_IDX, UIntType RD_A,
           std::size_t RD_U, UIntType RD_D, std::size_t RD_S, UIntType RD_B, std::size_t RD_T, UIntType RD_C,
           std::size_t RD_L, UIntType INIT_SEED_F>
-class LIBATFRAME_UTILS_API_HEAD_ONLY mersenne_twister {
+class ATFRAMEWORK_UTILS_API_HEAD_ONLY mersenne_twister {
  public:
   using result_type = UIntType;
 
@@ -124,7 +124,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY mersenne_twister {
    * @param [in] last 随机数种子散列值结束位置
    */
   template <class It>
-  LIBATFRAME_UTILS_API_HEAD_ONLY void init_seed(It &first, It last) {
+  ATFRAMEWORK_UTILS_API_HEAD_ONLY void init_seed(It &first, It last) {
     It begin = first;
     for (mt_index = 0; mt_index < MAX_STATUS_N_SIZE && begin != last; ++mt_index, ++begin) {
       mt_status[mt_index] = static_cast<UIntType>(*begin);
@@ -193,6 +193,6 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY mersenne_twister {
 };
 }  // namespace core
 }  // namespace random
-LIBATFRAME_UTILS_NAMESPACE_END
+ATFRAMEWORK_UTILS_NAMESPACE_END
 
 #endif /* RANDOMMTCORE_H_ */

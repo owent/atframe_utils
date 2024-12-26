@@ -28,15 +28,15 @@
 
 #include "config/atframe_utils_build_feature.h"
 
-#if defined(NETWORK_EVPOLL_ENABLE_LIBUV) && defined(NETWORK_ENABLE_CURL)
-#  if NETWORK_ENABLE_CURL && NETWORK_EVPOLL_ENABLE_LIBUV
+#if defined(ATFRAMEWORK_UTILS_NETWORK_EVPOLL_ENABLE_LIBUV) && defined(ATFRAMEWORK_UTILS_NETWORK_ENABLE_CURL)
+#  if ATFRAMEWORK_UTILS_NETWORK_ENABLE_CURL && ATFRAMEWORK_UTILS_NETWORK_EVPOLL_ENABLE_LIBUV
 
 extern "C" {
 #    include <curl/curl.h>
 #    include <uv.h>
 }
 
-LIBATFRAME_UTILS_NAMESPACE_BEGIN
+ATFRAMEWORK_UTILS_NAMESPACE_BEGIN
 namespace network {
 
 /**
@@ -44,7 +44,7 @@ namespace network {
  * @see https://curl.haxx.se/libcurl/c/multi-uv.html
  */
 class http_request : public std::enable_shared_from_this<http_request>,
-                     public LIBATFRAME_UTILS_NAMESPACE_ID::design_pattern::noncopyable {
+                     public ATFRAMEWORK_UTILS_NAMESPACE_ID::design_pattern::noncopyable {
  public:
   /**
    * @brief types
@@ -52,7 +52,7 @@ class http_request : public std::enable_shared_from_this<http_request>,
   using self_type = http_request;
   using ptr_t = std::shared_ptr<self_type>;
 
-  struct LIBATFRAME_UTILS_API method_t {
+  struct ATFRAMEWORK_UTILS_API method_t {
     enum type { EN_MT_GET = 0, EN_MT_POST, EN_MT_PUT, EN_MT_DELETE, EN_MT_TRACE };
   };
 
@@ -60,7 +60,7 @@ class http_request : public std::enable_shared_from_this<http_request>,
    * @brief common http status code
    * @see https://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html
    */
-  struct LIBATFRAME_UTILS_API status_code_t {
+  struct ATFRAMEWORK_UTILS_API status_code_t {
     enum group {
       EN_ECG_INFOMATION = 1,
       EN_ECG_SUCCESS = 2,
@@ -113,7 +113,7 @@ class http_request : public std::enable_shared_from_this<http_request>,
     };
   };
 
-  struct LIBATFRAME_UTILS_API flag_t {
+  struct ATFRAMEWORK_UTILS_API flag_t {
     enum type {
       EN_FT_CURL_MULTI_HANDLE = 0x01,
       EN_FT_RUNNING = 0x02,
@@ -122,7 +122,7 @@ class http_request : public std::enable_shared_from_this<http_request>,
     };
   };
 
-  struct LIBATFRAME_UTILS_API_HEAD_ONLY curl_share_options {
+  struct ATFRAMEWORK_UTILS_API_HEAD_ONLY curl_share_options {
     bool enable_multi_thread;
     bool share_cookie;
     bool share_dns;
@@ -172,8 +172,8 @@ class http_request : public std::enable_shared_from_this<http_request>,
     curl_share_context &operator=(curl_share_context &&) = delete;
 
    public:
-    LIBATFRAME_UTILS_API curl_share_context(CURLSH *share) noexcept;
-    LIBATFRAME_UTILS_API ~curl_share_context();
+    ATFRAMEWORK_UTILS_API curl_share_context(CURLSH *share) noexcept;
+    ATFRAMEWORK_UTILS_API ~curl_share_context();
 
     UTIL_FORCEINLINE CURLSH *get_share_handle() noexcept { return curl_share_; }
     UTIL_FORCEINLINE const CURLSH *get_share_handle() const noexcept { return curl_share_; }
@@ -188,7 +188,7 @@ class http_request : public std::enable_shared_from_this<http_request>,
   };
   using curl_share_context_ptr_type = std::shared_ptr<curl_share_context>;
 
-  struct LIBATFRAME_UTILS_API_HEAD_ONLY curl_multi_options {
+  struct ATFRAMEWORK_UTILS_API_HEAD_ONLY curl_multi_options {
     uv_loop_t *ev_loop;
     curl_share_context_ptr_type share_context;
 
@@ -206,7 +206,7 @@ class http_request : public std::enable_shared_from_this<http_request>,
     curl_multi_context &operator=(curl_multi_context &&) = delete;
 
    public:
-    LIBATFRAME_UTILS_API curl_multi_context() noexcept;
+    ATFRAMEWORK_UTILS_API curl_multi_context() noexcept;
 
     UTIL_FORCEINLINE uv_loop_t *get_evloop() noexcept { return ev_loop_; }
     UTIL_FORCEINLINE const uv_loop_t *get_evloop() const noexcept { return ev_loop_; }
@@ -228,7 +228,7 @@ class http_request : public std::enable_shared_from_this<http_request>,
   using curl_m_bind_t = curl_multi_context;
   using curl_m_bind_ptr_t = curl_multi_context_ptr_type;
 
-  struct LIBATFRAME_UTILS_API curl_poll_context_t {
+  struct ATFRAMEWORK_UTILS_API curl_poll_context_t {
     curl_multi_context *bind_multi;
     uv_poll_t poll_object;
     curl_socket_t sockfd;
@@ -239,7 +239,7 @@ class http_request : public std::enable_shared_from_this<http_request>,
   using on_success_fn_t = std::function<int(http_request &)>;
   using on_complete_fn_t = std::function<int(http_request &)>;
 
-  struct LIBATFRAME_UTILS_API progress_t {
+  struct ATFRAMEWORK_UTILS_API progress_t {
     size_t dltotal; /** total download size **/
     size_t dlnow;   /** already downloaded size **/
     size_t ultotal; /** total upload size **/
@@ -260,66 +260,66 @@ class http_request : public std::enable_shared_from_this<http_request>,
                                             size_t size)>;  // it's useful if we want to debug and show verbose info
 
  public:
-  LIBATFRAME_UTILS_API static ptr_t create(curl_multi_context *, gsl::string_view url);
+  ATFRAMEWORK_UTILS_API static ptr_t create(curl_multi_context *, gsl::string_view url);
 
-  LIBATFRAME_UTILS_API static ptr_t create(curl_multi_context *);
+  ATFRAMEWORK_UTILS_API static ptr_t create(curl_multi_context *);
 
-  LIBATFRAME_UTILS_API static ptr_t create(const curl_share_context_ptr_type &, gsl::string_view url);
+  ATFRAMEWORK_UTILS_API static ptr_t create(const curl_share_context_ptr_type &, gsl::string_view url);
 
-  LIBATFRAME_UTILS_API static ptr_t create(const curl_share_context_ptr_type &);
+  ATFRAMEWORK_UTILS_API static ptr_t create(const curl_share_context_ptr_type &);
 
-  LIBATFRAME_UTILS_API static int get_status_code_group(int code);
+  ATFRAMEWORK_UTILS_API static int get_status_code_group(int code);
 
-  LIBATFRAME_UTILS_API http_request(curl_multi_context *curl_multi, const curl_share_context_ptr_type &share_context);
+  ATFRAMEWORK_UTILS_API http_request(curl_multi_context *curl_multi, const curl_share_context_ptr_type &share_context);
 
-  LIBATFRAME_UTILS_API ~http_request();
+  ATFRAMEWORK_UTILS_API ~http_request();
 
-  static LIBATFRAME_UTILS_API int create_curl_share(const curl_share_options &options,
-                                                    std::shared_ptr<curl_share_context> &output);
+  static ATFRAMEWORK_UTILS_API int create_curl_share(const curl_share_options &options,
+                                                     std::shared_ptr<curl_share_context> &output);
 
-  static LIBATFRAME_UTILS_API int create_curl_multi(uv_loop_t *evloop, std::shared_ptr<curl_multi_context> &manager);
-  static LIBATFRAME_UTILS_API int create_curl_multi(const curl_multi_options &options,
-                                                    std::shared_ptr<curl_multi_context> &manager);
-  static LIBATFRAME_UTILS_API int destroy_curl_multi(std::shared_ptr<curl_multi_context> &manager);
+  static ATFRAMEWORK_UTILS_API int create_curl_multi(uv_loop_t *evloop, std::shared_ptr<curl_multi_context> &manager);
+  static ATFRAMEWORK_UTILS_API int create_curl_multi(const curl_multi_options &options,
+                                                     std::shared_ptr<curl_multi_context> &manager);
+  static ATFRAMEWORK_UTILS_API int destroy_curl_multi(std::shared_ptr<curl_multi_context> &manager);
 
   /**
    * @brief start a http request
    * @param wait if true, waiting for request finished
    * @return 0 or error code, curl's error code is greater than 0, and this system's error code will be less than 0
    */
-  LIBATFRAME_UTILS_API int start(method_t::type method = method_t::EN_MT_GET, bool wait = false);
+  ATFRAMEWORK_UTILS_API int start(method_t::type method = method_t::EN_MT_GET, bool wait = false);
 
-  LIBATFRAME_UTILS_API int stop();
+  ATFRAMEWORK_UTILS_API int stop();
 
-  LIBATFRAME_UTILS_API void set_url(gsl::string_view v);
-  LIBATFRAME_UTILS_API const std::string &get_url() const;
+  ATFRAMEWORK_UTILS_API void set_url(gsl::string_view v);
+  ATFRAMEWORK_UTILS_API const std::string &get_url() const;
 
-  LIBATFRAME_UTILS_API void set_user_agent(gsl::string_view v);
-  LIBATFRAME_UTILS_API const std::string &get_user_agent() const;
+  ATFRAMEWORK_UTILS_API void set_user_agent(gsl::string_view v);
+  ATFRAMEWORK_UTILS_API const std::string &get_user_agent() const;
 
-  LIBATFRAME_UTILS_API std::string &post_data();
-  LIBATFRAME_UTILS_API const std::string &post_data() const;
+  ATFRAMEWORK_UTILS_API std::string &post_data();
+  ATFRAMEWORK_UTILS_API const std::string &post_data() const;
 
-  LIBATFRAME_UTILS_API int get_response_code() const;
+  ATFRAMEWORK_UTILS_API int get_response_code() const;
 
-  LIBATFRAME_UTILS_API int get_error_code() const;
+  ATFRAMEWORK_UTILS_API int get_error_code() const;
 
-  LIBATFRAME_UTILS_API const char *get_error_msg() const;
+  ATFRAMEWORK_UTILS_API const char *get_error_msg() const;
 
-  LIBATFRAME_UTILS_API std::stringstream &get_response_stream();
-  LIBATFRAME_UTILS_API const std::stringstream &get_response_stream() const;
+  ATFRAMEWORK_UTILS_API std::stringstream &get_response_stream();
+  ATFRAMEWORK_UTILS_API const std::stringstream &get_response_stream() const;
 
-  LIBATFRAME_UTILS_API int add_form_file(const std::string &fieldname, const char *filename);
+  ATFRAMEWORK_UTILS_API int add_form_file(const std::string &fieldname, const char *filename);
 
-  LIBATFRAME_UTILS_API int add_form_file(const std::string &fieldname, const char *filename, const char *content_type,
-                                         const char *new_filename);
+  ATFRAMEWORK_UTILS_API int add_form_file(const std::string &fieldname, const char *filename, const char *content_type,
+                                          const char *new_filename);
 
-  LIBATFRAME_UTILS_API int add_form_file(const std::string &fieldname, const char *filename, const char *content_type);
+  ATFRAMEWORK_UTILS_API int add_form_file(const std::string &fieldname, const char *filename, const char *content_type);
 
-  LIBATFRAME_UTILS_API int add_form_field(const std::string &fieldname, const std::string &fieldvalue);
+  ATFRAMEWORK_UTILS_API int add_form_field(const std::string &fieldname, const std::string &fieldvalue);
 
   template <typename T>
-  LIBATFRAME_UTILS_API_HEAD_ONLY int add_form_field(const std::string &fieldname, const T &fieldvalue) {
+  ATFRAMEWORK_UTILS_API_HEAD_ONLY int add_form_field(const std::string &fieldname, const T &fieldvalue) {
     std::stringstream ss;
     ss << fieldvalue;
 
@@ -328,16 +328,16 @@ class http_request : public std::enable_shared_from_this<http_request>,
     return add_form_field(fieldname, val);
   }
 
-  LIBATFRAME_UTILS_API void set_priv_data(void *v);
-  LIBATFRAME_UTILS_API void *get_priv_data() const;
+  ATFRAMEWORK_UTILS_API void set_priv_data(void *v);
+  ATFRAMEWORK_UTILS_API void *get_priv_data() const;
 
   // ======== set options of libcurl @see https://curl.haxx.se/libcurl/c/curl_easy_setopt.html for detail ========
-  LIBATFRAME_UTILS_API void set_opt_bool(CURLoption k, bool v);
+  ATFRAMEWORK_UTILS_API void set_opt_bool(CURLoption k, bool v);
 
-  LIBATFRAME_UTILS_API void set_opt_string(CURLoption k, const char *v);
+  ATFRAMEWORK_UTILS_API void set_opt_string(CURLoption k, const char *v);
 
   template <typename T>
-  LIBATFRAME_UTILS_API_HEAD_ONLY void set_opt_long(CURLoption k, T v) {
+  ATFRAMEWORK_UTILS_API_HEAD_ONLY void set_opt_long(CURLoption k, T v) {
     if (nullptr == mutable_request()) {
       return;
     }
@@ -346,24 +346,24 @@ class http_request : public std::enable_shared_from_this<http_request>,
     curl_easy_setopt(mutable_request(), k, val);
   }
 
-  LIBATFRAME_UTILS_API void set_opt_ssl_verify_peer(bool v);
+  ATFRAMEWORK_UTILS_API void set_opt_ssl_verify_peer(bool v);
 
-  LIBATFRAME_UTILS_API void set_opt_no_signal(bool v);
+  ATFRAMEWORK_UTILS_API void set_opt_no_signal(bool v);
 
-  LIBATFRAME_UTILS_API void set_opt_follow_location(bool v);
+  ATFRAMEWORK_UTILS_API void set_opt_follow_location(bool v);
 
   /**
    * @brief use set_on_verbose instead
    */
-  LIBATFRAME_UTILS_API void set_opt_verbose(bool v);
+  ATFRAMEWORK_UTILS_API void set_opt_verbose(bool v);
 
   /**
    * @brief set accept encoding for this request
    * @param enc pass empty string("") to use all built-in supported encodings, and nullptr to disable it
    */
-  LIBATFRAME_UTILS_API void set_opt_accept_encoding(const char *enc);
+  ATFRAMEWORK_UTILS_API void set_opt_accept_encoding(const char *enc);
 
-  LIBATFRAME_UTILS_API void set_opt_http_content_decoding(bool v);
+  ATFRAMEWORK_UTILS_API void set_opt_http_content_decoding(bool v);
 
   /**
    * @brief set keepalive option for libcurl
@@ -372,88 +372,88 @@ class http_request : public std::enable_shared_from_this<http_request>,
    * @note set idle and interval into 0 to disable keepalive
    * @return true if it's supported
    */
-  LIBATFRAME_UTILS_API bool set_opt_keepalive(time_t idle, time_t interval);
+  ATFRAMEWORK_UTILS_API bool set_opt_keepalive(time_t idle, time_t interval);
 
-  LIBATFRAME_UTILS_API void set_opt_timeout(time_t timeout_ms);
+  ATFRAMEWORK_UTILS_API void set_opt_timeout(time_t timeout_ms);
 
-  LIBATFRAME_UTILS_API void set_opt_connect_timeout(time_t timeout_ms);
+  ATFRAMEWORK_UTILS_API void set_opt_connect_timeout(time_t timeout_ms);
 
-  LIBATFRAME_UTILS_API void set_opt_reuse_connection(bool v);
+  ATFRAMEWORK_UTILS_API void set_opt_reuse_connection(bool v);
 
-  LIBATFRAME_UTILS_API void set_libcurl_no_expect();
+  ATFRAMEWORK_UTILS_API void set_libcurl_no_expect();
 
-  LIBATFRAME_UTILS_API void set_libcurl_allow_expect_100_continue();
+  ATFRAMEWORK_UTILS_API void set_libcurl_allow_expect_100_continue();
 
-  LIBATFRAME_UTILS_API void append_http_header(const char *http_header);
+  ATFRAMEWORK_UTILS_API void append_http_header(const char *http_header);
   // -------- set options of libcurl @see https://curl.haxx.se/libcurl/c/curl_easy_setopt.html for detail --------
 
-  LIBATFRAME_UTILS_API const on_progress_fn_t &get_on_progress() const;
-  LIBATFRAME_UTILS_API void set_on_progress(on_progress_fn_t fn);
+  ATFRAMEWORK_UTILS_API const on_progress_fn_t &get_on_progress() const;
+  ATFRAMEWORK_UTILS_API void set_on_progress(on_progress_fn_t fn);
 
-  LIBATFRAME_UTILS_API const on_header_fn_t &get_on_header() const;
-  LIBATFRAME_UTILS_API void set_on_header(on_header_fn_t fn);
+  ATFRAMEWORK_UTILS_API const on_header_fn_t &get_on_header() const;
+  ATFRAMEWORK_UTILS_API void set_on_header(on_header_fn_t fn);
 
-  LIBATFRAME_UTILS_API const on_success_fn_t &get_on_success() const;
-  LIBATFRAME_UTILS_API void set_on_success(on_success_fn_t fn);
+  ATFRAMEWORK_UTILS_API const on_success_fn_t &get_on_success() const;
+  ATFRAMEWORK_UTILS_API void set_on_success(on_success_fn_t fn);
 
-  LIBATFRAME_UTILS_API const on_error_fn_t &get_on_error() const;
-  LIBATFRAME_UTILS_API void set_on_error(on_error_fn_t fn);
+  ATFRAMEWORK_UTILS_API const on_error_fn_t &get_on_error() const;
+  ATFRAMEWORK_UTILS_API void set_on_error(on_error_fn_t fn);
 
-  LIBATFRAME_UTILS_API const on_complete_fn_t &get_on_complete() const;
-  LIBATFRAME_UTILS_API void set_on_complete(on_complete_fn_t fn);
+  ATFRAMEWORK_UTILS_API const on_complete_fn_t &get_on_complete() const;
+  ATFRAMEWORK_UTILS_API void set_on_complete(on_complete_fn_t fn);
 
-  LIBATFRAME_UTILS_API const on_write_fn_t &get_on_write() const;
-  LIBATFRAME_UTILS_API void set_on_write(on_write_fn_t fn);
+  ATFRAMEWORK_UTILS_API const on_write_fn_t &get_on_write() const;
+  ATFRAMEWORK_UTILS_API void set_on_write(on_write_fn_t fn);
 
-  LIBATFRAME_UTILS_API const on_verbose_fn_t &get_on_verbose() const;
-  LIBATFRAME_UTILS_API void set_on_verbose(on_verbose_fn_t fn);
+  ATFRAMEWORK_UTILS_API const on_verbose_fn_t &get_on_verbose() const;
+  ATFRAMEWORK_UTILS_API void set_on_verbose(on_verbose_fn_t fn);
 
-  LIBATFRAME_UTILS_API bool is_running() const;
+  ATFRAMEWORK_UTILS_API bool is_running() const;
 
  private:
-  LIBATFRAME_UTILS_API void remove_curl_request();
+  ATFRAMEWORK_UTILS_API void remove_curl_request();
 
-  LIBATFRAME_UTILS_API void cleanup();
+  ATFRAMEWORK_UTILS_API void cleanup();
 
-  LIBATFRAME_UTILS_API void finish_req_rsp();
+  ATFRAMEWORK_UTILS_API void finish_req_rsp();
 
-  LIBATFRAME_UTILS_API CURL *mutable_request();
+  ATFRAMEWORK_UTILS_API CURL *mutable_request();
 
 #    if LIBCURL_VERSION_NUM >= 0x073800
-  LIBATFRAME_UTILS_API curl_mime *mutable_multipart();
+  ATFRAMEWORK_UTILS_API curl_mime *mutable_multipart();
 #    endif
 
-  LIBATFRAME_UTILS_API void build_http_form(method_t::type method);
+  ATFRAMEWORK_UTILS_API void build_http_form(method_t::type method);
 
-  static LIBATFRAME_UTILS_API curl_poll_context_t *malloc_poll(http_request *req, curl_socket_t sockfd);
-  static LIBATFRAME_UTILS_API void free_poll(curl_poll_context_t *);
+  static ATFRAMEWORK_UTILS_API curl_poll_context_t *malloc_poll(http_request *req, curl_socket_t sockfd);
+  static ATFRAMEWORK_UTILS_API void free_poll(curl_poll_context_t *);
 
-  static LIBATFRAME_UTILS_API void check_multi_info(CURLM *curl_handle);
+  static ATFRAMEWORK_UTILS_API void check_multi_info(CURLM *curl_handle);
 
-  static LIBATFRAME_UTILS_API void ev_callback_on_timer_closed(uv_handle_t *handle);
-  static LIBATFRAME_UTILS_API void ev_callback_on_poll_closed(uv_handle_t *handle);
-  static LIBATFRAME_UTILS_API void ev_callback_on_timeout(uv_timer_t *handle);
-  static LIBATFRAME_UTILS_API void ev_callback_curl_perform(uv_poll_t *req, int status, int events);
+  static ATFRAMEWORK_UTILS_API void ev_callback_on_timer_closed(uv_handle_t *handle);
+  static ATFRAMEWORK_UTILS_API void ev_callback_on_poll_closed(uv_handle_t *handle);
+  static ATFRAMEWORK_UTILS_API void ev_callback_on_timeout(uv_timer_t *handle);
+  static ATFRAMEWORK_UTILS_API void ev_callback_curl_perform(uv_poll_t *req, int status, int events);
 
-  static LIBATFRAME_UTILS_API int curl_callback_start_timer(CURLM *multi, long timeout_ms, void *userp);
-  static LIBATFRAME_UTILS_API int curl_callback_handle_socket(CURL *easy, curl_socket_t s, int action, void *userp,
-                                                              void *socketp);
-  static LIBATFRAME_UTILS_API size_t curl_callback_on_write(char *ptr, size_t size, size_t nmemb, void *userdata);
+  static ATFRAMEWORK_UTILS_API int curl_callback_start_timer(CURLM *multi, long timeout_ms, void *userp);
+  static ATFRAMEWORK_UTILS_API int curl_callback_handle_socket(CURL *easy, curl_socket_t s, int action, void *userp,
+                                                               void *socketp);
+  static ATFRAMEWORK_UTILS_API size_t curl_callback_on_write(char *ptr, size_t size, size_t nmemb, void *userdata);
 #    if LIBCURL_VERSION_NUM >= 0x072000
-  static LIBATFRAME_UTILS_API int curl_callback_on_progress(void *clientp, curl_off_t dltotal, curl_off_t dlnow,
-                                                            curl_off_t ultotal, curl_off_t ulnow);
+  static ATFRAMEWORK_UTILS_API int curl_callback_on_progress(void *clientp, curl_off_t dltotal, curl_off_t dlnow,
+                                                             curl_off_t ultotal, curl_off_t ulnow);
 #    else
-  static LIBATFRAME_UTILS_API int curl_callback_on_progress(void *clientp, double dltotal, double dlnow, double ultotal,
-                                                            double ulnow);
+  static ATFRAMEWORK_UTILS_API int curl_callback_on_progress(void *clientp, double dltotal, double dlnow,
+                                                             double ultotal, double ulnow);
 #    endif
-  static LIBATFRAME_UTILS_API size_t curl_callback_on_read(char *buffer, size_t size, size_t nitems, void *instream);
-  static LIBATFRAME_UTILS_API size_t curl_callback_on_header(char *buffer, size_t size, size_t nitems, void *userdata);
-  static LIBATFRAME_UTILS_API int curl_callback_on_verbose(CURL *handle, curl_infotype type, char *data, size_t size,
-                                                           void *userptr);
+  static ATFRAMEWORK_UTILS_API size_t curl_callback_on_read(char *buffer, size_t size, size_t nitems, void *instream);
+  static ATFRAMEWORK_UTILS_API size_t curl_callback_on_header(char *buffer, size_t size, size_t nitems, void *userdata);
+  static ATFRAMEWORK_UTILS_API int curl_callback_on_verbose(CURL *handle, curl_infotype type, char *data, size_t size,
+                                                            void *userptr);
 
-  static LIBATFRAME_UTILS_API void curl_share_callback_on_lock(CURL *handle, curl_lock_data data,
-                                                               curl_lock_access access, void *userptr);
-  static LIBATFRAME_UTILS_API void curl_share_callback_on_unlock(CURL *handle, curl_lock_data data, void *userptr);
+  static ATFRAMEWORK_UTILS_API void curl_share_callback_on_lock(CURL *handle, curl_lock_data data,
+                                                                curl_lock_access access, void *userptr);
+  static ATFRAMEWORK_UTILS_API void curl_share_callback_on_unlock(CURL *handle, curl_lock_data data, void *userptr);
 
  private:
   // event dispatcher
@@ -483,7 +483,7 @@ class http_request : public std::enable_shared_from_this<http_request>,
     curl_httppost *end;
 #    endif
     curl_slist *headerlist;
-    LIBATFRAME_UTILS_NAMESPACE_ID::tquerystring qs_fields;
+    ATFRAMEWORK_UTILS_NAMESPACE_ID::tquerystring qs_fields;
 
     size_t posted_size;
     int flags;
@@ -510,7 +510,7 @@ class http_request : public std::enable_shared_from_this<http_request>,
   on_verbose_fn_t on_verbose_fn_;
 };
 }  // namespace network
-LIBATFRAME_UTILS_NAMESPACE_END
+ATFRAMEWORK_UTILS_NAMESPACE_END
 #  endif
 
 #endif

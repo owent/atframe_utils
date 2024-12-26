@@ -11,9 +11,9 @@
 
 #include "random/uuid_generator.h"
 
-static void on_error(LIBATFRAME_UTILS_NAMESPACE_ID::cli::callback_param params, bool& need_exit) {
+static void on_error(ATFRAMEWORK_UTILS_NAMESPACE_ID::cli::callback_param params, bool& need_exit) {
   std::stringstream args;
-  for (LIBATFRAME_UTILS_NAMESPACE_ID::cli::cmd_option_list::cmd_array_type::const_iterator iter =
+  for (ATFRAMEWORK_UTILS_NAMESPACE_ID::cli::cmd_option_list::cmd_array_type::const_iterator iter =
            params.get_cmd_array().begin();
        iter != params.get_cmd_array().end(); ++iter) {
     args << " \"" << iter->first << '"';
@@ -24,13 +24,13 @@ static void on_error(LIBATFRAME_UTILS_NAMESPACE_ID::cli::callback_param params, 
     }
   }
 
-  LIBATFRAME_UTILS_NAMESPACE_ID::cli::cmd_option_list::value_type err_msg = params.get("@ErrorMsg");
+  ATFRAMEWORK_UTILS_NAMESPACE_ID::cli::cmd_option_list::value_type err_msg = params.get("@ErrorMsg");
   std::cerr << "Unknown Options: " << args.str() << (err_msg ? err_msg->to_string() : "") << std::endl;
 
   need_exit = true;
 }
 
-void on_help(LIBATFRAME_UTILS_NAMESPACE_ID::cli::callback_param, LIBATFRAME_UTILS_NAMESPACE_ID::cli::cmd_option* self,
+void on_help(ATFRAMEWORK_UTILS_NAMESPACE_ID::cli::callback_param, ATFRAMEWORK_UTILS_NAMESPACE_ID::cli::cmd_option* self,
              bool& need_exit) {
   std::cout << "Usage: uuidgen [options...]" << std::endl;
   std::cout << (*self);
@@ -38,12 +38,12 @@ void on_help(LIBATFRAME_UTILS_NAMESPACE_ID::cli::callback_param, LIBATFRAME_UTIL
   need_exit = true;
 }
 
-void on_version(LIBATFRAME_UTILS_NAMESPACE_ID::cli::callback_param, bool& need_exit) {
-  std::cout << "uuidgen from atframe_utils " << LIBATFRAME_UTILS_VERSION;
+void on_version(ATFRAMEWORK_UTILS_NAMESPACE_ID::cli::callback_param, bool& need_exit) {
+  std::cout << "uuidgen from atframe_utils " << ATFRAMEWORK_UTILS_VERSION;
 
-#if (defined(LIBATFRAME_UTILS_ENABLE_LIBUUID) && LIBATFRAME_UTILS_ENABLE_LIBUUID)
+#if (defined(ATFRAMEWORK_UTILS_ENABLE_LIBUUID) && ATFRAMEWORK_UTILS_ENABLE_LIBUUID)
   std::cout << " - libuuid/uuid";
-#elif (defined(LIBATFRAME_UTILS_ENABLE_UUID_WINRPC) && LIBATFRAME_UTILS_ENABLE_UUID_WINRPC)
+#elif (defined(ATFRAMEWORK_UTILS_ENABLE_UUID_WINRPC) && ATFRAMEWORK_UTILS_ENABLE_UUID_WINRPC)
   std::cout << " - Rpcrt";
 #endif
 
@@ -52,16 +52,16 @@ void on_version(LIBATFRAME_UTILS_NAMESPACE_ID::cli::callback_param, bool& need_e
 }
 
 int main(int argc, char* argv[]) {
-  LIBATFRAME_UTILS_NAMESPACE_ID::cli::cmd_option::ptr_type opts =
-      LIBATFRAME_UTILS_NAMESPACE_ID::cli::cmd_option::create();
+  ATFRAMEWORK_UTILS_NAMESPACE_ID::cli::cmd_option::ptr_type opts =
+      ATFRAMEWORK_UTILS_NAMESPACE_ID::cli::cmd_option::create();
   bool using_random = false;
   bool using_time = false;
   bool need_exit = false;
 
   opts->bind_cmd("@OnError", on_error, std::ref(need_exit));
-  opts->bind_cmd("-r, --random", LIBATFRAME_UTILS_NAMESPACE_ID::cli::phoenix::set_const(using_random, true))
+  opts->bind_cmd("-r, --random", ATFRAMEWORK_UTILS_NAMESPACE_ID::cli::phoenix::set_const(using_random, true))
       ->set_help_msg("Generate UUID using random engine(V4)");
-  opts->bind_cmd("-t, --time", LIBATFRAME_UTILS_NAMESPACE_ID::cli::phoenix::set_const(using_time, true))
+  opts->bind_cmd("-t, --time", ATFRAMEWORK_UTILS_NAMESPACE_ID::cli::phoenix::set_const(using_time, true))
       ->set_help_msg("Generate UUID using time engine(V1)");
 
   opts->bind_cmd("-h, --help", on_help, opts.get(), std::ref(need_exit))->set_help_msg("Show help messages");
@@ -74,11 +74,11 @@ int main(int argc, char* argv[]) {
   }
 
   if (using_random) {
-    std::cout << LIBATFRAME_UTILS_NAMESPACE_ID::random::uuid_generator::generate_string_random() << std::endl;
+    std::cout << ATFRAMEWORK_UTILS_NAMESPACE_ID::random::uuid_generator::generate_string_random() << std::endl;
   } else if (using_time) {
-    std::cout << LIBATFRAME_UTILS_NAMESPACE_ID::random::uuid_generator::generate_string_time() << std::endl;
+    std::cout << ATFRAMEWORK_UTILS_NAMESPACE_ID::random::uuid_generator::generate_string_time() << std::endl;
   } else {
-    std::cout << LIBATFRAME_UTILS_NAMESPACE_ID::random::uuid_generator::generate_string() << std::endl;
+    std::cout << ATFRAMEWORK_UTILS_NAMESPACE_ID::random::uuid_generator::generate_string() << std::endl;
   }
   return 0;
 }

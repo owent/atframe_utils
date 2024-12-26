@@ -15,7 +15,7 @@
 
 namespace {
 
-static void run_fun(util::nostd::function_ref<void()> f) { f(); }
+static void run_fun(atfw::util::nostd::function_ref<void()> f) { f(); }
 
 CASE_TEST(function_ref_test, Lambda) {
   bool ran = false;
@@ -26,17 +26,17 @@ CASE_TEST(function_ref_test, Lambda) {
 static int normal_function() { return 1337; }
 
 CASE_TEST(function_ref_test, Function1) {
-  util::nostd::function_ref<int()> ref(&normal_function);
+  atfw::util::nostd::function_ref<int()> ref(&normal_function);
   CASE_EXPECT_EQ(1337, ref());
 }
 
 CASE_TEST(function_ref_test, Function2) {
-  util::nostd::function_ref<int()> ref(normal_function);
+  atfw::util::nostd::function_ref<int()> ref(normal_function);
   CASE_EXPECT_EQ(1337, ref());
 }
 
 CASE_TEST(function_ref_test, ConstFunction) {
-  util::nostd::function_ref<int() const> ref(normal_function);
+  atfw::util::nostd::function_ref<int() const> ref(normal_function);
   CASE_EXPECT_EQ(1337, ref());
 }
 
@@ -44,25 +44,25 @@ static int no_except_function() noexcept { return 1337; }
 
 // TODO(jdennett): Add a test for noexcept member functions.
 CASE_TEST(function_ref_test, no_except_function) {
-  util::nostd::function_ref<int()> ref(no_except_function);
+  atfw::util::nostd::function_ref<int()> ref(no_except_function);
   CASE_EXPECT_EQ(1337, ref());
 }
 
 CASE_TEST(function_ref_test, ForwardsArgs) {
   auto l = [](std::unique_ptr<int> i) { return *i; };
-  util::nostd::function_ref<int(std::unique_ptr<int>)> ref(l);
+  atfw::util::nostd::function_ref<int(std::unique_ptr<int>)> ref(l);
   CASE_EXPECT_EQ(42, ref(gsl::make_unique<int>(42)));
 }
 
 CASE_TEST(function_ref_test, ReturnMoveOnly) {
   auto l = [] { return gsl::make_unique<int>(29); };
-  util::nostd::function_ref<std::unique_ptr<int>()> ref(l);
+  atfw::util::nostd::function_ref<std::unique_ptr<int>()> ref(l);
   CASE_EXPECT_EQ(29, *ref());
 }
 
 CASE_TEST(function_ref_test, ManyArgs) {
   auto l = [](int a, int b, int c) { return a + b + c; };
-  util::nostd::function_ref<int(int, int, int)> ref(l);
+  atfw::util::nostd::function_ref<int(int, int, int)> ref(l);
   CASE_EXPECT_EQ(6, ref(1, 2, 3));
 }
 
@@ -72,7 +72,7 @@ CASE_TEST(function_ref_test, VoidResultFromNonVoidFunctor) {
     ran = true;
     return 2;
   };
-  util::nostd::function_ref<void()> ref(l);
+  atfw::util::nostd::function_ref<void()> ref(l);
   ref();
   CASE_EXPECT_TRUE(ran);
 }
@@ -83,16 +83,16 @@ CASE_TEST(function_ref_test, CastFromDerived) {
 
   Derived d;
   auto l1 = [&](Base* b) { CASE_EXPECT_EQ(&d, b); };
-  util::nostd::function_ref<void(Derived*)> ref1(l1);
+  atfw::util::nostd::function_ref<void(Derived*)> ref1(l1);
   ref1(&d);
 
   auto l2 = [&]() -> Derived* { return &d; };
-  util::nostd::function_ref<Base*()> ref2(l2);
+  atfw::util::nostd::function_ref<Base*()> ref2(l2);
   CASE_EXPECT_EQ(&d, ref2());
 }
 
 CASE_TEST(function_ref_test, VoidResultFromNonVoidFuncton) {
-  util::nostd::function_ref<void()> ref(normal_function);
+  atfw::util::nostd::function_ref<void()> ref(normal_function);
   ref();
 }
 
@@ -103,7 +103,7 @@ CASE_TEST(function_ref_test, MemberPtr) {
 
   S s{1100111};
   auto mem_ptr = &S::i;
-  util::nostd::function_ref<int(const S& s)> ref(mem_ptr);
+  atfw::util::nostd::function_ref<int(const S& s)> ref(mem_ptr);
   CASE_EXPECT_EQ(1100111, ref(s));
 }
 
@@ -115,13 +115,13 @@ CASE_TEST(function_ref_test, MemberFun) {
 
   S s{22};
   auto mem_fun_ptr = &S::get_i;
-  util::nostd::function_ref<int(const S& s)> ref(mem_fun_ptr);
+  atfw::util::nostd::function_ref<int(const S& s)> ref(mem_fun_ptr);
   CASE_EXPECT_EQ(22, ref(s));
 }
 
 CASE_TEST(function_ref_test, PassByValueTypes) {
-  using util::nostd::details::functional_ref_invoker;
-  using util::nostd::details::functional_ref_void_ptr;
+  using atfw::util::nostd::details::functional_ref_invoker;
+  using atfw::util::nostd::details::functional_ref_void_ptr;
   struct small_trivial {
     void* p[2];
   };
@@ -147,14 +147,14 @@ CASE_TEST(function_ref_test, PassByValueTypes) {
   {
     large_trivial obj;
     auto test = [&obj](large_trivial& input) { CASE_EXPECT_EQ(&input, &obj); };
-    util::nostd::function_ref<void(large_trivial&)> ref(test);
+    atfw::util::nostd::function_ref<void(large_trivial&)> ref(test);
     ref(obj);
   }
 
   {
     small_trivial obj;
     auto test = [&obj](small_trivial& input) { CASE_EXPECT_EQ(&input, &obj); };
-    util::nostd::function_ref<void(small_trivial&)> ref(test);
+    atfw::util::nostd::function_ref<void(small_trivial&)> ref(test);
     ref(obj);
   }
 }
@@ -162,7 +162,7 @@ CASE_TEST(function_ref_test, PassByValueTypes) {
 CASE_TEST(function_ref_test, ReferenceToIncompleteType) {
   struct incomplete_type;
   auto test = [](incomplete_type&) {};
-  util::nostd::function_ref<void(incomplete_type&)> ref(test);
+  atfw::util::nostd::function_ref<void(incomplete_type&)> ref(test);
 
   struct incomplete_type {};
   incomplete_type obj;

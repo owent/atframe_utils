@@ -42,7 +42,7 @@
 
 #include "shell_font.h"
 
-LIBATFRAME_UTILS_NAMESPACE_BEGIN
+ATFRAMEWORK_UTILS_NAMESPACE_BEGIN
 namespace cli {
 // 标准指令处理函数(无返回值，参数为选项的映射表)
 // void function_name (cmd_option_list&, [参数]); // 函数参数可选
@@ -65,7 +65,7 @@ using value_type = std::shared_ptr<cli::cmd_option_value>;
  *                     [注: 调用start函数不会响应这个事件]
  */
 template <typename TCmdStr>
-class LIBATFRAME_UTILS_API_HEAD_ONLY cmd_option_bind : public binder::cmd_option_bind_base {
+class ATFRAMEWORK_UTILS_API_HEAD_ONLY cmd_option_bind : public binder::cmd_option_bind_base {
  public:
   using uc_t = unsigned char;
   using self_type = cmd_option_bind<TCmdStr>;
@@ -142,7 +142,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY cmd_option_bind : public binder::cmd_option
 
       // all children do not make a help_msg_t
       if (callback_children_.find(iter->first) != callback_children_.end()) {
-#if defined(LIBATFRAME_UTILS_ENABLE_RTTI) && LIBATFRAME_UTILS_ENABLE_RTTI
+#if defined(ATFRAMEWORK_UTILS_ENABLE_RTTI) && ATFRAMEWORK_UTILS_ENABLE_RTTI
         self_type *child = dynamic_cast<self_type *>(iter->second.get());
 #else
         self_type *child = static_cast<self_type *>(iter->second.get());
@@ -583,7 +583,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY cmd_option_bind : public binder::cmd_option
    */
   template <typename _F,
             typename... _Args>  // 绑定函数(_Arg:参数[注意值的复制发生在本函数执行时], _R: 绑定函数返回值类型)
-  LIBATFRAME_UTILS_API_HEAD_ONLY std::shared_ptr<binder::cmd_option_bindt<
+  ATFRAMEWORK_UTILS_API_HEAD_ONLY std::shared_ptr<binder::cmd_option_bindt<
       typename binder::maybe_wrap_member_pointer<_F>::caller_type, binder::cmd_option_bind_param_list<_Args...> > >
   bind_cmd(const std::string &cmd_content, _F raw_fn, _Args... args) {
     using list_type = binder::cmd_option_bind_param_list<_Args...>;
@@ -623,7 +623,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY cmd_option_bind : public binder::cmd_option
   }
 
   std::shared_ptr<binder::cmd_option_bind_base> bind_child_cmd(const std::string cmd_content, ptr_type cmd_opt) {
-#if defined(LIBATFRAME_UTILS_ENABLE_RTTI) && LIBATFRAME_UTILS_ENABLE_RTTI
+#if defined(ATFRAMEWORK_UTILS_ENABLE_RTTI) && ATFRAMEWORK_UTILS_ENABLE_RTTI
     std::shared_ptr<binder::cmd_option_bind_base> base_node =
         std::dynamic_pointer_cast<binder::cmd_option_bind_base>(cmd_opt);
 #else
@@ -642,16 +642,16 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY cmd_option_bind : public binder::cmd_option
 };
 
 template <typename Ty>
-LIBATFRAME_UTILS_API_HEAD_ONLY short cmd_option_bind<Ty>::map_value_[256] = {0};
+ATFRAMEWORK_UTILS_API_HEAD_ONLY short cmd_option_bind<Ty>::map_value_[256] = {0};
 
 template <typename Ty>
-LIBATFRAME_UTILS_API_HEAD_ONLY char cmd_option_bind<Ty>::trans_value_[256] = {0};
+ATFRAMEWORK_UTILS_API_HEAD_ONLY char cmd_option_bind<Ty>::trans_value_[256] = {0};
 
 // 类型重定义
 using cmd_option = cmd_option_bind<std::string>;
 using cmd_option_ci = cmd_option_bind<cmd_option_ci_string>;
 }  // namespace cli
-LIBATFRAME_UTILS_NAMESPACE_END
+ATFRAMEWORK_UTILS_NAMESPACE_END
 
 #include <config/compiler/template_suffix.h>
 

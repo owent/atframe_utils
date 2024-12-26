@@ -15,7 +15,7 @@
  * 自由函数绑定器
  */
 
-LIBATFRAME_UTILS_NAMESPACE_BEGIN
+ATFRAMEWORK_UTILS_NAMESPACE_BEGIN
 namespace cli {
 // 绑定器集合
 namespace binder {
@@ -23,7 +23,7 @@ namespace binder {
 // ===       函数绑定       ===
 // ============================
 template <typename _TF>
-class LIBATFRAME_UTILS_API_HEAD_ONLY cmd_option_bindt_cc_caller {
+class ATFRAMEWORK_UTILS_API_HEAD_ONLY cmd_option_bindt_cc_caller {
  private:
   _TF func_;
 
@@ -37,5 +37,5 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY cmd_option_bindt_cc_caller {
 };
 }  // namespace binder
 }  // namespace cli
-LIBATFRAME_UTILS_NAMESPACE_END
+ATFRAMEWORK_UTILS_NAMESPACE_END
 #endif /* cmd_option_bindt_cc_caller */

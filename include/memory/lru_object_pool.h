@@ -44,12 +44,12 @@
 
 #include "lock/seq_alloc.h"
 
-LIBATFRAME_UTILS_NAMESPACE_BEGIN
+ATFRAMEWORK_UTILS_NAMESPACE_BEGIN
 namespace memory {
 
-class LIBATFRAME_UTILS_API lru_pool_base {
+class ATFRAMEWORK_UTILS_API lru_pool_base {
  public:
-  class LIBATFRAME_UTILS_API list_type_base {
+  class ATFRAMEWORK_UTILS_API list_type_base {
    public:
     virtual size_t size() const = 0;
     virtual bool gc() = 0;
@@ -80,11 +80,11 @@ class lru_pool_manager {
   using check_list_t = std::list<check_item_t>;
 
  public:
-  static LIBATFRAME_UTILS_API ptr_t create();
+  static ATFRAMEWORK_UTILS_API ptr_t create();
 
 #define _UTIL_MEMPOOL_LRUOBJECTPOOL_SETTER_GETTER(x) \
-  LIBATFRAME_UTILS_API void set_##x(size_t v);       \
-  LIBATFRAME_UTILS_API size_t get_##x() const;
+  ATFRAMEWORK_UTILS_API void set_##x(size_t v);      \
+  ATFRAMEWORK_UTILS_API size_t get_##x() const;
 
   _UTIL_MEMPOOL_LRUOBJECTPOOL_SETTER_GETTER(item_min_bound);   // 主动GC的保留对象数量
   _UTIL_MEMPOOL_LRUOBJECTPOOL_SETTER_GETTER(item_max_bound);   // 超出对象数量触发GC
@@ -92,63 +92,63 @@ class lru_pool_manager {
   _UTIL_MEMPOOL_LRUOBJECTPOOL_SETTER_GETTER(gc_item);          // 下一次GC保留的对象数量
 #undef _UTIL_MEMPOOL_LRUOBJECTPOOL_SETTER_GETTER
 
-  LIBATFRAME_UTILS_API void set_list_tick_timeout(time_t v);
+  ATFRAMEWORK_UTILS_API void set_list_tick_timeout(time_t v);
 
-  LIBATFRAME_UTILS_API time_t get_list_tick_timeout() const;
+  ATFRAMEWORK_UTILS_API time_t get_list_tick_timeout() const;
 
-  LIBATFRAME_UTILS_API void set_item_adjust_min(size_t v);
+  ATFRAMEWORK_UTILS_API void set_item_adjust_min(size_t v);
 
-  LIBATFRAME_UTILS_API size_t get_item_adjust_min() const;
+  ATFRAMEWORK_UTILS_API size_t get_item_adjust_min() const;
 
-  LIBATFRAME_UTILS_API void set_item_adjust_max(size_t v);
+  ATFRAMEWORK_UTILS_API void set_item_adjust_max(size_t v);
 
-  LIBATFRAME_UTILS_API size_t get_item_adjust_max() const;
+  ATFRAMEWORK_UTILS_API size_t get_item_adjust_max() const;
 
   /**
    * @brief 获取实例缓存数量
    * @note 如果不是非常了解这个数值的作用，请不要修改它
    */
-  LIBATFRAME_UTILS_API const LIBATFRAME_UTILS_NAMESPACE_ID::lock::seq_alloc_u64 &item_count() const;
+  ATFRAMEWORK_UTILS_API const ATFRAMEWORK_UTILS_NAMESPACE_ID::lock::seq_alloc_u64 &item_count() const;
 
   /**
    * @brief 主动GC，会触发阈值自适应
    * @return 此次调用回收的元素的个数
    */
-  LIBATFRAME_UTILS_API size_t gc();
+  ATFRAMEWORK_UTILS_API size_t gc();
 
   /**
    * @brief 定时回调
    * @param tick 用于判定超时的tick时间，时间单位由业务逻辑决定
    * @return 此次调用回收的元素的个数
    */
-  LIBATFRAME_UTILS_API size_t proc(time_t tick);
+  ATFRAMEWORK_UTILS_API size_t proc(time_t tick);
 
   /**
    * @brief 添加检查列表
    */
-  LIBATFRAME_UTILS_API check_list_t::iterator push_check_list(weak_rc_ptr<lru_pool_base::list_type_base> list_);
+  ATFRAMEWORK_UTILS_API check_list_t::iterator push_check_list(weak_rc_ptr<lru_pool_base::list_type_base> list_);
 
-  LIBATFRAME_UTILS_API bool erase_check_list(check_list_t::iterator iter);
+  ATFRAMEWORK_UTILS_API bool erase_check_list(check_list_t::iterator iter);
 
   // GCC 4.4 don't support erase(const_iterator)
-  // LIBATFRAME_UTILS_API bool erase_check_list(check_list_t::const_iterator iter);
+  // ATFRAMEWORK_UTILS_API bool erase_check_list(check_list_t::const_iterator iter);
 
-  LIBATFRAME_UTILS_API check_list_t::iterator end_check_list();
+  ATFRAMEWORK_UTILS_API check_list_t::iterator end_check_list();
 
  private:
-  LIBATFRAME_UTILS_API lru_pool_manager();
+  ATFRAMEWORK_UTILS_API lru_pool_manager();
 
   lru_pool_manager(const lru_pool_manager &);
   lru_pool_manager &operator=(const lru_pool_manager &);
 
-  LIBATFRAME_UTILS_API size_t inner_gc();
+  ATFRAMEWORK_UTILS_API size_t inner_gc();
 
-  LIBATFRAME_UTILS_API bool check_tick(time_t tp);
+  ATFRAMEWORK_UTILS_API bool check_tick(time_t tp);
 
  private:
   size_t item_min_bound_;
   size_t item_max_bound_;
-  LIBATFRAME_UTILS_NAMESPACE_ID::lock::seq_alloc_u64 item_count_;
+  ATFRAMEWORK_UTILS_NAMESPACE_ID::lock::seq_alloc_u64 item_count_;
   size_t proc_item_count_;
   size_t gc_item_;
   check_list_t checked_list_;
@@ -163,15 +163,14 @@ class lru_pool_manager {
 };
 
 template <class TObj>
-struct LIBATFRAME_UTILS_API_HEAD_ONLY lru_default_action {
-  void push(TObj *) {}
-  void pull(TObj *) {}
-  void reset(TObj *) {}
-  void gc(TObj *obj) { delete obj; }
-};
+struct ATFRAMEWORK_UTILS_API_HEAD_ONLY lru_default_action{
+    void push(TObj *){} void pull(TObj *){} void reset(TObj *){} void gc(TObj * obj){delete obj;
+}  // namespace memory
+}
+;
 
 template <class TKey, class TObj, class TAction = lru_default_action<TObj> >
-class LIBATFRAME_UTILS_API_HEAD_ONLY lru_pool : public lru_pool_base {
+class ATFRAMEWORK_UTILS_API_HEAD_ONLY lru_pool : public lru_pool_base {
  public:
   using key_t = TKey;
   using value_type = TObj;
@@ -179,7 +178,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY lru_pool : public lru_pool_base {
 
   class list_type;
   using list_ptr_type = strong_rc_ptr<list_type>;
-  using cat_map_type = LIBATFRAME_UTILS_AUTO_SELETC_MAP(key_t, list_ptr_type);
+  using cat_map_type = std::unordered_map<key_t, list_ptr_type>;
 
   class list_type : public lru_pool_base::list_type_base {
    public:
@@ -238,12 +237,12 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY lru_pool : public lru_pool_base {
       }
 
       for (typename std::list<wrapper>::iterator iter = cache_.begin(); iter != cache_.end(); ++iter) {
-#if defined(LIBATFRAME_UTILS_ENABLE_RTTI) && LIBATFRAME_UTILS_ENABLE_RTTI
-        (*iter).refer_iterator =
-            owner_->mgr_->push_check_list(util::memory::dynamic_pointer_cast<lru_pool_base::list_type_base>(self));
+#if defined(ATFRAMEWORK_UTILS_ENABLE_RTTI) && ATFRAMEWORK_UTILS_ENABLE_RTTI
+        (*iter).refer_iterator = owner_->mgr_->push_check_list(
+            ATFRAMEWORK_UTILS_NAMESPACE_ID::memory::dynamic_pointer_cast<lru_pool_base::list_type_base>(self));
 #else
-        (*iter).refer_iterator =
-            owner_->mgr_->push_check_list(util::memory::static_pointer_cast<lru_pool_base::list_type_base>(self));
+        (*iter).refer_iterator = owner_->mgr_->push_check_list(
+            ATFRAMEWORK_UTILS_NAMESPACE_ID::memory::static_pointer_cast<lru_pool_base::list_type_base>(self));
 #endif
       }
     }
@@ -257,12 +256,12 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY lru_pool : public lru_pool_base {
 
       (*iter).object = obj;
       if (owner_->mgr_) {
-#if defined(LIBATFRAME_UTILS_ENABLE_RTTI) && LIBATFRAME_UTILS_ENABLE_RTTI
-        (*iter).refer_iterator =
-            owner_->mgr_->push_check_list(util::memory::dynamic_pointer_cast<lru_pool_base::list_type_base>(self));
+#if defined(ATFRAMEWORK_UTILS_ENABLE_RTTI) && ATFRAMEWORK_UTILS_ENABLE_RTTI
+        (*iter).refer_iterator = owner_->mgr_->push_check_list(
+            ATFRAMEWORK_UTILS_NAMESPACE_ID::memory::dynamic_pointer_cast<lru_pool_base::list_type_base>(self));
 #else
-        (*iter).refer_iterator =
-            owner_->mgr_->push_check_list(util::memory::static_pointer_cast<lru_pool_base::list_type_base>(self));
+        (*iter).refer_iterator = owner_->mgr_->push_check_list(
+            ATFRAMEWORK_UTILS_NAMESPACE_ID::memory::static_pointer_cast<lru_pool_base::list_type_base>(self));
 #endif
       }
 
@@ -480,4 +479,4 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY lru_pool : public lru_pool_base {
 #endif
 };
 }  // namespace memory
-LIBATFRAME_UTILS_NAMESPACE_END
+ATFRAMEWORK_UTILS_NAMESPACE_END

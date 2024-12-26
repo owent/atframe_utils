@@ -38,7 +38,7 @@ struct hash<test_wal_object_log_action> {
 }  // namespace std
 
 struct test_wal_object_log_type {
-  LIBATFRAME_UTILS_NAMESPACE_ID::distributed_system::wal_time_point timepoint;
+  atfw::util::distributed_system::wal_time_point timepoint;
   int64_t log_key;
   test_wal_object_log_action action;
   int64_t data;
@@ -76,12 +76,11 @@ size_t test_wal_object_log_hash(size_t previous_hash_code, int64_t log_key) {
 
 namespace mt {
 using test_wal_object_log_operator =
-    LIBATFRAME_UTILS_NAMESPACE_ID::distributed_system::wal_log_operator<int64_t, test_wal_object_log_type,
-                                                                        test_wal_object_log_action_getter>;
+    atfw::util::distributed_system::wal_log_operator<int64_t, test_wal_object_log_type,
+                                                     test_wal_object_log_action_getter>;
 using test_wal_object_type =
-    LIBATFRAME_UTILS_NAMESPACE_ID::distributed_system::wal_object<test_wal_object_log_storage_type,
-                                                                  test_wal_object_log_operator, test_wal_object_context,
-                                                                  test_wal_object_private_type>;
+    atfw::util::distributed_system::wal_object<test_wal_object_log_storage_type, test_wal_object_log_operator,
+                                               test_wal_object_context, test_wal_object_private_type>;
 
 static_assert(std::is_same<std::shared_ptr<test_wal_object_context>,
                            test_wal_object_log_operator::strong_ptr<test_wal_object_context>>::value,
@@ -112,7 +111,7 @@ test_wal_object_stats g_test_wal_object_stats{1, 0, 0, 0, 0, 0, 0, 0, test_wal_o
 
 static test_wal_object_type::vtable_pointer create_vtable() {
   using wal_object_type = test_wal_object_type;
-  using wal_result_code = LIBATFRAME_UTILS_NAMESPACE_ID::distributed_system::wal_result_code;
+  using wal_result_code = atfw::util::distributed_system::wal_result_code;
 
   wal_object_type::vtable_pointer ret = test_wal_object_log_operator::make_strong<wal_object_type::vtable_type>();
 
@@ -289,7 +288,7 @@ CASE_TEST(wal_object, load_and_dump_mt) {
       details::g_test_wal_object_stats.default_action_count + details::g_test_wal_object_stats.delegate_action_count;
 
   test_wal_object_log_storage_type load_storege;
-  LIBATFRAME_UTILS_NAMESPACE_ID::distributed_system::wal_time_point now = std::chrono::system_clock::now();
+  atfw::util::distributed_system::wal_time_point now = std::chrono::system_clock::now();
   load_storege.global_ignore = 123;
   load_storege.logs.push_back(test_wal_object_log_type{now, 124, test_wal_object_log_action::kDoNothing, 124, 0});
   load_storege.logs.push_back(test_wal_object_log_type{now, 125, test_wal_object_log_action::kFallbackDefault, 125, 0});
@@ -306,8 +305,7 @@ CASE_TEST(wal_object, load_and_dump_mt) {
   if (!wal_obj) {
     return;
   }
-  CASE_EXPECT_TRUE(LIBATFRAME_UTILS_NAMESPACE_ID::distributed_system::wal_result_code::kOk ==
-                   wal_obj->load(load_storege, ctx));
+  CASE_EXPECT_TRUE(atfw::util::distributed_system::wal_result_code::kOk == wal_obj->load(load_storege, ctx));
   CASE_EXPECT_EQ(old_action_count, details::g_test_wal_object_stats.default_action_count +
                                        details::g_test_wal_object_stats.delegate_action_count);
 
@@ -322,8 +320,7 @@ CASE_TEST(wal_object, load_and_dump_mt) {
 
   // dump
   test_wal_object_log_storage_type dump_storege;
-  CASE_EXPECT_TRUE(LIBATFRAME_UTILS_NAMESPACE_ID::distributed_system::wal_result_code::kOk ==
-                   wal_obj->dump(dump_storege, ctx));
+  CASE_EXPECT_TRUE(atfw::util::distributed_system::wal_result_code::kOk == wal_obj->dump(dump_storege, ctx));
 
   CASE_EXPECT_EQ(123, dump_storege.global_ignore);
   CASE_EXPECT_EQ(3, dump_storege.logs.size());
@@ -334,7 +331,7 @@ CASE_TEST(wal_object, load_and_dump_mt) {
 CASE_TEST(wal_object, add_action_mt) {
   test_wal_object_log_storage_type storage;
   test_wal_object_context ctx;
-  LIBATFRAME_UTILS_NAMESPACE_ID::distributed_system::wal_time_point now = std::chrono::system_clock::now();
+  atfw::util::distributed_system::wal_time_point now = std::chrono::system_clock::now();
 
   auto conf = create_configure();
   auto vtable = create_vtable();
@@ -566,7 +563,7 @@ CASE_TEST(wal_object, add_action_mt) {
 CASE_TEST(wal_object, gc_mt) {
   test_wal_object_log_storage_type storage;
   test_wal_object_context ctx;
-  LIBATFRAME_UTILS_NAMESPACE_ID::distributed_system::wal_time_point now = std::chrono::system_clock::now();
+  atfw::util::distributed_system::wal_time_point now = std::chrono::system_clock::now();
 
   auto conf = create_configure();
   auto vtable = create_vtable();
@@ -685,7 +682,7 @@ CASE_TEST(wal_object, gc_mt) {
 CASE_TEST(wal_object, ignore_mt) {
   test_wal_object_log_storage_type storage;
   test_wal_object_context ctx;
-  LIBATFRAME_UTILS_NAMESPACE_ID::distributed_system::wal_time_point now = std::chrono::system_clock::now();
+  atfw::util::distributed_system::wal_time_point now = std::chrono::system_clock::now();
 
   auto conf = create_configure();
   auto vtable = create_vtable();
@@ -707,7 +704,7 @@ CASE_TEST(wal_object, ignore_mt) {
     log->data = log->log_key + 100;
     wal_obj->set_global_ingore_key(log->log_key);
     auto push_back_result = wal_obj->push_back(log, ctx);
-    CASE_EXPECT_TRUE(LIBATFRAME_UTILS_NAMESPACE_ID::distributed_system::wal_result_code::kIgnore == push_back_result);
+    CASE_EXPECT_TRUE(atfw::util::distributed_system::wal_result_code::kIgnore == push_back_result);
 
     CASE_EXPECT_EQ(0, wal_obj->get_all_logs().size());
     CASE_EXPECT_EQ(old_default_action_count, details::g_test_wal_object_stats.default_action_count);
@@ -725,7 +722,7 @@ CASE_TEST(wal_object, ignore_mt) {
     }
     log->data = log->log_key + 100;
     auto push_back_result = wal_obj->push_back(log, ctx);
-    CASE_EXPECT_TRUE(LIBATFRAME_UTILS_NAMESPACE_ID::distributed_system::wal_result_code::kIgnore == push_back_result);
+    CASE_EXPECT_TRUE(atfw::util::distributed_system::wal_result_code::kIgnore == push_back_result);
 
     CASE_EXPECT_EQ(0, wal_obj->get_all_logs().size());
     CASE_EXPECT_EQ(old_default_action_count, details::g_test_wal_object_stats.default_action_count);
@@ -736,7 +733,7 @@ CASE_TEST(wal_object, ignore_mt) {
 CASE_TEST(wal_object, reorder_mt) {
   test_wal_object_log_storage_type storage;
   test_wal_object_context ctx;
-  LIBATFRAME_UTILS_NAMESPACE_ID::distributed_system::wal_time_point now = std::chrono::system_clock::now();
+  atfw::util::distributed_system::wal_time_point now = std::chrono::system_clock::now();
 
   auto conf = create_configure();
   auto vtable = create_vtable();
@@ -782,21 +779,20 @@ CASE_TEST(wal_object, reorder_mt) {
 }  // namespace mt
 
 namespace st {
-using test_wal_object_log_operator = LIBATFRAME_UTILS_NAMESPACE_ID::distributed_system::wal_log_operator_with_mt_mode<
+using test_wal_object_log_operator = atfw::util::distributed_system::wal_log_operator_with_mt_mode<
     int64_t, test_wal_object_log_type, test_wal_object_log_action_getter,
-    LIBATFRAME_UTILS_NAMESPACE_ID::distributed_system::wal_mt_mode::kSingleThread>;
+    atfw::util::distributed_system::wal_mt_mode::kSingleThread>;
 using test_wal_object_type =
-    LIBATFRAME_UTILS_NAMESPACE_ID::distributed_system::wal_object<test_wal_object_log_storage_type,
-                                                                  test_wal_object_log_operator, test_wal_object_context,
-                                                                  test_wal_object_private_type>;
+    atfw::util::distributed_system::wal_object<test_wal_object_log_storage_type, test_wal_object_log_operator,
+                                               test_wal_object_context, test_wal_object_private_type>;
 
-static_assert(std::is_same<util::memory::strong_rc_ptr<test_wal_object_context>,
+static_assert(std::is_same<atfw::util::memory::strong_rc_ptr<test_wal_object_context>,
                            test_wal_object_log_operator::strong_ptr<test_wal_object_context>>::value,
               "WAL check strong_ptr type failed");
-static_assert(std::is_same<util::memory::weak_rc_ptr<test_wal_object_context>,
+static_assert(std::is_same<atfw::util::memory::weak_rc_ptr<test_wal_object_context>,
                            test_wal_object_log_operator::weak_ptr<test_wal_object_context>>::value,
               "WAL check weak_ptr type failed");
-static_assert(std::is_same<util::memory::enable_shared_rc_from_this<test_wal_object_context>,
+static_assert(std::is_same<atfw::util::memory::enable_shared_rc_from_this<test_wal_object_context>,
                            test_wal_object_log_operator::enable_shared_from_this<test_wal_object_context>>::value,
               "WAL check enable_shared_from_this type failed");
 
@@ -819,7 +815,7 @@ test_wal_object_stats g_test_wal_object_stats{1, 0, 0, 0, 0, 0, 0, 0, test_wal_o
 
 static test_wal_object_type::vtable_pointer create_vtable() {
   using wal_object_type = test_wal_object_type;
-  using wal_result_code = LIBATFRAME_UTILS_NAMESPACE_ID::distributed_system::wal_result_code;
+  using wal_result_code = atfw::util::distributed_system::wal_result_code;
 
   wal_object_type::vtable_pointer ret = test_wal_object_log_operator::make_strong<wal_object_type::vtable_type>();
 
@@ -996,7 +992,7 @@ CASE_TEST(wal_object, load_and_dump_st) {
       details::g_test_wal_object_stats.default_action_count + details::g_test_wal_object_stats.delegate_action_count;
 
   test_wal_object_log_storage_type load_storege;
-  LIBATFRAME_UTILS_NAMESPACE_ID::distributed_system::wal_time_point now = std::chrono::system_clock::now();
+  atfw::util::distributed_system::wal_time_point now = std::chrono::system_clock::now();
   load_storege.global_ignore = 123;
   load_storege.logs.push_back(test_wal_object_log_type{now, 124, test_wal_object_log_action::kDoNothing, 124, 0});
   load_storege.logs.push_back(test_wal_object_log_type{now, 125, test_wal_object_log_action::kFallbackDefault, 125, 0});
@@ -1013,8 +1009,7 @@ CASE_TEST(wal_object, load_and_dump_st) {
   if (!wal_obj) {
     return;
   }
-  CASE_EXPECT_TRUE(LIBATFRAME_UTILS_NAMESPACE_ID::distributed_system::wal_result_code::kOk ==
-                   wal_obj->load(load_storege, ctx));
+  CASE_EXPECT_TRUE(atfw::util::distributed_system::wal_result_code::kOk == wal_obj->load(load_storege, ctx));
   CASE_EXPECT_EQ(old_action_count, details::g_test_wal_object_stats.default_action_count +
                                        details::g_test_wal_object_stats.delegate_action_count);
 
@@ -1029,8 +1024,7 @@ CASE_TEST(wal_object, load_and_dump_st) {
 
   // dump
   test_wal_object_log_storage_type dump_storege;
-  CASE_EXPECT_TRUE(LIBATFRAME_UTILS_NAMESPACE_ID::distributed_system::wal_result_code::kOk ==
-                   wal_obj->dump(dump_storege, ctx));
+  CASE_EXPECT_TRUE(atfw::util::distributed_system::wal_result_code::kOk == wal_obj->dump(dump_storege, ctx));
 
   // Verify hash code
   size_t hash_code = 0;
@@ -1050,7 +1044,7 @@ CASE_TEST(wal_object, load_and_dump_st) {
 CASE_TEST(wal_object, add_action_st) {
   test_wal_object_log_storage_type storage;
   test_wal_object_context ctx;
-  LIBATFRAME_UTILS_NAMESPACE_ID::distributed_system::wal_time_point now = std::chrono::system_clock::now();
+  atfw::util::distributed_system::wal_time_point now = std::chrono::system_clock::now();
 
   auto conf = create_configure();
   auto vtable = create_vtable();
@@ -1291,7 +1285,7 @@ CASE_TEST(wal_object, add_action_st) {
 CASE_TEST(wal_object, gc_st) {
   test_wal_object_log_storage_type storage;
   test_wal_object_context ctx;
-  LIBATFRAME_UTILS_NAMESPACE_ID::distributed_system::wal_time_point now = std::chrono::system_clock::now();
+  atfw::util::distributed_system::wal_time_point now = std::chrono::system_clock::now();
 
   auto conf = create_configure();
   auto vtable = create_vtable();
@@ -1422,7 +1416,7 @@ CASE_TEST(wal_object, gc_st) {
 CASE_TEST(wal_object, ignore_st) {
   test_wal_object_log_storage_type storage;
   test_wal_object_context ctx;
-  LIBATFRAME_UTILS_NAMESPACE_ID::distributed_system::wal_time_point now = std::chrono::system_clock::now();
+  atfw::util::distributed_system::wal_time_point now = std::chrono::system_clock::now();
 
   auto conf = create_configure();
   auto vtable = create_vtable();
@@ -1444,7 +1438,7 @@ CASE_TEST(wal_object, ignore_st) {
     log->data = log->log_key + 100;
     wal_obj->set_global_ingore_key(log->log_key);
     auto push_back_result = wal_obj->push_back(log, ctx);
-    CASE_EXPECT_TRUE(LIBATFRAME_UTILS_NAMESPACE_ID::distributed_system::wal_result_code::kIgnore == push_back_result);
+    CASE_EXPECT_TRUE(atfw::util::distributed_system::wal_result_code::kIgnore == push_back_result);
 
     CASE_EXPECT_EQ(0, wal_obj->get_all_logs().size());
     CASE_EXPECT_EQ(old_default_action_count, details::g_test_wal_object_stats.default_action_count);
@@ -1462,7 +1456,7 @@ CASE_TEST(wal_object, ignore_st) {
     }
     log->data = log->log_key + 100;
     auto push_back_result = wal_obj->push_back(log, ctx);
-    CASE_EXPECT_TRUE(LIBATFRAME_UTILS_NAMESPACE_ID::distributed_system::wal_result_code::kIgnore == push_back_result);
+    CASE_EXPECT_TRUE(atfw::util::distributed_system::wal_result_code::kIgnore == push_back_result);
 
     CASE_EXPECT_EQ(0, wal_obj->get_all_logs().size());
     CASE_EXPECT_EQ(old_default_action_count, details::g_test_wal_object_stats.default_action_count);
@@ -1473,7 +1467,7 @@ CASE_TEST(wal_object, ignore_st) {
 CASE_TEST(wal_object, reorder_st) {
   test_wal_object_log_storage_type storage;
   test_wal_object_context ctx;
-  LIBATFRAME_UTILS_NAMESPACE_ID::distributed_system::wal_time_point now = std::chrono::system_clock::now();
+  atfw::util::distributed_system::wal_time_point now = std::chrono::system_clock::now();
 
   auto conf = create_configure();
   auto vtable = create_vtable();
@@ -1568,14 +1562,14 @@ struct test_wal_object_test_allocator : public ::std::allocator<T> {
 namespace std {
 template <class T>
 struct allocator_traits<st::test_wal_object_test_allocator<T>>
-    : public ::util::memory::allocator_traits<st::test_wal_object_test_allocator<T>> {};
+    : public ::atfw::util::memory::allocator_traits<st::test_wal_object_test_allocator<T>> {};
 }  // namespace std
 
 namespace st {
 CASE_TEST(wal_object, with_allocator) {
   test_wal_object_log_storage_type storage;
   test_wal_object_context ctx;
-  LIBATFRAME_UTILS_NAMESPACE_ID::distributed_system::wal_time_point now = std::chrono::system_clock::now();
+  atfw::util::distributed_system::wal_time_point now = std::chrono::system_clock::now();
 
   test_wal_object_test_allocator<test_wal_object_type::log_type> alloc;
 

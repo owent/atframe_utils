@@ -94,7 +94,7 @@
 #include "config/compile_optimize.h"
 #include "config/compiler_features.h"
 
-LIBATFRAME_UTILS_NAMESPACE_BEGIN
+ATFRAMEWORK_UTILS_NAMESPACE_BEGIN
 namespace lock {
 #ifdef __UTIL_LOCK_ATOMIC_INT_TYPE_ATOMIC_STD
 using ::std::memory_order;
@@ -119,7 +119,7 @@ using ::std::memory_order_seq_cst;
  * @note Ty can only be a integer or enum, can not be bool or raw pointer
  */
 template <typename Ty = int>
-class LIBATFRAME_UTILS_API_HEAD_ONLY atomic_int_type {
+class ATFRAMEWORK_UTILS_API_HEAD_ONLY atomic_int_type {
  public:
   using value_type = Ty;
 
@@ -135,22 +135,22 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY atomic_int_type {
   atomic_int_type() noexcept : data_() {}
   atomic_int_type(value_type desired) noexcept : data_(desired) {}
 
-  inline void store(value_type desired, LIBATFRAME_UTILS_NAMESPACE_ID::lock::memory_order order =
-                                            LIBATFRAME_UTILS_NAMESPACE_ID::lock::memory_order_seq_cst) noexcept {
+  inline void store(value_type desired, ATFRAMEWORK_UTILS_NAMESPACE_ID::lock::memory_order order =
+                                            ATFRAMEWORK_UTILS_NAMESPACE_ID::lock::memory_order_seq_cst) noexcept {
     data_.store(desired, order);
   }
   inline void store(value_type desired,
-                    LIBATFRAME_UTILS_NAMESPACE_ID::lock::memory_order order =
-                        LIBATFRAME_UTILS_NAMESPACE_ID::lock::memory_order_seq_cst) volatile noexcept {
+                    ATFRAMEWORK_UTILS_NAMESPACE_ID::lock::memory_order order =
+                        ATFRAMEWORK_UTILS_NAMESPACE_ID::lock::memory_order_seq_cst) volatile noexcept {
     data_.store(desired, order);
   }
 
-  inline value_type load(LIBATFRAME_UTILS_NAMESPACE_ID::lock::memory_order order =
-                             LIBATFRAME_UTILS_NAMESPACE_ID::lock::memory_order_seq_cst) const noexcept {
+  inline value_type load(ATFRAMEWORK_UTILS_NAMESPACE_ID::lock::memory_order order =
+                             ATFRAMEWORK_UTILS_NAMESPACE_ID::lock::memory_order_seq_cst) const noexcept {
     return data_.load(order);
   }
-  inline value_type load(LIBATFRAME_UTILS_NAMESPACE_ID::lock::memory_order order =
-                             LIBATFRAME_UTILS_NAMESPACE_ID::lock::memory_order_seq_cst) const volatile noexcept {
+  inline value_type load(ATFRAMEWORK_UTILS_NAMESPACE_ID::lock::memory_order order =
+                             ATFRAMEWORK_UTILS_NAMESPACE_ID::lock::memory_order_seq_cst) const volatile noexcept {
     return data_.load(order);
   }
 
@@ -176,107 +176,108 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY atomic_int_type {
   inline value_type operator--(int) volatile noexcept { return data_--; }
 
   inline value_type exchange(value_type desired,
-                             LIBATFRAME_UTILS_NAMESPACE_ID::lock::memory_order order =
-                                 LIBATFRAME_UTILS_NAMESPACE_ID::lock::memory_order_seq_cst) noexcept {
+                             ATFRAMEWORK_UTILS_NAMESPACE_ID::lock::memory_order order =
+                                 ATFRAMEWORK_UTILS_NAMESPACE_ID::lock::memory_order_seq_cst) noexcept {
     return data_.exchange(desired, order);
   }
   inline value_type exchange(value_type desired,
-                             LIBATFRAME_UTILS_NAMESPACE_ID::lock::memory_order order =
-                                 LIBATFRAME_UTILS_NAMESPACE_ID::lock::memory_order_seq_cst) volatile noexcept {
+                             ATFRAMEWORK_UTILS_NAMESPACE_ID::lock::memory_order order =
+                                 ATFRAMEWORK_UTILS_NAMESPACE_ID::lock::memory_order_seq_cst) volatile noexcept {
     return data_.exchange(desired, order);
   }
 
   inline bool compare_exchange_weak(value_type &expected, value_type desired,
-                                    LIBATFRAME_UTILS_NAMESPACE_ID::lock::memory_order success,
-                                    LIBATFRAME_UTILS_NAMESPACE_ID::lock::memory_order failure) noexcept {
+                                    ATFRAMEWORK_UTILS_NAMESPACE_ID::lock::memory_order success,
+                                    ATFRAMEWORK_UTILS_NAMESPACE_ID::lock::memory_order failure) noexcept {
     return data_.compare_exchange_weak(expected, desired, success, failure);
   }
   inline bool compare_exchange_weak(value_type &expected, value_type desired,
-                                    LIBATFRAME_UTILS_NAMESPACE_ID::lock::memory_order success,
-                                    LIBATFRAME_UTILS_NAMESPACE_ID::lock::memory_order failure) volatile noexcept {
+                                    ATFRAMEWORK_UTILS_NAMESPACE_ID::lock::memory_order success,
+                                    ATFRAMEWORK_UTILS_NAMESPACE_ID::lock::memory_order failure) volatile noexcept {
     return data_.compare_exchange_weak(expected, desired, success, failure);
   }
 
   inline bool compare_exchange_weak(value_type &expected, value_type desired,
-                                    LIBATFRAME_UTILS_NAMESPACE_ID::lock::memory_order order =
-                                        LIBATFRAME_UTILS_NAMESPACE_ID::lock::memory_order_seq_cst) noexcept {
+                                    ATFRAMEWORK_UTILS_NAMESPACE_ID::lock::memory_order order =
+                                        ATFRAMEWORK_UTILS_NAMESPACE_ID::lock::memory_order_seq_cst) noexcept {
     return data_.compare_exchange_weak(expected, desired, order);
   }
   inline bool compare_exchange_weak(value_type &expected, value_type desired,
-                                    LIBATFRAME_UTILS_NAMESPACE_ID::lock::memory_order order =
-                                        LIBATFRAME_UTILS_NAMESPACE_ID::lock::memory_order_seq_cst) volatile noexcept {
+                                    ATFRAMEWORK_UTILS_NAMESPACE_ID::lock::memory_order order =
+                                        ATFRAMEWORK_UTILS_NAMESPACE_ID::lock::memory_order_seq_cst) volatile noexcept {
     return data_.compare_exchange_weak(expected, desired, order);
   }
 
   inline bool compare_exchange_strong(value_type &expected, value_type desired,
-                                      LIBATFRAME_UTILS_NAMESPACE_ID::lock::memory_order success,
-                                      LIBATFRAME_UTILS_NAMESPACE_ID::lock::memory_order failure) noexcept {
+                                      ATFRAMEWORK_UTILS_NAMESPACE_ID::lock::memory_order success,
+                                      ATFRAMEWORK_UTILS_NAMESPACE_ID::lock::memory_order failure) noexcept {
     return data_.compare_exchange_strong(expected, desired, success, failure);
   }
   inline bool compare_exchange_strong(value_type &expected, value_type desired,
-                                      LIBATFRAME_UTILS_NAMESPACE_ID::lock::memory_order success,
-                                      LIBATFRAME_UTILS_NAMESPACE_ID::lock::memory_order failure) volatile noexcept {
+                                      ATFRAMEWORK_UTILS_NAMESPACE_ID::lock::memory_order success,
+                                      ATFRAMEWORK_UTILS_NAMESPACE_ID::lock::memory_order failure) volatile noexcept {
     return data_.compare_exchange_strong(expected, desired, success, failure);
   }
 
   inline bool compare_exchange_strong(value_type &expected, value_type desired,
-                                      LIBATFRAME_UTILS_NAMESPACE_ID::lock::memory_order order =
-                                          LIBATFRAME_UTILS_NAMESPACE_ID::lock::memory_order_seq_cst) noexcept {
+                                      ATFRAMEWORK_UTILS_NAMESPACE_ID::lock::memory_order order =
+                                          ATFRAMEWORK_UTILS_NAMESPACE_ID::lock::memory_order_seq_cst) noexcept {
     return data_.compare_exchange_strong(expected, desired, order);
   }
-  inline bool compare_exchange_strong(value_type &expected, value_type desired,
-                                      LIBATFRAME_UTILS_NAMESPACE_ID::lock::memory_order order =
-                                          LIBATFRAME_UTILS_NAMESPACE_ID::lock::memory_order_seq_cst) volatile noexcept {
+  inline bool compare_exchange_strong(
+      value_type &expected, value_type desired,
+      ATFRAMEWORK_UTILS_NAMESPACE_ID::lock::memory_order order =
+          ATFRAMEWORK_UTILS_NAMESPACE_ID::lock::memory_order_seq_cst) volatile noexcept {
     return data_.compare_exchange_strong(expected, desired, order);
   }
 
-  inline value_type fetch_add(value_type arg, LIBATFRAME_UTILS_NAMESPACE_ID::lock::memory_order order =
-                                                  LIBATFRAME_UTILS_NAMESPACE_ID::lock::memory_order_seq_cst) noexcept {
+  inline value_type fetch_add(value_type arg, ATFRAMEWORK_UTILS_NAMESPACE_ID::lock::memory_order order =
+                                                  ATFRAMEWORK_UTILS_NAMESPACE_ID::lock::memory_order_seq_cst) noexcept {
     return data_.fetch_add(arg, order);
   }
   inline value_type fetch_add(value_type arg,
-                              LIBATFRAME_UTILS_NAMESPACE_ID::lock::memory_order order =
-                                  LIBATFRAME_UTILS_NAMESPACE_ID::lock::memory_order_seq_cst) volatile noexcept {
+                              ATFRAMEWORK_UTILS_NAMESPACE_ID::lock::memory_order order =
+                                  ATFRAMEWORK_UTILS_NAMESPACE_ID::lock::memory_order_seq_cst) volatile noexcept {
     return data_.fetch_add(arg, order);
   }
 
-  inline value_type fetch_sub(value_type arg, LIBATFRAME_UTILS_NAMESPACE_ID::lock::memory_order order =
-                                                  LIBATFRAME_UTILS_NAMESPACE_ID::lock::memory_order_seq_cst) noexcept {
+  inline value_type fetch_sub(value_type arg, ATFRAMEWORK_UTILS_NAMESPACE_ID::lock::memory_order order =
+                                                  ATFRAMEWORK_UTILS_NAMESPACE_ID::lock::memory_order_seq_cst) noexcept {
     return data_.fetch_sub(arg, order);
   }
   inline value_type fetch_sub(value_type arg,
-                              LIBATFRAME_UTILS_NAMESPACE_ID::lock::memory_order order =
-                                  LIBATFRAME_UTILS_NAMESPACE_ID::lock::memory_order_seq_cst) volatile noexcept {
+                              ATFRAMEWORK_UTILS_NAMESPACE_ID::lock::memory_order order =
+                                  ATFRAMEWORK_UTILS_NAMESPACE_ID::lock::memory_order_seq_cst) volatile noexcept {
     return data_.fetch_sub(arg, order);
   }
 
-  inline value_type fetch_and(value_type arg, LIBATFRAME_UTILS_NAMESPACE_ID::lock::memory_order order =
-                                                  LIBATFRAME_UTILS_NAMESPACE_ID::lock::memory_order_seq_cst) noexcept {
+  inline value_type fetch_and(value_type arg, ATFRAMEWORK_UTILS_NAMESPACE_ID::lock::memory_order order =
+                                                  ATFRAMEWORK_UTILS_NAMESPACE_ID::lock::memory_order_seq_cst) noexcept {
     return data_.fetch_and(arg, order);
   }
   inline value_type fetch_and(value_type arg,
-                              LIBATFRAME_UTILS_NAMESPACE_ID::lock::memory_order order =
-                                  LIBATFRAME_UTILS_NAMESPACE_ID::lock::memory_order_seq_cst) volatile noexcept {
+                              ATFRAMEWORK_UTILS_NAMESPACE_ID::lock::memory_order order =
+                                  ATFRAMEWORK_UTILS_NAMESPACE_ID::lock::memory_order_seq_cst) volatile noexcept {
     return data_.fetch_and(arg, order);
   }
 
-  inline value_type fetch_or(value_type arg, LIBATFRAME_UTILS_NAMESPACE_ID::lock::memory_order order =
-                                                 LIBATFRAME_UTILS_NAMESPACE_ID::lock::memory_order_seq_cst) noexcept {
+  inline value_type fetch_or(value_type arg, ATFRAMEWORK_UTILS_NAMESPACE_ID::lock::memory_order order =
+                                                 ATFRAMEWORK_UTILS_NAMESPACE_ID::lock::memory_order_seq_cst) noexcept {
     return data_.fetch_or(arg, order);
   }
   inline value_type fetch_or(value_type arg,
-                             LIBATFRAME_UTILS_NAMESPACE_ID::lock::memory_order order =
-                                 LIBATFRAME_UTILS_NAMESPACE_ID::lock::memory_order_seq_cst) volatile noexcept {
+                             ATFRAMEWORK_UTILS_NAMESPACE_ID::lock::memory_order order =
+                                 ATFRAMEWORK_UTILS_NAMESPACE_ID::lock::memory_order_seq_cst) volatile noexcept {
     return data_.fetch_or(arg, order);
   }
 
-  inline value_type fetch_xor(value_type arg, LIBATFRAME_UTILS_NAMESPACE_ID::lock::memory_order order =
-                                                  LIBATFRAME_UTILS_NAMESPACE_ID::lock::memory_order_seq_cst) noexcept {
+  inline value_type fetch_xor(value_type arg, ATFRAMEWORK_UTILS_NAMESPACE_ID::lock::memory_order order =
+                                                  ATFRAMEWORK_UTILS_NAMESPACE_ID::lock::memory_order_seq_cst) noexcept {
     return data_.fetch_xor(arg, order);
   }
   inline value_type fetch_xor(value_type arg,
-                              LIBATFRAME_UTILS_NAMESPACE_ID::lock::memory_order order =
-                                  LIBATFRAME_UTILS_NAMESPACE_ID::lock::memory_order_seq_cst) volatile noexcept {
+                              ATFRAMEWORK_UTILS_NAMESPACE_ID::lock::memory_order order =
+                                  ATFRAMEWORK_UTILS_NAMESPACE_ID::lock::memory_order_seq_cst) volatile noexcept {
     return data_.fetch_xor(arg, order);
   }
 };
@@ -349,7 +350,7 @@ enum memory_order {
 #  endif
 
 template <typename Ty = int>
-class LIBATFRAME_UTILS_API_HEAD_ONLY atomic_int_type {
+class ATFRAMEWORK_UTILS_API_HEAD_ONLY atomic_int_type {
  public:
   using value_type = Ty;
 
@@ -366,8 +367,8 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY atomic_int_type {
   atomic_int_type(value_type desired) noexcept  // NOLINT: runtime/explicit
       : data_(desired) {}
 
-  inline void store(value_type desired, EXPLICIT_UNUSED_ATTR LIBATFRAME_UTILS_NAMESPACE_ID::lock::memory_order order =
-                                            LIBATFRAME_UTILS_NAMESPACE_ID::lock::memory_order_seq_cst) noexcept {
+  inline void store(value_type desired, EXPLICIT_UNUSED_ATTR ATFRAMEWORK_UTILS_NAMESPACE_ID::lock::memory_order order =
+                                            ATFRAMEWORK_UTILS_NAMESPACE_ID::lock::memory_order_seq_cst) noexcept {
 #  if defined(__UTIL_LOCK_ATOMIC_INT_ATOMIC_GCC_ATOMIC)
     __atomic_store_n(&data_, desired, order);
 #  else
@@ -376,8 +377,8 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY atomic_int_type {
   }
 
   inline void store(value_type desired,
-                    EXPLICIT_UNUSED_ATTR LIBATFRAME_UTILS_NAMESPACE_ID::lock::memory_order order =
-                        LIBATFRAME_UTILS_NAMESPACE_ID::lock::memory_order_seq_cst) volatile noexcept {
+                    EXPLICIT_UNUSED_ATTR ATFRAMEWORK_UTILS_NAMESPACE_ID::lock::memory_order order =
+                        ATFRAMEWORK_UTILS_NAMESPACE_ID::lock::memory_order_seq_cst) volatile noexcept {
 #  if defined(__UTIL_LOCK_ATOMIC_INT_ATOMIC_GCC_ATOMIC)
     __atomic_store_n(&data_, desired, order);
 #  else
@@ -385,8 +386,8 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY atomic_int_type {
 #  endif
   }
 
-  inline value_type load(EXPLICIT_UNUSED_ATTR LIBATFRAME_UTILS_NAMESPACE_ID::lock::memory_order order =
-                             LIBATFRAME_UTILS_NAMESPACE_ID::lock::memory_order_seq_cst) const noexcept {
+  inline value_type load(EXPLICIT_UNUSED_ATTR ATFRAMEWORK_UTILS_NAMESPACE_ID::lock::memory_order order =
+                             ATFRAMEWORK_UTILS_NAMESPACE_ID::lock::memory_order_seq_cst) const noexcept {
 #  if defined(__UTIL_LOCK_ATOMIC_INT_ATOMIC_GCC_ATOMIC)
     return __atomic_load_n(&data_, order);
 #  else
@@ -395,8 +396,8 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY atomic_int_type {
 #  endif
   }
 
-  inline value_type load(EXPLICIT_UNUSED_ATTR LIBATFRAME_UTILS_NAMESPACE_ID::lock::memory_order order =
-                             LIBATFRAME_UTILS_NAMESPACE_ID::lock::memory_order_seq_cst) const volatile noexcept {
+  inline value_type load(EXPLICIT_UNUSED_ATTR ATFRAMEWORK_UTILS_NAMESPACE_ID::lock::memory_order order =
+                             ATFRAMEWORK_UTILS_NAMESPACE_ID::lock::memory_order_seq_cst) const volatile noexcept {
 #  if defined(__UTIL_LOCK_ATOMIC_INT_ATOMIC_GCC_ATOMIC)
     return __atomic_load_n(&data_, order);
 #  else
@@ -427,8 +428,8 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY atomic_int_type {
   inline value_type operator--(int) volatile noexcept { return fetch_sub(1); }
 
   inline value_type exchange(value_type desired,
-                             EXPLICIT_UNUSED_ATTR LIBATFRAME_UTILS_NAMESPACE_ID::lock::memory_order order =
-                                 LIBATFRAME_UTILS_NAMESPACE_ID::lock::memory_order_seq_cst) noexcept {
+                             EXPLICIT_UNUSED_ATTR ATFRAMEWORK_UTILS_NAMESPACE_ID::lock::memory_order order =
+                                 ATFRAMEWORK_UTILS_NAMESPACE_ID::lock::memory_order_seq_cst) noexcept {
 #  if defined(__UTIL_LOCK_ATOMIC_INT_ATOMIC_GCC_ATOMIC)
     return __atomic_exchange_n(&data_, desired, order);
 #  else
@@ -441,8 +442,8 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY atomic_int_type {
   }
 
   inline value_type exchange(value_type desired,
-                             EXPLICIT_UNUSED_ATTR LIBATFRAME_UTILS_NAMESPACE_ID::lock::memory_order order =
-                                 LIBATFRAME_UTILS_NAMESPACE_ID::lock::memory_order_seq_cst) volatile noexcept {
+                             EXPLICIT_UNUSED_ATTR ATFRAMEWORK_UTILS_NAMESPACE_ID::lock::memory_order order =
+                                 ATFRAMEWORK_UTILS_NAMESPACE_ID::lock::memory_order_seq_cst) volatile noexcept {
 #  if defined(__UTIL_LOCK_ATOMIC_INT_ATOMIC_GCC_ATOMIC)
     return __atomic_exchange_n(&data_, desired, order);
 #  else
@@ -456,8 +457,8 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY atomic_int_type {
 
   inline bool compare_exchange_weak(
       value_type &expected, value_type desired,
-      EXPLICIT_UNUSED_ATTR LIBATFRAME_UTILS_NAMESPACE_ID::lock::memory_order success,
-      EXPLICIT_UNUSED_ATTR LIBATFRAME_UTILS_NAMESPACE_ID::lock::memory_order failure) noexcept {
+      EXPLICIT_UNUSED_ATTR ATFRAMEWORK_UTILS_NAMESPACE_ID::lock::memory_order success,
+      EXPLICIT_UNUSED_ATTR ATFRAMEWORK_UTILS_NAMESPACE_ID::lock::memory_order failure) noexcept {
 #  if defined(__UTIL_LOCK_ATOMIC_INT_ATOMIC_GCC_ATOMIC)
     return __atomic_compare_exchange_n(&data_, &expected, desired, true, success, failure);
 #  else
@@ -472,8 +473,8 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY atomic_int_type {
 
   inline bool compare_exchange_weak(
       value_type &expected, value_type desired,
-      EXPLICIT_UNUSED_ATTR LIBATFRAME_UTILS_NAMESPACE_ID::lock::memory_order success,
-      EXPLICIT_UNUSED_ATTR LIBATFRAME_UTILS_NAMESPACE_ID::lock::memory_order failure) volatile noexcept {
+      EXPLICIT_UNUSED_ATTR ATFRAMEWORK_UTILS_NAMESPACE_ID::lock::memory_order success,
+      EXPLICIT_UNUSED_ATTR ATFRAMEWORK_UTILS_NAMESPACE_ID::lock::memory_order failure) volatile noexcept {
 #  if defined(__UTIL_LOCK_ATOMIC_INT_ATOMIC_GCC_ATOMIC)
     return __atomic_compare_exchange_n(&data_, &expected, desired, true, success, failure);
 #  else
@@ -487,8 +488,8 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY atomic_int_type {
   }
 
   inline bool compare_exchange_weak(value_type &expected, value_type desired,
-                                    EXPLICIT_UNUSED_ATTR LIBATFRAME_UTILS_NAMESPACE_ID::lock::memory_order order =
-                                        LIBATFRAME_UTILS_NAMESPACE_ID::lock::memory_order_seq_cst) noexcept {
+                                    EXPLICIT_UNUSED_ATTR ATFRAMEWORK_UTILS_NAMESPACE_ID::lock::memory_order order =
+                                        ATFRAMEWORK_UTILS_NAMESPACE_ID::lock::memory_order_seq_cst) noexcept {
 #  if defined(__UTIL_LOCK_ATOMIC_INT_ATOMIC_GCC_ATOMIC)
     return __atomic_compare_exchange_n(&data_, &expected, desired, true, order, order);
 #  else
@@ -502,8 +503,8 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY atomic_int_type {
   }
 
   inline bool compare_exchange_weak(value_type &expected, value_type desired,
-                                    EXPLICIT_UNUSED_ATTR LIBATFRAME_UTILS_NAMESPACE_ID::lock::memory_order order =
-                                        LIBATFRAME_UTILS_NAMESPACE_ID::lock::memory_order_seq_cst) volatile noexcept {
+                                    EXPLICIT_UNUSED_ATTR ATFRAMEWORK_UTILS_NAMESPACE_ID::lock::memory_order order =
+                                        ATFRAMEWORK_UTILS_NAMESPACE_ID::lock::memory_order_seq_cst) volatile noexcept {
 #  if defined(__UTIL_LOCK_ATOMIC_INT_ATOMIC_GCC_ATOMIC)
     return __atomic_compare_exchange_n(&data_, &expected, desired, true, order, order);
 #  else
@@ -518,8 +519,8 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY atomic_int_type {
 
   inline bool compare_exchange_strong(
       value_type &expected, value_type desired,
-      EXPLICIT_UNUSED_ATTR LIBATFRAME_UTILS_NAMESPACE_ID::lock::memory_order success,
-      EXPLICIT_UNUSED_ATTR LIBATFRAME_UTILS_NAMESPACE_ID::lock::memory_order failure) noexcept {
+      EXPLICIT_UNUSED_ATTR ATFRAMEWORK_UTILS_NAMESPACE_ID::lock::memory_order success,
+      EXPLICIT_UNUSED_ATTR ATFRAMEWORK_UTILS_NAMESPACE_ID::lock::memory_order failure) noexcept {
 #  if defined(__UTIL_LOCK_ATOMIC_INT_ATOMIC_GCC_ATOMIC)
     return __atomic_compare_exchange_n(&data_, &expected, desired, false, success, failure);
 #  else
@@ -534,8 +535,8 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY atomic_int_type {
 
   inline bool compare_exchange_strong(
       value_type &expected, value_type desired,
-      EXPLICIT_UNUSED_ATTR LIBATFRAME_UTILS_NAMESPACE_ID::lock::memory_order success,
-      EXPLICIT_UNUSED_ATTR LIBATFRAME_UTILS_NAMESPACE_ID::lock::memory_order failure) volatile noexcept {
+      EXPLICIT_UNUSED_ATTR ATFRAMEWORK_UTILS_NAMESPACE_ID::lock::memory_order success,
+      EXPLICIT_UNUSED_ATTR ATFRAMEWORK_UTILS_NAMESPACE_ID::lock::memory_order failure) volatile noexcept {
 #  if defined(__UTIL_LOCK_ATOMIC_INT_ATOMIC_GCC_ATOMIC)
     return __atomic_compare_exchange_n(&data_, &expected, desired, false, success, failure);
 #  else
@@ -549,8 +550,8 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY atomic_int_type {
   }
 
   inline bool compare_exchange_strong(value_type &expected, value_type desired,
-                                      EXPLICIT_UNUSED_ATTR LIBATFRAME_UTILS_NAMESPACE_ID::lock::memory_order order =
-                                          LIBATFRAME_UTILS_NAMESPACE_ID::lock::memory_order_seq_cst) noexcept {
+                                      EXPLICIT_UNUSED_ATTR ATFRAMEWORK_UTILS_NAMESPACE_ID::lock::memory_order order =
+                                          ATFRAMEWORK_UTILS_NAMESPACE_ID::lock::memory_order_seq_cst) noexcept {
 #  if defined(__UTIL_LOCK_ATOMIC_INT_ATOMIC_GCC_ATOMIC)
     return __atomic_compare_exchange_n(&data_, &expected, desired, false, order, order);
 #  else
@@ -563,9 +564,10 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY atomic_int_type {
 #  endif
   }
 
-  inline bool compare_exchange_strong(value_type &expected, value_type desired,
-                                      EXPLICIT_UNUSED_ATTR LIBATFRAME_UTILS_NAMESPACE_ID::lock::memory_order order =
-                                          LIBATFRAME_UTILS_NAMESPACE_ID::lock::memory_order_seq_cst) volatile noexcept {
+  inline bool compare_exchange_strong(
+      value_type &expected, value_type desired,
+      EXPLICIT_UNUSED_ATTR ATFRAMEWORK_UTILS_NAMESPACE_ID::lock::memory_order order =
+          ATFRAMEWORK_UTILS_NAMESPACE_ID::lock::memory_order_seq_cst) volatile noexcept {
 #  if defined(__UTIL_LOCK_ATOMIC_INT_ATOMIC_GCC_ATOMIC)
     return __atomic_compare_exchange_n(&data_, &expected, desired, false, order, order);
 #  else
@@ -579,8 +581,8 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY atomic_int_type {
   }
 
   inline value_type fetch_add(value_type arg,
-                              EXPLICIT_UNUSED_ATTR LIBATFRAME_UTILS_NAMESPACE_ID::lock::memory_order order =
-                                  LIBATFRAME_UTILS_NAMESPACE_ID::lock::memory_order_seq_cst) noexcept {
+                              EXPLICIT_UNUSED_ATTR ATFRAMEWORK_UTILS_NAMESPACE_ID::lock::memory_order order =
+                                  ATFRAMEWORK_UTILS_NAMESPACE_ID::lock::memory_order_seq_cst) noexcept {
 #  if defined(__UTIL_LOCK_ATOMIC_INT_ATOMIC_GCC_ATOMIC)
     return __atomic_fetch_add(&data_, arg, order);
 #  else
@@ -588,8 +590,8 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY atomic_int_type {
 #  endif
   }
   inline value_type fetch_add(value_type arg,
-                              EXPLICIT_UNUSED_ATTR LIBATFRAME_UTILS_NAMESPACE_ID::lock::memory_order order =
-                                  LIBATFRAME_UTILS_NAMESPACE_ID::lock::memory_order_seq_cst) volatile noexcept {
+                              EXPLICIT_UNUSED_ATTR ATFRAMEWORK_UTILS_NAMESPACE_ID::lock::memory_order order =
+                                  ATFRAMEWORK_UTILS_NAMESPACE_ID::lock::memory_order_seq_cst) volatile noexcept {
 #  if defined(__UTIL_LOCK_ATOMIC_INT_ATOMIC_GCC_ATOMIC)
     return __atomic_fetch_add(&data_, arg, order);
 #  else
@@ -598,8 +600,8 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY atomic_int_type {
   }
 
   inline value_type fetch_sub(value_type arg,
-                              EXPLICIT_UNUSED_ATTR LIBATFRAME_UTILS_NAMESPACE_ID::lock::memory_order order =
-                                  LIBATFRAME_UTILS_NAMESPACE_ID::lock::memory_order_seq_cst) noexcept {
+                              EXPLICIT_UNUSED_ATTR ATFRAMEWORK_UTILS_NAMESPACE_ID::lock::memory_order order =
+                                  ATFRAMEWORK_UTILS_NAMESPACE_ID::lock::memory_order_seq_cst) noexcept {
 #  if defined(__UTIL_LOCK_ATOMIC_INT_ATOMIC_GCC_ATOMIC)
     return __atomic_fetch_sub(&data_, arg, order);
 #  else
@@ -607,8 +609,8 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY atomic_int_type {
 #  endif
   }
   inline value_type fetch_sub(value_type arg,
-                              EXPLICIT_UNUSED_ATTR LIBATFRAME_UTILS_NAMESPACE_ID::lock::memory_order order =
-                                  LIBATFRAME_UTILS_NAMESPACE_ID::lock::memory_order_seq_cst) volatile noexcept {
+                              EXPLICIT_UNUSED_ATTR ATFRAMEWORK_UTILS_NAMESPACE_ID::lock::memory_order order =
+                                  ATFRAMEWORK_UTILS_NAMESPACE_ID::lock::memory_order_seq_cst) volatile noexcept {
 #  if defined(__UTIL_LOCK_ATOMIC_INT_ATOMIC_GCC_ATOMIC)
     return __atomic_fetch_sub(&data_, arg, order);
 #  else
@@ -617,8 +619,8 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY atomic_int_type {
   }
 
   inline value_type fetch_and(value_type arg,
-                              EXPLICIT_UNUSED_ATTR LIBATFRAME_UTILS_NAMESPACE_ID::lock::memory_order order =
-                                  LIBATFRAME_UTILS_NAMESPACE_ID::lock::memory_order_seq_cst) noexcept {
+                              EXPLICIT_UNUSED_ATTR ATFRAMEWORK_UTILS_NAMESPACE_ID::lock::memory_order order =
+                                  ATFRAMEWORK_UTILS_NAMESPACE_ID::lock::memory_order_seq_cst) noexcept {
 #  if defined(__UTIL_LOCK_ATOMIC_INT_ATOMIC_GCC_ATOMIC)
     return __atomic_fetch_and(&data_, arg, order);
 #  else
@@ -626,8 +628,8 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY atomic_int_type {
 #  endif
   }
   inline value_type fetch_and(value_type arg,
-                              EXPLICIT_UNUSED_ATTR LIBATFRAME_UTILS_NAMESPACE_ID::lock::memory_order order =
-                                  LIBATFRAME_UTILS_NAMESPACE_ID::lock::memory_order_seq_cst) volatile noexcept {
+                              EXPLICIT_UNUSED_ATTR ATFRAMEWORK_UTILS_NAMESPACE_ID::lock::memory_order order =
+                                  ATFRAMEWORK_UTILS_NAMESPACE_ID::lock::memory_order_seq_cst) volatile noexcept {
 #  if defined(__UTIL_LOCK_ATOMIC_INT_ATOMIC_GCC_ATOMIC)
     return __atomic_fetch_and(&data_, arg, order);
 #  else
@@ -636,8 +638,8 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY atomic_int_type {
   }
 
   inline value_type fetch_or(value_type arg,
-                             EXPLICIT_UNUSED_ATTR LIBATFRAME_UTILS_NAMESPACE_ID::lock::memory_order order =
-                                 LIBATFRAME_UTILS_NAMESPACE_ID::lock::memory_order_seq_cst) noexcept {
+                             EXPLICIT_UNUSED_ATTR ATFRAMEWORK_UTILS_NAMESPACE_ID::lock::memory_order order =
+                                 ATFRAMEWORK_UTILS_NAMESPACE_ID::lock::memory_order_seq_cst) noexcept {
 #  if defined(__UTIL_LOCK_ATOMIC_INT_ATOMIC_GCC_ATOMIC)
     return __atomic_fetch_or(&data_, arg, order);
 #  else
@@ -645,8 +647,8 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY atomic_int_type {
 #  endif
   }
   inline value_type fetch_or(value_type arg,
-                             EXPLICIT_UNUSED_ATTR LIBATFRAME_UTILS_NAMESPACE_ID::lock::memory_order order =
-                                 LIBATFRAME_UTILS_NAMESPACE_ID::lock::memory_order_seq_cst) volatile noexcept {
+                             EXPLICIT_UNUSED_ATTR ATFRAMEWORK_UTILS_NAMESPACE_ID::lock::memory_order order =
+                                 ATFRAMEWORK_UTILS_NAMESPACE_ID::lock::memory_order_seq_cst) volatile noexcept {
 #  if defined(__UTIL_LOCK_ATOMIC_INT_ATOMIC_GCC_ATOMIC)
     return __atomic_fetch_or(&data_, arg, order);
 #  else
@@ -655,8 +657,8 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY atomic_int_type {
   }
 
   inline value_type fetch_xor(value_type arg,
-                              EXPLICIT_UNUSED_ATTR LIBATFRAME_UTILS_NAMESPACE_ID::lock::memory_order order =
-                                  LIBATFRAME_UTILS_NAMESPACE_ID::lock::memory_order_seq_cst) noexcept {
+                              EXPLICIT_UNUSED_ATTR ATFRAMEWORK_UTILS_NAMESPACE_ID::lock::memory_order order =
+                                  ATFRAMEWORK_UTILS_NAMESPACE_ID::lock::memory_order_seq_cst) noexcept {
 #  if defined(__UTIL_LOCK_ATOMIC_INT_ATOMIC_GCC_ATOMIC)
     return __atomic_fetch_xor(&data_, arg, order);
 #  else
@@ -664,8 +666,8 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY atomic_int_type {
 #  endif
   }
   inline value_type fetch_xor(value_type arg,
-                              EXPLICIT_UNUSED_ATTR LIBATFRAME_UTILS_NAMESPACE_ID::lock::memory_order order =
-                                  LIBATFRAME_UTILS_NAMESPACE_ID::lock::memory_order_seq_cst) volatile noexcept {
+                              EXPLICIT_UNUSED_ATTR ATFRAMEWORK_UTILS_NAMESPACE_ID::lock::memory_order order =
+                                  ATFRAMEWORK_UTILS_NAMESPACE_ID::lock::memory_order_seq_cst) volatile noexcept {
 #  if defined(__UTIL_LOCK_ATOMIC_INT_ATOMIC_GCC_ATOMIC)
     return __atomic_fetch_xor(&data_, arg, order);
 #  else
@@ -678,12 +680,12 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY atomic_int_type {
 
 // used for unsafe (not multi-thread safe)
 template <typename Ty = int>
-struct LIBATFRAME_UTILS_API_HEAD_ONLY unsafe_int_type {
+struct ATFRAMEWORK_UTILS_API_HEAD_ONLY unsafe_int_type {
   using value_type = Ty;
 };
 
 template <typename Ty>
-class LIBATFRAME_UTILS_API_HEAD_ONLY atomic_int_type<unsafe_int_type<Ty> > {
+class ATFRAMEWORK_UTILS_API_HEAD_ONLY atomic_int_type<unsafe_int_type<Ty> > {
  public:
   using value_type = typename unsafe_int_type<Ty>::value_type;
 
@@ -700,22 +702,22 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY atomic_int_type<unsafe_int_type<Ty> > {
   atomic_int_type(value_type desired)  // NOLINT: runtime/explicit
       : data_(desired) {}
 
-  inline void store(value_type desired, EXPLICIT_UNUSED_ATTR LIBATFRAME_UTILS_NAMESPACE_ID::lock::memory_order order =
-                                            LIBATFRAME_UTILS_NAMESPACE_ID::lock::memory_order_seq_cst) noexcept {
+  inline void store(value_type desired, EXPLICIT_UNUSED_ATTR ATFRAMEWORK_UTILS_NAMESPACE_ID::lock::memory_order order =
+                                            ATFRAMEWORK_UTILS_NAMESPACE_ID::lock::memory_order_seq_cst) noexcept {
     data_ = desired;
   }
   inline void store(value_type desired,
-                    EXPLICIT_UNUSED_ATTR LIBATFRAME_UTILS_NAMESPACE_ID::lock::memory_order order =
-                        LIBATFRAME_UTILS_NAMESPACE_ID::lock::memory_order_seq_cst) volatile noexcept {
+                    EXPLICIT_UNUSED_ATTR ATFRAMEWORK_UTILS_NAMESPACE_ID::lock::memory_order order =
+                        ATFRAMEWORK_UTILS_NAMESPACE_ID::lock::memory_order_seq_cst) volatile noexcept {
     data_ = desired;
   }
 
-  inline value_type load(EXPLICIT_UNUSED_ATTR LIBATFRAME_UTILS_NAMESPACE_ID::lock::memory_order order =
-                             LIBATFRAME_UTILS_NAMESPACE_ID::lock::memory_order_seq_cst) const noexcept {
+  inline value_type load(EXPLICIT_UNUSED_ATTR ATFRAMEWORK_UTILS_NAMESPACE_ID::lock::memory_order order =
+                             ATFRAMEWORK_UTILS_NAMESPACE_ID::lock::memory_order_seq_cst) const noexcept {
     return data_;
   }
-  inline value_type load(EXPLICIT_UNUSED_ATTR LIBATFRAME_UTILS_NAMESPACE_ID::lock::memory_order order =
-                             LIBATFRAME_UTILS_NAMESPACE_ID::lock::memory_order_seq_cst) const volatile noexcept {
+  inline value_type load(EXPLICIT_UNUSED_ATTR ATFRAMEWORK_UTILS_NAMESPACE_ID::lock::memory_order order =
+                             ATFRAMEWORK_UTILS_NAMESPACE_ID::lock::memory_order_seq_cst) const volatile noexcept {
     return data_;
   }
 
@@ -741,15 +743,15 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY atomic_int_type<unsafe_int_type<Ty> > {
   inline value_type operator--(int) volatile noexcept { return data_--; }
 
   inline value_type exchange(value_type desired,
-                             EXPLICIT_UNUSED_ATTR LIBATFRAME_UTILS_NAMESPACE_ID::lock::memory_order order =
-                                 LIBATFRAME_UTILS_NAMESPACE_ID::lock::memory_order_seq_cst) noexcept {
+                             EXPLICIT_UNUSED_ATTR ATFRAMEWORK_UTILS_NAMESPACE_ID::lock::memory_order order =
+                                 ATFRAMEWORK_UTILS_NAMESPACE_ID::lock::memory_order_seq_cst) noexcept {
     value_type ret = data_;
     data_ = desired;
     return ret;
   }
   inline value_type exchange(value_type desired,
-                             EXPLICIT_UNUSED_ATTR LIBATFRAME_UTILS_NAMESPACE_ID::lock::memory_order order =
-                                 LIBATFRAME_UTILS_NAMESPACE_ID::lock::memory_order_seq_cst) volatile noexcept {
+                             EXPLICIT_UNUSED_ATTR ATFRAMEWORK_UTILS_NAMESPACE_ID::lock::memory_order order =
+                                 ATFRAMEWORK_UTILS_NAMESPACE_ID::lock::memory_order_seq_cst) volatile noexcept {
     value_type ret = data_;
     data_ = desired;
     return ret;
@@ -769,128 +771,129 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY atomic_int_type<unsafe_int_type<Ty> > {
  public:
   inline bool compare_exchange_weak(
       value_type &expected, value_type desired,
-      EXPLICIT_UNUSED_ATTR LIBATFRAME_UTILS_NAMESPACE_ID::lock::memory_order success,
-      EXPLICIT_UNUSED_ATTR LIBATFRAME_UTILS_NAMESPACE_ID::lock::memory_order failure) noexcept {
+      EXPLICIT_UNUSED_ATTR ATFRAMEWORK_UTILS_NAMESPACE_ID::lock::memory_order success,
+      EXPLICIT_UNUSED_ATTR ATFRAMEWORK_UTILS_NAMESPACE_ID::lock::memory_order failure) noexcept {
     return cas(expected, desired);
   }
   inline bool compare_exchange_weak(
       value_type &expected, value_type desired,
-      EXPLICIT_UNUSED_ATTR LIBATFRAME_UTILS_NAMESPACE_ID::lock::memory_order success,
-      EXPLICIT_UNUSED_ATTR LIBATFRAME_UTILS_NAMESPACE_ID::lock::memory_order failure) volatile noexcept {
+      EXPLICIT_UNUSED_ATTR ATFRAMEWORK_UTILS_NAMESPACE_ID::lock::memory_order success,
+      EXPLICIT_UNUSED_ATTR ATFRAMEWORK_UTILS_NAMESPACE_ID::lock::memory_order failure) volatile noexcept {
     return cas(expected, desired);
   }
 
   inline bool compare_exchange_weak(value_type &expected, value_type desired,
-                                    EXPLICIT_UNUSED_ATTR LIBATFRAME_UTILS_NAMESPACE_ID::lock::memory_order order =
-                                        LIBATFRAME_UTILS_NAMESPACE_ID::lock::memory_order_seq_cst) noexcept {
+                                    EXPLICIT_UNUSED_ATTR ATFRAMEWORK_UTILS_NAMESPACE_ID::lock::memory_order order =
+                                        ATFRAMEWORK_UTILS_NAMESPACE_ID::lock::memory_order_seq_cst) noexcept {
     return cas(expected, desired);
   }
   inline bool compare_exchange_weak(value_type &expected, value_type desired,
-                                    EXPLICIT_UNUSED_ATTR LIBATFRAME_UTILS_NAMESPACE_ID::lock::memory_order order =
-                                        LIBATFRAME_UTILS_NAMESPACE_ID::lock::memory_order_seq_cst) volatile noexcept {
+                                    EXPLICIT_UNUSED_ATTR ATFRAMEWORK_UTILS_NAMESPACE_ID::lock::memory_order order =
+                                        ATFRAMEWORK_UTILS_NAMESPACE_ID::lock::memory_order_seq_cst) volatile noexcept {
     return cas(expected, desired);
   }
 
   inline bool compare_exchange_strong(
       value_type &expected, value_type desired,
-      EXPLICIT_UNUSED_ATTR LIBATFRAME_UTILS_NAMESPACE_ID::lock::memory_order success,
-      EXPLICIT_UNUSED_ATTR LIBATFRAME_UTILS_NAMESPACE_ID::lock::memory_order failure) noexcept {
+      EXPLICIT_UNUSED_ATTR ATFRAMEWORK_UTILS_NAMESPACE_ID::lock::memory_order success,
+      EXPLICIT_UNUSED_ATTR ATFRAMEWORK_UTILS_NAMESPACE_ID::lock::memory_order failure) noexcept {
     return cas(expected, desired);
   }
   inline bool compare_exchange_strong(
       value_type &expected, value_type desired,
-      EXPLICIT_UNUSED_ATTR LIBATFRAME_UTILS_NAMESPACE_ID::lock::memory_order success,
-      EXPLICIT_UNUSED_ATTR LIBATFRAME_UTILS_NAMESPACE_ID::lock::memory_order failure) volatile noexcept {
+      EXPLICIT_UNUSED_ATTR ATFRAMEWORK_UTILS_NAMESPACE_ID::lock::memory_order success,
+      EXPLICIT_UNUSED_ATTR ATFRAMEWORK_UTILS_NAMESPACE_ID::lock::memory_order failure) volatile noexcept {
     return cas(expected, desired);
   }
 
   inline bool compare_exchange_strong(value_type &expected, value_type desired,
-                                      EXPLICIT_UNUSED_ATTR LIBATFRAME_UTILS_NAMESPACE_ID::lock::memory_order order =
-                                          LIBATFRAME_UTILS_NAMESPACE_ID::lock::memory_order_seq_cst) noexcept {
+                                      EXPLICIT_UNUSED_ATTR ATFRAMEWORK_UTILS_NAMESPACE_ID::lock::memory_order order =
+                                          ATFRAMEWORK_UTILS_NAMESPACE_ID::lock::memory_order_seq_cst) noexcept {
     return cas(expected, desired);
   }
-  inline bool compare_exchange_strong(value_type &expected, value_type desired,
-                                      EXPLICIT_UNUSED_ATTR LIBATFRAME_UTILS_NAMESPACE_ID::lock::memory_order order =
-                                          LIBATFRAME_UTILS_NAMESPACE_ID::lock::memory_order_seq_cst) volatile noexcept {
+  inline bool compare_exchange_strong(
+      value_type &expected, value_type desired,
+      EXPLICIT_UNUSED_ATTR ATFRAMEWORK_UTILS_NAMESPACE_ID::lock::memory_order order =
+          ATFRAMEWORK_UTILS_NAMESPACE_ID::lock::memory_order_seq_cst) volatile noexcept {
     return cas(expected, desired);
   }
 
   inline value_type fetch_add(value_type arg,
-                              EXPLICIT_UNUSED_ATTR LIBATFRAME_UTILS_NAMESPACE_ID::lock::memory_order order =
-                                  LIBATFRAME_UTILS_NAMESPACE_ID::lock::memory_order_seq_cst) noexcept {
+                              EXPLICIT_UNUSED_ATTR ATFRAMEWORK_UTILS_NAMESPACE_ID::lock::memory_order order =
+                                  ATFRAMEWORK_UTILS_NAMESPACE_ID::lock::memory_order_seq_cst) noexcept {
     value_type ret = data_;
     data_ += arg;
     return ret;
   }
   inline value_type fetch_add(value_type arg,
-                              EXPLICIT_UNUSED_ATTR LIBATFRAME_UTILS_NAMESPACE_ID::lock::memory_order order =
-                                  LIBATFRAME_UTILS_NAMESPACE_ID::lock::memory_order_seq_cst) volatile noexcept {
+                              EXPLICIT_UNUSED_ATTR ATFRAMEWORK_UTILS_NAMESPACE_ID::lock::memory_order order =
+                                  ATFRAMEWORK_UTILS_NAMESPACE_ID::lock::memory_order_seq_cst) volatile noexcept {
     value_type ret = data_;
     data_ += arg;
     return ret;
   }
 
   inline value_type fetch_sub(value_type arg,
-                              EXPLICIT_UNUSED_ATTR LIBATFRAME_UTILS_NAMESPACE_ID::lock::memory_order order =
-                                  LIBATFRAME_UTILS_NAMESPACE_ID::lock::memory_order_seq_cst) noexcept {
+                              EXPLICIT_UNUSED_ATTR ATFRAMEWORK_UTILS_NAMESPACE_ID::lock::memory_order order =
+                                  ATFRAMEWORK_UTILS_NAMESPACE_ID::lock::memory_order_seq_cst) noexcept {
     value_type ret = data_;
     data_ -= arg;
     return ret;
   }
   inline value_type fetch_sub(value_type arg,
-                              EXPLICIT_UNUSED_ATTR LIBATFRAME_UTILS_NAMESPACE_ID::lock::memory_order order =
-                                  LIBATFRAME_UTILS_NAMESPACE_ID::lock::memory_order_seq_cst) volatile noexcept {
+                              EXPLICIT_UNUSED_ATTR ATFRAMEWORK_UTILS_NAMESPACE_ID::lock::memory_order order =
+                                  ATFRAMEWORK_UTILS_NAMESPACE_ID::lock::memory_order_seq_cst) volatile noexcept {
     value_type ret = data_;
     data_ -= arg;
     return ret;
   }
 
   inline value_type fetch_and(value_type arg,
-                              EXPLICIT_UNUSED_ATTR LIBATFRAME_UTILS_NAMESPACE_ID::lock::memory_order order =
-                                  LIBATFRAME_UTILS_NAMESPACE_ID::lock::memory_order_seq_cst) noexcept {
+                              EXPLICIT_UNUSED_ATTR ATFRAMEWORK_UTILS_NAMESPACE_ID::lock::memory_order order =
+                                  ATFRAMEWORK_UTILS_NAMESPACE_ID::lock::memory_order_seq_cst) noexcept {
     value_type ret = data_;
     data_ &= arg;
     return ret;
   }
   inline value_type fetch_and(value_type arg,
-                              EXPLICIT_UNUSED_ATTR LIBATFRAME_UTILS_NAMESPACE_ID::lock::memory_order order =
-                                  LIBATFRAME_UTILS_NAMESPACE_ID::lock::memory_order_seq_cst) volatile noexcept {
+                              EXPLICIT_UNUSED_ATTR ATFRAMEWORK_UTILS_NAMESPACE_ID::lock::memory_order order =
+                                  ATFRAMEWORK_UTILS_NAMESPACE_ID::lock::memory_order_seq_cst) volatile noexcept {
     value_type ret = data_;
     data_ &= arg;
     return ret;
   }
 
   inline value_type fetch_or(value_type arg,
-                             EXPLICIT_UNUSED_ATTR LIBATFRAME_UTILS_NAMESPACE_ID::lock::memory_order order =
-                                 LIBATFRAME_UTILS_NAMESPACE_ID::lock::memory_order_seq_cst) noexcept {
+                             EXPLICIT_UNUSED_ATTR ATFRAMEWORK_UTILS_NAMESPACE_ID::lock::memory_order order =
+                                 ATFRAMEWORK_UTILS_NAMESPACE_ID::lock::memory_order_seq_cst) noexcept {
     value_type ret = data_;
     data_ |= arg;
     return ret;
   }
   inline value_type fetch_or(value_type arg,
-                             EXPLICIT_UNUSED_ATTR LIBATFRAME_UTILS_NAMESPACE_ID::lock::memory_order order =
-                                 LIBATFRAME_UTILS_NAMESPACE_ID::lock::memory_order_seq_cst) volatile noexcept {
+                             EXPLICIT_UNUSED_ATTR ATFRAMEWORK_UTILS_NAMESPACE_ID::lock::memory_order order =
+                                 ATFRAMEWORK_UTILS_NAMESPACE_ID::lock::memory_order_seq_cst) volatile noexcept {
     value_type ret = data_;
     data_ |= arg;
     return ret;
   }
 
   inline value_type fetch_xor(value_type arg,
-                              EXPLICIT_UNUSED_ATTR LIBATFRAME_UTILS_NAMESPACE_ID::lock::memory_order order =
-                                  LIBATFRAME_UTILS_NAMESPACE_ID::lock::memory_order_seq_cst) noexcept {
+                              EXPLICIT_UNUSED_ATTR ATFRAMEWORK_UTILS_NAMESPACE_ID::lock::memory_order order =
+                                  ATFRAMEWORK_UTILS_NAMESPACE_ID::lock::memory_order_seq_cst) noexcept {
     value_type ret = data_;
     data_ ^= arg;
     return ret;
   }
   inline value_type fetch_xor(value_type arg,
-                              EXPLICIT_UNUSED_ATTR LIBATFRAME_UTILS_NAMESPACE_ID::lock::memory_order order =
-                                  LIBATFRAME_UTILS_NAMESPACE_ID::lock::memory_order_seq_cst) volatile noexcept {
+                              EXPLICIT_UNUSED_ATTR ATFRAMEWORK_UTILS_NAMESPACE_ID::lock::memory_order order =
+                                  ATFRAMEWORK_UTILS_NAMESPACE_ID::lock::memory_order_seq_cst) volatile noexcept {
     value_type ret = data_;
     data_ ^= arg;
     return ret;
   }
 };
 }  // namespace lock
-LIBATFRAME_UTILS_NAMESPACE_END
+ATFRAMEWORK_UTILS_NAMESPACE_END
 
 #endif /* _UTIL_LOCK_ATOMIC_INT_TYPE_H_ */

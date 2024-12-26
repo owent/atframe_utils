@@ -26,7 +26,7 @@
 #include <unordered_map>
 #include <vector>
 
-LIBATFRAME_UTILS_NAMESPACE_BEGIN
+ATFRAMEWORK_UTILS_NAMESPACE_BEGIN
 namespace uri {
 /**
  * @brief 编码URI，类似Javascript的encodeURI函数
@@ -34,7 +34,7 @@ namespace uri {
  * @param [in] sz      编码内容大小（默认当作字符串）
  * @return 编码后的字符串
  */
-LIBATFRAME_UTILS_API std::string encode_uri(const char *content, std::size_t sz = 0);
+ATFRAMEWORK_UTILS_API std::string encode_uri(const char *content, std::size_t sz = 0);
 
 /**
  * @brief 解码URI，类似Javascript的decodeURI函数
@@ -42,7 +42,7 @@ LIBATFRAME_UTILS_API std::string encode_uri(const char *content, std::size_t sz 
  * @param [in] sz      解码内容大小（默认当作字符串）
  * @return 解码后的字符串
  */
-LIBATFRAME_UTILS_API std::string decode_uri(const char *uri, std::size_t sz = 0);
+ATFRAMEWORK_UTILS_API std::string decode_uri(const char *uri, std::size_t sz = 0);
 
 /**
  * @brief 编码并转义URI，类似Javascript的decodeURIComponent函数
@@ -50,7 +50,7 @@ LIBATFRAME_UTILS_API std::string decode_uri(const char *uri, std::size_t sz = 0)
  * @param [in] sz      编码内容大小（默认当作字符串）
  * @return 编码后的字符串
  */
-LIBATFRAME_UTILS_API std::string encode_uri_component(const char *content, std::size_t sz = 0);
+ATFRAMEWORK_UTILS_API std::string encode_uri_component(const char *content, std::size_t sz = 0);
 
 /**
  * @brief 解码转义的URI，类似Javascript的encodeURIComponent函数
@@ -58,7 +58,7 @@ LIBATFRAME_UTILS_API std::string encode_uri_component(const char *content, std::
  * @param [in] sz      解码内容大小（默认当作字符串）
  * @return 编码后的字符串
  */
-LIBATFRAME_UTILS_API std::string decode_uri_component(const char *uri, std::size_t sz = 0);
+ATFRAMEWORK_UTILS_API std::string decode_uri_component(const char *uri, std::size_t sz = 0);
 
 /**
  * @brief 编码并转义URL，类似php的rawurlencode函数
@@ -67,7 +67,7 @@ LIBATFRAME_UTILS_API std::string decode_uri_component(const char *uri, std::size
  * @param [in] sz      编码内容大小（默认当作字符串）
  * @return 编码后的字符串
  */
-LIBATFRAME_UTILS_API std::string raw_encode_url(const char *content, std::size_t sz = 0);
+ATFRAMEWORK_UTILS_API std::string raw_encode_url(const char *content, std::size_t sz = 0);
 
 /**
  * @brief 解码转义的URL，类似php的rawurldecode函数
@@ -75,7 +75,7 @@ LIBATFRAME_UTILS_API std::string raw_encode_url(const char *content, std::size_t
  * @param [in] sz      解码内容大小（默认当作字符串）
  * @return 编码后的字符串
  */
-LIBATFRAME_UTILS_API std::string raw_decode_url(const char *uri, std::size_t sz = 0);
+ATFRAMEWORK_UTILS_API std::string raw_decode_url(const char *uri, std::size_t sz = 0);
 
 /**
  * @brief 编码并转义URL，类似php的urlencode函数
@@ -84,7 +84,7 @@ LIBATFRAME_UTILS_API std::string raw_decode_url(const char *uri, std::size_t sz 
  * @param [in] sz      编码内容大小（默认当作字符串）
  * @return 编码后的字符串
  */
-LIBATFRAME_UTILS_API std::string encode_url(const char *content, std::size_t sz = 0);
+ATFRAMEWORK_UTILS_API std::string encode_url(const char *content, std::size_t sz = 0);
 
 /**
  * @brief 解码转义的URL，类似php的urldecode函数
@@ -92,7 +92,7 @@ LIBATFRAME_UTILS_API std::string encode_url(const char *content, std::size_t sz 
  * @param [in] sz      解码内容大小（默认当作字符串）
  * @return 编码后的字符串
  */
-LIBATFRAME_UTILS_API std::string decode_url(const char *uri, std::size_t sz = 0);
+ATFRAMEWORK_UTILS_API std::string decode_url(const char *uri, std::size_t sz = 0);
 
 /**
  * @brief 字符串转换为任意类型
@@ -100,7 +100,7 @@ LIBATFRAME_UTILS_API std::string decode_url(const char *uri, std::size_t sz = 0)
  * @return 任意类型
  */
 template <typename T>
-LIBATFRAME_UTILS_API_HEAD_ONLY T query_string_to_any(const char *str) {
+ATFRAMEWORK_UTILS_API_HEAD_ONLY T query_string_to_any(const char *str) {
   T ret;
   std::stringstream ss;
   ss << str;
@@ -114,7 +114,7 @@ LIBATFRAME_UTILS_API_HEAD_ONLY T query_string_to_any(const char *str) {
  * @return 对应的字符串
  */
 template <typename T>
-LIBATFRAME_UTILS_API_HEAD_ONLY std::string any_to_query_string(const T &val) {
+ATFRAMEWORK_UTILS_API_HEAD_ONLY std::string any_to_query_string(const T &val) {
   std::stringstream ss;
   ss << val;
   return ss.str();
@@ -130,7 +130,7 @@ enum ITEM_TYPE { ITEM_TYPE_STRING = 0, ITEM_TYPE_QUERYSTRING = 1, ITEM_TYPE_ARRA
 /**
  * @brief 数据类型抽象接口
  */
-class LIBATFRAME_UTILS_API item_impl {
+class ATFRAMEWORK_UTILS_API item_impl {
  protected:
   item_impl() {}
 
@@ -206,63 +206,63 @@ class item_string : public item_impl {
    */
   using ptr_type = std::shared_ptr<item_string>;
 
-  LIBATFRAME_UTILS_API item_string();
+  ATFRAMEWORK_UTILS_API item_string();
 
-  LIBATFRAME_UTILS_API item_string(const std::string &data);
+  ATFRAMEWORK_UTILS_API item_string(const std::string &data);
 
-  LIBATFRAME_UTILS_API virtual ~item_string();
+  ATFRAMEWORK_UTILS_API virtual ~item_string();
 
   /**
    * @brief 创建自身类型的实例
    * @return 新实例的智能指针
    */
-  static LIBATFRAME_UTILS_API ptr_type create();
+  static ATFRAMEWORK_UTILS_API ptr_type create();
 
   /**
    * @brief 创建自身类型的实例
    * @param [in] data 初始数据
    * @return 新实例的智能指针
    */
-  static LIBATFRAME_UTILS_API ptr_type create(const std::string &data);
+  static ATFRAMEWORK_UTILS_API ptr_type create(const std::string &data);
 
-  LIBATFRAME_UTILS_API bool empty() const override;
+  ATFRAMEWORK_UTILS_API bool empty() const override;
 
-  LIBATFRAME_UTILS_API std::size_t size() const override;
+  ATFRAMEWORK_UTILS_API std::size_t size() const override;
 
-  LIBATFRAME_UTILS_API types::ITEM_TYPE type() const override;
+  ATFRAMEWORK_UTILS_API types::ITEM_TYPE type() const override;
 
-  LIBATFRAME_UTILS_API std::string to_string(const char *prefix = "") const override;
+  ATFRAMEWORK_UTILS_API std::string to_string(const char *prefix = "") const override;
 
-  LIBATFRAME_UTILS_API bool encode(std::string &output, const char *prefix = "") const override;
+  ATFRAMEWORK_UTILS_API bool encode(std::string &output, const char *prefix = "") const override;
 
-  LIBATFRAME_UTILS_API bool parse(const std::vector<std::string> &keys, std::size_t index,
-                                  const std::string &value) override;
+  ATFRAMEWORK_UTILS_API bool parse(const std::vector<std::string> &keys, std::size_t index,
+                                   const std::string &value) override;
 
-  LIBATFRAME_UTILS_API const std::string &data() const;
+  ATFRAMEWORK_UTILS_API const std::string &data() const;
 
   /**
    * @breif 类型转换操作
    */
-  LIBATFRAME_UTILS_API operator std::string();
+  ATFRAMEWORK_UTILS_API operator std::string();
 
   /**
    * @breif 兼容赋值操作
    * @param [in] data 原始数据
    * @return 依据等号操作符规则返回自身引用
    */
-  LIBATFRAME_UTILS_API item_string &operator=(const std::string &data);
+  ATFRAMEWORK_UTILS_API item_string &operator=(const std::string &data);
 
   /**
    * @breif 设置数据
    * @param [in] data 原始数据
    */
-  LIBATFRAME_UTILS_API void set(const std::string &data);
+  ATFRAMEWORK_UTILS_API void set(const std::string &data);
 
   /**
    * @breif 获取数据
    * @return 数据内容
    */
-  LIBATFRAME_UTILS_API std::string &get();
+  ATFRAMEWORK_UTILS_API std::string &get();
 };
 
 /**
@@ -270,7 +270,7 @@ class item_string : public item_impl {
  */
 class item_array : public item_impl {
  protected:
-  std::vector<std::shared_ptr<item_impl> > data_;
+  std::vector<std::shared_ptr<item_impl>> data_;
 
  public:
   /**
@@ -278,81 +278,81 @@ class item_array : public item_impl {
    */
   using ptr_type = std::shared_ptr<item_array>;
 
-  LIBATFRAME_UTILS_API item_array();
+  ATFRAMEWORK_UTILS_API item_array();
 
-  LIBATFRAME_UTILS_API virtual ~item_array();
+  ATFRAMEWORK_UTILS_API virtual ~item_array();
 
   /**
    * @brief 创建自身类型的实例
    * @param [in] data 初始数据
    * @return 新实例的智能指针
    */
-  static LIBATFRAME_UTILS_API ptr_type create();
+  static ATFRAMEWORK_UTILS_API ptr_type create();
 
-  LIBATFRAME_UTILS_API bool empty() const override;
+  ATFRAMEWORK_UTILS_API bool empty() const override;
 
-  LIBATFRAME_UTILS_API std::size_t size() const override;
+  ATFRAMEWORK_UTILS_API std::size_t size() const override;
 
-  LIBATFRAME_UTILS_API types::ITEM_TYPE type() const override;
+  ATFRAMEWORK_UTILS_API types::ITEM_TYPE type() const override;
 
-  LIBATFRAME_UTILS_API std::string to_string(const char *prefix = "") const override;
+  ATFRAMEWORK_UTILS_API std::string to_string(const char *prefix = "") const override;
 
-  LIBATFRAME_UTILS_API bool encode(std::string &output, const char *prefix = "") const override;
+  ATFRAMEWORK_UTILS_API bool encode(std::string &output, const char *prefix = "") const override;
 
-  LIBATFRAME_UTILS_API bool parse(const std::vector<std::string> &keys, std::size_t index,
-                                  const std::string &value) override;
+  ATFRAMEWORK_UTILS_API bool parse(const std::vector<std::string> &keys, std::size_t index,
+                                   const std::string &value) override;
 
   /**
    * @breif 依据下标获取数据
    * @param [in] uIndex 下标
    * @return 数据内容的智能指针
    */
-  LIBATFRAME_UTILS_API std::shared_ptr<item_impl> get(std::size_t uIndex);
+  ATFRAMEWORK_UTILS_API std::shared_ptr<item_impl> get(std::size_t uIndex);
 
   /**
    * @breif 依据下标获取数据的字符串值
    * @param [in] uIndex 下标
    * @return 数据内容的字符串表示
    */
-  LIBATFRAME_UTILS_API std::string get_string(std::size_t uIndex) const;
+  ATFRAMEWORK_UTILS_API std::string get_string(std::size_t uIndex) const;
 
   /**
    * @breif 设置值
    * @param [in] uIndex 下标
    * @param [in] value 值的智能指针
    */
-  LIBATFRAME_UTILS_API void set(std::size_t uIndex, const std::shared_ptr<item_impl> &value);
+  ATFRAMEWORK_UTILS_API void set(std::size_t uIndex, const std::shared_ptr<item_impl> &value);
 
   /**
    * @breif 设置字符串值
    * @param [in] uIndex 下标
    * @param [in] value 字符串值
    */
-  LIBATFRAME_UTILS_API void set(std::size_t uIndex, const std::string &value);
+  ATFRAMEWORK_UTILS_API void set(std::size_t uIndex, const std::string &value);
 
   /**
    * @breif 添加值
    * @param [in] uIndex 下标
    * @param [in] value 值的智能指针
    */
-  LIBATFRAME_UTILS_API void append(const std::shared_ptr<item_impl> &value);
+  ATFRAMEWORK_UTILS_API void append(const std::shared_ptr<item_impl> &value);
 
   /**
    * @breif 添加字符串值
    * @param [in] uIndex 下标
    * @param [in] value 字符串值
    */
-  LIBATFRAME_UTILS_API void append(const std::string &value);
+  ATFRAMEWORK_UTILS_API void append(const std::string &value);
 
   /**
    * @breif 清除最后一项数据
    */
-  LIBATFRAME_UTILS_API void pop_back();
+  ATFRAMEWORK_UTILS_API void pop_back();
 
   /**
    * @breif 清空数据
    */
-  LIBATFRAME_UTILS_API void clear();
+  ATFRAMEWORK_UTILS_API void clear();
 };
 
 /**
@@ -360,7 +360,7 @@ class item_array : public item_impl {
  */
 class item_object : public item_impl {
  public:
-  using data_map_t = LIBATFRAME_UTILS_AUTO_SELETC_MAP(std::string, std::shared_ptr<item_impl>);
+  using data_map_t = std::unordered_map<std::string, std::shared_ptr<item_impl>>;
   using data_iterator = data_map_t::iterator;
   using data_const_iterator = data_map_t::const_iterator;
   using ptr_type = std::shared_ptr<item_object>;
@@ -372,66 +372,66 @@ class item_object : public item_impl {
    * @param [in] data 初始数据
    * @return 新实例的智能指针
    */
-  static LIBATFRAME_UTILS_API ptr_type create();
+  static ATFRAMEWORK_UTILS_API ptr_type create();
 
-  LIBATFRAME_UTILS_API item_object();
+  ATFRAMEWORK_UTILS_API item_object();
 
-  LIBATFRAME_UTILS_API virtual ~item_object();
+  ATFRAMEWORK_UTILS_API virtual ~item_object();
 
-  LIBATFRAME_UTILS_API bool empty() const override;
+  ATFRAMEWORK_UTILS_API bool empty() const override;
 
-  LIBATFRAME_UTILS_API std::size_t size() const override;
+  ATFRAMEWORK_UTILS_API std::size_t size() const override;
 
-  LIBATFRAME_UTILS_API types::ITEM_TYPE type() const override;
+  ATFRAMEWORK_UTILS_API types::ITEM_TYPE type() const override;
 
-  LIBATFRAME_UTILS_API std::string to_string(const char *prefix = "") const override;
+  ATFRAMEWORK_UTILS_API std::string to_string(const char *prefix = "") const override;
 
-  LIBATFRAME_UTILS_API bool encode(std::string &output, const char *prefix = "") const override;
+  ATFRAMEWORK_UTILS_API bool encode(std::string &output, const char *prefix = "") const override;
 
-  LIBATFRAME_UTILS_API bool parse(const std::vector<std::string> &keys, std::size_t index,
-                                  const std::string &value) override;
+  ATFRAMEWORK_UTILS_API bool parse(const std::vector<std::string> &keys, std::size_t index,
+                                   const std::string &value) override;
 
-  LIBATFRAME_UTILS_API std::vector<std::string> keys() const;
+  ATFRAMEWORK_UTILS_API std::vector<std::string> keys() const;
 
-  LIBATFRAME_UTILS_API const LIBATFRAME_UTILS_AUTO_SELETC_MAP(std::string, std::shared_ptr<item_impl>) & data() const;
+  ATFRAMEWORK_UTILS_API const std::unordered_map<std::string, std::shared_ptr<item_impl>> &data() const;
   /**
    * @breif 依据Key获取数据
    * @param [in] key Key
    * @return 数据内容的智能指针
    */
-  LIBATFRAME_UTILS_API std::shared_ptr<item_impl> get(const std::string &key);
+  ATFRAMEWORK_UTILS_API std::shared_ptr<item_impl> get(const std::string &key);
 
   /**
    * @breif 依据Key获取数据的字符串值
    * @param [in] key Key
    * @return 数据内容的字符串表示
    */
-  LIBATFRAME_UTILS_API std::string get_string(const std::string &key) const;
+  ATFRAMEWORK_UTILS_API std::string get_string(const std::string &key) const;
 
   /**
    * @breif 添加或设置值
    * @param [in] key Key
    * @param [in] value 值的智能指针
    */
-  LIBATFRAME_UTILS_API void set(const std::string &key, const std::shared_ptr<item_impl> &value);
+  ATFRAMEWORK_UTILS_API void set(const std::string &key, const std::shared_ptr<item_impl> &value);
 
   /**
    * @breif 添加或设置字符串值
    * @param [in] key Key
    * @param [in] value 字符串值
    */
-  LIBATFRAME_UTILS_API void set(const std::string &key, const std::string &value);
+  ATFRAMEWORK_UTILS_API void set(const std::string &key, const std::string &value);
 
   /**
    * @breif 删除数据
    * @param [in] key Key
    */
-  LIBATFRAME_UTILS_API void remove(const std::string &key);
+  ATFRAMEWORK_UTILS_API void remove(const std::string &key);
 
   /**
    * @breif 清空数据
    */
-  LIBATFRAME_UTILS_API void clear();
+  ATFRAMEWORK_UTILS_API void clear();
 };
 }  // namespace types
 
@@ -444,7 +444,7 @@ class tquerystring : public types::item_object {
  protected:
   std::string spliter_;
 
-  LIBATFRAME_UTILS_API bool decode_record(const char *content, std::size_t sz);
+  ATFRAMEWORK_UTILS_API bool decode_record(const char *content, std::size_t sz);
 
  public:
   /**
@@ -452,34 +452,34 @@ class tquerystring : public types::item_object {
    */
   using ptr_type = std::shared_ptr<tquerystring>;
 
-  LIBATFRAME_UTILS_API tquerystring();
+  ATFRAMEWORK_UTILS_API tquerystring();
 
-  LIBATFRAME_UTILS_API tquerystring(const std::string &spliter);
+  ATFRAMEWORK_UTILS_API tquerystring(const std::string &spliter);
 
-  LIBATFRAME_UTILS_API virtual ~tquerystring();
+  ATFRAMEWORK_UTILS_API virtual ~tquerystring();
 
   /**
    * @brief 创建自身类型的实例
    * @return 新实例的智能指针
    */
-  static LIBATFRAME_UTILS_API ptr_type create();
+  static ATFRAMEWORK_UTILS_API ptr_type create();
 
   /**
    * @brief 创建自身类型的实例
    * @param [in] spliter 默认分隔符
    * @return 新实例的智能指针
    */
-  static LIBATFRAME_UTILS_API ptr_type create(const std::string &spliter);
+  static ATFRAMEWORK_UTILS_API ptr_type create(const std::string &spliter);
 
-  LIBATFRAME_UTILS_API bool empty() const override;
+  ATFRAMEWORK_UTILS_API bool empty() const override;
 
-  LIBATFRAME_UTILS_API std::size_t size() const override;
+  ATFRAMEWORK_UTILS_API std::size_t size() const override;
 
-  LIBATFRAME_UTILS_API types::ITEM_TYPE type() const override;
+  ATFRAMEWORK_UTILS_API types::ITEM_TYPE type() const override;
 
-  LIBATFRAME_UTILS_API std::string to_string(const char *prefix = "") const override;
+  ATFRAMEWORK_UTILS_API std::string to_string(const char *prefix = "") const override;
 
-  LIBATFRAME_UTILS_API bool encode(std::string &output, const char *prefix = "") const override;
+  ATFRAMEWORK_UTILS_API bool encode(std::string &output, const char *prefix = "") const override;
 
   /**
    * @breif 解码数据
@@ -487,44 +487,44 @@ class tquerystring : public types::item_object {
    * @param [in] sz      数据长度
    * @return 成功返回true
    */
-  LIBATFRAME_UTILS_API bool decode(const char *content, std::size_t sz = 0);
+  ATFRAMEWORK_UTILS_API bool decode(const char *content, std::size_t sz = 0);
 
   /**
    * @breif 根据ID获取数据
    * @param [in] key Key
    * @return 存在返回对应的智能指针，否则返回空智能指针
    */
-  LIBATFRAME_UTILS_API std::shared_ptr<types::item_impl> operator[](const std::string &key);
+  ATFRAMEWORK_UTILS_API std::shared_ptr<types::item_impl> operator[](const std::string &key);
 
   /**
    * @breif 设置数据分隔符
    * @param [in] spliter 分割符，每个字符都是单独的分隔符
    */
-  LIBATFRAME_UTILS_API void set_spliter(const std::string &spliter);
+  ATFRAMEWORK_UTILS_API void set_spliter(const std::string &spliter);
 
   /**
    * @breif 创建字符串实例
    * @return 新实例指针
    */
-  LIBATFRAME_UTILS_API types::item_string::ptr_type create_string();
+  ATFRAMEWORK_UTILS_API types::item_string::ptr_type create_string();
 
   /**
    * @breif 创建字符串实例
    * @param [in] val 初始值
    * @return 新实例指针
    */
-  LIBATFRAME_UTILS_API types::item_string::ptr_type create_string(const std::string &val);
+  ATFRAMEWORK_UTILS_API types::item_string::ptr_type create_string(const std::string &val);
 
   /**
    * @breif 创建数组实例
    * @return 新实例指针
    */
-  LIBATFRAME_UTILS_API types::item_array::ptr_type create_array();
+  ATFRAMEWORK_UTILS_API types::item_array::ptr_type create_array();
 
   /**
    * @breif 创建Object实例
    * @return 新实例指针
    */
-  LIBATFRAME_UTILS_API types::item_object::ptr_type create_object();
+  ATFRAMEWORK_UTILS_API types::item_object::ptr_type create_object();
 };
-LIBATFRAME_UTILS_NAMESPACE_END
+ATFRAMEWORK_UTILS_NAMESPACE_END

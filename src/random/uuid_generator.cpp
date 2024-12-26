@@ -6,11 +6,11 @@
 #include <random/random_generator.h>
 #include <random/uuid_generator.h>
 
-#if (defined(LIBATFRAME_UTILS_ENABLE_LIBUUID) && LIBATFRAME_UTILS_ENABLE_LIBUUID) ||         \
-    (defined(LIBATFRAME_UTILS_ENABLE_UUID_WINRPC) && LIBATFRAME_UTILS_ENABLE_UUID_WINRPC) || \
-    (defined(LIBATFRAME_UTILS_ENABLE_UUID_INTERNAL_IMPLEMENT) && LIBATFRAME_UTILS_ENABLE_UUID_INTERNAL_IMPLEMENT)
+#if (defined(ATFRAMEWORK_UTILS_ENABLE_LIBUUID) && ATFRAMEWORK_UTILS_ENABLE_LIBUUID) ||         \
+    (defined(ATFRAMEWORK_UTILS_ENABLE_UUID_WINRPC) && ATFRAMEWORK_UTILS_ENABLE_UUID_WINRPC) || \
+    (defined(ATFRAMEWORK_UTILS_ENABLE_UUID_INTERNAL_IMPLEMENT) && ATFRAMEWORK_UTILS_ENABLE_UUID_INTERNAL_IMPLEMENT)
 
-#  if defined(LIBATFRAME_UTILS_ENABLE_UUID_INTERNAL_IMPLEMENT) && LIBATFRAME_UTILS_ENABLE_UUID_INTERNAL_IMPLEMENT
+#  if defined(ATFRAMEWORK_UTILS_ENABLE_UUID_INTERNAL_IMPLEMENT) && ATFRAMEWORK_UTILS_ENABLE_UUID_INTERNAL_IMPLEMENT
 #    include <stdio.h>
 #    include <ctime>
 #    ifdef HAVE_UNISTD_H
@@ -89,29 +89,29 @@
 #    include <type_traits>
 #  endif
 
-#  if defined(LIBATFRAME_UTILS_ENABLE_LIBUUID) && LIBATFRAME_UTILS_ENABLE_LIBUUID
+#  if defined(ATFRAMEWORK_UTILS_ENABLE_LIBUUID) && ATFRAMEWORK_UTILS_ENABLE_LIBUUID
 #    if defined(UTIL_CONFIG_COMPILER_CXX_STATIC_ASSERT) && UTIL_CONFIG_COMPILER_CXX_STATIC_ASSERT
 #      if ((defined(_MSVC_LANG) && _MSVC_LANG >= 201402L)) ||                       \
           (defined(__cplusplus) && __cplusplus >= 201402L &&                        \
            !(!defined(__clang__) && defined(__GNUC__) && defined(__GNUC_MINOR__) && \
              __GNUC__ * 100 + __GNUC_MINOR__ <= 409))
 UTIL_CONFIG_STATIC_ASSERT(std::is_trivially_copyable<uuid_t>::value);
-UTIL_CONFIG_STATIC_ASSERT(std::is_trivially_copyable<LIBATFRAME_UTILS_NAMESPACE_ID::random::uuid>::value);
+UTIL_CONFIG_STATIC_ASSERT(std::is_trivially_copyable<ATFRAMEWORK_UTILS_NAMESPACE_ID::random::uuid>::value);
 #      elif (defined(__cplusplus) && __cplusplus >= 201103L) || ((defined(_MSVC_LANG) && _MSVC_LANG >= 201103L))
 UTIL_CONFIG_STATIC_ASSERT(std::is_trivial<uuid_t>::value);
-UTIL_CONFIG_STATIC_ASSERT(std::is_trivial<LIBATFRAME_UTILS_NAMESPACE_ID::random::uuid>::value);
+UTIL_CONFIG_STATIC_ASSERT(std::is_trivial<ATFRAMEWORK_UTILS_NAMESPACE_ID::random::uuid>::value);
 #      else
 UTIL_CONFIG_STATIC_ASSERT(std::is_pod<uuid_t>::value);
-UTIL_CONFIG_STATIC_ASSERT(std::is_pod<LIBATFRAME_UTILS_NAMESPACE_ID::random::uuid>::value);
+UTIL_CONFIG_STATIC_ASSERT(std::is_pod<ATFRAMEWORK_UTILS_NAMESPACE_ID::random::uuid>::value);
 #      endif
-UTIL_CONFIG_STATIC_ASSERT(sizeof(uuid_t) == sizeof(LIBATFRAME_UTILS_NAMESPACE_ID::random::uuid));
+UTIL_CONFIG_STATIC_ASSERT(sizeof(uuid_t) == sizeof(ATFRAMEWORK_UTILS_NAMESPACE_ID::random::uuid));
 #    endif
 #  endif
 
-LIBATFRAME_UTILS_NAMESPACE_BEGIN
+ATFRAMEWORK_UTILS_NAMESPACE_BEGIN
 namespace random {
 
-#  if defined(LIBATFRAME_UTILS_ENABLE_UUID_INTERNAL_IMPLEMENT) && LIBATFRAME_UTILS_ENABLE_UUID_INTERNAL_IMPLEMENT
+#  if defined(ATFRAMEWORK_UTILS_ENABLE_UUID_INTERNAL_IMPLEMENT) && ATFRAMEWORK_UTILS_ENABLE_UUID_INTERNAL_IMPLEMENT
 namespace details {
 // Codes below just like https://sourceforge.net/p/libuuid/code/ci/master/tree/gen_uuid.c
 #    ifndef LOCK_EX
@@ -180,12 +180,12 @@ static int getuid(void) { return 1; }
  * use glibc pseudo-random functions.
  */
 static void random_get_bytes(unsigned char *buf, size_t nbytes) {
-  using uuid_generator_rand_engine = LIBATFRAME_UTILS_NAMESPACE_ID::random::mt19937_64;
-  static LIBATFRAME_UTILS_NAMESPACE_ID::lock::spin_lock random_generator_lock;
+  using uuid_generator_rand_engine = ATFRAMEWORK_UTILS_NAMESPACE_ID::random::mt19937_64;
+  static ATFRAMEWORK_UTILS_NAMESPACE_ID::lock::spin_lock random_generator_lock;
   static uuid_generator_rand_engine random_generator;
   static bool uuid_generator_rand_engine_inited = false;
 
-  LIBATFRAME_UTILS_NAMESPACE_ID::lock::lock_holder<LIBATFRAME_UTILS_NAMESPACE_ID::lock::spin_lock> lock_guard(
+  ATFRAMEWORK_UTILS_NAMESPACE_ID::lock::lock_holder<ATFRAMEWORK_UTILS_NAMESPACE_ID::lock::spin_lock> lock_guard(
       random_generator_lock);
 
   UTIL_UNLIKELY_IF (!uuid_generator_rand_engine_inited) {
@@ -430,7 +430,7 @@ try_again:
   return ret;
 }
 
-static int __uuid_generate_time(LIBATFRAME_UTILS_NAMESPACE_ID::random::uuid &out) {
+static int __uuid_generate_time(ATFRAMEWORK_UTILS_NAMESPACE_ID::random::uuid &out) {
   static unsigned char node_id[6];
   static int has_init = 0;
   uint32_t clock_mid;
@@ -456,7 +456,7 @@ static int __uuid_generate_time(LIBATFRAME_UTILS_NAMESPACE_ID::random::uuid &out
   return ret;
 }
 
-static void __uuid_generate_random(LIBATFRAME_UTILS_NAMESPACE_ID::random::uuid &out) {
+static void __uuid_generate_random(ATFRAMEWORK_UTILS_NAMESPACE_ID::random::uuid &out) {
   random_get_bytes(reinterpret_cast<unsigned char *>(&out), sizeof(out));
   // Set version
   out.clock_seq = static_cast<uint16_t>((out.clock_seq & 0x3FFF) | 0x8000);
@@ -478,7 +478,7 @@ static void __uuid_generate_random(LIBATFRAME_UTILS_NAMESPACE_ID::random::uuid &
  * /dev/urandom is available, since otherwise we won't have
  * high-quality randomness.
  */
-// static void uuid_generate(LIBATFRAME_UTILS_NAMESPACE_ID::random::uuid& out) {
+// static void uuid_generate(ATFRAMEWORK_UTILS_NAMESPACE_ID::random::uuid& out) {
 //     if (have_random_source()) {
 //         __uuid_generate_random(out);
 //     } else {
@@ -488,7 +488,7 @@ static void __uuid_generate_random(LIBATFRAME_UTILS_NAMESPACE_ID::random::uuid &
 }  // namespace details
 #  endif
 
-#  if !(defined(LIBATFRAME_UTILS_ENABLE_LIBUUID) && LIBATFRAME_UTILS_ENABLE_LIBUUID)
+#  if !(defined(ATFRAMEWORK_UTILS_ENABLE_LIBUUID) && ATFRAMEWORK_UTILS_ENABLE_LIBUUID)
 namespace details {
 inline static void __to_hex(char *output, unsigned char input) {
   unsigned char low = input & 0x0f;
@@ -508,10 +508,10 @@ inline static void __to_hex(char *output, unsigned char input) {
 }  // namespace details
 #  endif
 
-LIBATFRAME_UTILS_API std::string uuid_generator::uuid_to_string(const uuid &id, bool remove_minus) {
+ATFRAMEWORK_UTILS_API std::string uuid_generator::uuid_to_string(const uuid &id, bool remove_minus) {
   char str_buff[40] = {0};
 
-#  if defined(LIBATFRAME_UTILS_ENABLE_LIBUUID) && LIBATFRAME_UTILS_ENABLE_LIBUUID
+#  if defined(ATFRAMEWORK_UTILS_ENABLE_LIBUUID) && ATFRAMEWORK_UTILS_ENABLE_LIBUUID
   uuid_t linux_uid;
   memcpy(linux_uid, &id, sizeof(uuid));
   uuid_unparse(linux_uid, str_buff);
@@ -573,7 +573,7 @@ LIBATFRAME_UTILS_API std::string uuid_generator::uuid_to_string(const uuid &id, 
   return std::string(str_buff);
 }
 
-LIBATFRAME_UTILS_API std::string uuid_generator::uuid_to_binary(const uuid &id) {
+ATFRAMEWORK_UTILS_API std::string uuid_generator::uuid_to_binary(const uuid &id) {
   std::string ret;
   ret.resize(sizeof(uuid));
   ret[0] = static_cast<char>((id.time_low >> 24) & 0xFF);
@@ -591,7 +591,7 @@ LIBATFRAME_UTILS_API std::string uuid_generator::uuid_to_binary(const uuid &id) 
   return ret;
 }
 
-LIBATFRAME_UTILS_API uuid uuid_generator::binary_to_uuid(const std::string &id_bin) {
+ATFRAMEWORK_UTILS_API uuid uuid_generator::binary_to_uuid(const std::string &id_bin) {
   uuid ret;
   if (sizeof(uuid) > id_bin.size()) {
     memset(&ret, 0, sizeof(ret));
@@ -608,14 +608,14 @@ LIBATFRAME_UTILS_API uuid uuid_generator::binary_to_uuid(const std::string &id_b
   return ret;
 }
 
-LIBATFRAME_UTILS_API uuid uuid_generator::generate() {
+ATFRAMEWORK_UTILS_API uuid uuid_generator::generate() {
   uuid ret;
 
-#  if defined(LIBATFRAME_UTILS_ENABLE_LIBUUID) && LIBATFRAME_UTILS_ENABLE_LIBUUID
+#  if defined(ATFRAMEWORK_UTILS_ENABLE_LIBUUID) && ATFRAMEWORK_UTILS_ENABLE_LIBUUID
   uuid_t linux_uid;
   uuid_generate(linux_uid);
   memcpy(&ret, linux_uid, sizeof(ret));
-#  elif defined(LIBATFRAME_UTILS_ENABLE_UUID_WINRPC) && LIBATFRAME_UTILS_ENABLE_UUID_WINRPC
+#  elif defined(ATFRAMEWORK_UTILS_ENABLE_UUID_WINRPC) && ATFRAMEWORK_UTILS_ENABLE_UUID_WINRPC
   UUID res;
   UuidCreate(&res);
   ret.time_low = static_cast<uint32_t>(res.Data1);
@@ -630,18 +630,18 @@ LIBATFRAME_UTILS_API uuid uuid_generator::generate() {
   return ret;
 }
 
-LIBATFRAME_UTILS_API std::string uuid_generator::generate_string(bool remove_minus) {
+ATFRAMEWORK_UTILS_API std::string uuid_generator::generate_string(bool remove_minus) {
   return uuid_to_string(generate(), remove_minus);
 }
 
-LIBATFRAME_UTILS_API uuid uuid_generator::generate_random() {
+ATFRAMEWORK_UTILS_API uuid uuid_generator::generate_random() {
   uuid ret;
 
-#  if defined(LIBATFRAME_UTILS_ENABLE_LIBUUID) && LIBATFRAME_UTILS_ENABLE_LIBUUID
+#  if defined(ATFRAMEWORK_UTILS_ENABLE_LIBUUID) && ATFRAMEWORK_UTILS_ENABLE_LIBUUID
   uuid_t linux_uid;
   uuid_generate_random(linux_uid);
   memcpy(&ret, linux_uid, sizeof(ret));
-#  elif defined(LIBATFRAME_UTILS_ENABLE_UUID_WINRPC) && LIBATFRAME_UTILS_ENABLE_UUID_WINRPC
+#  elif defined(ATFRAMEWORK_UTILS_ENABLE_UUID_WINRPC) && ATFRAMEWORK_UTILS_ENABLE_UUID_WINRPC
   UUID res;
   UuidCreate(&res);
   ret.time_low = static_cast<uint32_t>(res.Data1);
@@ -656,18 +656,18 @@ LIBATFRAME_UTILS_API uuid uuid_generator::generate_random() {
   return ret;
 }
 
-LIBATFRAME_UTILS_API std::string uuid_generator::generate_string_random(bool remove_minus) {
+ATFRAMEWORK_UTILS_API std::string uuid_generator::generate_string_random(bool remove_minus) {
   return uuid_to_string(generate_random(), remove_minus);
 }
 
-LIBATFRAME_UTILS_API uuid uuid_generator::generate_time() {
+ATFRAMEWORK_UTILS_API uuid uuid_generator::generate_time() {
   uuid ret;
 
-#  if defined(LIBATFRAME_UTILS_ENABLE_LIBUUID) && LIBATFRAME_UTILS_ENABLE_LIBUUID
+#  if defined(ATFRAMEWORK_UTILS_ENABLE_LIBUUID) && ATFRAMEWORK_UTILS_ENABLE_LIBUUID
   uuid_t linux_uid;
   uuid_generate_time(linux_uid);
   memcpy(&ret, linux_uid, sizeof(ret));
-#  elif defined(LIBATFRAME_UTILS_ENABLE_UUID_WINRPC) && LIBATFRAME_UTILS_ENABLE_UUID_WINRPC
+#  elif defined(ATFRAMEWORK_UTILS_ENABLE_UUID_WINRPC) && ATFRAMEWORK_UTILS_ENABLE_UUID_WINRPC
   UUID res;
   UuidCreateSequential(&res);
   ret.time_low = static_cast<uint32_t>(res.Data1);
@@ -682,10 +682,10 @@ LIBATFRAME_UTILS_API uuid uuid_generator::generate_time() {
   return ret;
 }
 
-LIBATFRAME_UTILS_API std::string uuid_generator::generate_string_time(bool remove_minus) {
+ATFRAMEWORK_UTILS_API std::string uuid_generator::generate_string_time(bool remove_minus) {
   return uuid_to_string(generate_time(), remove_minus);
 }
 }  // namespace random
-LIBATFRAME_UTILS_NAMESPACE_END
+ATFRAMEWORK_UTILS_NAMESPACE_END
 
 #endif

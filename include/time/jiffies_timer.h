@@ -82,7 +82,7 @@
 #include <list>
 #include <memory>
 
-LIBATFRAME_UTILS_NAMESPACE_BEGIN
+ATFRAMEWORK_UTILS_NAMESPACE_BEGIN
 namespace time {
 /**
  * @brief jiffies timer 定时器实现
@@ -94,7 +94,7 @@ namespace time {
  */
 template <time_t LVL_BITS = 6, time_t LVL_CLK_SHIFT = 3, size_t LVL_DEPTH = 8,
           memory::compat_strong_ptr_mode PTR_MODE = memory::compat_strong_ptr_mode::kStl>
-class LIBATFRAME_UTILS_API_HEAD_ONLY jiffies_timer {
+class ATFRAMEWORK_UTILS_API_HEAD_ONLY jiffies_timer {
  public:
   UTIL_CONFIG_STATIC_ASSERT(LVL_CLK_SHIFT < LVL_BITS);
 
@@ -465,4 +465,4 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY jiffies_timer {
   void *private_data_;
 };
 }  // namespace time
-LIBATFRAME_UTILS_NAMESPACE_END
+ATFRAMEWORK_UTILS_NAMESPACE_END

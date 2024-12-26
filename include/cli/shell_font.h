@@ -41,7 +41,7 @@
 
 #endif
 
-LIBATFRAME_UTILS_NAMESPACE_BEGIN
+ATFRAMEWORK_UTILS_NAMESPACE_BEGIN
 namespace cli {
 
 // 下面是编码表
@@ -77,7 +77,7 @@ namespace cli {
 //  47  设置白色背景
 //  49  设置缺省黑色背景
 
-struct LIBATFRAME_UTILS_API shell_font_style {
+struct ATFRAMEWORK_UTILS_API shell_font_style {
   enum shell_font_spec {
     SHELL_FONT_SPEC_NULL = 0x00,
     SHELL_FONT_SPEC_BOLD = 0x01,
@@ -109,7 +109,7 @@ struct LIBATFRAME_UTILS_API shell_font_style {
   };
 };
 
-class LIBATFRAME_UTILS_API shell_font {
+class ATFRAMEWORK_UTILS_API shell_font {
  private:
   int m_iFlag;
 
@@ -172,33 +172,33 @@ class UTIL_SYMBOL_VISIBLE shell_stream {
     mutable int flag;
 
     // 进允许内部复制构造
-    LIBATFRAME_UTILS_API shell_stream_opr(const shell_stream_opr &);
-    LIBATFRAME_UTILS_API shell_stream_opr &operator=(const shell_stream_opr &);
+    ATFRAMEWORK_UTILS_API shell_stream_opr(const shell_stream_opr &);
+    ATFRAMEWORK_UTILS_API shell_stream_opr &operator=(const shell_stream_opr &);
 
     friend class shell_stream;
 
    public:
-    LIBATFRAME_UTILS_API shell_stream_opr(stream_t *os);
-    LIBATFRAME_UTILS_API ~shell_stream_opr();
+    ATFRAMEWORK_UTILS_API shell_stream_opr(stream_t *os);
+    ATFRAMEWORK_UTILS_API ~shell_stream_opr();
 
     template <typename Ty>
-    LIBATFRAME_UTILS_API_HEAD_ONLY const shell_stream_opr &operator<<(const Ty &v) const {
+    ATFRAMEWORK_UTILS_API_HEAD_ONLY const shell_stream_opr &operator<<(const Ty &v) const {
       close();
       (*pOs) << v;
       return (*this);
     }
 
-    LIBATFRAME_UTILS_API const shell_stream_opr &operator<<(std::nullptr_t) const;
-    LIBATFRAME_UTILS_API const shell_stream_opr &operator<<(shell_font_style::shell_font_spec style) const;
-    LIBATFRAME_UTILS_API const shell_stream_opr &operator<<(shell_font_style::shell_font_color style) const;
-    LIBATFRAME_UTILS_API const shell_stream_opr &operator<<(shell_font_style::shell_font_background_color style) const;
-    LIBATFRAME_UTILS_API const shell_stream_opr &operator<<(stream_t &(*fn)(stream_t &)) const;
+    ATFRAMEWORK_UTILS_API const shell_stream_opr &operator<<(std::nullptr_t) const;
+    ATFRAMEWORK_UTILS_API const shell_stream_opr &operator<<(shell_font_style::shell_font_spec style) const;
+    ATFRAMEWORK_UTILS_API const shell_stream_opr &operator<<(shell_font_style::shell_font_color style) const;
+    ATFRAMEWORK_UTILS_API const shell_stream_opr &operator<<(shell_font_style::shell_font_background_color style) const;
+    ATFRAMEWORK_UTILS_API const shell_stream_opr &operator<<(stream_t &(*fn)(stream_t &)) const;
 
-    LIBATFRAME_UTILS_API const shell_stream_opr &open(int flag) const;
+    ATFRAMEWORK_UTILS_API const shell_stream_opr &open(int flag) const;
 
-    LIBATFRAME_UTILS_API void close() const;
+    ATFRAMEWORK_UTILS_API void close() const;
 
-    LIBATFRAME_UTILS_API void reset() const;
+    ATFRAMEWORK_UTILS_API void reset() const;
 
     UTIL_FORCEINLINE operator stream_t &() const { return *pOs; }
 
@@ -206,15 +206,15 @@ class UTIL_SYMBOL_VISIBLE shell_stream {
   };
 
  public:
-  LIBATFRAME_UTILS_API shell_stream(stream_t &stream = std::cout);
-  LIBATFRAME_UTILS_API shell_stream_opr operator()() const;
+  ATFRAMEWORK_UTILS_API shell_stream(stream_t &stream = std::cout);
+  ATFRAMEWORK_UTILS_API shell_stream_opr operator()() const;
 
  private:
   stream_t *m_pOs;
 };
 
 }  // namespace cli
-LIBATFRAME_UTILS_NAMESPACE_END
+ATFRAMEWORK_UTILS_NAMESPACE_END
 
 #if defined(__GNUC__) && !defined(__clang__) && !defined(__apple_build_version__)
 #  if (__GNUC__ * 100 + __GNUC_MINOR__ * 10) >= 460

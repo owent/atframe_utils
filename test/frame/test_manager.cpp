@@ -25,8 +25,8 @@
 #include "test_manager.h"
 
 namespace detail {
-#if !(defined(THREAD_TLS_USE_PTHREAD) && THREAD_TLS_USE_PTHREAD) && defined(THREAD_TLS_ENABLED) && \
-    1 == THREAD_TLS_ENABLED
+#if !(defined(ATFRAMEWORK_UTILS_THREAD_TLS_USE_PTHREAD) && ATFRAMEWORK_UTILS_THREAD_TLS_USE_PTHREAD) && \
+    defined(THREAD_TLS_ENABLED) && 1 == THREAD_TLS_ENABLED
 
 struct test_manager_tls_block_t {
   int *success_counter_ptr;
@@ -199,12 +199,11 @@ int test_manager::run_event_on_start() {
          iter != evt_on_starts_[i].second->after.end(); ++iter) {
       index_by_name_t::iterator dep_iter = index_by_name.find(*iter);
       if (dep_iter == index_by_name.end()) {
-        LIBATFRAME_UTILS_NAMESPACE_ID::cli::shell_stream ss(std::cerr);
-        ss() << LIBATFRAME_UTILS_NAMESPACE_ID::cli::shell_font_style::SHELL_FONT_COLOR_GREEN
-             << LIBATFRAME_UTILS_NAMESPACE_ID::cli::shell_font_style::SHELL_FONT_SPEC_BOLD << "[ WARNING  ] "
-             << LIBATFRAME_UTILS_NAMESPACE_ID::cli::shell_font_style::SHELL_FONT_SPEC_NULL << "On Start Event "
-             << evt_on_starts_[i].first << " is configured run after " << (*iter) << ", but " << (*iter) << "not found."
-             << std::endl;
+        atfw::util::cli::shell_stream ss(std::cerr);
+        ss() << atfw::util::cli::shell_font_style::SHELL_FONT_COLOR_GREEN
+             << atfw::util::cli::shell_font_style::SHELL_FONT_SPEC_BOLD << "[ WARNING  ] "
+             << atfw::util::cli::shell_font_style::SHELL_FONT_SPEC_NULL << "On Start Event " << evt_on_starts_[i].first
+             << " is configured run after " << (*iter) << ", but " << (*iter) << "not found." << std::endl;
         continue;
       }
 
@@ -217,11 +216,10 @@ int test_manager::run_event_on_start() {
   topological_sort(index_by_name, run_order);
 
   for (size_t i = 0; i < run_order.size(); ++i) {
-    LIBATFRAME_UTILS_NAMESPACE_ID::cli::shell_stream ss(std::cout);
-    ss() << LIBATFRAME_UTILS_NAMESPACE_ID::cli::shell_font_style::SHELL_FONT_COLOR_GREEN
-         << LIBATFRAME_UTILS_NAMESPACE_ID::cli::shell_font_style::SHELL_FONT_SPEC_BOLD << "[ On Start ] "
-         << LIBATFRAME_UTILS_NAMESPACE_ID::cli::shell_font_style::SHELL_FONT_SPEC_NULL << "Running "
-         << run_order[i]->name << std::endl;
+    atfw::util::cli::shell_stream ss(std::cout);
+    ss() << atfw::util::cli::shell_font_style::SHELL_FONT_COLOR_GREEN
+         << atfw::util::cli::shell_font_style::SHELL_FONT_SPEC_BOLD << "[ On Start ] "
+         << atfw::util::cli::shell_font_style::SHELL_FONT_SPEC_NULL << "Running " << run_order[i]->name << std::endl;
     reinterpret_cast<on_start_ptr_type>(run_order[i]->object)->run();
   }
 
@@ -246,12 +244,11 @@ int test_manager::run_event_on_exit() {
          iter != evt_on_exits_[i].second->before.end(); ++iter) {
       index_by_name_t::iterator dep_iter = index_by_name.find(*iter);
       if (dep_iter == index_by_name.end()) {
-        LIBATFRAME_UTILS_NAMESPACE_ID::cli::shell_stream ss(std::cerr);
-        ss() << LIBATFRAME_UTILS_NAMESPACE_ID::cli::shell_font_style::SHELL_FONT_COLOR_GREEN
-             << LIBATFRAME_UTILS_NAMESPACE_ID::cli::shell_font_style::SHELL_FONT_SPEC_BOLD << "[ WARNING  ] "
-             << LIBATFRAME_UTILS_NAMESPACE_ID::cli::shell_font_style::SHELL_FONT_SPEC_NULL << "On Exit Event "
-             << evt_on_exits_[i].first << " is configured run before " << (*iter) << ", but " << (*iter) << "not found."
-             << std::endl;
+        atfw::util::cli::shell_stream ss(std::cerr);
+        ss() << atfw::util::cli::shell_font_style::SHELL_FONT_COLOR_GREEN
+             << atfw::util::cli::shell_font_style::SHELL_FONT_SPEC_BOLD << "[ WARNING  ] "
+             << atfw::util::cli::shell_font_style::SHELL_FONT_SPEC_NULL << "On Exit Event " << evt_on_exits_[i].first
+             << " is configured run before " << (*iter) << ", but " << (*iter) << "not found." << std::endl;
         continue;
       }
 
@@ -265,11 +262,10 @@ int test_manager::run_event_on_exit() {
 
   for (size_t i = 0; i < run_order.size(); ++i) {
     size_t idx = run_order.size() - 1 - i;
-    LIBATFRAME_UTILS_NAMESPACE_ID::cli::shell_stream ss(std::cout);
-    ss() << LIBATFRAME_UTILS_NAMESPACE_ID::cli::shell_font_style::SHELL_FONT_COLOR_GREEN
-         << LIBATFRAME_UTILS_NAMESPACE_ID::cli::shell_font_style::SHELL_FONT_SPEC_BOLD << "[ On Exit  ] "
-         << LIBATFRAME_UTILS_NAMESPACE_ID::cli::shell_font_style::SHELL_FONT_SPEC_NULL << "Running "
-         << run_order[idx]->name << std::endl;
+    atfw::util::cli::shell_stream ss(std::cout);
+    ss() << atfw::util::cli::shell_font_style::SHELL_FONT_COLOR_GREEN
+         << atfw::util::cli::shell_font_style::SHELL_FONT_SPEC_BOLD << "[ On Exit  ] "
+         << atfw::util::cli::shell_font_style::SHELL_FONT_SPEC_NULL << "Running " << run_order[idx]->name << std::endl;
     reinterpret_cast<on_exit_ptr_type>(run_order[idx]->object)->run();
   }
 
@@ -281,11 +277,11 @@ int test_manager::run() {
   failed_ = 0;
 
   clock_t all_begin_time = clock();
-  LIBATFRAME_UTILS_NAMESPACE_ID::cli::shell_stream ss(std::cout);
-  ss() << LIBATFRAME_UTILS_NAMESPACE_ID::cli::shell_font_style::SHELL_FONT_COLOR_GREEN
-       << LIBATFRAME_UTILS_NAMESPACE_ID::cli::shell_font_style::SHELL_FONT_SPEC_BOLD << "[==========] "
-       << LIBATFRAME_UTILS_NAMESPACE_ID::cli::shell_font_style::SHELL_FONT_SPEC_NULL << "Running " << tests_.size()
-       << " test(s)" << std::endl;
+  atfw::util::cli::shell_stream ss(std::cout);
+  ss() << atfw::util::cli::shell_font_style::SHELL_FONT_COLOR_GREEN
+       << atfw::util::cli::shell_font_style::SHELL_FONT_SPEC_BOLD << "[==========] "
+       << atfw::util::cli::shell_font_style::SHELL_FONT_SPEC_NULL << "Running " << tests_.size() << " test(s)"
+       << std::endl;
 
   for (test_data_type::iterator iter = tests_.begin(); iter != tests_.end(); ++iter) {
     bool check_test_group_passed = run_cases_.empty();
@@ -307,10 +303,10 @@ int test_manager::run() {
     size_t run_group_count = 0;
 
     ss() << std::endl
-         << LIBATFRAME_UTILS_NAMESPACE_ID::cli::shell_font_style::SHELL_FONT_COLOR_GREEN
-         << LIBATFRAME_UTILS_NAMESPACE_ID::cli::shell_font_style::SHELL_FONT_SPEC_BOLD << "[----------] "
-         << LIBATFRAME_UTILS_NAMESPACE_ID::cli::shell_font_style::SHELL_FONT_SPEC_NULL << iter->second.size()
-         << " test case(s) from " << iter->first << std::endl;
+         << atfw::util::cli::shell_font_style::SHELL_FONT_COLOR_GREEN
+         << atfw::util::cli::shell_font_style::SHELL_FONT_SPEC_BOLD << "[----------] "
+         << atfw::util::cli::shell_font_style::SHELL_FONT_SPEC_NULL << iter->second.size() << " test case(s) from "
+         << iter->first << std::endl;
 
     clock_t test_begin_time = clock();
     for (test_type::iterator iter2 = iter->second.begin(); iter2 != iter->second.end(); ++iter2) {
@@ -331,9 +327,9 @@ int test_manager::run() {
         continue;
       }
 
-      ss() << LIBATFRAME_UTILS_NAMESPACE_ID::cli::shell_font_style::SHELL_FONT_COLOR_GREEN << "[ RUN      ] "
-           << LIBATFRAME_UTILS_NAMESPACE_ID::cli::shell_font_style::SHELL_FONT_SPEC_NULL << iter->first << "."
-           << iter2->first << std::endl;
+      ss() << atfw::util::cli::shell_font_style::SHELL_FONT_COLOR_GREEN << "[ RUN      ] "
+           << atfw::util::cli::shell_font_style::SHELL_FONT_SPEC_NULL << iter->first << "." << iter2->first
+           << std::endl;
 
       clock_t case_begin_time = clock();
       iter2->second->run();
@@ -341,48 +337,46 @@ int test_manager::run() {
 
       if (0 == iter2->second->failed_) {
         ++success_;
-        ss() << LIBATFRAME_UTILS_NAMESPACE_ID::cli::shell_font_style::SHELL_FONT_COLOR_GREEN << "[       OK ] "
-             << LIBATFRAME_UTILS_NAMESPACE_ID::cli::shell_font_style::SHELL_FONT_SPEC_NULL << iter->first << "."
-             << iter2->first << " (" << get_expire_time(case_begin_time, case_end_time) << ")" << std::endl;
+        ss() << atfw::util::cli::shell_font_style::SHELL_FONT_COLOR_GREEN << "[       OK ] "
+             << atfw::util::cli::shell_font_style::SHELL_FONT_SPEC_NULL << iter->first << "." << iter2->first << " ("
+             << get_expire_time(case_begin_time, case_end_time) << ")" << std::endl;
       } else {
         ++failed_;
-        ss() << LIBATFRAME_UTILS_NAMESPACE_ID::cli::shell_font_style::SHELL_FONT_COLOR_RED << "[  FAILED  ] "
-             << LIBATFRAME_UTILS_NAMESPACE_ID::cli::shell_font_style::SHELL_FONT_SPEC_NULL << iter->first << "."
-             << iter2->first << " (" << get_expire_time(case_begin_time, case_end_time) << ")" << std::endl;
+        ss() << atfw::util::cli::shell_font_style::SHELL_FONT_COLOR_RED << "[  FAILED  ] "
+             << atfw::util::cli::shell_font_style::SHELL_FONT_SPEC_NULL << iter->first << "." << iter2->first << " ("
+             << get_expire_time(case_begin_time, case_end_time) << ")" << std::endl;
       }
 
       ++run_group_count;
     }
 
     clock_t test_end_time = clock();
-    ss() << LIBATFRAME_UTILS_NAMESPACE_ID::cli::shell_font_style::SHELL_FONT_COLOR_GREEN
-         << LIBATFRAME_UTILS_NAMESPACE_ID::cli::shell_font_style::SHELL_FONT_SPEC_BOLD << "[----------] "
-         << LIBATFRAME_UTILS_NAMESPACE_ID::cli::shell_font_style::SHELL_FONT_SPEC_NULL << run_group_count
-         << " test case(s) from " << iter->first << " (" << get_expire_time(test_begin_time, test_end_time) << " total)"
-         << std::endl;
+    ss() << atfw::util::cli::shell_font_style::SHELL_FONT_COLOR_GREEN
+         << atfw::util::cli::shell_font_style::SHELL_FONT_SPEC_BOLD << "[----------] "
+         << atfw::util::cli::shell_font_style::SHELL_FONT_SPEC_NULL << run_group_count << " test case(s) from "
+         << iter->first << " (" << get_expire_time(test_begin_time, test_end_time) << " total)" << std::endl;
   }
 
   clock_t all_end_time = clock();
-  ss() << LIBATFRAME_UTILS_NAMESPACE_ID::cli::shell_font_style::SHELL_FONT_COLOR_GREEN
-       << LIBATFRAME_UTILS_NAMESPACE_ID::cli::shell_font_style::SHELL_FONT_SPEC_BOLD << "[==========] "
-       << LIBATFRAME_UTILS_NAMESPACE_ID::cli::shell_font_style::SHELL_FONT_SPEC_NULL << (success_ + failed_)
-       << " test(s) ran." << " (" << get_expire_time(all_begin_time, all_end_time) << " total)" << std::endl;
+  ss() << atfw::util::cli::shell_font_style::SHELL_FONT_COLOR_GREEN
+       << atfw::util::cli::shell_font_style::SHELL_FONT_SPEC_BOLD << "[==========] "
+       << atfw::util::cli::shell_font_style::SHELL_FONT_SPEC_NULL << (success_ + failed_) << " test(s) ran." << " ("
+       << get_expire_time(all_begin_time, all_end_time) << " total)" << std::endl;
 
-  ss() << LIBATFRAME_UTILS_NAMESPACE_ID::cli::shell_font_style::SHELL_FONT_COLOR_GREEN << "[  PASSED  ] "
-       << LIBATFRAME_UTILS_NAMESPACE_ID::cli::shell_font_style::SHELL_FONT_SPEC_NULL << success_ << " test case(s)."
-       << std::endl;
+  ss() << atfw::util::cli::shell_font_style::SHELL_FONT_COLOR_GREEN << "[  PASSED  ] "
+       << atfw::util::cli::shell_font_style::SHELL_FONT_SPEC_NULL << success_ << " test case(s)." << std::endl;
 
   if (failed_ > 0) {
-    ss() << LIBATFRAME_UTILS_NAMESPACE_ID::cli::shell_font_style::SHELL_FONT_COLOR_RED << "[  FAILED  ] "
-         << LIBATFRAME_UTILS_NAMESPACE_ID::cli::shell_font_style::SHELL_FONT_SPEC_NULL << failed_
+    ss() << atfw::util::cli::shell_font_style::SHELL_FONT_COLOR_RED << "[  FAILED  ] "
+         << atfw::util::cli::shell_font_style::SHELL_FONT_SPEC_NULL << failed_
          << " test case(s), listed below:" << std::endl;
 
     for (test_data_type::iterator iter = tests_.begin(); iter != tests_.end(); ++iter) {
       for (test_type::iterator iter2 = iter->second.begin(); iter2 != iter->second.end(); ++iter2) {
         if (iter2->second->failed_ > 0) {
-          ss() << LIBATFRAME_UTILS_NAMESPACE_ID::cli::shell_font_style::SHELL_FONT_COLOR_RED << "[  FAILED  ] "
-               << LIBATFRAME_UTILS_NAMESPACE_ID::cli::shell_font_style::SHELL_FONT_SPEC_NULL << iter->first << "."
-               << iter2->first << std::endl;
+          ss() << atfw::util::cli::shell_font_style::SHELL_FONT_COLOR_RED << "[  FAILED  ] "
+               << atfw::util::cli::shell_font_style::SHELL_FONT_SPEC_NULL << iter->first << "." << iter2->first
+               << std::endl;
         }
       }
     }
@@ -437,9 +431,9 @@ void test_manager::inc_success_counter() {
     return;
   }
 
-  LIBATFRAME_UTILS_NAMESPACE_ID::cli::shell_stream ss(std::cerr);
-  ss() << LIBATFRAME_UTILS_NAMESPACE_ID::cli::shell_font_style::SHELL_FONT_COLOR_RED
-       << LIBATFRAME_UTILS_NAMESPACE_ID::cli::shell_font_style::SHELL_FONT_SPEC_BOLD << "[==========] "
+  atfw::util::cli::shell_stream ss(std::cerr);
+  ss() << atfw::util::cli::shell_font_style::SHELL_FONT_COLOR_RED
+       << atfw::util::cli::shell_font_style::SHELL_FONT_SPEC_BOLD << "[==========] "
        << "Expect expression can not be used when not running test case." << std::endl;
 }
 
@@ -450,9 +444,9 @@ void test_manager::inc_failed_counter() {
     return;
   }
 
-  LIBATFRAME_UTILS_NAMESPACE_ID::cli::shell_stream ss(std::cerr);
-  ss() << LIBATFRAME_UTILS_NAMESPACE_ID::cli::shell_font_style::SHELL_FONT_COLOR_RED
-       << LIBATFRAME_UTILS_NAMESPACE_ID::cli::shell_font_style::SHELL_FONT_SPEC_BOLD << "[==========] "
+  atfw::util::cli::shell_stream ss(std::cerr);
+  ss() << atfw::util::cli::shell_font_style::SHELL_FONT_COLOR_RED
+       << atfw::util::cli::shell_font_style::SHELL_FONT_SPEC_BOLD << "[==========] "
        << "Expect expression can not be used when not running test case." << std::endl;
 }
 
@@ -466,15 +460,12 @@ int run_tests(int argc, char *argv[]) {
   bool is_help = false;
   bool is_show_version = false;
 
-  LIBATFRAME_UTILS_NAMESPACE_ID::cli::cmd_option::ptr_type cmd_opts =
-      LIBATFRAME_UTILS_NAMESPACE_ID::cli::cmd_option::create();
-  cmd_opts->bind_cmd("-h, --help, help", LIBATFRAME_UTILS_NAMESPACE_ID::cli::phoenix::set_const(is_help, true))
+  atfw::util::cli::cmd_option::ptr_type cmd_opts = atfw::util::cli::cmd_option::create();
+  cmd_opts->bind_cmd("-h, --help, help", atfw::util::cli::phoenix::set_const(is_help, true))
       ->set_help_msg("                              show help message and exit.");
-  cmd_opts
-      ->bind_cmd("-v, --version, version",
-                 LIBATFRAME_UTILS_NAMESPACE_ID::cli::phoenix::set_const(is_show_version, true))
+  cmd_opts->bind_cmd("-v, --version, version", atfw::util::cli::phoenix::set_const(is_show_version, true))
       ->set_help_msg("                              show version and exit.");
-  cmd_opts->bind_cmd("-r, --run, run", LIBATFRAME_UTILS_NAMESPACE_ID::cli::phoenix::push_back(run_cases))
+  cmd_opts->bind_cmd("-r, --run, run", atfw::util::cli::phoenix::push_back(run_cases))
       ->set_help_msg("[case names...]               only run specify cases.");
 
   cmd_opts->start(argc, argv);

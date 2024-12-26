@@ -5,7 +5,7 @@
 
 #include "string/tquerystring.h"
 
-LIBATFRAME_UTILS_NAMESPACE_BEGIN
+ATFRAMEWORK_UTILS_NAMESPACE_BEGIN
 namespace uri {
 using uri_map_type = bool[256];
 
@@ -128,124 +128,124 @@ static std::string _decode_uri(const char *data, size_t sz, bool like_php) {
   return ret;
 }
 
-LIBATFRAME_UTILS_API std::string encode_uri(const char *content, size_t sz) {
+ATFRAMEWORK_UTILS_API std::string encode_uri(const char *content, size_t sz) {
   _init_uri_map(g_uri_map);
   sz = sz ? sz : strlen(content);
 
   return _encode_uri(g_uri_map, content, sz, false);
 }
 
-LIBATFRAME_UTILS_API std::string decode_uri(const char *uri, size_t sz) {
+ATFRAMEWORK_UTILS_API std::string decode_uri(const char *uri, size_t sz) {
   sz = sz ? sz : strlen(uri);
   return _decode_uri(uri, sz, false);
 }
 
-LIBATFRAME_UTILS_API std::string encode_uri_component(const char *content, size_t sz) {
+ATFRAMEWORK_UTILS_API std::string encode_uri_component(const char *content, size_t sz) {
   _init_uri_component_map(g_uri_component_map);
   sz = sz ? sz : strlen(content);
 
   return _encode_uri(g_uri_component_map, content, sz, false);
 }
 
-LIBATFRAME_UTILS_API std::string decode_uri_component(const char *uri, size_t sz) {
+ATFRAMEWORK_UTILS_API std::string decode_uri_component(const char *uri, size_t sz) {
   sz = sz ? sz : strlen(uri);
   return _decode_uri(uri, sz, false);
 }
 
 // ==== RFC 3986 ====
-LIBATFRAME_UTILS_API std::string raw_encode_url(const char *content, size_t sz) {
+ATFRAMEWORK_UTILS_API std::string raw_encode_url(const char *content, size_t sz) {
   _init_raw_url_map(g_raw_url_map);
   sz = sz ? sz : strlen(content);
 
   return _encode_uri(g_raw_url_map, content, sz, false);
 }
 
-LIBATFRAME_UTILS_API std::string raw_decode_url(const char *uri, size_t sz) {
+ATFRAMEWORK_UTILS_API std::string raw_decode_url(const char *uri, size_t sz) {
   sz = sz ? sz : strlen(uri);
   return _decode_uri(uri, sz, false);
 }
 
 // ==== application/x-www-form-urlencoded ====
-LIBATFRAME_UTILS_API std::string encode_url(const char *content, size_t sz) {
+ATFRAMEWORK_UTILS_API std::string encode_url(const char *content, size_t sz) {
   _init_raw_url_map(g_raw_url_map);
   sz = sz ? sz : strlen(content);
 
   return _encode_uri(g_raw_url_map, content, sz, true);
 }
 
-LIBATFRAME_UTILS_API std::string decode_url(const char *uri, size_t sz) {
+ATFRAMEWORK_UTILS_API std::string decode_url(const char *uri, size_t sz) {
   sz = sz ? sz : strlen(uri);
   return _decode_uri(uri, sz, true);
 }
 }  // namespace uri
 
 namespace types {
-LIBATFRAME_UTILS_API item_impl::~item_impl() {}
+ATFRAMEWORK_UTILS_API item_impl::~item_impl() {}
 
-LIBATFRAME_UTILS_API void item_impl::append_to(std::string &target, const std::string &key,
-                                               const std::string &value) const {
+ATFRAMEWORK_UTILS_API void item_impl::append_to(std::string &target, const std::string &key,
+                                                const std::string &value) const {
   target += uri::encode_uri_component(key.c_str(), key.size()) + "=" +
             uri::encode_uri_component(value.c_str(), value.size()) + "&";
 }
 
 // 字符串类型
-LIBATFRAME_UTILS_API item_string::item_string() {}
+ATFRAMEWORK_UTILS_API item_string::item_string() {}
 
-LIBATFRAME_UTILS_API item_string::item_string(const std::string &input_data) : data_(input_data) {}
+ATFRAMEWORK_UTILS_API item_string::item_string(const std::string &input_data) : data_(input_data) {}
 
-LIBATFRAME_UTILS_API item_string::~item_string() {}
+ATFRAMEWORK_UTILS_API item_string::~item_string() {}
 
-LIBATFRAME_UTILS_API item_string::ptr_type item_string::create() { return std::make_shared<item_string>(); }
+ATFRAMEWORK_UTILS_API item_string::ptr_type item_string::create() { return std::make_shared<item_string>(); }
 
-LIBATFRAME_UTILS_API item_string::ptr_type item_string::create(const std::string &input_data) {
+ATFRAMEWORK_UTILS_API item_string::ptr_type item_string::create(const std::string &input_data) {
   return std::make_shared<item_string>(input_data);
 }
 
-LIBATFRAME_UTILS_API bool item_string::empty() const { return data_.empty(); }
+ATFRAMEWORK_UTILS_API bool item_string::empty() const { return data_.empty(); }
 
-LIBATFRAME_UTILS_API size_t item_string::size() const { return data_.size(); }
+ATFRAMEWORK_UTILS_API size_t item_string::size() const { return data_.size(); }
 
-LIBATFRAME_UTILS_API ITEM_TYPE item_string::type() const { return ITEM_TYPE_STRING; }
+ATFRAMEWORK_UTILS_API ITEM_TYPE item_string::type() const { return ITEM_TYPE_STRING; }
 
-LIBATFRAME_UTILS_API std::string item_string::to_string(const char *) const { return data_; }
+ATFRAMEWORK_UTILS_API std::string item_string::to_string(const char *) const { return data_; }
 
-LIBATFRAME_UTILS_API bool item_string::encode(std::string &output, const char *prefix) const {
+ATFRAMEWORK_UTILS_API bool item_string::encode(std::string &output, const char *prefix) const {
   append_to(output, std::string(prefix), data_);
   return true;
 }
 
-LIBATFRAME_UTILS_API bool item_string::parse(const std::vector<std::string> &, size_t, const std::string &value) {
+ATFRAMEWORK_UTILS_API bool item_string::parse(const std::vector<std::string> &, size_t, const std::string &value) {
   data_ = value;
   return true;
 }
 
-LIBATFRAME_UTILS_API const std::string &item_string::data() const { return data_; }
+ATFRAMEWORK_UTILS_API const std::string &item_string::data() const { return data_; }
 
-LIBATFRAME_UTILS_API item_string::operator std::string() { return get(); };
+ATFRAMEWORK_UTILS_API item_string::operator std::string() { return get(); };
 
-LIBATFRAME_UTILS_API item_string &item_string::operator=(const std::string &input_data) {
+ATFRAMEWORK_UTILS_API item_string &item_string::operator=(const std::string &input_data) {
   set(input_data);
   return (*this);
 };
 
-LIBATFRAME_UTILS_API void item_string::set(const std::string &input_data) { data_ = input_data; };
+ATFRAMEWORK_UTILS_API void item_string::set(const std::string &input_data) { data_ = input_data; };
 
-LIBATFRAME_UTILS_API std::string &item_string::get() { return data_; };
+ATFRAMEWORK_UTILS_API std::string &item_string::get() { return data_; };
 
 // 数组类型
-LIBATFRAME_UTILS_API item_array::item_array() {}
+ATFRAMEWORK_UTILS_API item_array::item_array() {}
 
-LIBATFRAME_UTILS_API item_array::~item_array() {}
+ATFRAMEWORK_UTILS_API item_array::~item_array() {}
 
-LIBATFRAME_UTILS_API item_array::ptr_type item_array::create() { return std::make_shared<item_array>(); }
+ATFRAMEWORK_UTILS_API item_array::ptr_type item_array::create() { return std::make_shared<item_array>(); }
 
-LIBATFRAME_UTILS_API bool item_array::empty() const { return data_.empty(); }
+ATFRAMEWORK_UTILS_API bool item_array::empty() const { return data_.empty(); }
 
-LIBATFRAME_UTILS_API size_t item_array::size() const { return data_.size(); }
+ATFRAMEWORK_UTILS_API size_t item_array::size() const { return data_.size(); }
 
-LIBATFRAME_UTILS_API ITEM_TYPE item_array::type() const { return ITEM_TYPE_ARRAY; }
+ATFRAMEWORK_UTILS_API ITEM_TYPE item_array::type() const { return ITEM_TYPE_ARRAY; }
 
-LIBATFRAME_UTILS_API std::string item_array::to_string(const char *prefix) const {
+ATFRAMEWORK_UTILS_API std::string item_array::to_string(const char *prefix) const {
   std::string ret = "[";
   for (size_t i = 0; i < data_.size(); ++i) {
     if (i) {
@@ -260,8 +260,8 @@ LIBATFRAME_UTILS_API std::string item_array::to_string(const char *prefix) const
   return ret;
 }
 
-LIBATFRAME_UTILS_API bool item_array::parse(const std::vector<std::string> &keys, size_t index,
-                                            const std::string &value) {
+ATFRAMEWORK_UTILS_API bool item_array::parse(const std::vector<std::string> &keys, size_t index,
+                                             const std::string &value) {
   if (index + 1 != keys.size() || keys[index].size()) {
     return false;
   }
@@ -270,7 +270,7 @@ LIBATFRAME_UTILS_API bool item_array::parse(const std::vector<std::string> &keys
   return true;
 }
 
-LIBATFRAME_UTILS_API bool item_array::encode(std::string &output, const char *prefix) const {
+ATFRAMEWORK_UTILS_API bool item_array::encode(std::string &output, const char *prefix) const {
   bool ret = true;
   size_t index = 0;
   std::string new_prefix, pre_prefix = prefix;
@@ -297,44 +297,44 @@ LIBATFRAME_UTILS_API bool item_array::encode(std::string &output, const char *pr
   return ret;
 }
 
-LIBATFRAME_UTILS_API std::shared_ptr<item_impl> item_array::get(std::size_t uIndex) { return data_[uIndex]; };
+ATFRAMEWORK_UTILS_API std::shared_ptr<item_impl> item_array::get(std::size_t uIndex) { return data_[uIndex]; };
 
-LIBATFRAME_UTILS_API std::string item_array::get_string(std::size_t uIndex) const {
+ATFRAMEWORK_UTILS_API std::string item_array::get_string(std::size_t uIndex) const {
   return data_[uIndex]->to_string();
 };
 
-LIBATFRAME_UTILS_API void item_array::set(std::size_t uIndex, const std::shared_ptr<item_impl> &value) {
+ATFRAMEWORK_UTILS_API void item_array::set(std::size_t uIndex, const std::shared_ptr<item_impl> &value) {
   data_[uIndex] = value;
 };
 
-LIBATFRAME_UTILS_API void item_array::set(std::size_t uIndex, const std::string &value) {
+ATFRAMEWORK_UTILS_API void item_array::set(std::size_t uIndex, const std::string &value) {
   data_[uIndex] = std::make_shared<item_string>(value);
 };
 
-LIBATFRAME_UTILS_API void item_array::append(const std::shared_ptr<item_impl> &value) { data_.push_back(value); };
+ATFRAMEWORK_UTILS_API void item_array::append(const std::shared_ptr<item_impl> &value) { data_.push_back(value); };
 
-LIBATFRAME_UTILS_API void item_array::append(const std::string &value) {
+ATFRAMEWORK_UTILS_API void item_array::append(const std::string &value) {
   data_.push_back(std::make_shared<item_string>(value));
 };
 
-LIBATFRAME_UTILS_API void item_array::pop_back() { data_.pop_back(); };
+ATFRAMEWORK_UTILS_API void item_array::pop_back() { data_.pop_back(); };
 
-LIBATFRAME_UTILS_API void item_array::clear() { data_.clear(); };
+ATFRAMEWORK_UTILS_API void item_array::clear() { data_.clear(); };
 
 // 映射类型
-LIBATFRAME_UTILS_API item_object::ptr_type item_object::create() { return std::make_shared<item_object>(); }
+ATFRAMEWORK_UTILS_API item_object::ptr_type item_object::create() { return std::make_shared<item_object>(); }
 
-LIBATFRAME_UTILS_API item_object::item_object() {}
+ATFRAMEWORK_UTILS_API item_object::item_object() {}
 
-LIBATFRAME_UTILS_API item_object::~item_object() {}
+ATFRAMEWORK_UTILS_API item_object::~item_object() {}
 
-LIBATFRAME_UTILS_API bool item_object::empty() const { return data_.empty(); }
+ATFRAMEWORK_UTILS_API bool item_object::empty() const { return data_.empty(); }
 
-LIBATFRAME_UTILS_API size_t item_object::size() const { return data_.size(); }
+ATFRAMEWORK_UTILS_API size_t item_object::size() const { return data_.size(); }
 
-LIBATFRAME_UTILS_API ITEM_TYPE item_object::type() const { return ITEM_TYPE_ARRAY; }
+ATFRAMEWORK_UTILS_API ITEM_TYPE item_object::type() const { return ITEM_TYPE_ARRAY; }
 
-LIBATFRAME_UTILS_API std::string item_object::to_string(const char *prefix) const {
+ATFRAMEWORK_UTILS_API std::string item_object::to_string(const char *prefix) const {
   std::string ret = "{";
   for (data_const_iterator iter = data_.begin(); iter != data_.end(); ++iter) {
     if (iter != data_.begin()) {
@@ -349,8 +349,8 @@ LIBATFRAME_UTILS_API std::string item_object::to_string(const char *prefix) cons
   return ret;
 }
 
-LIBATFRAME_UTILS_API bool item_object::parse(const std::vector<std::string> &input_keys, size_t index,
-                                             const std::string &input_value) {
+ATFRAMEWORK_UTILS_API bool item_object::parse(const std::vector<std::string> &input_keys, size_t index,
+                                              const std::string &input_value) {
   if (index >= input_keys.size()) {
     return false;
   }
@@ -380,7 +380,7 @@ LIBATFRAME_UTILS_API bool item_object::parse(const std::vector<std::string> &inp
   // return false;
 }
 
-LIBATFRAME_UTILS_API bool item_object::encode(std::string &output, const char *prefix) const {
+ATFRAMEWORK_UTILS_API bool item_object::encode(std::string &output, const char *prefix) const {
   bool ret = true;
   std::string new_prefix, pre_prefix = prefix;
 
@@ -392,7 +392,7 @@ LIBATFRAME_UTILS_API bool item_object::encode(std::string &output, const char *p
   return ret;
 }
 
-LIBATFRAME_UTILS_API std::vector<std::string> item_object::keys() const {
+ATFRAMEWORK_UTILS_API std::vector<std::string> item_object::keys() const {
   std::vector<std::string> ret;
 
   for (data_const_iterator iter = data_.begin(); iter != data_.end(); ++iter) {
@@ -402,22 +402,21 @@ LIBATFRAME_UTILS_API std::vector<std::string> item_object::keys() const {
   return ret;
 }
 
-LIBATFRAME_UTILS_API const LIBATFRAME_UTILS_AUTO_SELETC_MAP(std::string, std::shared_ptr<item_impl>) &
-    item_object::data() const {
+ATFRAMEWORK_UTILS_API const std::unordered_map<std::string, std::shared_ptr<item_impl>> &item_object::data() const {
   return data_;
 }
 
-LIBATFRAME_UTILS_API std::shared_ptr<item_impl> item_object::get(const std::string &key) {
+ATFRAMEWORK_UTILS_API std::shared_ptr<item_impl> item_object::get(const std::string &key) {
   data_iterator iter = data_.find(key);
   return iter == data_.end() ? std::shared_ptr<item_impl>() : iter->second;
 };
 
-LIBATFRAME_UTILS_API std::string item_object::get_string(const std::string &key) const {
+ATFRAMEWORK_UTILS_API std::string item_object::get_string(const std::string &key) const {
   data_const_iterator iter = data_.find(key);
   return iter == data_.end() ? "" : iter->second->to_string();
 };
 
-LIBATFRAME_UTILS_API void item_object::set(const std::string &key, const std::shared_ptr<item_impl> &value) {
+ATFRAMEWORK_UTILS_API void item_object::set(const std::string &key, const std::shared_ptr<item_impl> &value) {
   data_iterator iter = data_.find(key);
   if (iter == data_.end()) {
     data_.insert(std::make_pair(key, value));
@@ -426,35 +425,35 @@ LIBATFRAME_UTILS_API void item_object::set(const std::string &key, const std::sh
   }
 };
 
-LIBATFRAME_UTILS_API void item_object::set(const std::string &key, const std::string &value) {
+ATFRAMEWORK_UTILS_API void item_object::set(const std::string &key, const std::string &value) {
   set(key, std::make_shared<item_string>(value));
 };
 
-LIBATFRAME_UTILS_API void item_object::remove(const std::string &key) { data_.erase(key); };
+ATFRAMEWORK_UTILS_API void item_object::remove(const std::string &key) { data_.erase(key); };
 
-LIBATFRAME_UTILS_API void item_object::clear() { data_.clear(); };
+ATFRAMEWORK_UTILS_API void item_object::clear() { data_.clear(); };
 
 }  // namespace types
 
-LIBATFRAME_UTILS_API tquerystring::tquerystring() : spliter_("?#&") {}
+ATFRAMEWORK_UTILS_API tquerystring::tquerystring() : spliter_("?#&") {}
 
-LIBATFRAME_UTILS_API tquerystring::tquerystring(const std::string &spliter) : spliter_(spliter) {}
+ATFRAMEWORK_UTILS_API tquerystring::tquerystring(const std::string &spliter) : spliter_(spliter) {}
 
-LIBATFRAME_UTILS_API tquerystring::~tquerystring() {}
+ATFRAMEWORK_UTILS_API tquerystring::~tquerystring() {}
 
-LIBATFRAME_UTILS_API tquerystring::ptr_type tquerystring::create() { return std::make_shared<tquerystring>(); }
+ATFRAMEWORK_UTILS_API tquerystring::ptr_type tquerystring::create() { return std::make_shared<tquerystring>(); }
 
-LIBATFRAME_UTILS_API tquerystring::ptr_type tquerystring::create(const std::string &spliter) {
+ATFRAMEWORK_UTILS_API tquerystring::ptr_type tquerystring::create(const std::string &spliter) {
   return std::make_shared<tquerystring>(spliter);
 }
 
-LIBATFRAME_UTILS_API bool tquerystring::empty() const { return data_.empty(); }
+ATFRAMEWORK_UTILS_API bool tquerystring::empty() const { return data_.empty(); }
 
-LIBATFRAME_UTILS_API size_t tquerystring::size() const { return data_.size(); }
+ATFRAMEWORK_UTILS_API size_t tquerystring::size() const { return data_.size(); }
 
-LIBATFRAME_UTILS_API types::ITEM_TYPE tquerystring::type() const { return types::ITEM_TYPE_QUERYSTRING; }
+ATFRAMEWORK_UTILS_API types::ITEM_TYPE tquerystring::type() const { return types::ITEM_TYPE_QUERYSTRING; }
 
-LIBATFRAME_UTILS_API std::string tquerystring::to_string(const char *prefix) const {
+ATFRAMEWORK_UTILS_API std::string tquerystring::to_string(const char *prefix) const {
   std::string ret;
 
   encode(ret, prefix);
@@ -462,7 +461,7 @@ LIBATFRAME_UTILS_API std::string tquerystring::to_string(const char *prefix) con
   return ret;
 }
 
-LIBATFRAME_UTILS_API bool tquerystring::decode(const char *content, size_t sz) {
+ATFRAMEWORK_UTILS_API bool tquerystring::decode(const char *content, size_t sz) {
   bool decl_map[256] = {false}, ret = true;
   size_t len = 0, is_decl;
   sz = sz ? sz : strlen(content);
@@ -488,7 +487,7 @@ LIBATFRAME_UTILS_API bool tquerystring::decode(const char *content, size_t sz) {
   return ret;
 }
 
-LIBATFRAME_UTILS_API bool tquerystring::decode_record(const char *content, size_t sz) {
+ATFRAMEWORK_UTILS_API bool tquerystring::decode_record(const char *content, size_t sz) {
   std::string seg, value, origin_val;
   std::vector<std::string> input_keys;
   origin_val.assign(content, sz);
@@ -534,7 +533,7 @@ LIBATFRAME_UTILS_API bool tquerystring::decode_record(const char *content, size_
   }
 }
 
-LIBATFRAME_UTILS_API bool tquerystring::encode(std::string &output, const char *) const {
+ATFRAMEWORK_UTILS_API bool tquerystring::encode(std::string &output, const char *) const {
   data_const_iterator iter = data_.begin();
 
   while (iter != data_.end() && iter->second->encode(output, iter->first.c_str())) {
@@ -548,23 +547,23 @@ LIBATFRAME_UTILS_API bool tquerystring::encode(std::string &output, const char *
   return iter == data_.end();
 }
 
-LIBATFRAME_UTILS_API std::shared_ptr<types::item_impl> tquerystring::operator[](const std::string &key) {
+ATFRAMEWORK_UTILS_API std::shared_ptr<types::item_impl> tquerystring::operator[](const std::string &key) {
   return get(key);
 }
 
-LIBATFRAME_UTILS_API void tquerystring::set_spliter(const std::string &spliter) { spliter_ = spliter; };
+ATFRAMEWORK_UTILS_API void tquerystring::set_spliter(const std::string &spliter) { spliter_ = spliter; };
 
-LIBATFRAME_UTILS_API types::item_string::ptr_type tquerystring::create_string() {
+ATFRAMEWORK_UTILS_API types::item_string::ptr_type tquerystring::create_string() {
   return types::item_string::create();
 };
 
-LIBATFRAME_UTILS_API types::item_string::ptr_type tquerystring::create_string(const std::string &val) {
+ATFRAMEWORK_UTILS_API types::item_string::ptr_type tquerystring::create_string(const std::string &val) {
   return types::item_string::create(val);
 };
 
-LIBATFRAME_UTILS_API types::item_array::ptr_type tquerystring::create_array() { return types::item_array::create(); };
+ATFRAMEWORK_UTILS_API types::item_array::ptr_type tquerystring::create_array() { return types::item_array::create(); };
 
-LIBATFRAME_UTILS_API types::item_object::ptr_type tquerystring::create_object() {
+ATFRAMEWORK_UTILS_API types::item_object::ptr_type tquerystring::create_object() {
   return types::item_object::create();
 };
-LIBATFRAME_UTILS_NAMESPACE_END
+ATFRAMEWORK_UTILS_NAMESPACE_END

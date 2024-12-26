@@ -23,7 +23,7 @@
 #include "nostd/nullability.h"
 #include "nostd/utility_data_size.h"
 
-#if defined(LIBATFRAME_UTILS_GSL_TEST_STL_STRING_VIEW) && LIBATFRAME_UTILS_GSL_TEST_STL_STRING_VIEW
+#if defined(ATFRAMEWORK_UTILS_GSL_TEST_STL_STRING_VIEW) && ATFRAMEWORK_UTILS_GSL_TEST_STL_STRING_VIEW
 #  include <string_view>
 #endif
 
@@ -50,30 +50,30 @@
 #  define UTIL_NOSTD_STRING_VIEW_CXX14_CONSTEXPR
 #endif
 
-LIBATFRAME_UTILS_NAMESPACE_BEGIN
+ATFRAMEWORK_UTILS_NAMESPACE_BEGIN
 namespace nostd {
 
 template <class Container>
-struct LIBATFRAME_UTILS_API_HEAD_ONLY __basic_string_view_from_string;
+struct ATFRAMEWORK_UTILS_API_HEAD_ONLY __basic_string_view_from_string;
 
 template <class CharT, class Traits, class Allocator>
-struct LIBATFRAME_UTILS_API_HEAD_ONLY __basic_string_view_from_string<::std::basic_string<CharT, Traits, Allocator>>
+struct ATFRAMEWORK_UTILS_API_HEAD_ONLY __basic_string_view_from_string<::std::basic_string<CharT, Traits, Allocator>>
     : public ::std::true_type {};
 
 template <class>
-struct LIBATFRAME_UTILS_API_HEAD_ONLY __basic_string_view_from_string : public ::std::false_type {};
+struct ATFRAMEWORK_UTILS_API_HEAD_ONLY __basic_string_view_from_string : public ::std::false_type {};
 
 template <class CharT, class Traits, class Container>
-struct LIBATFRAME_UTILS_API_HEAD_ONLY __basic_string_view_lifetime_guard;
+struct ATFRAMEWORK_UTILS_API_HEAD_ONLY __basic_string_view_lifetime_guard;
 
 template <class CharT, class Traits, class Container>
-struct LIBATFRAME_UTILS_API_HEAD_ONLY __basic_string_view_lifetime_guard
+struct ATFRAMEWORK_UTILS_API_HEAD_ONLY __basic_string_view_lifetime_guard
     : public ::std::conditional<!(__basic_string_view_from_string<remove_cvref_t<Container>>::value &&
                                   ::std::is_rvalue_reference<Container>::value),
                                 ::std::true_type, ::std::false_type>::type {};
 
 template <class CharT, class Traits = std::char_traits<CharT>>
-class LIBATFRAME_UTILS_API_HEAD_ONLY basic_string_view {
+class ATFRAMEWORK_UTILS_API_HEAD_ONLY basic_string_view {
  public:
   using traits_type = Traits;
   using value_type = CharT;
@@ -120,7 +120,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY basic_string_view {
   // Just like std::basic_string_view in C++23
   constexpr basic_string_view(std::nullptr_t) = delete;  // NOLINT(runtime/explicit)
 
-#if defined(LIBATFRAME_UTILS_GSL_TEST_STL_STRING_VIEW) && LIBATFRAME_UTILS_GSL_TEST_STL_STRING_VIEW
+#if defined(ATFRAMEWORK_UTILS_GSL_TEST_STL_STRING_VIEW) && ATFRAMEWORK_UTILS_GSL_TEST_STL_STRING_VIEW
   constexpr basic_string_view(  // NOLINT(runtime/explicit)
       const std::basic_string_view<CharT, Traits>& stl_string_view) noexcept
       // This is implemented in terms of `basic_string_view(p, n)` so `str.size()`
@@ -314,7 +314,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY basic_string_view {
     return std::basic_string<value_type, traits_type, A>(data(), size());
   }
 
-#if defined(LIBATFRAME_UTILS_GSL_TEST_STL_STRING_VIEW) && LIBATFRAME_UTILS_GSL_TEST_STL_STRING_VIEW
+#if defined(ATFRAMEWORK_UTILS_GSL_TEST_STL_STRING_VIEW) && ATFRAMEWORK_UTILS_GSL_TEST_STL_STRING_VIEW
   explicit operator std::basic_string_view<CharT, Traits>() const {
     if (!data()) return {};
     return std::basic_string_view<CharT, Traits>(data(), size());
@@ -531,7 +531,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY basic_string_view {
 // https://en.cppreference.com/w/cpp/language/static
 #if !((defined(__cplusplus) && __cplusplus >= 201703L) || (defined(_MSVC_LANG) && _MSVC_LANG >= 201703L))
 template <class CharT, class Traits>
-LIBATFRAME_UTILS_API_HEAD_ONLY constexpr const typename basic_string_view<CharT, Traits>::size_type
+ATFRAMEWORK_UTILS_API_HEAD_ONLY constexpr const typename basic_string_view<CharT, Traits>::size_type
     basic_string_view<CharT, Traits>::npos;
 #endif
 
@@ -558,8 +558,8 @@ LIBATFRAME_UTILS_API_HEAD_ONLY constexpr const typename basic_string_view<CharT,
 
 #if UTIL_NOSTD_INTERNAL_STRING_VIEW_USE_COMMON_TYPE
 template <class CharT, class Traits>
-LIBATFRAME_UTILS_API_HEAD_ONLY constexpr bool operator==(basic_string_view<CharT, Traits> x,
-                                                         basic_string_view<CharT, Traits> y) noexcept {
+ATFRAMEWORK_UTILS_API_HEAD_ONLY constexpr bool operator==(basic_string_view<CharT, Traits> x,
+                                                          basic_string_view<CharT, Traits> y) noexcept {
   return x.size() == y.size() &&
          (x.empty() || UTIL_NOSTD_INTERNAL_STRING_VIEW_MEMCMP(x.data(), y.data(), x.size()) == 0);
 }
@@ -570,7 +570,7 @@ template <class CharT, class Traits, int = 1>  // TRANSITION, VSO-409326
 #    else
 template <class CharT, class Traits>
 #    endif
-LIBATFRAME_UTILS_API_HEAD_ONLY constexpr bool operator==(
+ATFRAMEWORK_UTILS_API_HEAD_ONLY constexpr bool operator==(
     typename std::common_type<basic_string_view<CharT, Traits>>::type x, basic_string_view<CharT, Traits> y) noexcept {
   return x.size() == y.size() &&
          (x.empty() || UTIL_NOSTD_INTERNAL_STRING_VIEW_MEMCMP(x.data(), y.data(), x.size()) == 0);
@@ -583,27 +583,27 @@ template <class CharT, class Traits, int = 2>  // TRANSITION, VSO-409326
 #else
 template <class CharT, class Traits>
 #endif
-LIBATFRAME_UTILS_API_HEAD_ONLY constexpr bool operator==(
+ATFRAMEWORK_UTILS_API_HEAD_ONLY constexpr bool operator==(
     basic_string_view<CharT, Traits> x, typename std::common_type<basic_string_view<CharT, Traits>>::type y) noexcept {
   return x.size() == y.size() &&
          (x.empty() || UTIL_NOSTD_INTERNAL_STRING_VIEW_MEMCMP(x.data(), y.data(), x.size()) == 0);
 }
 
 template <class CharT, class Traits>
-LIBATFRAME_UTILS_API_HEAD_ONLY constexpr bool operator==(std::nullptr_t, basic_string_view<CharT, Traits> y) noexcept {
+ATFRAMEWORK_UTILS_API_HEAD_ONLY constexpr bool operator==(std::nullptr_t, basic_string_view<CharT, Traits> y) noexcept {
   return y.empty();
 }
 
 template <class CharT, class Traits>
-LIBATFRAME_UTILS_API_HEAD_ONLY constexpr bool operator==(basic_string_view<CharT, Traits> x, std::nullptr_t) noexcept {
+ATFRAMEWORK_UTILS_API_HEAD_ONLY constexpr bool operator==(basic_string_view<CharT, Traits> x, std::nullptr_t) noexcept {
   return x.empty();
 }
 
 #ifdef __cpp_impl_three_way_comparison
 #  if UTIL_NOSTD_INTERNAL_STRING_VIEW_USE_COMMON_TYPE
 template <class CharT, class Traits>
-LIBATFRAME_UTILS_API_HEAD_ONLY constexpr std::strong_ordering operator<=>(basic_string_view<CharT, Traits> x,
-                                                                          basic_string_view<CharT, Traits> y) noexcept {
+ATFRAMEWORK_UTILS_API_HEAD_ONLY constexpr std::strong_ordering operator<=>(
+    basic_string_view<CharT, Traits> x, basic_string_view<CharT, Traits> y) noexcept {
   auto result = x.compare(y);
   return result < 0 ? std::strong_ordering::less
                     : (result > 0 ? std::strong_ordering::greater : std::strong_ordering::equal);
@@ -615,7 +615,7 @@ template <class CharT, class Traits, int = 1>  // TRANSITION, VSO-409326
 #      else
 template <class CharT, class Traits>
 #      endif
-LIBATFRAME_UTILS_API_HEAD_ONLY constexpr std::strong_ordering operator<=>(
+ATFRAMEWORK_UTILS_API_HEAD_ONLY constexpr std::strong_ordering operator<=>(
     typename std::common_type<basic_string_view<CharT, Traits>>::type x, basic_string_view<CharT, Traits> y) noexcept {
   auto result = x.compare(y);
   return result < 0 ? std::strong_ordering::less
@@ -629,7 +629,7 @@ template <class CharT, class Traits, int = 2>  // TRANSITION, VSO-409326
 #  else
 template <class CharT, class Traits>
 #  endif
-LIBATFRAME_UTILS_API_HEAD_ONLY constexpr std::strong_ordering operator<=>(
+ATFRAMEWORK_UTILS_API_HEAD_ONLY constexpr std::strong_ordering operator<=>(
     basic_string_view<CharT, Traits> x, typename std::common_type<basic_string_view<CharT, Traits>>::type y) noexcept {
   auto result = x.compare(y);
   return result < 0 ? std::strong_ordering::less
@@ -637,14 +637,14 @@ LIBATFRAME_UTILS_API_HEAD_ONLY constexpr std::strong_ordering operator<=>(
 }
 
 template <class CharT, class Traits>
-LIBATFRAME_UTILS_API_HEAD_ONLY constexpr std::strong_ordering operator<=>(std::nullptr_t,
-                                                                          basic_string_view<CharT, Traits> y) noexcept {
+ATFRAMEWORK_UTILS_API_HEAD_ONLY constexpr std::strong_ordering operator<=>(
+    std::nullptr_t, basic_string_view<CharT, Traits> y) noexcept {
   return basic_string_view<CharT, Traits>() <=> y;
 }
 
 template <class CharT, class Traits>
-LIBATFRAME_UTILS_API_HEAD_ONLY constexpr std::strong_ordering operator<=>(basic_string_view<CharT, Traits> x,
-                                                                          std::nullptr_t) noexcept {
+ATFRAMEWORK_UTILS_API_HEAD_ONLY constexpr std::strong_ordering operator<=>(basic_string_view<CharT, Traits> x,
+                                                                           std::nullptr_t) noexcept {
   return x <=> basic_string_view<CharT, Traits>();
 }
 
@@ -652,8 +652,8 @@ LIBATFRAME_UTILS_API_HEAD_ONLY constexpr std::strong_ordering operator<=>(basic_
 
 #  if UTIL_NOSTD_INTERNAL_STRING_VIEW_USE_COMMON_TYPE
 template <class CharT, class Traits>
-LIBATFRAME_UTILS_API_HEAD_ONLY constexpr bool operator!=(basic_string_view<CharT, Traits> x,
-                                                         basic_string_view<CharT, Traits> y) noexcept {
+ATFRAMEWORK_UTILS_API_HEAD_ONLY constexpr bool operator!=(basic_string_view<CharT, Traits> x,
+                                                          basic_string_view<CharT, Traits> y) noexcept {
   return !(x == y);
 }
 
@@ -663,7 +663,7 @@ template <class CharT, class Traits, int = 1>  // TRANSITION, VSO-409326
 #      else
 template <class CharT, class Traits>
 #      endif
-LIBATFRAME_UTILS_API_HEAD_ONLY constexpr bool operator!=(
+ATFRAMEWORK_UTILS_API_HEAD_ONLY constexpr bool operator!=(
     typename std::common_type<basic_string_view<CharT, Traits>>::type x, basic_string_view<CharT, Traits> y) noexcept {
   return !(x == y);
 }
@@ -675,25 +675,25 @@ template <class CharT, class Traits, int = 2>  // TRANSITION, VSO-409326
 #  else
 template <class CharT, class Traits>
 #  endif
-LIBATFRAME_UTILS_API_HEAD_ONLY constexpr bool operator!=(
+ATFRAMEWORK_UTILS_API_HEAD_ONLY constexpr bool operator!=(
     basic_string_view<CharT, Traits> x, typename std::common_type<basic_string_view<CharT, Traits>>::type y) noexcept {
   return !(x == y);
 }
 
 template <class CharT, class Traits>
-LIBATFRAME_UTILS_API_HEAD_ONLY constexpr bool operator!=(basic_string_view<CharT, Traits> x, std::nullptr_t) noexcept {
+ATFRAMEWORK_UTILS_API_HEAD_ONLY constexpr bool operator!=(basic_string_view<CharT, Traits> x, std::nullptr_t) noexcept {
   return !(x == basic_string_view<CharT, Traits>());
 }
 
 template <class CharT, class Traits>
-LIBATFRAME_UTILS_API_HEAD_ONLY constexpr bool operator!=(std::nullptr_t, basic_string_view<CharT, Traits> y) noexcept {
+ATFRAMEWORK_UTILS_API_HEAD_ONLY constexpr bool operator!=(std::nullptr_t, basic_string_view<CharT, Traits> y) noexcept {
   return !(basic_string_view<CharT, Traits>() == y);
 }
 
 #  if UTIL_NOSTD_INTERNAL_STRING_VIEW_USE_COMMON_TYPE
 template <class CharT, class Traits>
-LIBATFRAME_UTILS_API_HEAD_ONLY constexpr bool operator<(basic_string_view<CharT, Traits> x,
-                                                        basic_string_view<CharT, Traits> y) noexcept {
+ATFRAMEWORK_UTILS_API_HEAD_ONLY constexpr bool operator<(basic_string_view<CharT, Traits> x,
+                                                         basic_string_view<CharT, Traits> y) noexcept {
   return x.compare(y) < 0;
 }
 
@@ -703,7 +703,7 @@ template <class CharT, class Traits, int = 1>  // TRANSITION, VSO-409326
 #      else
 template <class CharT, class Traits>
 #      endif
-LIBATFRAME_UTILS_API_HEAD_ONLY constexpr bool operator<(
+ATFRAMEWORK_UTILS_API_HEAD_ONLY constexpr bool operator<(
     typename std::common_type<basic_string_view<CharT, Traits>>::type x, basic_string_view<CharT, Traits> y) noexcept {
   return x.compare(y) < 0;
 }
@@ -715,25 +715,25 @@ template <class CharT, class Traits, int = 2>  // TRANSITION, VSO-409326
 #  else
 template <class CharT, class Traits>
 #  endif
-LIBATFRAME_UTILS_API_HEAD_ONLY constexpr bool operator<(
+ATFRAMEWORK_UTILS_API_HEAD_ONLY constexpr bool operator<(
     basic_string_view<CharT, Traits> x, typename std::common_type<basic_string_view<CharT, Traits>>::type y) noexcept {
   return x.compare(y) < 0;
 }
 
 template <class CharT, class Traits>
-LIBATFRAME_UTILS_API_HEAD_ONLY constexpr bool operator<(std::nullptr_t, basic_string_view<CharT, Traits> y) noexcept {
+ATFRAMEWORK_UTILS_API_HEAD_ONLY constexpr bool operator<(std::nullptr_t, basic_string_view<CharT, Traits> y) noexcept {
   return basic_string_view<CharT, Traits>().compare(y) < 0;
 }
 
 template <class CharT, class Traits>
-LIBATFRAME_UTILS_API_HEAD_ONLY constexpr bool operator<(basic_string_view<CharT, Traits> x, std::nullptr_t) noexcept {
+ATFRAMEWORK_UTILS_API_HEAD_ONLY constexpr bool operator<(basic_string_view<CharT, Traits> x, std::nullptr_t) noexcept {
   return x.compare(basic_string_view<CharT, Traits>()) < 0;
 }
 
 #  if UTIL_NOSTD_INTERNAL_STRING_VIEW_USE_COMMON_TYPE
 template <class CharT, class Traits>
-LIBATFRAME_UTILS_API_HEAD_ONLY constexpr bool operator>(basic_string_view<CharT, Traits> x,
-                                                        basic_string_view<CharT, Traits> y) noexcept {
+ATFRAMEWORK_UTILS_API_HEAD_ONLY constexpr bool operator>(basic_string_view<CharT, Traits> x,
+                                                         basic_string_view<CharT, Traits> y) noexcept {
   return y < x;
 }
 
@@ -743,7 +743,7 @@ template <class CharT, class Traits, int = 1>  // TRANSITION, VSO-409326
 #      else
 template <class CharT, class Traits>
 #      endif
-LIBATFRAME_UTILS_API_HEAD_ONLY constexpr bool operator>(
+ATFRAMEWORK_UTILS_API_HEAD_ONLY constexpr bool operator>(
     typename std::common_type<basic_string_view<CharT, Traits>>::type x, basic_string_view<CharT, Traits> y) noexcept {
   return y < x;
 }
@@ -755,25 +755,27 @@ template <class CharT, class Traits, int = 2>  // TRANSITION, VSO-409326
 #  else
 template <class CharT, class Traits>
 #  endif
-LIBATFRAME_UTILS_API_HEAD_ONLY constexpr bool operator>(
+ATFRAMEWORK_UTILS_API_HEAD_ONLY constexpr bool operator>(
     basic_string_view<CharT, Traits> x, typename std::common_type<basic_string_view<CharT, Traits>>::type y) noexcept {
   return y < x;
 }
 
 template <class CharT, class Traits>
-LIBATFRAME_UTILS_API_HEAD_ONLY constexpr bool operator>(std::nullptr_t x, basic_string_view<CharT, Traits> y) noexcept {
+ATFRAMEWORK_UTILS_API_HEAD_ONLY constexpr bool operator>(std::nullptr_t x,
+                                                         basic_string_view<CharT, Traits> y) noexcept {
   return y < x;
 }
 
 template <class CharT, class Traits>
-LIBATFRAME_UTILS_API_HEAD_ONLY constexpr bool operator>(basic_string_view<CharT, Traits> x, std::nullptr_t y) noexcept {
+ATFRAMEWORK_UTILS_API_HEAD_ONLY constexpr bool operator>(basic_string_view<CharT, Traits> x,
+                                                         std::nullptr_t y) noexcept {
   return y < x;
 }
 
 #  if UTIL_NOSTD_INTERNAL_STRING_VIEW_USE_COMMON_TYPE
 template <class CharT, class Traits>
-LIBATFRAME_UTILS_API_HEAD_ONLY constexpr bool operator<=(basic_string_view<CharT, Traits> x,
-                                                         basic_string_view<CharT, Traits> y) noexcept {
+ATFRAMEWORK_UTILS_API_HEAD_ONLY constexpr bool operator<=(basic_string_view<CharT, Traits> x,
+                                                          basic_string_view<CharT, Traits> y) noexcept {
   return !(y < x);
 }
 
@@ -783,7 +785,7 @@ template <class CharT, class Traits, int = 1>  // TRANSITION, VSO-409326
 #      else
 template <class CharT, class Traits>
 #      endif
-LIBATFRAME_UTILS_API_HEAD_ONLY constexpr bool operator<=(
+ATFRAMEWORK_UTILS_API_HEAD_ONLY constexpr bool operator<=(
     typename std::common_type<basic_string_view<CharT, Traits>>::type x, basic_string_view<CharT, Traits> y) noexcept {
   return !(y < x);
 }
@@ -795,27 +797,27 @@ template <class CharT, class Traits, int = 2>  // TRANSITION, VSO-409326
 #  else
 template <class CharT, class Traits>
 #  endif
-LIBATFRAME_UTILS_API_HEAD_ONLY constexpr bool operator<=(
+ATFRAMEWORK_UTILS_API_HEAD_ONLY constexpr bool operator<=(
     basic_string_view<CharT, Traits> x, typename std::common_type<basic_string_view<CharT, Traits>>::type y) noexcept {
   return !(y < x);
 }
 
 template <class CharT, class Traits>
-LIBATFRAME_UTILS_API_HEAD_ONLY constexpr bool operator<=(std::nullptr_t x,
-                                                         basic_string_view<CharT, Traits> y) noexcept {
+ATFRAMEWORK_UTILS_API_HEAD_ONLY constexpr bool operator<=(std::nullptr_t x,
+                                                          basic_string_view<CharT, Traits> y) noexcept {
   return !(y < x);
 }
 
 template <class CharT, class Traits>
-LIBATFRAME_UTILS_API_HEAD_ONLY constexpr bool operator<=(basic_string_view<CharT, Traits> x,
-                                                         std::nullptr_t y) noexcept {
+ATFRAMEWORK_UTILS_API_HEAD_ONLY constexpr bool operator<=(basic_string_view<CharT, Traits> x,
+                                                          std::nullptr_t y) noexcept {
   return !(y < x);
 }
 
 #  if UTIL_NOSTD_INTERNAL_STRING_VIEW_USE_COMMON_TYPE
 template <class CharT, class Traits>
-LIBATFRAME_UTILS_API_HEAD_ONLY constexpr bool operator>=(basic_string_view<CharT, Traits> x,
-                                                         basic_string_view<CharT, Traits> y) noexcept {
+ATFRAMEWORK_UTILS_API_HEAD_ONLY constexpr bool operator>=(basic_string_view<CharT, Traits> x,
+                                                          basic_string_view<CharT, Traits> y) noexcept {
   return !(x < y);
 }
 
@@ -825,7 +827,7 @@ template <class CharT, class Traits, int = 1>  // TRANSITION, VSO-409326
 #      else
 template <class CharT, class Traits>
 #      endif
-LIBATFRAME_UTILS_API_HEAD_ONLY constexpr bool operator>=(
+ATFRAMEWORK_UTILS_API_HEAD_ONLY constexpr bool operator>=(
     typename std::common_type<basic_string_view<CharT, Traits>>::type x, basic_string_view<CharT, Traits> y) noexcept {
   return !(x < y);
 }
@@ -837,27 +839,27 @@ template <class CharT, class Traits, int = 2>  // TRANSITION, VSO-409326
 #  else
 template <class CharT, class Traits>
 #  endif
-LIBATFRAME_UTILS_API_HEAD_ONLY constexpr bool operator>=(
+ATFRAMEWORK_UTILS_API_HEAD_ONLY constexpr bool operator>=(
     basic_string_view<CharT, Traits> x, typename std::common_type<basic_string_view<CharT, Traits>>::type y) noexcept {
   return !(x < y);
 }
 
 template <class CharT, class Traits>
-LIBATFRAME_UTILS_API_HEAD_ONLY constexpr bool operator>=(std::nullptr_t x,
-                                                         basic_string_view<CharT, Traits> y) noexcept {
+ATFRAMEWORK_UTILS_API_HEAD_ONLY constexpr bool operator>=(std::nullptr_t x,
+                                                          basic_string_view<CharT, Traits> y) noexcept {
   return !(x < y);
 }
 
 template <class CharT, class Traits>
-LIBATFRAME_UTILS_API_HEAD_ONLY constexpr bool operator>=(basic_string_view<CharT, Traits> x,
-                                                         std::nullptr_t y) noexcept {
+ATFRAMEWORK_UTILS_API_HEAD_ONLY constexpr bool operator>=(basic_string_view<CharT, Traits> x,
+                                                          std::nullptr_t y) noexcept {
   return !(x < y);
 }
 #endif
 
 // IO Insertion Operator
 template <class CharT, class Traits = std::char_traits<CharT>>
-LIBATFRAME_UTILS_API_HEAD_ONLY std::basic_ostream<CharT, Traits>& operator<<(
+ATFRAMEWORK_UTILS_API_HEAD_ONLY std::basic_ostream<CharT, Traits>& operator<<(
     std::basic_ostream<CharT, Traits>& os, basic_string_view<CharT, Traits> const& spn) {
   typename std::basic_ostream<CharT, Traits>::sentry sentry(os);
 
@@ -875,7 +877,7 @@ LIBATFRAME_UTILS_API_HEAD_ONLY std::basic_ostream<CharT, Traits>& operator<<(
 using string_view = basic_string_view<char>;
 using wstring_view = basic_string_view<wchar_t>;
 }  // namespace nostd
-LIBATFRAME_UTILS_NAMESPACE_END
+ATFRAMEWORK_UTILS_NAMESPACE_END
 
 #undef UTIL_NOSTD_STRING_VIEW_CXX14_CONSTEXPR
 #undef UTIL_NOSTD_INTERNAL_STRING_VIEW_MEMCMP

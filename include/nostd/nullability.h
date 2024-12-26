@@ -11,7 +11,7 @@
 
 #include "nostd/type_traits.h"
 
-LIBATFRAME_UTILS_NAMESPACE_BEGIN
+ATFRAMEWORK_UTILS_NAMESPACE_BEGIN
 namespace nostd {
 template <class, class = void>
 struct __is_nullability_compatible : ::std::false_type {};
@@ -91,4 +91,4 @@ using nullability_unknown
     = T;
 
 }  // namespace nostd
-LIBATFRAME_UTILS_NAMESPACE_END
+ATFRAMEWORK_UTILS_NAMESPACE_END

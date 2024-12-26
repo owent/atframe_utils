@@ -13,8 +13,8 @@
 struct test_lru_data {};
 static int g_stat_lru[4] = {0, 0, 0, 0};
 
-struct test_lru_action : public LIBATFRAME_UTILS_NAMESPACE_ID::mempool::lru_default_action<test_lru_data> {
-  using base_type = LIBATFRAME_UTILS_NAMESPACE_ID::mempool::lru_default_action<test_lru_data>;
+struct test_lru_action : public atfw::util::mempool::lru_default_action<test_lru_data> {
+  using base_type = atfw::util::mempool::lru_default_action<test_lru_data>;
   void push(test_lru_data *) { ++g_stat_lru[0]; }
 
   void pull(test_lru_data *) { ++g_stat_lru[1]; }
@@ -29,9 +29,8 @@ struct test_lru_action : public LIBATFRAME_UTILS_NAMESPACE_ID::mempool::lru_defa
 
 CASE_TEST(lru_object_pool_test, basic) {
   {
-    using test_lru_pool_t = LIBATFRAME_UTILS_NAMESPACE_ID::mempool::lru_pool<uint32_t, test_lru_data, test_lru_action>;
-    LIBATFRAME_UTILS_NAMESPACE_ID::mempool::lru_pool_manager::ptr_t mgr =
-        LIBATFRAME_UTILS_NAMESPACE_ID::mempool::lru_pool_manager::create();
+    using test_lru_pool_t = atfw::util::mempool::lru_pool<uint32_t, test_lru_data, test_lru_action>;
+    atfw::util::mempool::lru_pool_manager::ptr_t mgr = atfw::util::mempool::lru_pool_manager::create();
     test_lru_pool_t lru;
     test_lru_data *check_ptr;
     lru.init(mgr);
@@ -76,9 +75,8 @@ CASE_TEST(lru_object_pool_test, basic) {
 }
 
 CASE_TEST(lru_object_pool_test, inner_gc_proc) {
-  using test_lru_pool_t = LIBATFRAME_UTILS_NAMESPACE_ID::mempool::lru_pool<uint32_t, test_lru_data, test_lru_action>;
-  LIBATFRAME_UTILS_NAMESPACE_ID::mempool::lru_pool_manager::ptr_t mgr =
-      LIBATFRAME_UTILS_NAMESPACE_ID::mempool::lru_pool_manager::create();
+  using test_lru_pool_t = atfw::util::mempool::lru_pool<uint32_t, test_lru_data, test_lru_action>;
+  atfw::util::mempool::lru_pool_manager::ptr_t mgr = atfw::util::mempool::lru_pool_manager::create();
   test_lru_pool_t lru;
   lru.init(mgr);
   mgr->set_proc_item_count(16);
@@ -136,9 +134,8 @@ CASE_TEST(lru_object_pool_test, inner_gc_proc) {
 }
 
 CASE_TEST(lru_object_pool_test, timeout) {
-  using test_lru_pool_t = LIBATFRAME_UTILS_NAMESPACE_ID::mempool::lru_pool<uint32_t, test_lru_data, test_lru_action>;
-  LIBATFRAME_UTILS_NAMESPACE_ID::mempool::lru_pool_manager::ptr_t mgr =
-      LIBATFRAME_UTILS_NAMESPACE_ID::mempool::lru_pool_manager::create();
+  using test_lru_pool_t = atfw::util::mempool::lru_pool<uint32_t, test_lru_data, test_lru_action>;
+  atfw::util::mempool::lru_pool_manager::ptr_t mgr = atfw::util::mempool::lru_pool_manager::create();
   test_lru_pool_t lru;
   lru.init(mgr);
   mgr->set_proc_item_count(16);
@@ -190,9 +187,8 @@ CASE_TEST(lru_object_pool_test, timeout) {
   CASE_EXPECT_EQ(lru.size(), mgr->item_count().get());
 }
 
-struct test_lru_action_donothing
-    : public LIBATFRAME_UTILS_NAMESPACE_ID::mempool::lru_default_action<test_lru_action_donothing> {
-  using base_type = LIBATFRAME_UTILS_NAMESPACE_ID::mempool::lru_default_action<test_lru_action_donothing>;
+struct test_lru_action_donothing : public atfw::util::mempool::lru_default_action<test_lru_action_donothing> {
+  using base_type = atfw::util::mempool::lru_default_action<test_lru_action_donothing>;
   void push(void *) {}
   void pull(void *) {}
   void reset(void *) {}
@@ -202,8 +198,7 @@ struct test_lru_action_donothing
 CASE_TEST(lru_object_pool_test, adjust_bound) {
   // manual gc and make cache smaller
   {
-    LIBATFRAME_UTILS_NAMESPACE_ID::mempool::lru_pool_manager::ptr_t mgr =
-        LIBATFRAME_UTILS_NAMESPACE_ID::mempool::lru_pool_manager::create();
+    atfw::util::mempool::lru_pool_manager::ptr_t mgr = atfw::util::mempool::lru_pool_manager::create();
     mgr->set_proc_item_count(16);
 
     mgr->set_item_max_bound(32);
@@ -224,9 +219,8 @@ CASE_TEST(lru_object_pool_test, adjust_bound) {
 
   // push and make cache larger
   {
-    using test_lru_pool_t = LIBATFRAME_UTILS_NAMESPACE_ID::mempool::lru_pool<uint32_t, void, test_lru_action_donothing>;
-    LIBATFRAME_UTILS_NAMESPACE_ID::mempool::lru_pool_manager::ptr_t mgr =
-        LIBATFRAME_UTILS_NAMESPACE_ID::mempool::lru_pool_manager::create();
+    using test_lru_pool_t = atfw::util::mempool::lru_pool<uint32_t, void, test_lru_action_donothing>;
+    atfw::util::mempool::lru_pool_manager::ptr_t mgr = atfw::util::mempool::lru_pool_manager::create();
     test_lru_pool_t lru;
     lru.init(mgr);
 

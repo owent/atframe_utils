@@ -24,28 +24,28 @@
 
 #include <config/atframe_utils_build_feature.h>
 
-LIBATFRAME_UTILS_NAMESPACE_BEGIN
+ATFRAMEWORK_UTILS_NAMESPACE_BEGIN
 namespace hash {
 namespace core {
 template <typename Ty, size_t s>
-struct LIBATFRAME_UTILS_API_HEAD_ONLY fnv_magic_prime_number {
+struct ATFRAMEWORK_UTILS_API_HEAD_ONLY fnv_magic_prime_number {
   static constexpr const Ty value = 0x01000193U;
 };
 
 template <typename Ty>
-struct LIBATFRAME_UTILS_API_HEAD_ONLY fnv_magic_prime_number<Ty, 8> {
+struct ATFRAMEWORK_UTILS_API_HEAD_ONLY fnv_magic_prime_number<Ty, 8> {
   static constexpr const Ty value = 0x100000001b3ULL;
 };
 
 template <typename Ty, size_t s>
-struct LIBATFRAME_UTILS_API_HEAD_ONLY fnv_magic_offset_basis {
+struct ATFRAMEWORK_UTILS_API_HEAD_ONLY fnv_magic_offset_basis {
   static constexpr const Ty value = 0x811C9DC5U;
 
   static constexpr Ty fix(Ty hval) { return hval; }
 };
 
 template <typename Ty>
-struct LIBATFRAME_UTILS_API_HEAD_ONLY fnv_magic_offset_basis<Ty, 8> {
+struct ATFRAMEWORK_UTILS_API_HEAD_ONLY fnv_magic_offset_basis<Ty, 8> {
   static constexpr const Ty value = 0xCBF29CE484222325ULL;
 
   static constexpr Ty fix(Ty hval) { return hval ^ (hval >> 32); }
@@ -59,8 +59,8 @@ struct LIBATFRAME_UTILS_API_HEAD_ONLY fnv_magic_offset_basis<Ty, 8> {
  * @return 返回的指定类型的值
  */
 template <typename Ty>
-LIBATFRAME_UTILS_API_HEAD_ONLY Ty fnv_n_buf(const void *buf, size_t len,
-                                            Ty hval = fnv_magic_offset_basis<Ty, sizeof(Ty)>::value) {
+ATFRAMEWORK_UTILS_API_HEAD_ONLY Ty fnv_n_buf(const void *buf, size_t len,
+                                             Ty hval = fnv_magic_offset_basis<Ty, sizeof(Ty)>::value) {
   unsigned char *bp = (unsigned char *)buf;
   unsigned char *be = bp + len;
   Ty mn = fnv_magic_prime_number<Ty, sizeof(Ty)>::value;
@@ -81,8 +81,8 @@ LIBATFRAME_UTILS_API_HEAD_ONLY Ty fnv_n_buf(const void *buf, size_t len,
  * @return 返回的指定类型的值
  */
 template <typename Ty>
-LIBATFRAME_UTILS_API_HEAD_ONLY Ty fnv_n_buf_a(const void *buf, size_t len,
-                                              Ty hval = fnv_magic_offset_basis<Ty, sizeof(Ty)>::value) {
+ATFRAMEWORK_UTILS_API_HEAD_ONLY Ty fnv_n_buf_a(const void *buf, size_t len,
+                                               Ty hval = fnv_magic_offset_basis<Ty, sizeof(Ty)>::value) {
   unsigned char *bp = (unsigned char *)buf;
   unsigned char *be = bp + len;
   Ty mn = fnv_magic_prime_number<Ty, sizeof(Ty)>::value;
@@ -104,8 +104,8 @@ LIBATFRAME_UTILS_API_HEAD_ONLY Ty fnv_n_buf_a(const void *buf, size_t len,
  * @return 散列值
  */
 template <typename THVal>
-LIBATFRAME_UTILS_API_HEAD_ONLY THVal hash_fnv1(const void *bin, size_t len,
-                                               THVal hval = core::fnv_magic_offset_basis<THVal, sizeof(THVal)>::value) {
+ATFRAMEWORK_UTILS_API_HEAD_ONLY THVal
+hash_fnv1(const void *bin, size_t len, THVal hval = core::fnv_magic_offset_basis<THVal, sizeof(THVal)>::value) {
   return core::fnv_n_buf(bin, len, hval);
 }
 
@@ -117,7 +117,7 @@ LIBATFRAME_UTILS_API_HEAD_ONLY THVal hash_fnv1(const void *bin, size_t len,
  * @return 散列值
  */
 template <typename THVal>
-LIBATFRAME_UTILS_API_HEAD_ONLY THVal
+ATFRAMEWORK_UTILS_API_HEAD_ONLY THVal
 hash_fnv1a(const void *bin, size_t len, THVal hval = core::fnv_magic_offset_basis<THVal, sizeof(THVal)>::value) {
   return core::fnv_n_buf_a(bin, len, hval);
 }
@@ -130,7 +130,7 @@ hash_fnv1a(const void *bin, size_t len, THVal hval = core::fnv_magic_offset_basi
  * @return 散列值
  */
 template <typename THVal>
-LIBATFRAME_UTILS_API_HEAD_ONLY THVal hash_sdbm(const void *bin, size_t len, THVal hval = 0) {
+ATFRAMEWORK_UTILS_API_HEAD_ONLY THVal hash_sdbm(const void *bin, size_t len, THVal hval = 0) {
   unsigned char *str_buff = (unsigned char *)bin;
   size_t index = 0;
   while (index < len) {
@@ -149,7 +149,7 @@ LIBATFRAME_UTILS_API_HEAD_ONLY THVal hash_sdbm(const void *bin, size_t len, THVa
  * @return 散列值
  */
 template <typename THVal>
-LIBATFRAME_UTILS_API_HEAD_ONLY THVal hash_rs(const void *bin, size_t len, THVal hval = 0) {
+ATFRAMEWORK_UTILS_API_HEAD_ONLY THVal hash_rs(const void *bin, size_t len, THVal hval = 0) {
   unsigned int b = 378551;
   unsigned int a = 63689;
   size_t index = 0;
@@ -171,7 +171,7 @@ LIBATFRAME_UTILS_API_HEAD_ONLY THVal hash_rs(const void *bin, size_t len, THVal 
  * @return 散列值
  */
 template <typename THVal>
-LIBATFRAME_UTILS_API_HEAD_ONLY THVal hash_js(const void *bin, size_t len, THVal hval = 1315423911) {
+ATFRAMEWORK_UTILS_API_HEAD_ONLY THVal hash_js(const void *bin, size_t len, THVal hval = 1315423911) {
   size_t index = 0;
   unsigned char *str_buff = (unsigned char *)bin;
 
@@ -190,7 +190,7 @@ LIBATFRAME_UTILS_API_HEAD_ONLY THVal hash_js(const void *bin, size_t len, THVal 
  * @return 散列值
  */
 template <typename THVal>
-LIBATFRAME_UTILS_API_HEAD_ONLY THVal hash_pjw(const void *bin, size_t len, THVal hval = 0) {
+ATFRAMEWORK_UTILS_API_HEAD_ONLY THVal hash_pjw(const void *bin, size_t len, THVal hval = 0) {
   size_t index = 0;
   unsigned char *str_buff = (unsigned char *)bin;
 
@@ -217,7 +217,7 @@ LIBATFRAME_UTILS_API_HEAD_ONLY THVal hash_pjw(const void *bin, size_t len, THVal
  * @return 散列值
  */
 template <typename THVal>
-LIBATFRAME_UTILS_API_HEAD_ONLY THVal hash_elf(const void *bin, size_t len, THVal hval = 0) {
+ATFRAMEWORK_UTILS_API_HEAD_ONLY THVal hash_elf(const void *bin, size_t len, THVal hval = 0) {
   size_t index = 0;
   unsigned char *str_buff = (unsigned char *)bin;
 
@@ -241,7 +241,7 @@ LIBATFRAME_UTILS_API_HEAD_ONLY THVal hash_elf(const void *bin, size_t len, THVal
  * @return 散列值
  */
 template <typename THVal>
-LIBATFRAME_UTILS_API_HEAD_ONLY THVal hash_bkdr(const void *bin, size_t len, THVal hval = 0) {
+ATFRAMEWORK_UTILS_API_HEAD_ONLY THVal hash_bkdr(const void *bin, size_t len, THVal hval = 0) {
   size_t index = 0;
   unsigned char *str_buff = (unsigned char *)bin;
 
@@ -261,7 +261,7 @@ LIBATFRAME_UTILS_API_HEAD_ONLY THVal hash_bkdr(const void *bin, size_t len, THVa
  * @return 散列值
  */
 template <typename THVal>
-LIBATFRAME_UTILS_API_HEAD_ONLY THVal hash_djb(const void *bin, size_t len, THVal hval = 5381) {
+ATFRAMEWORK_UTILS_API_HEAD_ONLY THVal hash_djb(const void *bin, size_t len, THVal hval = 5381) {
   size_t index = 0;
   unsigned char *str_buff = (unsigned char *)bin;
 
@@ -280,7 +280,7 @@ LIBATFRAME_UTILS_API_HEAD_ONLY THVal hash_djb(const void *bin, size_t len, THVal
  * @return 散列值
  */
 template <typename THVal>
-LIBATFRAME_UTILS_API_HEAD_ONLY THVal hash_ap(const void *bin, size_t len, THVal hval = 0) {
+ATFRAMEWORK_UTILS_API_HEAD_ONLY THVal hash_ap(const void *bin, size_t len, THVal hval = 0) {
   size_t index = 0;
   unsigned char *str_buff = (unsigned char *)bin;
 
@@ -295,6 +295,6 @@ LIBATFRAME_UTILS_API_HEAD_ONLY THVal hash_ap(const void *bin, size_t len, THVal 
   return hval;
 }
 }  // namespace hash
-LIBATFRAME_UTILS_NAMESPACE_END
+ATFRAMEWORK_UTILS_NAMESPACE_END
 
 #endif /* HASH_H_ */

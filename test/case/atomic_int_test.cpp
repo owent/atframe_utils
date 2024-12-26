@@ -10,7 +10,7 @@
 
 CASE_TEST(atomic_int_test, int8) {
   using tested_type = int8_t;
-  LIBATFRAME_UTILS_NAMESPACE_ID::lock::atomic_int_type<tested_type> tested(43);
+  atfw::util::lock::atomic_int_type<tested_type> tested(43);
 
   // store and load
   CASE_EXPECT_EQ(43, tested.load());
@@ -61,7 +61,7 @@ CASE_TEST(atomic_int_test, int8) {
 
 CASE_TEST(atomic_int_test, uint8) {
   using tested_type = uint8_t;
-  LIBATFRAME_UTILS_NAMESPACE_ID::lock::atomic_int_type<tested_type> tested(43);
+  atfw::util::lock::atomic_int_type<tested_type> tested(43);
 
   // store and load
   CASE_EXPECT_EQ(43, tested.load());
@@ -112,7 +112,7 @@ CASE_TEST(atomic_int_test, uint8) {
 
 CASE_TEST(atomic_int_test, int16) {
   using tested_type = int16_t;
-  LIBATFRAME_UTILS_NAMESPACE_ID::lock::atomic_int_type<tested_type> tested(43);
+  atfw::util::lock::atomic_int_type<tested_type> tested(43);
 
   // store and load
   CASE_EXPECT_EQ(43, tested.load());
@@ -163,7 +163,7 @@ CASE_TEST(atomic_int_test, int16) {
 
 CASE_TEST(atomic_int_test, uint16) {
   using tested_type = uint16_t;
-  LIBATFRAME_UTILS_NAMESPACE_ID::lock::atomic_int_type<tested_type> tested(43);
+  atfw::util::lock::atomic_int_type<tested_type> tested(43);
 
   // store and load
   CASE_EXPECT_EQ(43, tested.load());
@@ -214,7 +214,7 @@ CASE_TEST(atomic_int_test, uint16) {
 
 CASE_TEST(atomic_int_test, int32) {
   using tested_type = int32_t;
-  LIBATFRAME_UTILS_NAMESPACE_ID::lock::atomic_int_type<tested_type> tested(43);
+  atfw::util::lock::atomic_int_type<tested_type> tested(43);
 
   // store and load
   CASE_EXPECT_EQ(43, tested.load());
@@ -265,7 +265,7 @@ CASE_TEST(atomic_int_test, int32) {
 
 CASE_TEST(atomic_int_test, uint32) {
   using tested_type = uint32_t;
-  LIBATFRAME_UTILS_NAMESPACE_ID::lock::atomic_int_type<tested_type> tested(43);
+  atfw::util::lock::atomic_int_type<tested_type> tested(43);
 
   // store and load
   CASE_EXPECT_EQ(43, tested.load());
@@ -316,7 +316,7 @@ CASE_TEST(atomic_int_test, uint32) {
 
 CASE_TEST(atomic_int_test, int64) {
   using tested_type = int64_t;
-  LIBATFRAME_UTILS_NAMESPACE_ID::lock::atomic_int_type<tested_type> tested(43);
+  atfw::util::lock::atomic_int_type<tested_type> tested(43);
 
   // store and load
   CASE_EXPECT_EQ(43, tested.load());
@@ -367,7 +367,7 @@ CASE_TEST(atomic_int_test, int64) {
 
 CASE_TEST(atomic_int_test, uint64) {
   using tested_type = uint64_t;
-  LIBATFRAME_UTILS_NAMESPACE_ID::lock::atomic_int_type<tested_type> tested(43);
+  atfw::util::lock::atomic_int_type<tested_type> tested(43);
 
   // store and load
   CASE_EXPECT_EQ(43, tested.load());
@@ -425,7 +425,7 @@ CASE_TEST(atomic_int_test, uint64) {
 
 CASE_TEST(atomic_int_test, multi_thread_add) {
   using tested_type = uint64_t;
-  LIBATFRAME_UTILS_NAMESPACE_ID::lock::atomic_int_type<tested_type> tested(43);
+  atfw::util::lock::atomic_int_type<tested_type> tested(43);
 
   // store and load
   CASE_EXPECT_EQ(43, tested.load());
@@ -453,9 +453,7 @@ CASE_TEST(atomic_int_test, multi_thread_add) {
 
 CASE_TEST(atomic_int_test, unsafe_int8) {
   using tested_type = int8_t;
-  LIBATFRAME_UTILS_NAMESPACE_ID::lock::atomic_int_type<
-      LIBATFRAME_UTILS_NAMESPACE_ID::lock::unsafe_int_type<tested_type> >
-      tested(43);
+  atfw::util::lock::atomic_int_type<atfw::util::lock::unsafe_int_type<tested_type> > tested(43);
 
   // store and load
   CASE_EXPECT_EQ(43, tested.load());
@@ -506,9 +504,7 @@ CASE_TEST(atomic_int_test, unsafe_int8) {
 
 CASE_TEST(atomic_int_test, unsafe_uint32) {
   using tested_type = uint32_t;
-  LIBATFRAME_UTILS_NAMESPACE_ID::lock::atomic_int_type<
-      LIBATFRAME_UTILS_NAMESPACE_ID::lock::unsafe_int_type<tested_type> >
-      tested(43);
+  atfw::util::lock::atomic_int_type<atfw::util::lock::unsafe_int_type<tested_type> > tested(43);
 
   // store and load
   CASE_EXPECT_EQ(43, tested.load());

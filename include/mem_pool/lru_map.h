@@ -9,7 +9,7 @@
 #include <memory>
 #include <utility>
 
-LIBATFRAME_UTILS_NAMESPACE_BEGIN
+ATFRAMEWORK_UTILS_NAMESPACE_BEGIN
 namespace mempool {
 
 template <class TKEY, class TVALUE, class TOption = memory::lru_map_option<memory::compat_strong_ptr_mode::kStl>>
@@ -22,4 +22,4 @@ template <class TKEY, class TVALUE, class THasher = std::hash<TKEY>, class TKeyE
 using lru_map = memory::lru_map<TKEY, TVALUE, THasher, TKeyEQ, TOption, TAlloc>;
 
 }  // namespace mempool
-LIBATFRAME_UTILS_NAMESPACE_END
+ATFRAMEWORK_UTILS_NAMESPACE_END

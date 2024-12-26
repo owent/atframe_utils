@@ -22,11 +22,11 @@
 
 #include <config/atframe_utils_build_feature.h>
 
-LIBATFRAME_UTILS_NAMESPACE_BEGIN
+ATFRAMEWORK_UTILS_NAMESPACE_BEGIN
 namespace random {
 namespace core {
 template <class UIntType, int w, int k, int q, int s>
-class LIBATFRAME_UTILS_API_HEAD_ONLY linear_feedback_shift_engine {
+class ATFRAMEWORK_UTILS_API_HEAD_ONLY linear_feedback_shift_engine {
  public:
   using result_type = UIntType;
 
@@ -81,7 +81,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY linear_feedback_shift_engine {
 };
 
 template <class URNG1, int s1, class URNG2, int s2>
-class LIBATFRAME_UTILS_API_HEAD_ONLY xor_combine_engine {
+class ATFRAMEWORK_UTILS_API_HEAD_ONLY xor_combine_engine {
  public:
   using base_left_type = URNG1;
   using base_right_type = URNG2;
@@ -101,7 +101,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY xor_combine_engine {
   }
 
   template <class It>
-  LIBATFRAME_UTILS_API_HEAD_ONLY void init_seed(It &first, It last) noexcept {
+  ATFRAMEWORK_UTILS_API_HEAD_ONLY void init_seed(It &first, It last) noexcept {
     It begin = first;
     if (begin != last) {
       xor_c_rng_left_.init_seed(*begin);
@@ -146,6 +146,6 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY xor_combine_engine {
 };
 }  // namespace core
 }  // namespace random
-LIBATFRAME_UTILS_NAMESPACE_END
+ATFRAMEWORK_UTILS_NAMESPACE_END
 
 #endif /* _UTIL_RANDOM_RANDOMXORCOMBINECORE_H_ */

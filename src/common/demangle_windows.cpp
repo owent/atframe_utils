@@ -6,7 +6,7 @@
 
 #include <common/demangle.h>
 
-#if defined(LIBATFRAME_UTILS_DEMANGLE_USING_WINDOWS)
+#if defined(ATFRAMEWORK_UTILS_DEMANGLE_USING_WINDOWS)
 
 // @see https://github.com/rui314/msvc-demangler/blob/master/MicrosoftDemangle.cpp
 #  include <algorithm>
@@ -22,7 +22,7 @@
 #  include <utility>
 #  include <vector>
 
-LIBATFRAME_UTILS_NAMESPACE_BEGIN
+ATFRAMEWORK_UTILS_NAMESPACE_BEGIN
 
 namespace {
 // A string class that does not own its contents.
@@ -1084,7 +1084,7 @@ void Demangler::write_space() {
 }
 }  // namespace
 
-LIBATFRAME_UTILS_API const char *demangle_alloc(const char *name) noexcept {
+ATFRAMEWORK_UTILS_API const char *demangle_alloc(const char *name) noexcept {
   if (nullptr == name) {
     return nullptr;
   }
@@ -1105,9 +1105,9 @@ LIBATFRAME_UTILS_API const char *demangle_alloc(const char *name) noexcept {
   return ret;
 }
 
-LIBATFRAME_UTILS_API void demangle_free(const char *name) noexcept { ::free(const_cast<char *>(name)); }
+ATFRAMEWORK_UTILS_API void demangle_free(const char *name) noexcept { ::free(const_cast<char *>(name)); }
 
-LIBATFRAME_UTILS_API std::string demangle(const char *name) {
+ATFRAMEWORK_UTILS_API std::string demangle(const char *name) {
   Demangler demangler({name, strlen(name)});
   demangler.parse();
   if (!demangler.error.empty()) {
@@ -1116,6 +1116,6 @@ LIBATFRAME_UTILS_API std::string demangle(const char *name) {
   return demangler.str();
 }
 
-LIBATFRAME_UTILS_NAMESPACE_END
+ATFRAMEWORK_UTILS_NAMESPACE_END
 
 #endif

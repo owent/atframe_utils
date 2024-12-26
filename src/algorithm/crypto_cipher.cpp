@@ -15,7 +15,7 @@
 
 #ifdef CRYPTO_CIPHER_ENABLED
 
-#  if defined(CRYPTO_USE_LIBSODIUM) && CRYPTO_USE_LIBSODIUM
+#  if defined(ATFRAMEWORK_UTILS_CRYPTO_USE_LIBSODIUM) && ATFRAMEWORK_UTILS_CRYPTO_USE_LIBSODIUM
 #    include <sodium.h>
 
 #    define LIBSODIUM_BLOCK_SIZE 64
@@ -48,7 +48,8 @@ static inline libsodium_counter_t libsodium_get_counter(const unsigned char *iv)
  *       OPENSSL_VERSION_TEXT       LIBRESSL_VERSION_TEXT
  */
 
-#  if defined(CRYPTO_USE_OPENSSL) || defined(CRYPTO_USE_LIBRESSL) || defined(CRYPTO_USE_BORINGSSL)
+#  if defined(ATFRAMEWORK_UTILS_CRYPTO_USE_OPENSSL) || defined(ATFRAMEWORK_UTILS_CRYPTO_USE_LIBRESSL) || \
+      defined(ATFRAMEWORK_UTILS_CRYPTO_USE_BORINGSSL)
 
 #    if defined(LIBRESSL_VERSION_NUMBER)
 
@@ -92,7 +93,7 @@ static inline libsodium_counter_t libsodium_get_counter(const unsigned char *iv)
 
 #  endif
 
-LIBATFRAME_UTILS_NAMESPACE_BEGIN
+ATFRAMEWORK_UTILS_NAMESPACE_BEGIN
 namespace crypto {
 enum cipher_interface_method_t {
   EN_CIMT_INVALID = 0,  // inner
@@ -129,8 +130,9 @@ struct cipher_interface_info_t {
 };
 
 namespace details {
-#  if defined(CRYPTO_USE_OPENSSL) || defined(CRYPTO_USE_LIBRESSL) || defined(CRYPTO_USE_BORINGSSL)
-LIBATFRAME_UTILS_NAMESPACE_ID::lock::atomic_int_type<size_t> g_global_init_counter_(0);
+#  if defined(ATFRAMEWORK_UTILS_CRYPTO_USE_OPENSSL) || defined(ATFRAMEWORK_UTILS_CRYPTO_USE_LIBRESSL) || \
+      defined(ATFRAMEWORK_UTILS_CRYPTO_USE_BORINGSSL)
+ATFRAMEWORK_UTILS_NAMESPACE_ID::lock::atomic_int_type<size_t> g_global_init_counter_(0);
 #  endif
 static inline cipher::error_code_t::type setup_errorno(cipher &ci, int64_t err, cipher::error_code_t::type ret) {
   ci.set_last_errno(err);
@@ -175,7 +177,7 @@ static constexpr const cipher_interface_info_t supported_ciphers[] = {
      EN_CIFT_NONE},
 #  endif
 
-#  if defined(CRYPTO_USE_LIBSODIUM) && CRYPTO_USE_LIBSODIUM
+#  if defined(ATFRAMEWORK_UTILS_CRYPTO_USE_LIBSODIUM) && ATFRAMEWORK_UTILS_CRYPTO_USE_LIBSODIUM
     {"chacha20", EN_CIMT_LIBSODIUM_CHACHA20, nullptr, "CHACHA20", EN_CIFT_NONE},
     {"chacha20-ietf", EN_CIMT_LIBSODIUM_CHACHA20_IETF, nullptr, "CHACHA20-IETF", EN_CIFT_NONE},
 #    ifdef crypto_stream_xchacha20_KEYBYTES
@@ -199,7 +201,7 @@ static constexpr const cipher_interface_info_t supported_ciphers[] = {
      EN_CIFT_AEAD | EN_CIFT_VARIABLE_IV_LEN},
 #  endif
 
-#  if defined(CRYPTO_USE_LIBSODIUM) && CRYPTO_USE_LIBSODIUM
+#  if defined(ATFRAMEWORK_UTILS_CRYPTO_USE_LIBSODIUM) && ATFRAMEWORK_UTILS_CRYPTO_USE_LIBSODIUM
     {"chacha20-poly1305", EN_CIMT_LIBSODIUM_CHACHA20_POLY1305, nullptr, "CHACHA20-POLY1305", EN_CIFT_AEAD},
     {"chacha20-poly1305-ietf", EN_CIMT_LIBSODIUM_CHACHA20_POLY1305_IETF, nullptr, "CHACHA20-POLY1305-IETF",
      EN_CIFT_AEAD},
@@ -228,10 +230,10 @@ static const cipher_interface_info_t *get_cipher_interface_by_name(const char *n
 }
 }  // namespace details
 
-LIBATFRAME_UTILS_API cipher::cipher() : interface_(nullptr), last_errorno_(0), cipher_kt_(nullptr) {}
-LIBATFRAME_UTILS_API cipher::~cipher() { close(); }
+ATFRAMEWORK_UTILS_API cipher::cipher() : interface_(nullptr), last_errorno_(0), cipher_kt_(nullptr) {}
+ATFRAMEWORK_UTILS_API cipher::~cipher() { close(); }
 
-LIBATFRAME_UTILS_API int cipher::init(const char *name, int mode) {
+ATFRAMEWORK_UTILS_API int cipher::init(const char *name, int mode) {
   if (nullptr != interface_ && interface_->method != EN_CIMT_INVALID) {
     return details::setup_errorno(*this, -1, error_code_t::ALREADY_INITED);
   }
@@ -291,7 +293,8 @@ int cipher::init_with_cipher(const cipher_interface_info_t *interface, int mode)
   }
 
   int ret = error_code_t::OK;
-#  if defined(CRYPTO_USE_OPENSSL) || defined(CRYPTO_USE_LIBRESSL) || defined(CRYPTO_USE_BORINGSSL)
+#  if defined(ATFRAMEWORK_UTILS_CRYPTO_USE_OPENSSL) || defined(ATFRAMEWORK_UTILS_CRYPTO_USE_LIBRESSL) || \
+      defined(ATFRAMEWORK_UTILS_CRYPTO_USE_BORINGSSL)
   do {
     if (mode & mode_t::EN_CMODE_ENCRYPT) {
       cipher_context_.enc = EVP_CIPHER_CTX_new();
@@ -338,7 +341,7 @@ int cipher::init_with_cipher(const cipher_interface_info_t *interface, int mode)
     }
   }
 
-#  elif defined(CRYPTO_USE_MBEDTLS)
+#  elif defined(ATFRAMEWORK_UTILS_CRYPTO_USE_MBEDTLS)
   do {
     if (mode & mode_t::EN_CMODE_ENCRYPT) {
       cipher_context_.enc = (cipher_evp_t *)malloc(sizeof(cipher_evp_t));
@@ -399,7 +402,7 @@ int cipher::init_with_cipher(const cipher_interface_info_t *interface, int mode)
   return ret;
 }
 
-LIBATFRAME_UTILS_API int cipher::close() {
+ATFRAMEWORK_UTILS_API int cipher::close() {
   if (nullptr == interface_ || interface_->method == EN_CIMT_INVALID) {
     return details::setup_errorno(*this, 0, error_code_t::NOT_INITED);
   }
@@ -435,9 +438,9 @@ LIBATFRAME_UTILS_API int cipher::close() {
   return ret;
 }
 
-LIBATFRAME_UTILS_API void cipher::set_last_errno(int64_t e) { last_errorno_ = e; }
+ATFRAMEWORK_UTILS_API void cipher::set_last_errno(int64_t e) { last_errorno_ = e; }
 
-LIBATFRAME_UTILS_API int64_t cipher::get_last_errno() const { return last_errorno_; }
+ATFRAMEWORK_UTILS_API int64_t cipher::get_last_errno() const { return last_errorno_; }
 
 int cipher::close_with_cipher() {
   if (nullptr == interface_) {
@@ -449,7 +452,8 @@ int cipher::close_with_cipher() {
   }
 
   // cipher cleanup
-#  if defined(CRYPTO_USE_OPENSSL) || defined(CRYPTO_USE_LIBRESSL) || defined(CRYPTO_USE_BORINGSSL)
+#  if defined(ATFRAMEWORK_UTILS_CRYPTO_USE_OPENSSL) || defined(ATFRAMEWORK_UTILS_CRYPTO_USE_LIBRESSL) || \
+      defined(ATFRAMEWORK_UTILS_CRYPTO_USE_BORINGSSL)
   if (nullptr != cipher_context_.enc) {
     EVP_CIPHER_CTX_free(cipher_context_.enc);
     cipher_context_.enc = nullptr;
@@ -460,7 +464,7 @@ int cipher::close_with_cipher() {
     cipher_context_.dec = nullptr;
   }
 
-#  elif defined(CRYPTO_USE_MBEDTLS)
+#  elif defined(ATFRAMEWORK_UTILS_CRYPTO_USE_MBEDTLS)
   if (nullptr != cipher_context_.enc) {
     mbedtls_cipher_free(cipher_context_.enc);
     free(cipher_context_.enc);
@@ -477,7 +481,7 @@ int cipher::close_with_cipher() {
   return details::setup_errorno(*this, 0, error_code_t::OK);
 }
 
-LIBATFRAME_UTILS_API bool cipher::is_aead() const {
+ATFRAMEWORK_UTILS_API bool cipher::is_aead() const {
   if (nullptr == interface_) {
     return false;
   }
@@ -485,7 +489,7 @@ LIBATFRAME_UTILS_API bool cipher::is_aead() const {
   return 0 != (interface_->flags & EN_CIFT_AEAD);
 }
 
-LIBATFRAME_UTILS_API uint32_t cipher::get_iv_size() const {
+ATFRAMEWORK_UTILS_API uint32_t cipher::get_iv_size() const {
   if (nullptr == interface_) {
     return 0;
   }
@@ -496,22 +500,24 @@ LIBATFRAME_UTILS_API uint32_t cipher::get_iv_size() const {
       return 0;
     case EN_CIMT_CIPHER:
       if (nullptr != cipher_context_.enc) {
-#  if defined(CRYPTO_USE_OPENSSL) || defined(CRYPTO_USE_LIBRESSL) || defined(CRYPTO_USE_BORINGSSL)
+#  if defined(ATFRAMEWORK_UTILS_CRYPTO_USE_OPENSSL) || defined(ATFRAMEWORK_UTILS_CRYPTO_USE_LIBRESSL) || \
+      defined(ATFRAMEWORK_UTILS_CRYPTO_USE_BORINGSSL)
         return static_cast<uint32_t>(EVP_CIPHER_CTX_iv_length(cipher_context_.enc));
-#  elif defined(CRYPTO_USE_MBEDTLS)
+#  elif defined(ATFRAMEWORK_UTILS_CRYPTO_USE_MBEDTLS)
         return static_cast<uint32_t>(mbedtls_cipher_get_iv_size(cipher_context_.enc));
 #  endif
       } else if (nullptr != cipher_context_.dec) {
-#  if defined(CRYPTO_USE_OPENSSL) || defined(CRYPTO_USE_LIBRESSL) || defined(CRYPTO_USE_BORINGSSL)
+#  if defined(ATFRAMEWORK_UTILS_CRYPTO_USE_OPENSSL) || defined(ATFRAMEWORK_UTILS_CRYPTO_USE_LIBRESSL) || \
+      defined(ATFRAMEWORK_UTILS_CRYPTO_USE_BORINGSSL)
         return static_cast<uint32_t>(EVP_CIPHER_CTX_iv_length(cipher_context_.dec));
-#  elif defined(CRYPTO_USE_MBEDTLS)
+#  elif defined(ATFRAMEWORK_UTILS_CRYPTO_USE_MBEDTLS)
         return static_cast<uint32_t>(mbedtls_cipher_get_iv_size(cipher_context_.dec));
 #  endif
       } else {
         return 0;
       }
 
-#  if defined(CRYPTO_USE_LIBSODIUM) && CRYPTO_USE_LIBSODIUM
+#  if defined(ATFRAMEWORK_UTILS_CRYPTO_USE_LIBSODIUM) && ATFRAMEWORK_UTILS_CRYPTO_USE_LIBSODIUM
     case EN_CIMT_LIBSODIUM_CHACHA20:
       return LIBSODIUM_COUNTER_SIZE + crypto_stream_chacha20_NONCEBYTES;
     case EN_CIMT_LIBSODIUM_CHACHA20_IETF:
@@ -543,7 +549,7 @@ LIBATFRAME_UTILS_API uint32_t cipher::get_iv_size() const {
   }
 }
 
-LIBATFRAME_UTILS_API uint32_t cipher::get_key_bits() const {
+ATFRAMEWORK_UTILS_API uint32_t cipher::get_key_bits() const {
   if (nullptr == interface_) {
     return 0;
   }
@@ -552,25 +558,27 @@ LIBATFRAME_UTILS_API uint32_t cipher::get_key_bits() const {
     case EN_CIMT_INVALID:
       return 0;
     case EN_CIMT_XXTEA:
-      return static_cast<uint32_t>(sizeof(LIBATFRAME_UTILS_NAMESPACE_ID::xxtea_key) * 8);
+      return static_cast<uint32_t>(sizeof(ATFRAMEWORK_UTILS_NAMESPACE_ID::xxtea_key) * 8);
     case EN_CIMT_CIPHER:
       if (nullptr != cipher_context_.enc) {
-#  if defined(CRYPTO_USE_OPENSSL) || defined(CRYPTO_USE_LIBRESSL) || defined(CRYPTO_USE_BORINGSSL)
+#  if defined(ATFRAMEWORK_UTILS_CRYPTO_USE_OPENSSL) || defined(ATFRAMEWORK_UTILS_CRYPTO_USE_LIBRESSL) || \
+      defined(ATFRAMEWORK_UTILS_CRYPTO_USE_BORINGSSL)
         return static_cast<uint32_t>(EVP_CIPHER_CTX_key_length(cipher_context_.enc) * 8);
-#  elif defined(CRYPTO_USE_MBEDTLS)
+#  elif defined(ATFRAMEWORK_UTILS_CRYPTO_USE_MBEDTLS)
         return static_cast<uint32_t>(mbedtls_cipher_get_key_bitlen(cipher_context_.enc));
 #  endif
       } else if (nullptr != cipher_context_.dec) {
-#  if defined(CRYPTO_USE_OPENSSL) || defined(CRYPTO_USE_LIBRESSL) || defined(CRYPTO_USE_BORINGSSL)
+#  if defined(ATFRAMEWORK_UTILS_CRYPTO_USE_OPENSSL) || defined(ATFRAMEWORK_UTILS_CRYPTO_USE_LIBRESSL) || \
+      defined(ATFRAMEWORK_UTILS_CRYPTO_USE_BORINGSSL)
         return static_cast<uint32_t>(EVP_CIPHER_CTX_key_length(cipher_context_.dec) * 8);
-#  elif defined(CRYPTO_USE_MBEDTLS)
+#  elif defined(ATFRAMEWORK_UTILS_CRYPTO_USE_MBEDTLS)
         return static_cast<uint32_t>(mbedtls_cipher_get_key_bitlen(cipher_context_.dec));
 #  endif
       } else {
         return 0;
       }
 
-#  if defined(CRYPTO_USE_LIBSODIUM) && CRYPTO_USE_LIBSODIUM
+#  if defined(ATFRAMEWORK_UTILS_CRYPTO_USE_LIBSODIUM) && ATFRAMEWORK_UTILS_CRYPTO_USE_LIBSODIUM
     case EN_CIMT_LIBSODIUM_CHACHA20:
       UTIL_CONFIG_STATIC_ASSERT(crypto_stream_chacha20_KEYBYTES <= sizeof(libsodium_context_t));
       return static_cast<uint32_t>(crypto_stream_chacha20_KEYBYTES * 8);
@@ -610,7 +618,7 @@ LIBATFRAME_UTILS_API uint32_t cipher::get_key_bits() const {
   }
 }
 
-LIBATFRAME_UTILS_API uint32_t cipher::get_block_size() const {
+ATFRAMEWORK_UTILS_API uint32_t cipher::get_block_size() const {
   if (nullptr == interface_) {
     return 0;
   }
@@ -622,15 +630,17 @@ LIBATFRAME_UTILS_API uint32_t cipher::get_block_size() const {
       return 0x04;
     case EN_CIMT_CIPHER:
       if (nullptr != cipher_context_.enc) {
-#  if defined(CRYPTO_USE_OPENSSL) || defined(CRYPTO_USE_LIBRESSL) || defined(CRYPTO_USE_BORINGSSL)
+#  if defined(ATFRAMEWORK_UTILS_CRYPTO_USE_OPENSSL) || defined(ATFRAMEWORK_UTILS_CRYPTO_USE_LIBRESSL) || \
+      defined(ATFRAMEWORK_UTILS_CRYPTO_USE_BORINGSSL)
         return static_cast<uint32_t>(EVP_CIPHER_CTX_block_size(cipher_context_.enc));
-#  elif defined(CRYPTO_USE_MBEDTLS)
+#  elif defined(ATFRAMEWORK_UTILS_CRYPTO_USE_MBEDTLS)
         return static_cast<uint32_t>(mbedtls_cipher_get_block_size(cipher_context_.enc));
 #  endif
       } else if (nullptr != cipher_context_.dec) {
-#  if defined(CRYPTO_USE_OPENSSL) || defined(CRYPTO_USE_LIBRESSL) || defined(CRYPTO_USE_BORINGSSL)
+#  if defined(ATFRAMEWORK_UTILS_CRYPTO_USE_OPENSSL) || defined(ATFRAMEWORK_UTILS_CRYPTO_USE_LIBRESSL) || \
+      defined(ATFRAMEWORK_UTILS_CRYPTO_USE_BORINGSSL)
         return static_cast<uint32_t>(EVP_CIPHER_CTX_block_size(cipher_context_.dec));
-#  elif defined(CRYPTO_USE_MBEDTLS)
+#  elif defined(ATFRAMEWORK_UTILS_CRYPTO_USE_MBEDTLS)
         return static_cast<uint32_t>(mbedtls_cipher_get_block_size(cipher_context_.dec));
 #  endif
       } else {
@@ -652,7 +662,7 @@ LIBATFRAME_UTILS_API uint32_t cipher::get_block_size() const {
   }
 }
 
-LIBATFRAME_UTILS_API int cipher::set_key(const unsigned char *key, uint32_t key_bitlen) {
+ATFRAMEWORK_UTILS_API int cipher::set_key(const unsigned char *key, uint32_t key_bitlen) {
   if (nullptr == interface_) {
     return details::setup_errorno(*this, 0, error_code_t::NOT_INITED);
   }
@@ -667,12 +677,13 @@ LIBATFRAME_UTILS_API int cipher::set_key(const unsigned char *key, uint32_t key_
       } else {
         memcpy(secret, key, key_bitlen / 8);
       }
-      LIBATFRAME_UTILS_NAMESPACE_ID::xxtea_setup(&xxtea_context_.key, secret);
+      ATFRAMEWORK_UTILS_NAMESPACE_ID::xxtea_setup(&xxtea_context_.key, secret);
       return details::setup_errorno(*this, 0, error_code_t::OK);
     }
     case EN_CIMT_CIPHER: {
       int res = 0;
-#  if defined(CRYPTO_USE_OPENSSL) || defined(CRYPTO_USE_LIBRESSL) || defined(CRYPTO_USE_BORINGSSL)
+#  if defined(ATFRAMEWORK_UTILS_CRYPTO_USE_OPENSSL) || defined(ATFRAMEWORK_UTILS_CRYPTO_USE_LIBRESSL) || \
+      defined(ATFRAMEWORK_UTILS_CRYPTO_USE_BORINGSSL)
       if (get_key_bits() > key_bitlen) {
         return details::setup_errorno(*this, -1, error_code_t::INVALID_PARAM);
       }
@@ -689,7 +700,7 @@ LIBATFRAME_UTILS_API int cipher::set_key(const unsigned char *key, uint32_t key_
         }
       }
 
-#  elif defined(CRYPTO_USE_MBEDTLS)
+#  elif defined(ATFRAMEWORK_UTILS_CRYPTO_USE_MBEDTLS)
       if (nullptr != cipher_context_.enc) {
         res = mbedtls_cipher_setkey(cipher_context_.enc, key, static_cast<int>(key_bitlen), MBEDTLS_ENCRYPT);
       }
@@ -724,7 +735,7 @@ LIBATFRAME_UTILS_API int cipher::set_key(const unsigned char *key, uint32_t key_
   }
 }
 
-LIBATFRAME_UTILS_API int cipher::set_iv(const unsigned char *iv, size_t iv_len) {
+ATFRAMEWORK_UTILS_API int cipher::set_iv(const unsigned char *iv, size_t iv_len) {
   if (nullptr == interface_ || interface_->method == EN_CIMT_INVALID) {
     return details::setup_errorno(*this, 0, error_code_t::NOT_INITED);
   }
@@ -735,7 +746,7 @@ LIBATFRAME_UTILS_API int cipher::set_iv(const unsigned char *iv, size_t iv_len) 
       return error_code_t::OK;
 
     case EN_CIMT_CIPHER: {
-#  if defined(CRYPTO_USE_MBEDTLS)
+#  if defined(ATFRAMEWORK_UTILS_CRYPTO_USE_MBEDTLS)
       if (iv_len > MBEDTLS_MAX_IV_LENGTH) {
         return details::setup_errorno(*this, -1, error_code_t::INVALID_PARAM);
       }
@@ -772,9 +783,10 @@ LIBATFRAME_UTILS_API int cipher::set_iv(const unsigned char *iv, size_t iv_len) 
   }
 }
 
-LIBATFRAME_UTILS_API void cipher::clear_iv() { iv_.clear(); }
+ATFRAMEWORK_UTILS_API void cipher::clear_iv() { iv_.clear(); }
 
-LIBATFRAME_UTILS_API int cipher::encrypt(const unsigned char *input, size_t ilen, unsigned char *output, size_t *olen) {
+ATFRAMEWORK_UTILS_API int cipher::encrypt(const unsigned char *input, size_t ilen, unsigned char *output,
+                                          size_t *olen) {
   if (nullptr == interface_ || interface_->method == EN_CIMT_INVALID) {
     return details::setup_errorno(*this, 0, error_code_t::NOT_INITED);
   }
@@ -799,8 +811,8 @@ LIBATFRAME_UTILS_API int cipher::encrypt(const unsigned char *input, size_t ilen
     case EN_CIMT_INVALID:
       return details::setup_errorno(*this, -1, error_code_t::NOT_INITED);
     case EN_CIMT_XXTEA: {
-      LIBATFRAME_UTILS_NAMESPACE_ID::xxtea_encrypt(&xxtea_context_.key, reinterpret_cast<const void *>(input), ilen,
-                                                   reinterpret_cast<void *>(output), olen);
+      ATFRAMEWORK_UTILS_NAMESPACE_ID::xxtea_encrypt(&xxtea_context_.key, reinterpret_cast<const void *>(input), ilen,
+                                                    reinterpret_cast<void *>(output), olen);
       return details::setup_errorno(*this, 0, error_code_t::OK);
     }
     case EN_CIMT_CIPHER: {
@@ -808,7 +820,8 @@ LIBATFRAME_UTILS_API int cipher::encrypt(const unsigned char *input, size_t ilen
         return details::setup_errorno(*this, 0, error_code_t::CIPHER_DISABLED);
       }
 
-#  if defined(CRYPTO_USE_OPENSSL) || defined(CRYPTO_USE_LIBRESSL) || defined(CRYPTO_USE_BORINGSSL)
+#  if defined(ATFRAMEWORK_UTILS_CRYPTO_USE_OPENSSL) || defined(ATFRAMEWORK_UTILS_CRYPTO_USE_LIBRESSL) || \
+      defined(ATFRAMEWORK_UTILS_CRYPTO_USE_BORINGSSL)
       int outl, finish_olen;
 
       if (!iv_.empty()) {
@@ -837,7 +850,7 @@ LIBATFRAME_UTILS_API int cipher::encrypt(const unsigned char *input, size_t ilen
       *olen = static_cast<size_t>(outl + finish_olen);
       return error_code_t::OK;
 
-#  elif defined(CRYPTO_USE_MBEDTLS)
+#  elif defined(ATFRAMEWORK_UTILS_CRYPTO_USE_MBEDTLS)
       if (0 != (interface_->flags & EN_CIFT_ENCRYPT_NO_PADDING) &&
           MBEDTLS_MODE_CBC ==
 #    if MBEDTLS_VERSION_MAJOR >= 3
@@ -860,7 +873,7 @@ LIBATFRAME_UTILS_API int cipher::encrypt(const unsigned char *input, size_t ilen
 #  endif
     }
 
-#  if defined(CRYPTO_USE_LIBSODIUM) && CRYPTO_USE_LIBSODIUM
+#  if defined(ATFRAMEWORK_UTILS_CRYPTO_USE_LIBSODIUM) && ATFRAMEWORK_UTILS_CRYPTO_USE_LIBSODIUM
     case EN_CIMT_LIBSODIUM_CHACHA20:
       if ((last_errorno_ = crypto_stream_chacha20_xor_ic(output, input, ilen, &iv_[LIBSODIUM_COUNTER_SIZE],
                                                          static_cast<uint64_t>(libsodium_get_counter(&iv_[0])),
@@ -905,7 +918,8 @@ LIBATFRAME_UTILS_API int cipher::encrypt(const unsigned char *input, size_t ilen
   }
 }
 
-LIBATFRAME_UTILS_API int cipher::decrypt(const unsigned char *input, size_t ilen, unsigned char *output, size_t *olen) {
+ATFRAMEWORK_UTILS_API int cipher::decrypt(const unsigned char *input, size_t ilen, unsigned char *output,
+                                          size_t *olen) {
   if (nullptr == interface_ || interface_->method == EN_CIMT_INVALID) {
     return details::setup_errorno(*this, 0, error_code_t::NOT_INITED);
   }
@@ -930,8 +944,8 @@ LIBATFRAME_UTILS_API int cipher::decrypt(const unsigned char *input, size_t ilen
     case EN_CIMT_INVALID:
       return details::setup_errorno(*this, -1, error_code_t::NOT_INITED);
     case EN_CIMT_XXTEA: {
-      LIBATFRAME_UTILS_NAMESPACE_ID::xxtea_decrypt(&xxtea_context_.key, reinterpret_cast<const void *>(input), ilen,
-                                                   reinterpret_cast<void *>(output), olen);
+      ATFRAMEWORK_UTILS_NAMESPACE_ID::xxtea_decrypt(&xxtea_context_.key, reinterpret_cast<const void *>(input), ilen,
+                                                    reinterpret_cast<void *>(output), olen);
       return details::setup_errorno(*this, 0, error_code_t::OK);
     }
     case EN_CIMT_CIPHER: {
@@ -939,7 +953,8 @@ LIBATFRAME_UTILS_API int cipher::decrypt(const unsigned char *input, size_t ilen
         return details::setup_errorno(*this, 0, error_code_t::CIPHER_DISABLED);
       }
 
-#  if defined(CRYPTO_USE_OPENSSL) || defined(CRYPTO_USE_LIBRESSL) || defined(CRYPTO_USE_BORINGSSL)
+#  if defined(ATFRAMEWORK_UTILS_CRYPTO_USE_OPENSSL) || defined(ATFRAMEWORK_UTILS_CRYPTO_USE_LIBRESSL) || \
+      defined(ATFRAMEWORK_UTILS_CRYPTO_USE_BORINGSSL)
       int outl, finish_olen;
 
       if (!iv_.empty()) {
@@ -968,7 +983,7 @@ LIBATFRAME_UTILS_API int cipher::decrypt(const unsigned char *input, size_t ilen
       *olen = static_cast<size_t>(outl + finish_olen);
 
       return error_code_t::OK;
-#  elif defined(CRYPTO_USE_MBEDTLS)
+#  elif defined(ATFRAMEWORK_UTILS_CRYPTO_USE_MBEDTLS)
       if (0 != (interface_->flags & EN_CIFT_DECRYPT_NO_PADDING) &&
           MBEDTLS_MODE_CBC ==
 #    if MBEDTLS_VERSION_MAJOR >= 3
@@ -991,7 +1006,7 @@ LIBATFRAME_UTILS_API int cipher::decrypt(const unsigned char *input, size_t ilen
 #  endif
     }
 
-#  if defined(CRYPTO_USE_LIBSODIUM) && CRYPTO_USE_LIBSODIUM
+#  if defined(ATFRAMEWORK_UTILS_CRYPTO_USE_LIBSODIUM) && ATFRAMEWORK_UTILS_CRYPTO_USE_LIBSODIUM
     case EN_CIMT_LIBSODIUM_CHACHA20:
       if ((last_errorno_ = crypto_stream_chacha20_xor_ic(output, input, ilen, &iv_[LIBSODIUM_COUNTER_SIZE],
                                                          static_cast<uint64_t>(libsodium_get_counter(&iv_[0])),
@@ -1037,8 +1052,8 @@ LIBATFRAME_UTILS_API int cipher::decrypt(const unsigned char *input, size_t ilen
   }
 }
 
-LIBATFRAME_UTILS_API int cipher::encrypt_aead(const unsigned char *input, size_t ilen, unsigned char *output,
-                                              size_t *olen, const unsigned char *ad, size_t ad_len, size_t tag_len) {
+ATFRAMEWORK_UTILS_API int cipher::encrypt_aead(const unsigned char *input, size_t ilen, unsigned char *output,
+                                               size_t *olen, const unsigned char *ad, size_t ad_len, size_t tag_len) {
   if (nullptr == interface_ || interface_->method == EN_CIMT_INVALID) {
     return details::setup_errorno(*this, 0, error_code_t::NOT_INITED);
   }
@@ -1065,7 +1080,8 @@ LIBATFRAME_UTILS_API int cipher::encrypt_aead(const unsigned char *input, size_t
         return details::setup_errorno(*this, 0, error_code_t::CIPHER_DISABLED);
       }
 
-#  if defined(CRYPTO_USE_OPENSSL) || defined(CRYPTO_USE_LIBRESSL) || defined(CRYPTO_USE_BORINGSSL)
+#  if defined(ATFRAMEWORK_UTILS_CRYPTO_USE_OPENSSL) || defined(ATFRAMEWORK_UTILS_CRYPTO_USE_LIBRESSL) || \
+      defined(ATFRAMEWORK_UTILS_CRYPTO_USE_BORINGSSL)
       int outl, finish_olen;
 
       if (!iv_.empty()) {
@@ -1125,7 +1141,7 @@ LIBATFRAME_UTILS_API int cipher::encrypt_aead(const unsigned char *input, size_t
 
       return error_code_t::OK;
 
-#  elif defined(CRYPTO_USE_MBEDTLS)
+#  elif defined(ATFRAMEWORK_UTILS_CRYPTO_USE_MBEDTLS)
       // if (0 != (interface_->flags & EN_CIFT_ENCRYPT_NO_PADDING) && MBEDTLS_MODE_CBC ==
       // cipher_context_.enc->cipher_info->mode)
       // {
@@ -1153,7 +1169,7 @@ LIBATFRAME_UTILS_API int cipher::encrypt_aead(const unsigned char *input, size_t
 #  endif
     }
 
-#  if defined(CRYPTO_USE_LIBSODIUM) && CRYPTO_USE_LIBSODIUM
+#  if defined(ATFRAMEWORK_UTILS_CRYPTO_USE_LIBSODIUM) && ATFRAMEWORK_UTILS_CRYPTO_USE_LIBSODIUM
 
     case EN_CIMT_LIBSODIUM_CHACHA20_POLY1305: {
       if (crypto_aead_chacha20poly1305_ABYTES > tag_len) {
@@ -1208,8 +1224,8 @@ LIBATFRAME_UTILS_API int cipher::encrypt_aead(const unsigned char *input, size_t
   }
 }
 
-LIBATFRAME_UTILS_API int cipher::decrypt_aead(const unsigned char *input, size_t ilen, unsigned char *output,
-                                              size_t *olen, const unsigned char *ad, size_t ad_len, size_t tag_len) {
+ATFRAMEWORK_UTILS_API int cipher::decrypt_aead(const unsigned char *input, size_t ilen, unsigned char *output,
+                                               size_t *olen, const unsigned char *ad, size_t ad_len, size_t tag_len) {
   if (nullptr == interface_ || interface_->method == EN_CIMT_INVALID) {
     return details::setup_errorno(*this, 0, error_code_t::NOT_INITED);
   }
@@ -1238,7 +1254,8 @@ LIBATFRAME_UTILS_API int cipher::decrypt_aead(const unsigned char *input, size_t
         return details::setup_errorno(*this, 0, error_code_t::CIPHER_DISABLED);
       }
 
-#  if defined(CRYPTO_USE_OPENSSL) || defined(CRYPTO_USE_LIBRESSL) || defined(CRYPTO_USE_BORINGSSL)
+#  if defined(ATFRAMEWORK_UTILS_CRYPTO_USE_OPENSSL) || defined(ATFRAMEWORK_UTILS_CRYPTO_USE_LIBRESSL) || \
+      defined(ATFRAMEWORK_UTILS_CRYPTO_USE_BORINGSSL)
       int outl, finish_olen;
 
       if (!iv_.empty()) {
@@ -1295,7 +1312,7 @@ LIBATFRAME_UTILS_API int cipher::decrypt_aead(const unsigned char *input, size_t
       *olen = static_cast<size_t>(outl + finish_olen);
 
       return error_code_t::OK;
-#  elif defined(CRYPTO_USE_MBEDTLS)
+#  elif defined(ATFRAMEWORK_UTILS_CRYPTO_USE_MBEDTLS)
       // if (0 != (interface_->flags & EN_CIFT_DECRYPT_NO_PADDING) && MBEDTLS_MODE_CBC ==
       // cipher_context_.dec->cipher_info->mode)
       // {
@@ -1321,7 +1338,7 @@ LIBATFRAME_UTILS_API int cipher::decrypt_aead(const unsigned char *input, size_t
 #  endif
     }
 
-#  if defined(CRYPTO_USE_LIBSODIUM) && CRYPTO_USE_LIBSODIUM
+#  if defined(ATFRAMEWORK_UTILS_CRYPTO_USE_LIBSODIUM) && ATFRAMEWORK_UTILS_CRYPTO_USE_LIBSODIUM
 
     case EN_CIMT_LIBSODIUM_CHACHA20_POLY1305: {
       if (crypto_aead_chacha20poly1305_ABYTES > tag_len) {
@@ -1372,25 +1389,26 @@ LIBATFRAME_UTILS_API int cipher::decrypt_aead(const unsigned char *input, size_t
   }
 }
 
-LIBATFRAME_UTILS_API const cipher::cipher_kt_t *cipher::get_cipher_by_name(const char *name) {
+ATFRAMEWORK_UTILS_API const cipher::cipher_kt_t *cipher::get_cipher_by_name(const char *name) {
   const cipher_interface_info_t *interface = details::get_cipher_interface_by_name(name);
 
   if (nullptr == interface) {
     return nullptr;
   }
 
-#  if defined(CRYPTO_USE_OPENSSL) || defined(CRYPTO_USE_LIBRESSL) || defined(CRYPTO_USE_BORINGSSL)
+#  if defined(ATFRAMEWORK_UTILS_CRYPTO_USE_OPENSSL) || defined(ATFRAMEWORK_UTILS_CRYPTO_USE_LIBRESSL) || \
+      defined(ATFRAMEWORK_UTILS_CRYPTO_USE_BORINGSSL)
   if (nullptr == interface->openssl_name) {
     return EVP_get_cipherbyname(interface->name);
   } else {
     return EVP_get_cipherbyname(interface->openssl_name);
   }
-#  elif defined(CRYPTO_USE_MBEDTLS)
+#  elif defined(ATFRAMEWORK_UTILS_CRYPTO_USE_MBEDTLS)
   return mbedtls_cipher_info_from_string(interface->mbedtls_name);
 #  endif
 }
 
-LIBATFRAME_UTILS_API std::pair<const char *, const char *> cipher::ciphertok(const char *in) {
+ATFRAMEWORK_UTILS_API std::pair<const char *, const char *> cipher::ciphertok(const char *in) {
   std::pair<const char *, const char *> ret;
   ret.first = nullptr;
   ret.second = nullptr;
@@ -1420,7 +1438,7 @@ LIBATFRAME_UTILS_API std::pair<const char *, const char *> cipher::ciphertok(con
   return ret;
 }
 
-LIBATFRAME_UTILS_API const std::vector<std::string> &cipher::get_all_cipher_names() {
+ATFRAMEWORK_UTILS_API const std::vector<std::string> &cipher::get_all_cipher_names() {
   static std::vector<std::string> ret;
   if (ret.empty()) {
     for (size_t i = 0; nullptr != details::supported_ciphers[i].name; ++i) {
@@ -1445,8 +1463,9 @@ LIBATFRAME_UTILS_API const std::vector<std::string> &cipher::get_all_cipher_name
   return ret;
 }
 
-LIBATFRAME_UTILS_API int cipher::init_global_algorithm() {
-#  if defined(CRYPTO_USE_OPENSSL) || defined(CRYPTO_USE_LIBRESSL) || defined(CRYPTO_USE_BORINGSSL)
+ATFRAMEWORK_UTILS_API int cipher::init_global_algorithm() {
+#  if defined(ATFRAMEWORK_UTILS_CRYPTO_USE_OPENSSL) || defined(ATFRAMEWORK_UTILS_CRYPTO_USE_LIBRESSL) || \
+      defined(ATFRAMEWORK_UTILS_CRYPTO_USE_BORINGSSL)
   size_t counter = details::g_global_init_counter_++;
   if (0 == counter) {
 // No explicit initialisation or de-initialisation is necessary from openssl 1.1.0.
@@ -1474,8 +1493,9 @@ LIBATFRAME_UTILS_API int cipher::init_global_algorithm() {
   return 0;
 }
 
-LIBATFRAME_UTILS_API int cipher::cleanup_global_algorithm() {
-#  if defined(CRYPTO_USE_OPENSSL) || defined(CRYPTO_USE_LIBRESSL) || defined(CRYPTO_USE_BORINGSSL)
+ATFRAMEWORK_UTILS_API int cipher::cleanup_global_algorithm() {
+#  if defined(ATFRAMEWORK_UTILS_CRYPTO_USE_OPENSSL) || defined(ATFRAMEWORK_UTILS_CRYPTO_USE_LIBRESSL) || \
+      defined(ATFRAMEWORK_UTILS_CRYPTO_USE_BORINGSSL)
   size_t counter = details::g_global_init_counter_.load();
   while (true) {
     if (0 == counter) {
@@ -1498,6 +1518,6 @@ LIBATFRAME_UTILS_API int cipher::cleanup_global_algorithm() {
   return 0;
 }
 }  // namespace crypto
-LIBATFRAME_UTILS_NAMESPACE_END
+ATFRAMEWORK_UTILS_NAMESPACE_END
 
 #endif

@@ -30,40 +30,40 @@ static const unsigned char xtea_test_ct[6][8] = {
     {0xd1, 0xbe, 0xdf, 0x50, 0xdc, 0xf2, 0x90, 0x43}, {0x47, 0xcc, 0x5f, 0xb9, 0x91, 0x90, 0x66, 0x6b}};
 
 CASE_TEST(xxtea, basic) {
-  LIBATFRAME_UTILS_NAMESPACE_ID::xxtea_key key;
+  atfw::util::xxtea_key key;
   unsigned char test_data[8];
 
   for (int i = 0; i < 6; ++i) {
-    LIBATFRAME_UTILS_NAMESPACE_ID::xxtea_setup(&key, xtea_test_key[i]);
+    atfw::util::xxtea_setup(&key, xtea_test_key[i]);
 
     memcpy(test_data, xtea_test_pt[i], 8);
-    LIBATFRAME_UTILS_NAMESPACE_ID::xxtea_encrypt(&key, test_data, 8);
+    atfw::util::xxtea_encrypt(&key, test_data, 8);
     CASE_EXPECT_EQ(0, memcmp(test_data, xtea_test_ct[i], 8));
 
     memcpy(test_data, xtea_test_ct[i], 8);
-    LIBATFRAME_UTILS_NAMESPACE_ID::xxtea_decrypt(&key, test_data, 8);
+    atfw::util::xxtea_decrypt(&key, test_data, 8);
     CASE_EXPECT_EQ(0, memcmp(test_data, xtea_test_pt[i], 8));
   }
 }
 
 CASE_TEST(xxtea, input_output) {
-  LIBATFRAME_UTILS_NAMESPACE_ID::xxtea_key key;
+  atfw::util::xxtea_key key;
   unsigned char test_data_in[8];
   unsigned char test_data_out[8];
   size_t olen = 0;
 
   for (int i = 0; i < 6; ++i) {
-    LIBATFRAME_UTILS_NAMESPACE_ID::xxtea_setup(&key, xtea_test_key[i]);
+    atfw::util::xxtea_setup(&key, xtea_test_key[i]);
 
     memcpy(test_data_in, xtea_test_pt[i], 8);
     olen = 8;
-    LIBATFRAME_UTILS_NAMESPACE_ID::xxtea_encrypt(&key, test_data_in, 8, test_data_out, &olen);
+    atfw::util::xxtea_encrypt(&key, test_data_in, 8, test_data_out, &olen);
     CASE_EXPECT_EQ(0, memcmp(test_data_out, xtea_test_ct[i], 8));
     CASE_EXPECT_EQ(8, olen);
 
     memcpy(test_data_in, xtea_test_ct[i], 8);
     olen = 8;
-    LIBATFRAME_UTILS_NAMESPACE_ID::xxtea_decrypt(&key, test_data_in, 8, test_data_out, &olen);
+    atfw::util::xxtea_decrypt(&key, test_data_in, 8, test_data_out, &olen);
     CASE_EXPECT_EQ(0, memcmp(test_data_out, xtea_test_pt[i], 8));
     CASE_EXPECT_EQ(8, olen);
   }

@@ -24,7 +24,7 @@
 
 #include <config/atframe_utils_build_feature.h>
 
-LIBATFRAME_UTILS_NAMESPACE_BEGIN
+ATFRAMEWORK_UTILS_NAMESPACE_BEGIN
 namespace random {
 namespace core {
 /**
@@ -36,7 +36,7 @@ namespace core {
  * @note not support for xoroshiro64** 、xoroshiro64*、xoroshiro512** 、xoroshiro512*、xoroshiro1024** 、xoroshiro1024*
  */
 template <class UIntType, bool is_plus, int iidx, int n1, int n2>
-class LIBATFRAME_UTILS_API_HEAD_ONLY xoshiro_engine {
+class ATFRAMEWORK_UTILS_API_HEAD_ONLY xoshiro_engine {
  public:
   using result_type = UIntType;
   using seed_type = result_type[4];
@@ -52,15 +52,15 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY xoshiro_engine {
   }
 
   template <class, bool>
-  struct LIBATFRAME_UTILS_API_HEAD_ONLY next_init;
+  struct ATFRAMEWORK_UTILS_API_HEAD_ONLY next_init;
 
   template <class T>
-  struct LIBATFRAME_UTILS_API_HEAD_ONLY next_init<T, true> {
+  struct ATFRAMEWORK_UTILS_API_HEAD_ONLY next_init<T, true> {
     static inline result_type call(seed_type &s) noexcept { return s[0] + s[3]; }
   };
 
   template <class T>
-  struct LIBATFRAME_UTILS_API_HEAD_ONLY next_init<T, false> {
+  struct ATFRAMEWORK_UTILS_API_HEAD_ONLY next_init<T, false> {
     static inline result_type call(seed_type &s) noexcept { return rotl(s[iidx] * 5, 7) * 9; }
   };
 
@@ -131,7 +131,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY xoshiro_engine {
   }
 
   template <class It>
-  LIBATFRAME_UTILS_API_HEAD_ONLY void init_seed(It &first, It last) {
+  ATFRAMEWORK_UTILS_API_HEAD_ONLY void init_seed(It &first, It last) {
     It begin = first;
     for (int i = 0; i < 4; ++i) {
       if (begin != last) {
@@ -176,7 +176,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY xoshiro_engine {
 };
 
 template <bool is_plus>
-class LIBATFRAME_UTILS_API_HEAD_ONLY xoshiro_engine_128 : public xoshiro_engine<uint32_t, is_plus, 0, 9, 11> {
+class ATFRAMEWORK_UTILS_API_HEAD_ONLY xoshiro_engine_128 : public xoshiro_engine<uint32_t, is_plus, 0, 9, 11> {
  public:
   using base_type = xoshiro_engine<uint32_t, is_plus, 0, 9, 11>;
   using result_type = typename base_type::result_type;
@@ -198,7 +198,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY xoshiro_engine_128 : public xoshiro_engine<
 };
 
 template <bool is_plus>
-class LIBATFRAME_UTILS_API_HEAD_ONLY xoshiro_engine_256 : public xoshiro_engine<uint64_t, is_plus, 1, 17, 45> {
+class ATFRAMEWORK_UTILS_API_HEAD_ONLY xoshiro_engine_256 : public xoshiro_engine<uint64_t, is_plus, 1, 17, 45> {
  public:
   using base_type = xoshiro_engine<uint64_t, is_plus, 1, 17, 45>;
   using result_type = typename base_type::result_type;
@@ -230,6 +230,6 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY xoshiro_engine_256 : public xoshiro_engine<
 };
 }  // namespace core
 }  // namespace random
-LIBATFRAME_UTILS_NAMESPACE_END
+ATFRAMEWORK_UTILS_NAMESPACE_END
 
 #endif /* UTIL_RANDOM_XOSHIRO_CORE_H */

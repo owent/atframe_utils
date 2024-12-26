@@ -31,16 +31,16 @@
 #endif
 
 CASE_TEST(utf8, length) {
-  CASE_EXPECT_EQ(0, util::string::utf8_char_t::length(nullptr));
-  CASE_EXPECT_EQ(1, util::string::utf8_char_t::length("o"));
-  CASE_EXPECT_EQ(3, util::string::utf8_char_t::length(U8_LITERALS("欧")));
+  CASE_EXPECT_EQ(0, atfw::util::string::utf8_char_t::length(nullptr));
+  CASE_EXPECT_EQ(1, atfw::util::string::utf8_char_t::length("o"));
+  CASE_EXPECT_EQ(3, atfw::util::string::utf8_char_t::length(U8_LITERALS("欧")));
 }
 
 CASE_TEST(utf8, equal) {
-  util::string::utf8_char_t a(U8_LITERALS("欧"));
-  util::string::utf8_char_t b(U8_LITERALS("o"));
-  util::string::utf8_char_t c(U8_LITERALS("o"));
-  util::string::utf8_char_t d(nullptr);
+  atfw::util::string::utf8_char_t a(U8_LITERALS("欧"));
+  atfw::util::string::utf8_char_t b(U8_LITERALS("o"));
+  atfw::util::string::utf8_char_t c(U8_LITERALS("o"));
+  atfw::util::string::utf8_char_t d(nullptr);
   CASE_EXPECT_EQ(1, c.length());
   CASE_EXPECT_EQ(1, d.length());
   CASE_EXPECT_EQ(3, a.length());
@@ -53,6 +53,6 @@ CASE_TEST(utf8, equal) {
 }
 
 CASE_TEST(utf8, string_length) {
-  CASE_EXPECT_EQ(2, util::string::utf8_char_t::utf8_string_length(U8_LITERALS("欧o")));
-  CASE_EXPECT_EQ(0, util::string::utf8_char_t::utf8_string_length(""));
+  CASE_EXPECT_EQ(2, atfw::util::string::utf8_char_t::utf8_string_length(U8_LITERALS("欧o")));
+  CASE_EXPECT_EQ(0, atfw::util::string::utf8_char_t::utf8_string_length(""));
 }

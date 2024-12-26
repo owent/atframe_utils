@@ -5,7 +5,7 @@
 #include "design_pattern/singleton.h"
 #include "frame/test_macros.h"
 
-class singleton_unit_test1 : public LIBATFRAME_UTILS_NAMESPACE_ID::design_pattern::singleton<singleton_unit_test1> {
+class singleton_unit_test1 : public atfw::util::design_pattern::singleton<singleton_unit_test1> {
  public:
   bool b;
   int i;
@@ -49,8 +49,7 @@ CASE_TEST(singleton_test, instance2) {
   CASE_EXPECT_EQ(1024, pr.i);
 }
 
-class singleton_unit_test3
-    : public LIBATFRAME_UTILS_NAMESPACE_ID::design_pattern::local_singleton<singleton_unit_test3> {
+class singleton_unit_test3 : public atfw::util::design_pattern::local_singleton<singleton_unit_test3> {
  public:
   bool b;
   int i;

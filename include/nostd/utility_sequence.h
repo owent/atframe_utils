@@ -9,7 +9,7 @@
 #include <cstddef>
 #include <utility>
 
-LIBATFRAME_UTILS_NAMESPACE_BEGIN
+ATFRAMEWORK_UTILS_NAMESPACE_BEGIN
 namespace nostd {
 
 #if __cplusplus >= 201402L
@@ -74,4 +74,4 @@ using index_sequence_for = make_index_sequence<sizeof...(Types)>;
 #endif
 
 }  // namespace nostd
-LIBATFRAME_UTILS_NAMESPACE_END
+ATFRAMEWORK_UTILS_NAMESPACE_END

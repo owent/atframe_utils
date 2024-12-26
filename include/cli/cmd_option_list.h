@@ -20,18 +20,18 @@
 
 #include "cli/cmd_option_value.h"
 
-LIBATFRAME_UTILS_NAMESPACE_BEGIN
+ATFRAMEWORK_UTILS_NAMESPACE_BEGIN
 namespace cli {
 class cmd_option_list;
 using callback_param = cmd_option_list &;
 
 namespace binder {
-struct UTIL_SYMBOL_VISIBLE unspecified {};
+struct UTIL_SYMBOL_VISIBLE unspecified{};
 
 // 绑定器接口
 class UTIL_SYMBOL_VISIBLE cmd_option_bind_base : public std::enable_shared_from_this<cmd_option_bind_base> {
  protected:
-  static LIBATFRAME_UTILS_API const char *ROOT_NODE_CMD;
+  static ATFRAMEWORK_UTILS_API const char *ROOT_NODE_CMD;
   struct help_msg_t {
     std::vector<std::string> cmd_paths;
     std::string all_cmds;
@@ -41,29 +41,29 @@ class UTIL_SYMBOL_VISIBLE cmd_option_bind_base : public std::enable_shared_from_
   using help_list_t = std::vector<help_msg_t>;
 
   std::string help_msg_;
-  LIBATFRAME_UTILS_API cmd_option_bind_base();
-  LIBATFRAME_UTILS_API virtual ~cmd_option_bind_base();
+  ATFRAMEWORK_UTILS_API cmd_option_bind_base();
+  ATFRAMEWORK_UTILS_API virtual ~cmd_option_bind_base();
 
-  static LIBATFRAME_UTILS_API bool sort_by_all_cmds(const help_msg_t &l, const help_msg_t &r);
+  static ATFRAMEWORK_UTILS_API bool sort_by_all_cmds(const help_msg_t &l, const help_msg_t &r);
 
  private:
-  LIBATFRAME_UTILS_API cmd_option_bind_base(const cmd_option_bind_base &other);
-  LIBATFRAME_UTILS_API cmd_option_bind_base &operator=(const cmd_option_bind_base &other);
+  ATFRAMEWORK_UTILS_API cmd_option_bind_base(const cmd_option_bind_base &other);
+  ATFRAMEWORK_UTILS_API cmd_option_bind_base &operator=(const cmd_option_bind_base &other);
 
  public:
   // 定义参数类型
   using param_type = callback_param;
 
-  LIBATFRAME_UTILS_API virtual void operator()(callback_param arg) = 0;
+  ATFRAMEWORK_UTILS_API virtual void operator()(callback_param arg) = 0;
 
   // 获取绑定器的帮助信息
-  LIBATFRAME_UTILS_API virtual std::string get_help_msg(const char *prefix_data = "") const;
+  ATFRAMEWORK_UTILS_API virtual std::string get_help_msg(const char *prefix_data = "") const;
 
   // 设置绑定器的帮助信息
-  LIBATFRAME_UTILS_API virtual std::shared_ptr<cmd_option_bind_base> set_help_msg(const char *help_msg);
+  ATFRAMEWORK_UTILS_API virtual std::shared_ptr<cmd_option_bind_base> set_help_msg(const char *help_msg);
 
   // 增加绑定器的帮助信息
-  LIBATFRAME_UTILS_API virtual std::shared_ptr<cmd_option_bind_base> add_help_msg(const char *help_msg);
+  ATFRAMEWORK_UTILS_API virtual std::shared_ptr<cmd_option_bind_base> add_help_msg(const char *help_msg);
 };
 }  // namespace binder
 
@@ -82,60 +82,60 @@ class UTIL_SYMBOL_VISIBLE cmd_option_list {
   void *ext_param_;
 
   // 初始化Key-Value映射（用于第一次调用get(key)时调用）
-  LIBATFRAME_UTILS_API void init_key_value_map();
+  ATFRAMEWORK_UTILS_API void init_key_value_map();
 
  public:
   // 构造函数
-  LIBATFRAME_UTILS_API cmd_option_list();
-  LIBATFRAME_UTILS_API cmd_option_list(int argv, const char *argc[]);
-  LIBATFRAME_UTILS_API cmd_option_list(const std::vector<std::string> &cmds);
+  ATFRAMEWORK_UTILS_API cmd_option_list();
+  ATFRAMEWORK_UTILS_API cmd_option_list(int argv, const char *argc[]);
+  ATFRAMEWORK_UTILS_API cmd_option_list(const std::vector<std::string> &cmds);
 
   // 增加选项
-  LIBATFRAME_UTILS_API void add(const char *param);
+  ATFRAMEWORK_UTILS_API void add(const char *param);
 
   // 删除全部选项
-  LIBATFRAME_UTILS_API void clear();
+  ATFRAMEWORK_UTILS_API void clear();
 
   // 读取指令集
-  LIBATFRAME_UTILS_API void load_cmd_array(const cmd_array_type &cmds);
+  ATFRAMEWORK_UTILS_API void load_cmd_array(const cmd_array_type &cmds);
 
   // 添加指令
-  LIBATFRAME_UTILS_API void append_cmd(const char *cmd_content,
-                                       std::shared_ptr<binder::cmd_option_bind_base> base_node);
+  ATFRAMEWORK_UTILS_API void append_cmd(const char *cmd_content,
+                                        std::shared_ptr<binder::cmd_option_bind_base> base_node);
 
   // 移除末尾指令
-  LIBATFRAME_UTILS_API void pop_cmd();
+  ATFRAMEWORK_UTILS_API void pop_cmd();
 
-  LIBATFRAME_UTILS_API const cmd_array_type &get_cmd_array() const;
+  ATFRAMEWORK_UTILS_API const cmd_array_type &get_cmd_array() const;
 
   // 根据键值获取选项指针，如果不存在返回默认值
-  LIBATFRAME_UTILS_API value_type get(std::string key, const char *default_val);
+  ATFRAMEWORK_UTILS_API value_type get(std::string key, const char *default_val);
 
   // 根据键值获取选项指针，如果不存在返回空指针
-  LIBATFRAME_UTILS_API value_type get(std::string key);
+  ATFRAMEWORK_UTILS_API value_type get(std::string key);
 
   // 根据下标获取选项指针，如果不存在会出现运行时错误
-  LIBATFRAME_UTILS_API value_type get(size_type index) const;
+  ATFRAMEWORK_UTILS_API value_type get(size_type index) const;
 
   // 操作符重载，功能和上面一样
-  LIBATFRAME_UTILS_API value_type operator[](size_type index) const;
+  ATFRAMEWORK_UTILS_API value_type operator[](size_type index) const;
 
   // 获取参数数量
-  LIBATFRAME_UTILS_API size_type get_params_number() const;
+  ATFRAMEWORK_UTILS_API size_type get_params_number() const;
 
   // 重置Key-Value映射表
   // # 在第一次调用get(字符串[, 默认值])后会建立映射表
   // # 如果这之后add了参数而没有调用此函数重置映射表
   // # 新的变量将不会进入映射表
-  LIBATFRAME_UTILS_API void reset_key_value_map();
+  ATFRAMEWORK_UTILS_API void reset_key_value_map();
 
   // 设置透传参数列表
-  LIBATFRAME_UTILS_API void set_ext_param(void *param);
+  ATFRAMEWORK_UTILS_API void set_ext_param(void *param);
 
   // 获取透传参数列表
-  LIBATFRAME_UTILS_API void *get_ext_param() const;
+  ATFRAMEWORK_UTILS_API void *get_ext_param() const;
 };
 }  // namespace cli
-LIBATFRAME_UTILS_NAMESPACE_END
+ATFRAMEWORK_UTILS_NAMESPACE_END
 
 #endif /* _CMDOPTIONLIST_H_ */

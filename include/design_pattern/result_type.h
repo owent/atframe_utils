@@ -16,42 +16,42 @@
 #include <type_traits>
 #include <utility>
 
-LIBATFRAME_UTILS_NAMESPACE_BEGIN
+ATFRAMEWORK_UTILS_NAMESPACE_BEGIN
 namespace design_pattern {
 template <class T>
-struct LIBATFRAME_UTILS_API_HEAD_ONLY small_object_optimize_storage_deleter {
-  inline void operator()(T *) const noexcept {
-    // Do nothing
-  }
-  template <class U>
+struct ATFRAMEWORK_UTILS_API_HEAD_ONLY small_object_optimize_storage_deleter {
+  inline void
+  operator()(T *) const noexcept {
+      // Do nothing
+  } template <class U>
   inline void operator()(U *) const noexcept {
-    // Do nothing
+      // Do nothing
   }
 };
 
 template <class LT, class RT, bool>
-struct LIBATFRAME_UTILS_API_HEAD_ONLY max_storage_size_helper;
+struct ATFRAMEWORK_UTILS_API_HEAD_ONLY max_storage_size_helper;
 
 template <class LT, class RT>
-struct LIBATFRAME_UTILS_API_HEAD_ONLY max_storage_size_helper<LT, RT, true> {
+struct ATFRAMEWORK_UTILS_API_HEAD_ONLY max_storage_size_helper<LT, RT, true> {
   static constexpr const std::size_t value = sizeof(typename nostd::aligned_storage<sizeof(RT)>::type);
 };
 
 template <class LT, class RT>
-struct LIBATFRAME_UTILS_API_HEAD_ONLY max_storage_size_helper<LT, RT, false> {
+struct ATFRAMEWORK_UTILS_API_HEAD_ONLY max_storage_size_helper<LT, RT, false> {
   static constexpr const std::size_t value = sizeof(typename nostd::aligned_storage<sizeof(LT)>::type);
 };
 
 template <class T>
-struct LIBATFRAME_UTILS_API_HEAD_ONLY compact_storage_select_type;
+struct ATFRAMEWORK_UTILS_API_HEAD_ONLY compact_storage_select_type;
 
 template <>
-struct LIBATFRAME_UTILS_API_HEAD_ONLY compact_storage_select_type<void> {
+struct ATFRAMEWORK_UTILS_API_HEAD_ONLY compact_storage_select_type<void> {
   typedef std::unique_ptr<void, small_object_optimize_storage_deleter<void>> type;
 };
 
 template <class T>
-struct LIBATFRAME_UTILS_API_HEAD_ONLY compact_storage_select_type {
+struct ATFRAMEWORK_UTILS_API_HEAD_ONLY compact_storage_select_type {
   typedef typename std::conditional<
 #if ((defined(_MSVC_LANG) && _MSVC_LANG >= 201402L)) || \
     (defined(__cplusplus) && __cplusplus >= 201402L &&  \
@@ -68,10 +68,10 @@ struct LIBATFRAME_UTILS_API_HEAD_ONLY compact_storage_select_type {
 };
 
 template <class T, class DeleterT>
-struct LIBATFRAME_UTILS_API_HEAD_ONLY compact_storage_type;
+struct ATFRAMEWORK_UTILS_API_HEAD_ONLY compact_storage_type;
 
 template </**void**/>
-struct LIBATFRAME_UTILS_API_HEAD_ONLY
+struct ATFRAMEWORK_UTILS_API_HEAD_ONLY
     compact_storage_type<void, std::unique_ptr<void, small_object_optimize_storage_deleter<void>>>
     : public std::true_type {
   using value_type = void *;
@@ -108,7 +108,7 @@ struct LIBATFRAME_UTILS_API_HEAD_ONLY
 };
 
 template <class T>
-struct LIBATFRAME_UTILS_API_HEAD_ONLY
+struct ATFRAMEWORK_UTILS_API_HEAD_ONLY
     compact_storage_type<T, std::unique_ptr<T, small_object_optimize_storage_deleter<T>>> : public std::true_type {
   using value_type = T;
   using pointer = std::unique_ptr<value_type, small_object_optimize_storage_deleter<value_type>>;
@@ -166,7 +166,7 @@ struct LIBATFRAME_UTILS_API_HEAD_ONLY
 };
 
 template <class T>
-struct LIBATFRAME_UTILS_API_HEAD_ONLY compact_storage_type<T, typename std::unique_ptr<T>::deleter_type>
+struct ATFRAMEWORK_UTILS_API_HEAD_ONLY compact_storage_type<T, typename std::unique_ptr<T>::deleter_type>
     : public std::false_type {
   using value_type = T;
   using pointer = std::unique_ptr<T, typename std::unique_ptr<T>::deleter_type>;
@@ -208,7 +208,7 @@ struct LIBATFRAME_UTILS_API_HEAD_ONLY compact_storage_type<T, typename std::uniq
 };
 
 template <class T, class DeleterT>
-struct LIBATFRAME_UTILS_API_HEAD_ONLY compact_storage_type : public std::false_type {
+struct ATFRAMEWORK_UTILS_API_HEAD_ONLY compact_storage_type : public std::false_type {
   using value_type = T;
   using pointer = std::unique_ptr<T, DeleterT>;
   using storage_type = pointer;
@@ -247,7 +247,7 @@ struct default_compact_storage_type {
 };
 
 template <class TOK, class TERR>
-class LIBATFRAME_UTILS_API_HEAD_ONLY result_base_type {
+class ATFRAMEWORK_UTILS_API_HEAD_ONLY result_base_type {
  public:
   using success_type = TOK;
   using error_type = TERR;
@@ -417,7 +417,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY result_base_type {
 };
 
 template <class TOK, class TERR>
-class LIBATFRAME_UTILS_API_HEAD_ONLY result_type : public result_base_type<TOK, TERR> {
+class ATFRAMEWORK_UTILS_API_HEAD_ONLY result_type : public result_base_type<TOK, TERR> {
  public:
   using base_type = result_base_type<TOK, TERR>;
   using self_type = result_type<TOK, TERR>;
@@ -438,4 +438,4 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY result_type : public result_base_type<TOK, 
   }
 };
 }  // namespace design_pattern
-LIBATFRAME_UTILS_NAMESPACE_END
+ATFRAMEWORK_UTILS_NAMESPACE_END

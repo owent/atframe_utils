@@ -45,8 +45,8 @@
 // narrow
 // ...
 
-#if (defined(LIBATFRAME_UTILS_GSL_TEST_STL_STRING_VIEW) && LIBATFRAME_UTILS_GSL_TEST_STL_STRING_VIEW) && \
-    (defined(LIBATFRAME_UTILS_ENABLE_GSL_STRING_VIEW_FROM_STD) && LIBATFRAME_UTILS_ENABLE_GSL_STRING_VIEW_FROM_STD)
+#if (defined(ATFRAMEWORK_UTILS_GSL_TEST_STL_STRING_VIEW) && ATFRAMEWORK_UTILS_GSL_TEST_STL_STRING_VIEW) && \
+    (defined(ATFRAMEWORK_UTILS_ENABLE_GSL_STRING_VIEW_FROM_STD) && ATFRAMEWORK_UTILS_ENABLE_GSL_STRING_VIEW_FROM_STD)
 #  include <string_view>
 namespace gsl {
 using std::basic_string_view;
@@ -56,13 +56,13 @@ using std::wstring_view;
 #else
 #  include <nostd/string_view.h>
 namespace gsl {
-using LIBATFRAME_UTILS_NAMESPACE_ID::nostd::basic_string_view;
-using LIBATFRAME_UTILS_NAMESPACE_ID::nostd::string_view;
-using LIBATFRAME_UTILS_NAMESPACE_ID::nostd::wstring_view;
+using ATFRAMEWORK_UTILS_NAMESPACE_ID::nostd::basic_string_view;
+using ATFRAMEWORK_UTILS_NAMESPACE_ID::nostd::string_view;
+using ATFRAMEWORK_UTILS_NAMESPACE_ID::nostd::wstring_view;
 }  // namespace gsl
 #endif
 
-#if defined(LIBATFRAME_UTILS_ENABLE_GSL_WITH_MS_GSL) && LIBATFRAME_UTILS_ENABLE_GSL_WITH_MS_GSL
+#if defined(ATFRAMEWORK_UTILS_ENABLE_GSL_WITH_MS_GSL) && ATFRAMEWORK_UTILS_ENABLE_GSL_WITH_MS_GSL
 #  include <gsl/gsl>
 namespace gsl {
 using std::make_shared;
@@ -76,9 +76,9 @@ EXPLICIT_NODISCARD_ATTR unique_ptr<T> make_unique(Args &&...args) {
 #  endif
 }  // namespace gsl
 
-#elif defined(LIBATFRAME_UTILS_ENABLE_GSL_WITH_GSL_LITE) && LIBATFRAME_UTILS_ENABLE_GSL_WITH_GSL_LITE
+#elif defined(ATFRAMEWORK_UTILS_ENABLE_GSL_WITH_GSL_LITE) && ATFRAMEWORK_UTILS_ENABLE_GSL_WITH_GSL_LITE
 #  include <gsl/gsl-lite.hpp>
-#elif defined(LIBATFRAME_UTILS_ENABLE_GSL_WITH_FALLBACK_STL) && LIBATFRAME_UTILS_ENABLE_GSL_WITH_FALLBACK_STL
+#elif defined(ATFRAMEWORK_UTILS_ENABLE_GSL_WITH_FALLBACK_STL) && ATFRAMEWORK_UTILS_ENABLE_GSL_WITH_FALLBACK_STL
 #  include <array>
 #  include <cstddef>
 #  include <iostream>
@@ -86,7 +86,8 @@ EXPLICIT_NODISCARD_ATTR unique_ptr<T> make_unique(Args &&...args) {
 #  include <type_traits>
 #  include <utility>
 
-#  if defined(LIBATFRAME_UTILS_ENABLE_GSL_WITH_FALLBACK_STL_SPAN) && LIBATFRAME_UTILS_ENABLE_GSL_WITH_FALLBACK_STL_SPAN
+#  if defined(ATFRAMEWORK_UTILS_ENABLE_GSL_WITH_FALLBACK_STL_SPAN) && \
+      ATFRAMEWORK_UTILS_ENABLE_GSL_WITH_FALLBACK_STL_SPAN
 #    include <span>
 #  endif
 
@@ -104,18 +105,18 @@ EXPLICIT_NODISCARD_ATTR unique_ptr<T> make_unique(Args&&... args) {
 #  endif
 
 template <class T, size_t N>
-EXPLICIT_NODISCARD_ATTR LIBATFRAME_UTILS_API_HEAD_ONLY constexpr inline T& at(T (&arr)[N], size_t pos) {
+EXPLICIT_NODISCARD_ATTR ATFRAMEWORK_UTILS_API_HEAD_ONLY constexpr inline T& at(T (&arr)[N], size_t pos) {
   return arr[pos];
 }
 
 template <class Container>
-EXPLICIT_NODISCARD_ATTR LIBATFRAME_UTILS_API_HEAD_ONLY constexpr inline typename Container::value_type& at(
+EXPLICIT_NODISCARD_ATTR ATFRAMEWORK_UTILS_API_HEAD_ONLY constexpr inline typename Container::value_type& at(
     Container& cont, size_t pos) {
   return cont[pos];
 }
 
 template <class Container>
-EXPLICIT_NODISCARD_ATTR LIBATFRAME_UTILS_API_HEAD_ONLY constexpr inline typename Container::value_type const& at(
+EXPLICIT_NODISCARD_ATTR ATFRAMEWORK_UTILS_API_HEAD_ONLY constexpr inline typename Container::value_type const& at(
     Container const& cont, size_t pos) {
   return cont[pos];
 }
@@ -123,62 +124,63 @@ EXPLICIT_NODISCARD_ATTR LIBATFRAME_UTILS_API_HEAD_ONLY constexpr inline typename
 #  if gsl_HAVE(INITIALIZER_LIST)
 
 template <class T>
-EXPLICIT_NODISCARD_ATTR LIBATFRAME_UTILS_API_HEAD_ONLY constexpr inline const T at(std::initializer_list<T> cont,
-                                                                                   size_t pos) {
+EXPLICIT_NODISCARD_ATTR ATFRAMEWORK_UTILS_API_HEAD_ONLY constexpr inline const T at(std::initializer_list<T> cont,
+                                                                                    size_t pos) {
   return *(cont.begin() + pos);
 }
 #  endif
 
 template <class T>
-EXPLICIT_NODISCARD_ATTR LIBATFRAME_UTILS_API_HEAD_ONLY constexpr inline T& at(span<T> s, size_t pos) {
+EXPLICIT_NODISCARD_ATTR ATFRAMEWORK_UTILS_API_HEAD_ONLY constexpr inline T& at(span<T> s, size_t pos) {
   return s[pos];
 }
 
 template <class TCONTAINER>
-LIBATFRAME_UTILS_API_HEAD_ONLY constexpr inline auto size(const TCONTAINER& container) -> decltype(container.size()) {
+ATFRAMEWORK_UTILS_API_HEAD_ONLY constexpr inline auto size(const TCONTAINER& container) -> decltype(container.size()) {
   return container.size();
 }
 
 template <class T, size_t SIZE>
-LIBATFRAME_UTILS_API_HEAD_ONLY constexpr inline size_t size(const T (&)[SIZE]) noexcept {
+ATFRAMEWORK_UTILS_API_HEAD_ONLY constexpr inline size_t size(const T (&)[SIZE]) noexcept {
   return SIZE;
 }
 
 template <class TCONTAINER>
-LIBATFRAME_UTILS_API_HEAD_ONLY constexpr inline auto data(TCONTAINER& container) -> decltype(container.data()) {
+ATFRAMEWORK_UTILS_API_HEAD_ONLY constexpr inline auto data(TCONTAINER& container) -> decltype(container.data()) {
   return container.data();
 }
 
 template <class TCONTAINER>
-LIBATFRAME_UTILS_API_HEAD_ONLY constexpr inline auto data(const TCONTAINER& container) -> decltype(container.data()) {
+ATFRAMEWORK_UTILS_API_HEAD_ONLY constexpr inline auto data(const TCONTAINER& container) -> decltype(container.data()) {
   return container.data();
 }
 
 template <class T, size_t SIZE>
-LIBATFRAME_UTILS_API_HEAD_ONLY constexpr inline T* data(T (&array_value)[SIZE]) noexcept {
+ATFRAMEWORK_UTILS_API_HEAD_ONLY constexpr inline T* data(T (&array_value)[SIZE]) noexcept {
   return array_value;
 }
 
 template <class TELEMENT>
-LIBATFRAME_UTILS_API_HEAD_ONLY constexpr inline const TELEMENT* data(std::initializer_list<TELEMENT> l) noexcept {
+ATFRAMEWORK_UTILS_API_HEAD_ONLY constexpr inline const TELEMENT* data(std::initializer_list<TELEMENT> l) noexcept {
   return l.begin();
 }
 
-#  if defined(LIBATFRAME_UTILS_ENABLE_GSL_WITH_FALLBACK_STL_SPAN) && LIBATFRAME_UTILS_ENABLE_GSL_WITH_FALLBACK_STL_SPAN
+#  if defined(ATFRAMEWORK_UTILS_ENABLE_GSL_WITH_FALLBACK_STL_SPAN) && \
+      ATFRAMEWORK_UTILS_ENABLE_GSL_WITH_FALLBACK_STL_SPAN
 using std::span;
 template <class T>
-EXPLICIT_NODISCARD_ATTR LIBATFRAME_UTILS_API_HEAD_ONLY inline constexpr span<T> make_span(
+EXPLICIT_NODISCARD_ATTR ATFRAMEWORK_UTILS_API_HEAD_ONLY inline constexpr span<T> make_span(
     T* ptr, typename span<T>::index_type count) {
   return span<T>(ptr, count);
 }
 
 template <class T>
-EXPLICIT_NODISCARD_ATTR LIBATFRAME_UTILS_API_HEAD_ONLY inline constexpr span<T> make_span(T* first, T* last) {
+EXPLICIT_NODISCARD_ATTR ATFRAMEWORK_UTILS_API_HEAD_ONLY inline constexpr span<T> make_span(T* first, T* last) {
   return span<T>(first, last);
 }
 
 template <class T, size_t N>
-EXPLICIT_NODISCARD_ATTR LIBATFRAME_UTILS_API_HEAD_ONLY inline constexpr span<T> make_span(T (&arr)[N]) {
+EXPLICIT_NODISCARD_ATTR ATFRAMEWORK_UTILS_API_HEAD_ONLY inline constexpr span<T> make_span(T (&arr)[N]) {
   return span<T>(&arr[0], N);
 }
 
@@ -230,19 +232,19 @@ using owner = T;
 // template< class T >
 // class not_null;
 
-#  if defined(LIBATFRAME_UTILS_GSL_TEST_FALLBACK_STL_BYTE) && LIBATFRAME_UTILS_GSL_TEST_FALLBACK_STL_BYTE
+#  if defined(ATFRAMEWORK_UTILS_GSL_TEST_FALLBACK_STL_BYTE) && ATFRAMEWORK_UTILS_GSL_TEST_FALLBACK_STL_BYTE
 using std::byte;
-#    if defined(LIBATFRAME_UTILS_ENABLE_GSL_WITH_FALLBACK_STL_SPAN) && \
-        LIBATFRAME_UTILS_ENABLE_GSL_WITH_FALLBACK_STL_SPAN
+#    if defined(ATFRAMEWORK_UTILS_ENABLE_GSL_WITH_FALLBACK_STL_SPAN) && \
+        ATFRAMEWORK_UTILS_ENABLE_GSL_WITH_FALLBACK_STL_SPAN
 template <class T>
-EXPLICIT_NODISCARD_ATTR LIBATFRAME_UTILS_API_HEAD_ONLY inline span<const byte> as_bytes(span<T> spn) noexcept {
+EXPLICIT_NODISCARD_ATTR ATFRAMEWORK_UTILS_API_HEAD_ONLY inline span<const byte> as_bytes(span<T> spn) noexcept {
   return span<const byte>(reinterpret_cast<const byte*>(spn.data()), spn.size_bytes());  // NOLINT
 }
 #    endif
 #  endif
 
 template <class F>
-class LIBATFRAME_UTILS_API_HEAD_ONLY final_action {
+class ATFRAMEWORK_UTILS_API_HEAD_ONLY final_action {
  public:
   explicit final_action(F action) noexcept : action_(std::move(action)), invoke_(true) {}
 
@@ -278,7 +280,7 @@ EXPLICIT_NODISCARD_ATTR inline final_action<F> finally(F&& action) noexcept {
 }
 
 template <class T, class U>
-EXPLICIT_NODISCARD_ATTR LIBATFRAME_UTILS_API_HEAD_ONLY inline constexpr T narrow_cast(U&& u) noexcept {
+EXPLICIT_NODISCARD_ATTR ATFRAMEWORK_UTILS_API_HEAD_ONLY inline constexpr T narrow_cast(U&& u) noexcept {
   return static_cast<T>(std::forward<U>(u));
 }
 

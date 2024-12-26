@@ -19,10 +19,10 @@
 // 默认文件大小是256KB
 #define DEFAULT_FILE_SIZE 256 * 1024
 
-LIBATFRAME_UTILS_NAMESPACE_BEGIN
+ATFRAMEWORK_UTILS_NAMESPACE_BEGIN
 namespace log {
 
-LIBATFRAME_UTILS_API log_sink_file_backend::log_sink_file_backend()
+ATFRAMEWORK_UTILS_API log_sink_file_backend::log_sink_file_backend()
     : rotation_size_(10),                 // 默认10个文件
       max_file_size_(DEFAULT_FILE_SIZE),  // 默认文件大小
       check_interval_(0),                 // 默认文件切换检查周期
@@ -37,7 +37,7 @@ LIBATFRAME_UTILS_API log_sink_file_backend::log_sink_file_backend()
   set_file_pattern("%Y-%m-%d.%N.log");  // 默认文件名规则
 }
 
-LIBATFRAME_UTILS_API log_sink_file_backend::log_sink_file_backend(const std::string &file_name_pattern)
+ATFRAMEWORK_UTILS_API log_sink_file_backend::log_sink_file_backend(const std::string &file_name_pattern)
     : rotation_size_(10),                 // 默认10个文件
       max_file_size_(DEFAULT_FILE_SIZE),  // 默认文件大小
       check_interval_(0),                 // 默认文件切换检查周期
@@ -52,7 +52,7 @@ LIBATFRAME_UTILS_API log_sink_file_backend::log_sink_file_backend(const std::str
   set_file_pattern(file_name_pattern);
 }
 
-LIBATFRAME_UTILS_API log_sink_file_backend::log_sink_file_backend(const log_sink_file_backend &other)
+ATFRAMEWORK_UTILS_API log_sink_file_backend::log_sink_file_backend(const log_sink_file_backend &other)
     : rotation_size_(other.rotation_size_),    // 默认文件数量
       max_file_size_(other.max_file_size_),    // 默认文件大小
       check_interval_(other.check_interval_),  // 默认文件切换检查周期
@@ -68,32 +68,32 @@ LIBATFRAME_UTILS_API log_sink_file_backend::log_sink_file_backend(const log_sink
   // 其他的部分都要重新初始化，不能复制
 }
 
-LIBATFRAME_UTILS_API log_sink_file_backend::~log_sink_file_backend() {
+ATFRAMEWORK_UTILS_API log_sink_file_backend::~log_sink_file_backend() {
   if (log_file_.opened_file) {
     fflush(log_file_.opened_file.get());
   }
 }
 
-LIBATFRAME_UTILS_API void log_sink_file_backend::set_file_pattern(const std::string &file_name_pattern) {
+ATFRAMEWORK_UTILS_API void log_sink_file_backend::set_file_pattern(const std::string &file_name_pattern) {
   // 计算按时间切换的检测间隔
   static time_t check_interval[128] = {0};
   // @see log_formatter::format
   // 计算检查周期，考虑到某些地区有夏令时，所以最大是小时。Unix时间戳会抹平闰秒，所以可以不考虑闰秒
   if (check_interval[static_cast<int>('S')] == 0) {
     check_interval[static_cast<int>('f')] = 1;
-    check_interval[static_cast<int>('R')] = LIBATFRAME_UTILS_NAMESPACE_ID::time::time_utility::MINITE_SECONDS;
+    check_interval[static_cast<int>('R')] = ATFRAMEWORK_UTILS_NAMESPACE_ID::time::time_utility::MINITE_SECONDS;
     check_interval[static_cast<int>('T')] = 1;
-    check_interval[static_cast<int>('F')] = LIBATFRAME_UTILS_NAMESPACE_ID::time::time_utility::HOUR_SECONDS;
+    check_interval[static_cast<int>('F')] = ATFRAMEWORK_UTILS_NAMESPACE_ID::time::time_utility::HOUR_SECONDS;
     check_interval[static_cast<int>('S')] = 1;
-    check_interval[static_cast<int>('M')] = LIBATFRAME_UTILS_NAMESPACE_ID::time::time_utility::MINITE_SECONDS;
-    check_interval[static_cast<int>('I')] = LIBATFRAME_UTILS_NAMESPACE_ID::time::time_utility::HOUR_SECONDS;
-    check_interval[static_cast<int>('H')] = LIBATFRAME_UTILS_NAMESPACE_ID::time::time_utility::HOUR_SECONDS;
-    check_interval[static_cast<int>('w')] = LIBATFRAME_UTILS_NAMESPACE_ID::time::time_utility::HOUR_SECONDS;
-    check_interval[static_cast<int>('d')] = LIBATFRAME_UTILS_NAMESPACE_ID::time::time_utility::HOUR_SECONDS;
-    check_interval[static_cast<int>('j')] = LIBATFRAME_UTILS_NAMESPACE_ID::time::time_utility::HOUR_SECONDS;
-    check_interval[static_cast<int>('m')] = LIBATFRAME_UTILS_NAMESPACE_ID::time::time_utility::HOUR_SECONDS;
-    check_interval[static_cast<int>('y')] = LIBATFRAME_UTILS_NAMESPACE_ID::time::time_utility::HOUR_SECONDS;
-    check_interval[static_cast<int>('Y')] = LIBATFRAME_UTILS_NAMESPACE_ID::time::time_utility::HOUR_SECONDS;
+    check_interval[static_cast<int>('M')] = ATFRAMEWORK_UTILS_NAMESPACE_ID::time::time_utility::MINITE_SECONDS;
+    check_interval[static_cast<int>('I')] = ATFRAMEWORK_UTILS_NAMESPACE_ID::time::time_utility::HOUR_SECONDS;
+    check_interval[static_cast<int>('H')] = ATFRAMEWORK_UTILS_NAMESPACE_ID::time::time_utility::HOUR_SECONDS;
+    check_interval[static_cast<int>('w')] = ATFRAMEWORK_UTILS_NAMESPACE_ID::time::time_utility::HOUR_SECONDS;
+    check_interval[static_cast<int>('d')] = ATFRAMEWORK_UTILS_NAMESPACE_ID::time::time_utility::HOUR_SECONDS;
+    check_interval[static_cast<int>('j')] = ATFRAMEWORK_UTILS_NAMESPACE_ID::time::time_utility::HOUR_SECONDS;
+    check_interval[static_cast<int>('m')] = ATFRAMEWORK_UTILS_NAMESPACE_ID::time::time_utility::HOUR_SECONDS;
+    check_interval[static_cast<int>('y')] = ATFRAMEWORK_UTILS_NAMESPACE_ID::time::time_utility::HOUR_SECONDS;
+    check_interval[static_cast<int>('Y')] = ATFRAMEWORK_UTILS_NAMESPACE_ID::time::time_utility::HOUR_SECONDS;
   }
 
   {
@@ -123,24 +123,24 @@ LIBATFRAME_UTILS_API void log_sink_file_backend::set_file_pattern(const std::str
   }
 }
 
-LIBATFRAME_UTILS_API void log_sink_file_backend::set_writing_alias_pattern(const std::string &file_name_pattern) {
+ATFRAMEWORK_UTILS_API void log_sink_file_backend::set_writing_alias_pattern(const std::string &file_name_pattern) {
   alias_writing_pattern_ = file_name_pattern;
 }
 
-LIBATFRAME_UTILS_API const std::string &log_sink_file_backend::get_writing_alias_pattern(
+ATFRAMEWORK_UTILS_API const std::string &log_sink_file_backend::get_writing_alias_pattern(
     const std::string &file_name_pattern) {
   return file_name_pattern;
 }
 
-LIBATFRAME_UTILS_API UTIL_SANITIZER_NO_THREAD void log_sink_file_backend::maybe_rotate_log() {
+ATFRAMEWORK_UTILS_API UTIL_SANITIZER_NO_THREAD void log_sink_file_backend::maybe_rotate_log() {
   if (log_file_.written_size > 0 && log_file_.written_size >= max_file_size_) {
     rotate_log();
   }
   check_update();
 }
 
-LIBATFRAME_UTILS_API void log_sink_file_backend::operator()(const log_formatter::caller_info_t &caller,
-                                                            const char *content, size_t content_size) {
+ATFRAMEWORK_UTILS_API void log_sink_file_backend::operator()(const log_formatter::caller_info_t &caller,
+                                                             const char *content, size_t content_size) {
   if (!inited_) {
     init();
   }
@@ -158,9 +158,9 @@ LIBATFRAME_UTILS_API void log_sink_file_backend::operator()(const log_formatter:
   after_write_log(caller, *f, content_size);
 }
 
-LIBATFRAME_UTILS_API UTIL_SANITIZER_NO_THREAD void log_sink_file_backend::after_write_log(
+ATFRAMEWORK_UTILS_API UTIL_SANITIZER_NO_THREAD void log_sink_file_backend::after_write_log(
     const log_formatter::caller_info_t &caller, FILE &f, size_t content_size) {
-  time_t now = LIBATFRAME_UTILS_NAMESPACE_ID::time::time_utility::get_sys_now();
+  time_t now = ATFRAMEWORK_UTILS_NAMESPACE_ID::time::time_utility::get_sys_now();
 
   // 日志级别高于指定级别，需要刷入
   if (static_cast<uint32_t>(caller.level_id) <= log_file_.auto_flush) {
@@ -178,37 +178,37 @@ LIBATFRAME_UTILS_API UTIL_SANITIZER_NO_THREAD void log_sink_file_backend::after_
   log_file_.written_size += content_size + 1;
 }
 
-LIBATFRAME_UTILS_API time_t log_sink_file_backend::get_check_interval() const { return check_interval_; }
+ATFRAMEWORK_UTILS_API time_t log_sink_file_backend::get_check_interval() const { return check_interval_; }
 
-LIBATFRAME_UTILS_API log_sink_file_backend &log_sink_file_backend::set_check_interval(time_t check_interval) {
+ATFRAMEWORK_UTILS_API log_sink_file_backend &log_sink_file_backend::set_check_interval(time_t check_interval) {
   check_interval_ = check_interval;
   return *this;
 }
 
-LIBATFRAME_UTILS_API time_t log_sink_file_backend::get_flush_interval() const { return flush_interval_; }
+ATFRAMEWORK_UTILS_API time_t log_sink_file_backend::get_flush_interval() const { return flush_interval_; }
 
-LIBATFRAME_UTILS_API log_sink_file_backend &log_sink_file_backend::set_flush_interval(time_t v) {
+ATFRAMEWORK_UTILS_API log_sink_file_backend &log_sink_file_backend::set_flush_interval(time_t v) {
   flush_interval_ = v;
   return *this;
 }
 
-LIBATFRAME_UTILS_API uint32_t log_sink_file_backend::get_auto_flush() const { return log_file_.auto_flush; }
+ATFRAMEWORK_UTILS_API uint32_t log_sink_file_backend::get_auto_flush() const { return log_file_.auto_flush; }
 
-LIBATFRAME_UTILS_API log_sink_file_backend &log_sink_file_backend::set_auto_flush(uint32_t flush_level) {
+ATFRAMEWORK_UTILS_API log_sink_file_backend &log_sink_file_backend::set_auto_flush(uint32_t flush_level) {
   log_file_.auto_flush = flush_level;
   return *this;
 }
 
-LIBATFRAME_UTILS_API size_t log_sink_file_backend::get_max_file_size() const { return max_file_size_; }
+ATFRAMEWORK_UTILS_API size_t log_sink_file_backend::get_max_file_size() const { return max_file_size_; }
 
-LIBATFRAME_UTILS_API log_sink_file_backend &log_sink_file_backend::set_max_file_size(size_t max_file_size) {
+ATFRAMEWORK_UTILS_API log_sink_file_backend &log_sink_file_backend::set_max_file_size(size_t max_file_size) {
   max_file_size_ = max_file_size;
   return *this;
 }
 
-LIBATFRAME_UTILS_API uint32_t log_sink_file_backend::get_rotate_size() const { return rotation_size_; }
+ATFRAMEWORK_UTILS_API uint32_t log_sink_file_backend::get_rotate_size() const { return rotation_size_; }
 
-LIBATFRAME_UTILS_API log_sink_file_backend &log_sink_file_backend::set_rotate_size(uint32_t sz) {
+ATFRAMEWORK_UTILS_API log_sink_file_backend &log_sink_file_backend::set_rotate_size(uint32_t sz) {
   // 轮训sz不能为0
   if (sz <= 1) {
     sz = 1;
@@ -217,7 +217,7 @@ LIBATFRAME_UTILS_API log_sink_file_backend &log_sink_file_backend::set_rotate_si
   return *this;
 }
 
-LIBATFRAME_UTILS_API UTIL_SANITIZER_NO_THREAD void log_sink_file_backend::init() {
+ATFRAMEWORK_UTILS_API UTIL_SANITIZER_NO_THREAD void log_sink_file_backend::init() {
   if (inited_) {
     return;
   }
@@ -251,7 +251,7 @@ LIBATFRAME_UTILS_API UTIL_SANITIZER_NO_THREAD void log_sink_file_backend::init()
   open_log_file(false);
 }
 
-LIBATFRAME_UTILS_API std::shared_ptr<std::FILE> log_sink_file_backend::open_log_file(bool destroy_content) {
+ATFRAMEWORK_UTILS_API std::shared_ptr<std::FILE> log_sink_file_backend::open_log_file(bool destroy_content) {
   if (log_file_.opened_file) {
     return log_file_.opened_file;
   }
@@ -276,9 +276,9 @@ LIBATFRAME_UTILS_API std::shared_ptr<std::FILE> log_sink_file_backend::open_log_
 
   std::shared_ptr<std::FILE> of;
   std::string dir_name;
-  LIBATFRAME_UTILS_NAMESPACE_ID::file_system::dirname(log_file, file_path_len, dir_name);
-  if (!dir_name.empty() && !LIBATFRAME_UTILS_NAMESPACE_ID::file_system::is_exist(dir_name.c_str())) {
-    LIBATFRAME_UTILS_NAMESPACE_ID::file_system::mkdir(dir_name.c_str(), true);
+  ATFRAMEWORK_UTILS_NAMESPACE_ID::file_system::dirname(log_file, file_path_len, dir_name);
+  if (!dir_name.empty() && !ATFRAMEWORK_UTILS_NAMESPACE_ID::file_system::is_exist(dir_name.c_str())) {
+    ATFRAMEWORK_UTILS_NAMESPACE_ID::file_system::mkdir(dir_name.c_str(), true);
   }
 
   // 销毁原先的内容
@@ -304,7 +304,7 @@ LIBATFRAME_UTILS_API std::shared_ptr<std::FILE> log_sink_file_backend::open_log_
   log_file_.written_size = static_cast<size_t>(ftell(of.get()));
 
   log_file_.opened_file = of;
-  log_file_.opened_file_point_ = LIBATFRAME_UTILS_NAMESPACE_ID::time::time_utility::get_sys_now();
+  log_file_.opened_file_point_ = ATFRAMEWORK_UTILS_NAMESPACE_ID::time::time_utility::get_sys_now();
   log_file_.file_path.assign(log_file, file_path_len);
 
   // 硬链接别名
@@ -326,8 +326,8 @@ LIBATFRAME_UTILS_API std::shared_ptr<std::FILE> log_sink_file_backend::open_log_
       return log_file_.opened_file;
     }
 
-    int res = LIBATFRAME_UTILS_NAMESPACE_ID::file_system::link(
-        log_file, alias_log_file, LIBATFRAME_UTILS_NAMESPACE_ID::file_system::link_opt_t::EN_LOT_FORCE_REWRITE);
+    int res = ATFRAMEWORK_UTILS_NAMESPACE_ID::file_system::link(
+        log_file, alias_log_file, ATFRAMEWORK_UTILS_NAMESPACE_ID::file_system::link_opt_t::EN_LOT_FORCE_REWRITE);
     if (res != 0) {
       std::cerr << "link(" << log_file << ", " << alias_log_file << ") failed, errno: " << res << std::endl;
 #  ifdef UTIL_FS_WINDOWS_API
@@ -351,7 +351,7 @@ LIBATFRAME_UTILS_API std::shared_ptr<std::FILE> log_sink_file_backend::open_log_
   return log_file_.opened_file;
 }
 
-LIBATFRAME_UTILS_API UTIL_SANITIZER_NO_THREAD void log_sink_file_backend::rotate_log() {
+ATFRAMEWORK_UTILS_API UTIL_SANITIZER_NO_THREAD void log_sink_file_backend::rotate_log() {
   if (rotation_size_ > 0) {
     log_file_.rotation_index = (log_file_.rotation_index + 1) % rotation_size_;
   } else {
@@ -360,9 +360,9 @@ LIBATFRAME_UTILS_API UTIL_SANITIZER_NO_THREAD void log_sink_file_backend::rotate
   reset_log_file();
 }
 
-LIBATFRAME_UTILS_API void log_sink_file_backend::check_update() {
+ATFRAMEWORK_UTILS_API void log_sink_file_backend::check_update() {
   if (0 != log_file_.opened_file_point_) {
-    if (0 == check_interval_ || LIBATFRAME_UTILS_NAMESPACE_ID::time::time_utility::get_sys_now() / check_interval_ ==
+    if (0 == check_interval_ || ATFRAMEWORK_UTILS_NAMESPACE_ID::time::time_utility::get_sys_now() / check_interval_ ==
                                     log_file_.opened_file_point_ / check_interval_) {
       return;
     }
@@ -388,7 +388,7 @@ LIBATFRAME_UTILS_API void log_sink_file_backend::check_update() {
     if (new_file_path == log_file_.file_path) {
       // 本次刷新周期内的文件名未变化，说明检测周期小于实际周期，所以这个周期内不需要再检测了
       // 因为考虑到夏时令，只要大于小时的配置检测周期都设置为小时，必然会小于实际周期然后走到这里
-      log_file_.opened_file_point_ = LIBATFRAME_UTILS_NAMESPACE_ID::time::time_utility::get_sys_now();
+      log_file_.opened_file_point_ = ATFRAMEWORK_UTILS_NAMESPACE_ID::time::time_utility::get_sys_now();
       return;
     }
 
@@ -397,8 +397,8 @@ LIBATFRAME_UTILS_API void log_sink_file_backend::check_update() {
 
   std::string new_dir;
   std::string old_dir;
-  LIBATFRAME_UTILS_NAMESPACE_ID::file_system::dirname(new_file_path.c_str(), new_file_path.size(), new_dir);
-  LIBATFRAME_UTILS_NAMESPACE_ID::file_system::dirname(old_file_path.c_str(), old_file_path.size(), old_dir);
+  ATFRAMEWORK_UTILS_NAMESPACE_ID::file_system::dirname(new_file_path.c_str(), new_file_path.size(), new_dir);
+  ATFRAMEWORK_UTILS_NAMESPACE_ID::file_system::dirname(old_file_path.c_str(), old_file_path.size(), old_dir);
 
   // 如果目录变化则重置序号
   if (new_dir != old_dir) {
@@ -408,7 +408,7 @@ LIBATFRAME_UTILS_API void log_sink_file_backend::check_update() {
   reset_log_file();
 }
 
-LIBATFRAME_UTILS_API void log_sink_file_backend::reset_log_file() {
+ATFRAMEWORK_UTILS_API void log_sink_file_backend::reset_log_file() {
   // 更换日志文件需要加锁
   lock::lock_holder<lock::spin_lock> lkholder(fs_lock_);
 
@@ -419,4 +419,4 @@ LIBATFRAME_UTILS_API void log_sink_file_backend::reset_log_file() {
   // log_file_.file_path.clear(); // 保留上一个文件路径，即便已被关闭。用于rotate后的目录变更判定
 }
 }  // namespace log
-LIBATFRAME_UTILS_NAMESPACE_END
+ATFRAMEWORK_UTILS_NAMESPACE_END

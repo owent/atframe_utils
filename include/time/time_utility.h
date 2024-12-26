@@ -43,7 +43,7 @@
 
 #endif
 
-LIBATFRAME_UTILS_NAMESPACE_BEGIN
+ATFRAMEWORK_UTILS_NAMESPACE_BEGIN
 namespace time {
 class time_utility {
  public:
@@ -69,19 +69,19 @@ class time_utility {
    * @brief 更新时间
    * @param t 可以指定时间对象
    */
-  static LIBATFRAME_UTILS_API UTIL_SANITIZER_NO_THREAD void update(raw_time_t *t = nullptr);
+  static ATFRAMEWORK_UTILS_API UTIL_SANITIZER_NO_THREAD void update(raw_time_t *t = nullptr);
 
   /**
    * @brief 获取原始系统时间对象
    * @return 最后一次update的时间
    */
-  static LIBATFRAME_UTILS_API UTIL_SANITIZER_NO_THREAD raw_time_t now();
+  static ATFRAMEWORK_UTILS_API UTIL_SANITIZER_NO_THREAD raw_time_t now();
 
   /**
    * @brief 获取当前Unix时间戳
    * @return 最后一次update的时间
    */
-  static LIBATFRAME_UTILS_API UTIL_SANITIZER_NO_THREAD time_t get_now();
+  static ATFRAMEWORK_UTILS_API UTIL_SANITIZER_NO_THREAD time_t get_now();
 
   /**
    * @brief 获取当前时间的微秒部分
@@ -90,7 +90,7 @@ class time_utility {
    * @note update接口不加锁，所以一般情况下，返回值在[0, 1000000)之间
    * @return 当前时间的微妙部分
    */
-  static LIBATFRAME_UTILS_API UTIL_SANITIZER_NO_THREAD int32_t get_now_usec();
+  static ATFRAMEWORK_UTILS_API UTIL_SANITIZER_NO_THREAD int32_t get_now_usec();
 
   /**
    * @brief 获取当前时间的纳秒部分
@@ -99,25 +99,25 @@ class time_utility {
    * @note update接口不加锁，所以一般情况下，返回值在[0, 1000000000)之间
    * @return 当前时间的微秒部分
    */
-  static LIBATFRAME_UTILS_API UTIL_SANITIZER_NO_THREAD int32_t get_now_nanos();
+  static ATFRAMEWORK_UTILS_API UTIL_SANITIZER_NO_THREAD int32_t get_now_nanos();
 
   /**
    * @brief 获取原始系统时间对象,不受set_global_now_offset()影响
    * @return 最后一次update的时间
    */
-  static LIBATFRAME_UTILS_API UTIL_SANITIZER_NO_THREAD raw_time_t sys_now();
+  static ATFRAMEWORK_UTILS_API UTIL_SANITIZER_NO_THREAD raw_time_t sys_now();
 
   /**
    * @brief 获取系统当前Unix时间戳,不受set_global_now_offset()影响
    * @return 最后一次update的时间
    */
-  static LIBATFRAME_UTILS_API UTIL_SANITIZER_NO_THREAD time_t get_sys_now();
+  static ATFRAMEWORK_UTILS_API UTIL_SANITIZER_NO_THREAD time_t get_sys_now();
 
   /**
    * @brief 设置时间的全局偏移（Debug功能）
    * @note 影响now()、get_now()和get_now_usec()的返回结果，用于模拟时间
    */
-  static LIBATFRAME_UTILS_API UTIL_SANITIZER_NO_THREAD void set_global_now_offset(
+  static ATFRAMEWORK_UTILS_API UTIL_SANITIZER_NO_THREAD void set_global_now_offset(
       const std::chrono::system_clock::duration &offset);
 
   /**
@@ -125,39 +125,39 @@ class time_utility {
    * @note 影响now()、get_now()和get_now_usec()的返回结果，用于模拟时间
    * @return 当前的时间全局偏移
    */
-  static LIBATFRAME_UTILS_API UTIL_SANITIZER_NO_THREAD std::chrono::system_clock::duration get_global_now_offset();
+  static ATFRAMEWORK_UTILS_API UTIL_SANITIZER_NO_THREAD std::chrono::system_clock::duration get_global_now_offset();
 
   /**
    * @brief 重置时间的全局偏移（Debug功能）
    * @note 影响now()、get_now()和get_now_usec()的返回结果，还原成真实时间
    */
-  static LIBATFRAME_UTILS_API UTIL_SANITIZER_NO_THREAD void reset_global_now_offset();
+  static ATFRAMEWORK_UTILS_API UTIL_SANITIZER_NO_THREAD void reset_global_now_offset();
 
   // ====================== 后面的函数都和时区相关 ======================
   /**
    * @brief 获取系统时区时间偏移(忽略自定义偏移)
    * @return 系统时区的时间偏移
    */
-  static LIBATFRAME_UTILS_API UTIL_SANITIZER_NO_THREAD time_t get_sys_zone_offset();
+  static ATFRAMEWORK_UTILS_API UTIL_SANITIZER_NO_THREAD time_t get_sys_zone_offset();
 
   /**
    * @brief 获取时区时间偏移（如果设置过自定义偏移，使用自定义的值，否则和get_sys_zone_offset()的结果一样)
    * @return 时区的时间偏移
    */
-  static LIBATFRAME_UTILS_API UTIL_SANITIZER_NO_THREAD time_t get_zone_offset();
+  static ATFRAMEWORK_UTILS_API UTIL_SANITIZER_NO_THREAD time_t get_zone_offset();
 
   /**
    * @brief 设置时区时间偏移
    * @param t 可以指定时区时间偏移
    * @note 比如要设置凌晨5点视为0点: set_zone_offset(get_sys_zone_offset() - 5 * HOUR_SECONDS)
    */
-  static LIBATFRAME_UTILS_API UTIL_SANITIZER_NO_THREAD void set_zone_offset(time_t t);
+  static ATFRAMEWORK_UTILS_API UTIL_SANITIZER_NO_THREAD void set_zone_offset(time_t t);
 
   /**
    * @brief 获取当前时区今天过了多少秒(不计自定义时区)
    * @return 目前时间的相对今天的偏移
    */
-  static LIBATFRAME_UTILS_API UTIL_SANITIZER_NO_THREAD time_t get_today_now_offset();
+  static ATFRAMEWORK_UTILS_API UTIL_SANITIZER_NO_THREAD time_t get_today_now_offset();
 
   /**
    * @brief [快速非严格]判定当前时区，两个时间是否是同一天
@@ -165,7 +165,7 @@ class time_utility {
    * @param right (必须大于0)
    * @return 同一天返回 true
    */
-  static LIBATFRAME_UTILS_API bool is_same_day(time_t left, time_t right);
+  static ATFRAMEWORK_UTILS_API bool is_same_day(time_t left, time_t right);
 
   /**
    * @brief [快速非严格]判定当前时区，两个时间是否跨同一天的指定时间点
@@ -176,7 +176,7 @@ class time_utility {
    * @note offset = 0时等同于is_same_day(time_t left, time_t right)
    * @return 不跨同一天的该时间点返回 true
    */
-  static LIBATFRAME_UTILS_API bool is_same_day(time_t left, time_t right, time_t offset);
+  static ATFRAMEWORK_UTILS_API bool is_same_day(time_t left, time_t right, time_t offset);
 
   /**
    * @brief [快速非严格]判定当前时区，right是否和left不是同一天且right大于left
@@ -184,7 +184,7 @@ class time_utility {
    * @param right (必须大于0)
    * @return right是否和left不是同一天且right大于left返回 true
    */
-  static LIBATFRAME_UTILS_API bool is_greater_day(time_t left, time_t right);
+  static ATFRAMEWORK_UTILS_API bool is_greater_day(time_t left, time_t right);
 
   /**
    * @brief [快速非严格]判定当前时区，right是否和left不是同一天且right大于left
@@ -195,14 +195,14 @@ class time_utility {
    * @note offset = 0时等同于is_greater_day(time_t left, time_t right)
    * @return right是否和left不是同一天且right大于left返回 true
    */
-  static LIBATFRAME_UTILS_API bool is_greater_day(time_t left, time_t right, time_t offset);
+  static ATFRAMEWORK_UTILS_API bool is_greater_day(time_t left, time_t right, time_t offset);
 
   /**
    * @brief 获取当前时区相对于今天零点之后offset秒的Unix时间戳
    * @param offset 时间偏移值
    * @return 今天0点后offset的时间戳
    */
-  static LIBATFRAME_UTILS_API time_t get_today_offset(time_t offset);
+  static ATFRAMEWORK_UTILS_API time_t get_today_offset(time_t offset);
 
   /**
    * @brief 获取当前时区相对于指定时间得那一天的零点之后offset秒的Unix时间戳
@@ -210,14 +210,14 @@ class time_utility {
    * @param offset 时间偏移值
    * @return 今天0点后offset的时间戳
    */
-  static LIBATFRAME_UTILS_API time_t get_any_day_offset(time_t checked, time_t offset = 0);
+  static ATFRAMEWORK_UTILS_API time_t get_any_day_offset(time_t checked, time_t offset = 0);
 
   /**
    * @brief 获取当前时区指定时间的详细信息
    * @param t (必须大于0)
    * @return 时间描述
    */
-  static LIBATFRAME_UTILS_API raw_time_desc_t get_local_tm(time_t t);
+  static ATFRAMEWORK_UTILS_API raw_time_desc_t get_local_tm(time_t t);
 
   /**
    * @brief 获取时指定太平洋时间的详细信息
@@ -225,39 +225,39 @@ class time_utility {
    * @param t (必须大于0)
    * @return 时间描述
    */
-  static LIBATFRAME_UTILS_API raw_time_desc_t get_gmt_tm(time_t t);
+  static ATFRAMEWORK_UTILS_API raw_time_desc_t get_gmt_tm(time_t t);
 
   /**
    * @brief 判定当前年是否是闰年
    * @return 闰年返回 true
    */
-  static LIBATFRAME_UTILS_API bool is_leap_year(int year);
+  static ATFRAMEWORK_UTILS_API bool is_leap_year(int year);
 
   /**
    * @brief 判定当前时区时间是否是同一个年
    * @return 同一月返回 true
    */
-  static LIBATFRAME_UTILS_API bool is_same_year(time_t left, time_t right);
+  static ATFRAMEWORK_UTILS_API bool is_same_year(time_t left, time_t right);
 
   /**
    * @brief 判定当前时区时间是本年第几天
    * @param t (必须大于0)
    * @return 本年第几天，0-365，和struct tm的tm_yday保持一致
    */
-  static LIBATFRAME_UTILS_API int get_year_day(time_t t);
+  static ATFRAMEWORK_UTILS_API int get_year_day(time_t t);
 
   /**
    * @brief 判定当前时区时间是否是同一个月
    * @return 同一月返回 true
    */
-  static LIBATFRAME_UTILS_API bool is_same_month(time_t left, time_t right);
+  static ATFRAMEWORK_UTILS_API bool is_same_month(time_t left, time_t right);
 
   /**
    * @brief 判定当前时区时间是本月第几天
    * @param t (必须大于0)
    * @return 本月第几天，1-31，和struct tm的tm_mday保持一致
    */
-  static LIBATFRAME_UTILS_API int get_month_day(time_t t);
+  static ATFRAMEWORK_UTILS_API int get_month_day(time_t t);
 
   /**
    * @brief [快速非严格]判定当前时区时间是否是同一个周
@@ -266,7 +266,7 @@ class time_utility {
    * @param week_first 一周的第一天，0表示周日，1表示周一，以此类推
    * @return 同一周返回 true
    */
-  static LIBATFRAME_UTILS_API bool is_same_week(time_t left, time_t right, time_t week_first = 0);
+  static ATFRAMEWORK_UTILS_API bool is_same_week(time_t left, time_t right, time_t week_first = 0);
 
   /**
    * @brief [快速非严格]判定当前时区，两个时间是否跨同一周的指定时间点
@@ -278,21 +278,21 @@ class time_utility {
    * @note offset = 0时等同于is_same_week(time_t left, time_t right, time_t week_first)
    * @return 不跨同一天的该时间点返回 true
    */
-  static LIBATFRAME_UTILS_API bool is_same_week_point(time_t left, time_t right, time_t offset, time_t week_first = 0);
+  static ATFRAMEWORK_UTILS_API bool is_same_week_point(time_t left, time_t right, time_t offset, time_t week_first = 0);
 
   /**
    * @brief [快速非严格]判定当前时区时间是本周第几天
    * @param t (必须大于0)
    * @return 本周第几天，周日返回0,周一返回1,周二返回2,以此类推
    */
-  static LIBATFRAME_UTILS_API int get_week_day(time_t t);
+  static ATFRAMEWORK_UTILS_API int get_week_day(time_t t);
 
   /**
    * @brief 获取一天的开始时间的时间戳
    * @param t 基于该时间的天,填0使用get_now()返回的时间
    * @return t所在天的开始时间戳
    */
-  static LIBATFRAME_UTILS_API time_t get_day_start_time(time_t t = 0);
+  static ATFRAMEWORK_UTILS_API time_t get_day_start_time(time_t t = 0);
 
   /**
    * @brief 获取一天的开始时间的时间戳
@@ -300,33 +300,33 @@ class time_utility {
    * @param week_first 一周的第一天，0表示周日，1表示周一，以此类推
    * @return t所在周的开始时间戳
    */
-  static LIBATFRAME_UTILS_API time_t get_week_start_time(time_t t = 0, time_t week_first = 0);
+  static ATFRAMEWORK_UTILS_API time_t get_week_start_time(time_t t = 0, time_t week_first = 0);
 
   /**
    * @brief 获取一天的开始时间的时间戳
    * @param t 基于该时间的月,填0使用get_now()返回的时间
    * @return t所在月的开始时间戳
    */
-  static LIBATFRAME_UTILS_API time_t get_month_start_time(time_t t = 0);
+  static ATFRAMEWORK_UTILS_API time_t get_month_start_time(time_t t = 0);
 
  private:
   // 当前时间
-  static LIBATFRAME_UTILS_API raw_time_t now_;
+  static ATFRAMEWORK_UTILS_API raw_time_t now_;
 
   // 当前时间(Unix时间戳)
-  static LIBATFRAME_UTILS_API time_t now_unix_;
+  static ATFRAMEWORK_UTILS_API time_t now_unix_;
 
   // 当前时间(微妙，非精确)
-  static LIBATFRAME_UTILS_API int32_t now_usec_;
+  static ATFRAMEWORK_UTILS_API int32_t now_usec_;
 
   // 当前时间(纳秒，非精确)
-  static LIBATFRAME_UTILS_API int32_t now_nanos_;
+  static ATFRAMEWORK_UTILS_API int32_t now_nanos_;
 
   // 时区时间的人为偏移
-  static LIBATFRAME_UTILS_API time_t custom_zone_offset_;
+  static ATFRAMEWORK_UTILS_API time_t custom_zone_offset_;
 
   // 时间的全局偏移（Debug功能）
-  static LIBATFRAME_UTILS_API std::chrono::system_clock::duration global_now_offset_;
+  static ATFRAMEWORK_UTILS_API std::chrono::system_clock::duration global_now_offset_;
 };
 }  // namespace time
-LIBATFRAME_UTILS_NAMESPACE_END
+ATFRAMEWORK_UTILS_NAMESPACE_END

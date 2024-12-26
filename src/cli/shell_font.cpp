@@ -11,7 +11,7 @@
 
 #define SHELL_FONT_SET_OPT_END "\033[0m"
 
-LIBATFRAME_UTILS_NAMESPACE_BEGIN
+ATFRAMEWORK_UTILS_NAMESPACE_BEGIN
 namespace cli {
 
 namespace detail {
@@ -60,11 +60,11 @@ static std::string getenv(const char *name) {
 
 }  // namespace detail
 
-LIBATFRAME_UTILS_API shell_font::shell_font(int iFlag) : m_iFlag(iFlag) {}
+ATFRAMEWORK_UTILS_API shell_font::shell_font(int iFlag) : m_iFlag(iFlag) {}
 
-LIBATFRAME_UTILS_API shell_font::~shell_font() {}
+ATFRAMEWORK_UTILS_API shell_font::~shell_font() {}
 
-LIBATFRAME_UTILS_API std::string shell_font::GetStyleCode(int iFlag) {
+ATFRAMEWORK_UTILS_API std::string shell_font::GetStyleCode(int iFlag) {
   std::string ret;
   ret.reserve(32);
   ret = "\033[";
@@ -115,9 +115,9 @@ LIBATFRAME_UTILS_API std::string shell_font::GetStyleCode(int iFlag) {
   return ret;
 }
 
-LIBATFRAME_UTILS_API std::string shell_font::GetStyleCode() { return GetStyleCode(m_iFlag); }
+ATFRAMEWORK_UTILS_API std::string shell_font::GetStyleCode() { return GetStyleCode(m_iFlag); }
 
-LIBATFRAME_UTILS_API std::string shell_font::GetStyleCloseCode() { return SHELL_FONT_SET_OPT_END; }
+ATFRAMEWORK_UTILS_API std::string shell_font::GetStyleCloseCode() { return SHELL_FONT_SET_OPT_END; }
 
 static int _check_term_color_status() {
   std::unordered_set<std::string> color_term;
@@ -232,7 +232,7 @@ static int _check_term_color_status() {
   return -1;
 }
 
-LIBATFRAME_UTILS_API std::string shell_font::GenerateString(const std::string &strInput, int iFlag) {
+ATFRAMEWORK_UTILS_API std::string shell_font::GenerateString(const std::string &strInput, int iFlag) {
   static int status_ = 0;
 
   if (0 == status_) {
@@ -243,7 +243,7 @@ LIBATFRAME_UTILS_API std::string shell_font::GenerateString(const std::string &s
   return GetStyleCode(iFlag) + strInput + GetStyleCloseCode();
 }
 
-LIBATFRAME_UTILS_API std::string shell_font::GenerateString(const std::string &strInput) {
+ATFRAMEWORK_UTILS_API std::string shell_font::GenerateString(const std::string &strInput) {
   return GenerateString(strInput, m_iFlag);
 }
 
@@ -285,7 +285,7 @@ static WORD _get_default_color() { return FOREGROUND_RED | FOREGROUND_GREEN | FO
 
 #endif
 
-LIBATFRAME_UTILS_API shell_stream::shell_stream_opr::shell_stream_opr(stream_t *os)
+ATFRAMEWORK_UTILS_API shell_stream::shell_stream_opr::shell_stream_opr(stream_t *os)
     : pOs(os), flag(shell_font_style::SHELL_FONT_SPEC_NULL) {
 #ifdef SHELL_FONT_USING_WIN32_CONSOLE
   if (os == &std::cout) {
@@ -298,7 +298,7 @@ LIBATFRAME_UTILS_API shell_stream::shell_stream_opr::shell_stream_opr(stream_t *
 #endif
 }
 
-LIBATFRAME_UTILS_API shell_stream::shell_stream_opr::~shell_stream_opr() {
+ATFRAMEWORK_UTILS_API shell_stream::shell_stream_opr::~shell_stream_opr() {
   if (nullptr == pOs) {
     return;
   }
@@ -306,11 +306,11 @@ LIBATFRAME_UTILS_API shell_stream::shell_stream_opr::~shell_stream_opr() {
   reset();
 }
 
-LIBATFRAME_UTILS_API shell_stream::shell_stream_opr::shell_stream_opr(const shell_stream_opr &other) {
+ATFRAMEWORK_UTILS_API shell_stream::shell_stream_opr::shell_stream_opr(const shell_stream_opr &other) {
   (*this) = other;
 }
 
-LIBATFRAME_UTILS_API shell_stream::shell_stream_opr &shell_stream::shell_stream_opr::operator=(
+ATFRAMEWORK_UTILS_API shell_stream::shell_stream_opr &shell_stream::shell_stream_opr::operator=(
     const shell_stream::shell_stream_opr &other) {
   pOs = other.pOs;
 
@@ -322,39 +322,39 @@ LIBATFRAME_UTILS_API shell_stream::shell_stream_opr &shell_stream::shell_stream_
   return (*this);
 }
 
-LIBATFRAME_UTILS_API const shell_stream::shell_stream_opr &shell_stream::shell_stream_opr::operator<<(
+ATFRAMEWORK_UTILS_API const shell_stream::shell_stream_opr &shell_stream::shell_stream_opr::operator<<(
     std::nullptr_t) const {
   close();
   (*pOs) << "nullptr";
   return (*this);
 }
 
-LIBATFRAME_UTILS_API const shell_stream::shell_stream_opr &shell_stream::shell_stream_opr::operator<<(
+ATFRAMEWORK_UTILS_API const shell_stream::shell_stream_opr &shell_stream::shell_stream_opr::operator<<(
     shell_font_style::shell_font_spec style) const {
   open(style);
   return (*this);
 }
 
-LIBATFRAME_UTILS_API const shell_stream::shell_stream_opr &shell_stream::shell_stream_opr::operator<<(
+ATFRAMEWORK_UTILS_API const shell_stream::shell_stream_opr &shell_stream::shell_stream_opr::operator<<(
     shell_font_style::shell_font_color style) const {
   open(style);
   return (*this);
 }
 
-LIBATFRAME_UTILS_API const shell_stream::shell_stream_opr &shell_stream::shell_stream_opr::operator<<(
+ATFRAMEWORK_UTILS_API const shell_stream::shell_stream_opr &shell_stream::shell_stream_opr::operator<<(
     shell_font_style::shell_font_background_color style) const {
   open(style);
   return (*this);
 }
 
-LIBATFRAME_UTILS_API const shell_stream::shell_stream_opr &shell_stream::shell_stream_opr::operator<<(
+ATFRAMEWORK_UTILS_API const shell_stream::shell_stream_opr &shell_stream::shell_stream_opr::operator<<(
     stream_t &(*fn)(stream_t &)) const {
   close();
   (*pOs) << fn;
   return (*this);
 }
 
-LIBATFRAME_UTILS_API const shell_stream::shell_stream_opr &shell_stream::shell_stream_opr::open(int f) const {
+ATFRAMEWORK_UTILS_API const shell_stream::shell_stream_opr &shell_stream::shell_stream_opr::open(int f) const {
   if (f == shell_font_style::SHELL_FONT_SPEC_NULL) {
     reset();
     return (*this);
@@ -364,7 +364,7 @@ LIBATFRAME_UTILS_API const shell_stream::shell_stream_opr &shell_stream::shell_s
   return (*this);
 }
 
-LIBATFRAME_UTILS_API void shell_stream::shell_stream_opr::close() const {
+ATFRAMEWORK_UTILS_API void shell_stream::shell_stream_opr::close() const {
   if (nullptr == pOs) {
     return;
   }
@@ -398,7 +398,7 @@ LIBATFRAME_UTILS_API void shell_stream::shell_stream_opr::close() const {
   flag = shell_font_style::SHELL_FONT_SPEC_NULL;
 }
 
-LIBATFRAME_UTILS_API void shell_stream::shell_stream_opr::reset() const {
+ATFRAMEWORK_UTILS_API void shell_stream::shell_stream_opr::reset() const {
   if (nullptr == pOs) {
     return;
   }
@@ -416,9 +416,11 @@ LIBATFRAME_UTILS_API void shell_stream::shell_stream_opr::reset() const {
 #endif
 }
 
-LIBATFRAME_UTILS_API shell_stream::shell_stream(stream_t &stream) : m_pOs(&stream) {}
+ATFRAMEWORK_UTILS_API shell_stream::shell_stream(stream_t &stream) : m_pOs(&stream) {}
 
-LIBATFRAME_UTILS_API shell_stream::shell_stream_opr shell_stream::operator()() const { return shell_stream_opr(m_pOs); }
+ATFRAMEWORK_UTILS_API shell_stream::shell_stream_opr shell_stream::operator()() const {
+  return shell_stream_opr(m_pOs);
+}
 
 }  // namespace cli
-LIBATFRAME_UTILS_NAMESPACE_END
+ATFRAMEWORK_UTILS_NAMESPACE_END

@@ -7,11 +7,13 @@
 
 #pragma once
 
-// CRYPTO_USE_OPENSSL, CRYPTO_USE_LIBRESSL,CRYPTO_USE_BORINGSSL, CRYPTO_USE_MBEDTLS
+// ATFRAMEWORK_UTILS_CRYPTO_USE_OPENSSL, ATFRAMEWORK_UTILS_CRYPTO_USE_LIBRESSL,ATFRAMEWORK_UTILS_CRYPTO_USE_BORINGSSL,
+// ATFRAMEWORK_UTILS_CRYPTO_USE_MBEDTLS
 
 #include <config/atframe_utils_build_feature.h>
 
-#if defined(CRYPTO_USE_OPENSSL) || defined(CRYPTO_USE_LIBRESSL) || defined(CRYPTO_USE_BORINGSSL)
+#if defined(ATFRAMEWORK_UTILS_CRYPTO_USE_OPENSSL) || defined(ATFRAMEWORK_UTILS_CRYPTO_USE_LIBRESSL) || \
+    defined(ATFRAMEWORK_UTILS_CRYPTO_USE_BORINGSSL)
 
 #  include <openssl/crypto.h>
 #  include <openssl/err.h>
@@ -19,7 +21,7 @@
 
 #  define CRYPTO_CIPHER_ENABLED 1
 
-#elif defined(CRYPTO_USE_MBEDTLS)
+#elif defined(ATFRAMEWORK_UTILS_CRYPTO_USE_MBEDTLS)
 
 #  include <mbedtls/cipher.h>
 #  include <mbedtls/md.h>
@@ -35,17 +37,18 @@
 
 #  include "xxtea.h"
 
-LIBATFRAME_UTILS_NAMESPACE_BEGIN
+ATFRAMEWORK_UTILS_NAMESPACE_BEGIN
 namespace crypto {
 struct cipher_interface_info_t;
 
 class cipher {
  public:
-  struct LIBATFRAME_UTILS_API mode_t {
+  struct ATFRAMEWORK_UTILS_API mode_t {
     enum type { EN_CMODE_ENCRYPT = 0x01, EN_CMODE_DECRYPT = 0x02 };
   };
 
-#  if defined(CRYPTO_USE_OPENSSL) || defined(CRYPTO_USE_LIBRESSL) || defined(CRYPTO_USE_BORINGSSL)
+#  if defined(ATFRAMEWORK_UTILS_CRYPTO_USE_OPENSSL) || defined(ATFRAMEWORK_UTILS_CRYPTO_USE_LIBRESSL) || \
+      defined(ATFRAMEWORK_UTILS_CRYPTO_USE_BORINGSSL)
   using cipher_kt_t = EVP_CIPHER;
   using cipher_evp_t = EVP_CIPHER_CTX;
   using digest_type_t = EVP_MD;
@@ -55,7 +58,7 @@ class cipher {
     MAX_MD_SIZE = EVP_MAX_MD_SIZE
   };
 
-#  elif defined(CRYPTO_USE_MBEDTLS)
+#  elif defined(ATFRAMEWORK_UTILS_CRYPTO_USE_MBEDTLS)
   using cipher_kt_t = mbedtls_cipher_info_t;
   using cipher_evp_t = mbedtls_cipher_context_t;
   using digest_type_t = mbedtls_md_info_t;
@@ -66,7 +69,7 @@ class cipher {
   };
 #  endif
 
-  struct LIBATFRAME_UTILS_API error_code_t {
+  struct ATFRAMEWORK_UTILS_API error_code_t {
     enum type {
       OK = 0,
       INVALID_PARAM = -1,
@@ -85,47 +88,47 @@ class cipher {
   };
 
  public:
-  LIBATFRAME_UTILS_API cipher();
-  LIBATFRAME_UTILS_API ~cipher();
+  ATFRAMEWORK_UTILS_API cipher();
+  ATFRAMEWORK_UTILS_API ~cipher();
 
-  LIBATFRAME_UTILS_API int init(const char *name, int mode = mode_t::EN_CMODE_ENCRYPT | mode_t::EN_CMODE_DECRYPT);
-  LIBATFRAME_UTILS_API int close();
+  ATFRAMEWORK_UTILS_API int init(const char *name, int mode = mode_t::EN_CMODE_ENCRYPT | mode_t::EN_CMODE_DECRYPT);
+  ATFRAMEWORK_UTILS_API int close();
 
   /**
    * @brief set last error returned by crypto library
    * @param err error code returned by crypto library
    */
-  LIBATFRAME_UTILS_API void set_last_errno(int64_t e);
+  ATFRAMEWORK_UTILS_API void set_last_errno(int64_t e);
   /**
    * @brief get last error returned by crypto library
    * @return last error code returned by crypto library
    */
-  LIBATFRAME_UTILS_API int64_t get_last_errno() const;
+  ATFRAMEWORK_UTILS_API int64_t get_last_errno() const;
 
   /**
    * @brief if it's a AEAD cipher
    * @see https://en.wikipedia.org/wiki/Authenticated_encryption
    * @return if it's AEAD cipher, return true
    */
-  LIBATFRAME_UTILS_API bool is_aead() const;
+  ATFRAMEWORK_UTILS_API bool is_aead() const;
 
   /**
    * @brief               get iv size in crypt library
    * @return              iv length in bytes
    */
-  LIBATFRAME_UTILS_API uint32_t get_iv_size() const;
+  ATFRAMEWORK_UTILS_API uint32_t get_iv_size() const;
 
   /**libsodium_context_
    * @brief               get key length in bits
    * @return              key length in bits
    */
-  LIBATFRAME_UTILS_API uint32_t get_key_bits() const;
+  ATFRAMEWORK_UTILS_API uint32_t get_key_bits() const;
 
   /**
    * @brief               get block size in crypt library
    * @return              block length in bytes
    */
-  LIBATFRAME_UTILS_API uint32_t get_block_size() const;
+  ATFRAMEWORK_UTILS_API uint32_t get_block_size() const;
 
   /**
    * @brief               set key
@@ -133,7 +136,7 @@ class cipher {
    * @param key_bitlen    key length to use, in bits. must equal or greater to get_key_bits()
    * @return              0 or error code less than 0
    */
-  LIBATFRAME_UTILS_API int set_key(const unsigned char *key, uint32_t key_bitlen);
+  ATFRAMEWORK_UTILS_API int set_key(const unsigned char *key, uint32_t key_bitlen);
 
   /**
    * @brief               selibsodium_context_t initialization vector
@@ -143,13 +146,13 @@ class cipher {
    *                      8 bytes is the counter, and the rest is the nonce.
    * @return              0 or error code less than 0
    */
-  LIBATFRAME_UTILS_API int set_iv(const unsigned char *iv, size_t iv_len);
+  ATFRAMEWORK_UTILS_API int set_iv(const unsigned char *iv, size_t iv_len);
 
   /**
    * @brief               clear initialization vector
    * @return              0 or error code less than 0
    */
-  LIBATFRAME_UTILS_API void clear_iv();
+  ATFRAMEWORK_UTILS_API void clear_iv();
 
   /**
    * @biref               encrypt data
@@ -162,7 +165,7 @@ class cipher {
    *                      actual number of bytes written.
    * @return              0 or error code
    */
-  LIBATFRAME_UTILS_API int encrypt(const unsigned char *input, size_t ilen, unsigned char *output, size_t *olen);
+  ATFRAMEWORK_UTILS_API int encrypt(const unsigned char *input, size_t ilen, unsigned char *output, size_t *olen);
 
   /**
    * @biref               decrypt data
@@ -175,7 +178,7 @@ class cipher {
    *                      actual number of bytes written.
    * @return              0 or error code
    */
-  LIBATFRAME_UTILS_API int decrypt(const unsigned char *input, size_t ilen, unsigned char *output, size_t *olen);
+  ATFRAMEWORK_UTILS_API int decrypt(const unsigned char *input, size_t ilen, unsigned char *output, size_t *olen);
 
   /**
    * @biref               encrypt data
@@ -191,8 +194,8 @@ class cipher {
    * @param tag_len       desired tag length, tag_len must between [4, 16] and tag_len % 2 == 0
    * @return              0 or error code
    */
-  LIBATFRAME_UTILS_API int encrypt_aead(const unsigned char *input, size_t ilen, unsigned char *output, size_t *olen,
-                                        const unsigned char *ad, size_t ad_len, size_t tag_len);
+  ATFRAMEWORK_UTILS_API int encrypt_aead(const unsigned char *input, size_t ilen, unsigned char *output, size_t *olen,
+                                         const unsigned char *ad, size_t ad_len, size_t tag_len);
 
   /**
    * @biref               decrypt data
@@ -208,22 +211,22 @@ class cipher {
    * @param tag_len       length of the authentication tag
    * @return              0 or error code
    */
-  LIBATFRAME_UTILS_API int decrypt_aead(const unsigned char *input, size_t ilen, unsigned char *output, size_t *olen,
-                                        const unsigned char *ad, size_t ad_len, size_t tag_len);
+  ATFRAMEWORK_UTILS_API int decrypt_aead(const unsigned char *input, size_t ilen, unsigned char *output, size_t *olen,
+                                         const unsigned char *ad, size_t ad_len, size_t tag_len);
 
  public:
-  static LIBATFRAME_UTILS_API const cipher_kt_t *get_cipher_by_name(const char *name);
+  static ATFRAMEWORK_UTILS_API const cipher_kt_t *get_cipher_by_name(const char *name);
   /**
    * @biref               split cipher names by space, comma, semicolon or colon
    * @param in            string contain some cipher names
    * @return              begin(first) and end(second) address of a cipher name, both nullptr if not found.
    *                      you can use second pointer as the paramter of next call, just like strtok
    */
-  static LIBATFRAME_UTILS_API std::pair<const char *, const char *> ciphertok(const char *in);
-  static LIBATFRAME_UTILS_API const std::vector<std::string> &get_all_cipher_names();
+  static ATFRAMEWORK_UTILS_API std::pair<const char *, const char *> ciphertok(const char *in);
+  static ATFRAMEWORK_UTILS_API const std::vector<std::string> &get_all_cipher_names();
 
-  static LIBATFRAME_UTILS_API int init_global_algorithm();
-  static LIBATFRAME_UTILS_API int cleanup_global_algorithm();
+  static ATFRAMEWORK_UTILS_API int init_global_algorithm();
+  static ATFRAMEWORK_UTILS_API int cleanup_global_algorithm();
 
  private:
   int init_with_cipher(const cipher_interface_info_t *, int mode);
@@ -235,7 +238,7 @@ class cipher {
   const cipher_kt_t *cipher_kt_;
   std::vector<unsigned char> iv_;
   struct xxtea_context_t {
-    LIBATFRAME_UTILS_NAMESPACE_ID::xxtea_key key;
+    ATFRAMEWORK_UTILS_NAMESPACE_ID::xxtea_key key;
   };
   struct libsodium_context_t {
     unsigned char key[32];
@@ -251,7 +254,7 @@ class cipher {
   };
 };
 }  // namespace crypto
-LIBATFRAME_UTILS_NAMESPACE_END
+ATFRAMEWORK_UTILS_NAMESPACE_END
 
 #endif
 

@@ -32,27 +32,27 @@
 // 定义ENABLE_MIXEDINT_MAGIC_MASK=[数字]以设置整数混淆功能
 // 如果ENABLE_MIXEDINT_MAGIC_MASK=1，则刚好是ZigZag编码规则
 
-#if defined(ENABLE_MIXEDINT_MAGIC_MASK)
-#  if ENABLE_MIXEDINT_MAGIC_MASK <= 0
-#    undef ENABLE_MIXEDINT_MAGIC_MASK
+#if defined(ATFRAMEWORK_UTILS_ENABLE_MIXEDINT_MAGIC_MASK)
+#  if ATFRAMEWORK_UTILS_ENABLE_MIXEDINT_MAGIC_MASK <= 0
+#    undef ATFRAMEWORK_UTILS_ENABLE_MIXEDINT_MAGIC_MASK
 
-#  elif ENABLE_MIXEDINT_MAGIC_MASK >= 64
-COMPILER_MSG_ERROR("ENABLE_MIXEDINT_MAGIC_MASK must be less than 64");
+#  elif ATFRAMEWORK_UTILS_ENABLE_MIXEDINT_MAGIC_MASK >= 64
+COMPILER_MSG_ERROR("ATFRAMEWORK_UTILS_ENABLE_MIXEDINT_MAGIC_MASK must be less than 64");
 #  endif
 
 #endif
 
-LIBATFRAME_UTILS_NAMESPACE_BEGIN
+ATFRAMEWORK_UTILS_NAMESPACE_BEGIN
 namespace mixed_int {
-#if defined(ENABLE_MIXEDINT_MAGIC_MASK)
+#if defined(ATFRAMEWORK_UTILS_ENABLE_MIXEDINT_MAGIC_MASK)
 namespace detail {
 template <typename TSINT>
-class LIBATFRAME_UTILS_API_HEAD_ONLY mixed_signed_int {
+class ATFRAMEWORK_UTILS_API_HEAD_ONLY mixed_signed_int {
  public:
   using value_type = TSINT;
 
   static constexpr const size_t TYPE_BIT = 8 * sizeof(value_type);
-  static constexpr const size_t TYPE_LEFT_BIT = ENABLE_MIXEDINT_MAGIC_MASK % TYPE_BIT;
+  static constexpr const size_t TYPE_LEFT_BIT = ATFRAMEWORK_UTILS_ENABLE_MIXEDINT_MAGIC_MASK % TYPE_BIT;
   static constexpr const size_t TYPE_RIGHT_BIT = TYPE_BIT - TYPE_LEFT_BIT;
   static constexpr const value_type RIGHT_MASK = (((value_type)1) << TYPE_RIGHT_BIT) - 1;
   static constexpr const value_type SYMBOL_MASK = ((value_type)1) << (TYPE_LEFT_BIT - 1);
@@ -66,12 +66,12 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY mixed_signed_int {
 };
 
 template <typename TUSINT>
-class LIBATFRAME_UTILS_API_HEAD_ONLY mixed_unsigned_int {
+class ATFRAMEWORK_UTILS_API_HEAD_ONLY mixed_unsigned_int {
  public:
   using value_type = TUSINT;
 
   static constexpr const size_t TYPE_BIT = 8 * sizeof(value_type);
-  static constexpr const size_t TYPE_LEFT_BIT = ENABLE_MIXEDINT_MAGIC_MASK % TYPE_BIT;
+  static constexpr const size_t TYPE_LEFT_BIT = ATFRAMEWORK_UTILS_ENABLE_MIXEDINT_MAGIC_MASK % TYPE_BIT;
   static constexpr const size_t TYPE_RIGHT_BIT = TYPE_BIT - TYPE_LEFT_BIT;
   static constexpr const value_type RIGHT_MASK = (((value_type)1) << TYPE_RIGHT_BIT) - 1;
   static constexpr const value_type SYMBOL_MASK = ((value_type)1) << (TYPE_LEFT_BIT - 1);
@@ -83,7 +83,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY mixed_unsigned_int {
 };
 
 template <typename TINT>
-class LIBATFRAME_UTILS_API_HEAD_ONLY mixed_int
+class ATFRAMEWORK_UTILS_API_HEAD_ONLY mixed_int
     : public std::conditional<std::is_unsigned<TINT>::value, mixed_unsigned_int<TINT>, mixed_signed_int<TINT> >::type {
  public:
   using value_type = TINT;
@@ -365,14 +365,14 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY mixed_int
 };
 }  // namespace detail
 
-using mixed_int8_t = LIBATFRAME_UTILS_NAMESPACE_ID::mixed_int::detail::mixed_int<int8_t>;
-using mixed_int16_t = LIBATFRAME_UTILS_NAMESPACE_ID::mixed_int::detail::mixed_int<int16_t>;
-using mixed_int32_t = LIBATFRAME_UTILS_NAMESPACE_ID::mixed_int::detail::mixed_int<int32_t>;
-using mixed_int64_t = LIBATFRAME_UTILS_NAMESPACE_ID::mixed_int::detail::mixed_int<int64_t>;
-using mixed_uint8_t = LIBATFRAME_UTILS_NAMESPACE_ID::mixed_int::detail::mixed_int<uint8_t>;
-using mixed_uint16_t = LIBATFRAME_UTILS_NAMESPACE_ID::mixed_int::detail::mixed_int<uint16_t>;
-using mixed_uint32_t = LIBATFRAME_UTILS_NAMESPACE_ID::mixed_int::detail::mixed_int<uint32_t>;
-using mixed_uint64_t = LIBATFRAME_UTILS_NAMESPACE_ID::mixed_int::detail::mixed_int<uint64_t>;
+using mixed_int8_t = ATFRAMEWORK_UTILS_NAMESPACE_ID::mixed_int::detail::mixed_int<int8_t>;
+using mixed_int16_t = ATFRAMEWORK_UTILS_NAMESPACE_ID::mixed_int::detail::mixed_int<int16_t>;
+using mixed_int32_t = ATFRAMEWORK_UTILS_NAMESPACE_ID::mixed_int::detail::mixed_int<int32_t>;
+using mixed_int64_t = ATFRAMEWORK_UTILS_NAMESPACE_ID::mixed_int::detail::mixed_int<int64_t>;
+using mixed_uint8_t = ATFRAMEWORK_UTILS_NAMESPACE_ID::mixed_int::detail::mixed_int<uint8_t>;
+using mixed_uint16_t = ATFRAMEWORK_UTILS_NAMESPACE_ID::mixed_int::detail::mixed_int<uint16_t>;
+using mixed_uint32_t = ATFRAMEWORK_UTILS_NAMESPACE_ID::mixed_int::detail::mixed_int<uint32_t>;
+using mixed_uint64_t = ATFRAMEWORK_UTILS_NAMESPACE_ID::mixed_int::detail::mixed_int<uint64_t>;
 
 #else
 using mixed_int8_t = int8_t;
@@ -385,15 +385,15 @@ using mixed_uint32_t = uint32_t;
 using mixed_uint64_t = uint64_t;
 #endif
 }  // namespace mixed_int
-LIBATFRAME_UTILS_NAMESPACE_END
+ATFRAMEWORK_UTILS_NAMESPACE_END
 
-using mixed_int8_t = LIBATFRAME_UTILS_NAMESPACE_ID::mixed_int::mixed_int8_t;
-using mixed_int16_t = LIBATFRAME_UTILS_NAMESPACE_ID::mixed_int::mixed_int16_t;
-using mixed_int32_t = LIBATFRAME_UTILS_NAMESPACE_ID::mixed_int::mixed_int32_t;
-using mixed_int64_t = LIBATFRAME_UTILS_NAMESPACE_ID::mixed_int::mixed_int64_t;
-using mixed_uint8_t = LIBATFRAME_UTILS_NAMESPACE_ID::mixed_int::mixed_uint8_t;
-using mixed_uint16_t = LIBATFRAME_UTILS_NAMESPACE_ID::mixed_int::mixed_uint16_t;
-using mixed_uint32_t = LIBATFRAME_UTILS_NAMESPACE_ID::mixed_int::mixed_uint32_t;
-using mixed_uint64_t = LIBATFRAME_UTILS_NAMESPACE_ID::mixed_int::mixed_uint64_t;
+using mixed_int8_t = ATFRAMEWORK_UTILS_NAMESPACE_ID::mixed_int::mixed_int8_t;
+using mixed_int16_t = ATFRAMEWORK_UTILS_NAMESPACE_ID::mixed_int::mixed_int16_t;
+using mixed_int32_t = ATFRAMEWORK_UTILS_NAMESPACE_ID::mixed_int::mixed_int32_t;
+using mixed_int64_t = ATFRAMEWORK_UTILS_NAMESPACE_ID::mixed_int::mixed_int64_t;
+using mixed_uint8_t = ATFRAMEWORK_UTILS_NAMESPACE_ID::mixed_int::mixed_uint8_t;
+using mixed_uint16_t = ATFRAMEWORK_UTILS_NAMESPACE_ID::mixed_int::mixed_uint16_t;
+using mixed_uint32_t = ATFRAMEWORK_UTILS_NAMESPACE_ID::mixed_int::mixed_uint32_t;
+using mixed_uint64_t = ATFRAMEWORK_UTILS_NAMESPACE_ID::mixed_int::mixed_uint64_t;
 
 #endif /* _UTIL_ALGORITHM_MIXEDINT_H_ */

@@ -27,21 +27,21 @@
 #if defined(__has_include) && \
     (!(defined(UTIL_CONFIG_COMPILER_IS_GNU) && UTIL_CONFIG_COMPILER_IS_GNU) || (__GNUC__ + 0) >= 5)
 #  if __has_include(<cxxabi.h>)
-#    define LIBATFRAME_UTILS_DEMANGLE_USING_CXX_ABI
+#    define ATFRAMEWORK_UTILS_DEMANGLE_USING_CXX_ABI
 #  endif
 #elif defined(__GLIBCXX__) || defined(__GLIBCPP__)
-#  define LIBATFRAME_UTILS_DEMANGLE_USING_CXX_ABI
+#  define ATFRAMEWORK_UTILS_DEMANGLE_USING_CXX_ABI
 #endif
 
-#if !defined(LIBATFRAME_UTILS_DEMANGLE_USING_CXX_ABI) && defined(_WIN32)
-#  define LIBATFRAME_UTILS_DEMANGLE_USING_WINDOWS
+#if !defined(ATFRAMEWORK_UTILS_DEMANGLE_USING_CXX_ABI) && defined(_WIN32)
+#  define ATFRAMEWORK_UTILS_DEMANGLE_USING_WINDOWS
 #endif
 
-LIBATFRAME_UTILS_NAMESPACE_BEGIN
+ATFRAMEWORK_UTILS_NAMESPACE_BEGIN
 
-LIBATFRAME_UTILS_API const char *demangle_alloc(const char *name) noexcept;
-LIBATFRAME_UTILS_API void demangle_free(const char *name) noexcept;
-LIBATFRAME_UTILS_API std::string demangle(const char *name);
+ATFRAMEWORK_UTILS_API const char *demangle_alloc(const char *name) noexcept;
+ATFRAMEWORK_UTILS_API void demangle_free(const char *name) noexcept;
+ATFRAMEWORK_UTILS_API std::string demangle(const char *name);
 
 class scoped_demangled_name {
  private:
@@ -49,14 +49,14 @@ class scoped_demangled_name {
   UTIL_DESIGN_PATTERN_NOCOPYABLE(scoped_demangled_name)
 
  public:
-  LIBATFRAME_UTILS_API explicit scoped_demangled_name(const char *name) noexcept;
+  ATFRAMEWORK_UTILS_API explicit scoped_demangled_name(const char *name) noexcept;
 
-  LIBATFRAME_UTILS_API ~scoped_demangled_name() noexcept;
+  ATFRAMEWORK_UTILS_API ~scoped_demangled_name() noexcept;
 
-  LIBATFRAME_UTILS_API scoped_demangled_name(scoped_demangled_name &&other) noexcept;
-  LIBATFRAME_UTILS_API scoped_demangled_name &operator=(scoped_demangled_name &&other) noexcept;
+  ATFRAMEWORK_UTILS_API scoped_demangled_name(scoped_demangled_name &&other) noexcept;
+  ATFRAMEWORK_UTILS_API scoped_demangled_name &operator=(scoped_demangled_name &&other) noexcept;
 
   UTIL_FORCEINLINE const char *get() const noexcept { return m_p; }
 };
 
-LIBATFRAME_UTILS_NAMESPACE_END
+ATFRAMEWORK_UTILS_NAMESPACE_END

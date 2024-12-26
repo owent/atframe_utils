@@ -63,22 +63,20 @@ CASE_TEST(string_oprs, version_normalize) {
 
 CASE_TEST(string_oprs, to_int) {
   // hex
-  CASE_EXPECT_EQ(0x1234, LIBATFRAME_UTILS_NAMESPACE_ID::string::to_int<int64_t>("0x1234"));
-  CASE_EXPECT_EQ(0x1234, LIBATFRAME_UTILS_NAMESPACE_ID::string::to_int<int64_t>("0X1234"));
+  CASE_EXPECT_EQ(0x1234, atfw::util::string::to_int<int64_t>("0x1234"));
+  CASE_EXPECT_EQ(0x1234, atfw::util::string::to_int<int64_t>("0X1234"));
 
   // dex
-  CASE_EXPECT_EQ(1234, LIBATFRAME_UTILS_NAMESPACE_ID::string::to_int<int64_t>("1234"));
+  CASE_EXPECT_EQ(1234, atfw::util::string::to_int<int64_t>("1234"));
 
   // oct
-  CASE_EXPECT_EQ(668, LIBATFRAME_UTILS_NAMESPACE_ID::string::to_int<int64_t>("\\1234"));
+  CASE_EXPECT_EQ(668, atfw::util::string::to_int<int64_t>("\\1234"));
 }
 
 CASE_TEST(tquerystring, encode_uri_utf8) {
-  CASE_EXPECT_EQ("%E4%BD%A0%E5%A5%BD",
-                 LIBATFRAME_UTILS_NAMESPACE_ID::uri::encode_uri_component("\xe4\xbd\xa0\xe5\xa5\xbd"));
+  CASE_EXPECT_EQ("%E4%BD%A0%E5%A5%BD", atfw::util::uri::encode_uri_component("\xe4\xbd\xa0\xe5\xa5\xbd"));
 
-  CASE_EXPECT_EQ("\xe4\xbd\xa0\xe5\xa5\xbd",
-                 LIBATFRAME_UTILS_NAMESPACE_ID::uri::decode_uri_component("%E4%BD%A0%E5%A5%BD"));
+  CASE_EXPECT_EQ("\xe4\xbd\xa0\xe5\xa5\xbd", atfw::util::uri::decode_uri_component("%E4%BD%A0%E5%A5%BD"));
 }
 
 CASE_TEST(string_oprs, trim) {
@@ -88,11 +86,9 @@ CASE_TEST(string_oprs, trim) {
   const char *test_after_trim_all = "trim done";
 
   {
-    std::pair<const char *, size_t> trim_left_res =
-        LIBATFRAME_UTILS_NAMESPACE_ID::string::trim(test_origin, 0, true, false);
-    std::pair<const char *, size_t> trim_right_res =
-        LIBATFRAME_UTILS_NAMESPACE_ID::string::trim(test_origin, 0, false, true);
-    std::pair<const char *, size_t> trim_all_res = LIBATFRAME_UTILS_NAMESPACE_ID::string::trim(test_origin, 0);
+    std::pair<const char *, size_t> trim_left_res = atfw::util::string::trim(test_origin, 0, true, false);
+    std::pair<const char *, size_t> trim_right_res = atfw::util::string::trim(test_origin, 0, false, true);
+    std::pair<const char *, size_t> trim_all_res = atfw::util::string::trim(test_origin, 0);
 
     CASE_EXPECT_EQ(0, UTIL_STRFUNC_STRNCMP(trim_left_res.first, test_after_trim_left, trim_left_res.second));
     CASE_EXPECT_EQ(strlen(test_after_trim_left), trim_left_res.second);
@@ -105,9 +101,9 @@ CASE_TEST(string_oprs, trim) {
   }
 
   {
-    gsl::string_view trim_left_res = LIBATFRAME_UTILS_NAMESPACE_ID::string::trim_string(test_origin, true, false);
-    gsl::string_view trim_right_res = LIBATFRAME_UTILS_NAMESPACE_ID::string::trim_string(test_origin, false, true);
-    gsl::string_view trim_all_res = LIBATFRAME_UTILS_NAMESPACE_ID::string::trim_string(test_origin);
+    gsl::string_view trim_left_res = atfw::util::string::trim_string(test_origin, true, false);
+    gsl::string_view trim_right_res = atfw::util::string::trim_string(test_origin, false, true);
+    gsl::string_view trim_all_res = atfw::util::string::trim_string(test_origin);
 
     CASE_EXPECT_EQ(0, UTIL_STRFUNC_STRNCMP(trim_left_res.data(), test_after_trim_left, trim_left_res.size()));
     CASE_EXPECT_EQ(strlen(test_after_trim_left), trim_left_res.size());
@@ -124,8 +120,8 @@ CASE_TEST(string_oprs, reverse) {
   char t1[] = "abcdefg";
   char t2[] = "abcdefg";
 
-  LIBATFRAME_UTILS_NAMESPACE_ID::string::reverse(&t1[0], nullptr);
-  LIBATFRAME_UTILS_NAMESPACE_ID::string::reverse(t2, t2 + 7);
+  atfw::util::string::reverse(&t1[0], nullptr);
+  atfw::util::string::reverse(t2, t2 + 7);
 
   CASE_EXPECT_EQ(t1, "gfedcba");
   CASE_EXPECT_EQ(t2, "gfedcba");
@@ -134,22 +130,22 @@ CASE_TEST(string_oprs, reverse) {
 CASE_TEST(string_oprs, int2str) {
   char buffer[32];
 
-  CASE_EXPECT_EQ(9, LIBATFRAME_UTILS_NAMESPACE_ID::string::int2str(&buffer[0], 9, 123456789U));
+  CASE_EXPECT_EQ(9, atfw::util::string::int2str(&buffer[0], 9, 123456789U));
   buffer[9] = 0;
   CASE_EXPECT_EQ("123456789", buffer);
 
-  CASE_EXPECT_EQ(10, LIBATFRAME_UTILS_NAMESPACE_ID::string::int2str(&buffer[0], sizeof(buffer), -123456789));
+  CASE_EXPECT_EQ(10, atfw::util::string::int2str(&buffer[0], sizeof(buffer), -123456789));
   buffer[10] = 0;
   CASE_EXPECT_EQ("-123456789", buffer);
 
-  CASE_EXPECT_EQ(18, LIBATFRAME_UTILS_NAMESPACE_ID::string::int2str(&buffer[0], sizeof(buffer), 123456789123456789ULL));
+  CASE_EXPECT_EQ(18, atfw::util::string::int2str(&buffer[0], sizeof(buffer), 123456789123456789ULL));
   buffer[18] = 0;
   CASE_EXPECT_EQ("123456789123456789", buffer);
 
-  CASE_EXPECT_EQ(19, LIBATFRAME_UTILS_NAMESPACE_ID::string::int2str(buffer, sizeof(buffer), -123456789123456789LL));
+  CASE_EXPECT_EQ(19, atfw::util::string::int2str(buffer, sizeof(buffer), -123456789123456789LL));
   buffer[19] = 0;
   CASE_EXPECT_EQ("-123456789123456789", buffer);
 
-  CASE_EXPECT_EQ(0, LIBATFRAME_UTILS_NAMESPACE_ID::string::int2str(buffer, 0, 123456789U));
-  CASE_EXPECT_EQ(0, LIBATFRAME_UTILS_NAMESPACE_ID::string::int2str(buffer, 8, 123456789U));
+  CASE_EXPECT_EQ(0, atfw::util::string::int2str(buffer, 0, 123456789U));
+  CASE_EXPECT_EQ(0, atfw::util::string::int2str(buffer, 8, 123456789U));
 }

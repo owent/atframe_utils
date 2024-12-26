@@ -4,13 +4,14 @@
 
 #include <algorithm/sha.h>
 
-#if defined(CRYPTO_USE_OPENSSL) || defined(CRYPTO_USE_LIBRESSL) || defined(CRYPTO_USE_BORINGSSL)
+#if defined(ATFRAMEWORK_UTILS_CRYPTO_USE_OPENSSL) || defined(ATFRAMEWORK_UTILS_CRYPTO_USE_LIBRESSL) || \
+    defined(ATFRAMEWORK_UTILS_CRYPTO_USE_BORINGSSL)
 #  define UTIL_HASH_IMPLEMENT_SHA_USING_OPENSSL 1
-#elif defined(CRYPTO_USE_MBEDTLS)
+#elif defined(ATFRAMEWORK_UTILS_CRYPTO_USE_MBEDTLS)
 #  define UTIL_HASH_IMPLEMENT_SHA_USING_MBEDTLS 1
 #endif
 
-LIBATFRAME_UTILS_NAMESPACE_BEGIN
+ATFRAMEWORK_UTILS_NAMESPACE_BEGIN
 namespace hash {
 
 namespace detail {
@@ -22,7 +23,7 @@ struct sha_inner_data {
 
 static inline sha_inner_data *into_inner_type(void *in) { return reinterpret_cast<sha_inner_data *>(in); }
 
-static inline void free_inner_type(void *in, LIBATFRAME_UTILS_NAMESPACE_ID::hash::sha::type) {
+static inline void free_inner_type(void *in, ATFRAMEWORK_UTILS_NAMESPACE_ID::hash::sha::type) {
   if (in == nullptr) {
     return;
   }
@@ -39,7 +40,7 @@ static inline void free_inner_type(void *in, LIBATFRAME_UTILS_NAMESPACE_ID::hash
   free(into_inner_type(in));
 }
 
-static inline sha_inner_data *malloc_inner_type(LIBATFRAME_UTILS_NAMESPACE_ID::hash::sha::type t) {
+static inline sha_inner_data *malloc_inner_type(ATFRAMEWORK_UTILS_NAMESPACE_ID::hash::sha::type t) {
   sha_inner_data *ret = reinterpret_cast<sha_inner_data *>(malloc(sizeof(sha_inner_data)));
   if (ret == nullptr) {
     return nullptr;
@@ -56,19 +57,19 @@ static inline sha_inner_data *malloc_inner_type(LIBATFRAME_UTILS_NAMESPACE_ID::h
 
   const EVP_MD *md = nullptr;
   switch (t) {
-    case LIBATFRAME_UTILS_NAMESPACE_ID::hash::sha::EN_ALGORITHM_SHA1:
+    case ATFRAMEWORK_UTILS_NAMESPACE_ID::hash::sha::EN_ALGORITHM_SHA1:
       md = EVP_get_digestbynid(NID_sha1);
       break;
-    case LIBATFRAME_UTILS_NAMESPACE_ID::hash::sha::EN_ALGORITHM_SHA224:
+    case ATFRAMEWORK_UTILS_NAMESPACE_ID::hash::sha::EN_ALGORITHM_SHA224:
       md = EVP_get_digestbynid(NID_sha224);
       break;
-    case LIBATFRAME_UTILS_NAMESPACE_ID::hash::sha::EN_ALGORITHM_SHA256:
+    case ATFRAMEWORK_UTILS_NAMESPACE_ID::hash::sha::EN_ALGORITHM_SHA256:
       md = EVP_get_digestbynid(NID_sha256);
       break;
-    case LIBATFRAME_UTILS_NAMESPACE_ID::hash::sha::EN_ALGORITHM_SHA384:
+    case ATFRAMEWORK_UTILS_NAMESPACE_ID::hash::sha::EN_ALGORITHM_SHA384:
       md = EVP_get_digestbynid(NID_sha384);
       break;
-    case LIBATFRAME_UTILS_NAMESPACE_ID::hash::sha::EN_ALGORITHM_SHA512:
+    case ATFRAMEWORK_UTILS_NAMESPACE_ID::hash::sha::EN_ALGORITHM_SHA512:
       md = EVP_get_digestbynid(NID_sha512);
       break;
     default:
@@ -110,7 +111,7 @@ struct sha_inner_data {
 
 static inline sha_inner_data *into_inner_type(void *in) { return reinterpret_cast<sha_inner_data *>(in); }
 
-static inline void free_inner_type(void *in, LIBATFRAME_UTILS_NAMESPACE_ID::hash::sha::type t) {
+static inline void free_inner_type(void *in, ATFRAMEWORK_UTILS_NAMESPACE_ID::hash::sha::type t) {
   if (in == nullptr) {
     return;
   }
@@ -118,19 +119,19 @@ static inline void free_inner_type(void *in, LIBATFRAME_UTILS_NAMESPACE_ID::hash
   sha_inner_data *obj = into_inner_type(in);
 
   switch (t) {
-    case LIBATFRAME_UTILS_NAMESPACE_ID::hash::sha::EN_ALGORITHM_SHA1:
+    case ATFRAMEWORK_UTILS_NAMESPACE_ID::hash::sha::EN_ALGORITHM_SHA1:
       mbedtls_sha1_free(&obj->sha1_context);
       break;
-    case LIBATFRAME_UTILS_NAMESPACE_ID::hash::sha::EN_ALGORITHM_SHA224:
+    case ATFRAMEWORK_UTILS_NAMESPACE_ID::hash::sha::EN_ALGORITHM_SHA224:
       mbedtls_sha256_free(&obj->sha224_context);
       break;
-    case LIBATFRAME_UTILS_NAMESPACE_ID::hash::sha::EN_ALGORITHM_SHA256:
+    case ATFRAMEWORK_UTILS_NAMESPACE_ID::hash::sha::EN_ALGORITHM_SHA256:
       mbedtls_sha256_free(&obj->sha256_context);
       break;
-    case LIBATFRAME_UTILS_NAMESPACE_ID::hash::sha::EN_ALGORITHM_SHA384:
+    case ATFRAMEWORK_UTILS_NAMESPACE_ID::hash::sha::EN_ALGORITHM_SHA384:
       mbedtls_sha512_free(&obj->sha384_context);
       break;
-    case LIBATFRAME_UTILS_NAMESPACE_ID::hash::sha::EN_ALGORITHM_SHA512:
+    case ATFRAMEWORK_UTILS_NAMESPACE_ID::hash::sha::EN_ALGORITHM_SHA512:
       mbedtls_sha512_free(&obj->sha384_context);
       break;
     default:
@@ -140,7 +141,7 @@ static inline void free_inner_type(void *in, LIBATFRAME_UTILS_NAMESPACE_ID::hash
   free(into_inner_type(in));
 }
 
-static inline sha_inner_data *malloc_inner_type(LIBATFRAME_UTILS_NAMESPACE_ID::hash::sha::type t) {
+static inline sha_inner_data *malloc_inner_type(ATFRAMEWORK_UTILS_NAMESPACE_ID::hash::sha::type t) {
   sha_inner_data *ret = reinterpret_cast<sha_inner_data *>(malloc(sizeof(sha_inner_data)));
   if (ret == nullptr) {
     return nullptr;
@@ -148,7 +149,7 @@ static inline sha_inner_data *malloc_inner_type(LIBATFRAME_UTILS_NAMESPACE_ID::h
 
   bool is_success = false;
   switch (t) {
-    case LIBATFRAME_UTILS_NAMESPACE_ID::hash::sha::EN_ALGORITHM_SHA1:
+    case ATFRAMEWORK_UTILS_NAMESPACE_ID::hash::sha::EN_ALGORITHM_SHA1:
       mbedtls_sha1_init(&ret->sha1_context);
 #  if MBEDTLS_VERSION_MAJOR >= 3
       is_success = 0 == mbedtls_sha1_starts(&ret->sha1_context);
@@ -156,7 +157,7 @@ static inline sha_inner_data *malloc_inner_type(LIBATFRAME_UTILS_NAMESPACE_ID::h
       is_success = 0 == mbedtls_sha1_starts_ret(&ret->sha1_context);
 #  endif
       break;
-    case LIBATFRAME_UTILS_NAMESPACE_ID::hash::sha::EN_ALGORITHM_SHA224:
+    case ATFRAMEWORK_UTILS_NAMESPACE_ID::hash::sha::EN_ALGORITHM_SHA224:
       mbedtls_sha256_init(&ret->sha224_context);
 #  if MBEDTLS_VERSION_MAJOR >= 3
       is_success = 0 == mbedtls_sha256_starts(&ret->sha224_context, 1);
@@ -164,7 +165,7 @@ static inline sha_inner_data *malloc_inner_type(LIBATFRAME_UTILS_NAMESPACE_ID::h
       is_success = 0 == mbedtls_sha256_starts_ret(&ret->sha224_context, 1);
 #  endif
       break;
-    case LIBATFRAME_UTILS_NAMESPACE_ID::hash::sha::EN_ALGORITHM_SHA256:
+    case ATFRAMEWORK_UTILS_NAMESPACE_ID::hash::sha::EN_ALGORITHM_SHA256:
       mbedtls_sha256_init(&ret->sha256_context);
 #  if MBEDTLS_VERSION_MAJOR >= 3
       is_success = 0 == mbedtls_sha256_starts(&ret->sha256_context, 0);
@@ -172,7 +173,7 @@ static inline sha_inner_data *malloc_inner_type(LIBATFRAME_UTILS_NAMESPACE_ID::h
       is_success = 0 == mbedtls_sha256_starts_ret(&ret->sha256_context, 0);
 #  endif
       break;
-    case LIBATFRAME_UTILS_NAMESPACE_ID::hash::sha::EN_ALGORITHM_SHA384:
+    case ATFRAMEWORK_UTILS_NAMESPACE_ID::hash::sha::EN_ALGORITHM_SHA384:
       mbedtls_sha512_init(&ret->sha384_context);
 #  if MBEDTLS_VERSION_MAJOR >= 3
       is_success = 0 == mbedtls_sha512_starts(&ret->sha384_context, 1);
@@ -180,7 +181,7 @@ static inline sha_inner_data *malloc_inner_type(LIBATFRAME_UTILS_NAMESPACE_ID::h
       is_success = 0 == mbedtls_sha512_starts_ret(&ret->sha384_context, 1);
 #  endif
       break;
-    case LIBATFRAME_UTILS_NAMESPACE_ID::hash::sha::EN_ALGORITHM_SHA512:
+    case ATFRAMEWORK_UTILS_NAMESPACE_ID::hash::sha::EN_ALGORITHM_SHA512:
       mbedtls_sha512_init(&ret->sha512_context);
 #  if MBEDTLS_VERSION_MAJOR >= 3
       is_success = 0 == mbedtls_sha512_starts(&ret->sha384_context, 0);
@@ -297,7 +298,7 @@ struct sha_inner_data {
 
 static inline sha_inner_data *into_inner_type(void *in) { return reinterpret_cast<sha_inner_data *>(in); }
 
-static inline void free_inner_type(void *in, LIBATFRAME_UTILS_NAMESPACE_ID::hash::sha::type) {
+static inline void free_inner_type(void *in, ATFRAMEWORK_UTILS_NAMESPACE_ID::hash::sha::type) {
   if (in == nullptr) {
     return;
   }
@@ -380,30 +381,30 @@ static void inner_sha512_starts_ret(sha512_context_t &ctx, bool is384) {
   }
 }
 
-static sha_inner_data *malloc_inner_type(LIBATFRAME_UTILS_NAMESPACE_ID::hash::sha::type t) {
+static sha_inner_data *malloc_inner_type(ATFRAMEWORK_UTILS_NAMESPACE_ID::hash::sha::type t) {
   sha_inner_data *ret = reinterpret_cast<sha_inner_data *>(malloc(sizeof(sha_inner_data)));
   if (ret == nullptr) {
     return nullptr;
   }
 
   switch (t) {
-    case LIBATFRAME_UTILS_NAMESPACE_ID::hash::sha::EN_ALGORITHM_SHA1:
+    case ATFRAMEWORK_UTILS_NAMESPACE_ID::hash::sha::EN_ALGORITHM_SHA1:
       memset(&ret->sha1_context, 0, sizeof(ret->sha1_context));
       inner_sha1_start(ret->sha1_context);
       break;
-    case LIBATFRAME_UTILS_NAMESPACE_ID::hash::sha::EN_ALGORITHM_SHA224:
+    case ATFRAMEWORK_UTILS_NAMESPACE_ID::hash::sha::EN_ALGORITHM_SHA224:
       memset(&ret->sha224_context, 0, sizeof(ret->sha224_context));
       inner_sha256_start(ret->sha224_context, true);
       break;
-    case LIBATFRAME_UTILS_NAMESPACE_ID::hash::sha::EN_ALGORITHM_SHA256:
+    case ATFRAMEWORK_UTILS_NAMESPACE_ID::hash::sha::EN_ALGORITHM_SHA256:
       memset(&ret->sha256_context, 0, sizeof(ret->sha256_context));
       inner_sha256_start(ret->sha256_context, false);
       break;
-    case LIBATFRAME_UTILS_NAMESPACE_ID::hash::sha::EN_ALGORITHM_SHA384:
+    case ATFRAMEWORK_UTILS_NAMESPACE_ID::hash::sha::EN_ALGORITHM_SHA384:
       memset(&ret->sha384_context, 0, sizeof(ret->sha384_context));
       inner_sha512_starts_ret(ret->sha384_context, true);
       break;
-    case LIBATFRAME_UTILS_NAMESPACE_ID::hash::sha::EN_ALGORITHM_SHA512:
+    case ATFRAMEWORK_UTILS_NAMESPACE_ID::hash::sha::EN_ALGORITHM_SHA512:
       memset(&ret->sha512_context, 0, sizeof(ret->sha512_context));
       inner_sha512_starts_ret(ret->sha384_context, false);
       break;
@@ -1035,19 +1036,19 @@ static void inner_sha512_finish(sha512_context_t &ctx, unsigned char output[64])
 #endif
 }  // namespace detail
 
-LIBATFRAME_UTILS_API sha::sha() : hash_type_(EN_ALGORITHM_UNINITED), private_raw_data_(nullptr) {}
-LIBATFRAME_UTILS_API sha::~sha() { close(); }
+ATFRAMEWORK_UTILS_API sha::sha() : hash_type_(EN_ALGORITHM_UNINITED), private_raw_data_(nullptr) {}
+ATFRAMEWORK_UTILS_API sha::~sha() { close(); }
 
-LIBATFRAME_UTILS_API sha::sha(sha &&other) : hash_type_(EN_ALGORITHM_UNINITED), private_raw_data_(nullptr) {
+ATFRAMEWORK_UTILS_API sha::sha(sha &&other) : hash_type_(EN_ALGORITHM_UNINITED), private_raw_data_(nullptr) {
   swap(other);
 }
 
-LIBATFRAME_UTILS_API sha &sha::operator=(sha &&other) {
+ATFRAMEWORK_UTILS_API sha &sha::operator=(sha &&other) {
   swap(other);
   return *this;
 }
 
-LIBATFRAME_UTILS_API bool sha::init(type t) {
+ATFRAMEWORK_UTILS_API bool sha::init(type t) {
   close();
   private_raw_data_ = detail::malloc_inner_type(t);
   if (private_raw_data_ == nullptr) {
@@ -1058,7 +1059,7 @@ LIBATFRAME_UTILS_API bool sha::init(type t) {
   return true;
 }
 
-LIBATFRAME_UTILS_API void sha::close() {
+ATFRAMEWORK_UTILS_API void sha::close() {
   if (hash_type_ == EN_ALGORITHM_UNINITED || private_raw_data_ == nullptr) {
     return;
   }
@@ -1070,13 +1071,13 @@ LIBATFRAME_UTILS_API void sha::close() {
   return;
 }
 
-LIBATFRAME_UTILS_API void sha::swap(sha &other) {
+ATFRAMEWORK_UTILS_API void sha::swap(sha &other) {
   using std::swap;
   swap(hash_type_, other.hash_type_);
   swap(private_raw_data_, other.private_raw_data_);
 }
 
-LIBATFRAME_UTILS_API bool sha::update(const unsigned char *in, size_t inlen) {
+ATFRAMEWORK_UTILS_API bool sha::update(const unsigned char *in, size_t inlen) {
   detail::sha_inner_data *inner_obj = detail::into_inner_type(private_raw_data_);
   if (inner_obj == nullptr) {
     return false;
@@ -1085,31 +1086,31 @@ LIBATFRAME_UTILS_API bool sha::update(const unsigned char *in, size_t inlen) {
   return 1 == EVP_DigestUpdate(inner_obj->ctx, reinterpret_cast<const void *>(in), inlen);
 #elif defined(UTIL_HASH_IMPLEMENT_SHA_USING_MBEDTLS) && UTIL_HASH_IMPLEMENT_SHA_USING_MBEDTLS
   switch (hash_type_) {
-    case LIBATFRAME_UTILS_NAMESPACE_ID::hash::sha::EN_ALGORITHM_SHA1:
+    case ATFRAMEWORK_UTILS_NAMESPACE_ID::hash::sha::EN_ALGORITHM_SHA1:
 #  if MBEDTLS_VERSION_MAJOR >= 3
       return 0 == mbedtls_sha1_update(&inner_obj->sha1_context, in, inlen);
 #  else
       return 0 == mbedtls_sha1_update_ret(&inner_obj->sha1_context, in, inlen);
 #  endif
-    case LIBATFRAME_UTILS_NAMESPACE_ID::hash::sha::EN_ALGORITHM_SHA224:
+    case ATFRAMEWORK_UTILS_NAMESPACE_ID::hash::sha::EN_ALGORITHM_SHA224:
 #  if MBEDTLS_VERSION_MAJOR >= 3
       return 0 == mbedtls_sha256_update(&inner_obj->sha224_context, in, inlen);
 #  else
       return 0 == mbedtls_sha256_update_ret(&inner_obj->sha224_context, in, inlen);
 #  endif
-    case LIBATFRAME_UTILS_NAMESPACE_ID::hash::sha::EN_ALGORITHM_SHA256:
+    case ATFRAMEWORK_UTILS_NAMESPACE_ID::hash::sha::EN_ALGORITHM_SHA256:
 #  if MBEDTLS_VERSION_MAJOR >= 3
       return 0 == mbedtls_sha256_update(&inner_obj->sha256_context, in, inlen);
 #  else
       return 0 == mbedtls_sha256_update_ret(&inner_obj->sha256_context, in, inlen);
 #  endif
-    case LIBATFRAME_UTILS_NAMESPACE_ID::hash::sha::EN_ALGORITHM_SHA384:
+    case ATFRAMEWORK_UTILS_NAMESPACE_ID::hash::sha::EN_ALGORITHM_SHA384:
 #  if MBEDTLS_VERSION_MAJOR >= 3
       return 0 == mbedtls_sha512_update(&inner_obj->sha384_context, in, inlen);
 #  else
       return 0 == mbedtls_sha512_update_ret(&inner_obj->sha384_context, in, inlen);
 #  endif
-    case LIBATFRAME_UTILS_NAMESPACE_ID::hash::sha::EN_ALGORITHM_SHA512:
+    case ATFRAMEWORK_UTILS_NAMESPACE_ID::hash::sha::EN_ALGORITHM_SHA512:
 #  if MBEDTLS_VERSION_MAJOR >= 3
       return 0 == mbedtls_sha512_update(&inner_obj->sha512_context, in, inlen);
 #  else
@@ -1121,19 +1122,19 @@ LIBATFRAME_UTILS_API bool sha::update(const unsigned char *in, size_t inlen) {
   return false;
 #else
   switch (hash_type_) {
-    case LIBATFRAME_UTILS_NAMESPACE_ID::hash::sha::EN_ALGORITHM_SHA1:
+    case ATFRAMEWORK_UTILS_NAMESPACE_ID::hash::sha::EN_ALGORITHM_SHA1:
       detail::inner_sha1_update(inner_obj->sha1_context, in, inlen);
       return true;
-    case LIBATFRAME_UTILS_NAMESPACE_ID::hash::sha::EN_ALGORITHM_SHA224:
+    case ATFRAMEWORK_UTILS_NAMESPACE_ID::hash::sha::EN_ALGORITHM_SHA224:
       detail::inner_sha256_update(inner_obj->sha224_context, in, inlen);
       return true;
-    case LIBATFRAME_UTILS_NAMESPACE_ID::hash::sha::EN_ALGORITHM_SHA256:
+    case ATFRAMEWORK_UTILS_NAMESPACE_ID::hash::sha::EN_ALGORITHM_SHA256:
       detail::inner_sha256_update(inner_obj->sha256_context, in, inlen);
       return true;
-    case LIBATFRAME_UTILS_NAMESPACE_ID::hash::sha::EN_ALGORITHM_SHA384:
+    case ATFRAMEWORK_UTILS_NAMESPACE_ID::hash::sha::EN_ALGORITHM_SHA384:
       detail::inner_sha512_update(inner_obj->sha384_context, in, inlen);
       return true;
-    case LIBATFRAME_UTILS_NAMESPACE_ID::hash::sha::EN_ALGORITHM_SHA512:
+    case ATFRAMEWORK_UTILS_NAMESPACE_ID::hash::sha::EN_ALGORITHM_SHA512:
       detail::inner_sha512_update(inner_obj->sha512_context, in, inlen);
       return true;
     default:
@@ -1143,7 +1144,7 @@ LIBATFRAME_UTILS_API bool sha::update(const unsigned char *in, size_t inlen) {
 #endif
 }
 
-LIBATFRAME_UTILS_API bool sha::final() {
+ATFRAMEWORK_UTILS_API bool sha::final() {
   detail::sha_inner_data *inner_obj = detail::into_inner_type(private_raw_data_);
   if (inner_obj == nullptr) {
     return false;
@@ -1153,31 +1154,31 @@ LIBATFRAME_UTILS_API bool sha::final() {
   return 1 == EVP_DigestFinal_ex(inner_obj->ctx, inner_obj->output, &md_len);
 #elif defined(UTIL_HASH_IMPLEMENT_SHA_USING_MBEDTLS) && UTIL_HASH_IMPLEMENT_SHA_USING_MBEDTLS
   switch (hash_type_) {
-    case LIBATFRAME_UTILS_NAMESPACE_ID::hash::sha::EN_ALGORITHM_SHA1:
+    case ATFRAMEWORK_UTILS_NAMESPACE_ID::hash::sha::EN_ALGORITHM_SHA1:
 #  if MBEDTLS_VERSION_MAJOR >= 3
       return 0 == mbedtls_sha1_finish(&inner_obj->sha1_context, inner_obj->output);
 #  else
       return 0 == mbedtls_sha1_finish_ret(&inner_obj->sha1_context, inner_obj->output);
 #  endif
-    case LIBATFRAME_UTILS_NAMESPACE_ID::hash::sha::EN_ALGORITHM_SHA224:
+    case ATFRAMEWORK_UTILS_NAMESPACE_ID::hash::sha::EN_ALGORITHM_SHA224:
 #  if MBEDTLS_VERSION_MAJOR >= 3
       return 0 == mbedtls_sha256_finish(&inner_obj->sha224_context, inner_obj->output);
 #  else
       return 0 == mbedtls_sha256_finish_ret(&inner_obj->sha224_context, inner_obj->output);
 #  endif
-    case LIBATFRAME_UTILS_NAMESPACE_ID::hash::sha::EN_ALGORITHM_SHA256:
+    case ATFRAMEWORK_UTILS_NAMESPACE_ID::hash::sha::EN_ALGORITHM_SHA256:
 #  if MBEDTLS_VERSION_MAJOR >= 3
       return 0 == mbedtls_sha256_finish(&inner_obj->sha256_context, inner_obj->output);
 #  else
       return 0 == mbedtls_sha256_finish_ret(&inner_obj->sha256_context, inner_obj->output);
 #  endif
-    case LIBATFRAME_UTILS_NAMESPACE_ID::hash::sha::EN_ALGORITHM_SHA384:
+    case ATFRAMEWORK_UTILS_NAMESPACE_ID::hash::sha::EN_ALGORITHM_SHA384:
 #  if MBEDTLS_VERSION_MAJOR >= 3
       return 0 == mbedtls_sha512_finish(&inner_obj->sha384_context, inner_obj->output);
 #  else
       return 0 == mbedtls_sha512_finish_ret(&inner_obj->sha384_context, inner_obj->output);
 #  endif
-    case LIBATFRAME_UTILS_NAMESPACE_ID::hash::sha::EN_ALGORITHM_SHA512:
+    case ATFRAMEWORK_UTILS_NAMESPACE_ID::hash::sha::EN_ALGORITHM_SHA512:
 #  if MBEDTLS_VERSION_MAJOR >= 3
       return 0 == mbedtls_sha512_finish(&inner_obj->sha512_context, inner_obj->output);
 #  else
@@ -1189,19 +1190,19 @@ LIBATFRAME_UTILS_API bool sha::final() {
   return false;
 #else
   switch (hash_type_) {
-    case LIBATFRAME_UTILS_NAMESPACE_ID::hash::sha::EN_ALGORITHM_SHA1:
+    case ATFRAMEWORK_UTILS_NAMESPACE_ID::hash::sha::EN_ALGORITHM_SHA1:
       detail::inner_sha1_finish(inner_obj->sha1_context, inner_obj->output);
       return true;
-    case LIBATFRAME_UTILS_NAMESPACE_ID::hash::sha::EN_ALGORITHM_SHA224:
+    case ATFRAMEWORK_UTILS_NAMESPACE_ID::hash::sha::EN_ALGORITHM_SHA224:
       detail::inner_sha256_finish(inner_obj->sha224_context, inner_obj->output);
       return true;
-    case LIBATFRAME_UTILS_NAMESPACE_ID::hash::sha::EN_ALGORITHM_SHA256:
+    case ATFRAMEWORK_UTILS_NAMESPACE_ID::hash::sha::EN_ALGORITHM_SHA256:
       detail::inner_sha256_finish(inner_obj->sha256_context, inner_obj->output);
       return true;
-    case LIBATFRAME_UTILS_NAMESPACE_ID::hash::sha::EN_ALGORITHM_SHA384:
+    case ATFRAMEWORK_UTILS_NAMESPACE_ID::hash::sha::EN_ALGORITHM_SHA384:
       detail::inner_sha512_finish(inner_obj->sha384_context, inner_obj->output);
       return true;
-    case LIBATFRAME_UTILS_NAMESPACE_ID::hash::sha::EN_ALGORITHM_SHA512:
+    case ATFRAMEWORK_UTILS_NAMESPACE_ID::hash::sha::EN_ALGORITHM_SHA512:
       detail::inner_sha512_finish(inner_obj->sha512_context, inner_obj->output);
       return true;
     default:
@@ -1211,25 +1212,26 @@ LIBATFRAME_UTILS_API bool sha::final() {
 #endif
 }
 
-LIBATFRAME_UTILS_API size_t sha::get_output_length() const { return get_output_length(hash_type_); }
+ATFRAMEWORK_UTILS_API size_t sha::get_output_length() const { return get_output_length(hash_type_); }
 
-LIBATFRAME_UTILS_API size_t sha::get_output_length(type bt) {
-#if defined(CRYPTO_USE_OPENSSL) || defined(CRYPTO_USE_LIBRESSL) || defined(CRYPTO_USE_BORINGSSL)
+ATFRAMEWORK_UTILS_API size_t sha::get_output_length(type bt) {
+#if defined(ATFRAMEWORK_UTILS_CRYPTO_USE_OPENSSL) || defined(ATFRAMEWORK_UTILS_CRYPTO_USE_LIBRESSL) || \
+    defined(ATFRAMEWORK_UTILS_CRYPTO_USE_BORINGSSL)
   const EVP_MD *md = nullptr;
   switch (bt) {
-    case LIBATFRAME_UTILS_NAMESPACE_ID::hash::sha::EN_ALGORITHM_SHA1:
+    case ATFRAMEWORK_UTILS_NAMESPACE_ID::hash::sha::EN_ALGORITHM_SHA1:
       md = EVP_get_digestbynid(NID_sha1);
       break;
-    case LIBATFRAME_UTILS_NAMESPACE_ID::hash::sha::EN_ALGORITHM_SHA224:
+    case ATFRAMEWORK_UTILS_NAMESPACE_ID::hash::sha::EN_ALGORITHM_SHA224:
       md = EVP_get_digestbynid(NID_sha224);
       break;
-    case LIBATFRAME_UTILS_NAMESPACE_ID::hash::sha::EN_ALGORITHM_SHA256:
+    case ATFRAMEWORK_UTILS_NAMESPACE_ID::hash::sha::EN_ALGORITHM_SHA256:
       md = EVP_get_digestbynid(NID_sha256);
       break;
-    case LIBATFRAME_UTILS_NAMESPACE_ID::hash::sha::EN_ALGORITHM_SHA384:
+    case ATFRAMEWORK_UTILS_NAMESPACE_ID::hash::sha::EN_ALGORITHM_SHA384:
       md = EVP_get_digestbynid(NID_sha384);
       break;
-    case LIBATFRAME_UTILS_NAMESPACE_ID::hash::sha::EN_ALGORITHM_SHA512:
+    case ATFRAMEWORK_UTILS_NAMESPACE_ID::hash::sha::EN_ALGORITHM_SHA512:
       md = EVP_get_digestbynid(NID_sha512);
       break;
     default:
@@ -1263,25 +1265,25 @@ LIBATFRAME_UTILS_API size_t sha::get_output_length(type bt) {
 #endif
 }
 
-LIBATFRAME_UTILS_API const unsigned char *sha::get_output() const {
+ATFRAMEWORK_UTILS_API const unsigned char *sha::get_output() const {
   return detail::get_output_buffer(private_raw_data_);
 }
 
-LIBATFRAME_UTILS_API std::string sha::get_output_hex(bool is_uppercase) const {
+ATFRAMEWORK_UTILS_API std::string sha::get_output_hex(bool is_uppercase) const {
   std::string ret;
   ret.resize(get_output_length() << 1, 0);
-  LIBATFRAME_UTILS_NAMESPACE_ID::string::dumphex(get_output(), get_output_length(), &ret[0], is_uppercase);
+  ATFRAMEWORK_UTILS_NAMESPACE_ID::string::dumphex(get_output(), get_output_length(), &ret[0], is_uppercase);
 
   return ret;
 }
 
-LIBATFRAME_UTILS_API std::string sha::get_output_base64(LIBATFRAME_UTILS_NAMESPACE_ID::base64_mode_t::type bt) const {
+ATFRAMEWORK_UTILS_API std::string sha::get_output_base64(ATFRAMEWORK_UTILS_NAMESPACE_ID::base64_mode_t::type bt) const {
   std::string ret;
-  LIBATFRAME_UTILS_NAMESPACE_ID::base64_encode(ret, get_output(), get_output_length(), bt);
+  ATFRAMEWORK_UTILS_NAMESPACE_ID::base64_encode(ret, get_output(), get_output_length(), bt);
   return ret;
 }
 
-LIBATFRAME_UTILS_API std::string sha::hash_to_binary(type t, const void *in, size_t inlen) {
+ATFRAMEWORK_UTILS_API std::string sha::hash_to_binary(type t, const void *in, size_t inlen) {
   sha obj;
   std::string ret;
 
@@ -1296,7 +1298,7 @@ LIBATFRAME_UTILS_API std::string sha::hash_to_binary(type t, const void *in, siz
   return ret;
 }
 
-LIBATFRAME_UTILS_API std::string sha::hash_to_hex(type t, const void *in, size_t inlen, bool is_uppercase) {
+ATFRAMEWORK_UTILS_API std::string sha::hash_to_hex(type t, const void *in, size_t inlen, bool is_uppercase) {
   sha obj;
 
   if (false == obj.init(t)) {
@@ -1309,8 +1311,8 @@ LIBATFRAME_UTILS_API std::string sha::hash_to_hex(type t, const void *in, size_t
   return obj.get_output_hex(is_uppercase);
 }
 
-LIBATFRAME_UTILS_API std::string sha::hash_to_base64(type t, const void *in, size_t inlen,
-                                                     LIBATFRAME_UTILS_NAMESPACE_ID::base64_mode_t::type bt) {
+ATFRAMEWORK_UTILS_API std::string sha::hash_to_base64(type t, const void *in, size_t inlen,
+                                                      ATFRAMEWORK_UTILS_NAMESPACE_ID::base64_mode_t::type bt) {
   sha obj;
 
   if (false == obj.init(t)) {
@@ -1323,4 +1325,4 @@ LIBATFRAME_UTILS_API std::string sha::hash_to_base64(type t, const void *in, siz
   return obj.get_output_base64(bt);
 }
 }  // namespace hash
-LIBATFRAME_UTILS_NAMESPACE_END
+ATFRAMEWORK_UTILS_NAMESPACE_END

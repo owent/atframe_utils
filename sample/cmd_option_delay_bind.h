@@ -8,22 +8,23 @@
 #include "cli/cmd_option.h"
 
 // 延迟绑定初始化
-bool delay_print(LIBATFRAME_UTILS_NAMESPACE_ID::cli::callback_param par) {
+bool delay_print(ATFRAMEWORK_UTILS_NAMESPACE_ID::cli::callback_param par) {
   if (par.get_params_number() > 0) puts(par[0]->to_string());
   return false;
 }
 
-void delay_init(LIBATFRAME_UTILS_NAMESPACE_ID::cli::callback_param par,
-                LIBATFRAME_UTILS_NAMESPACE_ID::cli::cmd_option *stChild) {
+void delay_init(ATFRAMEWORK_UTILS_NAMESPACE_ID::cli::callback_param par,
+                ATFRAMEWORK_UTILS_NAMESPACE_ID::cli::cmd_option *stChild) {
   printf("Delay Init Params Num: %d\n", static_cast<int>(par.get_params_number()));
   stChild->bind_cmd("-p, --print", delay_print);
 }
 
 void delay_bind() {
   puts("延迟初始化子绑定");
-  LIBATFRAME_UTILS_NAMESPACE_ID::cli::cmd_option::ptr_type f = LIBATFRAME_UTILS_NAMESPACE_ID::cli::cmd_option::create();
-  std::shared_ptr<LIBATFRAME_UTILS_NAMESPACE_ID::cli::cmd_option> pc =
-      LIBATFRAME_UTILS_NAMESPACE_ID::cli::cmd_option::create();
+  ATFRAMEWORK_UTILS_NAMESPACE_ID::cli::cmd_option::ptr_type f =
+      ATFRAMEWORK_UTILS_NAMESPACE_ID::cli::cmd_option::create();
+  std::shared_ptr<ATFRAMEWORK_UTILS_NAMESPACE_ID::cli::cmd_option> pc =
+      ATFRAMEWORK_UTILS_NAMESPACE_ID::cli::cmd_option::create();
   pc->bind_cmd("@OnCallFunc", delay_init, pc.get());  // 设置初始化函数
   // 注意这里不能传入*pc
   // 因为如果传入引用，子CmdOption结构会被复制，然后作为f的子命令，而传入并延迟绑定的是pc的指针

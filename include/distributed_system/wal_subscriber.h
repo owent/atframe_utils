@@ -16,13 +16,13 @@
 
 #include "distributed_system/wal_common_defs.h"
 
-LIBATFRAME_UTILS_NAMESPACE_BEGIN
+ATFRAMEWORK_UTILS_NAMESPACE_BEGIN
 namespace distributed_system {
 
 template <class PrivateDataT, class KeyT, class HashSubscriberKeyT = std::hash<KeyT>,
           class EqualSubscriberKeyT = std::equal_to<KeyT>, class Allocator = std::allocator<KeyT>,
           wal_mt_mode MTMode = wal_mt_mode::kMultiThread>
-class LIBATFRAME_UTILS_API_HEAD_ONLY wal_subscriber {
+class ATFRAMEWORK_UTILS_API_HEAD_ONLY wal_subscriber {
  public:
   using pointer = typename wal_mt_mode_data_trait<wal_subscriber, MTMode>::strong_ptr;
 
@@ -316,4 +316,4 @@ using wal_subscriber_with_mt_mode =
     wal_subscriber<PrivateDataT, KeyT, HashSubscriberKeyT, EqualSubscriberKeyT, Allocator, MTMode>;
 
 }  // namespace distributed_system
-LIBATFRAME_UTILS_NAMESPACE_END
+ATFRAMEWORK_UTILS_NAMESPACE_END

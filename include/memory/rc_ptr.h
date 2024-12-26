@@ -21,23 +21,23 @@
 #include <memory/allocator_ptr.h>
 #include <nostd/type_traits.h>
 
-LIBATFRAME_UTILS_NAMESPACE_BEGIN
+ATFRAMEWORK_UTILS_NAMESPACE_BEGIN
 namespace memory {
 
 template <class T>
-class LIBATFRAME_UTILS_API_HEAD_ONLY weak_rc_ptr;
+class ATFRAMEWORK_UTILS_API_HEAD_ONLY weak_rc_ptr;
 
 template <class T>
-class LIBATFRAME_UTILS_API_HEAD_ONLY strong_rc_ptr;
+class ATFRAMEWORK_UTILS_API_HEAD_ONLY strong_rc_ptr;
 
 template <class T>
-class LIBATFRAME_UTILS_API_HEAD_ONLY enable_shared_rc_from_this;
+class ATFRAMEWORK_UTILS_API_HEAD_ONLY enable_shared_rc_from_this;
 
 class UTIL_SYMBOL_VISIBLE __rc_ptr_counted_data_base {
  public:
   UTIL_CONFIG_CONSTEXPR __rc_ptr_counted_data_base() noexcept : use_count_(1), weak_count_(1) {}
 
-  LIBATFRAME_UTILS_API virtual ~__rc_ptr_counted_data_base() noexcept;
+  ATFRAMEWORK_UTILS_API virtual ~__rc_ptr_counted_data_base() noexcept;
 
   // Called when use_count_ drops to zero, to release the resources
   // managed by *this.
@@ -46,7 +46,7 @@ class UTIL_SYMBOL_VISIBLE __rc_ptr_counted_data_base {
   // Called when weak_count_ drops to zero.
   virtual void destroy() noexcept = 0;
 
-  LIBATFRAME_UTILS_API static void throw_bad_weak_ptr();
+  ATFRAMEWORK_UTILS_API static void throw_bad_weak_ptr();
 
   // Increment the use count if it is non-zero, throw otherwise.
   UTIL_FORCEINLINE void add_ref() {
@@ -97,7 +97,7 @@ class UTIL_SYMBOL_VISIBLE __rc_ptr_counted_data_base {
 };
 
 template <class T>
-class LIBATFRAME_UTILS_API_HEAD_ONLY __rc_ptr_counted_data_default final : public __rc_ptr_counted_data_base {
+class ATFRAMEWORK_UTILS_API_HEAD_ONLY __rc_ptr_counted_data_default final : public __rc_ptr_counted_data_base {
  public:
   explicit __rc_ptr_counted_data_default(T* p) noexcept : ptr_(p) {}
 
@@ -124,7 +124,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY __rc_ptr_counted_data_default final : publi
 };
 
 template <class T>
-class LIBATFRAME_UTILS_API_HEAD_ONLY __rc_ptr_counted_data_inplace final : public __rc_ptr_counted_data_base {
+class ATFRAMEWORK_UTILS_API_HEAD_ONLY __rc_ptr_counted_data_inplace final : public __rc_ptr_counted_data_base {
  public:
   template <class... Args>
   explicit __rc_ptr_counted_data_inplace(Args&&... args) {
@@ -158,7 +158,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY __rc_ptr_counted_data_inplace final : publi
 };
 
 template <class T, class Alloc>
-class LIBATFRAME_UTILS_API_HEAD_ONLY __rc_ptr_counted_data_inplace_alloc final : public __rc_ptr_counted_data_base {
+class ATFRAMEWORK_UTILS_API_HEAD_ONLY __rc_ptr_counted_data_inplace_alloc final : public __rc_ptr_counted_data_base {
  public:
   template <class AllocInput, class... Args>
   explicit __rc_ptr_counted_data_inplace_alloc(AllocInput&& a, Args&&... args) {
@@ -169,13 +169,13 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY __rc_ptr_counted_data_inplace_alloc final :
     alloc_traits_a::construct(aa, alloc_ptr(), std::forward<AllocInput>(a));
 
 // and then value
-#if defined(LIBATFRAME_UTILS_ENABLE_EXCEPTION) && LIBATFRAME_UTILS_ENABLE_EXCEPTION
+#if defined(ATFRAMEWORK_UTILS_ENABLE_EXCEPTION) && ATFRAMEWORK_UTILS_ENABLE_EXCEPTION
     try {
 #endif
       using alloc_traits_v = ::std::allocator_traits<Alloc>;
       alloc_traits_v::construct(*alloc_ptr(), const_cast<nostd::remove_cv_t<T>*>(value_ptr()),
                                 std::forward<Args>(args)...);
-#if defined(LIBATFRAME_UTILS_ENABLE_EXCEPTION) && LIBATFRAME_UTILS_ENABLE_EXCEPTION
+#if defined(ATFRAMEWORK_UTILS_ENABLE_EXCEPTION) && ATFRAMEWORK_UTILS_ENABLE_EXCEPTION
     } catch (...) {
       alloc_traits_a::destroy(aa, alloc_ptr());
       throw;
@@ -217,7 +217,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY __rc_ptr_counted_data_inplace_alloc final :
 };
 
 template <class T, class Deleter>
-class LIBATFRAME_UTILS_API_HEAD_ONLY __rc_ptr_counted_data_with_deleter final : public __rc_ptr_counted_data_base {
+class ATFRAMEWORK_UTILS_API_HEAD_ONLY __rc_ptr_counted_data_with_deleter final : public __rc_ptr_counted_data_base {
  public:
   template <class DeleterInput>
   inline __rc_ptr_counted_data_with_deleter(T* p, DeleterInput&& d) noexcept
@@ -239,7 +239,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY __rc_ptr_counted_data_with_deleter final : 
 };
 
 template <class T, class Deleter, class Alloc>
-class LIBATFRAME_UTILS_API_HEAD_ONLY __rc_ptr_counted_data_with_deleter_allocator final
+class ATFRAMEWORK_UTILS_API_HEAD_ONLY __rc_ptr_counted_data_with_deleter_allocator final
     : public __rc_ptr_counted_data_base {
  public:
   template <class DeleterInput, class AllocInput>
@@ -264,16 +264,16 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY __rc_ptr_counted_data_with_deleter_allocato
 };
 
 template <class T>
-struct LIBATFRAME_UTILS_API_HEAD_ONLY __strong_rc_default_alloc_shared_tag {};
+struct ATFRAMEWORK_UTILS_API_HEAD_ONLY __strong_rc_default_alloc_shared_tag{};
 
 template <class T>
-struct LIBATFRAME_UTILS_API_HEAD_ONLY __strong_rc_with_alloc_shared_tag {};
+struct ATFRAMEWORK_UTILS_API_HEAD_ONLY __strong_rc_with_alloc_shared_tag{};
 
 template <class T>
-class LIBATFRAME_UTILS_API_HEAD_ONLY __weak_rc_counter;
+class ATFRAMEWORK_UTILS_API_HEAD_ONLY __weak_rc_counter;
 
 template <class T>
-class LIBATFRAME_UTILS_API_HEAD_ONLY __strong_rc_counter {
+class ATFRAMEWORK_UTILS_API_HEAD_ONLY __strong_rc_counter {
   // Prevent __strong_rc_default_alloc_shared_tag and __strong_rc_with_alloc_shared_tag from matching the shared_ptr(P,
   // D) ctor.
   template <class>
@@ -296,14 +296,14 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY __strong_rc_counter {
     using alloc_traits = ::std::allocator_traits<alloc_type>;
     alloc_type alloc;
     auto guard = allocate_guarded(alloc);
-#if defined(LIBATFRAME_UTILS_ENABLE_EXCEPTION) && LIBATFRAME_UTILS_ENABLE_EXCEPTION
+#if defined(ATFRAMEWORK_UTILS_ENABLE_EXCEPTION) && ATFRAMEWORK_UTILS_ENABLE_EXCEPTION
     try {
 #endif
       alloc_traits::construct(alloc, guard.get(), p);
       pi_ = guard.get();
       guard = nullptr;
 
-#if defined(LIBATFRAME_UTILS_ENABLE_EXCEPTION) && LIBATFRAME_UTILS_ENABLE_EXCEPTION
+#if defined(ATFRAMEWORK_UTILS_ENABLE_EXCEPTION) && ATFRAMEWORK_UTILS_ENABLE_EXCEPTION
     } catch (...) {
       using alloc_type_y = ::std::allocator<nostd::remove_cv_t<Y>>;
       using alloc_traits_y = ::std::allocator_traits<alloc_type_y>;
@@ -324,13 +324,13 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY __strong_rc_counter {
     using alloc_traits = ::std::allocator_traits<alloc_type>;
     alloc_type alloc;
     auto guard = allocate_guarded(alloc);
-#if defined(LIBATFRAME_UTILS_ENABLE_EXCEPTION) && LIBATFRAME_UTILS_ENABLE_EXCEPTION
+#if defined(ATFRAMEWORK_UTILS_ENABLE_EXCEPTION) && ATFRAMEWORK_UTILS_ENABLE_EXCEPTION
     try {
 #endif
       alloc_traits::construct(alloc, guard.get(), p, std::forward<Deleter>(d));
       pi_ = guard.get();
       guard = nullptr;
-#if defined(LIBATFRAME_UTILS_ENABLE_EXCEPTION) && LIBATFRAME_UTILS_ENABLE_EXCEPTION
+#if defined(ATFRAMEWORK_UTILS_ENABLE_EXCEPTION) && ATFRAMEWORK_UTILS_ENABLE_EXCEPTION
     } catch (...) {
       d(p);
       throw;
@@ -347,13 +347,13 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY __strong_rc_counter {
     using alloc_traits = ::std::allocator_traits<alloc_type>;
     alloc_type alloc{a};
     auto guard = allocate_guarded(alloc);
-#if defined(LIBATFRAME_UTILS_ENABLE_EXCEPTION) && LIBATFRAME_UTILS_ENABLE_EXCEPTION
+#if defined(ATFRAMEWORK_UTILS_ENABLE_EXCEPTION) && ATFRAMEWORK_UTILS_ENABLE_EXCEPTION
     try {
 #endif
       alloc_traits::construct(alloc, guard.get(), p, std::forward<Deleter>(d), std::forward<Alloc>(a));
       pi_ = guard.get();
       guard = nullptr;
-#if defined(LIBATFRAME_UTILS_ENABLE_EXCEPTION) && LIBATFRAME_UTILS_ENABLE_EXCEPTION
+#if defined(ATFRAMEWORK_UTILS_ENABLE_EXCEPTION) && ATFRAMEWORK_UTILS_ENABLE_EXCEPTION
     } catch (...) {
       d(p);
       throw;
@@ -368,14 +368,14 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY __strong_rc_counter {
     alloc_type alloc;
     auto guard = allocate_guarded(alloc);
 
-#if defined(LIBATFRAME_UTILS_ENABLE_EXCEPTION) && LIBATFRAME_UTILS_ENABLE_EXCEPTION
+#if defined(ATFRAMEWORK_UTILS_ENABLE_EXCEPTION) && ATFRAMEWORK_UTILS_ENABLE_EXCEPTION
     try {
 #endif
       alloc_traits::construct(alloc, guard.get(), std::forward<Args>(args)...);
       pi_ = guard.get();
       __p = guard.get()->ptr();
       guard = nullptr;
-#if defined(LIBATFRAME_UTILS_ENABLE_EXCEPTION) && LIBATFRAME_UTILS_ENABLE_EXCEPTION
+#if defined(ATFRAMEWORK_UTILS_ENABLE_EXCEPTION) && ATFRAMEWORK_UTILS_ENABLE_EXCEPTION
     } catch (...) {
       throw;
     }
@@ -392,14 +392,14 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY __strong_rc_counter {
     alloc_type alloc{a};
     auto guard = allocate_guarded(alloc);
 
-#if defined(LIBATFRAME_UTILS_ENABLE_EXCEPTION) && LIBATFRAME_UTILS_ENABLE_EXCEPTION
+#if defined(ATFRAMEWORK_UTILS_ENABLE_EXCEPTION) && ATFRAMEWORK_UTILS_ENABLE_EXCEPTION
     try {
 #endif
       alloc_traits::construct(alloc, guard.get(), std::forward<Alloc>(a), std::forward<Args>(args)...);
       pi_ = guard.get();
       __p = guard.get()->value_ptr();
       guard = nullptr;
-#if defined(LIBATFRAME_UTILS_ENABLE_EXCEPTION) && LIBATFRAME_UTILS_ENABLE_EXCEPTION
+#if defined(ATFRAMEWORK_UTILS_ENABLE_EXCEPTION) && ATFRAMEWORK_UTILS_ENABLE_EXCEPTION
     } catch (...) {
       throw;
     }
@@ -417,7 +417,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY __strong_rc_counter {
     alloc_type alloc;
     auto guard = allocate_guarded(alloc);
 
-#if defined(LIBATFRAME_UTILS_ENABLE_EXCEPTION) && LIBATFRAME_UTILS_ENABLE_EXCEPTION
+#if defined(ATFRAMEWORK_UTILS_ENABLE_EXCEPTION) && ATFRAMEWORK_UTILS_ENABLE_EXCEPTION
     try {
 #endif
       alloc_traits::construct(alloc, guard.get(), r.get(), std::forward<UDeleter>(r.get_deleter()));
@@ -425,7 +425,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY __strong_rc_counter {
       guard = nullptr;
 
       r.release();
-#if defined(LIBATFRAME_UTILS_ENABLE_EXCEPTION) && LIBATFRAME_UTILS_ENABLE_EXCEPTION
+#if defined(ATFRAMEWORK_UTILS_ENABLE_EXCEPTION) && ATFRAMEWORK_UTILS_ENABLE_EXCEPTION
     } catch (...) {
       throw;
     }
@@ -509,13 +509,13 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY __strong_rc_counter {
 
  private:
   template <class>
-  friend class LIBATFRAME_UTILS_API_HEAD_ONLY __strong_rc_counter;
+  friend class ATFRAMEWORK_UTILS_API_HEAD_ONLY __strong_rc_counter;
 
   __rc_ptr_counted_data_base* pi_;
 };
 
 template <class T>
-class LIBATFRAME_UTILS_API_HEAD_ONLY __weak_rc_counter {
+class ATFRAMEWORK_UTILS_API_HEAD_ONLY __weak_rc_counter {
  public:
   UTIL_CONFIG_CONSTEXPR __weak_rc_counter() noexcept : pi_(nullptr) {}
 
@@ -599,7 +599,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY __weak_rc_counter {
 
  private:
   template <class>
-  friend class LIBATFRAME_UTILS_API_HEAD_ONLY __weak_rc_counter;
+  friend class ATFRAMEWORK_UTILS_API_HEAD_ONLY __weak_rc_counter;
 
   __rc_ptr_counted_data_base* pi_;
 };
@@ -621,13 +621,13 @@ __strong_rc_counter<T>::__strong_rc_counter(const __weak_rc_counter<T>& w, std::
 }
 
 template <class T, bool = std::is_array<T>::value, bool = std::is_void<T>::value>
-class LIBATFRAME_UTILS_API_HEAD_ONLY strong_rc_ptr_access {
+class ATFRAMEWORK_UTILS_API_HEAD_ONLY strong_rc_ptr_access {
  public:
   using element_type = T;
 
   inline element_type& operator*() const noexcept {
     element_type* ret = get();
-#if defined(LIBATFRAME_UTILS_ENABLE_EXCEPTION) && LIBATFRAME_UTILS_ENABLE_EXCEPTION
+#if defined(ATFRAMEWORK_UTILS_ENABLE_EXCEPTION) && ATFRAMEWORK_UTILS_ENABLE_EXCEPTION
     if (nullptr == ret) {
       __rc_ptr_counted_data_base::throw_bad_weak_ptr();
     }
@@ -637,7 +637,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY strong_rc_ptr_access {
 
   inline element_type* operator->() const noexcept {
     element_type* ret = get();
-#if defined(LIBATFRAME_UTILS_ENABLE_EXCEPTION) && LIBATFRAME_UTILS_ENABLE_EXCEPTION
+#if defined(ATFRAMEWORK_UTILS_ENABLE_EXCEPTION) && ATFRAMEWORK_UTILS_ENABLE_EXCEPTION
     if (nullptr == ret) {
       __rc_ptr_counted_data_base::throw_bad_weak_ptr();
     }
@@ -650,13 +650,13 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY strong_rc_ptr_access {
 };
 
 template <class T>
-class LIBATFRAME_UTILS_API_HEAD_ONLY strong_rc_ptr_access<T, false, true> {
+class ATFRAMEWORK_UTILS_API_HEAD_ONLY strong_rc_ptr_access<T, false, true> {
  public:
   using element_type = T;
 
   inline element_type* operator->() const noexcept {
     element_type* ret = get();
-#if defined(LIBATFRAME_UTILS_ENABLE_EXCEPTION) && LIBATFRAME_UTILS_ENABLE_EXCEPTION
+#if defined(ATFRAMEWORK_UTILS_ENABLE_EXCEPTION) && ATFRAMEWORK_UTILS_ENABLE_EXCEPTION
     if (nullptr == ret) {
       __rc_ptr_counted_data_base::throw_bad_weak_ptr();
     }
@@ -669,13 +669,13 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY strong_rc_ptr_access<T, false, true> {
 };
 
 template <class T>
-class LIBATFRAME_UTILS_API_HEAD_ONLY strong_rc_ptr_access<T, true, false> {
+class ATFRAMEWORK_UTILS_API_HEAD_ONLY strong_rc_ptr_access<T, true, false> {
  public:
   using element_type = nostd::remove_extent_t<T>;
 
   element_type& operator[](std::ptrdiff_t __i) const noexcept {
     element_type* ret = get();
-#if defined(LIBATFRAME_UTILS_ENABLE_EXCEPTION) && LIBATFRAME_UTILS_ENABLE_EXCEPTION
+#if defined(ATFRAMEWORK_UTILS_ENABLE_EXCEPTION) && ATFRAMEWORK_UTILS_ENABLE_EXCEPTION
     if (nullptr == ret) {
       __rc_ptr_counted_data_base::throw_bad_weak_ptr();
     }
@@ -688,16 +688,16 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY strong_rc_ptr_access<T, true, false> {
 };
 
 template <class T1, class T2, class T3>
-LIBATFRAME_UTILS_API_HEAD_ONLY inline void __enable_shared_from_this_with(const __strong_rc_counter<T1>* __n,
-                                                                          const T2* __py,
-                                                                          const enable_shared_rc_from_this<T3>* __p) {
+ATFRAMEWORK_UTILS_API_HEAD_ONLY inline void __enable_shared_from_this_with(const __strong_rc_counter<T1>* __n,
+                                                                           const T2* __py,
+                                                                           const enable_shared_rc_from_this<T3>* __p) {
   if (nullptr != __p) {
     __p->__internal_weak_assign(const_cast<T2*>(__py), *__n);
   }
 }
 
 template <class T1, class T2, class T3, size_t T3SIZE>
-LIBATFRAME_UTILS_API_HEAD_ONLY inline void __enable_shared_from_this_with(
+ATFRAMEWORK_UTILS_API_HEAD_ONLY inline void __enable_shared_from_this_with(
     const __strong_rc_counter<T1>* __n, const T2* __py, const enable_shared_rc_from_this<T3[T3SIZE]>* __p) {
   if (nullptr != __p) {
     for (auto& p : *__p) {
@@ -715,17 +715,17 @@ struct __sp_any_pointer {
   __sp_any_pointer(T*) {}  // NOLINT: runtime/explicit
 };
 
-LIBATFRAME_UTILS_API_HEAD_ONLY inline void __enable_shared_from_this_with(__sp_any_pointer, __sp_any_pointer,
-                                                                          __sp_any_pointer) {}
+ATFRAMEWORK_UTILS_API_HEAD_ONLY inline void __enable_shared_from_this_with(__sp_any_pointer, __sp_any_pointer,
+                                                                           __sp_any_pointer) {}
 
 #else  // _MANAGED
 
-LIBATFRAME_UTILS_API_HEAD_ONLY inline void __enable_shared_from_this_with(...) {}
+ATFRAMEWORK_UTILS_API_HEAD_ONLY inline void __enable_shared_from_this_with(...) {}
 
 #endif  // _MANAGED
 
 template <class T>
-class LIBATFRAME_UTILS_API_HEAD_ONLY strong_rc_ptr : public strong_rc_ptr_access<T> {
+class ATFRAMEWORK_UTILS_API_HEAD_ONLY strong_rc_ptr : public strong_rc_ptr_access<T> {
  public:
   using element_type = nostd::remove_extent_t<T>;
   using weak_type = weak_rc_ptr<T>;
@@ -910,10 +910,10 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY strong_rc_ptr : public strong_rc_ptr_access
 
  private:
   template <class>
-  friend class LIBATFRAME_UTILS_API_HEAD_ONLY weak_rc_ptr;
+  friend class ATFRAMEWORK_UTILS_API_HEAD_ONLY weak_rc_ptr;
 
   template <class>
-  friend class LIBATFRAME_UTILS_API_HEAD_ONLY strong_rc_ptr;
+  friend class ATFRAMEWORK_UTILS_API_HEAD_ONLY strong_rc_ptr;
 
  private:
   element_type* ptr_;
@@ -921,12 +921,13 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY strong_rc_ptr : public strong_rc_ptr_access
 };
 
 template <class T1, class T2>
-LIBATFRAME_UTILS_API_HEAD_ONLY inline bool operator==(const strong_rc_ptr<T1>& l, const strong_rc_ptr<T2>& r) noexcept {
+ATFRAMEWORK_UTILS_API_HEAD_ONLY inline bool operator==(const strong_rc_ptr<T1>& l,
+                                                       const strong_rc_ptr<T2>& r) noexcept {
   return l.get() == r.get();
 }
 
 template <class T1>
-LIBATFRAME_UTILS_API_HEAD_ONLY inline bool operator==(const strong_rc_ptr<T1>& l, ::std::nullptr_t) noexcept {
+ATFRAMEWORK_UTILS_API_HEAD_ONLY inline bool operator==(const strong_rc_ptr<T1>& l, ::std::nullptr_t) noexcept {
   return !l;
 }
 
@@ -951,106 +952,109 @@ struct __strong_rc_ptr_compare_common_type<T1, T2, false> {
 
 #ifdef __cpp_impl_three_way_comparison
 template <class T1, class T2>
-LIBATFRAME_UTILS_API_HEAD_ONLY inline std::strong_ordering operator<=>(const strong_rc_ptr<T1>& l,
-                                                                       const strong_rc_ptr<T2>& r) noexcept {
+ATFRAMEWORK_UTILS_API_HEAD_ONLY inline std::strong_ordering operator<=>(const strong_rc_ptr<T1>& l,
+                                                                        const strong_rc_ptr<T2>& r) noexcept {
   return reinterpret_cast<typename __strong_rc_ptr_compare_common_type<T1, T2>::left_type>(l.get()) <=>
          reinterpret_cast<typename __strong_rc_ptr_compare_common_type<T1, T2>::right_type>(r.get());
 }
 
 template <class T1>
-LIBATFRAME_UTILS_API_HEAD_ONLY inline std::strong_ordering operator<=>(const strong_rc_ptr<T1>& l,
-                                                                       ::std::nullptr_t) noexcept {
+ATFRAMEWORK_UTILS_API_HEAD_ONLY inline std::strong_ordering operator<=>(const strong_rc_ptr<T1>& l,
+                                                                        ::std::nullptr_t) noexcept {
   return l.get() <=> static_cast<T1*>(nullptr);
 }
 #else
 
 template <class T1>
-LIBATFRAME_UTILS_API_HEAD_ONLY inline bool operator==(::std::nullptr_t, const strong_rc_ptr<T1>& r) noexcept {
+ATFRAMEWORK_UTILS_API_HEAD_ONLY inline bool operator==(::std::nullptr_t, const strong_rc_ptr<T1>& r) noexcept {
   return !r;
 }
 
 template <class T1, class T2>
-LIBATFRAME_UTILS_API_HEAD_ONLY inline bool operator!=(const strong_rc_ptr<T1>& l, const strong_rc_ptr<T2>& r) noexcept {
+ATFRAMEWORK_UTILS_API_HEAD_ONLY inline bool operator!=(const strong_rc_ptr<T1>& l,
+                                                       const strong_rc_ptr<T2>& r) noexcept {
   return l.get() != r.get();
 }
 
 template <class T1>
-LIBATFRAME_UTILS_API_HEAD_ONLY inline bool operator!=(const strong_rc_ptr<T1>& l, ::std::nullptr_t) noexcept {
+ATFRAMEWORK_UTILS_API_HEAD_ONLY inline bool operator!=(const strong_rc_ptr<T1>& l, ::std::nullptr_t) noexcept {
   return l.get() != nullptr;
 }
 
 template <class T1>
-LIBATFRAME_UTILS_API_HEAD_ONLY inline bool operator!=(::std::nullptr_t, const strong_rc_ptr<T1>& r) noexcept {
+ATFRAMEWORK_UTILS_API_HEAD_ONLY inline bool operator!=(::std::nullptr_t, const strong_rc_ptr<T1>& r) noexcept {
   return r.get() != nullptr;
 }
 
 template <class T1, class T2>
-LIBATFRAME_UTILS_API_HEAD_ONLY inline bool operator<(const strong_rc_ptr<T1>& l, const strong_rc_ptr<T2>& r) noexcept {
+ATFRAMEWORK_UTILS_API_HEAD_ONLY inline bool operator<(const strong_rc_ptr<T1>& l, const strong_rc_ptr<T2>& r) noexcept {
   return std::less<typename __strong_rc_ptr_compare_common_type<
       typename strong_rc_ptr<T1>::element_type, typename strong_rc_ptr<T2>::element_type>::common_type>()(l.get(),
                                                                                                           r.get());
 }
 
 template <class T1>
-LIBATFRAME_UTILS_API_HEAD_ONLY inline bool operator<(const strong_rc_ptr<T1>& l, ::std::nullptr_t) noexcept {
+ATFRAMEWORK_UTILS_API_HEAD_ONLY inline bool operator<(const strong_rc_ptr<T1>& l, ::std::nullptr_t) noexcept {
   return std::less<T1>()(l.get(), nullptr);
 }
 
 template <class T1>
-LIBATFRAME_UTILS_API_HEAD_ONLY inline bool operator<(::std::nullptr_t, const strong_rc_ptr<T1>& r) noexcept {
+ATFRAMEWORK_UTILS_API_HEAD_ONLY inline bool operator<(::std::nullptr_t, const strong_rc_ptr<T1>& r) noexcept {
   return std::less<T1>()(nullptr, r.get());
 }
 
 template <class T1, class T2>
-LIBATFRAME_UTILS_API_HEAD_ONLY inline bool operator>(const strong_rc_ptr<T1>& l, const strong_rc_ptr<T2>& r) noexcept {
+ATFRAMEWORK_UTILS_API_HEAD_ONLY inline bool operator>(const strong_rc_ptr<T1>& l, const strong_rc_ptr<T2>& r) noexcept {
   return std::greater<typename __strong_rc_ptr_compare_common_type<
       typename strong_rc_ptr<T1>::element_type, typename strong_rc_ptr<T2>::element_type>::common_type>()(l.get(),
                                                                                                           r.get());
 }
 
 template <class T1>
-LIBATFRAME_UTILS_API_HEAD_ONLY inline bool operator>(const strong_rc_ptr<T1>& l, ::std::nullptr_t) noexcept {
+ATFRAMEWORK_UTILS_API_HEAD_ONLY inline bool operator>(const strong_rc_ptr<T1>& l, ::std::nullptr_t) noexcept {
   return std::greater<T1>()(l.get(), nullptr);
 }
 
 template <class T1>
-LIBATFRAME_UTILS_API_HEAD_ONLY inline bool operator>(::std::nullptr_t, const strong_rc_ptr<T1>& r) noexcept {
+ATFRAMEWORK_UTILS_API_HEAD_ONLY inline bool operator>(::std::nullptr_t, const strong_rc_ptr<T1>& r) noexcept {
   return std::greater<T1>()(nullptr, r.get());
 }
 
 template <class T1, class T2>
-LIBATFRAME_UTILS_API_HEAD_ONLY inline bool operator<=(const strong_rc_ptr<T1>& l, const strong_rc_ptr<T2>& r) noexcept {
+ATFRAMEWORK_UTILS_API_HEAD_ONLY inline bool operator<=(const strong_rc_ptr<T1>& l,
+                                                       const strong_rc_ptr<T2>& r) noexcept {
   return !(r < l);
 }
 
 template <class T1>
-LIBATFRAME_UTILS_API_HEAD_ONLY inline bool operator<=(const strong_rc_ptr<T1>& l, ::std::nullptr_t) noexcept {
+ATFRAMEWORK_UTILS_API_HEAD_ONLY inline bool operator<=(const strong_rc_ptr<T1>& l, ::std::nullptr_t) noexcept {
   return !(nullptr < l);
 }
 
 template <class T1>
-LIBATFRAME_UTILS_API_HEAD_ONLY inline bool operator<=(::std::nullptr_t, const strong_rc_ptr<T1>& r) noexcept {
+ATFRAMEWORK_UTILS_API_HEAD_ONLY inline bool operator<=(::std::nullptr_t, const strong_rc_ptr<T1>& r) noexcept {
   return !(r < nullptr);
 }
 
 template <class T1, class T2>
-LIBATFRAME_UTILS_API_HEAD_ONLY inline bool operator>=(const strong_rc_ptr<T1>& l, const strong_rc_ptr<T2>& r) noexcept {
+ATFRAMEWORK_UTILS_API_HEAD_ONLY inline bool operator>=(const strong_rc_ptr<T1>& l,
+                                                       const strong_rc_ptr<T2>& r) noexcept {
   return !(r > l);
 }
 
 template <class T1>
-LIBATFRAME_UTILS_API_HEAD_ONLY inline bool operator>=(const strong_rc_ptr<T1>& l, ::std::nullptr_t) noexcept {
+ATFRAMEWORK_UTILS_API_HEAD_ONLY inline bool operator>=(const strong_rc_ptr<T1>& l, ::std::nullptr_t) noexcept {
   return !(nullptr > l);
 }
 
 template <class T1>
-LIBATFRAME_UTILS_API_HEAD_ONLY inline bool operator>=(::std::nullptr_t, const strong_rc_ptr<T1>& r) noexcept {
+ATFRAMEWORK_UTILS_API_HEAD_ONLY inline bool operator>=(::std::nullptr_t, const strong_rc_ptr<T1>& r) noexcept {
   return !(r > nullptr);
 }
 #endif
 
 template <typename T>
-class LIBATFRAME_UTILS_API_HEAD_ONLY weak_rc_ptr {
+class ATFRAMEWORK_UTILS_API_HEAD_ONLY weak_rc_ptr {
  public:
   using element_type = nostd::remove_extent_t<T>;
 
@@ -1144,7 +1148,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY weak_rc_ptr {
 
  private:
   template <class>
-  friend class LIBATFRAME_UTILS_API_HEAD_ONLY enable_shared_rc_from_this;
+  friend class ATFRAMEWORK_UTILS_API_HEAD_ONLY enable_shared_rc_from_this;
 
   // Used by enable_shared_rc_from_this.
   void assign(element_type* __ptr, const __strong_rc_counter<T>& __refcount) noexcept {
@@ -1155,10 +1159,10 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY weak_rc_ptr {
   }
 
   template <class>
-  friend class LIBATFRAME_UTILS_API_HEAD_ONLY weak_rc_ptr;
+  friend class ATFRAMEWORK_UTILS_API_HEAD_ONLY weak_rc_ptr;
 
   template <class>
-  friend class LIBATFRAME_UTILS_API_HEAD_ONLY strong_rc_ptr;
+  friend class ATFRAMEWORK_UTILS_API_HEAD_ONLY strong_rc_ptr;
 
  private:
   element_type* ptr_;
@@ -1170,7 +1174,7 @@ class enable_shared_rc_from_this {
  public:
   strong_rc_ptr<T> shared_from_this() {
     strong_rc_ptr<T> result = weak_this_.lock();
-#if defined(LIBATFRAME_UTILS_ENABLE_EXCEPTION) && LIBATFRAME_UTILS_ENABLE_EXCEPTION
+#if defined(ATFRAMEWORK_UTILS_ENABLE_EXCEPTION) && ATFRAMEWORK_UTILS_ENABLE_EXCEPTION
     if (this != result.get()) {
       __rc_ptr_counted_data_base::throw_bad_weak_ptr();
     }
@@ -1181,7 +1185,7 @@ class enable_shared_rc_from_this {
 
   strong_rc_ptr<const T> shared_from_this() const {
     strong_rc_ptr<T> result = weak_this_.lock();
-#if defined(LIBATFRAME_UTILS_ENABLE_EXCEPTION) && LIBATFRAME_UTILS_ENABLE_EXCEPTION
+#if defined(ATFRAMEWORK_UTILS_ENABLE_EXCEPTION) && ATFRAMEWORK_UTILS_ENABLE_EXCEPTION
     if (this != result.get()) {
       __rc_ptr_counted_data_base::throw_bad_weak_ptr();
     }
@@ -1202,7 +1206,7 @@ class enable_shared_rc_from_this {
 
  private:
   template <class>
-  friend class LIBATFRAME_UTILS_API_HEAD_ONLY strong_rc_ptr;
+  friend class ATFRAMEWORK_UTILS_API_HEAD_ONLY strong_rc_ptr;
 
  public:
   template <class Y>
@@ -1246,7 +1250,7 @@ strong_rc_ptr<T> const_pointer_cast(const strong_rc_ptr<Y>& r) noexcept {
   return strong_rc_ptr<T>(r, const_cast<typename strong_rc_ptr<T>::element_type*>(r.get()));
 }
 
-#if defined(LIBATFRAME_UTILS_ENABLE_RTTI) && LIBATFRAME_UTILS_ENABLE_RTTI
+#if defined(ATFRAMEWORK_UTILS_ENABLE_RTTI) && ATFRAMEWORK_UTILS_ENABLE_RTTI
 template <class T, class Y>
 strong_rc_ptr<T> dynamic_pointer_cast(const strong_rc_ptr<Y>& r) noexcept {
   return strong_rc_ptr<T>(r, dynamic_cast<typename strong_rc_ptr<T>::element_type*>(r.get()));
@@ -1254,31 +1258,31 @@ strong_rc_ptr<T> dynamic_pointer_cast(const strong_rc_ptr<Y>& r) noexcept {
 #endif
 
 }  // namespace memory
-LIBATFRAME_UTILS_NAMESPACE_END
+ATFRAMEWORK_UTILS_NAMESPACE_END
 
 namespace std {
 template <class T>
-LIBATFRAME_UTILS_API_HEAD_ONLY void swap(LIBATFRAME_UTILS_NAMESPACE_ID::memory::strong_rc_ptr<T>& a,
-                                         LIBATFRAME_UTILS_NAMESPACE_ID::memory::strong_rc_ptr<T>& b) noexcept {
+ATFRAMEWORK_UTILS_API_HEAD_ONLY void swap(ATFRAMEWORK_UTILS_NAMESPACE_ID::memory::strong_rc_ptr<T>& a,
+                                          ATFRAMEWORK_UTILS_NAMESPACE_ID::memory::strong_rc_ptr<T>& b) noexcept {
   a.swap(b);
 }
 
 template <class T>
-struct LIBATFRAME_UTILS_API_HEAD_ONLY hash<LIBATFRAME_UTILS_NAMESPACE_ID::memory::strong_rc_ptr<T>> {
-  std::size_t operator()(const LIBATFRAME_UTILS_NAMESPACE_ID::memory::strong_rc_ptr<T>& s) const noexcept {
+struct ATFRAMEWORK_UTILS_API_HEAD_ONLY hash<ATFRAMEWORK_UTILS_NAMESPACE_ID::memory::strong_rc_ptr<T>> {
+  std::size_t operator()(const ATFRAMEWORK_UTILS_NAMESPACE_ID::memory::strong_rc_ptr<T>& s) const noexcept {
     return std::hash<T*>()(s.get());
   }
 };
 
 template <class CharT, class TraitT, class T>
-LIBATFRAME_UTILS_API_HEAD_ONLY inline std::basic_ostream<CharT, TraitT>& operator<<(
-    std::basic_ostream<CharT, TraitT>& __os, const LIBATFRAME_UTILS_NAMESPACE_ID::memory::strong_rc_ptr<T>& __p) {
+ATFRAMEWORK_UTILS_API_HEAD_ONLY inline std::basic_ostream<CharT, TraitT>& operator<<(
+    std::basic_ostream<CharT, TraitT>& __os, const ATFRAMEWORK_UTILS_NAMESPACE_ID::memory::strong_rc_ptr<T>& __p) {
   __os << __p.get();
   return __os;
 }
 }  // namespace std
 
-LIBATFRAME_UTILS_NAMESPACE_BEGIN
+ATFRAMEWORK_UTILS_NAMESPACE_BEGIN
 namespace memory {
 enum class compat_strong_ptr_mode : int8_t {
   kStrongRc = 0,
@@ -1286,10 +1290,10 @@ enum class compat_strong_ptr_mode : int8_t {
 };
 
 template <compat_strong_ptr_mode>
-struct LIBATFRAME_UTILS_API_HEAD_ONLY compat_strong_ptr_function_trait;
+struct ATFRAMEWORK_UTILS_API_HEAD_ONLY compat_strong_ptr_function_trait;
 
 template <>
-struct LIBATFRAME_UTILS_API_HEAD_ONLY compat_strong_ptr_function_trait<compat_strong_ptr_mode::kStrongRc> {
+struct ATFRAMEWORK_UTILS_API_HEAD_ONLY compat_strong_ptr_function_trait<compat_strong_ptr_mode::kStrongRc> {
   template <class Y>
   using shared_ptr = memory::strong_rc_ptr<Y>;
 
@@ -1319,7 +1323,7 @@ struct LIBATFRAME_UTILS_API_HEAD_ONLY compat_strong_ptr_function_trait<compat_st
     return memory::const_pointer_cast<Y>(std::forward<F>(f));
   }
 
-#if defined(LIBATFRAME_UTILS_ENABLE_RTTI) && LIBATFRAME_UTILS_ENABLE_RTTI
+#if defined(ATFRAMEWORK_UTILS_ENABLE_RTTI) && ATFRAMEWORK_UTILS_ENABLE_RTTI
   template <class Y, class F>
   static inline memory::strong_rc_ptr<Y> dynamic_pointer_cast(F&& f) {
     return memory::dynamic_pointer_cast<Y>(std::forward<F>(f));
@@ -1328,7 +1332,7 @@ struct LIBATFRAME_UTILS_API_HEAD_ONLY compat_strong_ptr_function_trait<compat_st
 };
 
 template <>
-struct LIBATFRAME_UTILS_API_HEAD_ONLY compat_strong_ptr_function_trait<compat_strong_ptr_mode::kStl> {
+struct ATFRAMEWORK_UTILS_API_HEAD_ONLY compat_strong_ptr_function_trait<compat_strong_ptr_mode::kStl> {
   template <class Y>
   using shared_ptr = std::shared_ptr<Y>;
 
@@ -1362,7 +1366,7 @@ struct LIBATFRAME_UTILS_API_HEAD_ONLY compat_strong_ptr_function_trait<compat_st
     return std::const_pointer_cast<Y>(std::forward<F>(f));
   }
 
-#if defined(LIBATFRAME_UTILS_ENABLE_RTTI) && LIBATFRAME_UTILS_ENABLE_RTTI
+#if defined(ATFRAMEWORK_UTILS_ENABLE_RTTI) && ATFRAMEWORK_UTILS_ENABLE_RTTI
   template <class Y, class F>
   static inline std::shared_ptr<Y> dynamic_pointer_cast(F&& f) {
     return std::dynamic_pointer_cast<Y>(std::forward<F>(f));
@@ -1371,10 +1375,10 @@ struct LIBATFRAME_UTILS_API_HEAD_ONLY compat_strong_ptr_function_trait<compat_st
 };
 
 template <class T, compat_strong_ptr_mode PtrMode>
-struct LIBATFRAME_UTILS_API_HEAD_ONLY compat_strong_ptr_type_trait {
+struct ATFRAMEWORK_UTILS_API_HEAD_ONLY compat_strong_ptr_type_trait {
   using shared_ptr = typename compat_strong_ptr_function_trait<PtrMode>::template shared_ptr<T>;
   using weak_ptr = typename compat_strong_ptr_function_trait<PtrMode>::template weak_ptr<T>;
 };
 
 }  // namespace memory
-LIBATFRAME_UTILS_NAMESPACE_END
+ATFRAMEWORK_UTILS_NAMESPACE_END

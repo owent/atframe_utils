@@ -27,20 +27,20 @@
 #include <common/string_oprs.h>
 #include <config/atframe_utils_build_feature.h>
 
-#if defined(LIBATFRAME_UTILS_ENABLE_LIBUUID) && LIBATFRAME_UTILS_ENABLE_LIBUUID
+#if defined(ATFRAMEWORK_UTILS_ENABLE_LIBUUID) && ATFRAMEWORK_UTILS_ENABLE_LIBUUID
 #  include <uuid/uuid.h>
 
-#elif defined(LIBATFRAME_UTILS_ENABLE_UUID_WINRPC) && LIBATFRAME_UTILS_ENABLE_UUID_WINRPC
+#elif defined(ATFRAMEWORK_UTILS_ENABLE_UUID_WINRPC) && ATFRAMEWORK_UTILS_ENABLE_UUID_WINRPC
 #  include <rpc.h>
 #  include <rpcdce.h>
 
 #endif
 
-#if (defined(LIBATFRAME_UTILS_ENABLE_LIBUUID) && LIBATFRAME_UTILS_ENABLE_LIBUUID) ||         \
-    (defined(LIBATFRAME_UTILS_ENABLE_UUID_WINRPC) && LIBATFRAME_UTILS_ENABLE_UUID_WINRPC) || \
-    (defined(LIBATFRAME_UTILS_ENABLE_UUID_INTERNAL_IMPLEMENT) && LIBATFRAME_UTILS_ENABLE_UUID_INTERNAL_IMPLEMENT)
+#if (defined(ATFRAMEWORK_UTILS_ENABLE_LIBUUID) && ATFRAMEWORK_UTILS_ENABLE_LIBUUID) ||         \
+    (defined(ATFRAMEWORK_UTILS_ENABLE_UUID_WINRPC) && ATFRAMEWORK_UTILS_ENABLE_UUID_WINRPC) || \
+    (defined(ATFRAMEWORK_UTILS_ENABLE_UUID_INTERNAL_IMPLEMENT) && ATFRAMEWORK_UTILS_ENABLE_UUID_INTERNAL_IMPLEMENT)
 
-LIBATFRAME_UTILS_NAMESPACE_BEGIN
+ATFRAMEWORK_UTILS_NAMESPACE_BEGIN
 namespace random {
 /**
  * @brief UUID generator
@@ -52,7 +52,7 @@ namespace random {
  * @see https://en.wikipedia.org/wiki/Universally_unique_identifier
  * @see https://tools.ietf.org/html/rfc4122
  */
-struct LIBATFRAME_UTILS_API_HEAD_ONLY uuid {
+struct ATFRAMEWORK_UTILS_API_HEAD_ONLY uuid {
   uint32_t time_low;            /* time_low */
   uint16_t time_mid;            /* time_mid */
   uint16_t time_hi_and_version; /* time_hi_and_version */
@@ -62,20 +62,20 @@ struct LIBATFRAME_UTILS_API_HEAD_ONLY uuid {
 
 class uuid_generator {
  public:
-  static LIBATFRAME_UTILS_API std::string uuid_to_string(const uuid &id, bool remove_minus = false);
+  static ATFRAMEWORK_UTILS_API std::string uuid_to_string(const uuid &id, bool remove_minus = false);
 
-  static LIBATFRAME_UTILS_API std::string uuid_to_binary(const uuid &id);
+  static ATFRAMEWORK_UTILS_API std::string uuid_to_binary(const uuid &id);
 
-  static LIBATFRAME_UTILS_API uuid binary_to_uuid(const std::string &id_bin);
+  static ATFRAMEWORK_UTILS_API uuid binary_to_uuid(const std::string &id_bin);
 
-  static LIBATFRAME_UTILS_API uuid generate();
+  static ATFRAMEWORK_UTILS_API uuid generate();
 
   /**
    * @brief prefer to use generate_string_random(...) on linux and windows/generate_string_time(...) on macOS
    * @see https://tools.ietf.org/html/rfc4122
    * @see https://en.wikipedia.org/wiki/Universally_unique_identifier
    */
-  static LIBATFRAME_UTILS_API std::string generate_string(bool remove_minus = false);
+  static ATFRAMEWORK_UTILS_API std::string generate_string(bool remove_minus = false);
 
   /**
    * @brief generate a uuid of Version 4
@@ -88,7 +88,7 @@ class uuid_generator {
    * @see https://tools.ietf.org/html/rfc4122
    * @see https://en.wikipedia.org/wiki/Universally_unique_identifier#Version_4_(random)
    */
-  static LIBATFRAME_UTILS_API uuid generate_random();
+  static ATFRAMEWORK_UTILS_API uuid generate_random();
 
   /**
    * @brief generate a uuid of Version 4
@@ -101,7 +101,7 @@ class uuid_generator {
    * @see https://tools.ietf.org/html/rfc4122
    * @see https://en.wikipedia.org/wiki/Universally_unique_identifier#Version_4_(random)
    */
-  static LIBATFRAME_UTILS_API std::string generate_string_random(bool remove_minus = false);
+  static ATFRAMEWORK_UTILS_API std::string generate_string_random(bool remove_minus = false);
 
   /**
    * @brief generate a uuid of Version 1
@@ -115,7 +115,7 @@ class uuid_generator {
    * @see https://tools.ietf.org/html/rfc4122
    * @see https://en.wikipedia.org/wiki/Universally_unique_identifier#Version_1_(date-time_and_MAC_address)
    */
-  static LIBATFRAME_UTILS_API uuid generate_time();
+  static ATFRAMEWORK_UTILS_API uuid generate_time();
 
   /**
    * @brief generate a uuid of Version 1
@@ -129,10 +129,10 @@ class uuid_generator {
    * @see https://tools.ietf.org/html/rfc4122
    * @see https://en.wikipedia.org/wiki/Universally_unique_identifier#Version_1_(date-time_and_MAC_address)
    */
-  static LIBATFRAME_UTILS_API std::string generate_string_time(bool remove_minus = false);
+  static ATFRAMEWORK_UTILS_API std::string generate_string_time(bool remove_minus = false);
 };
 }  // namespace random
-LIBATFRAME_UTILS_NAMESPACE_END
+ATFRAMEWORK_UTILS_NAMESPACE_END
 
 #endif
 

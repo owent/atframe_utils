@@ -358,7 +358,7 @@ intrusive_ptr<T> const_pointer_cast(intrusive_ptr<U> const &p) {
   return const_cast<T *>(p.get());
 }
 
-#if defined(LIBATFRAME_UTILS_ENABLE_RTTI) && LIBATFRAME_UTILS_ENABLE_RTTI
+#if defined(ATFRAMEWORK_UTILS_ENABLE_RTTI) && ATFRAMEWORK_UTILS_ENABLE_RTTI
 template <typename T, typename U>
 intrusive_ptr<T> dynamic_pointer_cast(intrusive_ptr<U> const &p) {
   return dynamic_cast<T *>(p.get());
@@ -373,11 +373,12 @@ std::basic_ostream<E, T> &operator<<(std::basic_ostream<E, T> &os, intrusive_ptr
 }
 }  // namespace std
 
-#if defined(LIBATFRAME_UTILS_LOCK_DISABLE_MT) && LIBATFRAME_UTILS_LOCK_DISABLE_MT
-#  define UTIL_INTRUSIVE_PTR_ATOMIC_TYPE \
-    LIBATFRAME_UTILS_NAMESPACE_ID::lock::atomic_int_type<LIBATFRAME_UTILS_NAMESPACE_ID::lock::unsafe_int_type<size_t> >
+#if defined(ATFRAMEWORK_UTILS_LOCK_DISABLE_MT) && ATFRAMEWORK_UTILS_LOCK_DISABLE_MT
+#  define UTIL_INTRUSIVE_PTR_ATOMIC_TYPE                   \
+    ATFRAMEWORK_UTILS_NAMESPACE_ID::lock::atomic_int_type< \
+        ATFRAMEWORK_UTILS_NAMESPACE_ID::lock::unsafe_int_type<size_t> >
 #else
-#  define UTIL_INTRUSIVE_PTR_ATOMIC_TYPE LIBATFRAME_UTILS_NAMESPACE_ID::lock::atomic_int_type<size_t>
+#  define UTIL_INTRUSIVE_PTR_ATOMIC_TYPE ATFRAMEWORK_UTILS_NAMESPACE_ID::lock::atomic_int_type<size_t>
 #endif
 
 #define UTIL_INTRUSIVE_PTR_REF_MEMBER_DECL(T)            \

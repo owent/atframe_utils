@@ -9,10 +9,10 @@
 
 #include "algorithm/base64.h"
 
-#define BASE64_SIZE_T_MAX ((size_t) - 1) /* SIZE_T_MAX is not standard */
+#define BASE64_SIZE_T_MAX ((size_t)-1)   /* SIZE_T_MAX is not standard */
 #define BASE64_INVALID_CHARACTER -0x002C /**< Invalid character in input. */
 
-LIBATFRAME_UTILS_NAMESPACE_BEGIN
+ATFRAMEWORK_UTILS_NAMESPACE_BEGIN
 
 namespace detail {
 using base_enc_map_t = const unsigned char[64];
@@ -322,36 +322,36 @@ static inline unsigned char base64_get_padding_char(base64_mode_t::type mode) {
 }
 }  // namespace detail
 
-LIBATFRAME_UTILS_API int base64_encode(unsigned char *dst, size_t dlen, size_t *olen, const unsigned char *src,
-                                       size_t slen, base64_mode_t::type mode) {
+ATFRAMEWORK_UTILS_API int base64_encode(unsigned char *dst, size_t dlen, size_t *olen, const unsigned char *src,
+                                        size_t slen, base64_mode_t::type mode) {
   return detail::base64_encode_inner(dst, dlen, olen, src, slen, detail::base64_get_enc_map(mode),
                                      detail::base64_get_padding_char(mode));
 }
 
-LIBATFRAME_UTILS_API int base64_encode(std::string &dst, const unsigned char *src, size_t slen,
-                                       base64_mode_t::type mode) {
+ATFRAMEWORK_UTILS_API int base64_encode(std::string &dst, const unsigned char *src, size_t slen,
+                                        base64_mode_t::type mode) {
   return detail::base64_encode_inner(dst, src, slen, detail::base64_get_enc_map(mode),
                                      detail::base64_get_padding_char(mode));
 }
 
-LIBATFRAME_UTILS_API int base64_encode(std::string &dst, const std::string &in, base64_mode_t::type mode) {
+ATFRAMEWORK_UTILS_API int base64_encode(std::string &dst, const std::string &in, base64_mode_t::type mode) {
   return detail::base64_encode_inner(dst, in, detail::base64_get_enc_map(mode), detail::base64_get_padding_char(mode));
 }
 
-LIBATFRAME_UTILS_API int base64_decode(unsigned char *dst, size_t dlen, size_t *olen, const unsigned char *src,
-                                       size_t slen, base64_mode_t::type mode) {
+ATFRAMEWORK_UTILS_API int base64_decode(unsigned char *dst, size_t dlen, size_t *olen, const unsigned char *src,
+                                        size_t slen, base64_mode_t::type mode) {
   return detail::base64_decode_inner(dst, dlen, olen, src, slen, detail::base64_get_dec_map(mode),
                                      detail::base64_get_padding_char(mode));
 }
 
-LIBATFRAME_UTILS_API int base64_decode(std::string &dst, const unsigned char *src, size_t slen,
-                                       base64_mode_t::type mode) {
+ATFRAMEWORK_UTILS_API int base64_decode(std::string &dst, const unsigned char *src, size_t slen,
+                                        base64_mode_t::type mode) {
   return detail::base64_decode_inner(dst, src, slen, detail::base64_get_dec_map(mode),
                                      detail::base64_get_padding_char(mode));
 }
 
-LIBATFRAME_UTILS_API int base64_decode(std::string &dst, const std::string &in, base64_mode_t::type mode) {
+ATFRAMEWORK_UTILS_API int base64_decode(std::string &dst, const std::string &in, base64_mode_t::type mode) {
   return detail::base64_decode_inner(dst, in, detail::base64_get_dec_map(mode), detail::base64_get_padding_char(mode));
 }
 
-LIBATFRAME_UTILS_NAMESPACE_END
+ATFRAMEWORK_UTILS_NAMESPACE_END

@@ -20,22 +20,22 @@
 #include "log/log_stacktrace.h"
 #include "log/log_wrapper.h"
 
-#if !(defined(THREAD_TLS_USE_PTHREAD) && THREAD_TLS_USE_PTHREAD) && defined(THREAD_TLS_ENABLED) && \
-    1 == THREAD_TLS_ENABLED
-LIBATFRAME_UTILS_NAMESPACE_BEGIN
+#if !(defined(ATFRAMEWORK_UTILS_THREAD_TLS_USE_PTHREAD) && ATFRAMEWORK_UTILS_THREAD_TLS_USE_PTHREAD) && \
+    defined(THREAD_TLS_ENABLED) && 1 == THREAD_TLS_ENABLED
+ATFRAMEWORK_UTILS_NAMESPACE_BEGIN
 namespace log {
 namespace detail {
 static char *get_log_tls_buffer() {
-  static THREAD_TLS char ret[LOG_WRAPPER_MAX_SIZE_PER_LINE];
+  static THREAD_TLS char ret[ATFRAMEWORK_UTILS_LOG_MAX_SIZE_PER_LINE];
   return ret;
 }
 }  // namespace detail
 }  // namespace log
-LIBATFRAME_UTILS_NAMESPACE_END
+ATFRAMEWORK_UTILS_NAMESPACE_END
 #else
 
 #  include <pthread.h>
-LIBATFRAME_UTILS_NAMESPACE_BEGIN
+ATFRAMEWORK_UTILS_NAMESPACE_BEGIN
 namespace log {
 namespace detail {
 static pthread_once_t gt_get_log_tls_once = PTHREAD_ONCE_INIT;
@@ -70,24 +70,24 @@ static char *get_log_tls_buffer() {
   (void)pthread_once(&gt_get_log_tls_once, init_pthread_get_log_tls);
   char *buffer_block = reinterpret_cast<char *>(pthread_getspecific(gt_get_log_tls_key));
   if (nullptr == buffer_block) {
-    buffer_block = new char[LOG_WRAPPER_MAX_SIZE_PER_LINE];
+    buffer_block = new char[ATFRAMEWORK_UTILS_LOG_MAX_SIZE_PER_LINE];
     pthread_setspecific(gt_get_log_tls_key, buffer_block);
   }
   return buffer_block;
 }
 }  // namespace detail
 }  // namespace log
-LIBATFRAME_UTILS_NAMESPACE_END
+ATFRAMEWORK_UTILS_NAMESPACE_END
 
 #endif
 
-LIBATFRAME_UTILS_NAMESPACE_BEGIN
+ATFRAMEWORK_UTILS_NAMESPACE_BEGIN
 namespace log {
 namespace detail {
 static bool log_wrapper_global_destroyed_ = false;
 }
 
-LIBATFRAME_UTILS_API log_wrapper::log_wrapper()
+ATFRAMEWORK_UTILS_API log_wrapper::log_wrapper()
     : log_level_(level_t::LOG_LW_DISABLED), stacktrace_level_(level_t::LOG_LW_DISABLED, level_t::LOG_LW_DISABLED) {
   // 默认设为全局logger，如果是用户logger，则create_user_logger里重新设为false
   options_.set(options_t::OPT_IS_GLOBAL, true);
@@ -96,13 +96,13 @@ LIBATFRAME_UTILS_API log_wrapper::log_wrapper()
   prefix_format_ = "[Log %L][%F %T.%f][%s:%n(%C)]: ";
 }
 
-LIBATFRAME_UTILS_API log_wrapper::log_wrapper(construct_helper_t &)
+ATFRAMEWORK_UTILS_API log_wrapper::log_wrapper(construct_helper_t &)
     : log_level_(level_t::LOG_LW_DISABLED), stacktrace_level_(level_t::LOG_LW_DISABLED, level_t::LOG_LW_DISABLED) {
   // 这个接口由create_user_logger调用，不设置OPT_IS_GLOBAL
   prefix_format_ = "[Log %L][%F %T.%f][%s:%n(%C)]: ";
 }
 
-LIBATFRAME_UTILS_API log_wrapper::~log_wrapper() {
+ATFRAMEWORK_UTILS_API log_wrapper::~log_wrapper() {
   if (get_option(options_t::OPT_IS_GLOBAL)) {
     detail::log_wrapper_global_destroyed_ = true;
   }
@@ -111,34 +111,34 @@ LIBATFRAME_UTILS_API log_wrapper::~log_wrapper() {
   log_level_ = level_t::LOG_LW_DISABLED;
 }
 
-LIBATFRAME_UTILS_API int32_t log_wrapper::init(level_t::type level) {
+ATFRAMEWORK_UTILS_API int32_t log_wrapper::init(level_t::type level) {
   log_level_ = level;
 
   return 0;
 }
 
-LIBATFRAME_UTILS_API size_t log_wrapper::sink_size() const {
-  LIBATFRAME_UTILS_NAMESPACE_ID::lock::read_lock_holder<LIBATFRAME_UTILS_NAMESPACE_ID::lock::spin_rw_lock> holder(
+ATFRAMEWORK_UTILS_API size_t log_wrapper::sink_size() const {
+  ATFRAMEWORK_UTILS_NAMESPACE_ID::lock::read_lock_holder<ATFRAMEWORK_UTILS_NAMESPACE_ID::lock::spin_rw_lock> holder(
       log_sinks_lock_);
 
   return log_sinks_.size();
 }
 
-LIBATFRAME_UTILS_API void log_wrapper::add_sink(log_handler_t h, level_t::type level_min, level_t::type level_max) {
+ATFRAMEWORK_UTILS_API void log_wrapper::add_sink(log_handler_t h, level_t::type level_min, level_t::type level_max) {
   if (h) {
     log_router_t router;
     router.handle = h;
     router.level_min = level_min;
     router.level_max = level_max;
 
-    LIBATFRAME_UTILS_NAMESPACE_ID::lock::write_lock_holder<LIBATFRAME_UTILS_NAMESPACE_ID::lock::spin_rw_lock> holder(
+    ATFRAMEWORK_UTILS_NAMESPACE_ID::lock::write_lock_holder<ATFRAMEWORK_UTILS_NAMESPACE_ID::lock::spin_rw_lock> holder(
         log_sinks_lock_);
     log_sinks_.push_back(router);
   }
 }
 
-LIBATFRAME_UTILS_API void log_wrapper::pop_sink() {
-  LIBATFRAME_UTILS_NAMESPACE_ID::lock::write_lock_holder<LIBATFRAME_UTILS_NAMESPACE_ID::lock::spin_rw_lock> holder(
+ATFRAMEWORK_UTILS_API void log_wrapper::pop_sink() {
+  ATFRAMEWORK_UTILS_NAMESPACE_ID::lock::write_lock_holder<ATFRAMEWORK_UTILS_NAMESPACE_ID::lock::spin_rw_lock> holder(
       log_sinks_lock_);
 
   if (log_sinks_.empty()) {
@@ -148,8 +148,8 @@ LIBATFRAME_UTILS_API void log_wrapper::pop_sink() {
   log_sinks_.pop_front();
 }
 
-LIBATFRAME_UTILS_API bool log_wrapper::set_sink(size_t idx, level_t::type level_min, level_t::type level_max) {
-  LIBATFRAME_UTILS_NAMESPACE_ID::lock::write_lock_holder<LIBATFRAME_UTILS_NAMESPACE_ID::lock::spin_rw_lock> holder(
+ATFRAMEWORK_UTILS_API bool log_wrapper::set_sink(size_t idx, level_t::type level_min, level_t::type level_max) {
+  ATFRAMEWORK_UTILS_NAMESPACE_ID::lock::write_lock_holder<ATFRAMEWORK_UTILS_NAMESPACE_ID::lock::spin_rw_lock> holder(
       log_sinks_lock_);
 
   if (log_sinks_.size() <= idx) {
@@ -166,13 +166,13 @@ LIBATFRAME_UTILS_API bool log_wrapper::set_sink(size_t idx, level_t::type level_
   return true;
 }
 
-LIBATFRAME_UTILS_API void log_wrapper::clear_sinks() {
-  LIBATFRAME_UTILS_NAMESPACE_ID::lock::write_lock_holder<LIBATFRAME_UTILS_NAMESPACE_ID::lock::spin_rw_lock> holder(
+ATFRAMEWORK_UTILS_API void log_wrapper::clear_sinks() {
+  ATFRAMEWORK_UTILS_NAMESPACE_ID::lock::write_lock_holder<ATFRAMEWORK_UTILS_NAMESPACE_ID::lock::spin_rw_lock> holder(
       log_sinks_lock_);
   log_sinks_.clear();
 }
 
-LIBATFRAME_UTILS_API void log_wrapper::set_stacktrace_level(level_t::type level_max, level_t::type level_min) {
+ATFRAMEWORK_UTILS_API void log_wrapper::set_stacktrace_level(level_t::type level_max, level_t::type level_min) {
   stacktrace_level_.first = level_min;
   stacktrace_level_.second = level_max;
 
@@ -184,13 +184,13 @@ LIBATFRAME_UTILS_API void log_wrapper::set_stacktrace_level(level_t::type level_
   }
 }
 
-LIBATFRAME_UTILS_API void log_wrapper::update() { LIBATFRAME_UTILS_NAMESPACE_ID::time::time_utility::update(); }
+ATFRAMEWORK_UTILS_API void log_wrapper::update() { ATFRAMEWORK_UTILS_NAMESPACE_ID::time::time_utility::update(); }
 
-LIBATFRAME_UTILS_API void log_wrapper::log(const caller_info_t &caller,
+ATFRAMEWORK_UTILS_API void log_wrapper::log(const caller_info_t &caller,
 #ifdef _MSC_VER
-                                           _In_z_ _Printf_format_string_ const char *fmt, ...
+                                            _In_z_ _Printf_format_string_ const char *fmt, ...
 #else
-                                           const char *fmt, ...
+                                            const char *fmt, ...
 #endif
 ) {
   log_operation_t writer;
@@ -220,9 +220,9 @@ LIBATFRAME_UTILS_API void log_wrapper::log(const caller_info_t &caller,
   finish_log(caller, writer);
 }
 
-LIBATFRAME_UTILS_API void log_wrapper::write_log(const caller_info_t &caller, const char *content,
-                                                 size_t content_size) {
-  LIBATFRAME_UTILS_NAMESPACE_ID::lock::read_lock_holder<LIBATFRAME_UTILS_NAMESPACE_ID::lock::spin_rw_lock> holder(
+ATFRAMEWORK_UTILS_API void log_wrapper::write_log(const caller_info_t &caller, const char *content,
+                                                  size_t content_size) {
+  ATFRAMEWORK_UTILS_NAMESPACE_ID::lock::read_lock_holder<ATFRAMEWORK_UTILS_NAMESPACE_ID::lock::spin_rw_lock> holder(
       log_sinks_lock_);
 
   for (std::list<log_router_t>::iterator iter = log_sinks_.begin(); iter != log_sinks_.end(); ++iter) {
@@ -232,7 +232,7 @@ LIBATFRAME_UTILS_API void log_wrapper::write_log(const caller_info_t &caller, co
   }
 }
 
-LIBATFRAME_UTILS_API log_wrapper *log_wrapper::mutable_log_cat(uint32_t cats) {
+ATFRAMEWORK_UTILS_API log_wrapper *log_wrapper::mutable_log_cat(uint32_t cats) {
   if (detail::log_wrapper_global_destroyed_) {
     return nullptr;
   }
@@ -246,7 +246,7 @@ LIBATFRAME_UTILS_API log_wrapper *log_wrapper::mutable_log_cat(uint32_t cats) {
   return &all_logger[cats];
 }
 
-LIBATFRAME_UTILS_API log_wrapper::ptr_t log_wrapper::create_user_logger() {
+ATFRAMEWORK_UTILS_API log_wrapper::ptr_t log_wrapper::create_user_logger() {
   construct_helper_t h;
   ptr_t ret = std::make_shared<log_wrapper>(h);
   if (ret) {
@@ -256,7 +256,7 @@ LIBATFRAME_UTILS_API log_wrapper::ptr_t log_wrapper::create_user_logger() {
   return ret;
 }
 
-LIBATFRAME_UTILS_API void log_wrapper::start_log(const caller_info_t &caller, log_operation_t &writer) {
+ATFRAMEWORK_UTILS_API void log_wrapper::start_log(const caller_info_t &caller, log_operation_t &writer) {
   if (get_option(options_t::OPT_AUTO_UPDATE_TIME) && !prefix_format_.empty()) {
     update();
   }
@@ -265,7 +265,7 @@ LIBATFRAME_UTILS_API void log_wrapper::start_log(const caller_info_t &caller, lo
   }
 
   writer.buffer = detail::get_log_tls_buffer();
-  writer.total_size = LOG_WRAPPER_MAX_SIZE_PER_LINE;
+  writer.total_size = ATFRAMEWORK_UTILS_LOG_MAX_SIZE_PER_LINE;
   writer.writen_size = 0;
 
   // format => "[Log    DEBUG][2015-01-12 10:09:08.]
@@ -273,7 +273,7 @@ LIBATFRAME_UTILS_API void log_wrapper::start_log(const caller_info_t &caller, lo
       log_formatter::format(writer.buffer, writer.total_size, prefix_format_.c_str(), prefix_format_.size(), caller);
 }
 
-LIBATFRAME_UTILS_API void log_wrapper::finish_log(const caller_info_t &caller, log_operation_t &writer) {
+ATFRAMEWORK_UTILS_API void log_wrapper::finish_log(const caller_info_t &caller, log_operation_t &writer) {
   if (log_sinks_.empty() || nullptr == writer.buffer) {
     return;
   }
@@ -304,7 +304,7 @@ LIBATFRAME_UTILS_API void log_wrapper::finish_log(const caller_info_t &caller, l
   write_log(caller, writer.buffer, writer.writen_size);
 }
 
-LIBATFRAME_UTILS_API void log_wrapper::append_log(log_operation_t &writer, const char *str, size_t strsz) {
+ATFRAMEWORK_UTILS_API void log_wrapper::append_log(log_operation_t &writer, const char *str, size_t strsz) {
   if (!writer.buffer || writer.writen_size + 1 >= writer.total_size) {
     return;
   }
@@ -329,4 +329,4 @@ LIBATFRAME_UTILS_API void log_wrapper::append_log(log_operation_t &writer, const
 }
 
 }  // namespace log
-LIBATFRAME_UTILS_NAMESPACE_END
+ATFRAMEWORK_UTILS_NAMESPACE_END

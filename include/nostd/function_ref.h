@@ -14,7 +14,7 @@
 
 #include "nostd/type_traits.h"
 
-LIBATFRAME_UTILS_NAMESPACE_BEGIN
+ATFRAMEWORK_UTILS_NAMESPACE_BEGIN
 namespace nostd {
 
 namespace details {
@@ -61,14 +61,14 @@ template <typename Obj, typename R, typename... Args>
 UTIL_SYMBOL_VISIBLE UTIL_NOSTD_INVOKE_RESULT_CONSTEXPR R
 functional_ref_invoke_object(functional_ref_void_ptr ptr, typename functional_ref_forward_type<Args>::type... args) {
   auto o = static_cast<const Obj*>(ptr.obj);
-  return static_cast<R>(::LIBATFRAME_UTILS_NAMESPACE_ID::nostd::invoke(*o, ::std::forward<Args>(args)...));
+  return static_cast<R>(::ATFRAMEWORK_UTILS_NAMESPACE_ID::nostd::invoke(*o, ::std::forward<Args>(args)...));
 }
 
 template <typename Fun, typename R, typename... Args>
 UTIL_SYMBOL_VISIBLE UTIL_NOSTD_INVOKE_RESULT_CONSTEXPR R
 functional_ref_invoke_function(functional_ref_void_ptr ptr, typename functional_ref_forward_type<Args>::type... args) {
   auto f = reinterpret_cast<Fun>(ptr.fn);
-  return static_cast<R>(::LIBATFRAME_UTILS_NAMESPACE_ID::nostd::invoke(f, ::std::forward<Args>(args)...));
+  return static_cast<R>(::ATFRAMEWORK_UTILS_NAMESPACE_ID::nostd::invoke(f, ::std::forward<Args>(args)...));
 }
 
 template <typename Sig>
@@ -82,7 +82,7 @@ template <typename F>
 UTIL_SYMBOL_VISIBLE UTIL_NOSTD_INVOKE_RESULT_CONSTEXPR void functional_ref_assert_non_null(const F&) {}
 
 template <typename F, typename C>
-UTIL_SYMBOL_VISIBLE UTIL_NOSTD_INVOKE_RESULT_CONSTEXPR void functional_ref_assert_non_null(F C::*f) {
+UTIL_SYMBOL_VISIBLE UTIL_NOSTD_INVOKE_RESULT_CONSTEXPR void functional_ref_assert_non_null(F C::* f) {
   assert(f != nullptr);
   (void)f;
 }
@@ -176,4 +176,4 @@ class function_ref<R(Args...) const> : public function_ref<R(Args...)> {
 };
 
 }  // namespace nostd
-LIBATFRAME_UTILS_NAMESPACE_END
+ATFRAMEWORK_UTILS_NAMESPACE_END

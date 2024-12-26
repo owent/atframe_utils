@@ -17,11 +17,11 @@
 #include "distributed_system/wal_common_defs.h"
 #include "distributed_system/wal_object.h"
 
-LIBATFRAME_UTILS_NAMESPACE_BEGIN
+ATFRAMEWORK_UTILS_NAMESPACE_BEGIN
 namespace distributed_system {
 
 template <class StorageT, class LogOperatorT, class CallbackParamT, class PrivateDataT, class SnapshotT>
-class LIBATFRAME_UTILS_API_HEAD_ONLY wal_client {
+class ATFRAMEWORK_UTILS_API_HEAD_ONLY wal_client {
  public:
   using log_operator_type = LogOperatorT;
   using object_type = wal_object<StorageT, LogOperatorT, CallbackParamT, PrivateDataT>;
@@ -495,4 +495,4 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_client {
 };
 
 }  // namespace distributed_system
-LIBATFRAME_UTILS_NAMESPACE_END
+ATFRAMEWORK_UTILS_NAMESPACE_END

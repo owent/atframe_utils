@@ -20,13 +20,13 @@
 
 #include "spin_lock.h"
 
-LIBATFRAME_UTILS_NAMESPACE_BEGIN
+ATFRAMEWORK_UTILS_NAMESPACE_BEGIN
 namespace lock {
-class LIBATFRAME_UTILS_API_HEAD_ONLY spin_rw_lock {
+class ATFRAMEWORK_UTILS_API_HEAD_ONLY spin_rw_lock {
  private:
-  LIBATFRAME_UTILS_NAMESPACE_ID::lock::atomic_int_type<
-#if defined(LIBATFRAME_UTILS_LOCK_DISABLE_MT) && LIBATFRAME_UTILS_LOCK_DISABLE_MT
-      LIBATFRAME_UTILS_NAMESPACE_ID::lock::unsafe_int_type<int32_t>
+  ATFRAMEWORK_UTILS_NAMESPACE_ID::lock::atomic_int_type<
+#if defined(ATFRAMEWORK_UTILS_LOCK_DISABLE_MT) && ATFRAMEWORK_UTILS_LOCK_DISABLE_MT
+      ATFRAMEWORK_UTILS_NAMESPACE_ID::lock::unsafe_int_type<int32_t>
 #else
       int32_t
 #endif
@@ -50,10 +50,10 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY spin_rw_lock {
 
   void read_unlock() { try_read_unlock(); }
 
-  bool is_read_locked() { return lock_status_.load(LIBATFRAME_UTILS_NAMESPACE_ID::lock::memory_order_acquire) >= 2; }
+  bool is_read_locked() { return lock_status_.load(ATFRAMEWORK_UTILS_NAMESPACE_ID::lock::memory_order_acquire) >= 2; }
 
   bool try_read_lock() {
-    int32_t src_status = lock_status_.load(LIBATFRAME_UTILS_NAMESPACE_ID::lock::memory_order_acquire);
+    int32_t src_status = lock_status_.load(ATFRAMEWORK_UTILS_NAMESPACE_ID::lock::memory_order_acquire);
     while (true) {
       // failed if already lock writable
       if (src_status & WRITE_LOCK_FLAG) {
@@ -67,14 +67,14 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY spin_rw_lock {
 
       int32_t dst_status = src_status + 2;
       if (lock_status_.compare_exchange_weak(src_status, dst_status,
-                                             LIBATFRAME_UTILS_NAMESPACE_ID::lock::memory_order_acq_rel)) {
+                                             ATFRAMEWORK_UTILS_NAMESPACE_ID::lock::memory_order_acq_rel)) {
         return true;
       }
     }
   }
 
   bool try_read_unlock() {
-    int32_t src_status = lock_status_.load(LIBATFRAME_UTILS_NAMESPACE_ID::lock::memory_order_acquire);
+    int32_t src_status = lock_status_.load(ATFRAMEWORK_UTILS_NAMESPACE_ID::lock::memory_order_acquire);
     while (true) {
       if (src_status < 2) {
         return false;
@@ -82,7 +82,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY spin_rw_lock {
 
       int32_t dst_status = src_status - 2;
       if (lock_status_.compare_exchange_weak(src_status, dst_status,
-                                             LIBATFRAME_UTILS_NAMESPACE_ID::lock::memory_order_acq_rel)) {
+                                             ATFRAMEWORK_UTILS_NAMESPACE_ID::lock::memory_order_acq_rel)) {
         return true;
       }
     }
@@ -93,7 +93,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY spin_rw_lock {
     unsigned char try_times = 0;
 
     while (true) {
-      int32_t src_status = lock_status_.load(LIBATFRAME_UTILS_NAMESPACE_ID::lock::memory_order_acquire);
+      int32_t src_status = lock_status_.load(ATFRAMEWORK_UTILS_NAMESPACE_ID::lock::memory_order_acquire);
       // already lock writable
       if (is_already_lock_writable) {
         if (src_status < 2) {
@@ -113,7 +113,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY spin_rw_lock {
       // lock writable and then wait for all read lock to free
       int32_t dst_status = src_status + WRITE_LOCK_FLAG;
       if (lock_status_.compare_exchange_weak(src_status, dst_status,
-                                             LIBATFRAME_UTILS_NAMESPACE_ID::lock::memory_order_acq_rel)) {
+                                             ATFRAMEWORK_UTILS_NAMESPACE_ID::lock::memory_order_acq_rel)) {
         is_already_lock_writable = true;
       }
     }
@@ -122,11 +122,11 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY spin_rw_lock {
   void write_unlock() { try_write_unlock(); }
 
   bool is_write_locked() {
-    return 0 != (lock_status_.load(LIBATFRAME_UTILS_NAMESPACE_ID::lock::memory_order_acquire) & WRITE_LOCK_FLAG);
+    return 0 != (lock_status_.load(ATFRAMEWORK_UTILS_NAMESPACE_ID::lock::memory_order_acquire) & WRITE_LOCK_FLAG);
   }
 
   bool try_write_lock() {
-    int32_t src_status = lock_status_.load(LIBATFRAME_UTILS_NAMESPACE_ID::lock::memory_order_acquire);
+    int32_t src_status = lock_status_.load(ATFRAMEWORK_UTILS_NAMESPACE_ID::lock::memory_order_acquire);
     while (true) {
       // failed if already locked
       if (src_status & WRITE_LOCK_FLAG) {
@@ -140,14 +140,14 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY spin_rw_lock {
 
       int32_t dst_status = src_status + WRITE_LOCK_FLAG;
       if (lock_status_.compare_exchange_weak(src_status, dst_status,
-                                             LIBATFRAME_UTILS_NAMESPACE_ID::lock::memory_order_acq_rel)) {
+                                             ATFRAMEWORK_UTILS_NAMESPACE_ID::lock::memory_order_acq_rel)) {
         return true;
       }
     }
   }
 
   bool try_write_unlock() {
-    int32_t src_status = lock_status_.load(LIBATFRAME_UTILS_NAMESPACE_ID::lock::memory_order_acquire);
+    int32_t src_status = lock_status_.load(ATFRAMEWORK_UTILS_NAMESPACE_ID::lock::memory_order_acquire);
     while (true) {
       if (0 == (src_status & WRITE_LOCK_FLAG)) {
         return false;
@@ -155,13 +155,13 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY spin_rw_lock {
 
       int32_t dst_status = src_status - WRITE_LOCK_FLAG;
       if (lock_status_.compare_exchange_weak(src_status, dst_status,
-                                             LIBATFRAME_UTILS_NAMESPACE_ID::lock::memory_order_acq_rel)) {
+                                             ATFRAMEWORK_UTILS_NAMESPACE_ID::lock::memory_order_acq_rel)) {
         return true;
       }
     }
   }
 };
 }  // namespace lock
-LIBATFRAME_UTILS_NAMESPACE_END
+ATFRAMEWORK_UTILS_NAMESPACE_END
 
 #endif /* SPINLOCK_H_ */

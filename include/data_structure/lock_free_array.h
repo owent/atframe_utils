@@ -19,11 +19,11 @@
 
 #include <config/atframe_utils_build_feature.h>
 
-LIBATFRAME_UTILS_NAMESPACE_BEGIN
+ATFRAMEWORK_UTILS_NAMESPACE_BEGIN
 namespace ds {
 
 template <typename T, size_t SIZE, typename TContainer = std::array<T, SIZE + 1> >
-class LIBATFRAME_UTILS_API_HEAD_ONLY lock_free_array {
+class ATFRAMEWORK_UTILS_API_HEAD_ONLY lock_free_array {
  public:
   using value_type = T;
   using pointer_type = value_type *;
@@ -144,4 +144,4 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY lock_free_array {
   container_type data_;
 };
 }  // namespace ds
-LIBATFRAME_UTILS_NAMESPACE_END
+ATFRAMEWORK_UTILS_NAMESPACE_END

@@ -24,7 +24,7 @@
 #  endif
 #endif
 
-LIBATFRAME_UTILS_NAMESPACE_BEGIN
+ATFRAMEWORK_UTILS_NAMESPACE_BEGIN
 namespace nostd {
 
 template <class...>
@@ -113,11 +113,11 @@ struct UTIL_SYMBOL_VISIBLE __inv_unwrap<_Tp, ::std::reference_wrapper<_Up>> {
   using type = _Up&;
 };
 
-struct UTIL_SYMBOL_VISIBLE __invoke_memfun_ref {};
-struct UTIL_SYMBOL_VISIBLE __invoke_memfun_deref {};
-struct UTIL_SYMBOL_VISIBLE __invoke_memobj_ref {};
-struct UTIL_SYMBOL_VISIBLE __invoke_memobj_deref {};
-struct UTIL_SYMBOL_VISIBLE __invoke_other {};
+struct UTIL_SYMBOL_VISIBLE __invoke_memfun_ref{};
+struct UTIL_SYMBOL_VISIBLE __invoke_memfun_deref{};
+struct UTIL_SYMBOL_VISIBLE __invoke_memobj_ref{};
+struct UTIL_SYMBOL_VISIBLE __invoke_memobj_deref{};
+struct UTIL_SYMBOL_VISIBLE __invoke_other{};
 
 template <typename _Tp, typename _Up = typename __inv_unwrap<_Tp>::type>
 UTIL_SYMBOL_VISIBLE inline UTIL_NOSTD_INVOKE_RESULT_CONSTEXPR _Up&& __invfwd(
@@ -257,7 +257,7 @@ struct max_sizeof_size_helper<Len> {
 // alignas is available from gcc 4.8, clang 3.0 and MSVC 19.0(2015)
 // alignof is available from gcc 4.5, clang 2.9 and MSVC 19.0(2015)
 template <std::size_t Len, class... Types>
-struct LIBATFRAME_UTILS_API_HEAD_ONLY aligned_union {
+struct ATFRAMEWORK_UTILS_API_HEAD_ONLY aligned_union {
   static constexpr const std::size_t alignment_value = max_alignof_size_helper<0, Types...>::alignment_value;
 
   struct type {
@@ -272,7 +272,7 @@ template <std::size_t Len, std::size_t Align = alignof(max_align_t)>
 #  else
 template <std::size_t Len, std::size_t Align = 16>
 #  endif
-struct LIBATFRAME_UTILS_API_HEAD_ONLY aligned_storage {
+struct ATFRAMEWORK_UTILS_API_HEAD_ONLY aligned_storage {
   struct type {
     alignas(Align) unsigned char _s[Len];
   };
@@ -413,14 +413,14 @@ using detected_or_t = typename detected_or<DefaultType, DetectTemplateOp, Templa
       using __UTIL_NOSTD_TYPE_TRAITS_CNTM_##TEST_CLASS##_##NESTED_TYPE = typename TEST_CLASS::NESTED_TYPE;            \
                                                                                                                       \
      public:                                                                                                          \
-      using TYPE_ALIAS = ::LIBATFRAME_UTILS_NAMESPACE_ID::nostd::detected_or_t<                                       \
+      using TYPE_ALIAS = ::ATFRAMEWORK_UTILS_NAMESPACE_ID::nostd::detected_or_t<                                      \
           DEFAULT_TYPE, __UTIL_NOSTD_TYPE_TRAITS_CNTM_##TEST_CLASS##_##NESTED_TYPE, TEST_CLASS>
 
 #    define UTIL_NOSTD_TYPE_TRAITS_CONDITION_NESTED_TYPE_AS_MEMBER(TEST_CLASS, NESTED_TYPE, TYPE_ALIAS, DEFAULT_TYPE) \
       template <class __TCNT>                                                                                         \
       using __UTIL_NOSTD_TYPE_TRAITS_CNTM_##TEST_CLASS##_##NESTED_TYPE = typename TEST_CLASS::NESTED_TYPE;            \
                                                                                                                       \
-      using TYPE_ALIAS = ::LIBATFRAME_UTILS_NAMESPACE_ID::nostd::detected_or_t<                                       \
+      using TYPE_ALIAS = ::ATFRAMEWORK_UTILS_NAMESPACE_ID::nostd::detected_or_t<                                      \
           DEFAULT_TYPE, __UTIL_NOSTD_TYPE_TRAITS_CNTM_##TEST_CLASS##_##NESTED_TYPE, TEST_CLASS>
 
 #  else
@@ -516,4 +516,4 @@ using detected_or_t = typename detected_or<DefaultType, DetectTemplateOp, Templa
         static_cast<TEST_CLASS*>(nullptr)))
 #endif
 
-LIBATFRAME_UTILS_NAMESPACE_END
+ATFRAMEWORK_UTILS_NAMESPACE_END

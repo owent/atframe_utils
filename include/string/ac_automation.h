@@ -27,11 +27,11 @@
 
 #include "string/utf8_char_t.h"
 
-LIBATFRAME_UTILS_NAMESPACE_BEGIN
+ATFRAMEWORK_UTILS_NAMESPACE_BEGIN
 namespace string {
 namespace detail {
 template <typename TC, typename TCTT>
-LIBATFRAME_UTILS_API_HEAD_ONLY void write_varint(std::basic_ostream<TC, TCTT> &os, uint32_t i) {
+ATFRAMEWORK_UTILS_API_HEAD_ONLY void write_varint(std::basic_ostream<TC, TCTT> &os, uint32_t i) {
   unsigned char c;
   if (i < (1U << 6)) {
     c = static_cast<unsigned char>(i & 0x3F);
@@ -64,7 +64,7 @@ LIBATFRAME_UTILS_API_HEAD_ONLY void write_varint(std::basic_ostream<TC, TCTT> &o
 }
 
 template <typename TC, typename TCTT>
-LIBATFRAME_UTILS_API_HEAD_ONLY uint32_t read_varint(std::basic_istream<TC, TCTT> &is) {
+ATFRAMEWORK_UTILS_API_HEAD_ONLY uint32_t read_varint(std::basic_istream<TC, TCTT> &is) {
   unsigned char c;
   if (!is >> c) {
     return 0;
@@ -83,10 +83,10 @@ LIBATFRAME_UTILS_API_HEAD_ONLY uint32_t read_varint(std::basic_istream<TC, TCTT>
 }
 
 template <typename CH, size_t CHSZ>
-class LIBATFRAME_UTILS_API_HEAD_ONLY actrie_skip_charset;
+class ATFRAMEWORK_UTILS_API_HEAD_ONLY actrie_skip_charset;
 
 template <typename CH>
-class LIBATFRAME_UTILS_API_HEAD_ONLY actrie_skip_charset<CH, 1> {
+class ATFRAMEWORK_UTILS_API_HEAD_ONLY actrie_skip_charset<CH, 1> {
  public:
   using self_t = actrie_skip_charset<CH, 1>;
   actrie_skip_charset() { memset(skip_code_, 0, sizeof(skip_code_)); }
@@ -112,15 +112,15 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY actrie_skip_charset<CH, 1> {
   inline bool operator[](CH c) const { return test(c); }
 
   template <typename OCH, typename OTCTT>
-  LIBATFRAME_UTILS_API_HEAD_ONLY friend std::basic_ostream<OCH, OTCTT> &operator<<(std::basic_ostream<OCH, OTCTT> &os,
-                                                                                   const self_t &self) {
+  ATFRAMEWORK_UTILS_API_HEAD_ONLY friend std::basic_ostream<OCH, OTCTT> &operator<<(std::basic_ostream<OCH, OTCTT> &os,
+                                                                                    const self_t &self) {
     os.write((CH *)self.skip_code_, sizeof(self.skip_code_));  // NOLINT: readability/casting
     return os;
   }
 
   template <typename OCH, typename OTCTT>
-  LIBATFRAME_UTILS_API_HEAD_ONLY friend std::basic_istream<OCH, OTCTT> &operator>>(std::basic_istream<OCH, OTCTT> &is,
-                                                                                   self_t &self) {
+  ATFRAMEWORK_UTILS_API_HEAD_ONLY friend std::basic_istream<OCH, OTCTT> &operator>>(std::basic_istream<OCH, OTCTT> &is,
+                                                                                    self_t &self) {
     is.read((CH *)self.skip_code_, sizeof(self.skip_code_));  // NOLINT: readability/casting
     return is;
   }
@@ -133,7 +133,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY actrie_skip_charset<CH, 1> {
 };
 
 template <typename CH, size_t CHSZ>
-class LIBATFRAME_UTILS_API_HEAD_ONLY actrie_skip_charset {
+class ATFRAMEWORK_UTILS_API_HEAD_ONLY actrie_skip_charset {
  public:
   using self_t = actrie_skip_charset<CH, CHSZ>;
   actrie_skip_charset() {}
@@ -147,8 +147,8 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY actrie_skip_charset {
   inline bool operator[](CH c) const { return test(c); }
 
   template <typename OCH, typename OTCTT>
-  LIBATFRAME_UTILS_API_HEAD_ONLY friend std::basic_ostream<OCH, OTCTT> &operator<<(std::basic_ostream<OCH, OTCTT> &os,
-                                                                                   const self_t &self) {
+  ATFRAMEWORK_UTILS_API_HEAD_ONLY friend std::basic_ostream<OCH, OTCTT> &operator<<(std::basic_ostream<OCH, OTCTT> &os,
+                                                                                    const self_t &self) {
     write_varint(os, static_cast<uint32_t>(self.skip_code_.size()));
     for (typename std::set<CH>::iterator iter = self.skip_code_.begin(); iter != self.skip_code_.end(); ++iter) {
       os << *iter;
@@ -157,8 +157,8 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY actrie_skip_charset {
   }
 
   template <typename OCH, typename OTCTT>
-  LIBATFRAME_UTILS_API_HEAD_ONLY friend std::basic_istream<OCH, OTCTT> &operator>>(std::basic_istream<OCH, OTCTT> &is,
-                                                                                   self_t &self) {
+  ATFRAMEWORK_UTILS_API_HEAD_ONLY friend std::basic_istream<OCH, OTCTT> &operator>>(std::basic_istream<OCH, OTCTT> &is,
+                                                                                    self_t &self) {
     uint32_t sz = read_varint(is);
     self.skip_code_.clear();
     for (uint32_t i = 0; i < sz; ++i) {
@@ -177,14 +177,14 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY actrie_skip_charset {
 };
 
 template <typename CH>
-size_t LIBATFRAME_UTILS_API_HEAD_ONLY actrie_get_length(const CH &c) {
+size_t ATFRAMEWORK_UTILS_API_HEAD_ONLY actrie_get_length(const CH &c) {
   return sizeof(c);
 }
 
-LIBATFRAME_UTILS_API_HEAD_ONLY size_t actrie_get_length(const utf8_char_t &c) { return c.length(); }
+ATFRAMEWORK_UTILS_API_HEAD_ONLY size_t actrie_get_length(const utf8_char_t &c) { return c.length(); }
 
 template <typename CH = char>
-class LIBATFRAME_UTILS_API_HEAD_ONLY actrie {
+class ATFRAMEWORK_UTILS_API_HEAD_ONLY actrie {
  public:
   using char_t = CH;
   using string_t = std::string;
@@ -263,27 +263,27 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY actrie {
   static inline bool equal_char(char l, char r) { return l == r; }
 
   template <typename OTC, typename OTCTT>
-  static LIBATFRAME_UTILS_API_HEAD_ONLY inline void output_char(char l, std::basic_ostream<OTC, OTCTT> &os) {
+  static ATFRAMEWORK_UTILS_API_HEAD_ONLY inline void output_char(char l, std::basic_ostream<OTC, OTCTT> &os) {
     if (l > 0x21 && l <= 0x7f) {
       os << l;
     } else {
       char hex_val[3] = {0};
-      LIBATFRAME_UTILS_NAMESPACE_ID::string::hex(hex_val, l);
+      ATFRAMEWORK_UTILS_NAMESPACE_ID::string::hex(hex_val, l);
       os << "0x" << hex_val;
     }
   }
 
-  static LIBATFRAME_UTILS_API_HEAD_ONLY inline bool equal_char(unsigned char l, char r) {
+  static ATFRAMEWORK_UTILS_API_HEAD_ONLY inline bool equal_char(unsigned char l, char r) {
     return l == static_cast<unsigned char>(r);
   }
 
   template <typename OTC, typename OTCTT>
-  static LIBATFRAME_UTILS_API_HEAD_ONLY inline void output_char(unsigned char l, std::basic_ostream<OTC, OTCTT> &os) {
+  static ATFRAMEWORK_UTILS_API_HEAD_ONLY inline void output_char(unsigned char l, std::basic_ostream<OTC, OTCTT> &os) {
     if (l > 0x21 && l <= 0x7f) {
       os << l;
     } else {
       char hex_val[3] = {0};
-      LIBATFRAME_UTILS_NAMESPACE_ID::string::hex(hex_val, l);
+      ATFRAMEWORK_UTILS_NAMESPACE_ID::string::hex(hex_val, l);
       os << "0x" << hex_val;
     }
   }
@@ -291,17 +291,17 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY actrie {
   static inline bool equal_char(utf8_char_t l, char r) { return l == r; }
 
   template <typename OTC, typename OTCTT>
-  static LIBATFRAME_UTILS_API_HEAD_ONLY inline void output_char(utf8_char_t l, std::basic_ostream<OTC, OTCTT> &os) {
+  static ATFRAMEWORK_UTILS_API_HEAD_ONLY inline void output_char(utf8_char_t l, std::basic_ostream<OTC, OTCTT> &os) {
     os << l;
   }
 
   template <typename TC>
-  static LIBATFRAME_UTILS_API_HEAD_ONLY inline bool equal_char(TC, char) {
+  static ATFRAMEWORK_UTILS_API_HEAD_ONLY inline bool equal_char(TC, char) {
     return false;
   }
 
   template <typename TC, typename OTC, typename OTCTT>
-  static LIBATFRAME_UTILS_API_HEAD_ONLY inline void output_char(TC l, std::basic_ostream<OTC, OTCTT> &os) {
+  static ATFRAMEWORK_UTILS_API_HEAD_ONLY inline void output_char(TC l, std::basic_ostream<OTC, OTCTT> &os) {
     os << l;
   }
 
@@ -334,7 +334,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY actrie {
   }
 
   template <typename TC, typename TCTT>
-  LIBATFRAME_UTILS_API_HEAD_ONLY void dump(std::basic_ostream<TC, TCTT> &os) const {
+  ATFRAMEWORK_UTILS_API_HEAD_ONLY void dump(std::basic_ostream<TC, TCTT> &os) const {
     write_varint(os, idx_);
     write_varint(os, failed_);
     write_varint(os, static_cast<uint32_t>(matched_string_.size()));
@@ -351,7 +351,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY actrie {
   }
 
   template <typename TC, typename TCTT>
-  LIBATFRAME_UTILS_API_HEAD_ONLY bool load(std::basic_istream<TC, TCTT> &is) {
+  ATFRAMEWORK_UTILS_API_HEAD_ONLY bool load(std::basic_istream<TC, TCTT> &is) {
     idx_ = read_varint(is);
     failed_ = read_varint(is);
     uint32_t mstr_sz = read_varint(is);
@@ -372,13 +372,13 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY actrie {
   }
 
   template <typename TC, typename TCTT>
-  static LIBATFRAME_UTILS_API_HEAD_ONLY inline std::basic_ostream<TC, TCTT> &dump_dot_node_name(
+  static ATFRAMEWORK_UTILS_API_HEAD_ONLY inline std::basic_ostream<TC, TCTT> &dump_dot_node_name(
       std::basic_ostream<TC, TCTT> &os, uint32_t idx) {
     return os << "char_" << idx;
   }
 
   template <typename TC, typename TCTT>
-  LIBATFRAME_UTILS_API_HEAD_ONLY void dump_dot_node(std::basic_ostream<TC, TCTT> &os) const {
+  ATFRAMEWORK_UTILS_API_HEAD_ONLY void dump_dot_node(std::basic_ostream<TC, TCTT> &os) const {
     dump_dot_node_name(os, get_idx());
     if (!matched_string_.empty()) {
       os << " [label=\"";
@@ -396,7 +396,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY actrie {
   }
 
   template <typename TC, typename TCTT>
-  LIBATFRAME_UTILS_API_HEAD_ONLY void dump_dot_relationship(std::basic_ostream<TC, TCTT> &os) const {
+  ATFRAMEWORK_UTILS_API_HEAD_ONLY void dump_dot_relationship(std::basic_ostream<TC, TCTT> &os) const {
     // fail node
     if (0 != failed_) {
       dump_dot_node_name(os, get_idx());
@@ -524,8 +524,8 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY actrie {
    * @return 匹配完成后剩余字节数
    */
   template <typename TSkipSet>
-  LIBATFRAME_UTILS_API_HEAD_ONLY size_t match(storage_t &storage, match_result_t &out, const char *chp, size_t left_sz,
-                                              const TSkipSet *skip) const {
+  ATFRAMEWORK_UTILS_API_HEAD_ONLY size_t match(storage_t &storage, match_result_t &out, const char *chp, size_t left_sz,
+                                               const TSkipSet *skip) const {
     // 成功匹配
     if (is_leaf()) {
       out.keyword = this;
@@ -609,7 +609,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY actrie {
 }  // namespace detail
 
 template <typename CH = char, typename TSKIP = detail::actrie_skip_charset<CH, sizeof(CH)> >
-class LIBATFRAME_UTILS_API_HEAD_ONLY ac_automation {
+class ATFRAMEWORK_UTILS_API_HEAD_ONLY ac_automation {
  public:
   using char_t = CH;
   using trie_type = typename detail::actrie<char_t>;
@@ -672,7 +672,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY ac_automation {
 
     if (is_no_case_) {
       string_t res = keyword;
-      std::transform(res.begin(), res.end(), res.begin(), LIBATFRAME_UTILS_NAMESPACE_ID::string::tolower<char>);
+      std::transform(res.begin(), res.end(), res.begin(), ATFRAMEWORK_UTILS_NAMESPACE_ID::string::tolower<char>);
       storage_[0]->insert(storage_, res.c_str(), res.size(), keyword);
     } else {
       storage_[0]->insert(storage_, keyword.c_str(), keyword.size(), keyword);
@@ -694,7 +694,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY ac_automation {
     if (is_no_case_) {
       nocase = content;
       std::transform(nocase.begin(), nocase.end(), nocase.begin(),
-                     LIBATFRAME_UTILS_NAMESPACE_ID::string::tolower<char>);
+                     ATFRAMEWORK_UTILS_NAMESPACE_ID::string::tolower<char>);
       conv_content = &nocase;
     }
 
@@ -767,9 +767,9 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY ac_automation {
    * @param edge_options 边绘制选项(最后跟一个NULL表示结束)
    */
   template <typename TC, typename TCTT>
-  LIBATFRAME_UTILS_API_HEAD_ONLY void dump_dot(std::basic_ostream<TC, TCTT> &os, const char *options[] = nullptr,
-                                               const char *node_options[] = nullptr,
-                                               const char *edge_options[] = nullptr) {
+  ATFRAMEWORK_UTILS_API_HEAD_ONLY void dump_dot(std::basic_ostream<TC, TCTT> &os, const char *options[] = nullptr,
+                                                const char *node_options[] = nullptr,
+                                                const char *edge_options[] = nullptr) {
     init();
 
     os << "digraph \"ac_automation";
@@ -823,7 +823,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY ac_automation {
    * @param edge_options 边绘制选项(最后跟一个NULL表示结束)
    */
   template <typename TC, typename TCTT>
-  LIBATFRAME_UTILS_API_HEAD_ONLY void dump(std::basic_ostream<TC, TCTT> &os) {
+  ATFRAMEWORK_UTILS_API_HEAD_ONLY void dump(std::basic_ostream<TC, TCTT> &os) {
     init();
 
     os << "ACAUTOMATION " << sizeof(char_t) << "\r\n";
@@ -842,4 +842,4 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY ac_automation {
   }
 };
 }  // namespace string
-LIBATFRAME_UTILS_NAMESPACE_END
+ATFRAMEWORK_UTILS_NAMESPACE_END

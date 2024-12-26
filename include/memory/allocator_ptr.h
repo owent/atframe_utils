@@ -10,7 +10,7 @@
 
 #include <memory>
 
-LIBATFRAME_UTILS_NAMESPACE_BEGIN
+ATFRAMEWORK_UTILS_NAMESPACE_BEGIN
 namespace memory {
 
 /// Non-standard RAII type for managing pointers obtained from allocators.
@@ -57,4 +57,4 @@ UTIL_SYMBOL_VISIBLE allocated_ptr<Alloc> allocate_guarded(Alloc& a) {
 }
 
 }  // namespace memory
-LIBATFRAME_UTILS_NAMESPACE_END
+ATFRAMEWORK_UTILS_NAMESPACE_END

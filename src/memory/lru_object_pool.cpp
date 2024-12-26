@@ -9,19 +9,19 @@
 #include <ctime>
 #include <memory>
 
-LIBATFRAME_UTILS_NAMESPACE_BEGIN
+ATFRAMEWORK_UTILS_NAMESPACE_BEGIN
 namespace memory {
-LIBATFRAME_UTILS_API lru_pool_base::list_type_base::list_type_base() {}
-LIBATFRAME_UTILS_API lru_pool_base::list_type_base::~list_type_base() {}
+ATFRAMEWORK_UTILS_API lru_pool_base::list_type_base::list_type_base() {}
+ATFRAMEWORK_UTILS_API lru_pool_base::list_type_base::~list_type_base() {}
 
-LIBATFRAME_UTILS_API lru_pool_base::lru_pool_base() {}
-LIBATFRAME_UTILS_API lru_pool_base::~lru_pool_base() {}
+ATFRAMEWORK_UTILS_API lru_pool_base::lru_pool_base() {}
+ATFRAMEWORK_UTILS_API lru_pool_base::~lru_pool_base() {}
 
-LIBATFRAME_UTILS_API lru_pool_manager::ptr_t lru_pool_manager::create() { return ptr_t(new lru_pool_manager()); }
+ATFRAMEWORK_UTILS_API lru_pool_manager::ptr_t lru_pool_manager::create() { return ptr_t(new lru_pool_manager()); }
 
-#define _UTIL_MEMPOOL_LRUOBJECTPOOL_SETTER_GETTER(x)                          \
-  LIBATFRAME_UTILS_API void lru_pool_manager::set_##x(size_t v) { x##_ = v; } \
-  LIBATFRAME_UTILS_API size_t lru_pool_manager::get_##x() const { return x##_; }
+#define _UTIL_MEMPOOL_LRUOBJECTPOOL_SETTER_GETTER(x)                           \
+  ATFRAMEWORK_UTILS_API void lru_pool_manager::set_##x(size_t v) { x##_ = v; } \
+  ATFRAMEWORK_UTILS_API size_t lru_pool_manager::get_##x() const { return x##_; }
 
 _UTIL_MEMPOOL_LRUOBJECTPOOL_SETTER_GETTER(item_min_bound);   // 主动GC的保留对象数量
 _UTIL_MEMPOOL_LRUOBJECTPOOL_SETTER_GETTER(item_max_bound);   // 超出对象数量触发GC
@@ -29,29 +29,29 @@ _UTIL_MEMPOOL_LRUOBJECTPOOL_SETTER_GETTER(proc_item_count);  // 每帧最大处�
 _UTIL_MEMPOOL_LRUOBJECTPOOL_SETTER_GETTER(gc_item);          // 下一次GC保留的对象数量
 #undef _UTIL_MEMPOOL_LRUOBJECTPOOL_SETTER_GETTER
 
-LIBATFRAME_UTILS_API void lru_pool_manager::set_list_tick_timeout(time_t v) { list_tick_timeout_ = v; }
+ATFRAMEWORK_UTILS_API void lru_pool_manager::set_list_tick_timeout(time_t v) { list_tick_timeout_ = v; }
 
-LIBATFRAME_UTILS_API time_t lru_pool_manager::get_list_tick_timeout() const { return list_tick_timeout_; }
+ATFRAMEWORK_UTILS_API time_t lru_pool_manager::get_list_tick_timeout() const { return list_tick_timeout_; }
 
-LIBATFRAME_UTILS_API void lru_pool_manager::set_item_adjust_min(size_t v) {
+ATFRAMEWORK_UTILS_API void lru_pool_manager::set_item_adjust_min(size_t v) {
   item_adjust_min_ = v;
   item_adjust_max_ = item_adjust_min_ >= item_adjust_max_ ? (item_adjust_min_ + 1) : item_adjust_max_;
 }
 
-LIBATFRAME_UTILS_API size_t lru_pool_manager::get_item_adjust_min() const { return item_adjust_min_; }
+ATFRAMEWORK_UTILS_API size_t lru_pool_manager::get_item_adjust_min() const { return item_adjust_min_; }
 
-LIBATFRAME_UTILS_API void lru_pool_manager::set_item_adjust_max(size_t v) {
+ATFRAMEWORK_UTILS_API void lru_pool_manager::set_item_adjust_max(size_t v) {
   item_adjust_max_ = v;
   item_adjust_min_ = item_adjust_min_ < item_adjust_max_ ? item_adjust_min_ : (item_adjust_max_ - 1);
 }
 
-LIBATFRAME_UTILS_API size_t lru_pool_manager::get_item_adjust_max() const { return item_adjust_max_; }
+ATFRAMEWORK_UTILS_API size_t lru_pool_manager::get_item_adjust_max() const { return item_adjust_max_; }
 
 /**
  * @brief 获取实例缓存数量
  * @note 如果不是非常了解这个数值的作用，请不要修改它
  */
-LIBATFRAME_UTILS_API const LIBATFRAME_UTILS_NAMESPACE_ID::lock::seq_alloc_u64 &lru_pool_manager::item_count() const {
+ATFRAMEWORK_UTILS_API const ATFRAMEWORK_UTILS_NAMESPACE_ID::lock::seq_alloc_u64 &lru_pool_manager::item_count() const {
   return item_count_;
 }
 
@@ -59,7 +59,7 @@ LIBATFRAME_UTILS_API const LIBATFRAME_UTILS_NAMESPACE_ID::lock::seq_alloc_u64 &l
  * @brief 主动GC，会触发阈值自适应
  * @return 此次调用回收的元素的个数
  */
-LIBATFRAME_UTILS_API size_t lru_pool_manager::gc() {
+ATFRAMEWORK_UTILS_API size_t lru_pool_manager::gc() {
   if (gc_item_ <= 0) {
     item_min_bound_ = static_cast<size_t>((item_count_.get() + item_min_bound_) / 2);
     item_max_bound_ = static_cast<size_t>((item_count_.get() + item_max_bound_ + 1) / 2);
@@ -87,7 +87,7 @@ LIBATFRAME_UTILS_API size_t lru_pool_manager::gc() {
  * @param tick 用于判定超时的tick时间，时间单位由业务逻辑决定
  * @return 此次调用回收的元素的个数
  */
-LIBATFRAME_UTILS_API size_t lru_pool_manager::proc(time_t tick) {
+ATFRAMEWORK_UTILS_API size_t lru_pool_manager::proc(time_t tick) {
   last_proc_tick_ = tick;
 
   if (gc_item_ <= 0) {
@@ -126,7 +126,8 @@ LIBATFRAME_UTILS_API size_t lru_pool_manager::proc(time_t tick) {
       continue;
     }
 
-    util::memory::strong_rc_ptr<lru_pool_base::list_type_base> tar_ls = checked_item.list_.lock();
+    ATFRAMEWORK_UTILS_NAMESPACE_ID::memory::strong_rc_ptr<lru_pool_base::list_type_base> tar_ls =
+        checked_item.list_.lock();
     if (!tar_ls) {
       item_count_.dec();
       checked_list_.pop_front();
@@ -153,8 +154,8 @@ LIBATFRAME_UTILS_API size_t lru_pool_manager::proc(time_t tick) {
 /**
  * @brief 添加检查列表
  */
-LIBATFRAME_UTILS_API lru_pool_manager::check_list_t::iterator lru_pool_manager::push_check_list(
-    util::memory::weak_rc_ptr<lru_pool_base::list_type_base> list_) {
+ATFRAMEWORK_UTILS_API lru_pool_manager::check_list_t::iterator lru_pool_manager::push_check_list(
+    ATFRAMEWORK_UTILS_NAMESPACE_ID::memory::weak_rc_ptr<lru_pool_base::list_type_base> list_) {
   check_list_t::iterator ret = checked_list_.insert(checked_list_.end(), check_item_t());
   if (ret == checked_list_.end()) {
     return ret;
@@ -176,7 +177,7 @@ LIBATFRAME_UTILS_API lru_pool_manager::check_list_t::iterator lru_pool_manager::
   return ret;
 }
 
-LIBATFRAME_UTILS_API bool lru_pool_manager::erase_check_list(check_list_t::iterator iter) {
+ATFRAMEWORK_UTILS_API bool lru_pool_manager::erase_check_list(check_list_t::iterator iter) {
   if (iter == checked_list_.end()) {
     return false;
   }
@@ -186,7 +187,7 @@ LIBATFRAME_UTILS_API bool lru_pool_manager::erase_check_list(check_list_t::itera
 }
 
 // GCC 4.4 don't support erase(const_iterator)
-// LIBATFRAME_UTILS_API bool lru_pool_manager::erase_check_list(check_list_t::const_iterator iter) {
+// ATFRAMEWORK_UTILS_API bool lru_pool_manager::erase_check_list(check_list_t::const_iterator iter) {
 //     if (iter == checked_list_.end()) {
 //         return false;
 //     }
@@ -195,11 +196,11 @@ LIBATFRAME_UTILS_API bool lru_pool_manager::erase_check_list(check_list_t::itera
 //     return true;
 // }
 
-LIBATFRAME_UTILS_API lru_pool_manager::check_list_t::iterator lru_pool_manager::end_check_list() {
+ATFRAMEWORK_UTILS_API lru_pool_manager::check_list_t::iterator lru_pool_manager::end_check_list() {
   return checked_list_.end();
 }
 
-LIBATFRAME_UTILS_API lru_pool_manager::lru_pool_manager()
+ATFRAMEWORK_UTILS_API lru_pool_manager::lru_pool_manager()
     : item_min_bound_(0),
       item_max_bound_(1024),
 #if defined(_MSC_VER) && _MSC_VER < 1900
@@ -218,7 +219,7 @@ LIBATFRAME_UTILS_API lru_pool_manager::lru_pool_manager()
   item_count_.set(0);
 }
 
-LIBATFRAME_UTILS_API size_t lru_pool_manager::inner_gc() {
+ATFRAMEWORK_UTILS_API size_t lru_pool_manager::inner_gc() {
   if (gc_item_ <= 0) {
     gc_item_ = item_max_bound_;
   }
@@ -226,10 +227,10 @@ LIBATFRAME_UTILS_API size_t lru_pool_manager::inner_gc() {
   return proc(last_proc_tick_);
 }
 
-LIBATFRAME_UTILS_API bool lru_pool_manager::check_tick(time_t tp) {
+ATFRAMEWORK_UTILS_API bool lru_pool_manager::check_tick(time_t tp) {
   using std::abs;
   return 0 == list_tick_timeout_ || abs(last_proc_tick_ - tp) <= list_tick_timeout_;
 }
 
 }  // namespace memory
-LIBATFRAME_UTILS_NAMESPACE_END
+ATFRAMEWORK_UTILS_NAMESPACE_END

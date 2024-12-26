@@ -28,7 +28,7 @@
 
 #include <config/atframe_utils_build_feature.h>
 
-LIBATFRAME_UTILS_NAMESPACE_BEGIN
+ATFRAMEWORK_UTILS_NAMESPACE_BEGIN
 /**
  * @brief          Calculate crc32
  *
@@ -38,7 +38,7 @@ LIBATFRAME_UTILS_NAMESPACE_BEGIN
  *
  * @return         crc32 result
  */
-LIBATFRAME_UTILS_API uint16_t crc16(const unsigned char *s, size_t l, uint16_t init_val = 0);
+ATFRAMEWORK_UTILS_API uint16_t crc16(const unsigned char *s, size_t l, uint16_t init_val = 0);
 
 /**
  * @brief          Calculate crc32
@@ -49,7 +49,7 @@ LIBATFRAME_UTILS_API uint16_t crc16(const unsigned char *s, size_t l, uint16_t i
  *
  * @return         crc32 result
  */
-LIBATFRAME_UTILS_API uint32_t crc32(const unsigned char *s, size_t l, uint32_t init_val = 0);
+ATFRAMEWORK_UTILS_API uint32_t crc32(const unsigned char *s, size_t l, uint32_t init_val = 0);
 
 /**
  * @brief          Calculate crc32
@@ -60,7 +60,7 @@ LIBATFRAME_UTILS_API uint32_t crc32(const unsigned char *s, size_t l, uint32_t i
  *
  * @return         crc32 result
  */
-LIBATFRAME_UTILS_API uint64_t crc64(const unsigned char *s, size_t l, uint64_t init_val = 0);
-LIBATFRAME_UTILS_NAMESPACE_END
+ATFRAMEWORK_UTILS_API uint64_t crc64(const unsigned char *s, size_t l, uint64_t init_val = 0);
+ATFRAMEWORK_UTILS_NAMESPACE_END
 
 #endif

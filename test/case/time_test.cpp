@@ -9,51 +9,50 @@
 #include "time/time_utility.h"
 
 CASE_TEST(time_test, global_offset) {
-  LIBATFRAME_UTILS_NAMESPACE_ID::time::time_utility::update();
-  time_t now = LIBATFRAME_UTILS_NAMESPACE_ID::time::time_utility::get_now();
+  atfw::util::time::time_utility::update();
+  time_t now = atfw::util::time::time_utility::get_now();
 
-  LIBATFRAME_UTILS_NAMESPACE_ID::time::time_utility::set_global_now_offset(
+  atfw::util::time::time_utility::set_global_now_offset(
       std::chrono::duration_cast<std::chrono::system_clock::duration>(std::chrono::seconds(5)));
-  CASE_EXPECT_EQ(now + 5, LIBATFRAME_UTILS_NAMESPACE_ID::time::time_utility::get_now());
+  CASE_EXPECT_EQ(now + 5, atfw::util::time::time_utility::get_now());
   CASE_EXPECT_EQ(std::chrono::duration_cast<std::chrono::system_clock::duration>(std::chrono::seconds(5)).count(),
-                 LIBATFRAME_UTILS_NAMESPACE_ID::time::time_utility::get_global_now_offset().count());
-  LIBATFRAME_UTILS_NAMESPACE_ID::time::time_utility::reset_global_now_offset();
-  CASE_EXPECT_EQ(now, LIBATFRAME_UTILS_NAMESPACE_ID::time::time_utility::get_now());
+                 atfw::util::time::time_utility::get_global_now_offset().count());
+  atfw::util::time::time_utility::reset_global_now_offset();
+  CASE_EXPECT_EQ(now, atfw::util::time::time_utility::get_now());
 }
 
 CASE_TEST(time_test, sys_now) {
-  LIBATFRAME_UTILS_NAMESPACE_ID::time::time_utility::update();
-  time_t now = LIBATFRAME_UTILS_NAMESPACE_ID::time::time_utility::get_now();
+  atfw::util::time::time_utility::update();
+  time_t now = atfw::util::time::time_utility::get_now();
 
-  LIBATFRAME_UTILS_NAMESPACE_ID::time::time_utility::set_global_now_offset(
+  atfw::util::time::time_utility::set_global_now_offset(
       std::chrono::duration_cast<std::chrono::system_clock::duration>(std::chrono::seconds(5)));
-  CASE_EXPECT_EQ(now + 5, LIBATFRAME_UTILS_NAMESPACE_ID::time::time_utility::get_now());
+  CASE_EXPECT_EQ(now + 5, atfw::util::time::time_utility::get_now());
   CASE_EXPECT_EQ(std::chrono::duration_cast<std::chrono::system_clock::duration>(std::chrono::seconds(5)).count(),
-                 LIBATFRAME_UTILS_NAMESPACE_ID::time::time_utility::get_global_now_offset().count());
+                 atfw::util::time::time_utility::get_global_now_offset().count());
 
-  CASE_EXPECT_EQ(now, LIBATFRAME_UTILS_NAMESPACE_ID::time::time_utility::get_sys_now());
+  CASE_EXPECT_EQ(now, atfw::util::time::time_utility::get_sys_now());
 
-  LIBATFRAME_UTILS_NAMESPACE_ID::time::time_utility::reset_global_now_offset();
-  CASE_EXPECT_EQ(now, LIBATFRAME_UTILS_NAMESPACE_ID::time::time_utility::get_now());
+  atfw::util::time::time_utility::reset_global_now_offset();
+  CASE_EXPECT_EQ(now, atfw::util::time::time_utility::get_now());
 }
 
 CASE_TEST(time_test, zone_offset) {
-  LIBATFRAME_UTILS_NAMESPACE_ID::time::time_utility::update();
-  time_t offset = LIBATFRAME_UTILS_NAMESPACE_ID::time::time_utility::get_sys_zone_offset() -
-                  5 * LIBATFRAME_UTILS_NAMESPACE_ID::time::time_utility::HOUR_SECONDS;
-  LIBATFRAME_UTILS_NAMESPACE_ID::time::time_utility::set_zone_offset(offset);
-  CASE_EXPECT_EQ(offset, LIBATFRAME_UTILS_NAMESPACE_ID::time::time_utility::get_zone_offset());
-  CASE_EXPECT_NE(offset, LIBATFRAME_UTILS_NAMESPACE_ID::time::time_utility::get_sys_zone_offset());
+  atfw::util::time::time_utility::update();
+  time_t offset =
+      atfw::util::time::time_utility::get_sys_zone_offset() - 5 * atfw::util::time::time_utility::HOUR_SECONDS;
+  atfw::util::time::time_utility::set_zone_offset(offset);
+  CASE_EXPECT_EQ(offset, atfw::util::time::time_utility::get_zone_offset());
+  CASE_EXPECT_NE(offset, atfw::util::time::time_utility::get_sys_zone_offset());
 
   // 恢复时区设置
-  LIBATFRAME_UTILS_NAMESPACE_ID::time::time_utility::set_zone_offset(
-      LIBATFRAME_UTILS_NAMESPACE_ID::time::time_utility::get_sys_zone_offset());
+  atfw::util::time::time_utility::set_zone_offset(atfw::util::time::time_utility::get_sys_zone_offset());
 }
 
 CASE_TEST(time_test, sys_zone_offset) {
-  LIBATFRAME_UTILS_NAMESPACE_ID::time::time_utility::update();
-  time_t offset = LIBATFRAME_UTILS_NAMESPACE_ID::time::time_utility::get_sys_zone_offset();
-  time_t now = LIBATFRAME_UTILS_NAMESPACE_ID::time::time_utility::get_sys_now();
+  atfw::util::time::time_utility::update();
+  time_t offset = atfw::util::time::time_utility::get_sys_zone_offset();
+  time_t now = atfw::util::time::time_utility::get_sys_now();
 
   tm local_tm, gmt_tm;
   time_t local_now = now;
@@ -73,18 +72,18 @@ CASE_TEST(time_test, today_offset) {
   using std::abs;
   struct tm tobj;
   time_t tnow, loffset, cnow;
-  LIBATFRAME_UTILS_NAMESPACE_ID::time::time_utility::update();
+  atfw::util::time::time_utility::update();
 
-  tnow = LIBATFRAME_UTILS_NAMESPACE_ID::time::time_utility::get_now();
+  tnow = atfw::util::time::time_utility::get_now();
   UTIL_STRFUNC_LOCALTIME_S(&tnow, &tobj);
-  loffset = tobj.tm_hour * LIBATFRAME_UTILS_NAMESPACE_ID::time::time_utility::HOUR_SECONDS +
-            tobj.tm_min * LIBATFRAME_UTILS_NAMESPACE_ID::time::time_utility::MINITE_SECONDS + tobj.tm_sec;
-  cnow = LIBATFRAME_UTILS_NAMESPACE_ID::time::time_utility::get_today_offset(loffset);
+  loffset = tobj.tm_hour * atfw::util::time::time_utility::HOUR_SECONDS +
+            tobj.tm_min * atfw::util::time::time_utility::MINITE_SECONDS + tobj.tm_sec;
+  cnow = atfw::util::time::time_utility::get_today_offset(loffset);
 
   // 只有闰秒误差，肯定在5秒以内
   // 容忍夏时令误差，所以要加一小时
-  time_t toff = (cnow + LIBATFRAME_UTILS_NAMESPACE_ID::time::time_utility::DAY_SECONDS - tnow) %
-                LIBATFRAME_UTILS_NAMESPACE_ID::time::time_utility::DAY_SECONDS;
+  time_t toff =
+      (cnow + atfw::util::time::time_utility::DAY_SECONDS - tnow) % atfw::util::time::time_utility::DAY_SECONDS;
   if (tobj.tm_isdst > 0) {
     CASE_EXPECT_LE(toff, 3605);
   } else {
@@ -95,8 +94,8 @@ CASE_TEST(time_test, today_offset) {
 CASE_TEST(time_test, is_same_day) {
   struct tm tobj;
   time_t lt, rt;
-  LIBATFRAME_UTILS_NAMESPACE_ID::time::time_utility::update();
-  lt = LIBATFRAME_UTILS_NAMESPACE_ID::time::time_utility::get_now();
+  atfw::util::time::time_utility::update();
+  lt = atfw::util::time::time_utility::get_now();
   UTIL_STRFUNC_LOCALTIME_S(&lt, &tobj);
 
   tobj.tm_isdst = 0;
@@ -105,30 +104,30 @@ CASE_TEST(time_test, is_same_day) {
   tobj.tm_sec = 5;
   lt = mktime(&tobj);
   rt = lt + 5;
-  CASE_EXPECT_TRUE(LIBATFRAME_UTILS_NAMESPACE_ID::time::time_utility::is_same_day(lt, rt));
+  CASE_EXPECT_TRUE(atfw::util::time::time_utility::is_same_day(lt, rt));
 
   tobj.tm_isdst = 0;
   tobj.tm_hour = 23;
   tobj.tm_min = 59;
   tobj.tm_sec = 55;
   rt = mktime(&tobj);
-  CASE_EXPECT_TRUE(LIBATFRAME_UTILS_NAMESPACE_ID::time::time_utility::is_same_day(lt, rt));
+  CASE_EXPECT_TRUE(atfw::util::time::time_utility::is_same_day(lt, rt));
 
   lt = rt - 5;
-  CASE_EXPECT_TRUE(LIBATFRAME_UTILS_NAMESPACE_ID::time::time_utility::is_same_day(lt, rt));
+  CASE_EXPECT_TRUE(atfw::util::time::time_utility::is_same_day(lt, rt));
   // 容忍夏时令误差
   lt = rt + 3610;
-  CASE_EXPECT_FALSE(LIBATFRAME_UTILS_NAMESPACE_ID::time::time_utility::is_same_day(lt, rt));
+  CASE_EXPECT_FALSE(atfw::util::time::time_utility::is_same_day(lt, rt));
 }
 
 CASE_TEST(time_test, is_same_day_with_offset) {
   struct tm tobj;
   time_t lt, rt;
   int zero_hore = 5;
-  time_t day_offset = zero_hore * LIBATFRAME_UTILS_NAMESPACE_ID::time::time_utility::HOUR_SECONDS;
+  time_t day_offset = zero_hore * atfw::util::time::time_utility::HOUR_SECONDS;
 
-  LIBATFRAME_UTILS_NAMESPACE_ID::time::time_utility::update();
-  lt = LIBATFRAME_UTILS_NAMESPACE_ID::time::time_utility::get_now();
+  atfw::util::time::time_utility::update();
+  lt = atfw::util::time::time_utility::get_now();
   UTIL_STRFUNC_LOCALTIME_S(&lt, &tobj);
 
   tobj.tm_isdst = 0;
@@ -137,22 +136,22 @@ CASE_TEST(time_test, is_same_day_with_offset) {
   tobj.tm_sec = 5;
   lt = mktime(&tobj);
   rt = lt + 5;
-  CASE_EXPECT_TRUE(LIBATFRAME_UTILS_NAMESPACE_ID::time::time_utility::is_same_day(lt, rt, day_offset));
+  CASE_EXPECT_TRUE(atfw::util::time::time_utility::is_same_day(lt, rt, day_offset));
 
   tobj.tm_isdst = 0;
   tobj.tm_hour = zero_hore - 1;
   tobj.tm_min = 59;
   tobj.tm_sec = 55;
   rt = mktime(&tobj);
-  CASE_EXPECT_FALSE(LIBATFRAME_UTILS_NAMESPACE_ID::time::time_utility::is_same_day(lt, rt, day_offset));
+  CASE_EXPECT_FALSE(atfw::util::time::time_utility::is_same_day(lt, rt, day_offset));
 }
 
 CASE_TEST(time_test, is_same_week) {
   struct tm tobj;
   time_t lt, rt, tnow;
 
-  LIBATFRAME_UTILS_NAMESPACE_ID::time::time_utility::update();
-  tnow = LIBATFRAME_UTILS_NAMESPACE_ID::time::time_utility::get_now();
+  atfw::util::time::time_utility::update();
+  tnow = atfw::util::time::time_utility::get_now();
   UTIL_STRFUNC_LOCALTIME_S(&tnow, &tobj);
 
   tobj.tm_isdst = 0;
@@ -160,21 +159,21 @@ CASE_TEST(time_test, is_same_week) {
   tobj.tm_min = 0;
   tobj.tm_sec = 5;
   lt = mktime(&tobj);
-  lt -= LIBATFRAME_UTILS_NAMESPACE_ID::time::time_utility::DAY_SECONDS * tobj.tm_wday;
-  rt = lt + LIBATFRAME_UTILS_NAMESPACE_ID::time::time_utility::WEEK_SECONDS;
-  CASE_EXPECT_FALSE(LIBATFRAME_UTILS_NAMESPACE_ID::time::time_utility::is_same_week(lt, rt));
+  lt -= atfw::util::time::time_utility::DAY_SECONDS * tobj.tm_wday;
+  rt = lt + atfw::util::time::time_utility::WEEK_SECONDS;
+  CASE_EXPECT_FALSE(atfw::util::time::time_utility::is_same_week(lt, rt));
 
   rt -= 10;
-  CASE_EXPECT_TRUE(LIBATFRAME_UTILS_NAMESPACE_ID::time::time_utility::is_same_week(lt, rt));
-  CASE_EXPECT_TRUE(LIBATFRAME_UTILS_NAMESPACE_ID::time::time_utility::is_same_week(lt, tnow));
+  CASE_EXPECT_TRUE(atfw::util::time::time_utility::is_same_week(lt, rt));
+  CASE_EXPECT_TRUE(atfw::util::time::time_utility::is_same_week(lt, tnow));
 }
 
 CASE_TEST(time_test, get_week_day) {
   struct tm tobj;
   time_t lt, rt, tnow;
 
-  LIBATFRAME_UTILS_NAMESPACE_ID::time::time_utility::update();
-  tnow = LIBATFRAME_UTILS_NAMESPACE_ID::time::time_utility::get_now();
+  atfw::util::time::time_utility::update();
+  tnow = atfw::util::time::time_utility::get_now();
   UTIL_STRFUNC_LOCALTIME_S(&tnow, &tobj);
 
   bool isdst = tobj.tm_isdst > 0;
@@ -194,14 +193,12 @@ CASE_TEST(time_test, get_week_day) {
   CASE_MSG_INFO() << "lt=" << lt << ",tnow=" << tnow << ",rt=" << rt << std::endl;
   // 夏时令会导致lt和rt可能提前一天
   if (isdst && lt > tnow + 5) {
-    lt -= LIBATFRAME_UTILS_NAMESPACE_ID::time::time_utility::DAY_SECONDS;
-    rt -= LIBATFRAME_UTILS_NAMESPACE_ID::time::time_utility::DAY_SECONDS;
+    lt -= atfw::util::time::time_utility::DAY_SECONDS;
+    rt -= atfw::util::time::time_utility::DAY_SECONDS;
   }
 
-  CASE_EXPECT_EQ(LIBATFRAME_UTILS_NAMESPACE_ID::time::time_utility::get_week_day(lt),
-                 LIBATFRAME_UTILS_NAMESPACE_ID::time::time_utility::get_week_day(tnow));
-  CASE_EXPECT_EQ(LIBATFRAME_UTILS_NAMESPACE_ID::time::time_utility::get_week_day(lt),
-                 LIBATFRAME_UTILS_NAMESPACE_ID::time::time_utility::get_week_day(rt));
+  CASE_EXPECT_EQ(atfw::util::time::time_utility::get_week_day(lt), atfw::util::time::time_utility::get_week_day(tnow));
+  CASE_EXPECT_EQ(atfw::util::time::time_utility::get_week_day(lt), atfw::util::time::time_utility::get_week_day(rt));
 }
 
 CASE_TEST(time_test, is_same_year) {
@@ -209,8 +206,8 @@ CASE_TEST(time_test, is_same_year) {
   struct tm tobj;
   time_t lt, rt, tnow;
 
-  LIBATFRAME_UTILS_NAMESPACE_ID::time::time_utility::update();
-  tnow = LIBATFRAME_UTILS_NAMESPACE_ID::time::time_utility::get_now();
+  atfw::util::time::time_utility::update();
+  tnow = atfw::util::time::time_utility::get_now();
   UTIL_STRFUNC_LOCALTIME_S(&tnow, &tobj);
 
   tobj.tm_mday = 1;
@@ -223,7 +220,7 @@ CASE_TEST(time_test, is_same_year) {
 
   tobj.tm_yday = 364;
   // 闰年多一天
-  if (LIBATFRAME_UTILS_NAMESPACE_ID::time::time_utility::is_leap_year(tobj.tm_year + 1900)) {
+  if (atfw::util::time::time_utility::is_leap_year(tobj.tm_year + 1900)) {
     ++tobj.tm_yday;
   }
   tobj.tm_mon = 11;
@@ -234,16 +231,16 @@ CASE_TEST(time_test, is_same_year) {
   tobj.tm_sec = 58;
   rt = mktime(&tobj);
 
-  CASE_EXPECT_TRUE(LIBATFRAME_UTILS_NAMESPACE_ID::time::time_utility::is_same_year(lt, rt));
-  CASE_EXPECT_FALSE(LIBATFRAME_UTILS_NAMESPACE_ID::time::time_utility::is_same_year(lt, rt + 3));
+  CASE_EXPECT_TRUE(atfw::util::time::time_utility::is_same_year(lt, rt));
+  CASE_EXPECT_FALSE(atfw::util::time::time_utility::is_same_year(lt, rt + 3));
 }
 
 CASE_TEST(time_test, get_year_day) {
   struct tm tobj;
   time_t lt, rt, tnow;
 
-  LIBATFRAME_UTILS_NAMESPACE_ID::time::time_utility::update();
-  tnow = LIBATFRAME_UTILS_NAMESPACE_ID::time::time_utility::get_now();
+  atfw::util::time::time_utility::update();
+  tnow = atfw::util::time::time_utility::get_now();
   UTIL_STRFUNC_LOCALTIME_S(&tnow, &tobj);
 
   tobj.tm_yday = 0;
@@ -257,7 +254,7 @@ CASE_TEST(time_test, get_year_day) {
 
   tobj.tm_yday = 364;
   // 闰年多一天
-  if (LIBATFRAME_UTILS_NAMESPACE_ID::time::time_utility::is_leap_year(tobj.tm_year + 1900)) {
+  if (atfw::util::time::time_utility::is_leap_year(tobj.tm_year + 1900)) {
     ++tobj.tm_yday;
   }
   tobj.tm_mon = 11;
@@ -268,17 +265,17 @@ CASE_TEST(time_test, get_year_day) {
   tobj.tm_sec = 58;
   rt = mktime(&tobj);
 
-  CASE_EXPECT_EQ(LIBATFRAME_UTILS_NAMESPACE_ID::time::time_utility::get_year_day(lt), 0);
-  CASE_EXPECT_EQ(LIBATFRAME_UTILS_NAMESPACE_ID::time::time_utility::get_year_day(rt), tobj.tm_yday);
-  CASE_EXPECT_EQ(LIBATFRAME_UTILS_NAMESPACE_ID::time::time_utility::get_year_day(rt + 3), 0);
+  CASE_EXPECT_EQ(atfw::util::time::time_utility::get_year_day(lt), 0);
+  CASE_EXPECT_EQ(atfw::util::time::time_utility::get_year_day(rt), tobj.tm_yday);
+  CASE_EXPECT_EQ(atfw::util::time::time_utility::get_year_day(rt + 3), 0);
 }
 
 CASE_TEST(time_test, is_same_month) {
   struct tm tobj;
   time_t lt, rt, tnow;
 
-  LIBATFRAME_UTILS_NAMESPACE_ID::time::time_utility::update();
-  tnow = LIBATFRAME_UTILS_NAMESPACE_ID::time::time_utility::get_now();
+  atfw::util::time::time_utility::update();
+  tnow = atfw::util::time::time_utility::get_now();
   UTIL_STRFUNC_LOCALTIME_S(&tnow, &tobj);
 
   tobj.tm_mon = 7;
@@ -297,16 +294,16 @@ CASE_TEST(time_test, is_same_month) {
   rt = mktime(&tobj);
 
   // nothing todo use libc now
-  CASE_EXPECT_TRUE(LIBATFRAME_UTILS_NAMESPACE_ID::time::time_utility::is_same_month(lt, rt));
-  CASE_EXPECT_FALSE(LIBATFRAME_UTILS_NAMESPACE_ID::time::time_utility::is_same_month(lt, rt + 3));
+  CASE_EXPECT_TRUE(atfw::util::time::time_utility::is_same_month(lt, rt));
+  CASE_EXPECT_FALSE(atfw::util::time::time_utility::is_same_month(lt, rt + 3));
 }
 
 CASE_TEST(time_test, get_month_day) {
   struct tm tobj;
   time_t lt, rt, tnow;
 
-  LIBATFRAME_UTILS_NAMESPACE_ID::time::time_utility::update();
-  tnow = LIBATFRAME_UTILS_NAMESPACE_ID::time::time_utility::get_now();
+  atfw::util::time::time_utility::update();
+  tnow = atfw::util::time::time_utility::get_now();
   UTIL_STRFUNC_LOCALTIME_S(&tnow, &tobj);
 
   tobj.tm_mday = 1;
@@ -322,12 +319,11 @@ CASE_TEST(time_test, get_month_day) {
   tobj.tm_sec = 58;
   rt = mktime(&tobj);
 
-  CASE_EXPECT_EQ(LIBATFRAME_UTILS_NAMESPACE_ID::time::time_utility::get_month_day(lt),
-                 LIBATFRAME_UTILS_NAMESPACE_ID::time::time_utility::get_month_day(rt));
-  CASE_EXPECT_NE(LIBATFRAME_UTILS_NAMESPACE_ID::time::time_utility::get_month_day(lt),
-                 LIBATFRAME_UTILS_NAMESPACE_ID::time::time_utility::get_month_day(rt + 3));
-  CASE_EXPECT_EQ(1, LIBATFRAME_UTILS_NAMESPACE_ID::time::time_utility::get_month_day(rt));
-  CASE_EXPECT_EQ(2, LIBATFRAME_UTILS_NAMESPACE_ID::time::time_utility::get_month_day(rt + 3));
+  CASE_EXPECT_EQ(atfw::util::time::time_utility::get_month_day(lt), atfw::util::time::time_utility::get_month_day(rt));
+  CASE_EXPECT_NE(atfw::util::time::time_utility::get_month_day(lt),
+                 atfw::util::time::time_utility::get_month_day(rt + 3));
+  CASE_EXPECT_EQ(1, atfw::util::time::time_utility::get_month_day(rt));
+  CASE_EXPECT_EQ(2, atfw::util::time::time_utility::get_month_day(rt + 3));
 
   tobj.tm_mon = 7;
   tobj.tm_mday = 31;
@@ -343,55 +339,53 @@ CASE_TEST(time_test, get_month_day) {
   tobj.tm_sec = 58;
   rt = mktime(&tobj);
 
-  CASE_EXPECT_EQ(LIBATFRAME_UTILS_NAMESPACE_ID::time::time_utility::get_month_day(lt),
-                 LIBATFRAME_UTILS_NAMESPACE_ID::time::time_utility::get_month_day(rt));
-  CASE_EXPECT_NE(LIBATFRAME_UTILS_NAMESPACE_ID::time::time_utility::get_month_day(lt),
-                 LIBATFRAME_UTILS_NAMESPACE_ID::time::time_utility::get_month_day(rt + 3));
-  CASE_EXPECT_EQ(31, LIBATFRAME_UTILS_NAMESPACE_ID::time::time_utility::get_month_day(rt));
-  CASE_EXPECT_EQ(1, LIBATFRAME_UTILS_NAMESPACE_ID::time::time_utility::get_month_day(rt + 3));
+  CASE_EXPECT_EQ(atfw::util::time::time_utility::get_month_day(lt), atfw::util::time::time_utility::get_month_day(rt));
+  CASE_EXPECT_NE(atfw::util::time::time_utility::get_month_day(lt),
+                 atfw::util::time::time_utility::get_month_day(rt + 3));
+  CASE_EXPECT_EQ(31, atfw::util::time::time_utility::get_month_day(rt));
+  CASE_EXPECT_EQ(1, atfw::util::time::time_utility::get_month_day(rt + 3));
 }
 
 CASE_TEST(time_test, get_day_start_time) {
   time_t lt, rt, tnow;
-  tnow = LIBATFRAME_UTILS_NAMESPACE_ID::time::time_utility::get_now();
-  lt = LIBATFRAME_UTILS_NAMESPACE_ID::time::time_utility::get_day_start_time(tnow);
-  rt = lt + LIBATFRAME_UTILS_NAMESPACE_ID::time::time_utility::DAY_SECONDS;
+  tnow = atfw::util::time::time_utility::get_now();
+  lt = atfw::util::time::time_utility::get_day_start_time(tnow);
+  rt = lt + atfw::util::time::time_utility::DAY_SECONDS;
 
-  CASE_EXPECT_TRUE(LIBATFRAME_UTILS_NAMESPACE_ID::time::time_utility::is_same_day(lt, tnow));
-  CASE_EXPECT_TRUE(LIBATFRAME_UTILS_NAMESPACE_ID::time::time_utility::is_same_day(lt, lt + 1));
-  CASE_EXPECT_FALSE(LIBATFRAME_UTILS_NAMESPACE_ID::time::time_utility::is_same_day(lt, lt - 1));
-  CASE_EXPECT_FALSE(LIBATFRAME_UTILS_NAMESPACE_ID::time::time_utility::is_same_day(lt, rt));
-  CASE_EXPECT_TRUE(LIBATFRAME_UTILS_NAMESPACE_ID::time::time_utility::is_same_day(lt, rt - 1));
+  CASE_EXPECT_TRUE(atfw::util::time::time_utility::is_same_day(lt, tnow));
+  CASE_EXPECT_TRUE(atfw::util::time::time_utility::is_same_day(lt, lt + 1));
+  CASE_EXPECT_FALSE(atfw::util::time::time_utility::is_same_day(lt, lt - 1));
+  CASE_EXPECT_FALSE(atfw::util::time::time_utility::is_same_day(lt, rt));
+  CASE_EXPECT_TRUE(atfw::util::time::time_utility::is_same_day(lt, rt - 1));
 }
 
 CASE_TEST(time_test, get_week_start_time) {
   time_t lt, rt, tnow;
-  tnow = LIBATFRAME_UTILS_NAMESPACE_ID::time::time_utility::get_now();
-  lt = LIBATFRAME_UTILS_NAMESPACE_ID::time::time_utility::get_week_start_time(tnow, 1);
-  rt = lt + LIBATFRAME_UTILS_NAMESPACE_ID::time::time_utility::WEEK_SECONDS;
+  tnow = atfw::util::time::time_utility::get_now();
+  lt = atfw::util::time::time_utility::get_week_start_time(tnow, 1);
+  rt = lt + atfw::util::time::time_utility::WEEK_SECONDS;
 
-  CASE_EXPECT_TRUE(LIBATFRAME_UTILS_NAMESPACE_ID::time::time_utility::is_same_week(lt, tnow, 1));
-  CASE_EXPECT_TRUE(LIBATFRAME_UTILS_NAMESPACE_ID::time::time_utility::is_same_week(lt, lt + 1, 1));
-  CASE_EXPECT_FALSE(LIBATFRAME_UTILS_NAMESPACE_ID::time::time_utility::is_same_week(lt, lt - 1, 1));
-  CASE_EXPECT_FALSE(LIBATFRAME_UTILS_NAMESPACE_ID::time::time_utility::is_same_week(lt, rt, 1));
-  CASE_EXPECT_TRUE(LIBATFRAME_UTILS_NAMESPACE_ID::time::time_utility::is_same_week(lt, rt - 1, 1));
+  CASE_EXPECT_TRUE(atfw::util::time::time_utility::is_same_week(lt, tnow, 1));
+  CASE_EXPECT_TRUE(atfw::util::time::time_utility::is_same_week(lt, lt + 1, 1));
+  CASE_EXPECT_FALSE(atfw::util::time::time_utility::is_same_week(lt, lt - 1, 1));
+  CASE_EXPECT_FALSE(atfw::util::time::time_utility::is_same_week(lt, rt, 1));
+  CASE_EXPECT_TRUE(atfw::util::time::time_utility::is_same_week(lt, rt - 1, 1));
 }
 
 CASE_TEST(time_test, get_month_start_time) {
   time_t lt, rt, tnow;
-  tnow = LIBATFRAME_UTILS_NAMESPACE_ID::time::time_utility::get_now();
-  lt = LIBATFRAME_UTILS_NAMESPACE_ID::time::time_utility::get_month_start_time(tnow);
-  rt = LIBATFRAME_UTILS_NAMESPACE_ID::time::time_utility::get_month_start_time(
-      lt + 32 * LIBATFRAME_UTILS_NAMESPACE_ID::time::time_utility::DAY_SECONDS);
+  tnow = atfw::util::time::time_utility::get_now();
+  lt = atfw::util::time::time_utility::get_month_start_time(tnow);
+  rt = atfw::util::time::time_utility::get_month_start_time(lt + 32 * atfw::util::time::time_utility::DAY_SECONDS);
 
-  CASE_EXPECT_TRUE(LIBATFRAME_UTILS_NAMESPACE_ID::time::time_utility::is_same_month(lt, tnow));
-  CASE_EXPECT_TRUE(LIBATFRAME_UTILS_NAMESPACE_ID::time::time_utility::is_same_month(lt, lt + 1));
-  CASE_EXPECT_FALSE(LIBATFRAME_UTILS_NAMESPACE_ID::time::time_utility::is_same_month(lt, lt - 1));
-  CASE_EXPECT_FALSE(LIBATFRAME_UTILS_NAMESPACE_ID::time::time_utility::is_same_month(lt, rt));
-  CASE_EXPECT_TRUE(LIBATFRAME_UTILS_NAMESPACE_ID::time::time_utility::is_same_month(lt, rt - 1));
+  CASE_EXPECT_TRUE(atfw::util::time::time_utility::is_same_month(lt, tnow));
+  CASE_EXPECT_TRUE(atfw::util::time::time_utility::is_same_month(lt, lt + 1));
+  CASE_EXPECT_FALSE(atfw::util::time::time_utility::is_same_month(lt, lt - 1));
+  CASE_EXPECT_FALSE(atfw::util::time::time_utility::is_same_month(lt, rt));
+  CASE_EXPECT_TRUE(atfw::util::time::time_utility::is_same_month(lt, rt - 1));
 }
 
-using short_timer_t = LIBATFRAME_UTILS_NAMESPACE_ID::time::jiffies_timer<6, 3, 4>;
+using short_timer_t = atfw::util::time::jiffies_timer<6, 3, 4>;
 struct jiffies_timer_fn {
   void *check_priv_data;
   jiffies_timer_fn(void *pd) : check_priv_data(pd) {}
@@ -736,7 +730,7 @@ CASE_TEST(time_test, jiffies_timer_keep_order) {
   CASE_EXPECT_EQ(0, static_cast<int>(short_timer.size()));
 }
 
-using default_timer_t = LIBATFRAME_UTILS_NAMESPACE_ID::time::jiffies_timer<6, 3, 8>;
+using default_timer_t = atfw::util::time::jiffies_timer<6, 3, 8>;
 struct jiffies_default_timer_keep_order_fn {
   jiffies_default_timer_keep_order_fn() {}
 

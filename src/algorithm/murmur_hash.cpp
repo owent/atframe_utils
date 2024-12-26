@@ -70,13 +70,13 @@ FORCE_INLINE uint64_t fmix64(uint64_t k) {
 
 //-----------------------------------------------------------------------------
 
-LIBATFRAME_UTILS_NAMESPACE_BEGIN
+ATFRAMEWORK_UTILS_NAMESPACE_BEGIN
 namespace hash {
 
 // ===================== MurmurHash2 =====================
 //-----------------------------------------------------------------------------
 
-LIBATFRAME_UTILS_API uint32_t murmur_hash2(const void *key, int len, uint32_t seed) {
+ATFRAMEWORK_UTILS_API uint32_t murmur_hash2(const void *key, int len, uint32_t seed) {
   // 'm' and 'r' are mixing constants generated offline.
   // They're not really 'magic', they just happen to work well.
 
@@ -137,7 +137,7 @@ LIBATFRAME_UTILS_API uint32_t murmur_hash2(const void *key, int len, uint32_t se
 
 // 64-bit hash for 64-bit platforms
 
-LIBATFRAME_UTILS_API uint64_t murmur_hash2_64a(const void *key, int len, uint64_t seed) {
+ATFRAMEWORK_UTILS_API uint64_t murmur_hash2_64a(const void *key, int len, uint64_t seed) {
   const uint64_t m = BIG_CONSTANT(0xc6a4a7935bd1e995);
   const int r = 47;
 
@@ -192,7 +192,7 @@ LIBATFRAME_UTILS_API uint64_t murmur_hash2_64a(const void *key, int len, uint64_
 
 // 64-bit hash for 32-bit platforms
 
-LIBATFRAME_UTILS_API uint64_t murmur_hash2_64b(const void *key, int len, uint64_t seed) {
+ATFRAMEWORK_UTILS_API uint64_t murmur_hash2_64b(const void *key, int len, uint64_t seed) {
   const uint32_t m = 0x5bd1e995;
   const int r = 24;
 
@@ -258,7 +258,7 @@ LIBATFRAME_UTILS_API uint64_t murmur_hash2_64b(const void *key, int len, uint64_
 }
 
 // ===================== MurmurHash3 =====================
-LIBATFRAME_UTILS_API uint32_t murmur_hash3_x86_32(const void *key, int len, uint32_t seed) {
+ATFRAMEWORK_UTILS_API uint32_t murmur_hash3_x86_32(const void *key, int len, uint32_t seed) {
   const uint8_t *data = (const uint8_t *)key;
   const int nblocks = len / 4;
 
@@ -318,7 +318,7 @@ LIBATFRAME_UTILS_API uint32_t murmur_hash3_x86_32(const void *key, int len, uint
 
 //-----------------------------------------------------------------------------
 
-LIBATFRAME_UTILS_API void murmur_hash3_x86_128(const void *key, const int len, uint32_t seed, uint32_t out[4]) {
+ATFRAMEWORK_UTILS_API void murmur_hash3_x86_128(const void *key, const int len, uint32_t seed, uint32_t out[4]) {
   const uint8_t *data = (const uint8_t *)key;
   const int nblocks = len / 16;
 
@@ -488,7 +488,7 @@ LIBATFRAME_UTILS_API void murmur_hash3_x86_128(const void *key, const int len, u
 
 //-----------------------------------------------------------------------------
 
-LIBATFRAME_UTILS_API void murmur_hash3_x64_128(const void *key, const int len, const uint32_t seed, uint64_t out[2]) {
+ATFRAMEWORK_UTILS_API void murmur_hash3_x64_128(const void *key, const int len, const uint32_t seed, uint64_t out[2]) {
   const uint8_t *data = (const uint8_t *)key;
   const int nblocks = len / 16;
 
@@ -610,4 +610,4 @@ LIBATFRAME_UTILS_API void murmur_hash3_x64_128(const void *key, const int len, c
 
 //-----------------------------------------------------------------------------
 }  // namespace hash
-LIBATFRAME_UTILS_NAMESPACE_END
+ATFRAMEWORK_UTILS_NAMESPACE_END

@@ -9,7 +9,7 @@
 
 #include "config/atframe_utils_build_feature.h"
 
-#if defined(LOG_WRAPPER_ENABLE_LUA_SUPPORT) && LOG_WRAPPER_ENABLE_LUA_SUPPORT
+#if defined(ATFRAMEWORK_UTILS_LOG_ENABLE_LUA_SUPPORT) && ATFRAMEWORK_UTILS_LOG_ENABLE_LUA_SUPPORT
 
 #  ifdef __cplusplus
 extern "C" {
@@ -18,7 +18,7 @@ extern "C" {
 #  include "lauxlib.h"
 #  include "lua.h"
 
-LIBATFRAME_UTILS_API int lua_log_adaptor_openLib(lua_State *L);
+ATFRAMEWORK_UTILS_API int lua_log_adaptor_openLib(lua_State *L);
 
 #  ifdef __cplusplus
 }

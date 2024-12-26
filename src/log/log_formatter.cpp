@@ -13,7 +13,7 @@
 
 #include "log/log_formatter.h"
 
-LIBATFRAME_UTILS_NAMESPACE_BEGIN
+ATFRAMEWORK_UTILS_NAMESPACE_BEGIN
 namespace log {
 namespace detail {
 UTIL_SANITIZER_NO_THREAD static const char *log_formatter_get_level_name(int l) {
@@ -39,23 +39,23 @@ UTIL_SANITIZER_NO_THREAD static const char *log_formatter_get_level_name(int l) 
 
 std::string log_formatter::project_dir_;
 
-LIBATFRAME_UTILS_API bool log_formatter::check_flag(int32_t flags, int32_t checked) {
+ATFRAMEWORK_UTILS_API bool log_formatter::check_flag(int32_t flags, int32_t checked) {
   return (flags & checked) == checked;
 }
 
-LIBATFRAME_UTILS_API struct tm *log_formatter::get_iso_tm() {
+ATFRAMEWORK_UTILS_API struct tm *log_formatter::get_iso_tm() {
   static THREAD_TLS time_t tm_tp = 0;
   static THREAD_TLS struct tm tm_obj;
-  if (tm_tp != LIBATFRAME_UTILS_NAMESPACE_ID::time::time_utility::get_sys_now()) {
-    tm_tp = LIBATFRAME_UTILS_NAMESPACE_ID::time::time_utility::get_sys_now();
+  if (tm_tp != ATFRAMEWORK_UTILS_NAMESPACE_ID::time::time_utility::get_sys_now()) {
+    tm_tp = ATFRAMEWORK_UTILS_NAMESPACE_ID::time::time_utility::get_sys_now();
     UTIL_STRFUNC_LOCALTIME_S(&tm_tp, &tm_obj);  // lgtm [cpp/potentially-dangerous-function]
   }
 
   return &tm_obj;
 }
 
-LIBATFRAME_UTILS_API size_t log_formatter::format(char *buff, size_t bufz, const char *fmt, size_t fmtz,
-                                                  const caller_info_t &caller) {
+ATFRAMEWORK_UTILS_API size_t log_formatter::format(char *buff, size_t bufz, const char *fmt, size_t fmtz,
+                                                   const caller_info_t &caller) {
   if (nullptr == buff || 0 == bufz) {
     return 0;
   }
@@ -258,7 +258,7 @@ LIBATFRAME_UTILS_API size_t log_formatter::format(char *buff, size_t bufz, const
         if (bufz - ret < 1) {
           running = false;
         } else {
-          time_t ms = LIBATFRAME_UTILS_NAMESPACE_ID::time::time_utility::get_now_usec() / 10;
+          time_t ms = ATFRAMEWORK_UTILS_NAMESPACE_ID::time::time_utility::get_now_usec() / 10;
           if (bufz - ret >= 1) {
             buff[ret++] = static_cast<char>(ms / 10000 + '0');
           }
@@ -401,7 +401,7 @@ LIBATFRAME_UTILS_API size_t log_formatter::format(char *buff, size_t bufz, const
   return ret;
 }
 
-LIBATFRAME_UTILS_API bool log_formatter::check_rotation_var(const char *fmt, size_t fmtz) {
+ATFRAMEWORK_UTILS_API bool log_formatter::check_rotation_var(const char *fmt, size_t fmtz) {
   for (size_t i = 0; fmt && i < fmtz - 1; ++i) {
     if ('%' == fmt[i] && 'N' == fmt[i + 1]) {
       return true;
@@ -411,7 +411,7 @@ LIBATFRAME_UTILS_API bool log_formatter::check_rotation_var(const char *fmt, siz
   return false;
 }
 
-LIBATFRAME_UTILS_API bool log_formatter::has_format(const char *fmt, size_t fmtz) {
+ATFRAMEWORK_UTILS_API bool log_formatter::has_format(const char *fmt, size_t fmtz) {
   for (size_t i = 0; fmt && i < fmtz - 1; ++i) {
     if ('%' == fmt[i]) {
       return true;
@@ -421,8 +421,8 @@ LIBATFRAME_UTILS_API bool log_formatter::has_format(const char *fmt, size_t fmtz
   return false;
 }
 
-LIBATFRAME_UTILS_API UTIL_SANITIZER_NO_THREAD void log_formatter::set_project_directory(const char *dirbuf,
-                                                                                        size_t dirsz) {
+ATFRAMEWORK_UTILS_API UTIL_SANITIZER_NO_THREAD void log_formatter::set_project_directory(const char *dirbuf,
+                                                                                         size_t dirsz) {
   if (nullptr == dirbuf) {
     project_dir_.clear();
   } else if (dirsz <= 0) {
@@ -432,14 +432,14 @@ LIBATFRAME_UTILS_API UTIL_SANITIZER_NO_THREAD void log_formatter::set_project_di
   }
 }
 
-LIBATFRAME_UTILS_API log_formatter::level_t::type log_formatter::get_level_by_name(gsl::string_view name) {
+ATFRAMEWORK_UTILS_API log_formatter::level_t::type log_formatter::get_level_by_name(gsl::string_view name) {
   if (name.empty()) {
     return level_t::LOG_LW_DEBUG;
   }
 
   // number, directly convert it
   if (name[0] == '\\' || (name[0] >= '0' && name[0] <= '9')) {
-    int l = LIBATFRAME_UTILS_NAMESPACE_ID::string::to_int<int>(name);
+    int l = ATFRAMEWORK_UTILS_NAMESPACE_ID::string::to_int<int>(name);
     if (l >= 0 && l <= level_t::LOG_LW_DEBUG) {
       return static_cast<level_t::type>(l);
     }
@@ -485,4 +485,4 @@ LIBATFRAME_UTILS_API log_formatter::level_t::type log_formatter::get_level_by_na
 }
 
 }  // namespace log
-LIBATFRAME_UTILS_NAMESPACE_END
+ATFRAMEWORK_UTILS_NAMESPACE_END

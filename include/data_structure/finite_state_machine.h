@@ -15,7 +15,7 @@
 #include <map>
 #include <memory>
 
-LIBATFRAME_UTILS_NAMESPACE_BEGIN
+ATFRAMEWORK_UTILS_NAMESPACE_BEGIN
 namespace ds {
 
 /**
@@ -23,7 +23,7 @@ namespace ds {
  * @brief 必须有0状态
  */
 template <typename T, typename... TParams>
-class LIBATFRAME_UTILS_API_HEAD_ONLY finite_state_machine {
+class ATFRAMEWORK_UTILS_API_HEAD_ONLY finite_state_machine {
  public:
   using key_type = T;
   using value_type = std::function<void(key_type, key_type, TParams...)>;
@@ -219,4 +219,4 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY finite_state_machine {
   std::shared_ptr<listener_set_type> enter_to_listener_;
 };
 }  // namespace ds
-LIBATFRAME_UTILS_NAMESPACE_END
+ATFRAMEWORK_UTILS_NAMESPACE_END

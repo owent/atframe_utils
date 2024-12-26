@@ -33,7 +33,7 @@
 #endif
 
 CASE_TEST(ac_automation, basic) {
-  LIBATFRAME_UTILS_NAMESPACE_ID::string::ac_automation<> actree;
+  atfw::util::string::ac_automation<> actree;
 
   actree.insert_keyword("acd");
   actree.insert_keyword("aceb");
@@ -41,7 +41,7 @@ CASE_TEST(ac_automation, basic) {
   actree.insert_keyword("cef");
   actree.insert_keyword("ef");
 
-  LIBATFRAME_UTILS_NAMESPACE_ID::string::ac_automation<>::value_type res = actree.match("acefcabefefefcevfefbc");
+  atfw::util::string::ac_automation<>::value_type res = actree.match("acefcabefefefcevfefbc");
 
   CASE_EXPECT_EQ(5, res.size());
   if (!res.empty()) {
@@ -59,7 +59,7 @@ CASE_TEST(ac_automation, basic) {
 }
 
 CASE_TEST(ac_automation, failed) {
-  LIBATFRAME_UTILS_NAMESPACE_ID::string::ac_automation<> actree;
+  atfw::util::string::ac_automation<> actree;
 
   actree.insert_keyword("acd");
   actree.insert_keyword("aceb");
@@ -67,13 +67,13 @@ CASE_TEST(ac_automation, failed) {
   actree.insert_keyword("cef");
   actree.insert_keyword("ef");
 
-  LIBATFRAME_UTILS_NAMESPACE_ID::string::ac_automation<>::value_type res = actree.match("lolololnmmnmuiyt");
+  atfw::util::string::ac_automation<>::value_type res = actree.match("lolololnmmnmuiyt");
 
   CASE_EXPECT_EQ(0, res.size());
 }
 
 CASE_TEST(ac_automation, skip_space) {
-  LIBATFRAME_UTILS_NAMESPACE_ID::string::ac_automation<> actree;
+  atfw::util::string::ac_automation<> actree;
 
   actree.insert_keyword("acd");
   actree.insert_keyword("aceb");
@@ -82,8 +82,7 @@ CASE_TEST(ac_automation, skip_space) {
   actree.insert_keyword("ef");
   actree.set_skip(' ');
 
-  LIBATFRAME_UTILS_NAMESPACE_ID::string::ac_automation<>::value_type res =
-      actree.match("ac  efca   b   e f efefcevfefbc");
+  atfw::util::string::ac_automation<>::value_type res = actree.match("ac  efca   b   e f efefcevfefbc");
 
   CASE_EXPECT_EQ(5, res.size());
   if (!res.empty()) {
@@ -97,11 +96,11 @@ CASE_TEST(ac_automation, skip_space) {
 }
 
 CASE_TEST(ac_automation, match_char) {
-  LIBATFRAME_UTILS_NAMESPACE_ID::string::ac_automation<> actree;
+  atfw::util::string::ac_automation<> actree;
 
   actree.insert_keyword("a");
 
-  LIBATFRAME_UTILS_NAMESPACE_ID::string::ac_automation<>::value_type res = actree.match(" aaa");
+  atfw::util::string::ac_automation<>::value_type res = actree.match(" aaa");
 
   CASE_EXPECT_EQ(3, res.size());
 
@@ -116,7 +115,7 @@ CASE_TEST(ac_automation, match_char) {
 }
 
 CASE_TEST(ac_automation, prefix) {
-  LIBATFRAME_UTILS_NAMESPACE_ID::string::ac_automation<> actree;
+  atfw::util::string::ac_automation<> actree;
 
   actree.insert_keyword("cb");
   actree.insert_keyword("abc");
@@ -124,7 +123,7 @@ CASE_TEST(ac_automation, prefix) {
   actree.set_skip(' ');
   actree.set_skip('\n');
 
-  LIBATFRAME_UTILS_NAMESPACE_ID::string::ac_automation<>::value_type res = actree.match("ca b\ncd");
+  atfw::util::string::ac_automation<>::value_type res = actree.match("ca b\ncd");
 
   CASE_EXPECT_EQ(1, res.size());
   if (!res.empty()) {
@@ -134,7 +133,7 @@ CASE_TEST(ac_automation, prefix) {
 }
 
 CASE_TEST(ac_automation, skip) {
-  LIBATFRAME_UTILS_NAMESPACE_ID::string::ac_automation<> actree;
+  atfw::util::string::ac_automation<> actree;
 
   actree.insert_keyword(U8_LITERALS("艹"));
   actree.insert_keyword(U8_LITERALS("测试脏字"));
@@ -146,7 +145,7 @@ CASE_TEST(ac_automation, skip) {
   actree.set_skip('\n');
 
   std::string input = "小册老艹，我干死试测  试脏测  试脏\r\n字艹 试脏";
-  LIBATFRAME_UTILS_NAMESPACE_ID::string::ac_automation<>::value_type res = actree.match(input);
+  atfw::util::string::ac_automation<>::value_type res = actree.match(input);
 
 // CI may not support this encoding
 #ifndef _MSC_VER
@@ -169,7 +168,7 @@ CASE_TEST(ac_automation, skip) {
 }
 
 CASE_TEST(ac_automation, dump_dot) {
-  LIBATFRAME_UTILS_NAMESPACE_ID::string::ac_automation<LIBATFRAME_UTILS_NAMESPACE_ID::string::utf8_char_t> actree;
+  atfw::util::string::ac_automation<atfw::util::string::utf8_char_t> actree;
 
   actree.insert_keyword(U8_LITERALS("艹"));
   actree.insert_keyword(U8_LITERALS("测试脏字"));
@@ -193,9 +192,9 @@ CASE_TEST(ac_automation, dump_dot) {
 }
 
 CASE_TEST(ac_automation, load_and_dump) {
-  LIBATFRAME_UTILS_NAMESPACE_ID::string::ac_automation<LIBATFRAME_UTILS_NAMESPACE_ID::string::utf8_char_t> actree;
+  atfw::util::string::ac_automation<atfw::util::string::utf8_char_t> actree;
 
-  if (false == LIBATFRAME_UTILS_NAMESPACE_ID::file_system::is_exist("ac_automation.in.txt")) {
+  if (false == atfw::util::file_system::is_exist("ac_automation.in.txt")) {
     return;
   }
 

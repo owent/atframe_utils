@@ -14,9 +14,9 @@
 
 #if (!defined(__cplusplus) && !defined(_MSVC_LANG)) || \
     !((defined(__cplusplus) && __cplusplus >= 202002L) || (defined(_MSVC_LANG) && _MSVC_LANG >= 202002L))
-#  define LIBATFRAME_UTILS_MEMORY_ALLOCATOR_CONSTEXPR
+#  define ATFRAMEWORK_UTILS_MEMORY_ALLOCATOR_CONSTEXPR
 #else
-#  define LIBATFRAME_UTILS_MEMORY_ALLOCATOR_CONSTEXPR constexpr
+#  define ATFRAMEWORK_UTILS_MEMORY_ALLOCATOR_CONSTEXPR constexpr
 #endif
 
 #if defined(_MSC_VER)
@@ -35,7 +35,7 @@
 #  pragma clang diagnostic ignored "-Wdeprecated"
 #endif
 
-LIBATFRAME_UTILS_NAMESPACE_BEGIN
+ATFRAMEWORK_UTILS_NAMESPACE_BEGIN
 namespace memory {
 
 #if ((defined(__cplusplus) && __cplusplus >= 201703L) || (defined(_MSVC_LANG) && _MSVC_LANG >= 201703L))
@@ -222,7 +222,7 @@ struct UTIL_SYMBOL_VISIBLE allocator_traits {
   template <typename U>
   using rebind_traits = allocator_traits<rebind_alloc<U>>;
 
-  EXPLICIT_NODISCARD_ATTR UTIL_SYMBOL_VISIBLE inline static LIBATFRAME_UTILS_MEMORY_ALLOCATOR_CONSTEXPR pointer
+  EXPLICIT_NODISCARD_ATTR UTIL_SYMBOL_VISIBLE inline static ATFRAMEWORK_UTILS_MEMORY_ALLOCATOR_CONSTEXPR pointer
   allocate(allocator_type& a, size_type n) {
     return a.allocate(n);
   }
@@ -230,8 +230,8 @@ struct UTIL_SYMBOL_VISIBLE allocator_traits {
  private:
   // allocate
   template <typename AllocOther>
-  UTIL_SYMBOL_VISIBLE inline static auto _S_allocate(AllocOther& __a, size_type __n, const_void_pointer __hint,
-                                                     int) -> decltype(__a.allocate(__n, __hint)) {
+  UTIL_SYMBOL_VISIBLE inline static auto _S_allocate(AllocOther& __a, size_type __n, const_void_pointer __hint, int)
+      -> decltype(__a.allocate(__n, __hint)) {
     return __a.allocate(__n, __hint);
   }
 
@@ -255,17 +255,18 @@ struct UTIL_SYMBOL_VISIBLE allocator_traits {
   };
 
   template <typename U, typename... _Args>
-  UTIL_SYMBOL_VISIBLE inline static LIBATFRAME_UTILS_MEMORY_ALLOCATOR_CONSTEXPR
-      util::nostd::enable_if_t<__construct_helper<U, _Args...>::value, void>
+  UTIL_SYMBOL_VISIBLE inline static ATFRAMEWORK_UTILS_MEMORY_ALLOCATOR_CONSTEXPR
+      ATFRAMEWORK_UTILS_NAMESPACE_ID::nostd::enable_if_t<__construct_helper<U, _Args...>::value, void>
       _S_construct(allocator_type& __a, U* __p,
                    _Args&&... __args) noexcept(noexcept(__a.construct(__p, std::forward<_Args>(__args)...))) {
     __a.construct(__p, std::forward<_Args>(__args)...);
   }
 
   template <typename U, typename... _Args>
-  UTIL_SYMBOL_VISIBLE inline static LIBATFRAME_UTILS_MEMORY_ALLOCATOR_CONSTEXPR util::nostd::enable_if_t<
-      !__construct_helper<U, _Args...>::value && ::std::is_constructible<U, _Args...>::value, void>
-  _S_construct(allocator_type&, U* __p, _Args&&... __args) noexcept(std::is_nothrow_constructible<U, _Args...>::value) {
+  UTIL_SYMBOL_VISIBLE inline static ATFRAMEWORK_UTILS_MEMORY_ALLOCATOR_CONSTEXPR ATFRAMEWORK_UTILS_NAMESPACE_ID::nostd::
+      enable_if_t<!__construct_helper<U, _Args...>::value && ::std::is_constructible<U, _Args...>::value, void>
+      _S_construct(allocator_type&, U* __p,
+                   _Args&&... __args) noexcept(std::is_nothrow_constructible<U, _Args...>::value) {
 #if ((defined(__cplusplus) && __cplusplus >= 202002L) || (defined(_MSVC_LANG) && _MSVC_LANG >= 202002L))
     ::std::construct_at(__p, std::forward<_Args>(__args)...);
 #else
@@ -275,13 +276,13 @@ struct UTIL_SYMBOL_VISIBLE allocator_traits {
 
   // destroy
   template <typename AllocatorOther, typename U>
-  UTIL_SYMBOL_VISIBLE inline static LIBATFRAME_UTILS_MEMORY_ALLOCATOR_CONSTEXPR auto _S_destroy(
+  UTIL_SYMBOL_VISIBLE inline static ATFRAMEWORK_UTILS_MEMORY_ALLOCATOR_CONSTEXPR auto _S_destroy(
       AllocatorOther& __a, U* __p, int) noexcept(noexcept(__a.destroy(__p))) -> decltype(__a.destroy(__p)) {
     __a.destroy(__p);
   }
 
   template <typename AllocatorOther, typename U>
-  UTIL_SYMBOL_VISIBLE inline static LIBATFRAME_UTILS_MEMORY_ALLOCATOR_CONSTEXPR void _S_destroy(
+  UTIL_SYMBOL_VISIBLE inline static ATFRAMEWORK_UTILS_MEMORY_ALLOCATOR_CONSTEXPR void _S_destroy(
       AllocatorOther&, U* __p, ...) noexcept(std::is_nothrow_destructible<U>::value) {
 #if ((defined(__cplusplus) && __cplusplus >= 202002L) || (defined(_MSVC_LANG) && _MSVC_LANG >= 202002L))
     ::std::destroy_at(__p);
@@ -292,32 +293,33 @@ struct UTIL_SYMBOL_VISIBLE allocator_traits {
 
   // max_size
   template <typename AllocOther>
-  UTIL_SYMBOL_VISIBLE inline static LIBATFRAME_UTILS_MEMORY_ALLOCATOR_CONSTEXPR auto _S_max_size(
-      const AllocOther& __a, int) -> decltype(__a.max_size()) {
+  UTIL_SYMBOL_VISIBLE inline static ATFRAMEWORK_UTILS_MEMORY_ALLOCATOR_CONSTEXPR auto _S_max_size(const AllocOther& __a,
+                                                                                                  int)
+      -> decltype(__a.max_size()) {
     return __a.max_size();
   }
 
   template <typename AllocOther>
-  UTIL_SYMBOL_VISIBLE inline static LIBATFRAME_UTILS_MEMORY_ALLOCATOR_CONSTEXPR size_type _S_max_size(const AllocOther&,
-                                                                                                      ...) {
+  UTIL_SYMBOL_VISIBLE inline static ATFRAMEWORK_UTILS_MEMORY_ALLOCATOR_CONSTEXPR size_type
+  _S_max_size(const AllocOther&, ...) {
     return ::std::numeric_limits<size_type>::max();
   }
 
   // select_on_container_copy_construction
   template <typename AllocOther>
-  UTIL_SYMBOL_VISIBLE inline static LIBATFRAME_UTILS_MEMORY_ALLOCATOR_CONSTEXPR auto _S_select(AllocOther& __a, int)
+  UTIL_SYMBOL_VISIBLE inline static ATFRAMEWORK_UTILS_MEMORY_ALLOCATOR_CONSTEXPR auto _S_select(AllocOther& __a, int)
       -> decltype(__a.select_on_container_copy_construction()) {
     return __a.select_on_container_copy_construction();
   }
 
   template <typename AllocOther>
-  UTIL_SYMBOL_VISIBLE inline static LIBATFRAME_UTILS_MEMORY_ALLOCATOR_CONSTEXPR AllocOther _S_select(AllocOther& __a,
-                                                                                                     ...) {
+  UTIL_SYMBOL_VISIBLE inline static ATFRAMEWORK_UTILS_MEMORY_ALLOCATOR_CONSTEXPR AllocOther _S_select(AllocOther& __a,
+                                                                                                      ...) {
     return __a;
   }
 
  public:
-  EXPLICIT_NODISCARD_ATTR UTIL_SYMBOL_VISIBLE inline static LIBATFRAME_UTILS_MEMORY_ALLOCATOR_CONSTEXPR pointer
+  EXPLICIT_NODISCARD_ATTR UTIL_SYMBOL_VISIBLE inline static ATFRAMEWORK_UTILS_MEMORY_ALLOCATOR_CONSTEXPR pointer
   allocate(allocator_type& a, size_type n, const_void_pointer hint) {
     return _S_allocate(a, n, hint, 0);
   }
@@ -331,9 +333,9 @@ struct UTIL_SYMBOL_VISIBLE allocator_traits {
   }
 #endif
 
-  UTIL_SYMBOL_VISIBLE inline static LIBATFRAME_UTILS_MEMORY_ALLOCATOR_CONSTEXPR void deallocate(allocator_type& a,
-                                                                                                pointer p,
-                                                                                                size_type n) {
+  UTIL_SYMBOL_VISIBLE inline static ATFRAMEWORK_UTILS_MEMORY_ALLOCATOR_CONSTEXPR void deallocate(allocator_type& a,
+                                                                                                 pointer p,
+                                                                                                 size_type n) {
     a.deallocate(p, n);
   }
 
@@ -349,19 +351,19 @@ struct UTIL_SYMBOL_VISIBLE allocator_traits {
     _S_destroy(a, p, 0);
   }
 
-  UTIL_SYMBOL_VISIBLE inline static LIBATFRAME_UTILS_MEMORY_ALLOCATOR_CONSTEXPR size_type
+  UTIL_SYMBOL_VISIBLE inline static ATFRAMEWORK_UTILS_MEMORY_ALLOCATOR_CONSTEXPR size_type
   max_size(const allocator_type& a) noexcept {
     return _S_max_size(a, 0);
   }
 
-  UTIL_SYMBOL_VISIBLE inline static LIBATFRAME_UTILS_MEMORY_ALLOCATOR_CONSTEXPR allocator_type
+  UTIL_SYMBOL_VISIBLE inline static ATFRAMEWORK_UTILS_MEMORY_ALLOCATOR_CONSTEXPR allocator_type
   select_on_container_copy_construction(const allocator_type& a) {
     return _S_select(a, 0);
   }
 };
 
 }  // namespace memory
-LIBATFRAME_UTILS_NAMESPACE_END
+ATFRAMEWORK_UTILS_NAMESPACE_END
 
 #if defined(_MSC_VER)
 #  pragma warning(pop)

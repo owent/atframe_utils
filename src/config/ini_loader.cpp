@@ -9,7 +9,7 @@
 #include <fstream>
 #include <string>
 
-LIBATFRAME_UTILS_NAMESPACE_BEGIN
+ATFRAMEWORK_UTILS_NAMESPACE_BEGIN
 namespace config {
 // ================= 词法状态机 =================
 namespace analysis {
@@ -166,38 +166,38 @@ T str2int(const_cstring str, const_cstring *left = nullptr) {
 }
 }  // namespace detail
 
-LIBATFRAME_UTILS_API ini_value::ini_value() {}
-LIBATFRAME_UTILS_API ini_value::~ini_value() {}
-LIBATFRAME_UTILS_API ini_value::ini_value(const ini_value &other) : std::enable_shared_from_this<ini_value>() {
+ATFRAMEWORK_UTILS_API ini_value::ini_value() {}
+ATFRAMEWORK_UTILS_API ini_value::~ini_value() {}
+ATFRAMEWORK_UTILS_API ini_value::ini_value(const ini_value &other) : std::enable_shared_from_this<ini_value>() {
   *this = other;
 }
 
-LIBATFRAME_UTILS_API ini_value &ini_value::operator=(const ini_value &other) {
+ATFRAMEWORK_UTILS_API ini_value &ini_value::operator=(const ini_value &other) {
   data_ = other.data_;
   children_nodes_ = other.children_nodes_;
   return (*this);
 }
 
-LIBATFRAME_UTILS_API void ini_value::add(LIBATFRAME_UTILS_NAMESPACE_ID::nostd::string_view val) {
+ATFRAMEWORK_UTILS_API void ini_value::add(ATFRAMEWORK_UTILS_NAMESPACE_ID::nostd::string_view val) {
   data_.push_back(std::string{val.data(), val.size()});
 }
 
-LIBATFRAME_UTILS_API void ini_value::add(const char *begin, const char *end) {
+ATFRAMEWORK_UTILS_API void ini_value::add(const char *begin, const char *end) {
   data_.push_back(std::string(begin, end));
 }
 
-LIBATFRAME_UTILS_API bool ini_value::empty() const { return data_.empty() && children_nodes_.empty(); }
+ATFRAMEWORK_UTILS_API bool ini_value::empty() const { return data_.empty() && children_nodes_.empty(); }
 
-LIBATFRAME_UTILS_API bool ini_value::has_data() const { return false == data_.empty(); }
+ATFRAMEWORK_UTILS_API bool ini_value::has_data() const { return false == data_.empty(); }
 
-LIBATFRAME_UTILS_API size_t ini_value::size() const { return data_.size(); }
+ATFRAMEWORK_UTILS_API size_t ini_value::size() const { return data_.size(); }
 
-LIBATFRAME_UTILS_API void ini_value::clear() {
+ATFRAMEWORK_UTILS_API void ini_value::clear() {
   data_.clear();
   children_nodes_.clear();
 }
 
-LIBATFRAME_UTILS_API ini_value &ini_value::operator[](LIBATFRAME_UTILS_NAMESPACE_ID::nostd::string_view key) {
+ATFRAMEWORK_UTILS_API ini_value &ini_value::operator[](ATFRAMEWORK_UTILS_NAMESPACE_ID::nostd::string_view key) {
   ptr_t &ret = children_nodes_[std::string{key.data(), key.size()}];
   if (!ret) {
     ret = std::make_shared<ini_value>();
@@ -205,12 +205,12 @@ LIBATFRAME_UTILS_API ini_value &ini_value::operator[](LIBATFRAME_UTILS_NAMESPACE
   return *ret;
 }
 
-LIBATFRAME_UTILS_API ini_value::node_type &ini_value::get_children() { return children_nodes_; }
+ATFRAMEWORK_UTILS_API ini_value::node_type &ini_value::get_children() { return children_nodes_; }
 
-LIBATFRAME_UTILS_API const ini_value::node_type &ini_value::get_children() const { return children_nodes_; }
+ATFRAMEWORK_UTILS_API const ini_value::node_type &ini_value::get_children() const { return children_nodes_; }
 
-LIBATFRAME_UTILS_API ini_value::ptr_t ini_value::get_child_by_path(
-    LIBATFRAME_UTILS_NAMESPACE_ID::nostd::string_view path) const {
+ATFRAMEWORK_UTILS_API ini_value::ptr_t ini_value::get_child_by_path(
+    ATFRAMEWORK_UTILS_NAMESPACE_ID::nostd::string_view path) const {
   const ini_value *ret = this;
 
   analysis::key _keys;
@@ -238,12 +238,12 @@ LIBATFRAME_UTILS_API ini_value::ptr_t ini_value::get_child_by_path(
   return nullptr;
 }
 
-LIBATFRAME_UTILS_API const std::string &ini_value::get_empty_string() {
+ATFRAMEWORK_UTILS_API const std::string &ini_value::get_empty_string() {
   static std::string empty_data;
   return empty_data;
 }
 
-LIBATFRAME_UTILS_API const std::string &ini_value::as_cpp_string(size_t index) const {
+ATFRAMEWORK_UTILS_API const std::string &ini_value::as_cpp_string(size_t index) const {
   if (index < data_.size()) {
     return data_[index];
   }
@@ -251,86 +251,86 @@ LIBATFRAME_UTILS_API const std::string &ini_value::as_cpp_string(size_t index) c
   return get_empty_string();
 }
 
-LIBATFRAME_UTILS_API char ini_value::as_char(size_t index) const {
+ATFRAMEWORK_UTILS_API char ini_value::as_char(size_t index) const {
   return detail::str2int<char>(as_cpp_string(index).c_str());
 }
 
-LIBATFRAME_UTILS_API short ini_value::as_short(size_t index) const {
+ATFRAMEWORK_UTILS_API short ini_value::as_short(size_t index) const {
   return detail::str2int<short>(as_cpp_string(index).c_str());
 }
 
-LIBATFRAME_UTILS_API int ini_value::as_int(size_t index) const {
+ATFRAMEWORK_UTILS_API int ini_value::as_int(size_t index) const {
   return detail::str2int<int>(as_cpp_string(index).c_str());
 }
 
-LIBATFRAME_UTILS_API long ini_value::as_long(size_t index) const {
+ATFRAMEWORK_UTILS_API long ini_value::as_long(size_t index) const {
   return detail::str2int<long>(as_cpp_string(index).c_str());
 }
 
-LIBATFRAME_UTILS_API long long ini_value::as_longlong(size_t index) const {
+ATFRAMEWORK_UTILS_API long long ini_value::as_longlong(size_t index) const {
   return detail::str2int<long long>(as_cpp_string(index).c_str());
 }
 
-LIBATFRAME_UTILS_API double ini_value::as_double(size_t index) const { return as<double>(index); }
+ATFRAMEWORK_UTILS_API double ini_value::as_double(size_t index) const { return as<double>(index); }
 
-LIBATFRAME_UTILS_API float ini_value::as_float(size_t index) const { return as<float>(index); }
+ATFRAMEWORK_UTILS_API float ini_value::as_float(size_t index) const { return as<float>(index); }
 
-LIBATFRAME_UTILS_API const char *ini_value::as_string(size_t index) const { return as_cpp_string(index).c_str(); }
+ATFRAMEWORK_UTILS_API const char *ini_value::as_string(size_t index) const { return as_cpp_string(index).c_str(); }
 
 // ============ unsigned ============
-LIBATFRAME_UTILS_API unsigned char ini_value::as_uchar(size_t index) const {
+ATFRAMEWORK_UTILS_API unsigned char ini_value::as_uchar(size_t index) const {
   return detail::str2int<unsigned char>(as_cpp_string(index).c_str());
 }
 
-LIBATFRAME_UTILS_API unsigned short ini_value::as_ushort(size_t index) const {
+ATFRAMEWORK_UTILS_API unsigned short ini_value::as_ushort(size_t index) const {
   return detail::str2int<unsigned short>(as_cpp_string(index).c_str());
 }
 
-LIBATFRAME_UTILS_API unsigned int ini_value::as_uint(size_t index) const {
+ATFRAMEWORK_UTILS_API unsigned int ini_value::as_uint(size_t index) const {
   return detail::str2int<unsigned int>(as_cpp_string(index).c_str());
 }
 
-LIBATFRAME_UTILS_API unsigned long ini_value::as_ulong(size_t index) const {
+ATFRAMEWORK_UTILS_API unsigned long ini_value::as_ulong(size_t index) const {
   return detail::str2int<unsigned long>(as_cpp_string(index).c_str());
 }
 
-LIBATFRAME_UTILS_API unsigned long long ini_value::as_ulonglong(size_t index) const {
+ATFRAMEWORK_UTILS_API unsigned long long ini_value::as_ulonglong(size_t index) const {
   return detail::str2int<unsigned long long>(as_cpp_string(index).c_str());
 }
 
-LIBATFRAME_UTILS_API int8_t ini_value::as_int8(size_t index) const {
+ATFRAMEWORK_UTILS_API int8_t ini_value::as_int8(size_t index) const {
   return detail::str2int<int8_t>(as_cpp_string(index).c_str());
 }
 
-LIBATFRAME_UTILS_API uint8_t ini_value::as_uint8(size_t index) const {
+ATFRAMEWORK_UTILS_API uint8_t ini_value::as_uint8(size_t index) const {
   return detail::str2int<uint8_t>(as_cpp_string(index).c_str());
 }
 
-LIBATFRAME_UTILS_API int16_t ini_value::as_int16(size_t index) const {
+ATFRAMEWORK_UTILS_API int16_t ini_value::as_int16(size_t index) const {
   return detail::str2int<int16_t>(as_cpp_string(index).c_str());
 }
 
-LIBATFRAME_UTILS_API uint16_t ini_value::as_uint16(size_t index) const {
+ATFRAMEWORK_UTILS_API uint16_t ini_value::as_uint16(size_t index) const {
   return detail::str2int<uint16_t>(as_cpp_string(index).c_str());
 }
 
-LIBATFRAME_UTILS_API int32_t ini_value::as_int32(size_t index) const {
+ATFRAMEWORK_UTILS_API int32_t ini_value::as_int32(size_t index) const {
   return detail::str2int<int32_t>(as_cpp_string(index).c_str());
 }
 
-LIBATFRAME_UTILS_API uint32_t ini_value::as_uint32(size_t index) const {
+ATFRAMEWORK_UTILS_API uint32_t ini_value::as_uint32(size_t index) const {
   return detail::str2int<uint32_t>(as_cpp_string(index).c_str());
 }
 
-LIBATFRAME_UTILS_API int64_t ini_value::as_int64(size_t index) const {
+ATFRAMEWORK_UTILS_API int64_t ini_value::as_int64(size_t index) const {
   return detail::str2int<int64_t>(as_cpp_string(index).c_str());
 }
 
-LIBATFRAME_UTILS_API uint64_t ini_value::as_uint64(size_t index) const {
+ATFRAMEWORK_UTILS_API uint64_t ini_value::as_uint64(size_t index) const {
   return detail::str2int<uint64_t>(as_cpp_string(index).c_str());
 }
 
-LIBATFRAME_UTILS_API duration_value ini_value::as_duration(size_t index) const {
+ATFRAMEWORK_UTILS_API duration_value ini_value::as_duration(size_t index) const {
   duration_value ret;
   clear_data(ret);
 
@@ -741,22 +741,22 @@ const char *sentence::parse(const char *begin, const char *end) {
 }
 }  // namespace analysis
 
-LIBATFRAME_UTILS_API ini_loader::ini_loader() {
+ATFRAMEWORK_UTILS_API ini_loader::ini_loader() {
   root_node_ = std::make_shared<ini_value>();
   current_node_ptr_ = root_node_.get();
 }
 
-LIBATFRAME_UTILS_API ini_loader::~ini_loader() {}
+ATFRAMEWORK_UTILS_API ini_loader::~ini_loader() {}
 
-LIBATFRAME_UTILS_API ini_loader::ini_loader(const ini_loader &other) { *this = other; }
+ATFRAMEWORK_UTILS_API ini_loader::ini_loader(const ini_loader &other) { *this = other; }
 
-LIBATFRAME_UTILS_API ini_loader &ini_loader::operator=(const ini_loader &other) {
+ATFRAMEWORK_UTILS_API ini_loader &ini_loader::operator=(const ini_loader &other) {
   root_node_ = std::make_shared<ini_value>(*other.root_node_);
   current_node_ptr_ = root_node_.get();
   return *this;
 }
 
-LIBATFRAME_UTILS_API int ini_loader::load_stream(std::istream &in, bool is_append) {
+ATFRAMEWORK_UTILS_API int ini_loader::load_stream(std::istream &in, bool is_append) {
   if (false == is_append) {
     clear();
   }
@@ -807,7 +807,7 @@ LIBATFRAME_UTILS_API int ini_loader::load_stream(std::istream &in, bool is_appen
   return EIEC_SUCCESS;
 }
 
-LIBATFRAME_UTILS_API int ini_loader::load_file(const char *file_path, bool is_append) {
+ATFRAMEWORK_UTILS_API int ini_loader::load_file(const char *file_path, bool is_append) {
   if (nullptr == file_path) {
     return EIEC_OPENFILE;
   }
@@ -825,29 +825,29 @@ LIBATFRAME_UTILS_API int ini_loader::load_file(const char *file_path, bool is_ap
   return load_stream(file_to_load, is_append);
 }
 
-LIBATFRAME_UTILS_API int ini_loader::load_file(const std::string &file_path, bool is_append) {
+ATFRAMEWORK_UTILS_API int ini_loader::load_file(const std::string &file_path, bool is_append) {
   return load_file(file_path.c_str(), is_append);
 }
 
-LIBATFRAME_UTILS_API void ini_loader::clear() {
+ATFRAMEWORK_UTILS_API void ini_loader::clear() {
   current_node_ptr_ = root_node_.get();
   root_node_->clear();
 }
 
-LIBATFRAME_UTILS_API void ini_loader::set_section(LIBATFRAME_UTILS_NAMESPACE_ID::nostd::string_view path) {
+ATFRAMEWORK_UTILS_API void ini_loader::set_section(ATFRAMEWORK_UTILS_NAMESPACE_ID::nostd::string_view path) {
   current_node_ptr_ = &get_node(path, &get_root_node());
 }
 
-LIBATFRAME_UTILS_API ini_value &ini_loader::get_section() { return *current_node_ptr_; }
+ATFRAMEWORK_UTILS_API ini_value &ini_loader::get_section() { return *current_node_ptr_; }
 
-LIBATFRAME_UTILS_API const ini_value &ini_loader::get_section() const { return *current_node_ptr_; }
+ATFRAMEWORK_UTILS_API const ini_value &ini_loader::get_section() const { return *current_node_ptr_; }
 
-LIBATFRAME_UTILS_API ini_value &ini_loader::get_root_node() { return *root_node_; }
+ATFRAMEWORK_UTILS_API ini_value &ini_loader::get_root_node() { return *root_node_; }
 
-LIBATFRAME_UTILS_API const ini_value &ini_loader::get_root_node() const { return *root_node_; }
+ATFRAMEWORK_UTILS_API const ini_value &ini_loader::get_root_node() const { return *root_node_; }
 
-LIBATFRAME_UTILS_API ini_value &ini_loader::get_node(LIBATFRAME_UTILS_NAMESPACE_ID::nostd::string_view path,
-                                                     ini_value *father_ptr) {
+ATFRAMEWORK_UTILS_API ini_value &ini_loader::get_node(ATFRAMEWORK_UTILS_NAMESPACE_ID::nostd::string_view path,
+                                                      ini_value *father_ptr) {
   if (nullptr == father_ptr) {
     father_ptr = root_node_.get();
   }
@@ -868,8 +868,8 @@ LIBATFRAME_UTILS_API ini_value &ini_loader::get_node(LIBATFRAME_UTILS_NAMESPACE_
   return *father_ptr;
 }
 
-LIBATFRAME_UTILS_API ini_value &ini_loader::get_child_node(LIBATFRAME_UTILS_NAMESPACE_ID::nostd::string_view path,
-                                                           ini_value *father_ptr) {
+ATFRAMEWORK_UTILS_API ini_value &ini_loader::get_child_node(ATFRAMEWORK_UTILS_NAMESPACE_ID::nostd::string_view path,
+                                                            ini_value *father_ptr) {
   if (nullptr == father_ptr) {
     father_ptr = root_node_.get();
   }
@@ -877,8 +877,8 @@ LIBATFRAME_UTILS_API ini_value &ini_loader::get_child_node(LIBATFRAME_UTILS_NAME
   return (*father_ptr)[std::string{path.data(), path.size()}];
 }
 
-LIBATFRAME_UTILS_API void ini_loader::dump_to(LIBATFRAME_UTILS_NAMESPACE_ID::nostd::string_view path, bool &val,
-                                              bool is_force, size_t index) {
+ATFRAMEWORK_UTILS_API void ini_loader::dump_to(ATFRAMEWORK_UTILS_NAMESPACE_ID::nostd::string_view path, bool &val,
+                                               bool is_force, size_t index) {
   ini_value &cur_node = get_node(path);
 
   if (false == cur_node.has_data() && false == is_force) {
@@ -900,16 +900,16 @@ LIBATFRAME_UTILS_API void ini_loader::dump_to(LIBATFRAME_UTILS_NAMESPACE_ID::nos
   }
 }
 
-LIBATFRAME_UTILS_API void ini_loader::dump_to(LIBATFRAME_UTILS_NAMESPACE_ID::nostd::string_view path, std::string &val,
-                                              bool is_force, size_t index) {
+ATFRAMEWORK_UTILS_API void ini_loader::dump_to(ATFRAMEWORK_UTILS_NAMESPACE_ID::nostd::string_view path,
+                                               std::string &val, bool is_force, size_t index) {
   ini_value &cur_node = get_node(path);
   if (cur_node.has_data() || is_force) {
     val = cur_node.as_cpp_string(index);
   }
 }
 
-LIBATFRAME_UTILS_API void ini_loader::dump_to(LIBATFRAME_UTILS_NAMESPACE_ID::nostd::string_view path, char *begin,
-                                              char *end, bool is_force, size_t index) {
+ATFRAMEWORK_UTILS_API void ini_loader::dump_to(ATFRAMEWORK_UTILS_NAMESPACE_ID::nostd::string_view path, char *begin,
+                                               char *end, bool is_force, size_t index) {
   ini_value &cur_node = get_node(path);
   if (cur_node.has_data() || is_force) {
     const std::string &val = cur_node.as_cpp_string(index);
@@ -920,4 +920,4 @@ LIBATFRAME_UTILS_API void ini_loader::dump_to(LIBATFRAME_UTILS_NAMESPACE_ID::nos
   }
 }
 }  // namespace config
-LIBATFRAME_UTILS_NAMESPACE_END
+ATFRAMEWORK_UTILS_NAMESPACE_END

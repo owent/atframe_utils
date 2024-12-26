@@ -27,7 +27,7 @@ struct hash<test_wal_client_log_action> {
 }  // namespace std
 
 struct test_wal_client_log_type {
-  LIBATFRAME_UTILS_NAMESPACE_ID::distributed_system::wal_time_point timepoint;
+  atfw::util::distributed_system::wal_time_point timepoint;
   int64_t log_key;
   test_wal_client_log_action action;
 
@@ -37,8 +37,8 @@ struct test_wal_client_log_type {
     int64_t data;
   };
 
-  inline explicit test_wal_client_log_type(LIBATFRAME_UTILS_NAMESPACE_ID::distributed_system::wal_time_point t,
-                                           int64_t k, test_wal_client_log_action act, int64_t d)
+  inline explicit test_wal_client_log_type(atfw::util::distributed_system::wal_time_point t, int64_t k,
+                                           test_wal_client_log_action act, int64_t d)
       : timepoint(t), log_key(k), action(act), hash_code(0), data(d) {}
   inline test_wal_client_log_type()
       : timepoint(std::chrono::system_clock::from_time_t(0)),
@@ -77,12 +77,13 @@ size_t test_wal_client_log_hash(size_t previous_hash_code, int64_t log_key) {
 
 namespace mt {
 using test_wal_client_log_operator =
-    LIBATFRAME_UTILS_NAMESPACE_ID::distributed_system::wal_log_operator<int64_t, test_wal_client_log_type,
-                                                                        test_wal_client_log_action_getter>;
+    atfw::util::distributed_system::wal_log_operator<int64_t, test_wal_client_log_type,
+                                                     test_wal_client_log_action_getter>;
 
-using test_wal_client_type = LIBATFRAME_UTILS_NAMESPACE_ID::distributed_system::wal_client<
-    test_wal_client_storage_type, test_wal_client_log_operator, test_wal_client_context, test_wal_client_private_type,
-    test_wal_client_storage_type>;
+using test_wal_client_type =
+    atfw::util::distributed_system::wal_client<test_wal_client_storage_type, test_wal_client_log_operator,
+                                               test_wal_client_context, test_wal_client_private_type,
+                                               test_wal_client_storage_type>;
 
 struct test_wal_client_stats {
   int64_t key_alloc;
@@ -106,7 +107,7 @@ test_wal_client_stats g_test_wal_client_stats{1, 0, 0, 0, 0, 0, 0, 0, 0, test_wa
 static test_wal_client_type::vtable_pointer create_vtable() {
   using wal_object_type = test_wal_client_type::object_type;
   using wal_client_type = test_wal_client_type;
-  using wal_result_code = LIBATFRAME_UTILS_NAMESPACE_ID::distributed_system::wal_result_code;
+  using wal_result_code = atfw::util::distributed_system::wal_result_code;
 
   wal_client_type::vtable_pointer ret = test_wal_client_log_operator::make_strong<wal_client_type::vtable_type>();
 
@@ -248,7 +249,7 @@ static test_wal_client_type::configure_pointer create_configure() {
 }
 
 CASE_TEST(wal_client, create_failed_mt) {
-  LIBATFRAME_UTILS_NAMESPACE_ID::distributed_system::wal_time_point now = std::chrono::system_clock::now();
+  atfw::util::distributed_system::wal_time_point now = std::chrono::system_clock::now();
   test_wal_client_storage_type storage;
   // test_wal_client_context ctx;
 
@@ -279,7 +280,7 @@ CASE_TEST(wal_client, load_and_dump_mt) {
       details::g_test_wal_client_stats.default_action_count + details::g_test_wal_client_stats.delegate_action_count;
 
   test_wal_client_storage_type load_storege;
-  LIBATFRAME_UTILS_NAMESPACE_ID::distributed_system::wal_time_point now = std::chrono::system_clock::now();
+  atfw::util::distributed_system::wal_time_point now = std::chrono::system_clock::now();
   load_storege.logs.push_back(test_wal_client_log_type{now, 124, test_wal_client_log_action::kDoNothing, 124});
   load_storege.logs.push_back(test_wal_client_log_type{now, 125, test_wal_client_log_action::kFallbackDefault, 125});
 
@@ -293,8 +294,7 @@ CASE_TEST(wal_client, load_and_dump_mt) {
   if (!client) {
     return;
   }
-  CASE_EXPECT_TRUE(LIBATFRAME_UTILS_NAMESPACE_ID::distributed_system::wal_result_code::kOk ==
-                   client->load(load_storege, ctx));
+  CASE_EXPECT_TRUE(atfw::util::distributed_system::wal_result_code::kOk == client->load(load_storege, ctx));
   CASE_EXPECT_EQ(old_action_count, details::g_test_wal_client_stats.default_action_count +
                                        details::g_test_wal_client_stats.delegate_action_count);
   CASE_EXPECT_EQ(4, client->get_configure().gc_log_size);
@@ -311,8 +311,7 @@ CASE_TEST(wal_client, load_and_dump_mt) {
 
   // dump
   test_wal_client_storage_type dump_storege;
-  CASE_EXPECT_TRUE(LIBATFRAME_UTILS_NAMESPACE_ID::distributed_system::wal_result_code::kOk ==
-                   client->dump(dump_storege, ctx));
+  CASE_EXPECT_TRUE(atfw::util::distributed_system::wal_result_code::kOk == client->dump(dump_storege, ctx));
 
   CASE_EXPECT_EQ(2, dump_storege.logs.size());
   CASE_EXPECT_EQ(124, dump_storege.logs[0].data);
@@ -327,7 +326,7 @@ CASE_TEST(wal_client, load_and_dump_mt) {
 
 // heartbeat,subscribe_request
 CASE_TEST(wal_client, heartbeat_mt) {
-  LIBATFRAME_UTILS_NAMESPACE_ID::distributed_system::wal_time_point now = std::chrono::system_clock::now();
+  atfw::util::distributed_system::wal_time_point now = std::chrono::system_clock::now();
   test_wal_client_storage_type storage;
   test_wal_client_context ctx;
 
@@ -362,8 +361,7 @@ CASE_TEST(wal_client, heartbeat_mt) {
   CASE_EXPECT_EQ(subscribe_request_count + 2, details::g_test_wal_client_stats.subscribe_request_count);
   CASE_EXPECT_EQ(receive_subscribe_response_count, details::g_test_wal_client_stats.receive_subscribe_response_count);
 
-  CASE_EXPECT_TRUE(LIBATFRAME_UTILS_NAMESPACE_ID::distributed_system::wal_result_code::kOk ==
-                   client->receive_subscribe_response(ctx));
+  CASE_EXPECT_TRUE(atfw::util::distributed_system::wal_result_code::kOk == client->receive_subscribe_response(ctx));
 
   CASE_EXPECT_EQ(subscribe_request_count + 2, details::g_test_wal_client_stats.subscribe_request_count);
   CASE_EXPECT_EQ(receive_subscribe_response_count + 1,
@@ -372,7 +370,7 @@ CASE_TEST(wal_client, heartbeat_mt) {
 
 // retry heartbeat
 CASE_TEST(wal_client, retry_heartbeat_mt) {
-  LIBATFRAME_UTILS_NAMESPACE_ID::distributed_system::wal_time_point now = std::chrono::system_clock::now();
+  atfw::util::distributed_system::wal_time_point now = std::chrono::system_clock::now();
   test_wal_client_storage_type storage;
   test_wal_client_context ctx;
 
@@ -383,10 +381,11 @@ CASE_TEST(wal_client, retry_heartbeat_mt) {
   conf->subscriber_heartbeat_retry_interval = retry_heartbeat;
   auto vtable = create_vtable();
 
-  vtable->subscribe_request = [](test_wal_client_type&, test_wal_client_type::object_type::callback_param_type)
-      -> LIBATFRAME_UTILS_NAMESPACE_ID::distributed_system::wal_result_code {
+  vtable->subscribe_request =
+      [](test_wal_client_type&,
+         test_wal_client_type::object_type::callback_param_type) -> atfw::util::distributed_system::wal_result_code {
     ++details::g_test_wal_client_stats.subscribe_request_count;
-    return LIBATFRAME_UTILS_NAMESPACE_ID::distributed_system::wal_result_code::kCallbackError;
+    return atfw::util::distributed_system::wal_result_code::kCallbackError;
   };
 
   auto client = test_wal_client_type::create(now, vtable, conf, &storage);
@@ -424,7 +423,7 @@ CASE_TEST(wal_client, receive_snapshot_mt) {
       details::g_test_wal_client_stats.default_action_count + details::g_test_wal_client_stats.delegate_action_count;
 
   test_wal_client_storage_type load_storege;
-  LIBATFRAME_UTILS_NAMESPACE_ID::distributed_system::wal_time_point now = std::chrono::system_clock::now();
+  atfw::util::distributed_system::wal_time_point now = std::chrono::system_clock::now();
   load_storege.logs.push_back(test_wal_client_log_type{now, 124, test_wal_client_log_action::kDoNothing, 124});
   load_storege.logs.push_back(test_wal_client_log_type{now, 125, test_wal_client_log_action::kFallbackDefault, 125});
 
@@ -439,8 +438,7 @@ CASE_TEST(wal_client, receive_snapshot_mt) {
     return;
   }
   auto receive_snapshot_count = details::g_test_wal_client_stats.receive_snapshot_count;
-  CASE_EXPECT_TRUE(LIBATFRAME_UTILS_NAMESPACE_ID::distributed_system::wal_result_code::kOk ==
-                   client->receive_snapshot(load_storege, ctx));
+  CASE_EXPECT_TRUE(atfw::util::distributed_system::wal_result_code::kOk == client->receive_snapshot(load_storege, ctx));
   CASE_EXPECT_EQ(receive_snapshot_count + 1, details::g_test_wal_client_stats.receive_snapshot_count);
   CASE_EXPECT_EQ(old_action_count, details::g_test_wal_client_stats.default_action_count +
                                        details::g_test_wal_client_stats.delegate_action_count);
@@ -458,8 +456,7 @@ CASE_TEST(wal_client, receive_snapshot_mt) {
 
   // dump
   test_wal_client_storage_type dump_storege;
-  CASE_EXPECT_TRUE(LIBATFRAME_UTILS_NAMESPACE_ID::distributed_system::wal_result_code::kOk ==
-                   client->dump(dump_storege, ctx));
+  CASE_EXPECT_TRUE(atfw::util::distributed_system::wal_result_code::kOk == client->dump(dump_storege, ctx));
 
   CASE_EXPECT_EQ(2, dump_storege.logs.size());
   CASE_EXPECT_EQ(124, dump_storege.logs[0].data);
@@ -473,7 +470,7 @@ CASE_TEST(wal_client, receive_snapshot_mt) {
 }
 
 CASE_TEST(wal_client, receive_logs_mt) {
-  LIBATFRAME_UTILS_NAMESPACE_ID::distributed_system::wal_time_point now = std::chrono::system_clock::now();
+  atfw::util::distributed_system::wal_time_point now = std::chrono::system_clock::now();
   test_wal_client_storage_type storage;
   test_wal_client_context ctx;
 
@@ -514,7 +511,7 @@ CASE_TEST(wal_client, receive_logs_mt) {
 }
 
 CASE_TEST(wal_client, receive_invalid_log_mt) {
-  LIBATFRAME_UTILS_NAMESPACE_ID::distributed_system::wal_time_point now = std::chrono::system_clock::now();
+  atfw::util::distributed_system::wal_time_point now = std::chrono::system_clock::now();
   test_wal_client_storage_type storage;
   test_wal_client_context ctx;
 
@@ -526,17 +523,15 @@ CASE_TEST(wal_client, receive_invalid_log_mt) {
     return;
   }
 
-  CASE_EXPECT_EQ(
-      static_cast<int32_t>(LIBATFRAME_UTILS_NAMESPACE_ID::distributed_system::wal_result_code::kInvalidParam),
-      static_cast<int32_t>(client->receive_log(ctx, test_wal_client_type::log_pointer{})));
+  CASE_EXPECT_EQ(static_cast<int32_t>(atfw::util::distributed_system::wal_result_code::kInvalidParam),
+                 static_cast<int32_t>(client->receive_log(ctx, test_wal_client_type::log_pointer{})));
 
-  CASE_EXPECT_EQ(
-      static_cast<int32_t>(LIBATFRAME_UTILS_NAMESPACE_ID::distributed_system::wal_result_code::kInvalidParam),
-      static_cast<int32_t>(client->receive_hole_log(ctx, test_wal_client_type::log_pointer{})));
+  CASE_EXPECT_EQ(static_cast<int32_t>(atfw::util::distributed_system::wal_result_code::kInvalidParam),
+                 static_cast<int32_t>(client->receive_hole_log(ctx, test_wal_client_type::log_pointer{})));
 }
 
 CASE_TEST(wal_client, receive_hole_logs_mt) {
-  LIBATFRAME_UTILS_NAMESPACE_ID::distributed_system::wal_time_point now = std::chrono::system_clock::now();
+  atfw::util::distributed_system::wal_time_point now = std::chrono::system_clock::now();
   test_wal_client_storage_type storage;
   test_wal_client_context ctx;
 
@@ -571,15 +566,14 @@ CASE_TEST(wal_client, receive_hole_logs_mt) {
   test_wal_client_log_type hole_log{now, 130, test_wal_client_log_action::kDoNothing, 130};
   hole_log.hash_code = test_wal_client_log_hash(logs[1].hash_code, hole_log.log_key) + 1;
 
-  CASE_EXPECT_EQ(
-      static_cast<int32_t>(LIBATFRAME_UTILS_NAMESPACE_ID::distributed_system::wal_result_code::kHashCodeMismatch),
-      static_cast<int32_t>(client->receive_hole_log(ctx, hole_log)));
+  CASE_EXPECT_EQ(static_cast<int32_t>(atfw::util::distributed_system::wal_result_code::kHashCodeMismatch),
+                 static_cast<int32_t>(client->receive_hole_log(ctx, hole_log)));
   if (client->get_last_finished_log_key()) {
     CASE_EXPECT_EQ(126, *client->get_last_finished_log_key());
   }
 
   --hole_log.hash_code;
-  CASE_EXPECT_EQ(static_cast<int32_t>(LIBATFRAME_UTILS_NAMESPACE_ID::distributed_system::wal_result_code::kOk),
+  CASE_EXPECT_EQ(static_cast<int32_t>(atfw::util::distributed_system::wal_result_code::kOk),
                  static_cast<int32_t>(client->receive_hole_log(ctx, hole_log)));
   if (client->get_last_finished_log_key()) {
     CASE_EXPECT_EQ(130, *client->get_last_finished_log_key());
@@ -590,11 +584,10 @@ CASE_TEST(wal_client, receive_hole_logs_mt) {
   hole_log.log_key = 128;
   hole_log.data = 128;
   hole_log.hash_code = test_wal_client_log_hash(logs[1].hash_code, hole_log.log_key) + 1;
-  CASE_EXPECT_EQ(
-      static_cast<int32_t>(LIBATFRAME_UTILS_NAMESPACE_ID::distributed_system::wal_result_code::kHashCodeMismatch),
-      static_cast<int32_t>(client->receive_hole_log(ctx, hole_log)));
+  CASE_EXPECT_EQ(static_cast<int32_t>(atfw::util::distributed_system::wal_result_code::kHashCodeMismatch),
+                 static_cast<int32_t>(client->receive_hole_log(ctx, hole_log)));
   --hole_log.hash_code;
-  CASE_EXPECT_EQ(static_cast<int32_t>(LIBATFRAME_UTILS_NAMESPACE_ID::distributed_system::wal_result_code::kOk),
+  CASE_EXPECT_EQ(static_cast<int32_t>(atfw::util::distributed_system::wal_result_code::kOk),
                  static_cast<int32_t>(client->receive_hole_log(ctx, hole_log)));
   size_t new_hash_code = (*client->get_log_manager().get_all_logs().rbegin())->hash_code;
   CASE_EXPECT_EQ(130, (*client->get_log_manager().get_all_logs().rbegin())->data);
@@ -603,13 +596,14 @@ CASE_TEST(wal_client, receive_hole_logs_mt) {
 }  // namespace mt
 
 namespace st {
-using test_wal_client_log_operator = LIBATFRAME_UTILS_NAMESPACE_ID::distributed_system::wal_log_operator_with_mt_mode<
+using test_wal_client_log_operator = atfw::util::distributed_system::wal_log_operator_with_mt_mode<
     int64_t, test_wal_client_log_type, test_wal_client_log_action_getter,
-    LIBATFRAME_UTILS_NAMESPACE_ID::distributed_system::wal_mt_mode::kSingleThread>;
+    atfw::util::distributed_system::wal_mt_mode::kSingleThread>;
 
-using test_wal_client_type = LIBATFRAME_UTILS_NAMESPACE_ID::distributed_system::wal_client<
-    test_wal_client_storage_type, test_wal_client_log_operator, test_wal_client_context, test_wal_client_private_type,
-    test_wal_client_storage_type>;
+using test_wal_client_type =
+    atfw::util::distributed_system::wal_client<test_wal_client_storage_type, test_wal_client_log_operator,
+                                               test_wal_client_context, test_wal_client_private_type,
+                                               test_wal_client_storage_type>;
 
 struct test_wal_client_stats {
   int64_t key_alloc;
@@ -633,7 +627,7 @@ test_wal_client_stats g_test_wal_client_stats{1, 0, 0, 0, 0, 0, 0, 0, 0, test_wa
 static test_wal_client_type::vtable_pointer create_vtable() {
   using wal_object_type = test_wal_client_type::object_type;
   using wal_client_type = test_wal_client_type;
-  using wal_result_code = LIBATFRAME_UTILS_NAMESPACE_ID::distributed_system::wal_result_code;
+  using wal_result_code = atfw::util::distributed_system::wal_result_code;
 
   wal_client_type::vtable_pointer ret = test_wal_client_log_operator::make_strong<wal_client_type::vtable_type>();
 
@@ -775,7 +769,7 @@ static test_wal_client_type::configure_pointer create_configure() {
 }
 
 CASE_TEST(wal_client, create_failed_st) {
-  LIBATFRAME_UTILS_NAMESPACE_ID::distributed_system::wal_time_point now = std::chrono::system_clock::now();
+  atfw::util::distributed_system::wal_time_point now = std::chrono::system_clock::now();
   test_wal_client_storage_type storage;
   // test_wal_client_context ctx;
 
@@ -806,7 +800,7 @@ CASE_TEST(wal_client, load_and_dump_st) {
       details::g_test_wal_client_stats.default_action_count + details::g_test_wal_client_stats.delegate_action_count;
 
   test_wal_client_storage_type load_storege;
-  LIBATFRAME_UTILS_NAMESPACE_ID::distributed_system::wal_time_point now = std::chrono::system_clock::now();
+  atfw::util::distributed_system::wal_time_point now = std::chrono::system_clock::now();
   load_storege.logs.push_back(test_wal_client_log_type{now, 124, test_wal_client_log_action::kDoNothing, 124});
   load_storege.logs.push_back(test_wal_client_log_type{now, 125, test_wal_client_log_action::kFallbackDefault, 125});
 
@@ -820,8 +814,7 @@ CASE_TEST(wal_client, load_and_dump_st) {
   if (!client) {
     return;
   }
-  CASE_EXPECT_TRUE(LIBATFRAME_UTILS_NAMESPACE_ID::distributed_system::wal_result_code::kOk ==
-                   client->load(load_storege, ctx));
+  CASE_EXPECT_TRUE(atfw::util::distributed_system::wal_result_code::kOk == client->load(load_storege, ctx));
   CASE_EXPECT_EQ(old_action_count, details::g_test_wal_client_stats.default_action_count +
                                        details::g_test_wal_client_stats.delegate_action_count);
   CASE_EXPECT_EQ(4, client->get_configure().gc_log_size);
@@ -838,8 +831,7 @@ CASE_TEST(wal_client, load_and_dump_st) {
 
   // dump
   test_wal_client_storage_type dump_storege;
-  CASE_EXPECT_TRUE(LIBATFRAME_UTILS_NAMESPACE_ID::distributed_system::wal_result_code::kOk ==
-                   client->dump(dump_storege, ctx));
+  CASE_EXPECT_TRUE(atfw::util::distributed_system::wal_result_code::kOk == client->dump(dump_storege, ctx));
 
   CASE_EXPECT_EQ(2, dump_storege.logs.size());
   CASE_EXPECT_EQ(124, dump_storege.logs[0].data);
@@ -854,7 +846,7 @@ CASE_TEST(wal_client, load_and_dump_st) {
 
 // heartbeat,subscribe_request
 CASE_TEST(wal_client, heartbeat_st) {
-  LIBATFRAME_UTILS_NAMESPACE_ID::distributed_system::wal_time_point now = std::chrono::system_clock::now();
+  atfw::util::distributed_system::wal_time_point now = std::chrono::system_clock::now();
   test_wal_client_storage_type storage;
   test_wal_client_context ctx;
 
@@ -889,8 +881,7 @@ CASE_TEST(wal_client, heartbeat_st) {
   CASE_EXPECT_EQ(subscribe_request_count + 2, details::g_test_wal_client_stats.subscribe_request_count);
   CASE_EXPECT_EQ(receive_subscribe_response_count, details::g_test_wal_client_stats.receive_subscribe_response_count);
 
-  CASE_EXPECT_TRUE(LIBATFRAME_UTILS_NAMESPACE_ID::distributed_system::wal_result_code::kOk ==
-                   client->receive_subscribe_response(ctx));
+  CASE_EXPECT_TRUE(atfw::util::distributed_system::wal_result_code::kOk == client->receive_subscribe_response(ctx));
 
   CASE_EXPECT_EQ(subscribe_request_count + 2, details::g_test_wal_client_stats.subscribe_request_count);
   CASE_EXPECT_EQ(receive_subscribe_response_count + 1,
@@ -899,7 +890,7 @@ CASE_TEST(wal_client, heartbeat_st) {
 
 // retry heartbeat
 CASE_TEST(wal_client, retry_heartbeat_st) {
-  LIBATFRAME_UTILS_NAMESPACE_ID::distributed_system::wal_time_point now = std::chrono::system_clock::now();
+  atfw::util::distributed_system::wal_time_point now = std::chrono::system_clock::now();
   test_wal_client_storage_type storage;
   test_wal_client_context ctx;
 
@@ -910,10 +901,11 @@ CASE_TEST(wal_client, retry_heartbeat_st) {
   conf->subscriber_heartbeat_retry_interval = retry_heartbeat;
   auto vtable = create_vtable();
 
-  vtable->subscribe_request = [](test_wal_client_type&, test_wal_client_type::object_type::callback_param_type)
-      -> LIBATFRAME_UTILS_NAMESPACE_ID::distributed_system::wal_result_code {
+  vtable->subscribe_request =
+      [](test_wal_client_type&,
+         test_wal_client_type::object_type::callback_param_type) -> atfw::util::distributed_system::wal_result_code {
     ++details::g_test_wal_client_stats.subscribe_request_count;
-    return LIBATFRAME_UTILS_NAMESPACE_ID::distributed_system::wal_result_code::kCallbackError;
+    return atfw::util::distributed_system::wal_result_code::kCallbackError;
   };
 
   auto client = test_wal_client_type::create(now, vtable, conf, &storage);
@@ -951,7 +943,7 @@ CASE_TEST(wal_client, receive_snapshot_st) {
       details::g_test_wal_client_stats.default_action_count + details::g_test_wal_client_stats.delegate_action_count;
 
   test_wal_client_storage_type load_storege;
-  LIBATFRAME_UTILS_NAMESPACE_ID::distributed_system::wal_time_point now = std::chrono::system_clock::now();
+  atfw::util::distributed_system::wal_time_point now = std::chrono::system_clock::now();
   load_storege.logs.push_back(test_wal_client_log_type{now, 124, test_wal_client_log_action::kDoNothing, 124});
   load_storege.logs.push_back(test_wal_client_log_type{now, 125, test_wal_client_log_action::kFallbackDefault, 125});
 
@@ -966,8 +958,7 @@ CASE_TEST(wal_client, receive_snapshot_st) {
     return;
   }
   auto receive_snapshot_count = details::g_test_wal_client_stats.receive_snapshot_count;
-  CASE_EXPECT_TRUE(LIBATFRAME_UTILS_NAMESPACE_ID::distributed_system::wal_result_code::kOk ==
-                   client->receive_snapshot(load_storege, ctx));
+  CASE_EXPECT_TRUE(atfw::util::distributed_system::wal_result_code::kOk == client->receive_snapshot(load_storege, ctx));
   CASE_EXPECT_EQ(receive_snapshot_count + 1, details::g_test_wal_client_stats.receive_snapshot_count);
   CASE_EXPECT_EQ(old_action_count, details::g_test_wal_client_stats.default_action_count +
                                        details::g_test_wal_client_stats.delegate_action_count);
@@ -985,8 +976,7 @@ CASE_TEST(wal_client, receive_snapshot_st) {
 
   // dump
   test_wal_client_storage_type dump_storege;
-  CASE_EXPECT_TRUE(LIBATFRAME_UTILS_NAMESPACE_ID::distributed_system::wal_result_code::kOk ==
-                   client->dump(dump_storege, ctx));
+  CASE_EXPECT_TRUE(atfw::util::distributed_system::wal_result_code::kOk == client->dump(dump_storege, ctx));
 
   CASE_EXPECT_EQ(2, dump_storege.logs.size());
   CASE_EXPECT_EQ(124, dump_storege.logs[0].data);
@@ -1000,7 +990,7 @@ CASE_TEST(wal_client, receive_snapshot_st) {
 }
 
 CASE_TEST(wal_client, receive_logs_st) {
-  LIBATFRAME_UTILS_NAMESPACE_ID::distributed_system::wal_time_point now = std::chrono::system_clock::now();
+  atfw::util::distributed_system::wal_time_point now = std::chrono::system_clock::now();
   test_wal_client_storage_type storage;
   test_wal_client_context ctx;
 
@@ -1043,7 +1033,7 @@ CASE_TEST(wal_client, receive_logs_st) {
 }
 
 CASE_TEST(wal_client, receive_invalid_log_st) {
-  LIBATFRAME_UTILS_NAMESPACE_ID::distributed_system::wal_time_point now = std::chrono::system_clock::now();
+  atfw::util::distributed_system::wal_time_point now = std::chrono::system_clock::now();
   test_wal_client_storage_type storage;
   test_wal_client_context ctx;
 
@@ -1055,17 +1045,15 @@ CASE_TEST(wal_client, receive_invalid_log_st) {
     return;
   }
 
-  CASE_EXPECT_EQ(
-      static_cast<int32_t>(LIBATFRAME_UTILS_NAMESPACE_ID::distributed_system::wal_result_code::kInvalidParam),
-      static_cast<int32_t>(client->receive_log(ctx, test_wal_client_type::log_pointer{})));
+  CASE_EXPECT_EQ(static_cast<int32_t>(atfw::util::distributed_system::wal_result_code::kInvalidParam),
+                 static_cast<int32_t>(client->receive_log(ctx, test_wal_client_type::log_pointer{})));
 
-  CASE_EXPECT_EQ(
-      static_cast<int32_t>(LIBATFRAME_UTILS_NAMESPACE_ID::distributed_system::wal_result_code::kInvalidParam),
-      static_cast<int32_t>(client->receive_hole_log(ctx, test_wal_client_type::log_pointer{})));
+  CASE_EXPECT_EQ(static_cast<int32_t>(atfw::util::distributed_system::wal_result_code::kInvalidParam),
+                 static_cast<int32_t>(client->receive_hole_log(ctx, test_wal_client_type::log_pointer{})));
 }
 
 CASE_TEST(wal_client, receive_hole_logs_st) {
-  LIBATFRAME_UTILS_NAMESPACE_ID::distributed_system::wal_time_point now = std::chrono::system_clock::now();
+  atfw::util::distributed_system::wal_time_point now = std::chrono::system_clock::now();
   test_wal_client_storage_type storage;
   test_wal_client_context ctx;
 
@@ -1100,15 +1088,14 @@ CASE_TEST(wal_client, receive_hole_logs_st) {
   test_wal_client_log_type hole_log{now, 130, test_wal_client_log_action::kDoNothing, 130};
   hole_log.hash_code = test_wal_client_log_hash(logs[1].hash_code, hole_log.log_key) + 1;
 
-  CASE_EXPECT_EQ(
-      static_cast<int32_t>(LIBATFRAME_UTILS_NAMESPACE_ID::distributed_system::wal_result_code::kHashCodeMismatch),
-      static_cast<int32_t>(client->receive_hole_log(ctx, hole_log)));
+  CASE_EXPECT_EQ(static_cast<int32_t>(atfw::util::distributed_system::wal_result_code::kHashCodeMismatch),
+                 static_cast<int32_t>(client->receive_hole_log(ctx, hole_log)));
   if (client->get_last_finished_log_key()) {
     CASE_EXPECT_EQ(126, *client->get_last_finished_log_key());
   }
 
   --hole_log.hash_code;
-  CASE_EXPECT_EQ(static_cast<int32_t>(LIBATFRAME_UTILS_NAMESPACE_ID::distributed_system::wal_result_code::kOk),
+  CASE_EXPECT_EQ(static_cast<int32_t>(atfw::util::distributed_system::wal_result_code::kOk),
                  static_cast<int32_t>(client->receive_hole_log(ctx, hole_log)));
   if (client->get_last_finished_log_key()) {
     CASE_EXPECT_EQ(130, *client->get_last_finished_log_key());
@@ -1119,11 +1106,10 @@ CASE_TEST(wal_client, receive_hole_logs_st) {
   hole_log.log_key = 128;
   hole_log.data = 128;
   hole_log.hash_code = test_wal_client_log_hash(logs[1].hash_code, hole_log.log_key) + 1;
-  CASE_EXPECT_EQ(
-      static_cast<int32_t>(LIBATFRAME_UTILS_NAMESPACE_ID::distributed_system::wal_result_code::kHashCodeMismatch),
-      static_cast<int32_t>(client->receive_hole_log(ctx, hole_log)));
+  CASE_EXPECT_EQ(static_cast<int32_t>(atfw::util::distributed_system::wal_result_code::kHashCodeMismatch),
+                 static_cast<int32_t>(client->receive_hole_log(ctx, hole_log)));
   --hole_log.hash_code;
-  CASE_EXPECT_EQ(static_cast<int32_t>(LIBATFRAME_UTILS_NAMESPACE_ID::distributed_system::wal_result_code::kOk),
+  CASE_EXPECT_EQ(static_cast<int32_t>(atfw::util::distributed_system::wal_result_code::kOk),
                  static_cast<int32_t>(client->receive_hole_log(ctx, hole_log)));
   size_t new_hash_code = (*client->get_log_manager().get_all_logs().rbegin())->hash_code;
   CASE_EXPECT_EQ(130, (*client->get_log_manager().get_all_logs().rbegin())->data);

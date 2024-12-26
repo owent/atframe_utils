@@ -5,7 +5,7 @@
 
 #include "memory/lru_object_pool.h"
 
-LIBATFRAME_UTILS_NAMESPACE_BEGIN
+ATFRAMEWORK_UTILS_NAMESPACE_BEGIN
 namespace mempool {
 using memory::lru_pool_base;
 using memory::lru_pool_manager;
@@ -17,4 +17,4 @@ template <class TKey, class TObj, class TAction = lru_default_action<TObj> >
 using lru_pool = memory::lru_pool<TKey, TObj, TAction>;
 
 }  // namespace mempool
-LIBATFRAME_UTILS_NAMESPACE_END
+ATFRAMEWORK_UTILS_NAMESPACE_END

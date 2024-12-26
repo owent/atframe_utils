@@ -50,14 +50,14 @@
 
 #endif
 
-LIBATFRAME_UTILS_NAMESPACE_BEGIN
+ATFRAMEWORK_UTILS_NAMESPACE_BEGIN
 
 #if !((defined(__cplusplus) && __cplusplus >= 201703L) || (defined(_MSVC_LANG) && _MSVC_LANG >= 201703L))
-LIBATFRAME_UTILS_API constexpr const char file_system::DIRECTORY_SEPARATOR;
-LIBATFRAME_UTILS_API constexpr const size_t file_system::MAX_PATH_LEN;
+ATFRAMEWORK_UTILS_API constexpr const char file_system::DIRECTORY_SEPARATOR;
+ATFRAMEWORK_UTILS_API constexpr const size_t file_system::MAX_PATH_LEN;
 #endif
 
-LIBATFRAME_UTILS_API bool file_system::get_file_content(std::string &out, const char *file_path, bool is_binary) {
+ATFRAMEWORK_UTILS_API bool file_system::get_file_content(std::string &out, const char *file_path, bool is_binary) {
   FILE *f = nullptr;
   if (is_binary) {
     UTIL_FS_OPEN(error_code, f, file_path, "rb");
@@ -117,7 +117,7 @@ LIBATFRAME_UTILS_API bool file_system::get_file_content(std::string &out, const 
   return ret;
 }
 
-LIBATFRAME_UTILS_API bool file_system::split_path(std::vector<std::string> &out, const char *path, bool compact) {
+ATFRAMEWORK_UTILS_API bool file_system::split_path(std::vector<std::string> &out, const char *path, bool compact) {
   if (nullptr == path) {
     return false;
   }
@@ -155,9 +155,9 @@ LIBATFRAME_UTILS_API bool file_system::split_path(std::vector<std::string> &out,
   return !out.empty();
 }
 
-LIBATFRAME_UTILS_API bool file_system::is_exist(const char *file_path) { return 0 == FUNC_ACCESS(file_path); }
+ATFRAMEWORK_UTILS_API bool file_system::is_exist(const char *file_path) { return 0 == FUNC_ACCESS(file_path); }
 
-LIBATFRAME_UTILS_API bool file_system::file_size(const char *file_path, size_t &sz) {
+ATFRAMEWORK_UTILS_API bool file_system::file_size(const char *file_path, size_t &sz) {
   FILE *f = nullptr;
   UTIL_FS_OPEN(error_code, f, file_path, "rb");
   COMPILER_UNUSED(error_code);
@@ -173,7 +173,7 @@ LIBATFRAME_UTILS_API bool file_system::file_size(const char *file_path, size_t &
   return true;
 }
 
-LIBATFRAME_UTILS_API bool file_system::mkdir(const char *dir_path, bool recursion, EXPLICIT_UNUSED_ATTR int mode) {
+ATFRAMEWORK_UTILS_API bool file_system::mkdir(const char *dir_path, bool recursion, EXPLICIT_UNUSED_ATTR int mode) {
 #ifndef UTIL_FS_WINDOWS_API
   if (0 == mode) {
     mode = S_IRWXU | S_IRWXG | S_IRWXO;
@@ -220,7 +220,7 @@ LIBATFRAME_UTILS_API bool file_system::mkdir(const char *dir_path, bool recursio
   return true;
 }
 
-LIBATFRAME_UTILS_API bool file_system::dirname(const char *file_path, size_t sz, std::string &dir, int depth) {
+ATFRAMEWORK_UTILS_API bool file_system::dirname(const char *file_path, size_t sz, std::string &dir, int depth) {
   if (nullptr == file_path || 0 == file_path[0]) {
     return false;
   }
@@ -250,7 +250,7 @@ LIBATFRAME_UTILS_API bool file_system::dirname(const char *file_path, size_t sz,
   return true;
 }
 
-LIBATFRAME_UTILS_API std::string file_system::get_cwd() {
+ATFRAMEWORK_UTILS_API std::string file_system::get_cwd() {
   std::string ret;
   char *res = nullptr;
 #ifdef UTIL_FS_WINDOWS_API
@@ -266,7 +266,7 @@ LIBATFRAME_UTILS_API std::string file_system::get_cwd() {
   return ret;
 }
 
-LIBATFRAME_UTILS_API std::string file_system::get_abs_path(const char *dir_path) {
+ATFRAMEWORK_UTILS_API std::string file_system::get_abs_path(const char *dir_path) {
   if (is_abs_path(dir_path)) {
     return dir_path;
   }
@@ -295,11 +295,11 @@ LIBATFRAME_UTILS_API std::string file_system::get_abs_path(const char *dir_path)
   return ret;
 }
 
-LIBATFRAME_UTILS_API bool file_system::rename(const char *from, const char *to) { return 0 == ::rename(from, to); }
+ATFRAMEWORK_UTILS_API bool file_system::rename(const char *from, const char *to) { return 0 == ::rename(from, to); }
 
-LIBATFRAME_UTILS_API bool file_system::remove(const char *path) { return 0 == ::remove(path); }
+ATFRAMEWORK_UTILS_API bool file_system::remove(const char *path) { return 0 == ::remove(path); }
 
-LIBATFRAME_UTILS_API std::string file_system::getenv(const char *name) {
+ATFRAMEWORK_UTILS_API std::string file_system::getenv(const char *name) {
   std::string ret;
 #if defined(UTIL_FS_C11_API)
   size_t len = 0;
@@ -334,7 +334,7 @@ LIBATFRAME_UTILS_API std::string file_system::getenv(const char *name) {
 #endif
 }
 
-LIBATFRAME_UTILS_API FILE *file_system::open_tmp_file() {
+ATFRAMEWORK_UTILS_API FILE *file_system::open_tmp_file() {
 #if defined(UTIL_FS_C11_API)
   FILE *ret = nullptr;
   if (0 == tmpfile_s(&ret)) {
@@ -347,9 +347,9 @@ LIBATFRAME_UTILS_API FILE *file_system::open_tmp_file() {
 #endif
 }
 
-LIBATFRAME_UTILS_API bool file_system::generate_tmp_file_name(std::string &inout) {
-#if (defined(LIBATFRAME_UTILS_ENABLE_WINDOWS_MKTEMP) && LIBATFRAME_UTILS_ENABLE_WINDOWS_MKTEMP) || \
-    (defined(LIBATFRAME_UTILS_ENABLE_POSIX_MKSTEMP) && LIBATFRAME_UTILS_ENABLE_POSIX_MKSTEMP)
+ATFRAMEWORK_UTILS_API bool file_system::generate_tmp_file_name(std::string &inout) {
+#if (defined(ATFRAMEWORK_UTILS_ENABLE_WINDOWS_MKTEMP) && ATFRAMEWORK_UTILS_ENABLE_WINDOWS_MKTEMP) || \
+    (defined(ATFRAMEWORK_UTILS_ENABLE_POSIX_MKSTEMP) && ATFRAMEWORK_UTILS_ENABLE_POSIX_MKSTEMP)
   if (inout.empty()) {
 #  ifdef WIN32
     inout = file_system::getenv("TMP");
@@ -377,7 +377,7 @@ LIBATFRAME_UTILS_API bool file_system::generate_tmp_file_name(std::string &inout
   inout += "XXXXXX";
   inout.resize(inout.size() + 1, 0);
 
-#  if (defined(LIBATFRAME_UTILS_ENABLE_WINDOWS_MKTEMP) && LIBATFRAME_UTILS_ENABLE_WINDOWS_MKTEMP)
+#  if (defined(ATFRAMEWORK_UTILS_ENABLE_WINDOWS_MKTEMP) && ATFRAMEWORK_UTILS_ENABLE_WINDOWS_MKTEMP)
 #    if defined(UTIL_FS_C11_API)
   if (0 == _mktemp_s(&inout[0], inout.size())) {
     inout.pop_back();
@@ -427,8 +427,8 @@ LIBATFRAME_UTILS_API bool file_system::generate_tmp_file_name(std::string &inout
   char path_buffer[L_tmpnam_s + 1] = {0};
   path_buffer[L_tmpnam_s] = 0;
 #    else
-  char path_buffer[LIBATFRAME_UTILS_NAMESPACE_ID::file_system::MAX_PATH_LEN + 1];
-  path_buffer[LIBATFRAME_UTILS_NAMESPACE_ID::file_system::MAX_PATH_LEN] = 0;
+  char path_buffer[ATFRAMEWORK_UTILS_NAMESPACE_ID::file_system::MAX_PATH_LEN + 1];
+  path_buffer[ATFRAMEWORK_UTILS_NAMESPACE_ID::file_system::MAX_PATH_LEN] = 0;
 #    endif
   if (0 == tmpnam_s(path_buffer, sizeof(path_buffer) - 1)) {
     inout = &path_buffer[0];
@@ -441,8 +441,8 @@ LIBATFRAME_UTILS_API bool file_system::generate_tmp_file_name(std::string &inout
   char path_buffer[L_tmpnam + 1] = {0};
   path_buffer[L_tmpnam] = 0;
 #    else
-  char path_buffer[LIBATFRAME_UTILS_NAMESPACE_ID::file_system::MAX_PATH_LEN + 1];
-  path_buffer[LIBATFRAME_UTILS_NAMESPACE_ID::file_system::MAX_PATH_LEN] = 0;
+  char path_buffer[ATFRAMEWORK_UTILS_NAMESPACE_ID::file_system::MAX_PATH_LEN + 1];
+  path_buffer[ATFRAMEWORK_UTILS_NAMESPACE_ID::file_system::MAX_PATH_LEN] = 0;
 #    endif
   if (nullptr != tmpnam(path_buffer)) {
     inout = &path_buffer[0];
@@ -463,7 +463,7 @@ LIBATFRAME_UTILS_API bool file_system::generate_tmp_file_name(std::string &inout
 #endif
 }
 
-LIBATFRAME_UTILS_API int file_system::scan_dir(const char *dir_path, std::list<std::string> &out, int options) {
+ATFRAMEWORK_UTILS_API int file_system::scan_dir(const char *dir_path, std::list<std::string> &out, int options) {
   int ret = 0;
   std::string base_dir = dir_path ? dir_path : "";
 
@@ -660,7 +660,7 @@ LIBATFRAME_UTILS_API int file_system::scan_dir(const char *dir_path, std::list<s
   return ret;
 }
 
-LIBATFRAME_UTILS_API bool file_system::is_abs_path(const char *dir_path) {
+ATFRAMEWORK_UTILS_API bool file_system::is_abs_path(const char *dir_path) {
   if (nullptr == dir_path) {
     return false;
   }
@@ -681,7 +681,7 @@ LIBATFRAME_UTILS_API bool file_system::is_abs_path(const char *dir_path) {
 }
 
 #if !defined(UTIL_FS_DISABLE_LINK)
-LIBATFRAME_UTILS_API int file_system::link(const char *oldpath, const char *newpath, int options) {
+ATFRAMEWORK_UTILS_API int file_system::link(const char *oldpath, const char *newpath, int options) {
   if ((options & link_opt_t::EN_LOT_FORCE_REWRITE) && is_exist(newpath)) {
     remove(newpath);
   }
@@ -731,4 +731,4 @@ LIBATFRAME_UTILS_API int file_system::link(const char *oldpath, const char *newp
 }
 #endif
 
-LIBATFRAME_UTILS_NAMESPACE_END
+ATFRAMEWORK_UTILS_NAMESPACE_END

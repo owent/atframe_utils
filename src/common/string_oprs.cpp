@@ -1,9 +1,9 @@
 #include <common/string_oprs.h>
 #include <sstream>
 
-LIBATFRAME_UTILS_NAMESPACE_BEGIN
+ATFRAMEWORK_UTILS_NAMESPACE_BEGIN
 namespace string {
-LIBATFRAME_UTILS_API gsl::string_view trim_string(gsl::string_view input, bool trim_left, bool trim_right) {
+ATFRAMEWORK_UTILS_API gsl::string_view trim_string(gsl::string_view input, bool trim_left, bool trim_right) {
   if (input.empty()) {
     return input;
   }
@@ -12,7 +12,7 @@ LIBATFRAME_UTILS_API gsl::string_view trim_string(gsl::string_view input, bool t
   return gsl::string_view{ret.first, ret.second};
 }
 
-LIBATFRAME_UTILS_API const char *version_tok(const char *v, int64_t &out) {
+ATFRAMEWORK_UTILS_API const char *version_tok(const char *v, int64_t &out) {
   if (nullptr == v) {
     out = 0;
     return v;
@@ -41,7 +41,7 @@ LIBATFRAME_UTILS_API const char *version_tok(const char *v, int64_t &out) {
   return v;
 }
 
-LIBATFRAME_UTILS_API int version_compare(const char *l, const char *r) {
+ATFRAMEWORK_UTILS_API int version_compare(const char *l, const char *r) {
   while ((l && *l) || (r && *r)) {
     int64_t lver = 0;
     int64_t rver = 0;
@@ -57,7 +57,7 @@ LIBATFRAME_UTILS_API int version_compare(const char *l, const char *r) {
   return 0;
 }
 
-LIBATFRAME_UTILS_API std::string version_normalize(const char *v) {
+ATFRAMEWORK_UTILS_API std::string version_normalize(const char *v) {
   std::stringstream ss;
 
   bool need_dot = false;
@@ -91,16 +91,16 @@ LIBATFRAME_UTILS_API std::string version_normalize(const char *v) {
 }
 
 }  // namespace string
-LIBATFRAME_UTILS_NAMESPACE_END
+ATFRAMEWORK_UTILS_NAMESPACE_END
 
-LIBATFRAME_UTILS_API_C(const char *) util_string_version_tok(const char *v, int64_t &out) {
-  return LIBATFRAME_UTILS_NAMESPACE_ID::string::version_tok(v, out);
+ATFRAMEWORK_UTILS_API_C(const char *) util_string_version_tok(const char *v, int64_t &out) {
+  return ATFRAMEWORK_UTILS_NAMESPACE_ID::string::version_tok(v, out);
 }
 
-LIBATFRAME_UTILS_API_C(int) util_string_version_compare(const char *l, const char *r) {
-  return LIBATFRAME_UTILS_NAMESPACE_ID::string::version_compare(l, r);
+ATFRAMEWORK_UTILS_API_C(int) util_string_version_compare(const char *l, const char *r) {
+  return ATFRAMEWORK_UTILS_NAMESPACE_ID::string::version_compare(l, r);
 }
 
-LIBATFRAME_UTILS_API std::string util_string_version_normalize(const char *v) {
-  return LIBATFRAME_UTILS_NAMESPACE_ID::string::version_normalize(v);
+ATFRAMEWORK_UTILS_API std::string util_string_version_normalize(const char *v) {
+  return ATFRAMEWORK_UTILS_NAMESPACE_ID::string::version_normalize(v);
 }

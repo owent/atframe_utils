@@ -3,12 +3,12 @@
 #include <typeinfo>
 #include "frame/test_macros.h"
 
-#define ENABLE_MIXEDINT_MAGIC_MASK 3
+#define ATFRAMEWORK_UTILS_ENABLE_MIXEDINT_MAGIC_MASK 3
 
 #include "algorithm/mixed_int.h"
 
 CASE_TEST(mixed_int_test, basic) {
-#if defined(LIBATFRAME_UTILS_ENABLE_RTTI) && LIBATFRAME_UTILS_ENABLE_RTTI
+#if defined(ATFRAMEWORK_UTILS_ENABLE_RTTI) && ATFRAMEWORK_UTILS_ENABLE_RTTI
   CASE_EXPECT_TRUE(typeid(uint32_t) != typeid(mixed_uint32_t));
 #endif
 

@@ -5,10 +5,10 @@
 #include <config/compile_optimize.h>
 #include <network/http_content_type.h>
 
-LIBATFRAME_UTILS_NAMESPACE_BEGIN
+ATFRAMEWORK_UTILS_NAMESPACE_BEGIN
 namespace network {
 namespace http_content_type {
-LIBATFRAME_UTILS_API const char *get_type(main_type mt) {
+ATFRAMEWORK_UTILS_API const char *get_type(main_type mt) {
   static const char *ret[EN_HCT_MT_MAX] = {nullptr};
   UTIL_UNLIKELY_IF (nullptr == ret[EN_HCT_MT_DISCRETE_TEXT]) {
     ret[EN_HCT_MT_DISCRETE_TEXT] = "text";
@@ -28,7 +28,7 @@ LIBATFRAME_UTILS_API const char *get_type(main_type mt) {
   return ret[mt];
 }
 
-LIBATFRAME_UTILS_API const char *get_subtype(sub_type st) {
+ATFRAMEWORK_UTILS_API const char *get_subtype(sub_type st) {
   static const char *ret[EN_HCT_ST_MAX] = {nullptr};
   UTIL_UNLIKELY_IF (nullptr == ret[EN_HCT_ST_TEXT_PLAIN]) {
     ret[EN_HCT_ST_TEXT_PLAIN] = "plain";
@@ -55,9 +55,9 @@ LIBATFRAME_UTILS_API const char *get_subtype(sub_type st) {
   return ret[st];
 }
 
-LIBATFRAME_UTILS_API int make_content_type(char *dst, size_t dst_sz, const char *type, const char *subtype,
-                                           const char *parameter_key[], const char *parameter_value[],
-                                           size_t parameter_sz) {
+ATFRAMEWORK_UTILS_API int make_content_type(char *dst, size_t dst_sz, const char *type, const char *subtype,
+                                            const char *parameter_key[], const char *parameter_value[],
+                                            size_t parameter_sz) {
   if (nullptr == dst || dst_sz < 14) {
     return -1;
   }
@@ -91,9 +91,9 @@ LIBATFRAME_UTILS_API int make_content_type(char *dst, size_t dst_sz, const char 
   return res;
 }
 
-LIBATFRAME_UTILS_API int make_content_type(char *dst, size_t dst_sz, main_type mt, const char *st,
-                                           const char *parameter_key[], const char *parameter_value[],
-                                           size_t parameter_sz) {
+ATFRAMEWORK_UTILS_API int make_content_type(char *dst, size_t dst_sz, main_type mt, const char *st,
+                                            const char *parameter_key[], const char *parameter_value[],
+                                            size_t parameter_sz) {
   const char *mt_str = get_type(mt);
   if (nullptr == mt_str) {
     return -11;
@@ -102,9 +102,9 @@ LIBATFRAME_UTILS_API int make_content_type(char *dst, size_t dst_sz, main_type m
   return make_content_type(dst, dst_sz, mt_str, st, parameter_key, parameter_value, parameter_sz);
 }
 
-LIBATFRAME_UTILS_API int make_content_type(char *dst, size_t dst_sz, const char *type, sub_type st,
-                                           const char *parameter_key[], const char *parameter_value[],
-                                           size_t parameter_sz) {
+ATFRAMEWORK_UTILS_API int make_content_type(char *dst, size_t dst_sz, const char *type, sub_type st,
+                                            const char *parameter_key[], const char *parameter_value[],
+                                            size_t parameter_sz) {
   const char *st_str = get_subtype(st);
   if (nullptr == st_str) {
     return -21;
@@ -113,9 +113,9 @@ LIBATFRAME_UTILS_API int make_content_type(char *dst, size_t dst_sz, const char 
   return make_content_type(dst, dst_sz, type, st_str, parameter_key, parameter_value, parameter_sz);
 }
 
-LIBATFRAME_UTILS_API int make_content_type(char *dst, size_t dst_sz, main_type mt, sub_type st,
-                                           const char *parameter_key[], const char *parameter_value[],
-                                           size_t parameter_sz) {
+ATFRAMEWORK_UTILS_API int make_content_type(char *dst, size_t dst_sz, main_type mt, sub_type st,
+                                            const char *parameter_key[], const char *parameter_value[],
+                                            size_t parameter_sz) {
   const char *st_str = get_subtype(st);
   if (nullptr == st_str) {
     return -21;
@@ -124,8 +124,8 @@ LIBATFRAME_UTILS_API int make_content_type(char *dst, size_t dst_sz, main_type m
   return make_content_type(dst, dst_sz, mt, st_str, parameter_key, parameter_value, parameter_sz);
 }
 
-LIBATFRAME_UTILS_API int make_content_type(char *dst, size_t dst_sz, easy_type et, const char *parameter_key[],
-                                           const char *parameter_value[], size_t parameter_sz) {
+ATFRAMEWORK_UTILS_API int make_content_type(char *dst, size_t dst_sz, easy_type et, const char *parameter_key[],
+                                            const char *parameter_value[], size_t parameter_sz) {
   switch (et) {
     case EN_HCP_ET_APPLICATION_OCTET_STREAM:
       return make_content_type(dst, dst_sz, EN_HCT_MT_DISCRETE_APPLICATION, EN_HCT_ST_APPLICATION_OCTET_STREAM,
@@ -145,4 +145,4 @@ LIBATFRAME_UTILS_API int make_content_type(char *dst, size_t dst_sz, easy_type e
 }
 }  // namespace http_content_type
 }  // namespace network
-LIBATFRAME_UTILS_NAMESPACE_END
+ATFRAMEWORK_UTILS_NAMESPACE_END

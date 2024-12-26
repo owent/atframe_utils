@@ -39,7 +39,7 @@
 #  undef min
 #endif
 
-LIBATFRAME_UTILS_NAMESPACE_BEGIN
+ATFRAMEWORK_UTILS_NAMESPACE_BEGIN
 namespace random {
 /**
  * 随机数包装类，用以提供高级功能
@@ -49,7 +49,7 @@ namespace random {
  * @see https://en.cppreference.com/w/cpp/algorithm/random_shuffle
  */
 template <typename CoreType>
-class LIBATFRAME_UTILS_API_HEAD_ONLY random_manager_wrapper {
+class ATFRAMEWORK_UTILS_API_HEAD_ONLY random_manager_wrapper {
  public:
   using core_type = CoreType;
   using result_type = typename core_type::result_type;
@@ -99,7 +99,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY random_manager_wrapper {
    * @param [in] last 随机数种子散列值结束位置
    */
   template <class It>
-  LIBATFRAME_UTILS_API_HEAD_ONLY void init_seed(It &first, It last) {
+  ATFRAMEWORK_UTILS_API_HEAD_ONLY void init_seed(It &first, It last) {
     core_.init_seed(first, last);
   }
 
@@ -123,7 +123,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY random_manager_wrapper {
    * @return 产生的随机数
    */
   template <typename ResultType>
-  LIBATFRAME_UTILS_API_HEAD_ONLY ResultType random_between(ResultType lowest, ResultType highest) noexcept {
+  ATFRAMEWORK_UTILS_API_HEAD_ONLY ResultType random_between(ResultType lowest, ResultType highest) noexcept {
     if (highest <= lowest) {
       return lowest;
     }
@@ -151,7 +151,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY random_manager_wrapper {
   }
 
   template <typename RandomIt>
-  LIBATFRAME_UTILS_API_HEAD_ONLY void shuffle(RandomIt first, RandomIt last) {
+  ATFRAMEWORK_UTILS_API_HEAD_ONLY void shuffle(RandomIt first, RandomIt last) {
 #if defined(__cplusplus) && __cplusplus >= 201103L
     std::shuffle(first, last, std::move(*this));
 #elif defined(_MSVC_LANG) && _MSVC_LANG >= 201402L
@@ -188,6 +188,6 @@ using xoshiro256_starstar = random_manager_wrapper<core::xoshiro_engine_256<fals
 // 循环节： 2^256 − 1，少一次旋转，更快一点点
 using xoshiro256_plus = random_manager_wrapper<core::xoshiro_engine_256<true> >;
 }  // namespace random
-LIBATFRAME_UTILS_NAMESPACE_END
+ATFRAMEWORK_UTILS_NAMESPACE_END
 
 #endif /* _UTIL_RANDOM_GENERATOR_H_ */

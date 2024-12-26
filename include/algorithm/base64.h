@@ -25,7 +25,7 @@
 
 #include <config/atframe_utils_build_feature.h>
 
-LIBATFRAME_UTILS_NAMESPACE_BEGIN
+ATFRAMEWORK_UTILS_NAMESPACE_BEGIN
 
 // @see https://en.wikipedia.org/wiki/Base64
 struct base64_mode_t {
@@ -65,8 +65,8 @@ struct base64_mode_t {
  * @note           Call this function with dlen = 0 to obtain the
  *                 required buffer size in *olen
  */
-LIBATFRAME_UTILS_API int base64_encode(unsigned char *dst, size_t dlen, size_t *olen, const unsigned char *src,
-                                       size_t slen, base64_mode_t::type mode = base64_mode_t::EN_BMT_STANDARD);
+ATFRAMEWORK_UTILS_API int base64_encode(unsigned char *dst, size_t dlen, size_t *olen, const unsigned char *src,
+                                        size_t slen, base64_mode_t::type mode = base64_mode_t::EN_BMT_STANDARD);
 
 /**
  * @brief          Encode a buffer into base64 format
@@ -78,8 +78,8 @@ LIBATFRAME_UTILS_API int base64_encode(unsigned char *dst, size_t dlen, size_t *
  *
  * @return         0 if successful
  */
-LIBATFRAME_UTILS_API int base64_encode(std::string &dst, const unsigned char *src, size_t slen,
-                                       base64_mode_t::type mode = base64_mode_t::EN_BMT_STANDARD);
+ATFRAMEWORK_UTILS_API int base64_encode(std::string &dst, const unsigned char *src, size_t slen,
+                                        base64_mode_t::type mode = base64_mode_t::EN_BMT_STANDARD);
 
 /**
  * @brief          Encode a buffer into base64 format
@@ -90,8 +90,8 @@ LIBATFRAME_UTILS_API int base64_encode(std::string &dst, const unsigned char *sr
  *
  * @return         0 if successful
  */
-LIBATFRAME_UTILS_API int base64_encode(std::string &dst, const std::string &in,
-                                       base64_mode_t::type mode = base64_mode_t::EN_BMT_STANDARD);
+ATFRAMEWORK_UTILS_API int base64_encode(std::string &dst, const std::string &in,
+                                        base64_mode_t::type mode = base64_mode_t::EN_BMT_STANDARD);
 
 /**
  * @brief          Decode a base64-formatted buffer, support no padding
@@ -110,8 +110,8 @@ LIBATFRAME_UTILS_API int base64_encode(std::string &dst, const std::string &in,
  * @note           Call this function with *dst = nullptr or dlen = 0 to obtain
  *                 the required buffer size in *olen
  */
-LIBATFRAME_UTILS_API int base64_decode(unsigned char *dst, size_t dlen, size_t *olen, const unsigned char *src,
-                                       size_t slen, base64_mode_t::type mode = base64_mode_t::EN_BMT_STANDARD);
+ATFRAMEWORK_UTILS_API int base64_decode(unsigned char *dst, size_t dlen, size_t *olen, const unsigned char *src,
+                                        size_t slen, base64_mode_t::type mode = base64_mode_t::EN_BMT_STANDARD);
 
 /**
  * @brief          Decode a base64-formatted buffer, support no padding
@@ -123,8 +123,8 @@ LIBATFRAME_UTILS_API int base64_decode(unsigned char *dst, size_t dlen, size_t *
  *
  * @return         0 if successful
  */
-LIBATFRAME_UTILS_API int base64_decode(std::string &dst, const unsigned char *src, size_t slen,
-                                       base64_mode_t::type mode = base64_mode_t::EN_BMT_STANDARD);
+ATFRAMEWORK_UTILS_API int base64_decode(std::string &dst, const unsigned char *src, size_t slen,
+                                        base64_mode_t::type mode = base64_mode_t::EN_BMT_STANDARD);
 
 /**
  * @brief          Decode a base64-formatted buffer, support no padding
@@ -135,6 +135,6 @@ LIBATFRAME_UTILS_API int base64_decode(std::string &dst, const unsigned char *sr
  *
  * @return         0 if successful
  */
-LIBATFRAME_UTILS_API int base64_decode(std::string &dst, const std::string &in,
-                                       base64_mode_t::type mode = base64_mode_t::EN_BMT_STANDARD);
-LIBATFRAME_UTILS_NAMESPACE_END
+ATFRAMEWORK_UTILS_API int base64_decode(std::string &dst, const std::string &in,
+                                        base64_mode_t::type mode = base64_mode_t::EN_BMT_STANDARD);
+ATFRAMEWORK_UTILS_NAMESPACE_END

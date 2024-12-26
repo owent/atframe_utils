@@ -9,33 +9,33 @@
 #include <memory>
 #include <string>
 
-LIBATFRAME_UTILS_NAMESPACE_BEGIN
+ATFRAMEWORK_UTILS_NAMESPACE_BEGIN
 
-LIBATFRAME_UTILS_API scoped_demangled_name::scoped_demangled_name(const char *name) noexcept
+ATFRAMEWORK_UTILS_API scoped_demangled_name::scoped_demangled_name(const char *name) noexcept
     : m_p(demangle_alloc(name)) {}
 
-LIBATFRAME_UTILS_API scoped_demangled_name::~scoped_demangled_name() noexcept {
+ATFRAMEWORK_UTILS_API scoped_demangled_name::~scoped_demangled_name() noexcept {
   if (nullptr != m_p) {
     demangle_free(m_p);
   }
 }
 
-LIBATFRAME_UTILS_API scoped_demangled_name::scoped_demangled_name(scoped_demangled_name &&other) noexcept
+ATFRAMEWORK_UTILS_API scoped_demangled_name::scoped_demangled_name(scoped_demangled_name &&other) noexcept
     : m_p(other.m_p) {
   other.m_p = nullptr;
 }
 
-LIBATFRAME_UTILS_API scoped_demangled_name &scoped_demangled_name::operator=(scoped_demangled_name &&other) noexcept {
+ATFRAMEWORK_UTILS_API scoped_demangled_name &scoped_demangled_name::operator=(scoped_demangled_name &&other) noexcept {
   const char *tmp = m_p;
   m_p = other.m_p;
   other.m_p = tmp;
   return *this;
 }
 
-#if !defined(LIBATFRAME_UTILS_DEMANGLE_USING_CXX_ABI) && !defined(LIBATFRAME_UTILS_DEMANGLE_USING_WINDOWS)
-LIBATFRAME_UTILS_API const char *demangle_alloc(const char *name) noexcept { return name; }
-LIBATFRAME_UTILS_API void demangle_free(const char *) noexcept {}
-LIBATFRAME_UTILS_API std::string demangle(const char *name) { return name; }
+#if !defined(ATFRAMEWORK_UTILS_DEMANGLE_USING_CXX_ABI) && !defined(ATFRAMEWORK_UTILS_DEMANGLE_USING_WINDOWS)
+ATFRAMEWORK_UTILS_API const char *demangle_alloc(const char *name) noexcept { return name; }
+ATFRAMEWORK_UTILS_API void demangle_free(const char *) noexcept {}
+ATFRAMEWORK_UTILS_API std::string demangle(const char *name) { return name; }
 #endif
 
-LIBATFRAME_UTILS_NAMESPACE_END
+ATFRAMEWORK_UTILS_NAMESPACE_END

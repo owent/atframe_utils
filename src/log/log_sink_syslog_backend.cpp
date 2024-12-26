@@ -4,7 +4,7 @@
 
 #include "log/log_sink_syslog_backend.h"
 
-#if defined(LOG_SINK_ENABLE_SYSLOG_SUPPORT) && LOG_SINK_ENABLE_SYSLOG_SUPPORT
+#if defined(ATFRAMEWORK_UTILS_LOG_SINK_ENABLE_SYSLOG_SUPPORT) && ATFRAMEWORK_UTILS_LOG_SINK_ENABLE_SYSLOG_SUPPORT
 
 #  include <syslog.h>
 #  include <cstring>
@@ -16,7 +16,7 @@
 #  include "lock/lock_holder.h"
 #  include "lock/spin_rw_lock.h"
 
-LIBATFRAME_UTILS_NAMESPACE_BEGIN
+ATFRAMEWORK_UTILS_NAMESPACE_BEGIN
 namespace log {
 
 class log_sink_syslog_backend_handle {
@@ -35,17 +35,17 @@ class log_sink_syslog_backend_handle {
 
   static std::shared_ptr<log_sink_syslog_backend_handle> mutable_instance(const char *ident, int option, int facility) {
     static std::shared_ptr<log_sink_syslog_backend_handle> syslog_handle;
-    static LIBATFRAME_UTILS_NAMESPACE_ID::lock::spin_rw_lock syslog_lock;
+    static ATFRAMEWORK_UTILS_NAMESPACE_ID::lock::spin_rw_lock syslog_lock;
 
     {
-      LIBATFRAME_UTILS_NAMESPACE_ID::lock::read_lock_holder<LIBATFRAME_UTILS_NAMESPACE_ID::lock::spin_rw_lock> guard{
+      ATFRAMEWORK_UTILS_NAMESPACE_ID::lock::read_lock_holder<ATFRAMEWORK_UTILS_NAMESPACE_ID::lock::spin_rw_lock> guard{
           syslog_lock};
       if (syslog_handle) {
         return syslog_handle;
       }
     }
 
-    LIBATFRAME_UTILS_NAMESPACE_ID::lock::write_lock_holder<LIBATFRAME_UTILS_NAMESPACE_ID::lock::spin_rw_lock> guard{
+    ATFRAMEWORK_UTILS_NAMESPACE_ID::lock::write_lock_holder<ATFRAMEWORK_UTILS_NAMESPACE_ID::lock::spin_rw_lock> guard{
         syslog_lock};
     syslog_handle = std::make_shared<log_sink_syslog_backend_handle>(ident, option, facility);
     return syslog_handle;
@@ -57,31 +57,31 @@ class log_sink_syslog_backend_handle {
   int facility_;
 };
 
-LIBATFRAME_UTILS_API log_sink_syslog_backend::log_sink_syslog_backend(const char *ident)
+ATFRAMEWORK_UTILS_API log_sink_syslog_backend::log_sink_syslog_backend(const char *ident)
     : option_(LOG_ODELAY | LOG_PID), facility_(LOG_USER) {
   if (nullptr != ident) {
     ident_ = ident;
   }
 }
 
-LIBATFRAME_UTILS_API log_sink_syslog_backend::log_sink_syslog_backend(const char *ident, int option)
+ATFRAMEWORK_UTILS_API log_sink_syslog_backend::log_sink_syslog_backend(const char *ident, int option)
     : option_(option), facility_(LOG_USER) {
   if (nullptr != ident) {
     ident_ = ident;
   }
 }
 
-LIBATFRAME_UTILS_API log_sink_syslog_backend::log_sink_syslog_backend(const char *ident, int option, int facility)
+ATFRAMEWORK_UTILS_API log_sink_syslog_backend::log_sink_syslog_backend(const char *ident, int option, int facility)
     : option_(option), facility_(facility) {
   if (nullptr != ident) {
     ident_ = ident;
   }
 }
 
-LIBATFRAME_UTILS_API log_sink_syslog_backend::~log_sink_syslog_backend() {}
+ATFRAMEWORK_UTILS_API log_sink_syslog_backend::~log_sink_syslog_backend() {}
 
-LIBATFRAME_UTILS_API void log_sink_syslog_backend::operator()(const log_formatter::caller_info_t &caller,
-                                                              const char *content, size_t /*content_size*/) {
+ATFRAMEWORK_UTILS_API void log_sink_syslog_backend::operator()(const log_formatter::caller_info_t &caller,
+                                                               const char *content, size_t /*content_size*/) {
   if (!handle_) {
     handle_ =
         log_sink_syslog_backend_handle::mutable_instance(ident_.empty() ? nullptr : ident_.c_str(), option_, facility_);
@@ -117,6 +117,6 @@ LIBATFRAME_UTILS_API void log_sink_syslog_backend::operator()(const log_formatte
 }
 
 }  // namespace log
-LIBATFRAME_UTILS_NAMESPACE_END
+ATFRAMEWORK_UTILS_NAMESPACE_END
 
 #endif

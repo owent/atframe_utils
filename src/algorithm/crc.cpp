@@ -6,7 +6,7 @@
 
 #include "algorithm/crc.h"
 
-LIBATFRAME_UTILS_NAMESPACE_BEGIN
+ATFRAMEWORK_UTILS_NAMESPACE_BEGIN
 namespace detail {
 
 /* CRC16 implementation according to CCITT standards.
@@ -172,7 +172,7 @@ static constexpr const uint64_t crc64_tab[256] = {
 
 }  // namespace detail
 
-LIBATFRAME_UTILS_API uint16_t crc16(const unsigned char *s, size_t l, uint16_t init_val) {
+ATFRAMEWORK_UTILS_API uint16_t crc16(const unsigned char *s, size_t l, uint16_t init_val) {
   if (!s) {
     return init_val;
   }
@@ -184,7 +184,7 @@ LIBATFRAME_UTILS_API uint16_t crc16(const unsigned char *s, size_t l, uint16_t i
   return init_val;
 }
 
-LIBATFRAME_UTILS_API uint32_t crc32(const unsigned char *s, size_t l, uint32_t init_val) {
+ATFRAMEWORK_UTILS_API uint32_t crc32(const unsigned char *s, size_t l, uint32_t init_val) {
   if (!s) {
     return init_val;
   }
@@ -197,7 +197,7 @@ LIBATFRAME_UTILS_API uint32_t crc32(const unsigned char *s, size_t l, uint32_t i
   return init_val;
 }
 
-LIBATFRAME_UTILS_API uint64_t crc64(const unsigned char *s, size_t l, uint64_t init_val) {
+ATFRAMEWORK_UTILS_API uint64_t crc64(const unsigned char *s, size_t l, uint64_t init_val) {
   if (!s) {
     return init_val;
   }
@@ -209,4 +209,4 @@ LIBATFRAME_UTILS_API uint64_t crc64(const unsigned char *s, size_t l, uint64_t i
 
   return init_val;
 }
-LIBATFRAME_UTILS_NAMESPACE_END
+ATFRAMEWORK_UTILS_NAMESPACE_END

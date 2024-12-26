@@ -18,7 +18,7 @@
 #include "cli/cmd_option_bindt_mf_cc.h"
 #include "cli/cmd_option_list.h"
 
-LIBATFRAME_UTILS_NAMESPACE_BEGIN
+ATFRAMEWORK_UTILS_NAMESPACE_BEGIN
 namespace cli {
 namespace binder {
 
@@ -27,7 +27,7 @@ namespace binder {
  *  primary template handles the non--member-pointer case.
  */
 template <typename _Tp>
-struct LIBATFRAME_UTILS_API_HEAD_ONLY maybe_wrap_member_pointer {
+struct ATFRAMEWORK_UTILS_API_HEAD_ONLY maybe_wrap_member_pointer {
   using type = _Tp;
   using caller_type = cmd_option_bindt_cc_caller<_Tp>;
 
@@ -41,7 +41,7 @@ struct LIBATFRAME_UTILS_API_HEAD_ONLY maybe_wrap_member_pointer {
  *  partial specialization handles the member pointer case.
  */
 template <typename _Tp, typename _Class>
-struct LIBATFRAME_UTILS_API_HEAD_ONLY maybe_wrap_member_pointer<_Tp _Class::*> {
+struct ATFRAMEWORK_UTILS_API_HEAD_ONLY maybe_wrap_member_pointer<_Tp _Class::*> {
   using type = _Tp _Class::*;
   using caller_type = cmd_option_bindt_mf_cc_caller<_Class, type>;
 
@@ -52,7 +52,7 @@ struct LIBATFRAME_UTILS_API_HEAD_ONLY maybe_wrap_member_pointer<_Tp _Class::*> {
 // ===       参数列表       ===
 // ============================
 template <typename... _Args>
-class LIBATFRAME_UTILS_API_HEAD_ONLY cmd_option_bind_param_list {
+class ATFRAMEWORK_UTILS_API_HEAD_ONLY cmd_option_bind_param_list {
  private:
   /**
    * 用于创建存储对象索引和解包索引[0, 1, 2, ..., sizeof...(_Args) - 1]
@@ -89,5 +89,5 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY cmd_option_bind_param_list {
 
 }  // namespace binder
 }  // namespace cli
-LIBATFRAME_UTILS_NAMESPACE_END
+ATFRAMEWORK_UTILS_NAMESPACE_END
 #endif /* _CMDOPTIONBINDPARAMLIST_H_ */

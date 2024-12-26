@@ -14,9 +14,9 @@
 
 #include "log_formatter.h"
 
-#if defined(LOG_SINK_ENABLE_SYSLOG_SUPPORT) && LOG_SINK_ENABLE_SYSLOG_SUPPORT
+#if defined(ATFRAMEWORK_UTILS_LOG_SINK_ENABLE_SYSLOG_SUPPORT) && ATFRAMEWORK_UTILS_LOG_SINK_ENABLE_SYSLOG_SUPPORT
 
-LIBATFRAME_UTILS_NAMESPACE_BEGIN
+ATFRAMEWORK_UTILS_NAMESPACE_BEGIN
 namespace log {
 
 class log_sink_syslog_backend_handle;
@@ -28,14 +28,14 @@ class log_sink_syslog_backend_handle;
 class log_sink_syslog_backend {
  public:
   // @see https://www.man7.org/linux/man-pages/man3/syslog.3.html for details
-  LIBATFRAME_UTILS_API log_sink_syslog_backend(const char *ident);
-  LIBATFRAME_UTILS_API log_sink_syslog_backend(const char *ident, int option);
-  LIBATFRAME_UTILS_API log_sink_syslog_backend(const char *ident, int option, int facility);
-  LIBATFRAME_UTILS_API ~log_sink_syslog_backend();
+  ATFRAMEWORK_UTILS_API log_sink_syslog_backend(const char *ident);
+  ATFRAMEWORK_UTILS_API log_sink_syslog_backend(const char *ident, int option);
+  ATFRAMEWORK_UTILS_API log_sink_syslog_backend(const char *ident, int option, int facility);
+  ATFRAMEWORK_UTILS_API ~log_sink_syslog_backend();
 
  public:
-  LIBATFRAME_UTILS_API void operator()(const log_formatter::caller_info_t &caller, const char *content,
-                                       size_t content_size);
+  ATFRAMEWORK_UTILS_API void operator()(const log_formatter::caller_info_t &caller, const char *content,
+                                        size_t content_size);
 
  private:
   std::shared_ptr<log_sink_syslog_backend_handle> handle_;
@@ -44,7 +44,7 @@ class log_sink_syslog_backend {
   int facility_;
 };
 }  // namespace log
-LIBATFRAME_UTILS_NAMESPACE_END
+ATFRAMEWORK_UTILS_NAMESPACE_END
 
 #endif
 

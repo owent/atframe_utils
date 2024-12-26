@@ -6,11 +6,13 @@
 
 #pragma once
 
-// CRYPTO_USE_OPENSSL, CRYPTO_USE_LIBRESSL,CRYPTO_USE_BORINGSSL, CRYPTO_USE_MBEDTLS
+// ATFRAMEWORK_UTILS_CRYPTO_USE_OPENSSL, ATFRAMEWORK_UTILS_CRYPTO_USE_LIBRESSL,ATFRAMEWORK_UTILS_CRYPTO_USE_BORINGSSL,
+// ATFRAMEWORK_UTILS_CRYPTO_USE_MBEDTLS
 
 #include <config/atframe_utils_build_feature.h>
 
-#if defined(CRYPTO_USE_OPENSSL) || defined(CRYPTO_USE_LIBRESSL) || defined(CRYPTO_USE_BORINGSSL)
+#if defined(ATFRAMEWORK_UTILS_CRYPTO_USE_OPENSSL) || defined(ATFRAMEWORK_UTILS_CRYPTO_USE_LIBRESSL) || \
+    defined(ATFRAMEWORK_UTILS_CRYPTO_USE_BORINGSSL)
 
 #  include <openssl/bio.h>
 #  include <openssl/bn.h>
@@ -26,7 +28,7 @@
 
 #  define CRYPTO_DH_ENABLED 1
 
-#elif defined(CRYPTO_USE_MBEDTLS)
+#elif defined(ATFRAMEWORK_UTILS_CRYPTO_USE_MBEDTLS)
 
 #  include "mbedtls/platform.h"
 // "mbedtls/platform.h" must be the first
@@ -46,11 +48,11 @@
 #  include <string>
 #  include <vector>
 
-LIBATFRAME_UTILS_NAMESPACE_BEGIN
+ATFRAMEWORK_UTILS_NAMESPACE_BEGIN
 namespace crypto {
 class dh {
  public:
-  struct LIBATFRAME_UTILS_API method_t {
+  struct ATFRAMEWORK_UTILS_API method_t {
     enum type {
       EN_CDT_INVALID = 0,  // inner
       EN_CDT_DH = 1,       // dh algorithm
@@ -58,8 +60,9 @@ class dh {
     };
   };
 
-#  if defined(CRYPTO_USE_OPENSSL) || defined(CRYPTO_USE_LIBRESSL) || defined(CRYPTO_USE_BORINGSSL)
-  struct LIBATFRAME_UTILS_API dh_context_t {
+#  if defined(ATFRAMEWORK_UTILS_CRYPTO_USE_OPENSSL) || defined(ATFRAMEWORK_UTILS_CRYPTO_USE_LIBRESSL) || \
+      defined(ATFRAMEWORK_UTILS_CRYPTO_USE_BORINGSSL)
+  struct ATFRAMEWORK_UTILS_API dh_context_t {
     EVP_PKEY_CTX *openssl_pkey_ctx_;
     union {
       EVP_PKEY *openssl_dh_pkey_;
@@ -71,8 +74,8 @@ class dh {
       EVP_PKEY *openssl_ecdh_peer_key_;
     };
   };
-#  elif defined(CRYPTO_USE_MBEDTLS)
-  struct LIBATFRAME_UTILS_API dh_context_t {
+#  elif defined(ATFRAMEWORK_UTILS_CRYPTO_USE_MBEDTLS)
+  struct ATFRAMEWORK_UTILS_API dh_context_t {
     union {
       mbedtls_dhm_context mbedtls_dh_ctx_;
       mbedtls_ecdh_context mbedtls_ecdh_ctx_;
@@ -80,7 +83,7 @@ class dh {
   };
 #  endif
 
-  struct LIBATFRAME_UTILS_API error_code_t {
+  struct ATFRAMEWORK_UTILS_API error_code_t {
     enum type {
       OK = 0,
       INVALID_PARAM = -1,
@@ -112,7 +115,8 @@ class dh {
         CLIENT_MODE = 0x02,
       };
     };
-#  if defined(CRYPTO_USE_OPENSSL) || defined(CRYPTO_USE_LIBRESSL) || defined(CRYPTO_USE_BORINGSSL)
+#  if defined(ATFRAMEWORK_UTILS_CRYPTO_USE_OPENSSL) || defined(ATFRAMEWORK_UTILS_CRYPTO_USE_LIBRESSL) || \
+      defined(ATFRAMEWORK_UTILS_CRYPTO_USE_BORINGSSL)
     struct dh_param_t {
       BIO *param;
       std::vector<unsigned char> param_buffer;
@@ -122,7 +126,7 @@ class dh {
 
     struct random_engine_t {};
 
-#  elif defined(CRYPTO_USE_MBEDTLS)
+#  elif defined(ATFRAMEWORK_UTILS_CRYPTO_USE_MBEDTLS)
     struct dh_param_t {
       std::string param;
       mbedtls_ecp_group_id group_id;
@@ -138,14 +142,14 @@ class dh {
     using ptr_t = std::shared_ptr<shared_context>;
 
    private:
-    struct LIBATFRAME_UTILS_API creator_helper {};
+    struct ATFRAMEWORK_UTILS_API creator_helper{};
 
-    LIBATFRAME_UTILS_API shared_context();
+    ATFRAMEWORK_UTILS_API shared_context();
 
    public:
-    LIBATFRAME_UTILS_API shared_context(creator_helper &helper);
-    LIBATFRAME_UTILS_API ~shared_context();
-    LIBATFRAME_UTILS_API static ptr_t create();
+    ATFRAMEWORK_UTILS_API shared_context(creator_helper &helper);
+    ATFRAMEWORK_UTILS_API ~shared_context();
+    ATFRAMEWORK_UTILS_API static ptr_t create();
 
     /**
      * @brief initialize a shared context for server mode
@@ -153,36 +157,37 @@ class dh {
      * @note using RFC 4492 for ECDH algorithm
      * @return 0 or error code
      */
-    LIBATFRAME_UTILS_API int init(const char *name);
+    ATFRAMEWORK_UTILS_API int init(const char *name);
 
     /**
      * @brief initialize a shared context for client mode
      * @param method algorithm method
      * @return 0 or error code
      */
-    LIBATFRAME_UTILS_API int init(method_t::type method);
+    ATFRAMEWORK_UTILS_API int init(method_t::type method);
 
     /**
      * @brief reset shared resource
      */
-    LIBATFRAME_UTILS_API void reset();
+    ATFRAMEWORK_UTILS_API void reset();
 
     /**
      * @brief random buffer
      * @return 0 or error code
      */
-    LIBATFRAME_UTILS_API int random(void *output, size_t output_sz);
+    ATFRAMEWORK_UTILS_API int random(void *output, size_t output_sz);
 
-    LIBATFRAME_UTILS_API bool is_client_mode() const;
+    ATFRAMEWORK_UTILS_API bool is_client_mode() const;
 
-    LIBATFRAME_UTILS_API method_t::type get_method() const;
+    ATFRAMEWORK_UTILS_API method_t::type get_method() const;
 
-    LIBATFRAME_UTILS_API const dh_param_t &get_dh_parameter() const;
-    LIBATFRAME_UTILS_API const random_engine_t &get_random_engine() const;
-    LIBATFRAME_UTILS_API random_engine_t &get_random_engine();
+    ATFRAMEWORK_UTILS_API const dh_param_t &get_dh_parameter() const;
+    ATFRAMEWORK_UTILS_API const random_engine_t &get_random_engine() const;
+    ATFRAMEWORK_UTILS_API random_engine_t &get_random_engine();
 
-#  if defined(CRYPTO_USE_OPENSSL) || defined(CRYPTO_USE_LIBRESSL) || defined(CRYPTO_USE_BORINGSSL)
-    LIBATFRAME_UTILS_API int try_reset_ecp_id(int group_id);
+#  if defined(ATFRAMEWORK_UTILS_CRYPTO_USE_OPENSSL) || defined(ATFRAMEWORK_UTILS_CRYPTO_USE_LIBRESSL) || \
+      defined(ATFRAMEWORK_UTILS_CRYPTO_USE_BORINGSSL)
+    ATFRAMEWORK_UTILS_API int try_reset_ecp_id(int group_id);
     /**
      * @brief Try to reset DH Params of P,G
      *
@@ -191,7 +196,7 @@ class dh {
      * @return 0 or error code
      * @note DH_p and DH_g will be set to nullptr when moved in, user must free them if they are still not nullptr
      */
-    LIBATFRAME_UTILS_API int try_reset_dh_params(BIGNUM *&DH_p, BIGNUM *&DH_g);
+    ATFRAMEWORK_UTILS_API int try_reset_dh_params(BIGNUM *&DH_p, BIGNUM *&DH_g);
 #  endif
    private:
     uint32_t flags_;
@@ -201,33 +206,33 @@ class dh {
   };
 
  public:
-  LIBATFRAME_UTILS_API dh();
-  LIBATFRAME_UTILS_API ~dh();
+  ATFRAMEWORK_UTILS_API dh();
+  ATFRAMEWORK_UTILS_API ~dh();
 
   /**
    * @brief initialize
    * @param shared_context shared context
    * @return 0 or error code
    */
-  LIBATFRAME_UTILS_API int init(shared_context::ptr_t shared_context);
+  ATFRAMEWORK_UTILS_API int init(shared_context::ptr_t shared_context);
 
   /**
    * @brief release all resources
    * @return 0 or error code
    */
-  LIBATFRAME_UTILS_API int close();
+  ATFRAMEWORK_UTILS_API int close();
 
   /**
    * @brief set last error returned by crypto library
    * @param err error code returned by crypto library
    */
-  LIBATFRAME_UTILS_API void set_last_errno(int e);
+  ATFRAMEWORK_UTILS_API void set_last_errno(int e);
 
   /**
    * @brief get last error returned by crypto library
    * @return last error code returned by crypto library
    */
-  LIBATFRAME_UTILS_API int get_last_errno() const;
+  ATFRAMEWORK_UTILS_API int get_last_errno() const;
 
   /**
    * @brief          Setup and write the ServerKeyExchange parameters
@@ -240,7 +245,7 @@ class dh {
    * @note           server process: make_params->read_public->calc_secret
    * @return         0 if successful, or error code
    */
-  LIBATFRAME_UTILS_API int make_params(std::vector<unsigned char> &param);
+  ATFRAMEWORK_UTILS_API int make_params(std::vector<unsigned char> &param);
 
   /**
    * @brief          Parse the ServerKeyExchange parameters
@@ -251,7 +256,7 @@ class dh {
    * @note           client process: read_params->make_public->calc_secret
    * @return         0 if successful, or error code
    */
-  LIBATFRAME_UTILS_API int read_params(const unsigned char *input, size_t ilen);
+  ATFRAMEWORK_UTILS_API int read_params(const unsigned char *input, size_t ilen);
 
   /**
    * @brief          Create own private value X and export G^X
@@ -261,7 +266,7 @@ class dh {
    * @note           client process: read_params->make_public->calc_secret
    * @return         0 if successful, or error code
    */
-  LIBATFRAME_UTILS_API int make_public(std::vector<unsigned char> &param);
+  ATFRAMEWORK_UTILS_API int make_public(std::vector<unsigned char> &param);
 
   /**
    * @brief          Import the peer's public value G^Y
@@ -272,7 +277,7 @@ class dh {
    * @note           server process: make_params->read_public->calc_secret
    * @return         0 if successful, or error code
    */
-  LIBATFRAME_UTILS_API int read_public(const unsigned char *input, size_t ilen);
+  ATFRAMEWORK_UTILS_API int read_public(const unsigned char *input, size_t ilen);
 
   /**
    * @brief          Derive and export the shared secret (G^Y)^X mod P
@@ -282,12 +287,13 @@ class dh {
    * @return         0 if successful, or error code
    *
    */
-  LIBATFRAME_UTILS_API int calc_secret(std::vector<unsigned char> &output);
+  ATFRAMEWORK_UTILS_API int calc_secret(std::vector<unsigned char> &output);
 
  public:
-  static LIBATFRAME_UTILS_API const std::vector<std::string> &get_all_curve_names();
+  static ATFRAMEWORK_UTILS_API const std::vector<std::string> &get_all_curve_names();
 
-#  if defined(CRYPTO_USE_OPENSSL) || defined(CRYPTO_USE_LIBRESSL) || defined(CRYPTO_USE_BORINGSSL)
+#  if defined(ATFRAMEWORK_UTILS_CRYPTO_USE_OPENSSL) || defined(ATFRAMEWORK_UTILS_CRYPTO_USE_LIBRESSL) || \
+      defined(ATFRAMEWORK_UTILS_CRYPTO_USE_BORINGSSL)
   int check_or_setup_ecp_id(int group_id);
   int check_or_setup_dh_pg_gy(BIGNUM *&DH_p, BIGNUM *&DH_g, BIGNUM *&DH_gy);
 #  endif
@@ -298,7 +304,7 @@ class dh {
   dh_context_t dh_context_;
 };
 }  // namespace crypto
-LIBATFRAME_UTILS_NAMESPACE_END
+ATFRAMEWORK_UTILS_NAMESPACE_END
 
 #endif
 

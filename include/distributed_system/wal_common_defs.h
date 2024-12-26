@@ -20,14 +20,14 @@
 #include <unordered_map>
 #include <utility>
 
-LIBATFRAME_UTILS_NAMESPACE_BEGIN
+ATFRAMEWORK_UTILS_NAMESPACE_BEGIN
 namespace distributed_system {
 
 using wal_time_point = std::chrono::system_clock::time_point;
 using wal_duration = std::chrono::system_clock::duration;
 
 template <class LogKeyT, class ActionCaseT>
-struct LIBATFRAME_UTILS_API_HEAD_ONLY wal_meta_type {
+struct ATFRAMEWORK_UTILS_API_HEAD_ONLY wal_meta_type {
   wal_time_point timepoint;
   LogKeyT log_key;
   ActionCaseT action_case;
@@ -71,7 +71,7 @@ enum class wal_mt_mode : int8_t {
 };
 
 template <class LogT, class ActionGetter>
-struct LIBATFRAME_UTILS_API_HEAD_ONLY wal_log_action_getter_trait {
+struct ATFRAMEWORK_UTILS_API_HEAD_ONLY wal_log_action_getter_trait {
 #if defined(__cplusplus) && __cplusplus >= 201703L
   using type = std::invoke_result_t<ActionGetter, LogT>;
 #else
@@ -80,25 +80,25 @@ struct LIBATFRAME_UTILS_API_HEAD_ONLY wal_log_action_getter_trait {
 };
 
 template <class T, wal_mt_mode MTMode>
-struct LIBATFRAME_UTILS_API_HEAD_ONLY wal_mt_mode_data_trait;
+struct ATFRAMEWORK_UTILS_API_HEAD_ONLY wal_mt_mode_data_trait;
 
 template <wal_mt_mode MTMode>
-struct LIBATFRAME_UTILS_API_HEAD_ONLY wal_mt_mode_func_trait;
+struct ATFRAMEWORK_UTILS_API_HEAD_ONLY wal_mt_mode_func_trait;
 
 template <class T>
-struct LIBATFRAME_UTILS_API_HEAD_ONLY wal_mt_mode_data_trait<T, wal_mt_mode::kSingleThread> {
+struct ATFRAMEWORK_UTILS_API_HEAD_ONLY wal_mt_mode_data_trait<T, wal_mt_mode::kSingleThread> {
   using strong_ptr = memory::strong_rc_ptr<T>;
   using weak_ptr = memory::weak_rc_ptr<T>;
 };
 
 template <class T>
-struct LIBATFRAME_UTILS_API_HEAD_ONLY wal_mt_mode_data_trait<T, wal_mt_mode::kMultiThread> {
+struct ATFRAMEWORK_UTILS_API_HEAD_ONLY wal_mt_mode_data_trait<T, wal_mt_mode::kMultiThread> {
   using strong_ptr = std::shared_ptr<T>;
   using weak_ptr = std::weak_ptr<T>;
 };
 
 template <>
-struct LIBATFRAME_UTILS_API_HEAD_ONLY wal_mt_mode_func_trait<wal_mt_mode::kSingleThread> {
+struct ATFRAMEWORK_UTILS_API_HEAD_ONLY wal_mt_mode_func_trait<wal_mt_mode::kSingleThread> {
   template <class Y>
   using enable_shared_from_this = memory::enable_shared_rc_from_this<Y>;
 
@@ -117,7 +117,7 @@ struct LIBATFRAME_UTILS_API_HEAD_ONLY wal_mt_mode_func_trait<wal_mt_mode::kSingl
     return memory::const_pointer_cast<Y>(std::forward<F>(f));
   }
 
-#if defined(LIBATFRAME_UTILS_ENABLE_RTTI) && LIBATFRAME_UTILS_ENABLE_RTTI
+#if defined(ATFRAMEWORK_UTILS_ENABLE_RTTI) && ATFRAMEWORK_UTILS_ENABLE_RTTI
   template <class Y, class F>
   static inline memory::strong_rc_ptr<Y> dynamic_pointer_cast(F&& f) {
     return memory::dynamic_pointer_cast<Y>(std::forward<F>(f));
@@ -126,7 +126,7 @@ struct LIBATFRAME_UTILS_API_HEAD_ONLY wal_mt_mode_func_trait<wal_mt_mode::kSingl
 };
 
 template <>
-struct LIBATFRAME_UTILS_API_HEAD_ONLY wal_mt_mode_func_trait<wal_mt_mode::kMultiThread> {
+struct ATFRAMEWORK_UTILS_API_HEAD_ONLY wal_mt_mode_func_trait<wal_mt_mode::kMultiThread> {
   template <class Y>
   using enable_shared_from_this = std::enable_shared_from_this<Y>;
 
@@ -147,7 +147,7 @@ struct LIBATFRAME_UTILS_API_HEAD_ONLY wal_mt_mode_func_trait<wal_mt_mode::kMulti
     return std::const_pointer_cast<Y>(std::forward<F>(f));
   }
 
-#if defined(LIBATFRAME_UTILS_ENABLE_RTTI) && LIBATFRAME_UTILS_ENABLE_RTTI
+#if defined(ATFRAMEWORK_UTILS_ENABLE_RTTI) && ATFRAMEWORK_UTILS_ENABLE_RTTI
   template <class Y, class F>
   static inline std::shared_ptr<Y> dynamic_pointer_cast(F&& f) {
     return std::dynamic_pointer_cast<Y>(std::forward<F>(f));
@@ -156,7 +156,7 @@ struct LIBATFRAME_UTILS_API_HEAD_ONLY wal_mt_mode_func_trait<wal_mt_mode::kMulti
 };
 
 template <class /*LogKeyT*/, class /*LogT*/>
-struct LIBATFRAME_UTILS_API_HEAD_ONLY wal_log_hash_code_traits {
+struct ATFRAMEWORK_UTILS_API_HEAD_ONLY wal_log_hash_code_traits {
   using hash_code_type = size_t;
 
   static inline hash_code_type initial_hash_code() noexcept { return 0; }
@@ -168,7 +168,7 @@ template <class LogKeyT, class LogT, class ActionGetter, class CompareLogKeyT = 
           class HashActionCaseT = std::hash<typename wal_log_action_getter_trait<LogT, ActionGetter>::type>,
           class EqualActionCaseT = std::equal_to<typename wal_log_action_getter_trait<LogT, ActionGetter>::type>,
           class Allocator = std::allocator<LogT>, wal_mt_mode MTMode = wal_mt_mode::kMultiThread>
-class LIBATFRAME_UTILS_API_HEAD_ONLY wal_log_operator {
+class ATFRAMEWORK_UTILS_API_HEAD_ONLY wal_log_operator {
  public:
   using log_key_type = LogKeyT;
   using log_type = LogT;
@@ -185,7 +185,8 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_log_operator {
   using log_pointer = typename wal_mt_mode_data_trait<log_type, mt_mode>::strong_ptr;
   using log_const_pointer = typename wal_mt_mode_data_trait<const log_type, mt_mode>::strong_ptr;
   using log_pointer_allocator = typename std::allocator_traits<log_allocator>::template rebind_alloc<log_pointer>;
-  using log_key_result_type = LIBATFRAME_UTILS_NAMESPACE_ID::design_pattern::result_type<log_key_type, wal_result_code>;
+  using log_key_result_type =
+      ATFRAMEWORK_UTILS_NAMESPACE_ID::design_pattern::result_type<log_key_type, wal_result_code>;
 
   template <class Y, class... ArgsT>
   static inline typename wal_mt_mode_data_trait<Y, mt_mode>::strong_ptr make_strong(ArgsT&&... args) {
@@ -213,7 +214,7 @@ class LIBATFRAME_UTILS_API_HEAD_ONLY wal_log_operator {
     return wal_mt_mode_func_trait<mt_mode>::template const_pointer_cast<Y>(std::forward<F>(f));
   }
 
-#if defined(LIBATFRAME_UTILS_ENABLE_RTTI) && LIBATFRAME_UTILS_ENABLE_RTTI
+#if defined(ATFRAMEWORK_UTILS_ENABLE_RTTI) && ATFRAMEWORK_UTILS_ENABLE_RTTI
   template <class Y, class F>
   static inline typename wal_mt_mode_data_trait<Y, mt_mode>::strong_ptr dynamic_pointer_cast(F&& f) {
     return wal_mt_mode_func_trait<mt_mode>::template dynamic_pointer_cast<Y>(std::forward<F>(f));
@@ -236,4 +237,4 @@ using wal_log_operator_with_mt_mode =
     wal_log_operator<LogKeyT, LogT, ActionGetter, CompareLogKeyT, HashActionCaseT, EqualActionCaseT, Allocator, MTMode>;
 
 }  // namespace distributed_system
-LIBATFRAME_UTILS_NAMESPACE_END
+ATFRAMEWORK_UTILS_NAMESPACE_END

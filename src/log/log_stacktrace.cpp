@@ -15,11 +15,11 @@
 #include "common/string_oprs.h"
 #include "log/log_wrapper.h"
 
-#ifndef LOG_STACKTRACE_MAX_STACKS
-#  define LOG_STACKTRACE_MAX_STACKS 256
+#ifndef ATFRAMEWORK_UTILS_LOG_STACKTRACE_MAX_STACKS
+#  define ATFRAMEWORK_UTILS_LOG_STACKTRACE_MAX_STACKS 256
 #endif
 
-#define LOG_STACKTRACE_MAX_STACKS_ARRAY_SIZE (LOG_STACKTRACE_MAX_STACKS + 1)
+#define LOG_STACKTRACE_MAX_STACKS_ARRAY_SIZE (ATFRAMEWORK_UTILS_LOG_STACKTRACE_MAX_STACKS + 1)
 
 // disable some warnings in msvc's headers
 #if defined(_MSC_VER)
@@ -28,16 +28,16 @@
 #endif
 
 // select method to stacktrace
-#if defined(LOG_STACKTRACE_USING_LIBUNWIND) && LOG_STACKTRACE_USING_LIBUNWIND
+#if defined(ATFRAMEWORK_UTILS_LOG_STACKTRACE_USING_LIBUNWIND) && ATFRAMEWORK_UTILS_LOG_STACKTRACE_USING_LIBUNWIND
 #  include <libunwind.h>
 
-#elif defined(LOG_STACKTRACE_USING_EXECINFO) && LOG_STACKTRACE_USING_EXECINFO
+#elif defined(ATFRAMEWORK_UTILS_LOG_STACKTRACE_USING_EXECINFO) && ATFRAMEWORK_UTILS_LOG_STACKTRACE_USING_EXECINFO
 #  include <execinfo.h>
 
-#elif defined(LOG_STACKTRACE_USING_UNWIND) && LOG_STACKTRACE_USING_UNWIND
+#elif defined(ATFRAMEWORK_UTILS_LOG_STACKTRACE_USING_UNWIND) && ATFRAMEWORK_UTILS_LOG_STACKTRACE_USING_UNWIND
 #  include <unwind.h>
 
-#elif defined(LOG_STACKTRACE_USING_DBGHELP) && LOG_STACKTRACE_USING_DBGHELP
+#elif defined(ATFRAMEWORK_UTILS_LOG_STACKTRACE_USING_DBGHELP) && ATFRAMEWORK_UTILS_LOG_STACKTRACE_USING_DBGHELP
 #  ifndef WIN32_LEAN_AND_MEAN
 #    define WIN32_LEAN_AND_MEAN
 #  endif
@@ -78,7 +78,7 @@ struct SymInitializeHelper {
 
 #  endif
 
-#elif defined(LOG_STACKTRACE_USING_DBGENG) && LOG_STACKTRACE_USING_DBGENG
+#elif defined(ATFRAMEWORK_UTILS_LOG_STACKTRACE_USING_DBGENG) && ATFRAMEWORK_UTILS_LOG_STACKTRACE_USING_DBGENG
 #  ifndef WIN32_LEAN_AND_MEAN
 #    define WIN32_LEAN_AND_MEAN
 #  endif
@@ -152,7 +152,7 @@ class log_stacktrace_com_holder {
 #  define USING_LIBCXX_ABI 1
 #endif
 
-LIBATFRAME_UTILS_NAMESPACE_BEGIN
+ATFRAMEWORK_UTILS_NAMESPACE_BEGIN
 namespace log {
 
 class UTIL_SYMBOL_LOCAL stacktrace_symbol_impl : public stacktrace_symbol {
@@ -196,7 +196,7 @@ struct UTIL_SYMBOL_LOCAL stacktrace_global_settings {
 };
 
 struct UTIL_SYMBOL_LOCAL stacktrace_global_manager
-    : public util::design_pattern::local_singleton<stacktrace_global_manager> {
+    : public ATFRAMEWORK_UTILS_NAMESPACE_ID::design_pattern::local_singleton<stacktrace_global_manager> {
   std::mutex lock;
   memory::lru_map<stacktrace_handle, stacktrace_symbol> stack_caches;
 };
@@ -303,18 +303,20 @@ static void internal_replace_stacktrace_symbol(
 }  // namespace
 
 #if LOG_STACKTRACE_USING_TRIVALLY_HANDLE
-LIBATFRAME_UTILS_API stacktrace_handle::stacktrace_handle(uintptr_t address) noexcept : address_(address) {}
+ATFRAMEWORK_UTILS_API stacktrace_handle::stacktrace_handle(uintptr_t address) noexcept : address_(address) {}
 #else
-LIBATFRAME_UTILS_API stacktrace_handle::stacktrace_handle(const util::memory::strong_rc_ptr<impl_type> &impl) noexcept
+ATFRAMEWORK_UTILS_API stacktrace_handle::stacktrace_handle(
+    const ATFRAMEWORK_UTILS_NAMESPACE_ID::memory::strong_rc_ptr<impl_type> &impl) noexcept
     : impl_(impl) {}
 
-LIBATFRAME_UTILS_API stacktrace_handle::stacktrace_handle(util::memory::strong_rc_ptr<impl_type> &&impl) noexcept
+ATFRAMEWORK_UTILS_API stacktrace_handle::stacktrace_handle(
+    ATFRAMEWORK_UTILS_NAMESPACE_ID::memory::strong_rc_ptr<impl_type> &&impl) noexcept
     : impl_(std::move(impl)) {}
 #endif
 
-LIBATFRAME_UTILS_API stacktrace_handle::~stacktrace_handle() {}
+ATFRAMEWORK_UTILS_API stacktrace_handle::~stacktrace_handle() {}
 
-LIBATFRAME_UTILS_API stacktrace_handle::stacktrace_handle(const stacktrace_handle &other) noexcept
+ATFRAMEWORK_UTILS_API stacktrace_handle::stacktrace_handle(const stacktrace_handle &other) noexcept
     :
 #if LOG_STACKTRACE_USING_TRIVALLY_HANDLE
       address_(other.address_)
@@ -324,7 +326,7 @@ LIBATFRAME_UTILS_API stacktrace_handle::stacktrace_handle(const stacktrace_handl
 {
 }
 
-LIBATFRAME_UTILS_API stacktrace_handle::stacktrace_handle(stacktrace_handle &&other) noexcept
+ATFRAMEWORK_UTILS_API stacktrace_handle::stacktrace_handle(stacktrace_handle &&other) noexcept
     :
 #if LOG_STACKTRACE_USING_TRIVALLY_HANDLE
       address_(other.address_)
@@ -334,7 +336,7 @@ LIBATFRAME_UTILS_API stacktrace_handle::stacktrace_handle(stacktrace_handle &&ot
 {
 }
 
-LIBATFRAME_UTILS_API stacktrace_handle &stacktrace_handle::operator=(const stacktrace_handle &other) noexcept {
+ATFRAMEWORK_UTILS_API stacktrace_handle &stacktrace_handle::operator=(const stacktrace_handle &other) noexcept {
 #if LOG_STACKTRACE_USING_TRIVALLY_HANDLE
   address_ = other.address_;
 #else
@@ -344,7 +346,7 @@ LIBATFRAME_UTILS_API stacktrace_handle &stacktrace_handle::operator=(const stack
   return *this;
 }
 
-LIBATFRAME_UTILS_API stacktrace_handle &stacktrace_handle::operator=(stacktrace_handle &&other) noexcept {
+ATFRAMEWORK_UTILS_API stacktrace_handle &stacktrace_handle::operator=(stacktrace_handle &&other) noexcept {
 #if LOG_STACKTRACE_USING_TRIVALLY_HANDLE
   address_ = other.address_;
   other.address_ = 0;
@@ -355,7 +357,7 @@ LIBATFRAME_UTILS_API stacktrace_handle &stacktrace_handle::operator=(stacktrace_
   return *this;
 }
 
-LIBATFRAME_UTILS_API stacktrace_handle::operator bool() const noexcept {
+ATFRAMEWORK_UTILS_API stacktrace_handle::operator bool() const noexcept {
 #if LOG_STACKTRACE_USING_TRIVALLY_HANDLE
   return 0 != address_;
 #else
@@ -363,7 +365,7 @@ LIBATFRAME_UTILS_API stacktrace_handle::operator bool() const noexcept {
 #endif
 }
 
-LIBATFRAME_UTILS_API void stacktrace_handle::swap(stacktrace_handle &other) noexcept {
+ATFRAMEWORK_UTILS_API void stacktrace_handle::swap(stacktrace_handle &other) noexcept {
 #if LOG_STACKTRACE_USING_TRIVALLY_HANDLE
   std::swap(address_, other.address_);
 #else
@@ -372,24 +374,24 @@ LIBATFRAME_UTILS_API void stacktrace_handle::swap(stacktrace_handle &other) noex
 }
 
 #if LOG_STACKTRACE_USING_TRIVALLY_HANDLE
-LIBATFRAME_UTILS_API size_t stacktrace_handle::hash_code() const noexcept { return std::hash<uintptr_t>()(address_); }
+ATFRAMEWORK_UTILS_API size_t stacktrace_handle::hash_code() const noexcept { return std::hash<uintptr_t>()(address_); }
 
-LIBATFRAME_UTILS_API bool stacktrace_handle::operator==(const stacktrace_handle &other) const noexcept {
+ATFRAMEWORK_UTILS_API bool stacktrace_handle::operator==(const stacktrace_handle &other) const noexcept {
   return address_ == other.address_;
 }
 
-LIBATFRAME_UTILS_API bool stacktrace_handle::operator<(const stacktrace_handle &other) const noexcept {
+ATFRAMEWORK_UTILS_API bool stacktrace_handle::operator<(const stacktrace_handle &other) const noexcept {
   return address_ < other.address_;
 }
 #endif
 
-#if defined(LOG_STACKTRACE_USING_LIBUNWIND) && LOG_STACKTRACE_USING_LIBUNWIND
+#if defined(ATFRAMEWORK_UTILS_LOG_STACKTRACE_USING_LIBUNWIND) && ATFRAMEWORK_UTILS_LOG_STACKTRACE_USING_LIBUNWIND
 struct stacktrace_handle::impl_type {
   unw_word_t unw_word;
   std::shared_ptr<stacktrace_symbol> symbol;
 };
 
-LIBATFRAME_UTILS_API size_t stacktrace_handle::hash_code() const noexcept {
+ATFRAMEWORK_UTILS_API size_t stacktrace_handle::hash_code() const noexcept {
   if (!impl_) {
     return 0;
   }
@@ -397,7 +399,7 @@ LIBATFRAME_UTILS_API size_t stacktrace_handle::hash_code() const noexcept {
   return std::hash<unw_word_t>()(impl_->unw_word);
 }
 
-LIBATFRAME_UTILS_API bool stacktrace_handle::operator==(const stacktrace_handle &other) const noexcept {
+ATFRAMEWORK_UTILS_API bool stacktrace_handle::operator==(const stacktrace_handle &other) const noexcept {
   if (impl_ == other.impl_) {
     return true;
   }
@@ -409,7 +411,7 @@ LIBATFRAME_UTILS_API bool stacktrace_handle::operator==(const stacktrace_handle 
   return impl_->unw_word == other.impl_->unw_word;
 }
 
-LIBATFRAME_UTILS_API bool stacktrace_handle::operator<(const stacktrace_handle &other) const noexcept {
+ATFRAMEWORK_UTILS_API bool stacktrace_handle::operator<(const stacktrace_handle &other) const noexcept {
   if (impl_ == other.impl_) {
     return false;
   }
@@ -424,9 +426,9 @@ LIBATFRAME_UTILS_API bool stacktrace_handle::operator<(const stacktrace_handle &
 
 namespace {
 
-#if defined(LOG_STACKTRACE_USING_LIBUNWIND) && LOG_STACKTRACE_USING_LIBUNWIND
+#if defined(ATFRAMEWORK_UTILS_LOG_STACKTRACE_USING_LIBUNWIND) && ATFRAMEWORK_UTILS_LOG_STACKTRACE_USING_LIBUNWIND
 static stacktrace_handle unw_mutable_symbol_from_cache(unw_word_t key, unw_cursor_t &unw_cur) {
-  auto handle_impl = util::memory::make_strong_rc<stacktrace_handle::impl_type>();
+  auto handle_impl = ATFRAMEWORK_UTILS_NAMESPACE_ID::memory::make_strong_rc<stacktrace_handle::impl_type>();
   handle_impl->unw_word = key;
   stacktrace_handle handle{handle_impl};
   handle_impl->symbol = internal_find_stacktrace_symbol(handle);
@@ -442,7 +444,7 @@ static stacktrace_handle unw_mutable_symbol_from_cache(unw_word_t key, unw_curso
 
   auto symbol = std::make_shared<stacktrace_symbol_impl>(
       static_cast<uintptr_t>(key), demangle(func_name_cache.data()), func_name_cache.data(),
-      util::log::format("+{:#x}", unw_offset),
+      ATFRAMEWORK_UTILS_NAMESPACE_ID::log::format("+{:#x}", unw_offset),
       std::chrono::system_clock::now() + internal_get_stacktrace_lru_cache_timeout());
   handle_impl->symbol = std::static_pointer_cast<stacktrace_symbol>(symbol);
 
@@ -453,7 +455,7 @@ static stacktrace_handle unw_mutable_symbol_from_cache(unw_word_t key, unw_curso
   return handle;
 }
 
-#elif defined(LOG_STACKTRACE_USING_EXECINFO) && LOG_STACKTRACE_USING_EXECINFO
+#elif defined(ATFRAMEWORK_UTILS_LOG_STACKTRACE_USING_EXECINFO) && ATFRAMEWORK_UTILS_LOG_STACKTRACE_USING_EXECINFO
 
 inline bool stacktrace_is_space_char(char c) noexcept { return ' ' == c || '\r' == c || '\t' == c || '\n' == c; }
 
@@ -621,7 +623,7 @@ static void stacktrace_fill_symbol_info(gsl::span<stacktrace_handle> stack_handl
   internal_replace_stacktrace_symbol(gsl::make_span(new_handle_pairs));
 }
 
-#elif defined(LOG_STACKTRACE_USING_UNWIND) && LOG_STACKTRACE_USING_UNWIND
+#elif defined(ATFRAMEWORK_UTILS_LOG_STACKTRACE_USING_UNWIND) && ATFRAMEWORK_UTILS_LOG_STACKTRACE_USING_UNWIND
 
 static void stacktrace_fill_symbol_info(gsl::span<stacktrace_handle> stack_handles,
                                         std::vector<std::shared_ptr<stacktrace_symbol>> &symbols) {
@@ -646,7 +648,8 @@ static void stacktrace_fill_symbol_info(gsl::span<stacktrace_handle> stack_handl
   // Second step: load from symbol
   if (!new_handle_pairs.empty()) {
     for (size_t i = 0; i < parse_symbols_idx.size() && i < new_handle_pairs.size(); ++i) {
-      std::string fake_name = util::log::format("{:#x}", new_handle_pairs[i].first.get_address());
+      std::string fake_name =
+          ATFRAMEWORK_UTILS_NAMESPACE_ID::log::format("{:#x}", new_handle_pairs[i].first.get_address());
       std::shared_ptr<stacktrace_symbol> symbol =
           std::static_pointer_cast<stacktrace_symbol>(std::make_shared<stacktrace_symbol_impl>(
               new_handle_pairs[i].first.get_address(), fake_name, fake_name, "",
@@ -659,8 +662,8 @@ static void stacktrace_fill_symbol_info(gsl::span<stacktrace_handle> stack_handl
   internal_replace_stacktrace_symbol(gsl::make_span(new_handle_pairs));
 }
 
-#elif (defined(LOG_STACKTRACE_USING_DBGHELP) && LOG_STACKTRACE_USING_DBGHELP) || \
-    (defined(LOG_STACKTRACE_USING_DBGENG) && LOG_STACKTRACE_USING_DBGENG)
+#elif (defined(ATFRAMEWORK_UTILS_LOG_STACKTRACE_USING_DBGHELP) && ATFRAMEWORK_UTILS_LOG_STACKTRACE_USING_DBGHELP) || \
+    (defined(ATFRAMEWORK_UTILS_LOG_STACKTRACE_USING_DBGENG) && ATFRAMEWORK_UTILS_LOG_STACKTRACE_USING_DBGENG)
 #  if !defined(_MSC_VER)
 static void stacktrace_fill_symbol_info(gsl::span<stacktrace_handle> stack_handles,
                                         std::vector<std::shared_ptr<stacktrace_symbol>> &symbols) {
@@ -685,7 +688,8 @@ static void stacktrace_fill_symbol_info(gsl::span<stacktrace_handle> stack_handl
   // Second step: load from symbol
   if (!new_handle_pairs.empty()) {
     for (size_t i = 0; i < parse_symbols_idx.size() && i < new_handle_pairs.size(); ++i) {
-      std::string fake_name = util::log::format("{:#x}", new_handle_pairs[i].first.get_address());
+      std::string fake_name =
+          ATFRAMEWORK_UTILS_NAMESPACE_ID::log::format("{:#x}", new_handle_pairs[i].first.get_address());
       std::shared_ptr<stacktrace_symbol> symbol =
           std::static_pointer_cast<stacktrace_symbol>(std::make_shared<stacktrace_symbol_impl>(
               new_handle_pairs[i].first.get_address(), fake_name, fake_name, "",
@@ -697,7 +701,7 @@ static void stacktrace_fill_symbol_info(gsl::span<stacktrace_handle> stack_handl
 
   internal_replace_stacktrace_symbol(gsl::make_span(new_handle_pairs));
 }
-#  elif (defined(LOG_STACKTRACE_USING_DBGHELP) && LOG_STACKTRACE_USING_DBGHELP)
+#  elif (defined(ATFRAMEWORK_UTILS_LOG_STACKTRACE_USING_DBGHELP) && ATFRAMEWORK_UTILS_LOG_STACKTRACE_USING_DBGHELP)
 struct UTIL_SYMBOL_LOCAL stacktrace_symbol_group_t {
   std::string demangle_name;
   std::string raw_name;
@@ -706,12 +710,11 @@ struct UTIL_SYMBOL_LOCAL stacktrace_symbol_group_t {
   std::chrono::system_clock::time_point timeout;
 };
 
-struct UTIL_SYMBOL_LOCAL dbghelper_cache_key_hash {
-  size_t operator()(const std::pair<HANDLE, PVOID> &key) const noexcept {
-    size_t result = std::hash<HANDLE>()(key.first);
-    result ^= std::hash<PVOID>()(key.second) + 0x9e3779b9 + (result << 6) + (result >> 2);
-    return result;
-  }
+struct UTIL_SYMBOL_LOCAL dbghelper_cache_key_hash{size_t operator()(const std::pair<HANDLE, PVOID> &key)
+                                                      const noexcept {size_t result = std::hash<HANDLE>()(key.first);
+result ^= std::hash<PVOID>()(key.second) + 0x9e3779b9 + (result << 6) + (result >> 2);
+return result;
+}
 };
 
 static stacktrace_symbol_group_t dbghelper_mutable_symbol_from_cache(HANDLE process, PVOID stack) {
@@ -732,10 +735,10 @@ static stacktrace_symbol_group_t dbghelper_mutable_symbol_from_cache(HANDLE proc
 
   if (SymFromAddr(SymInitializeHelper::Inst().process, reinterpret_cast<ULONG64>(stack), &displacement, symbol)) {
     result.raw_name = LOG_STACKTRACE_VC_W2A(symbol->Name);
-    result.offset_hint = util::log::format("+{:#x}", displacement);
+    result.offset_hint = ATFRAMEWORK_UTILS_NAMESPACE_ID::log::format("+{:#x}", displacement);
     result.demangle_name = demangle(result.raw_name.c_str());
   } else {
-    result.raw_name = util::log::format("{}", reinterpret_cast<const void *>(stack));
+    result.raw_name = ATFRAMEWORK_UTILS_NAMESPACE_ID::log::format("{}", reinterpret_cast<const void *>(stack));
     result.demangle_name = demangle(result.raw_name.c_str());
   }
   free(symbol);
@@ -890,7 +893,7 @@ static void stacktrace_fill_symbol_info(gsl::span<stacktrace_handle> stack_handl
 
       // 读不到符号，就只写出地址
       if (!try_read_sym) {
-        raw_symbol_name = util::log::format("{:#x}", offset);
+        raw_symbol_name = ATFRAMEWORK_UTILS_NAMESPACE_ID::log::format("{:#x}", offset);
       }
 
       std::shared_ptr<stacktrace_symbol> symbol =
@@ -910,48 +913,48 @@ static void stacktrace_fill_symbol_info(gsl::span<stacktrace_handle> stack_handl
 
 }  // namespace
 
-LIBATFRAME_UTILS_API stacktrace_symbol::stacktrace_symbol() {}
+ATFRAMEWORK_UTILS_API stacktrace_symbol::stacktrace_symbol() {}
 
-LIBATFRAME_UTILS_API stacktrace_symbol::~stacktrace_symbol() {}
+ATFRAMEWORK_UTILS_API stacktrace_symbol::~stacktrace_symbol() {}
 
-LIBATFRAME_UTILS_API bool is_stacktrace_enabled() noexcept {
-#if defined(LOG_STACKTRACE_USING_LIBUNWIND) && LOG_STACKTRACE_USING_LIBUNWIND
+ATFRAMEWORK_UTILS_API bool is_stacktrace_enabled() noexcept {
+#if defined(ATFRAMEWORK_UTILS_LOG_STACKTRACE_USING_LIBUNWIND) && ATFRAMEWORK_UTILS_LOG_STACKTRACE_USING_LIBUNWIND
   return true;
-#elif defined(LOG_STACKTRACE_USING_EXECINFO) && LOG_STACKTRACE_USING_EXECINFO
+#elif defined(ATFRAMEWORK_UTILS_LOG_STACKTRACE_USING_EXECINFO) && ATFRAMEWORK_UTILS_LOG_STACKTRACE_USING_EXECINFO
   return true;
-#elif defined(LOG_STACKTRACE_USING_UNWIND) && LOG_STACKTRACE_USING_UNWIND
+#elif defined(ATFRAMEWORK_UTILS_LOG_STACKTRACE_USING_UNWIND) && ATFRAMEWORK_UTILS_LOG_STACKTRACE_USING_UNWIND
   return true;
-#elif defined(LOG_STACKTRACE_USING_DBGHELP) && LOG_STACKTRACE_USING_DBGHELP
+#elif defined(ATFRAMEWORK_UTILS_LOG_STACKTRACE_USING_DBGHELP) && ATFRAMEWORK_UTILS_LOG_STACKTRACE_USING_DBGHELP
   return true;
-#elif defined(LOG_STACKTRACE_USING_DBGENG) && LOG_STACKTRACE_USING_DBGENG
+#elif defined(ATFRAMEWORK_UTILS_LOG_STACKTRACE_USING_DBGENG) && ATFRAMEWORK_UTILS_LOG_STACKTRACE_USING_DBGENG
   return true;
 #else
   return false;
 #endif
 }
 
-LIBATFRAME_UTILS_API void set_stacktrace_lru_cache_size(size_t sz) noexcept {
+ATFRAMEWORK_UTILS_API void set_stacktrace_lru_cache_size(size_t sz) noexcept {
   internal_set_stacktrace_lru_cache_size(sz);
 }
 
-LIBATFRAME_UTILS_API size_t get_stacktrace_lru_cache_size() noexcept {
+ATFRAMEWORK_UTILS_API size_t get_stacktrace_lru_cache_size() noexcept {
   return internal_get_stacktrace_lru_cache_size();
 }
 
-LIBATFRAME_UTILS_API void set_stacktrace_lru_cache_timeout(std::chrono::microseconds timeout) noexcept {
+ATFRAMEWORK_UTILS_API void set_stacktrace_lru_cache_timeout(std::chrono::microseconds timeout) noexcept {
   internal_set_stacktrace_lru_cache_timeout(timeout);
 }
 
-LIBATFRAME_UTILS_API std::chrono::microseconds get_stacktrace_lru_cache_timeout() noexcept {
+ATFRAMEWORK_UTILS_API std::chrono::microseconds get_stacktrace_lru_cache_timeout() noexcept {
   return internal_get_stacktrace_lru_cache_timeout();
 }
 
-LIBATFRAME_UTILS_API void clear_stacktrace_lru_cache() noexcept { internal_set_clear_stacktrace_lru_cache(true); }
+ATFRAMEWORK_UTILS_API void clear_stacktrace_lru_cache() noexcept { internal_set_clear_stacktrace_lru_cache(true); }
 
-#if defined(LOG_STACKTRACE_USING_LIBUNWIND) && LOG_STACKTRACE_USING_LIBUNWIND
+#if defined(ATFRAMEWORK_UTILS_LOG_STACKTRACE_USING_LIBUNWIND) && ATFRAMEWORK_UTILS_LOG_STACKTRACE_USING_LIBUNWIND
 
-LIBATFRAME_UTILS_API void stacktrace_get_context(std::vector<stacktrace_handle> &stack_handles,
-                                                 const stacktrace_options *options) noexcept {
+ATFRAMEWORK_UTILS_API void stacktrace_get_context(std::vector<stacktrace_handle> &stack_handles,
+                                                  const stacktrace_options *options) noexcept {
   if (nullptr == options) {
     options = &default_stacktrace_options();
   }
@@ -964,7 +967,7 @@ LIBATFRAME_UTILS_API void stacktrace_get_context(std::vector<stacktrace_handle> 
 
   int frame_id = 0;
   int skip_frames = 1 + static_cast<int>(options->skip_start_frames);
-  int frames_count = LOG_STACKTRACE_MAX_STACKS;
+  int frames_count = ATFRAMEWORK_UTILS_LOG_STACKTRACE_MAX_STACKS;
 
   if (options->skip_end_frames > 0) {
     frames_count = 1;
@@ -1015,8 +1018,8 @@ LIBATFRAME_UTILS_API void stacktrace_get_context(std::vector<stacktrace_handle> 
   }
 }
 
-LIBATFRAME_UTILS_API void stacktrace_parse_symbols(gsl::span<stacktrace_handle> stack_handles,
-                                                   std::vector<std::shared_ptr<stacktrace_symbol>> &symbols) noexcept {
+ATFRAMEWORK_UTILS_API void stacktrace_parse_symbols(gsl::span<stacktrace_handle> stack_handles,
+                                                    std::vector<std::shared_ptr<stacktrace_symbol>> &symbols) noexcept {
   symbols.reserve(symbols.size() + stack_handles.size());
   for (auto &handle : stack_handles) {
     if (handle.get_internal_impl() && handle.get_internal_impl()->symbol) {
@@ -1025,10 +1028,10 @@ LIBATFRAME_UTILS_API void stacktrace_parse_symbols(gsl::span<stacktrace_handle> 
   }
 }
 
-#elif defined(LOG_STACKTRACE_USING_EXECINFO) && LOG_STACKTRACE_USING_EXECINFO
+#elif defined(ATFRAMEWORK_UTILS_LOG_STACKTRACE_USING_EXECINFO) && ATFRAMEWORK_UTILS_LOG_STACKTRACE_USING_EXECINFO
 
-LIBATFRAME_UTILS_API void stacktrace_get_context(std::vector<stacktrace_handle> &stack_handles,
-                                                 const stacktrace_options *options) noexcept {
+ATFRAMEWORK_UTILS_API void stacktrace_get_context(std::vector<stacktrace_handle> &stack_handles,
+                                                  const stacktrace_options *options) noexcept {
   if (nullptr == options) {
     options = &default_stacktrace_options();
   }
@@ -1057,13 +1060,13 @@ LIBATFRAME_UTILS_API void stacktrace_get_context(std::vector<stacktrace_handle> 
   }
 }
 
-LIBATFRAME_UTILS_API void stacktrace_parse_symbols(gsl::span<stacktrace_handle> stack_handles,
-                                                   std::vector<std::shared_ptr<stacktrace_symbol>> &symbols) noexcept {
+ATFRAMEWORK_UTILS_API void stacktrace_parse_symbols(gsl::span<stacktrace_handle> stack_handles,
+                                                    std::vector<std::shared_ptr<stacktrace_symbol>> &symbols) noexcept {
   symbols.reserve(symbols.size() + stack_handles.size());
   stacktrace_fill_symbol_info(stack_handles, symbols);
 }
 
-#elif defined(LOG_STACKTRACE_USING_UNWIND) && LOG_STACKTRACE_USING_UNWIND
+#elif defined(ATFRAMEWORK_UTILS_LOG_STACKTRACE_USING_UNWIND) && ATFRAMEWORK_UTILS_LOG_STACKTRACE_USING_UNWIND
 struct UTIL_SYMBOL_LOCAL stacktrace_unwind_state_t {
   size_t frames_to_skip;
   _Unwind_Word *current;
@@ -1089,8 +1092,8 @@ static _Unwind_Reason_Code stacktrace_unwind_callback(::_Unwind_Context *context
   return ::_URC_NO_REASON;
 }
 
-LIBATFRAME_UTILS_API void stacktrace_get_context(std::vector<stacktrace_handle> &stack_handles,
-                                                 const stacktrace_options *options) noexcept {
+ATFRAMEWORK_UTILS_API void stacktrace_get_context(std::vector<stacktrace_handle> &stack_handles,
+                                                  const stacktrace_options *options) noexcept {
   if (nullptr == options) {
     options = &default_stacktrace_options();
   }
@@ -1126,17 +1129,17 @@ LIBATFRAME_UTILS_API void stacktrace_get_context(std::vector<stacktrace_handle> 
   }
 }
 
-LIBATFRAME_UTILS_API void stacktrace_parse_symbols(gsl::span<stacktrace_handle> stack_handles,
-                                                   std::vector<std::shared_ptr<stacktrace_symbol>> &symbols) noexcept {
+ATFRAMEWORK_UTILS_API void stacktrace_parse_symbols(gsl::span<stacktrace_handle> stack_handles,
+                                                    std::vector<std::shared_ptr<stacktrace_symbol>> &symbols) noexcept {
   symbols.reserve(symbols.size() + stack_handles.size());
   stacktrace_fill_symbol_info(stack_handles, symbols);
 }
 
-#elif (defined(LOG_STACKTRACE_USING_DBGHELP) && LOG_STACKTRACE_USING_DBGHELP) || \
-    (defined(LOG_STACKTRACE_USING_DBGENG) && LOG_STACKTRACE_USING_DBGENG)
+#elif (defined(ATFRAMEWORK_UTILS_LOG_STACKTRACE_USING_DBGHELP) && ATFRAMEWORK_UTILS_LOG_STACKTRACE_USING_DBGHELP) || \
+    (defined(ATFRAMEWORK_UTILS_LOG_STACKTRACE_USING_DBGENG) && ATFRAMEWORK_UTILS_LOG_STACKTRACE_USING_DBGENG)
 
-LIBATFRAME_UTILS_API void stacktrace_get_context(std::vector<stacktrace_handle> &stack_handles,
-                                                 const stacktrace_options *options) noexcept {
+ATFRAMEWORK_UTILS_API void stacktrace_get_context(std::vector<stacktrace_handle> &stack_handles,
+                                                  const stacktrace_options *options) noexcept {
   if (nullptr == options) {
     options = &default_stacktrace_options();
   }
@@ -1167,17 +1170,17 @@ LIBATFRAME_UTILS_API void stacktrace_get_context(std::vector<stacktrace_handle> 
   }
 }
 
-LIBATFRAME_UTILS_API void stacktrace_parse_symbols(gsl::span<stacktrace_handle> stack_handles,
-                                                   std::vector<std::shared_ptr<stacktrace_symbol>> &symbols) noexcept {
+ATFRAMEWORK_UTILS_API void stacktrace_parse_symbols(gsl::span<stacktrace_handle> stack_handles,
+                                                    std::vector<std::shared_ptr<stacktrace_symbol>> &symbols) noexcept {
   symbols.reserve(symbols.size() + stack_handles.size());
   stacktrace_fill_symbol_info(stack_handles, symbols);
 }
 #else
-LIBATFRAME_UTILS_API void stacktrace_get_context(std::vector<stacktrace_handle> &,
-                                                 const stacktrace_options *) noexcept {}
+ATFRAMEWORK_UTILS_API void stacktrace_get_context(std::vector<stacktrace_handle> &,
+                                                  const stacktrace_options *) noexcept {}
 
-LIBATFRAME_UTILS_API void stacktrace_parse_symbols(gsl::span<stacktrace_handle> stack_handles,
-                                                   std::vector<std::shared_ptr<stacktrace_symbol>> &symbols) noexcept {
+ATFRAMEWORK_UTILS_API void stacktrace_parse_symbols(gsl::span<stacktrace_handle> stack_handles,
+                                                    std::vector<std::shared_ptr<stacktrace_symbol>> &symbols) noexcept {
   if (stack_handles.empty()) {
     return;
   }
@@ -1195,7 +1198,7 @@ LIBATFRAME_UTILS_API void stacktrace_parse_symbols(gsl::span<stacktrace_handle> 
 }
 #endif
 
-LIBATFRAME_UTILS_API std::shared_ptr<stacktrace_symbol> stacktrace_find_symbol(
+ATFRAMEWORK_UTILS_API std::shared_ptr<stacktrace_symbol> stacktrace_find_symbol(
     stacktrace_handle stack_handle) noexcept {
   auto ret = internal_find_stacktrace_symbol(stack_handle);
   if (ret) {
@@ -1211,7 +1214,7 @@ LIBATFRAME_UTILS_API std::shared_ptr<stacktrace_symbol> stacktrace_find_symbol(
   return nullptr;
 }
 
-LIBATFRAME_UTILS_API size_t stacktrace_write(char *buf, size_t bufsz, const stacktrace_options *options) {
+ATFRAMEWORK_UTILS_API size_t stacktrace_write(char *buf, size_t bufsz, const stacktrace_options *options) {
   if (nullptr == buf || bufsz <= 0) {
     return 0;
   }
@@ -1231,8 +1234,9 @@ LIBATFRAME_UTILS_API size_t stacktrace_write(char *buf, size_t bufsz, const stac
       continue;
     }
 
-    auto res = util::log::format_to_n(buf, bufsz, "Frame #{:#03}: ({}{}) [{:#x}]\r\n", frame_id,
-                                      symbol->get_demangle_name(), symbol->get_offset_hint(), symbol->get_address());
+    auto res = ATFRAMEWORK_UTILS_NAMESPACE_ID::log::format_to_n(buf, bufsz, "Frame #{:#03}: ({}{}) [{:#x}]\r\n",
+                                                                frame_id, symbol->get_demangle_name(),
+                                                                symbol->get_offset_hint(), symbol->get_address());
 
     if (res.size <= 0) {
       break;
@@ -1249,4 +1253,4 @@ LIBATFRAME_UTILS_API size_t stacktrace_write(char *buf, size_t bufsz, const stac
 }
 
 }  // namespace log
-LIBATFRAME_UTILS_NAMESPACE_END
+ATFRAMEWORK_UTILS_NAMESPACE_END
