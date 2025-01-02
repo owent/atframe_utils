@@ -35,6 +35,7 @@ namespace distributed_system {
 template <class StorageT, class LogOperatorT, class CallbackParamT, class PrivateDataT>
 class ATFRAMEWORK_UTILS_API_HEAD_ONLY wal_object {
  public:
+  // Delare the types from wal_log_operator, we use it to check types and keep ABI compatibility
   using storage_type = StorageT;
   using private_data_type = PrivateDataT;
   using log_operator_type = LogOperatorT;
@@ -109,7 +110,10 @@ class ATFRAMEWORK_UTILS_API_HEAD_ONLY wal_object {
       std::function<hash_code_type(const wal_object&, hash_code_type previous, const log_type&)>;
 
   struct callback_log_fn_group_t {
+    // The log action to patch a log, we can modify the log in this callback
     callback_log_patch_fn_t patch;
+
+    // The log action callback
     callback_log_action_fn_t action;
   };
   using callback_log_group_map_t =
@@ -126,19 +130,30 @@ class ATFRAMEWORK_UTILS_API_HEAD_ONLY wal_object {
     callback_alloc_log_key_fn_t allocate_log_key;
     callback_log_event_fn_t on_log_added;
     callback_log_event_fn_t on_log_removed;
+
+    // We can custom the hash function to let users to dicide how to keep the consistent of logs
     callback_get_hash_code_fn_t get_hash_code;
     callback_set_hash_code_fn_t set_hash_code;
     callback_calulate_hash_code_fn_t calculate_hash_code;
 
+    // Log action callback dispatcher by action case
     callback_log_group_map_t log_action_delegate;
     callback_log_fn_group_t default_delegate;
   };
   using vtable_pointer = typename wal_mt_mode_data_trait<vtable_type, log_operator_type::mt_mode>::strong_ptr;
 
   struct configure_type {
+    // GC expire duration
     duration gc_expire_duration;
+
+    // Max log size
     size_t max_log_size;
+
+    // The log size ti trigger gc
     size_t gc_log_size;
+
+    // Force accept the log even if action callback return a error but the hash code is matched
+    // We can use this in main-replicator mode to force accept a log for replication
     bool accept_log_when_hash_matched;
   };
   using configure_pointer = typename wal_mt_mode_data_trait<configure_type, log_operator_type::mt_mode>::strong_ptr;
@@ -146,11 +161,18 @@ class ATFRAMEWORK_UTILS_API_HEAD_ONLY wal_object {
  private:
   UTIL_DESIGN_PATTERN_NOMOVABLE(wal_object);
   UTIL_DESIGN_PATTERN_NOCOPYABLE(wal_object);
+
+  /**
+   * @brief Internal class to protect the access of wal_object's constructor
+   */
   struct construct_helper {
     vtable_pointer vt;
     configure_pointer conf;
   };
 
+  /**
+   * @brief A alternative to gsl::finally
+   */
   struct finally_helper {
     std::function<void(wal_object&)> fn;
     wal_object* owner;
@@ -253,17 +275,22 @@ class ATFRAMEWORK_UTILS_API_HEAD_ONLY wal_object {
   }
 
   /**
-   * @brief clear and assign all logs
-   * @note this function is useful when loading data and will not trigger event and action callback
+   * @brief Clear and assign all logs
+   * @note This function is useful when loading data and will not trigger event and action callback
    *
-   * @tparam ContainerT container type
-   * @param source
+   * @param source Data source
    */
   template <class ContainerT>
   void assign_logs(const ContainerT& source) {
     assign_logs(source.begin(), source.end());
   }
 
+  /**
+   * @brief Clear and assign all logs
+   * @note this function is useful when loading data and will not trigger event and action callback
+   *
+   * @param source Data source
+   */
   void assign_logs(log_container_type&& source) {
     logs_.swap(source);
     source.clear();
@@ -281,6 +308,14 @@ class ATFRAMEWORK_UTILS_API_HEAD_ONLY wal_object {
     }
   }
 
+  /**
+   * @brief Allocate a new log instance, set meta data and key from callbacks
+   *
+   * @param now Current time point
+   * @param action_case The default action case
+   * @param param Callback parameter
+   * @param args Arguments to construct log instance
+   */
   template <class... ArgsT>
   log_pointer allocate_log(time_point now, action_case_type action_case, callback_param_type param, ArgsT&&... args) {
     if (!configure_ || !vtable_ || !vtable_->allocate_log_key || !vtable_->set_meta) {
@@ -297,6 +332,7 @@ class ATFRAMEWORK_UTILS_API_HEAD_ONLY wal_object {
       return nullptr;
     }
 
+    // Call the action to set meta data
     meta_type meta;
     meta.timepoint = now;
     meta.log_key = *new_key.get_success();
@@ -306,6 +342,15 @@ class ATFRAMEWORK_UTILS_API_HEAD_ONLY wal_object {
     return ret;
   }
 
+  /**
+   * @brief Allocate a new log instance with custom allocator, set meta data and key from callbacks
+   *
+   * @param alloc Custom allocator
+   * @param now Current time point
+   * @param action_case The default action case
+   * @param param Callback parameter
+   * @param args Arguments to construct log instance
+   */
   template <class Alloc, class... ArgsT>
   log_pointer allocate_log(const Alloc& alloc, time_point now, action_case_type action_case, callback_param_type param,
                            ArgsT&&... args) {
@@ -323,6 +368,7 @@ class ATFRAMEWORK_UTILS_API_HEAD_ONLY wal_object {
       return nullptr;
     }
 
+    // Call the action to set meta data
     meta_type meta;
     meta.timepoint = now;
     meta.log_key = *new_key.get_success();
@@ -332,11 +378,19 @@ class ATFRAMEWORK_UTILS_API_HEAD_ONLY wal_object {
     return ret;
   }
 
+  /**
+   * @brief emplace back a new log instance
+   * @note this function will trigger event and action callback
+   * @param log The log to emplace back
+   * @param param The callback parameter
+   * @return The result code
+   */
   wal_result_code emplace_back(log_pointer&& log, callback_param_type param) {
     if (!log) {
       return wal_result_code::kInvalidParam;
     }
 
+    // We append the logs to pending queue in recursive calls
     if (!pending_logs_.empty() || in_log_action_callback_) {
       pending_logs_.emplace_back(std::pair<log_pointer, callback_param_storage_type>{std::move(log), param});
       return wal_result_code::kPending;
@@ -345,10 +399,12 @@ class ATFRAMEWORK_UTILS_API_HEAD_ONLY wal_object {
     in_log_action_callback_ = true;
     finally_helper guard(*this, [](wal_object& self) { self.in_log_action_callback_ = false; });
 
+    // Directly push back log
     wal_result_code ret;
     if (!vtable_ || !vtable_->get_log_key) {
       ret = pusk_back_internal(std::move(log), param);
     } else {
+      // Check the key to keep idempotence
       log_key_type this_key = vtable_->get_log_key(*this, *log);
       if (global_ingore_ && !log_key_compare_(*global_ingore_, this_key)) {
         ret = wal_result_code::kIgnore;
@@ -357,6 +413,7 @@ class ATFRAMEWORK_UTILS_API_HEAD_ONLY wal_object {
       }
     }
 
+    // Process pending logs in recursive calls
     while (!pending_logs_.empty()) {
       auto pending_log = pending_logs_.begin();
 
@@ -366,6 +423,7 @@ class ATFRAMEWORK_UTILS_API_HEAD_ONLY wal_object {
       }
 
       if (vtable_ && vtable_->get_log_key) {
+        // Check the key to keep idempotence
         log_key_type this_key = vtable_->get_log_key(*this, *(*pending_log).first);
         if (global_ingore_ && log_key_compare_(this_key, *global_ingore_)) {
           continue;
@@ -387,8 +445,21 @@ class ATFRAMEWORK_UTILS_API_HEAD_ONLY wal_object {
     return ret;
   }
 
+  /**
+   * @brief push back a new log instance
+   * @note this function will trigger event and action callback
+   * @param log The log to emplace back
+   * @param param The callback parameter
+   * @return The result code
+   */
   wal_result_code push_back(log_pointer log, callback_param_type param) { return emplace_back(std::move(log), param); }
 
+  /**
+   * @brief Custom remove logs before a time point
+   * @param now The time point to remove before
+   * @param max_count Max log count to remove in one call
+   * @return The result code
+   */
   wal_result_code remove_before(time_point now, size_t max_count = std::numeric_limits<size_t>::max()) {
     if (!vtable_ || !vtable_->get_meta) {
       return wal_result_code::kInitlization;
@@ -443,10 +514,12 @@ class ATFRAMEWORK_UTILS_API_HEAD_ONLY wal_object {
         break;
       }
 
+      // Only trigger GC when logs size is greater than gc_log_size
       if (logs_.size() <= gc_log_size) {
         break;
       }
 
+      // Keep the logs size less than max_log_size
       if (logs_.size() > max_log_size) {
         pop_front_internal();
         continue;
@@ -457,6 +530,7 @@ class ATFRAMEWORK_UTILS_API_HEAD_ONLY wal_object {
         continue;
       }
 
+      // Actually remove log
       meta_result_type meta = vtable_->get_meta(*this, **logs_.begin());
       if (meta.is_error() || meta.is_none()) {
         pop_front_internal();
@@ -473,8 +547,16 @@ class ATFRAMEWORK_UTILS_API_HEAD_ONLY wal_object {
     return ret;
   }
 
+  /**
+   * @brief Get the log key to ignore logs with key less than or equal to the key
+   * @return The log key or nullptr if not set
+   */
   const log_key_type* get_global_ingore_key() const noexcept { return global_ingore_.get(); }
 
+  /**
+   * @brief Set ignore logs with key less than or equal to the given key
+   * @param key The key since what to ignore logs
+   */
   template <class ToKey>
   void set_global_ingore_key(ToKey&& key) {
     if (global_ingore_) {
@@ -484,8 +566,16 @@ class ATFRAMEWORK_UTILS_API_HEAD_ONLY wal_object {
     }
   }
 
+  /**
+   * @brief Get the last removed log key
+   * @return The last removed log key or nullptr if not set
+   */
   const log_key_type* get_last_removed_key() const noexcept { return global_last_removed_.get(); }
 
+  /**
+   * @brief Set the last removed log key
+   * @param key The key to set
+   */
   template <class ToKey>
   void set_last_removed_key(ToKey&& key) {
     if (global_last_removed_) {
@@ -495,29 +585,67 @@ class ATFRAMEWORK_UTILS_API_HEAD_ONLY wal_object {
     }
   }
 
+  /**
+   * @brief Get the last finished log key
+   * @return The last finished log key or nullptr if not set
+   */
   inline const log_container_type& get_all_logs() const noexcept { return logs_; }
 
+  /**
+   * @brief Get the private data
+   * @return The private data
+   */
   inline const private_data_type& get_private_data() const noexcept { return private_data_; }
+
+  /**
+   * @brief Get the private data
+   * @return The private data
+   */
   inline private_data_type& get_private_data() noexcept { return private_data_; }
 
+  /**
+   * @brief Get the log key compare function
+   * @return The log key compare function
+   */
   inline const log_key_compare_type& get_log_key_compare() const noexcept { return log_key_compare_; }
+
+  /**
+   * @brief Get the log key compare function
+   * @return The log key compare function
+   */
   inline log_key_compare_type& get_log_key_compare() noexcept { return log_key_compare_; }
 
+  /**
+   * @brief Get the configure
+   * @return The configure
+   */
   inline const configure_type& get_configure() const noexcept {
     // We can not create wal_object without configure, so it's safe here
     return *configure_;
   }
 
+  /**
+   * @brief Get the configure
+   * @return The configure
+   */
   inline configure_type& get_configure() noexcept {
     // We can not create wal_object without configure, so it's safe here
     return *configure_;
   }
 
+  /**
+   * @brief Get the vtable
+   * @return The vtable
+   */
   inline const vtable_type& get_vtable() const noexcept {
     // We can not create wal_object without vtable, so it's safe here
     return *vtable_;
   }
 
+  /**
+   * @brief Get the log by key
+   * @return Log or nullptr if not found
+   */
   log_pointer find_log(const log_key_type& key) noexcept {
     log_iterator iter = log_lower_bound(key);
     if (iter == logs_.end()) {
@@ -532,6 +660,10 @@ class ATFRAMEWORK_UTILS_API_HEAD_ONLY wal_object {
     return nullptr;
   }
 
+  /**
+   * @brief Get the log by key
+   * @return Log or nullptr if not found
+   */
   log_const_pointer find_log(const log_key_type& key) const noexcept {
     log_const_iterator iter = log_lower_bound(key);
     if (iter == logs_.end()) {
@@ -546,11 +678,35 @@ class ATFRAMEWORK_UTILS_API_HEAD_ONLY wal_object {
     return nullptr;
   }
 
+  /**
+   * @brief Begin iterator of all logs
+   * @return Begin iterator
+   */
   inline log_iterator log_begin() noexcept { return logs_.begin(); }
+
+  /**
+   * @brief End iterator of all logs
+   * @return End iterator
+   */
   inline log_iterator log_end() noexcept { return logs_.end(); }
+
+  /**
+   * @brief Const begin iterator of all logs
+   * @return Const begin iterator
+   */
   inline log_const_iterator log_cbegin() const noexcept { return logs_.begin(); }
+
+  /**
+   * @brief Const end iterator of all logs
+   * @return Const end iterator
+   */
   inline log_const_iterator log_cend() const noexcept { return logs_.end(); }
 
+  /**
+   * @brief Lower bound iterator by key
+   * @param key The key to find
+   * @return Lower bound iterator or end iterator if not found
+   */
   log_iterator log_lower_bound(const log_key_type& key) noexcept {
     if (!vtable_ || !vtable_->get_log_key) {
       return logs_.end();
@@ -573,6 +729,11 @@ class ATFRAMEWORK_UTILS_API_HEAD_ONLY wal_object {
     });
   }
 
+  /**
+   * @brief Lower bound iterator by key
+   * @param key The key to find
+   * @return Lower bound iterator or end iterator if not found
+   */
   log_const_iterator log_lower_bound(const log_key_type& key) const noexcept {
     if (!vtable_ || !vtable_->get_log_key) {
       return logs_.end();
@@ -595,6 +756,11 @@ class ATFRAMEWORK_UTILS_API_HEAD_ONLY wal_object {
     });
   }
 
+  /**
+   * @brief Upper bound iterator by key
+   * @param key The key to find
+   * @return Upper bound iterator or end iterator if not found
+   */
   log_iterator log_upper_bound(const log_key_type& key) noexcept {
     if (!vtable_ || !vtable_->get_log_key) {
       return logs_.end();
@@ -617,6 +783,11 @@ class ATFRAMEWORK_UTILS_API_HEAD_ONLY wal_object {
     });
   }
 
+  /**
+   * @brief Upper bound iterator by key
+   * @param key The key to find
+   * @return Upper bound iterator or end iterator if not found
+   */
   log_const_iterator log_upper_bound(const log_key_type& key) const noexcept {
     if (!vtable_ || !vtable_->get_log_key) {
       return logs_.end();
@@ -639,14 +810,26 @@ class ATFRAMEWORK_UTILS_API_HEAD_ONLY wal_object {
     });
   }
 
+  /**
+   * @brief Get begin and end iterator of all logs
+   * @return (begin, end)
+   */
   std::pair<log_iterator, log_iterator> log_all_range() noexcept {
     return std::pair<log_iterator, log_iterator>(logs_.begin(), logs_.end());
   }
 
+  /**
+   * @brief Get begin and end iterator of all logs
+   * @return (begin, end)
+   */
   std::pair<log_const_iterator, log_const_iterator> log_all_range() const noexcept {
     return std::pair<log_const_iterator, log_const_iterator>(logs_.begin(), logs_.end());
   }
 
+  /**
+   * @brief Get previous log key before the given key, it's usually used to calculate the next hash code
+   * @return hash code
+   */
   hash_code_type get_hash_code_before(const log_key_type& key) const noexcept {
     if (logs_.empty()) {
       return hash_code_traits::initial_hash_code();
@@ -656,6 +839,7 @@ class ATFRAMEWORK_UTILS_API_HEAD_ONLY wal_object {
       return hash_code_traits::initial_hash_code();
     }
 
+    // Return the last hash code if the key is greater than the last log key
     log_key_type last_key = vtable_->get_log_key(*this, **logs_.rbegin());
     if (log_key_compare_(last_key, key)) {
       return vtable_->get_hash_code(*this, **logs_.rbegin());
@@ -670,6 +854,12 @@ class ATFRAMEWORK_UTILS_API_HEAD_ONLY wal_object {
   }
 
  private:
+  /**
+   * @brief Acutally do or redo the log
+   * @param log The log to redo
+   * @param param The callback parameter
+   * @return The result code
+   */
   wal_result_code redo_log(const log_pointer& log, callback_param_type param) {
     if (!log) {
       return wal_result_code::kInvalidParam;
@@ -688,6 +878,7 @@ class ATFRAMEWORK_UTILS_API_HEAD_ONLY wal_object {
 
     wal_result_code ret = wal_result_code::kActionNotSet;
     do {
+      // Dispatch the log action by action case
       auto iter = vtable_->log_action_delegate.find(meta.get_success()->action_case);
       if (iter != vtable_->log_action_delegate.end() && (iter->second.patch || iter->second.action)) {
         if (iter->second.patch) {
@@ -702,6 +893,7 @@ class ATFRAMEWORK_UTILS_API_HEAD_ONLY wal_object {
         break;
       }
 
+      // Fallback log action
       if (vtable_->default_delegate.patch) {
         ret = vtable_->default_delegate.patch(*this, *log, param);
         if (ret != wal_result_code::kOk) {
@@ -717,6 +909,7 @@ class ATFRAMEWORK_UTILS_API_HEAD_ONLY wal_object {
   }
 
   wal_result_code pusk_back_internal_uncheck(log_pointer&& log, callback_param_lvalue_reference_type param) {
+    // Reset hash  code
     if (vtable_ && vtable_->set_hash_code && vtable_->get_hash_code && vtable_->calculate_hash_code &&
         vtable_->get_log_key) {
       hash_code_type hash_code = hash_code_traits::initial_hash_code();
@@ -730,12 +923,14 @@ class ATFRAMEWORK_UTILS_API_HEAD_ONLY wal_object {
       vtable_->set_hash_code(*this, *log, hash_code);
     }
 
+    // Do actions
     wal_result_code ret = redo_log(log, param);
     if (wal_result_code::kOk != ret && !(get_configure().accept_log_when_hash_matched && vtable_->set_hash_code &&
                                          vtable_->get_hash_code && vtable_->calculate_hash_code)) {
       return ret;
     }
 
+    // Callback and push back log
     if (internal_event_on_add_log_) {
       internal_event_on_add_log_(*this, log);
     }
@@ -782,6 +977,7 @@ class ATFRAMEWORK_UTILS_API_HEAD_ONLY wal_object {
         });
 
     if (iter != logs_.end()) {
+      // Merge log if it's already exists
       last_key = vtable_->get_log_key(*this, **iter);
       if (!log_key_compare_(last_key, this_key) && !log_key_compare_(this_key, last_key)) {
         if (vtable_->merge_log) {
@@ -797,6 +993,7 @@ class ATFRAMEWORK_UTILS_API_HEAD_ONLY wal_object {
       }
     }
 
+    // Reset hash code
     if (vtable_->set_hash_code && vtable_->get_hash_code && vtable_->calculate_hash_code) {
       hash_code_type hash_code = hash_code_traits::initial_hash_code();
       if (iter == logs_.end()) {
@@ -822,7 +1019,7 @@ class ATFRAMEWORK_UTILS_API_HEAD_ONLY wal_object {
     }
 
     if (vtable_->set_hash_code && vtable_->get_hash_code && vtable_->calculate_hash_code) {
-      // Update hash code
+      // Update next hash codes when got a hole log
       hash_code_type hash_code = vtable_->get_hash_code(*this, *log);
       for (auto fix_iter = iter; fix_iter != logs_.end(); ++fix_iter) {
         hash_code = vtable_->calculate_hash_code(*this, hash_code, **fix_iter);
@@ -830,6 +1027,7 @@ class ATFRAMEWORK_UTILS_API_HEAD_ONLY wal_object {
       }
     }
 
+    // Callback and push back log
     if (internal_event_on_add_log_) {
       internal_event_on_add_log_(*this, log);
     }
@@ -850,6 +1048,7 @@ class ATFRAMEWORK_UTILS_API_HEAD_ONLY wal_object {
     logs_.pop_front();
 
     if (vtable_ && vtable_->get_log_key) {
+      // Update last removed key, so we will send back a snapshot if the subscriber is out of date
       log_key_type key = vtable_->get_log_key(*this, *log);
       if (!(global_last_removed_ && log_key_compare_(key, *global_last_removed_))) {
         set_last_removed_key(std::move(key));

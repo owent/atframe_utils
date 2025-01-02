@@ -26,6 +26,7 @@ namespace distributed_system {
 template <class StorageT, class LogOperatorT, class CallbackParamT, class PrivateDataT, class WalSubscriber>
 class ATFRAMEWORK_UTILS_API_HEAD_ONLY wal_publisher {
  public:
+  // Delare the types from wal_log_operator, we use it to check types and keep ABI compatibility
   using log_operator_type = LogOperatorT;
   using object_type = wal_object<StorageT, LogOperatorT, CallbackParamT, PrivateDataT>;
   using subscriber_type = WalSubscriber;
@@ -53,8 +54,10 @@ class ATFRAMEWORK_UTILS_API_HEAD_ONLY wal_publisher {
   using meta_type = typename object_type::meta_type;
   using meta_result_type = typename object_type::meta_result_type;
 
+  // Private data type
   using private_data_type = typename object_type::private_data_type;
 
+  // Types for subscriber management
   using subscriber_key_type = typename subscriber_type::key_type;
   using subscriber_collector_type = typename subscriber_type::subscriber_collector_type;
   using subscriber_iterator = typename subscriber_type::subscriber_iterator;
@@ -63,6 +66,7 @@ class ATFRAMEWORK_UTILS_API_HEAD_ONLY wal_publisher {
   using subscriber_private_data_type = typename subscriber_type::private_data_type;
   using subscriber_manager_type = typename subscriber_type::manager;
 
+  // Callback types
   using callback_load_fn_t = typename object_type::callback_load_fn_t;
   using callback_dump_fn_t = typename object_type::callback_dump_fn_t;
   using callback_log_action_fn_t = typename object_type::callback_log_action_fn_t;
@@ -137,6 +141,10 @@ class ATFRAMEWORK_UTILS_API_HEAD_ONLY wal_publisher {
   using wal_object_ptr_type = typename wal_mt_mode_data_trait<object_type, log_operator_type::mt_mode>::strong_ptr;
   using subscriber_manager_ptr_type =
       typename wal_mt_mode_data_trait<subscriber_manager_type, log_operator_type::mt_mode>::strong_ptr;
+
+  /**
+   * @brief Internal class to protect the access of wal_publisher's constructor
+   */
   struct construct_helper {
     vtable_pointer vt;
     configure_pointer conf;
@@ -247,6 +255,10 @@ class ATFRAMEWORK_UTILS_API_HEAD_ONLY wal_publisher {
     return log_operator_type::template make_strong<wal_publisher>(helper);
   }
 
+  /**
+   * @brief Create wal_publisher's default configure
+   * @return The default configure
+   */
   static configure_pointer make_configure() {
     configure_pointer ret = log_operator_type::template make_strong<configure_type>();
     if (!ret) {
@@ -276,6 +288,10 @@ class ATFRAMEWORK_UTILS_API_HEAD_ONLY wal_publisher {
     return wal_object_->dump(storage, param);
   }
 
+  /**
+   * @brief Assign log storage, this will clear all the old logs in wal_object
+   * @param args logs
+   */
   template <class... ArgsT>
   void assign_logs(ArgsT&&... args) {
     if (!wal_object_) {
@@ -284,6 +300,14 @@ class ATFRAMEWORK_UTILS_API_HEAD_ONLY wal_publisher {
     wal_object_->assign_logs(std::forward<ArgsT>(args)...);
   }
 
+  /**
+   * @brief Allocate a new log instance with custom allocator, set meta data and key from callbacks
+   *
+   * @param now Current time point
+   * @param action_case The default action case
+   * @param param Callback parameter
+   * @param args Arguments to construct log instance
+   */
   template <class... ArgsT>
   log_pointer allocate_log(time_point now, action_case_type action_case, callback_param_type param, ArgsT&&... args) {
     if (!wal_object_) {
@@ -293,6 +317,13 @@ class ATFRAMEWORK_UTILS_API_HEAD_ONLY wal_publisher {
     return wal_object_->allocate_log(now, action_case, param, std::forward<ArgsT>(args)...);
   }
 
+  /**
+   * @brief emplace back a new log instance
+   * @note this function will trigger event and action callback
+   * @param log The log to emplace back
+   * @param param The callback parameter
+   * @return The result code
+   */
   wal_result_code emplace_back_log(log_pointer&& log, callback_param_type param) {
     if (!wal_object_) {
       return wal_result_code::kInitlization;
@@ -301,6 +332,13 @@ class ATFRAMEWORK_UTILS_API_HEAD_ONLY wal_publisher {
     return wal_object_->emplace_back(std::move(log), param);
   }
 
+  /**
+   * @brief push back a new log instance
+   * @note this function will trigger event and action callback
+   * @param log The log to emplace back
+   * @param param The callback parameter
+   * @return The result code
+   */
   wal_result_code push_back_log(log_pointer log, callback_param_type param) {
     if (!wal_object_) {
       return wal_result_code::kInitlization;
@@ -309,6 +347,10 @@ class ATFRAMEWORK_UTILS_API_HEAD_ONLY wal_publisher {
     return wal_object_->emplace_back(std::move(log), param);
   }
 
+  /**
+   * @brief Get the log key to ignore logs with key less than or equal to the key
+   * @return The log key or nullptr if not set
+   */
   const log_key_type* get_global_log_ingore_key() const noexcept {
     if (!wal_object_) {
       return nullptr;
@@ -316,6 +358,10 @@ class ATFRAMEWORK_UTILS_API_HEAD_ONLY wal_publisher {
     return wal_object_->get_global_ingore_key();
   }
 
+  /**
+   * @brief Set ignore logs with key less than or equal to the given key
+   * @param key The key since what to ignore logs
+   */
   template <class ToKey>
   void set_global_log_ingore_key(ToKey&& key) {
     if (!wal_object_) {
@@ -325,6 +371,10 @@ class ATFRAMEWORK_UTILS_API_HEAD_ONLY wal_publisher {
     wal_object_->set_global_ingore_key(std::forward<ToKey>(key));
   }
 
+  /**
+   * @brief Get the log by key
+   * @return Log or nullptr if not found
+   */
   log_pointer find_log(const log_key_type& key) noexcept {
     if (!wal_object_) {
       return nullptr;
@@ -333,6 +383,11 @@ class ATFRAMEWORK_UTILS_API_HEAD_ONLY wal_publisher {
     return wal_object_->find_log(key);
   }
 
+  /**
+   * @brief Find log by specify key
+   * @param key The key to find
+   * @return The log pointer if found, nullptr if not found
+   */
   log_const_pointer find_log(const log_key_type& key) const noexcept {
     if (!wal_object_) {
       return nullptr;
@@ -341,10 +396,28 @@ class ATFRAMEWORK_UTILS_API_HEAD_ONLY wal_publisher {
     return wal_object_->find_log(key);
   }
 
+  /**
+   * @brief Get the private data
+   * @return The private data
+   */
   inline const private_data_type& get_private_data() const noexcept { return wal_object_->get_private_data(); }
+
+  /**
+   * @brief Get the private data
+   * @return The private data
+   */
   inline private_data_type& get_private_data() noexcept { return wal_object_->get_private_data(); }
 
+  /**
+   * @brief Get the log key compare function
+   * @return The log key compare function
+   */
   inline const log_key_compare_type& get_log_key_compare() const noexcept { return wal_object_->get_log_key_compare(); }
+
+  /**
+   * @brief Get the log key compare function
+   * @return The log key compare function
+   */
   inline log_key_compare_type& get_log_key_compare() noexcept { return wal_object_->get_log_key_compare(); }
 
   inline const configure_type& get_configure() const noexcept {
@@ -352,20 +425,57 @@ class ATFRAMEWORK_UTILS_API_HEAD_ONLY wal_publisher {
     return *configure_;
   }
 
+  /**
+   * @brief Get the configure
+   * @return The configure
+   */
   inline configure_type& get_configure() noexcept {
     // We can not create wal_object without configure, so it's safe here
     return *configure_;
   }
 
+  /**
+   * @brief Get internal wal_object
+   * @return The wal_object instance
+   */
   const object_type& get_log_manager() const noexcept { return *wal_object_; }
+
+  /**
+   * @brief Get internal wal_object
+   * @return The wal_object instance
+   */
   object_type& get_log_manager() noexcept { return *wal_object_; }
 
+  /**
+   * @brief Get internal subscribe manager
+   * @return The subscribe manager instance
+   */
   const subscriber_manager_type& get_subscribe_manager() const noexcept { return *subscriber_manager_; }
+
+  /**
+   * @brief Get internal subscribe manager
+   * @return The subscribe manager instance
+   */
   subscriber_manager_type& get_subscribe_manager() noexcept { return *subscriber_manager_; }
 
+  /**
+   * @brief Get the subscribers which pending to remove
+   * @return The subscribers which pending to remove
+   */
   const subscriber_collector_type& get_subscribe_gc_pool() const noexcept { return gc_subscribers_; }
+
+  /**
+   * @brief Get the subscribers which pending to remove
+   * @return The subscribers which pending to remove
+   */
   subscriber_collector_type& get_subscribe_gc_pool() noexcept { return gc_subscribers_; }
 
+  /**
+   * @brief Get the subscriber by key
+   * @param key The key of subscriber
+   * @param param The callback parameter
+   * @return The subscriber if found, nullptr if not found
+   */
   subscriber_pointer find_subscriber(const subscriber_key_type& key, callback_param_type param) {
     subscriber_pointer ret = subscriber_manager_->find(key);
 
@@ -376,6 +486,12 @@ class ATFRAMEWORK_UTILS_API_HEAD_ONLY wal_publisher {
     return ret;
   }
 
+  /**
+   * @brief Check if subscriber still available
+   * @param subscriber The subscriber
+   * @param param The callback parameter
+   * @return true if it's still available, false if not
+   */
   bool check_subscriber(const subscriber_pointer& subscriber, callback_param_type param) {
     if (!subscriber) {
       return false;
@@ -391,9 +507,19 @@ class ATFRAMEWORK_UTILS_API_HEAD_ONLY wal_publisher {
     return true;
   }
 
+  /**
+   * @brief Create a subscriber
+   * @param key The key of subscriber
+   * @param now Current time point
+   * @param last_checkpoint The last checkpoint(Maybe it's restore from DB and has a history checkpoint)
+   * @param param The callback parameter
+   * @param args Arguments to construct subscriber
+   * @return The created subscriber or the old one if the key is already exists found
+   */
   template <class... ArgsT>
   subscriber_pointer create_subscriber(const subscriber_key_type& key, const time_point& now,
                                        log_key_type last_checkpoint, callback_param_type param, ArgsT&&... args) {
+    // Just update call subscribe when the subscriber is already exists
     subscriber_pointer subscriber = find_subscriber(key, param);
     if (subscriber) {
       subscriber->set_heartbeat_timeout(configure_->subscriber_timeout);
@@ -413,10 +539,20 @@ class ATFRAMEWORK_UTILS_API_HEAD_ONLY wal_publisher {
     return subscriber;
   }
 
+  /**
+   * @brief Create a subscriber
+   * @param key The key of subscriber
+   * @param now Current time point
+   * @param last_checkpoint The last checkpoint(Maybe it's restore from DB and has a history checkpoint)
+   * @param param The callback parameter
+   * @param args Arguments to construct subscriber
+   * @return The created subscriber or the old one if the key is already exists found
+   */
   template <class... ArgsT>
   subscriber_pointer create_subscriber(const subscriber_key_type& key, const time_point& now,
                                        std::pair<log_key_type, hash_code_type> last_checkpoint,
                                        callback_param_type param, ArgsT&&... args) {
+    // Just update call subscribe when the subscriber is already exists
     subscriber_pointer subscriber = find_subscriber(key, param);
     if (subscriber) {
       subscriber->set_heartbeat_timeout(configure_->subscriber_timeout);
@@ -436,6 +572,12 @@ class ATFRAMEWORK_UTILS_API_HEAD_ONLY wal_publisher {
     return subscriber;
   }
 
+  /**
+   * @brief Remove a subscriber
+   * @param key The key of subscriber
+   * @param reason The reason to remove
+   * @param param The callback parameter
+   */
   void remove_subscriber(const subscriber_key_type& key, wal_unsubscribe_reason reason, callback_param_type param) {
     subscriber_pointer subscriber = subscriber_manager_->unsubscribe(key, reason);
     if (!subscriber) {
@@ -451,6 +593,12 @@ class ATFRAMEWORK_UTILS_API_HEAD_ONLY wal_publisher {
     }
   }
 
+  /**
+   * @brief Remove a subscriber
+   * @param checked The instance of subscriber
+   * @param reason The reason to remove
+   * @param param The callback parameter
+   */
   void remove_subscriber(const subscriber_pointer& checked, wal_unsubscribe_reason reason, callback_param_type param) {
     subscriber_pointer subscriber = subscriber_manager_->unsubscribe(checked, reason);
     if (!subscriber) {
@@ -466,14 +614,28 @@ class ATFRAMEWORK_UTILS_API_HEAD_ONLY wal_publisher {
     }
   }
 
+  /**
+   * @brief Get the range of all subscribers
+   */
   std::pair<subscriber_iterator, subscriber_iterator> subscriber_all_range() noexcept {
     return subscriber_manager_->all_range();
   }
 
+  /**
+   * @brief Get the range of all subscribers
+   */
   std::pair<subscriber_const_iterator, subscriber_const_iterator> subscriber_all_range() const noexcept {
     return subscriber_manager_->all_range();
   }
 
+  /**
+   * @brief Tick the wal_publisher
+   * @note This function will trigger log GC, broadcast and remove the expired subscribers
+   * @param now Current time point
+   * @param param The callback parameter
+   * @param max_event The max event to process
+   * @return The processed event count
+   */
   size_t tick(const time_point& now, callback_param_type param, size_t max_event = std::numeric_limits<size_t>::max()) {
     size_t ret = 0;
     if (0 == max_event) {
@@ -549,6 +711,7 @@ class ATFRAMEWORK_UTILS_API_HEAD_ONLY wal_publisher {
       vtable_->on_subscriber_request(*this, subscriber, param);
     }
 
+    // We allow users to force sync snapshot by custom rule
     if (vtable_ && vtable_->subscriber_force_sync_snapshot) {
       if (vtable_->subscriber_force_sync_snapshot(*this, subscriber, last_checkpoint, check_hash_code, param)) {
         auto iters = subscriber_manager_->find_iterator(key);
@@ -557,6 +720,7 @@ class ATFRAMEWORK_UTILS_API_HEAD_ONLY wal_publisher {
       }
     }
 
+    // If logs are compacted and can not be restore by incremental logs, send snapshot
     if (nullptr != wal_object_->get_last_removed_key()) {
       // Some log can not be resend, send snapshot
       if (wal_object_->get_log_key_compare()(last_checkpoint, *wal_object_->get_last_removed_key())) {
@@ -566,7 +730,7 @@ class ATFRAMEWORK_UTILS_API_HEAD_ONLY wal_publisher {
       }
     }
 
-    // If hash code mismatch, it should always send snapshot
+    // If hash code mismatch, there is bad data, it should always send snapshot
     log_const_iterator log_iter = wal_object_->log_lower_bound(last_checkpoint);
     bool should_send_snapshot = false;
     if (log_iter != wal_object_->log_cend()) {
@@ -608,6 +772,10 @@ class ATFRAMEWORK_UTILS_API_HEAD_ONLY wal_publisher {
     return _receive_subscribe_request(key, last_checkpoint, &check_hash_code, now, param, true);
   }
 
+  /**
+   * @brief Set the log key from which to broadcast logs
+   * @param args The arguments to construct log key
+   */
   template <class... ArgsT>
   void set_broadcast_key_bound(ArgsT&&... args) {
     if (broadcast_key_bound_) {
@@ -617,8 +785,17 @@ class ATFRAMEWORK_UTILS_API_HEAD_ONLY wal_publisher {
     }
   }
 
+  /**
+   * @brief Get the log key from which to broadcast logs
+   * @return The broadcast key bound
+   */
   const log_key_type* get_broadcast_key_bound() const { return broadcast_key_bound_.get(); }
 
+  /**
+   * @brief Broadcast logs to all subscribers
+   * @param param The callback parameter
+   * @return The count of logs broadcasted
+   */
   size_t broadcast(callback_param_type param) {
     if (!vtable_ || !vtable_->get_log_key) {
       return 0;
@@ -634,6 +811,7 @@ class ATFRAMEWORK_UTILS_API_HEAD_ONLY wal_publisher {
       logs = wal_object_->log_all_range();
     }
 
+    // Broadcast incremental logs
     std::pair<subscriber_iterator, subscriber_iterator> subscribers = subscriber_manager_->all_range();
     if (subscribers.first != subscribers.second) {
       if (logs.first != logs.second) {
@@ -645,6 +823,7 @@ class ATFRAMEWORK_UTILS_API_HEAD_ONLY wal_publisher {
       }
     }
 
+    // If we remove a subscriber, we should also send last logs to them(which may contains remove logs)
     size_t retry_last_broadcast = 3;
     while (!gc_subscribers_.empty() && retry_last_broadcast > 0) {
       --retry_last_broadcast;
@@ -667,9 +846,13 @@ class ATFRAMEWORK_UTILS_API_HEAD_ONLY wal_publisher {
         for (auto& new_removed_subscriber : gc_subscribers_) {
           cache[new_removed_subscriber.first] = new_removed_subscriber.second;
         }
+
+        // There may be more new removed subscriber when calling callbacks, just retry again
         cache.swap(gc_subscribers_);
       }
     }
+
+    // Also cleanup when error happens
     if (!gc_subscribers_.empty()) {
       gc_subscribers_.clear();
     }
@@ -679,6 +862,8 @@ class ATFRAMEWORK_UTILS_API_HEAD_ONLY wal_publisher {
       broadcast_hole_logs_.clear();
     }
 
+    // Update broadcast key bound, every log is iteratored before, so it will not increase complexity to iterate them
+    // again.
     log_const_iterator last;
     bool reset_broadcast_key_bound = false;
     while (logs.first != logs.second) {

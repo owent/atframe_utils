@@ -1,4 +1,8 @@
 // Copyright 2024 atframework
+// Licenses under the MIT License
+// @note 本文件的单元测试case来自 boost::smart_ptr ,但是做了部分修改。
+//       抹除了线程安全检测和部分与stl行为不一致的部分采用STL行为。
+//       用于保证与std::shared_ptr的有定义借口行为 100% 兼容。
 
 #include "frame/test_macros.h"
 

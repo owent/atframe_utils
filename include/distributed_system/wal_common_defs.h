@@ -79,9 +79,17 @@ struct ATFRAMEWORK_UTILS_API_HEAD_ONLY wal_log_action_getter_trait {
 #endif
 };
 
+/**
+ * @brief Helper class to switch types between strong_rc_ptr and std::shared_ptr.
+ * @note We recommend to use strong_rc_ptr in single-thread environment.
+ */
 template <class T, wal_mt_mode MTMode>
 struct ATFRAMEWORK_UTILS_API_HEAD_ONLY wal_mt_mode_data_trait;
 
+/**
+ * @brief Helper class to switch functions between strong_rc_ptr and std::shared_ptr.
+ * @note We recommend to use strong_rc_ptr in single-thread environment.
+ */
 template <wal_mt_mode MTMode>
 struct ATFRAMEWORK_UTILS_API_HEAD_ONLY wal_mt_mode_func_trait;
 

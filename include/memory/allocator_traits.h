@@ -1,5 +1,38 @@
 // Copyright 2024 atframework
 // Licenses under the MIT License
+//
+// @note This is a helper class for user to implement a standard allocator and allocator_traits more easily.
+// @example
+//   ```cpp
+//   template <class T, class BackendAllocator = ::std::allocator<T>>
+//   struct custom_allocator : public ::std::allocator<T> {
+//       T* allocate(::std::size_t n) { /* ... */ };
+//       void deallocate(T* p, ::std::size_t n) { /* ... */ };
+//      template <class U>
+//      struct rebind {
+//        /* Recursive rebind backend allocator(traditional way) */
+//        using __rebind_backend_type_other =
+//            typename ::std::allocator_traits<BackendAllocator>::template rebind_alloc<U>;
+//        using other = allocator<U, __rebind_backend_type_other>;
+//      };
+//   };
+//
+//   /* Just use codes below to support standard allocator_traits for custom_allocator */
+//   namespace std {
+//   template <class T, class BackendAllocator>
+//   struct allocator_traits<custom_allocator<T, BackendAllocator>>
+//       : public ::atfw::util::memory::allocator_traits<custom_allocator<T, BackendAllocator>> {
+//     template <typename U>
+//     using rebind_alloc = custom_allocator<T,
+//       /* Rebind backend allocator(modern way) */
+//       typename ::std::allocator_traits<BackendAllocator>::template rebind_alloc<U>>;
+//
+//     template <typename U>
+//     using rebind_traits = allocator_traits<rebind_alloc<U>>;
+//   };
+//   }  // namespace std
+//   ```
+//
 
 #pragma once
 
@@ -12,6 +45,7 @@
 #include <memory>
 #include <utility>
 
+// STL declare allocator's callbacks as constexpr since C++20, we keep the same behavior for compatibility
 #if (!defined(__cplusplus) && !defined(_MSVC_LANG)) || \
     !((defined(__cplusplus) && __cplusplus >= 202002L) || (defined(_MSVC_LANG) && _MSVC_LANG >= 202002L))
 #  define ATFRAMEWORK_UTILS_MEMORY_ALLOCATOR_CONSTEXPR
@@ -38,6 +72,9 @@
 ATFRAMEWORK_UTILS_NAMESPACE_BEGIN
 namespace memory {
 
+// __util_memory_allocator_traits_ALLOCATOR_NESTED_TYPE is used to bind allocator's nested type to allocator_traits
+// It will try to use allocator's nested type first, if not exists, it will use default type according to ISO instead.
+// @see https://en.cppreference.com/w/cpp/memory/allocator_traits
 #if ((defined(__cplusplus) && __cplusplus >= 201703L) || (defined(_MSVC_LANG) && _MSVC_LANG >= 201703L))
 // Not all compilers support detected_or for template template_args now
 #  if 0 && (defined(__cpp_template_template_args) && __cpp_template_template_args)
@@ -144,14 +181,16 @@ struct __util_memory_allocator_traits_allocator_allocator_rebind<Allocator<Up, A
   using type = Allocator<T, Args...>;
 };
 
-/// Non-standard RAII type for managing pointers obtained from allocators.
+// Non-standard RAII type for managing pointers obtained from allocators.
+// Just delcare it in std namespace to make allocator compatible with std::allocator_traits
 template <class Alloc>
 struct UTIL_SYMBOL_VISIBLE allocator_traits {
   using allocator_type = Alloc;
   using value_type = typename allocator_type::value_type;
 
 #if ((defined(__cplusplus) && __cplusplus >= 201703L) || (defined(_MSVC_LANG) && _MSVC_LANG >= 201703L))
-// Not all compilers support detected_or for template template_args now
+// Many compilers have problems in detected_or for template template_args now, we turn it on when it's ready in the
+// future.
 #  if 0 && (defined(__cpp_template_template_args) && __cpp_template_template_args)
 #    if defined(__cpp_concepts) && __cpp_concepts >= 202002L
   // Implementation of the detection idiom (negative case).
@@ -194,6 +233,7 @@ struct UTIL_SYMBOL_VISIBLE allocator_traits {
 #  endif
 #endif
 
+  // Rebind types for allocator_traits
   __util_memory_allocator_traits_ALLOCATOR_NESTED_TYPE(allocator_type, pointer, pointer, value_type*);
   __util_memory_allocator_traits_ALLOCATOR_NESTED_TYPE(
       allocator_type, const_pointer, const_pointer,
@@ -254,6 +294,8 @@ struct UTIL_SYMBOL_VISIBLE allocator_traits {
     static UTIL_CONFIG_CONSTEXPR const bool value = type::value;
   };
 
+  // Constroctor
+  // Using the allocator's constructor, keep the same exception specification as the allocator's construct
   template <typename U, typename... _Args>
   UTIL_SYMBOL_VISIBLE inline static ATFRAMEWORK_UTILS_MEMORY_ALLOCATOR_CONSTEXPR
       ATFRAMEWORK_UTILS_NAMESPACE_ID::nostd::enable_if_t<__construct_helper<U, _Args...>::value, void>
@@ -262,6 +304,7 @@ struct UTIL_SYMBOL_VISIBLE allocator_traits {
     __a.construct(__p, std::forward<_Args>(__args)...);
   }
 
+  // Using the default constructor, keep the same exception specification as the default constructor
   template <typename U, typename... _Args>
   UTIL_SYMBOL_VISIBLE inline static ATFRAMEWORK_UTILS_MEMORY_ALLOCATOR_CONSTEXPR ATFRAMEWORK_UTILS_NAMESPACE_ID::nostd::
       enable_if_t<!__construct_helper<U, _Args...>::value && ::std::is_constructible<U, _Args...>::value, void>
@@ -275,12 +318,14 @@ struct UTIL_SYMBOL_VISIBLE allocator_traits {
   }
 
   // destroy
+  // Using the allocator's destroy callback, keep the same exception specification as the allocator's callback
   template <typename AllocatorOther, typename U>
   UTIL_SYMBOL_VISIBLE inline static ATFRAMEWORK_UTILS_MEMORY_ALLOCATOR_CONSTEXPR auto _S_destroy(
       AllocatorOther& __a, U* __p, int) noexcept(noexcept(__a.destroy(__p))) -> decltype(__a.destroy(__p)) {
     __a.destroy(__p);
   }
 
+  // Using the default destroy function, keep the same exception specification as the default destroy function
   template <typename AllocatorOther, typename U>
   UTIL_SYMBOL_VISIBLE inline static ATFRAMEWORK_UTILS_MEMORY_ALLOCATOR_CONSTEXPR void _S_destroy(
       AllocatorOther&, U* __p, ...) noexcept(std::is_nothrow_destructible<U>::value) {

@@ -1,5 +1,8 @@
 // Copyright 2024 atframework
 // Licenses under the MIT License
+// @note This is a smart pointer class that is compatible with std::shared_ptr, but it is more lightweight and do not
+//       use atomic operation for reference counting. It is designed for single thread usage.
+// @note We support all APIs of std::shared_ptr in C++14, and partly APIs of std::shared_ptr in C++17/20/26.
 
 #pragma once
 
@@ -46,6 +49,7 @@ class UTIL_SYMBOL_VISIBLE __rc_ptr_counted_data_base {
   // Called when weak_count_ drops to zero.
   virtual void destroy() noexcept = 0;
 
+  // Donohting when with -fno-exception/EHsc-
   ATFRAMEWORK_UTILS_API static void throw_bad_weak_ptr();
 
   // Increment the use count if it is non-zero, throw otherwise.
@@ -96,6 +100,10 @@ class UTIL_SYMBOL_VISIBLE __rc_ptr_counted_data_base {
   std::size_t weak_count_;
 };
 
+/**
+ * @brief Template class definition for reference-counted.
+ * @note Construct object and counter with default data management and allocator.
+ */
 template <class T>
 class ATFRAMEWORK_UTILS_API_HEAD_ONLY __rc_ptr_counted_data_default final : public __rc_ptr_counted_data_base {
  public:
@@ -123,6 +131,11 @@ class ATFRAMEWORK_UTILS_API_HEAD_ONLY __rc_ptr_counted_data_default final : publ
   T* ptr_;
 };
 
+/**
+ * @brief Template class definition for reference-counted.(inplacement)
+ * @note Construct object and counter inplace with default allocator.
+ *       This will reduce memory fragmentation and slightly improve performance.
+ */
 template <class T>
 class ATFRAMEWORK_UTILS_API_HEAD_ONLY __rc_ptr_counted_data_inplace final : public __rc_ptr_counted_data_base {
  public:
@@ -157,6 +170,12 @@ class ATFRAMEWORK_UTILS_API_HEAD_ONLY __rc_ptr_counted_data_inplace final : publ
   nostd::aligned_storage_t<sizeof(T), alignof(T)> storage_;
 };
 
+/**
+ * @brief Template class definition for reference-counted with allocator.(inplacement)
+ * @note Construct object and counter inplace with custom allocator.
+ *       This will reduce memory fragmentation and slightly improve performance.
+ * @note We use allocator rebind to allocate all data with custom allocator.
+ */
 template <class T, class Alloc>
 class ATFRAMEWORK_UTILS_API_HEAD_ONLY __rc_ptr_counted_data_inplace_alloc final : public __rc_ptr_counted_data_base {
  public:
@@ -216,6 +235,10 @@ class ATFRAMEWORK_UTILS_API_HEAD_ONLY __rc_ptr_counted_data_inplace_alloc final 
   nostd::aligned_storage_t<sizeof(Alloc), alignof(Alloc)> alloc_;
 };
 
+/**
+ * @brief Template class definition for reference-counted with deletor.
+ * @note Construct object and counter with custom deletor and default allocator.
+ */
 template <class T, class Deleter>
 class ATFRAMEWORK_UTILS_API_HEAD_ONLY __rc_ptr_counted_data_with_deleter final : public __rc_ptr_counted_data_base {
  public:
@@ -229,6 +252,8 @@ class ATFRAMEWORK_UTILS_API_HEAD_ONLY __rc_ptr_counted_data_with_deleter final :
     using alloc_type = ::std::allocator<__rc_ptr_counted_data_with_deleter<T, Deleter>>;
     using alloc_traits = ::std::allocator_traits<alloc_type>;
     alloc_type alloc;
+
+    // deallocate this after function finished
     allocated_ptr<alloc_type> guard_ptr{alloc, this};
     alloc_traits::destroy(alloc, this);
   }
@@ -238,6 +263,10 @@ class ATFRAMEWORK_UTILS_API_HEAD_ONLY __rc_ptr_counted_data_with_deleter final :
   Deleter deleter_;
 };
 
+/**
+ * @brief Template class definition for reference-counted with deletor and allocator.
+ * @note Construct object and counter with custom deletor and custom allocator.
+ */
 template <class T, class Deleter, class Alloc>
 class ATFRAMEWORK_UTILS_API_HEAD_ONLY __rc_ptr_counted_data_with_deleter_allocator final
     : public __rc_ptr_counted_data_base {
@@ -253,6 +282,8 @@ class ATFRAMEWORK_UTILS_API_HEAD_ONLY __rc_ptr_counted_data_with_deleter_allocat
         __rc_ptr_counted_data_with_deleter_allocator<T, Deleter, Alloc>>;
     using alloc_traits = ::std::allocator_traits<alloc_type>;
     alloc_type alloc{alloc_};
+
+    // deallocate this after function finished
     allocated_ptr<alloc_type> guard_ptr{alloc, this};
     alloc_traits::destroy(alloc, this);
   }
@@ -620,6 +651,9 @@ __strong_rc_counter<T>::__strong_rc_counter(const __weak_rc_counter<T>& w, std::
   }
 }
 
+/**
+ * @brief Base class to mantain all shared APIs.
+ */
 template <class T, bool = std::is_array<T>::value, bool = std::is_void<T>::value>
 class ATFRAMEWORK_UTILS_API_HEAD_ONLY strong_rc_ptr_access {
  public:
@@ -649,6 +683,9 @@ class ATFRAMEWORK_UTILS_API_HEAD_ONLY strong_rc_ptr_access {
   inline element_type* get() const noexcept { return static_cast<const strong_rc_ptr<T>*>(this)->get(); }
 };
 
+/**
+ * @brief A helper class that used to access internal APIs for void type.
+ */
 template <class T>
 class ATFRAMEWORK_UTILS_API_HEAD_ONLY strong_rc_ptr_access<T, false, true> {
  public:
@@ -687,6 +724,11 @@ class ATFRAMEWORK_UTILS_API_HEAD_ONLY strong_rc_ptr_access<T, true, false> {
   inline element_type* get() const noexcept { return static_cast<const strong_rc_ptr<T>*>(this)->get(); }
 };
 
+/**
+ * @brief A helper class that used to inject datas for classes that inherit enable_shared_rc_from_this
+ * @note We use the old way to implement this feature, because some old compiler has problems for implementation of the
+ *       detection idiom.
+ */
 template <class T1, class T2, class T3>
 ATFRAMEWORK_UTILS_API_HEAD_ONLY inline void __enable_shared_from_this_with(const __strong_rc_counter<T1>* __n,
                                                                            const T2* __py,
@@ -696,6 +738,7 @@ ATFRAMEWORK_UTILS_API_HEAD_ONLY inline void __enable_shared_from_this_with(const
   }
 }
 
+// All ptr shares the same lifetime.
 template <class T1, class T2, class T3, size_t T3SIZE>
 ATFRAMEWORK_UTILS_API_HEAD_ONLY inline void __enable_shared_from_this_with(
     const __strong_rc_counter<T1>* __n, const T2* __py, const enable_shared_rc_from_this<T3[T3SIZE]>* __p) {
@@ -724,6 +767,10 @@ ATFRAMEWORK_UTILS_API_HEAD_ONLY inline void __enable_shared_from_this_with(...) 
 
 #endif  // _MANAGED
 
+/**
+ * @brief A std::shared_ptr replacement that is more lightweight and do not use atomic operation for reference counting.
+ * @note This class is designed for single thread usage.
+ */
 template <class T>
 class ATFRAMEWORK_UTILS_API_HEAD_ONLY strong_rc_ptr : public strong_rc_ptr_access<T> {
  public:
@@ -805,12 +852,22 @@ class ATFRAMEWORK_UTILS_API_HEAD_ONLY strong_rc_ptr : public strong_rc_ptr_acces
     __enable_shared_from_this_with(&ref_counter_, ptr_, ptr_);
   }
 
+  /**
+   * @brief This is a special constructor for make_strong_rc/allocate_strong_rc.
+   * @param __tag Tag for type decetion
+   * @param args Arguments to construct the object.
+   */
   template <class... Args>
   strong_rc_ptr(__strong_rc_default_alloc_shared_tag<T> __tag, Args&&... args)  // NOLINT: runtime/explicit
       : ptr_(nullptr), ref_counter_(ptr_, __tag, std::forward<Args>(args)...) {
     __enable_shared_from_this_with(&ref_counter_, ptr_, ptr_);
   }
 
+  /**
+   * @brief This is a special constructor for make_strong_rc/allocate_strong_rc.
+   * @param __tag Tag for type decetion
+   * @param args Arguments to construct the object.
+   */
   template <class... Args>
   strong_rc_ptr(__strong_rc_with_alloc_shared_tag<T> __tag, Args&&... args)  // NOLINT: runtime/explicit
       : ptr_(nullptr), ref_counter_(ptr_, __tag, std::forward<Args>(args)...) {
@@ -950,6 +1007,7 @@ struct __strong_rc_ptr_compare_common_type<T1, T2, false> {
   using common_type = const void*;
 };
 
+// Use three way comparison if available
 #ifdef __cpp_impl_three_way_comparison
 template <class T1, class T2>
 ATFRAMEWORK_UTILS_API_HEAD_ONLY inline std::strong_ordering operator<=>(const strong_rc_ptr<T1>& l,
@@ -1053,6 +1111,10 @@ ATFRAMEWORK_UTILS_API_HEAD_ONLY inline bool operator>=(::std::nullptr_t, const s
 }
 #endif
 
+/**
+ * @brief A std::weak_ptr replacement that is more lightweight and do not use atomic operation for reference counting.
+ * @note This class is designed for single thread usage.
+ */
 template <typename T>
 class ATFRAMEWORK_UTILS_API_HEAD_ONLY weak_rc_ptr {
  public:
@@ -1218,39 +1280,72 @@ class enable_shared_rc_from_this {
   mutable weak_rc_ptr<T> weak_this_;
 };
 
+/**
+ * @brief A std::make_shared replacement for strong_rc_ptr(non-array).
+ * @param args Arguments to construct the object.
+ */
 template <class T, class... TArgs>
 nostd::enable_if_t<!::std::is_array<T>::value, strong_rc_ptr<T>> make_strong_rc(TArgs&&... args) {
   return strong_rc_ptr<T>(__strong_rc_default_alloc_shared_tag<T>{}, std::forward<TArgs>(args)...);
 }
 
+/**
+ * @brief A std::make_shared replacement for strong_rc_ptr(bounded array).
+ * @param args Arguments to construct the object.
+ */
 template <class T, class... TArgs>
 nostd::enable_if_t<nostd::is_bounded_array<T>::value, strong_rc_ptr<T>> make_strong_rc(TArgs&&... args) {
   return strong_rc_ptr<T>(__strong_rc_default_alloc_shared_tag<T>{}, std::forward<TArgs>(args)...);
 }
 
+/**
+ * @brief A std::allocate_shared (C++20) replacement for strong_rc_ptr(non-array).
+ * @param alloc The custom allocator.
+ * @param args Arguments to construct the object.
+ */
 template <class T, class Alloc, class... TArgs>
 nostd::enable_if_t<!::std::is_array<T>::value, strong_rc_ptr<T>> allocate_strong_rc(const Alloc& alloc,
                                                                                     TArgs&&... args) {
   return strong_rc_ptr<T>(__strong_rc_with_alloc_shared_tag<T>{}, alloc, std::forward<TArgs>(args)...);
 }
 
+/**
+ * @brief A std::allocate_shared (C++20) replacement for strong_rc_ptr(bounded array).
+ * @param alloc The custom allocator.
+ * @param args Arguments to construct the object.
+ */
 template <class T, class Alloc, class... TArgs>
 nostd::enable_if_t<nostd::is_bounded_array<T>::value, strong_rc_ptr<T>> allocate_strong_rc(const Alloc& alloc,
                                                                                            TArgs&&... args) {
   return strong_rc_ptr<T>(__strong_rc_with_alloc_shared_tag<T>{}, alloc, std::forward<TArgs>(args)...);
 }
 
+/**
+ * @brief A std::static_pointer_cast replacement for strong_rc_ptr
+ * @param r A strong_rc_ptr instance.
+ * @return Converted strong_rc_ptr instance.
+ */
 template <class T, class Y>
 strong_rc_ptr<T> static_pointer_cast(const strong_rc_ptr<Y>& r) noexcept {
   return strong_rc_ptr<T>(r, static_cast<typename strong_rc_ptr<T>::element_type*>(r.get()));
 }
 
+/**
+ * @brief A std::const_pointer_cast replacement for strong_rc_ptr
+ * @param r A strong_rc_ptr instance.
+ * @return Converted strong_rc_ptr instance.
+ */
 template <class T, class Y>
 strong_rc_ptr<T> const_pointer_cast(const strong_rc_ptr<Y>& r) noexcept {
   return strong_rc_ptr<T>(r, const_cast<typename strong_rc_ptr<T>::element_type*>(r.get()));
 }
 
 #if defined(ATFRAMEWORK_UTILS_ENABLE_RTTI) && ATFRAMEWORK_UTILS_ENABLE_RTTI
+/**
+ * @brief A std::dynamic_pointer_cast replacement for strong_rc_ptr
+ * @param r A strong_rc_ptr instance.
+ * @return Converted strong_rc_ptr instance.
+ */
 template <class T, class Y>
 strong_rc_ptr<T> dynamic_pointer_cast(const strong_rc_ptr<Y>& r) noexcept {
   return strong_rc_ptr<T>(r, dynamic_cast<typename strong_rc_ptr<T>::element_type*>(r.get()));
@@ -1261,12 +1356,22 @@ strong_rc_ptr<T> dynamic_pointer_cast(const strong_rc_ptr<Y>& r) noexcept {
 ATFRAMEWORK_UTILS_NAMESPACE_END
 
 namespace std {
+/**
+ * @brief Support std::swap for strong_rc_ptr.
+ * @param a A strong_rc_ptr instance.
+ * @param b Another strong_rc_ptr instance.
+ */
 template <class T>
 ATFRAMEWORK_UTILS_API_HEAD_ONLY void swap(ATFRAMEWORK_UTILS_NAMESPACE_ID::memory::strong_rc_ptr<T>& a,
                                           ATFRAMEWORK_UTILS_NAMESPACE_ID::memory::strong_rc_ptr<T>& b) noexcept {
   a.swap(b);
 }
 
+/**
+ * @brief Support std::hash for strong_rc_ptr.
+ * @param a A strong_rc_ptr instance.
+ * @param b Another strong_rc_ptr instance.
+ */
 template <class T>
 struct ATFRAMEWORK_UTILS_API_HEAD_ONLY hash<ATFRAMEWORK_UTILS_NAMESPACE_ID::memory::strong_rc_ptr<T>> {
   std::size_t operator()(const ATFRAMEWORK_UTILS_NAMESPACE_ID::memory::strong_rc_ptr<T>& s) const noexcept {
@@ -1274,6 +1379,11 @@ struct ATFRAMEWORK_UTILS_API_HEAD_ONLY hash<ATFRAMEWORK_UTILS_NAMESPACE_ID::memo
   }
 };
 
+/**
+ * @brief Support std::basic_ostream for strong_rc_ptr.
+ * @param a A strong_rc_ptr instance.
+ * @param b Another strong_rc_ptr instance.
+ */
 template <class CharT, class TraitT, class T>
 ATFRAMEWORK_UTILS_API_HEAD_ONLY inline std::basic_ostream<CharT, TraitT>& operator<<(
     std::basic_ostream<CharT, TraitT>& __os, const ATFRAMEWORK_UTILS_NAMESPACE_ID::memory::strong_rc_ptr<T>& __p) {
@@ -1284,11 +1394,18 @@ ATFRAMEWORK_UTILS_API_HEAD_ONLY inline std::basic_ostream<CharT, TraitT>& operat
 
 ATFRAMEWORK_UTILS_NAMESPACE_BEGIN
 namespace memory {
+
+/**
+ * @brief Helper class to switch between strong_rc_ptr and std::shared_ptr.
+ */
 enum class compat_strong_ptr_mode : int8_t {
-  kStrongRc = 0,
-  kStl = 1,
+  kStrongRc = 0,  // Use strong_rc_ptr
+  kStl = 1,       // Use shared_ptr
 };
 
+/**
+ * @brief Helper trait class to switch between strong_rc_ptr and std::shared_ptr.
+ */
 template <compat_strong_ptr_mode>
 struct ATFRAMEWORK_UTILS_API_HEAD_ONLY compat_strong_ptr_function_trait;
 
@@ -1344,16 +1461,24 @@ struct ATFRAMEWORK_UTILS_API_HEAD_ONLY compat_strong_ptr_function_trait<compat_s
 
   template <class Y, class... ArgsT>
   static inline std::shared_ptr<Y> make_shared(ArgsT&&... args) {
-#include "config/compiler/internal/stl_compact_prefix.h.inc"  // NOLINT: build/include
+    // Some versions os STL will cause warning by mistake, which may trigger -Werror/-WX to fail the build.
+    // Use include guard to ignore them.
+    // NOLINT: build/include
+#include "config/compiler/internal/stl_compact_prefix.h.inc"  // IWYU pragma: keep
     return std::make_shared<Y>(std::forward<ArgsT>(args)...);
-#include "config/compiler/internal/stl_compact_suffix.h.inc"  // NOLINT: build/include
+    // NOLINT: build/include
+#include "config/compiler/internal/stl_compact_suffix.h.inc"  // IWYU pragma: keep
   }
 
   template <class Y, class Alloc, class... TArgs>
   static inline std::shared_ptr<Y> allocate_shared(const Alloc& alloc, TArgs&&... args) {
-#include "config/compiler/internal/stl_compact_prefix.h.inc"  // NOLINT: build/include
+    // Some versions os STL will cause warning by mistake, which may trigger -Werror/-WX to fail the build.
+    // Use include guard to ignore them.
+    // NOLINT: build/include
+#include "config/compiler/internal/stl_compact_prefix.h.inc"  // IWYU pragma: keep
     return std::allocate_shared<Y>(alloc, std::forward<TArgs>(args)...);
-#include "config/compiler/internal/stl_compact_suffix.h.inc"  // NOLINT: build/include
+    // NOLINT: build/include
+#include "config/compiler/internal/stl_compact_suffix.h.inc"  // IWYU pragma: keep
   }
 
   template <class Y, class F>
@@ -1374,6 +1499,10 @@ struct ATFRAMEWORK_UTILS_API_HEAD_ONLY compat_strong_ptr_function_trait<compat_s
 #endif
 };
 
+/**
+ * @brief A simple helper trait class to switch between strong_rc_ptr and std::shared_ptr.
+ * @note This is for type declaration only.
+ */
 template <class T, compat_strong_ptr_mode PtrMode>
 struct ATFRAMEWORK_UTILS_API_HEAD_ONLY compat_strong_ptr_type_trait {
   using shared_ptr = typename compat_strong_ptr_function_trait<PtrMode>::template shared_ptr<T>;

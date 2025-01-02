@@ -166,10 +166,20 @@ class ATFRAMEWORK_UTILS_API_HEAD_ONLY wal_subscriber {
       return subscriber;
     }
 
+    /**
+     * @brief Allocate a new subscriber with custom allocator
+     * @param alloc Custom allocator
+     * @param key The key to allocate
+     * @param now Current time point
+     * @param timeout The timeout duration
+     * @param args Arguments to construct subscriber instance
+     * @return The allocated subscriber
+     */
     template <class Alloc, class... ArgsT>
     pointer allocate(const Alloc& alloc, const key_type& key, const time_point& now, const duration& timeout,
                      ArgsT&&... args) {
       auto old = subscribers_.find(key);
+      // if found, just update the timeout
       if (old != subscribers_.end()) {
         if (!old->second) {
           subscribers_.erase(old);
@@ -180,6 +190,7 @@ class ATFRAMEWORK_UTILS_API_HEAD_ONLY wal_subscriber {
         }
       }
 
+      // Create a new subscriber and insert timer
       construct_helper guard;
       auto ret = wal_mt_mode_func_trait<MTMode>::template allocate_strong<wal_subscriber>(
           alloc, guard, *this, key, now, timeout, subscribers_timer_.end(), std::forward<ArgsT>(args)...);
@@ -193,12 +204,26 @@ class ATFRAMEWORK_UTILS_API_HEAD_ONLY wal_subscriber {
       return ret;
     }
 
+    /**
+     * @brief Allocate a new subscriber with default allocator
+     * @param alloc Custom allocator
+     * @param key The key to allocate
+     * @param now Current time point
+     * @param timeout The timeout duration
+     * @param args Arguments to construct subscriber instance
+     * @return The allocated subscriber
+     */
     template <class... ArgsT>
     pointer create(const key_type& key, const time_point& now, const duration& timeout, ArgsT&&... args) {
       using subscriber_allocator = typename std::allocator_traits<Allocator>::template rebind_alloc<wal_subscriber>;
       return allocate(subscriber_allocator(), key, now, timeout, std::forward<ArgsT>(args)...);
     }
 
+    /**
+     * @brief Find a subscriber by key
+     * @param key The key to find
+     * @return The subscriber if found, nullptr if not found
+     */
     pointer find(const key_type& key) noexcept {
       auto iter = subscribers_.find(key);
       if (iter == subscribers_.end()) {
@@ -208,6 +233,11 @@ class ATFRAMEWORK_UTILS_API_HEAD_ONLY wal_subscriber {
       return iter->second;
     }
 
+    /**
+     * @brief Find a subscriber by key
+     * @param key The key to find
+     * @return The subscriber iterator range if found, end iterator if not found
+     */
     std::pair<subscriber_iterator, subscriber_iterator> find_iterator(const key_type& key) noexcept {
       auto iter = subscribers_.find(key);
       if (iter == subscribers_.end()) {
@@ -219,6 +249,11 @@ class ATFRAMEWORK_UTILS_API_HEAD_ONLY wal_subscriber {
       return std::pair<subscriber_iterator, subscriber_iterator>(iter, end);
     }
 
+    /**
+     * @brief Find a subscriber by key
+     * @param key The key to find
+     * @return The subscriber iterator range if found, end iterator if not found
+     */
     std::pair<subscriber_const_iterator, subscriber_const_iterator> find_iterator(const key_type& key) const noexcept {
       auto iter = subscribers_.find(key);
       if (iter == subscribers_.end()) {
@@ -230,14 +265,27 @@ class ATFRAMEWORK_UTILS_API_HEAD_ONLY wal_subscriber {
       return std::pair<subscriber_const_iterator, subscriber_const_iterator>(iter, end);
     }
 
+    /**
+     * @brief Get all subscribers
+     * @return The subscriber iterator range
+     */
     std::pair<subscriber_iterator, subscriber_iterator> all_range() noexcept {
       return std::pair<subscriber_iterator, subscriber_iterator>(subscribers_.begin(), subscribers_.end());
     }
 
+    /**
+     * @brief Get all subscribers
+     * @return The subscriber iterator range
+     */
     std::pair<subscriber_const_iterator, subscriber_const_iterator> all_range() const noexcept {
       return std::pair<subscriber_const_iterator, subscriber_const_iterator>(subscribers_.begin(), subscribers_.end());
     }
 
+    /**
+     * @brief Get the first expired subscriber
+     * @param now Current time point
+     * @return The first expired subscriber if found, nullptr if not found
+     */
     pointer get_first_expired(const time_point& now) {
       while (!subscribers_timer_.empty()) {
         auto begin = subscribers_timer_.begin();
