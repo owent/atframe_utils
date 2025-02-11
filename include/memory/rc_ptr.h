@@ -215,11 +215,11 @@ class ATFRAMEWORK_UTILS_API_HEAD_ONLY __rc_ptr_counted_data_inplace_alloc final 
     // destroy allocator first
     using alloc_type_a = typename ::std::allocator_traits<Alloc>::template rebind_alloc<Alloc>;
     using alloc_traits_a = ::std::allocator_traits<alloc_type_a>;
-    alloc_type_a aa{*alloc_ptr()} ATFW_UTIL_ATTRIBUTE_UNINITIALIZED;
+    ATFW_UTIL_ATTRIBUTE_UNINITIALIZED alloc_type_a aa{*alloc_ptr()};
     alloc_traits_a::destroy(aa, alloc_ptr());
 
     // then, destroy and deallocate this
-    alloc_type_self as{*alloc_ptr()} ATFW_UTIL_ATTRIBUTE_UNINITIALIZED;
+    ATFW_UTIL_ATTRIBUTE_UNINITIALIZED alloc_type_self as{*alloc_ptr()};
     allocated_ptr<alloc_type_self> guard_ptr{as, this};
     alloc_traits_self::destroy(as, this);
   }
