@@ -212,6 +212,16 @@ class ATFRAMEWORK_UTILS_API_HEAD_ONLY __rc_ptr_counted_data_inplace_alloc final 
         typename ::std::allocator_traits<Alloc>::template rebind_alloc<__rc_ptr_counted_data_inplace_alloc<T, Alloc>>;
     using alloc_traits_self = ::std::allocator_traits<alloc_type_self>;
 
+#if defined(__GNUC__) && !defined(__clang__) && !defined(__apple_build_version__)
+#  if (__GNUC__ * 100 + __GNUC_MINOR__ * 10) >= 460
+#    pragma GCC diagnostic push
+#  endif
+#  pragma GCC diagnostic ignored "-Wuninitialized"
+#elif defined(__clang__) || defined(__apple_build_version__)
+#  pragma clang diagnostic push
+#  pragma clang diagnostic ignored "-Wuninitialized"
+#endif
+
     // destroy allocator first
     using alloc_type_a = typename ::std::allocator_traits<Alloc>::template rebind_alloc<Alloc>;
     using alloc_traits_a = ::std::allocator_traits<alloc_type_a>;
@@ -222,6 +232,14 @@ class ATFRAMEWORK_UTILS_API_HEAD_ONLY __rc_ptr_counted_data_inplace_alloc final 
     ATFW_UTIL_ATTRIBUTE_UNINITIALIZED alloc_type_self as{*alloc_ptr()};
     allocated_ptr<alloc_type_self> guard_ptr{as, this};
     alloc_traits_self::destroy(as, this);
+
+#if defined(__GNUC__) && !defined(__clang__) && !defined(__apple_build_version__)
+#  if (__GNUC__ * 100 + __GNUC_MINOR__ * 10) >= 460
+#    pragma GCC diagnostic pop
+#  endif
+#elif defined(__clang__) || defined(__apple_build_version__)
+#  pragma clang diagnostic pop
+#endif
   }
 
   inline T* value_ptr() noexcept { return reinterpret_cast<T*>(value_addr()); }
