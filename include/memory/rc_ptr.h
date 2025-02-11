@@ -167,7 +167,7 @@ class ATFRAMEWORK_UTILS_API_HEAD_ONLY __rc_ptr_counted_data_inplace final : publ
  private:
   inline void* addr() { return reinterpret_cast<void*>(&storage_); }
 
-  nostd::aligned_storage_t<sizeof(T), alignof(T)> storage_;
+  nostd::aligned_storage_t<sizeof(T), alignof(T)> storage_ ATFW_UTIL_ATTRIBUTE_UNINITIALIZED;
 };
 
 /**
@@ -219,7 +219,7 @@ class ATFRAMEWORK_UTILS_API_HEAD_ONLY __rc_ptr_counted_data_inplace_alloc final 
     alloc_traits_a::destroy(aa, alloc_ptr());
 
     // then, destroy and deallocate this
-    alloc_type_self as{*alloc_ptr()};
+    alloc_type_self as{*alloc_ptr()} ATFW_UTIL_ATTRIBUTE_UNINITIALIZED;
     allocated_ptr<alloc_type_self> guard_ptr{as, this};
     alloc_traits_self::destroy(as, this);
   }
@@ -231,8 +231,8 @@ class ATFRAMEWORK_UTILS_API_HEAD_ONLY __rc_ptr_counted_data_inplace_alloc final 
   inline void* value_addr() { return reinterpret_cast<void*>(&storage_); }
   inline void* alloc_addr() { return reinterpret_cast<void*>(&alloc_); }
 
-  nostd::aligned_storage_t<sizeof(T), alignof(T)> storage_;
-  nostd::aligned_storage_t<sizeof(Alloc), alignof(Alloc)> alloc_;
+  nostd::aligned_storage_t<sizeof(T), alignof(T)> storage_ ATFW_UTIL_ATTRIBUTE_UNINITIALIZED;
+  nostd::aligned_storage_t<sizeof(Alloc), alignof(Alloc)> alloc_ ATFW_UTIL_ATTRIBUTE_UNINITIALIZED;
 };
 
 /**
