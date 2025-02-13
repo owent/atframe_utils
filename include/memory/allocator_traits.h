@@ -370,7 +370,7 @@ struct UTIL_SYMBOL_VISIBLE allocator_traits {
   }
 
 #if ((defined(__cplusplus) && __cplusplus >= 202302L) || (defined(_MSVC_LANG) && _MSVC_LANG >= 202302L)) && \
-    defined(__cpp_lib_allocate_at_least)
+    defined(__cpp_lib_allocate_at_least) && __cpp_lib_allocate_at_least >= 202302L
   EXPLICIT_NODISCARD_ATTR
   UTIL_SYMBOL_VISIBLE inline static UTIL_CONFIG_CONSTEXPR ::std::allocation_result<pointer, size_type>
   allocate_at_least(allocator_type& a, size_type n) {

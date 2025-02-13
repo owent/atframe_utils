@@ -117,7 +117,11 @@ class log_wrapper {
 #  ifdef ATFRAMEWORK_UTILS_STRING_FWAPI_FORMAT_STRING_TYPE
             ATFRAMEWORK_UTILS_STRING_FWAPI_NAMESPACE vformat_to_n<char *>(
                 writer.buffer + writer.writen_size, writer.total_size - writer.writen_size - 1,
+#    if defined(FMT_VERSION) && FMT_VERSION >= 100000
+                ATFRAMEWORK_UTILS_STRING_FWAPI_NAMESPACE string_view{std::forward<FMT>(fmt_text)},
+#    else
                 std::forward<FMT>(fmt_text),
+#    endif
 #    if defined(ATFRAMEWORK_UTILS_ENABLE_FMTLIB) && ATFRAMEWORK_UTILS_ENABLE_FMTLIB && defined(FMT_VERSION) && \
         FMT_VERSION >= 100000
                 ATFRAMEWORK_UTILS_STRING_FWAPI_NAMESPACE make_format_args(args...)

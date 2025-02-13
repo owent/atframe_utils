@@ -293,7 +293,12 @@ ATFRAMEWORK_UTILS_API_HEAD_ONLY ATFRAMEWORK_UTILS_STRING_FWAPI_NAMESPACE format_
 #  endif
 #  ifdef ATFRAMEWORK_UTILS_STRING_FWAPI_FORMAT_STRING_TYPE
     return ATFRAMEWORK_UTILS_STRING_FWAPI_NAMESPACE vformat_to_n(
-        out, static_cast<typename details::truncating_iterator<OutputIt>::size_type>(n), std::forward<TFMT>(fmt_text),
+        out, static_cast<typename details::truncating_iterator<OutputIt>::size_type>(n),
+#    if defined(FMT_VERSION) && FMT_VERSION >= 100000
+        ATFRAMEWORK_UTILS_STRING_FWAPI_NAMESPACE string_view{std::forward<TFMT>(fmt_text)},
+#    else
+        std::forward<TFMT>(fmt_text),
+#    endif
 #    if defined(ATFRAMEWORK_UTILS_ENABLE_FMTLIB) && ATFRAMEWORK_UTILS_ENABLE_FMTLIB && defined(FMT_VERSION) && \
         FMT_VERSION >= 100000
         ATFRAMEWORK_UTILS_STRING_FWAPI_NAMESPACE make_format_args(args...)
