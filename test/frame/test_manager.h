@@ -2,6 +2,18 @@
 
 #pragma once
 
+// Import the C++20 feature-test macros
+#ifdef __has_include
+#  if __has_include(<version>)
+#    include <version>
+#  endif
+#elif defined(_MSC_VER) && \
+    ((defined(__cplusplus) && __cplusplus >= 202002L) || (defined(_MSVC_LANG) && _MSVC_LANG >= 202002L))
+#  if _MSC_VER >= 1922
+#    include <version>
+#  endif
+#endif
+
 #include <stdint.h>
 #include <ctime>
 #include <string>
@@ -69,13 +81,17 @@ class test_manager {
   static boost::unit_test::test_suite *&test_suit();
 #endif
 
+  template <class T>
+  struct is_numberic : std::conditional<std::is_arithmetic<T>::value || std::is_enum<T>::value, std::true_type,
+                                        std::false_type>::type {};
+
   template <class TL, class TR,
             bool has_pointer = std::is_pointer<typename std::decay<TL>::type>::value ||
                                std::is_pointer<typename std::decay<TR>::type>::value,
-            bool has_number = std::is_arithmetic<typename std::decay<TL>::type>::value ||
-                              std::is_arithmetic<typename std::decay<TR>::type>::value,
-            bool all_number = std::is_arithmetic<typename std::decay<TL>::type>::value &&
-                              std::is_arithmetic<typename std::decay<TR>::type>::value>
+            bool has_number =
+                is_numberic<typename std::decay<TL>::type>::value || is_numberic<typename std::decay<TR>::type>::value,
+            bool all_number =
+                is_numberic<typename std::decay<TL>::type>::value && is_numberic<typename std::decay<TR>::type>::value>
   struct pick_param;
 
   // compare pointer with integer
@@ -132,6 +148,35 @@ class test_manager {
     }
   };
 
+  template <class TL, bool CONVERT_TO_VOID_P = std::is_pointer<typename std::decay<TL>::type>::value ||
+                                               std::is_function<typename std::decay<TL>::type>::value>
+  struct convert_param;
+
+  template <class TL>
+  struct convert_param<TL, true> {
+    using value_type = void;
+    using type = const void *;
+    template <class TINPUT>
+    static inline const void *pick(TINPUT &&v) {
+      return reinterpret_cast<const void *>(v);
+    }
+  };
+
+  template <class TL>
+  struct convert_param<TL, false> {
+    using value_type = typename std::decay<TL>::type;
+    using type = const value_type &;
+    template <class TINPUT>
+    static inline const value_type &pick(TINPUT &&v) {
+      return v;
+    }
+  };
+
+  template <class TL>
+  typename convert_param<TL>::type pick_convert_value(TL &&v) {
+    return convert_param<TL>::pick(std::forward<TL>(v));
+  }
+
   // expect functions
   template <class TL, class TR>
   bool expect_eq(TL &&l, TR &&r, const char *lexpr, const char *rexpr, const char *file, size_t line) {
@@ -145,8 +190,8 @@ class test_manager {
       ss() << atfw::util::cli::shell_font_style::SHELL_FONT_COLOR_RED << "FAILED => " << file << ":" << line
            << std::endl
            << "Expected: " << lexpr << " == " << rexpr << std::endl
-           << lexpr << ": " << l << std::endl
-           << rexpr << ": " << r << std::endl;
+           << lexpr << ": " << pick_convert_value(l) << std::endl
+           << rexpr << ": " << pick_convert_value(r) << std::endl;
 
       return false;
     }
@@ -165,8 +210,8 @@ class test_manager {
       ss() << atfw::util::cli::shell_font_style::SHELL_FONT_COLOR_RED << "FAILED => " << file << ":" << line
            << std::endl
            << "Expected: " << lexpr << " ！= " << rexpr << std::endl
-           << lexpr << ": " << l << std::endl
-           << rexpr << ": " << r << std::endl;
+           << lexpr << ": " << pick_convert_value(l) << std::endl
+           << rexpr << ": " << pick_convert_value(r) << std::endl;
 
       return false;
     }
@@ -185,8 +230,8 @@ class test_manager {
       ss() << atfw::util::cli::shell_font_style::SHELL_FONT_COLOR_RED << "FAILED => " << file << ":" << line
            << std::endl
            << "Expected: " << lexpr << " < " << rexpr << std::endl
-           << lexpr << ": " << l << std::endl
-           << rexpr << ": " << r << std::endl;
+           << lexpr << ": " << pick_convert_value(l) << std::endl
+           << rexpr << ": " << pick_convert_value(r) << std::endl;
 
       return false;
     }
@@ -205,8 +250,8 @@ class test_manager {
       ss() << atfw::util::cli::shell_font_style::SHELL_FONT_COLOR_RED << "FAILED => " << file << ":" << line
            << std::endl
            << "Expected: " << lexpr << " <= " << rexpr << std::endl
-           << lexpr << ": " << l << std::endl
-           << rexpr << ": " << r << std::endl;
+           << lexpr << ": " << pick_convert_value(l) << std::endl
+           << rexpr << ": " << pick_convert_value(r) << std::endl;
 
       return false;
     }
@@ -225,8 +270,8 @@ class test_manager {
       ss() << atfw::util::cli::shell_font_style::SHELL_FONT_COLOR_RED << "FAILED => " << file << ":" << line
            << std::endl
            << "Expected: " << lexpr << " > " << rexpr << std::endl
-           << lexpr << ": " << l << std::endl
-           << rexpr << ": " << r << std::endl;
+           << lexpr << ": " << pick_convert_value(l) << std::endl
+           << rexpr << ": " << pick_convert_value(r) << std::endl;
 
       return false;
     }
@@ -245,8 +290,8 @@ class test_manager {
       ss() << atfw::util::cli::shell_font_style::SHELL_FONT_COLOR_RED << "FAILED => " << file << ":" << line
            << std::endl
            << "Expected: " << lexpr << " >= " << rexpr << std::endl
-           << lexpr << ": " << l << std::endl
-           << rexpr << ": " << r << std::endl;
+           << lexpr << ": " << pick_convert_value(l) << std::endl
+           << rexpr << ": " << pick_convert_value(r) << std::endl;
 
       return false;
     }
@@ -263,7 +308,7 @@ class test_manager {
       ss() << atfw::util::cli::shell_font_style::SHELL_FONT_COLOR_RED << "FAILED => " << file << ":" << line
            << std::endl
            << "Expected true: " << expr << std::endl
-           << expr << ": " << l << std::endl;
+           << expr << ": " << pick_convert_value(l) << std::endl;
 
       return false;
     }
@@ -280,7 +325,7 @@ class test_manager {
       ss() << atfw::util::cli::shell_font_style::SHELL_FONT_COLOR_RED << "FAILED => " << file << ":" << line
            << std::endl
            << "Expected false: " << expr << std::endl
-           << expr << ": " << l << std::endl;
+           << expr << ": " << pick_convert_value(l) << std::endl;
 
       return false;
     }

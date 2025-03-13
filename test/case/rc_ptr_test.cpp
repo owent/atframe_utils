@@ -2389,11 +2389,11 @@ int end_called = 0;
 
 class event_handler_impl : public event_handler {
  public:
-  virtual void begin() { ++begin_called; }
+  void begin() override { ++begin_called; }
 
-  virtual void handle(int event) { handle_called = event; }
+  void handle(int event) override { handle_called = event; }
 
-  virtual void end() { ++end_called; }
+  void end() override { ++end_called; }
 };
 
 another_ptr<event_handler> get_event_handler() {
@@ -2488,9 +2488,9 @@ class impl : public X, public Y {
     return pi;
   }
 
-  virtual void f() {}
+  void f() override {}
 
-  virtual atfw::util::memory::strong_rc_ptr<X> getX() {
+  atfw::util::memory::strong_rc_ptr<X> getX() override {
     atfw::util::memory::strong_rc_ptr<X> px = weak_this.lock();
     return px;
   }
@@ -2618,9 +2618,9 @@ class X_impl : public X {
 
   ~X_impl() { --X_instances; }
 
-  virtual void f(int n) { n_ += n; }
+  void f(int n) override { n_ += n; }
 
-  virtual int g() { return n_; }
+  int g() override { return n_; }
 };
 
 atfw::util::memory::strong_rc_ptr<X> createX() {
@@ -4257,9 +4257,9 @@ CASE_TEST(rc_ptr, shared_from_this) {
 
 class impl : public X, public virtual Y, public virtual atfw::util::memory::enable_shared_rc_from_this<impl> {
  public:
-  virtual void f() {}
+  void f() override {}
 
-  virtual atfw::util::memory::strong_rc_ptr<X> getX() {
+  atfw::util::memory::strong_rc_ptr<X> getX() override {
     atfw::util::memory::strong_rc_ptr<impl> pi = shared_from_this();
     CASE_EXPECT_TRUE(pi.get() == this);
     return pi;

@@ -156,9 +156,9 @@ int test_manager::run() {
 
 #else
 
-static void topological_sort(UTIL_UNIT_TEST_MACRO_AUTO_MAP(std::string, detail::topological_sort_object_t) & in,
+static void topological_sort(std::unordered_map<std::string, detail::topological_sort_object_t> &in,
                              std::vector<detail::topological_sort_object_t *> &out) {
-  using index_by_name_t = UTIL_UNIT_TEST_MACRO_AUTO_MAP(std::string, detail::topological_sort_object_t);
+  using index_by_name_t = std::unordered_map<std::string, detail::topological_sort_object_t>;
   out.reserve(in.size());
 
   for (index_by_name_t::iterator iter = in.begin(); iter != in.end(); ++iter) {
@@ -183,7 +183,7 @@ static void topological_sort(UTIL_UNIT_TEST_MACRO_AUTO_MAP(std::string, detail::
 
 int test_manager::run_event_on_start() {
   // generate topological_sort_object_t
-  using index_by_name_t = UTIL_UNIT_TEST_MACRO_AUTO_MAP(std::string, detail::topological_sort_object_t);
+  using index_by_name_t = std::unordered_map<std::string, detail::topological_sort_object_t>;
   index_by_name_t index_by_name;
   for (size_t i = 0; i < evt_on_starts_.size(); ++i) {
     detail::topological_sort_object_t &obj = index_by_name[evt_on_starts_[i].first];
@@ -227,7 +227,7 @@ int test_manager::run_event_on_start() {
 }
 
 int test_manager::run_event_on_exit() {
-  using index_by_name_t = UTIL_UNIT_TEST_MACRO_AUTO_MAP(std::string, detail::topological_sort_object_t);
+  using index_by_name_t = std::unordered_map<std::string, detail::topological_sort_object_t>;
   // generate topological_sort_object_t
   index_by_name_t index_by_name;
   for (size_t i = 0; i < evt_on_exits_.size(); ++i) {

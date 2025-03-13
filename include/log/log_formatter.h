@@ -17,6 +17,10 @@
 #include <ctime>
 #include <string>
 
+#if defined(ATFRAMEWORK_UTILS_ENABLE_SOURCE_LOCATION) && ATFRAMEWORK_UTILS_ENABLE_SOURCE_LOCATION
+#  include <source_location>
+#endif
+
 #include "string/string_format.h"
 
 ATFRAMEWORK_UTILS_NAMESPACE_BEGIN
@@ -55,23 +59,41 @@ class log_formatter {
     gsl::string_view func_name;
     uint32_t rotate_index;
 
-    inline caller_info_t()
+    inline caller_info_t() noexcept
         : level_id(level_t::LOG_LW_DISABLED), level_name{}, file_path{}, line_number(0), func_name{}, rotate_index(0) {}
 
     inline ~caller_info_t() {}
 
     inline caller_info_t(level_t::type lid, gsl::string_view lname, gsl::string_view fpath, uint32_t lnum,
-                         gsl::string_view fnname)
+                         gsl::string_view fnname) noexcept
         : level_id(lid), level_name(lname), file_path(fpath), line_number(lnum), func_name(fnname), rotate_index(0) {}
 
     inline caller_info_t(level_t::type lid, gsl::string_view lname, gsl::string_view fpath, uint32_t lnum,
-                         gsl::string_view fnname, uint32_t ridx)
+                         gsl::string_view fnname, uint32_t ridx) noexcept
         : level_id(lid),
           level_name(lname),
           file_path(fpath),
           line_number(lnum),
           func_name(fnname),
           rotate_index(ridx) {}
+
+#if defined(ATFRAMEWORK_UTILS_ENABLE_SOURCE_LOCATION) && ATFRAMEWORK_UTILS_ENABLE_SOURCE_LOCATION
+    inline caller_info_t(level_t::type lid, gsl::string_view lname, const std::source_location &sloc) noexcept
+        : level_id(lid),
+          level_name(lname),
+          file_path(sloc.file_name()),
+          line_number(static_cast<uint32_t>(sloc.line())),
+          func_name(sloc.function_name()) {}
+
+    inline caller_info_t(level_t::type lid, gsl::string_view lname, const std::source_location &sloc,
+                         uint32_t ridx) noexcept
+        : level_id(lid),
+          level_name(lname),
+          file_path(sloc.file_name()),
+          line_number(static_cast<uint32_t>(sloc.line())),
+          func_name(sloc.function_name()),
+          rotate_index(ridx) {}
+#endif
   };
 
  public:

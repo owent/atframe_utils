@@ -16,7 +16,7 @@ namespace nostd {
 template <class, class = void>
 struct __is_nullability_compatible : ::std::false_type {};
 
-// Allow custom to supoort nullability by define nullability_compatible_type as void
+// Allow custom to support nullability by define nullability_compatible_type as void
 template <class T>
 struct __is_nullability_compatible<T, void_t<typename T::nullability_compatible_type>> : ::std::true_type {};
 

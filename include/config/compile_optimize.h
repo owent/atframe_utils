@@ -2,7 +2,7 @@
 
 #pragma once
 
-// ATFW_UTIL_HAVE_BUILTIN&UTIL_HAVE_FEATURE
+// ATFW_UTIL_HAVE_BUILTIN&ATFW_UTIL_HAVE_FEATURE
 //
 // Checks whether the compiler supports a Clang Feature Checking Macro, and if
 // so, checks whether it supports the provided builtin function "x" where x
@@ -131,13 +131,13 @@
 
 // Legacy macros
 #ifndef UTIL_LIKELY_IF
-#  define UTIL_LIKELY_IF(...) ATFW_UTIL_LIKELY_IF(__VA_ARGS__)
+#  define UTIL_LIKELY_IF(...) ATFW_UTIL_LIKELY_IF (__VA_ARGS__)
 #endif
 #ifndef UTIL_LIKELY_CONDITION
 #  define UTIL_LIKELY_CONDITION(...) ATFW_UTIL_LIKELY_CONDITION(__VA_ARGS__)
 #endif
 #ifndef UTIL_UNLIKELY_IF
-#  define UTIL_UNLIKELY_IF(...) ATFW_UTIL_UNLIKELY_IF(__VA_ARGS__)
+#  define UTIL_UNLIKELY_IF(...) ATFW_UTIL_UNLIKELY_IF (__VA_ARGS__)
 #endif
 #ifndef UTIL_UNLIKELY_CONDITION
 #  define UTIL_UNLIKELY_CONDITION(...) ATFW_UTIL_UNLIKELY_CONDITION(__VA_ARGS__)
@@ -547,7 +547,7 @@
 #  define UTIL_SANITIZER_NO_MEMORY ATFW_UTIL_SANITIZER_NO_MEMORY
 #endif
 
-// UTIL_HAVE_THREAD_SANITIZER
+// ATFW_UTIL_HAVE_THREAD_SANITIZER
 //
 // ThreadSanitizer (TSan) is a fast data race detector.
 #ifndef ATFW_UTIL_HAVE_THREAD_SANITIZER

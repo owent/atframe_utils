@@ -1,4 +1,4 @@
-// Copyright 2023 atframework
+// Copyright 2025 atframework
 
 # pragma once
 
@@ -6,6 +6,8 @@
 
 #include <config/compile_optimize.h>
 #include <config/compiler_features.h>
+
+// clang-format off
 
 // Import the C++20 feature-test macros
 #ifdef __has_include
@@ -108,6 +110,7 @@ namespace atfw = atframework;
 #cmakedefine01 ATFRAMEWORK_UTILS_ENABLE_EXCEPTION
 #cmakedefine01 ATFRAMEWORK_UTILS_ENABLE_STD_EXCEPTION_PTR
 #cmakedefine01 ATFRAMEWORK_UTILS_ENABLE_SOURCE_LOCATION
+#cmakedefine01 ATFRAMEWORK_UTILS_ENABLE_STACKTRACE
 
 
 // Patch for disable RTTI on later options
@@ -202,3 +205,5 @@ using namespace atframework::util;
 #    define THREAD_TLS_USE_PTHREAD ATFRAMEWORK_UTILS_THREAD_TLS_USE_PTHREAD
 #  endif
 #endif
+
+// clang-format on

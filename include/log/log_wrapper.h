@@ -259,8 +259,14 @@ ATFRAMEWORK_UTILS_NAMESPACE_END
 #define WLOG_LEVELID(lv) static_cast<ATFRAMEWORK_UTILS_NAMESPACE_ID::log::log_wrapper::level_t::type>(lv)
 
 #define WDTLOGGETCAT(cat) ATFRAMEWORK_UTILS_NAMESPACE_ID::log::log_wrapper::mutable_log_cat(cat)
-#define WDTLOGFILENF(lv, name) \
-  ATFRAMEWORK_UTILS_NAMESPACE_ID::log::log_wrapper::caller_info_t(lv, name, __FILE__, __LINE__, __FUNCTION__)
+
+#if defined(ATFRAMEWORK_UTILS_ENABLE_SOURCE_LOCATION) && ATFRAMEWORK_UTILS_ENABLE_SOURCE_LOCATION
+#  define WDTLOGFILENF(lv, name) \
+    ATFRAMEWORK_UTILS_NAMESPACE_ID::log::log_wrapper::caller_info_t(lv, name, ::std::source_location::current())
+#else
+#  define WDTLOGFILENF(lv, name) \
+    ATFRAMEWORK_UTILS_NAMESPACE_ID::log::log_wrapper::caller_info_t(lv, name, __FILE__, __LINE__, __FUNCTION__)
+#endif
 
 #define WLOG_INIT(cat, lv) nullptr != WDTLOGGETCAT(cat) ? WDTLOGGETCAT(cat)->init(lv) : -1
 
@@ -517,6 +523,7 @@ ATFRAMEWORK_UTILS_NAMESPACE_END
     PSTDTERMCOLOR(cout, ATFRAMEWORK_UTILS_NAMESPACE_ID::cli::shell_font_style::SHELL_FONT_COLOR_CYAN, __VA_ARGS__)
 #  define PSTDDEBUG(...) \
     PSTDTERMCOLOR(cout, ATFRAMEWORK_UTILS_NAMESPACE_ID::cli::shell_font_style::SHELL_FONT_COLOR_CYAN, __VA_ARGS__)
+
 #  define PSTDMARK                                                                                                   \
     PSTDTERMCOLOR(cout,                                                                                              \
                   ATFRAMEWORK_UTILS_NAMESPACE_ID::cli::shell_font_style::SHELL_FONT_SPEC_BOLD |                      \
