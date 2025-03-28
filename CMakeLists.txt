@@ -1,23 +1,5 @@
-cmake_minimum_required(VERSION 3.16.0)
-cmake_policy(SET CMP0022 NEW)
-cmake_policy(SET CMP0048 NEW)
-cmake_policy(SET CMP0054 NEW)
-cmake_policy(SET CMP0067 NEW)
-cmake_policy(SET CMP0074 NEW)
-cmake_policy(SET CMP0077 NEW)
-cmake_policy(SET CMP0091 NEW)
-if(CMAKE_VERSION VERSION_GREATER_EQUAL "3.19.0")
-  cmake_policy(SET CMP0111 NEW)
-endif()
+cmake_minimum_required(VERSION 3.24.0)
 
-# MSVC RTTI flag /GR should not be not added to CMAKE_CXX_FLAGS by default. @see
-# https://cmake.org/cmake/help/latest/policy/CMP0117.html
-if(CMAKE_VERSION VERSION_GREATER_EQUAL "3.20.0")
-  cmake_policy(SET CMP0117 NEW)
-endif()
-if(CMAKE_VERSION VERSION_GREATER_EQUAL "3.22.0")
-  cmake_policy(SET CMP0128 NEW)
-endif()
 if(CMAKE_VERSION VERSION_GREATER_EQUAL "3.27.0")
   cmake_policy(SET CMP0144 NEW)
 endif()
@@ -109,7 +91,6 @@ set(SRC_LIST
     "${CMAKE_CURRENT_LIST_DIR}/src/string/tquerystring.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/src/time/time_utility.cpp")
 set(HEADER_LIST
-    "${ATFRAMEWORK_UTILS_GENERATED_DIR}/include/config/atframe_utils_build_feature.h"
     "${CMAKE_CURRENT_LIST_DIR}/include/algorithm/base64.h"
     "${CMAKE_CURRENT_LIST_DIR}/include/algorithm/crc.h"
     "${CMAKE_CURRENT_LIST_DIR}/include/algorithm/crypto_cipher.h"
@@ -199,8 +180,11 @@ set(HEADER_LIST
 # lib名称
 set(PROJECT_LIB_EXPORT_NAME "${PROJECT_NAME}-target")
 
-source_group_by_dir(HEADER_LIST)
-source_group_by_dir(SRC_LIST)
+source_group(TREE "${CMAKE_CURRENT_LIST_DIR}" FILES ${HEADER_LIST} ${SRC_LIST})
+
+list(APPEND HEADER_LIST "${ATFRAMEWORK_UTILS_GENERATED_DIR}/include/config/atframe_utils_build_feature.h")
+source_group(TREE "${ATFRAMEWORK_UTILS_GENERATED_DIR}"
+             FILES "${ATFRAMEWORK_UTILS_GENERATED_DIR}/include/config/atframe_utils_build_feature.h")
 
 # Internal implement of uuid
 if(ATFRAMEWORK_UTILS_ENABLE_UUID_INTERNAL_IMPLEMENT)
