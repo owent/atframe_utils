@@ -126,7 +126,7 @@ struct ATFRAMEWORK_UTILS_API_HEAD_ONLY compact_storage_type<__inplace_result_sto
 
   UTIL_FORCEINLINE static constexpr pointer default_instance() noexcept { return nullptr; }
 
-  UTIL_FORCEINLINE static constexpr pointer default_true_instance() noexcept { return reinterpret_cast<pointer>(1); }
+  UTIL_FORCEINLINE static pointer default_true_instance() noexcept { return reinterpret_cast<pointer>(1); }
 };
 
 template <class T>
@@ -456,7 +456,7 @@ class ATFRAMEWORK_UTILS_API_HEAD_ONLY result_base_type {
 
   inline void construct_copy_success(const typename success_storage_type::storage_type &other) noexcept(
       noexcept(__result_storage_value_operations<success_type>::template construct_copy<success_storage_type>(
-          nullptr, ::std::declval<success_storage_type::storage_type>()))) {
+          nullptr, ::std::declval<typename success_storage_type::storage_type>()))) {
     reset();
     __result_storage_value_operations<success_type>::template construct_copy<success_storage_type>(success_data_arena(),
                                                                                                    other);
@@ -464,14 +464,16 @@ class ATFRAMEWORK_UTILS_API_HEAD_ONLY result_base_type {
   }
 
   inline void construct_move_success(typename success_storage_type::storage_type &&other) noexcept(noexcept(
-      success_storage_type::construct_move_storage(nullptr, ::std::declval<success_storage_type::storage_type>()))) {
+      success_storage_type::construct_move_storage(nullptr,
+                                                   ::std::declval<typename success_storage_type::storage_type>()))) {
     reset();
     success_storage_type::construct_move_storage(success_data_arena(), std::move(other));
     mode_ = mode::kSuccess;
   }
 
   inline void construct_move_error(typename error_storage_type::storage_type &&other) noexcept(noexcept(
-      error_storage_type::construct_move_storage(nullptr, ::std::declval<error_storage_type::storage_type>()))) {
+      error_storage_type::construct_move_storage(nullptr,
+                                                 ::std::declval<typename error_storage_type::storage_type>()))) {
     reset();
     error_storage_type::construct_move_storage(error_data_arena(), std::move(other));
     mode_ = mode::kError;
@@ -479,7 +481,7 @@ class ATFRAMEWORK_UTILS_API_HEAD_ONLY result_base_type {
 
   inline void construct_copy_error(const typename error_storage_type::storage_type &other) noexcept(
       noexcept(__result_storage_value_operations<error_type>::template construct_copy<error_storage_type>(
-          nullptr, ::std::declval<error_storage_type::storage_type>()))) {
+          nullptr, ::std::declval<typename error_storage_type::storage_type>()))) {
     reset();
     __result_storage_value_operations<error_type>::template construct_copy<error_storage_type>(error_data_arena(),
                                                                                                other);
