@@ -95,9 +95,9 @@ static_assert(std::is_trivially_destructible<__void_result_storage>::value &&
                   std::is_trivially_destructible<__void_result_storage>::value,
               "__void_result_storage must be trivially");
 #elif (defined(__cplusplus) && __cplusplus >= 201103L) || ((defined(_MSVC_LANG) && _MSVC_LANG >= 201103L))
-static_assert(std::is_trivial<T>::value, "__void_result_storage must be trivially");
+static_assert(std::is_trivial<__void_result_storage>::value, "__void_result_storage must be trivially");
 #else
-static_assert(std::is_pod<T>::value, "__void_result_storage must be trivially");
+static_assert(std::is_pod<__void_result_storage>::value, "__void_result_storage must be trivially");
 #endif
 
 template <class T>
