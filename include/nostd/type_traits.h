@@ -188,11 +188,14 @@ struct __invoke_tag : public __result_of_tag_impl<
                           ::std::is_member_function_pointer<typename ::std::remove_reference<_Functor>::type>::value,
                           _Functor, _ArgTypes...> {};
 
+template <typename _Functor, typename... _ArgTypes>
+using __invoke_tag_t = typename __invoke_tag<F, ArgTypes...>::type;
+
 template <typename F, typename... ArgTypes>
 UTIL_SYMBOL_VISIBLE inline UTIL_NOSTD_INVOKE_RESULT_CONSTEXPR invoke_result_t<F, ArgTypes...>
-__invoke(F&& __fn, ArgTypes&&... __args) noexcept(noexcept(
-    __invoke_impl<invoke_result_t<F, ArgTypes...>>(__tag{}, ::std::declval<F>(), ::std::declval<ArgTypes>()...))) {
-  using __tag = typename __invoke_tag<F, ArgTypes...>::type;
+__invoke(F&& __fn, ArgTypes&&... __args) noexcept(noexcept(__invoke_impl<invoke_result_t<F, ArgTypes...>>(
+    __invoke_tag_t<F, ArgTypes...>{}, ::std::declval<F>(), ::std::declval<ArgTypes>()...))) {
+  using __tag = __invoke_tag_t<F, ArgTypes...>;
   return __invoke_impl<invoke_result_t<F, ArgTypes...>>(__tag{}, ::std::forward<F>(__fn),
                                                         ::std::forward<ArgTypes>(__args)...);
 }
