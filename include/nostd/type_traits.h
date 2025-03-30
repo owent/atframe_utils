@@ -30,43 +30,43 @@ namespace nostd {
 template <class...>
 using void_t = void;
 
-template <typename T>
+template <class T>
 using add_const_t = typename ::std::add_const<T>::type;
 
-template <typename T>
+template <class T>
 using remove_const_t = typename ::std::remove_const<T>::type;
 
-template <typename T>
+template <class T>
 using add_volatile_t = typename ::std::add_volatile<T>::type;
 
-template <typename T>
+template <class T>
 using remove_volatile_t = typename ::std::remove_volatile<T>::type;
 
-template <typename T>
+template <class T>
 using add_cv_t = typename ::std::add_cv<T>::type;
 
-template <typename T>
+template <class T>
 using remove_cv_t = typename ::std::remove_cv<T>::type;
 
-template <typename T>
+template <class T>
 using add_pointer_t = typename ::std::add_pointer<T>::type;
 
-template <typename T>
+template <class T>
 using remove_pointer_t = typename ::std::remove_pointer<T>::type;
 
-template <typename T>
+template <class T>
 using add_lvalue_reference_t = typename ::std::add_lvalue_reference<T>::type;
 
-template <typename T>
+template <class T>
 using add_rvalue_reference_t = typename ::std::add_rvalue_reference<T>::type;
 
-template <typename T>
+template <class T>
 using remove_reference_t = typename ::std::remove_reference<T>::type;
 
-template <typename T>
+template <class T>
 using remove_cvref_t = remove_cv_t<remove_reference_t<T>>;
 
-template <typename T>
+template <class T>
 using decay_t = typename ::std::decay<T>::type;
 
 template <class... T>
@@ -109,12 +109,12 @@ using ::std::invoke;
 namespace details {
 
 // Used by result_of, invoke etc. to unwrap a reference_wrapper.
-template <typename _Tp, typename _Up = remove_cvref_t<_Tp>>
+template <class _Tp, class _Up = remove_cvref_t<_Tp>>
 struct UTIL_SYMBOL_VISIBLE __inv_unwrap {
   using type = _Tp;
 };
 
-template <typename _Tp, typename _Up>
+template <class _Tp, class _Up>
 struct UTIL_SYMBOL_VISIBLE __inv_unwrap<_Tp, ::std::reference_wrapper<_Up>> {
   using type = _Up&;
 };
@@ -125,73 +125,73 @@ struct UTIL_SYMBOL_VISIBLE __invoke_memobj_ref {};
 struct UTIL_SYMBOL_VISIBLE __invoke_memobj_deref {};
 struct UTIL_SYMBOL_VISIBLE __invoke_other {};
 
-template <typename _Tp, typename _Up = typename __inv_unwrap<_Tp>::type>
+template <class _Tp, class _Up = typename __inv_unwrap<_Tp>::type>
 UTIL_SYMBOL_VISIBLE inline UTIL_NOSTD_INVOKE_RESULT_CONSTEXPR _Up&& __invfwd(
     typename ::std::remove_reference<_Tp>::type& __t) noexcept {
   return static_cast<_Up&&>(__t);
 }
 
-template <typename R, typename _Fn, typename... _Args>
+template <class R, class _Fn, class... _Args>
 UTIL_SYMBOL_VISIBLE inline UTIL_NOSTD_INVOKE_RESULT_CONSTEXPR R
 __invoke_impl(__invoke_other, _Fn&& __f,
               _Args&&... __args) noexcept(noexcept(::std::declval<_Fn>()(::std::declval<_Args>()...))) {
   return ::std::forward<_Fn>(__f)(::std::forward<_Args>(__args)...);
 }
 
-template <typename R, typename _MemFun, typename _Tp, typename... _Args>
+template <class R, class _MemFun, class _Tp, class... _Args>
 UTIL_SYMBOL_VISIBLE inline UTIL_NOSTD_INVOKE_RESULT_CONSTEXPR R __invoke_impl(
     __invoke_memfun_ref, _MemFun&& __f, _Tp&& __t,
     _Args&&... __args) noexcept(noexcept((__invfwd<_Tp>(::std::declval<_Tp>()).*__f)(::std::declval<_Args>()...))) {
   return (__invfwd<_Tp>(__t).*__f)(::std::forward<_Args>(__args)...);
 }
 
-template <typename R, typename _MemFun, typename _Tp, typename... _Args>
+template <class R, class _MemFun, class _Tp, class... _Args>
 UTIL_SYMBOL_VISIBLE inline UTIL_NOSTD_INVOKE_RESULT_CONSTEXPR R
 __invoke_impl(__invoke_memfun_deref, _MemFun&& __f, _Tp&& __t,
               _Args&&... __args) noexcept(noexcept(((*::std::declval<_Tp>()).*__f)(::std::declval<_Args>()...))) {
   return ((*::std::forward<_Tp>(__t)).*__f)(::std::forward<_Args>(__args)...);
 }
 
-template <typename R, typename _MemPtr, typename _Tp>
+template <class R, class _MemPtr, class _Tp>
 UTIL_SYMBOL_VISIBLE inline UTIL_NOSTD_INVOKE_RESULT_CONSTEXPR R __invoke_impl(__invoke_memobj_ref, _MemPtr&& __f,
                                                                               _Tp&& __t) noexcept {
   return __invfwd<_Tp>(__t).*__f;
 }
 
-template <typename R, typename _MemPtr, typename _Tp>
+template <class R, class _MemPtr, class _Tp>
 UTIL_SYMBOL_VISIBLE inline UTIL_NOSTD_INVOKE_RESULT_CONSTEXPR R __invoke_impl(__invoke_memobj_deref, _MemPtr&& __f,
                                                                               _Tp&& __t) noexcept {
   return (*::std::forward<_Tp>(__t)).*__f;
 }
 
-template <bool, bool, typename _Functor, typename... _ArgTypes>
+template <bool, bool, class _Functor, class... _ArgTypes>
 struct __result_of_tag_impl {
   using type = __invoke_other;
 };
 
-template <typename _MemPtr, typename _Clazz, typename... _ArgTypes>
+template <class _MemPtr, class _Clazz, class... _ArgTypes>
 struct __result_of_tag_impl<true, false, _MemPtr, _Clazz, _ArgTypes...> {
   using type =
       typename ::std::conditional<::std::is_pointer<_Clazz>::value, __invoke_memobj_deref, __invoke_memobj_ref>::type;
 };
 
-template <typename _MemPtr, typename _Clazz, typename... _ArgTypes>
+template <class _MemPtr, class _Clazz, class... _ArgTypes>
 struct __result_of_tag_impl<false, true, _MemPtr, _Clazz, _ArgTypes...> {
   using type =
       typename ::std::conditional<::std::is_pointer<_Clazz>::value, __invoke_memfun_deref, __invoke_memfun_ref>::type;
 };
 
 // __invoke_result (std::invoke_result for C++11)
-template <typename _Functor, typename... _ArgTypes>
+template <class _Functor, class... _ArgTypes>
 struct __invoke_tag : public __result_of_tag_impl<
                           ::std::is_member_object_pointer<typename ::std::remove_reference<_Functor>::type>::value,
                           ::std::is_member_function_pointer<typename ::std::remove_reference<_Functor>::type>::value,
                           _Functor, _ArgTypes...> {};
 
-template <typename _Functor, typename... _ArgTypes>
-using __invoke_tag_t = typename __invoke_tag<F, ArgTypes...>::type;
+template <class _Functor, class... _ArgTypes>
+using __invoke_tag_t = typename __invoke_tag<_Functor, _ArgTypes...>::type;
 
-template <typename F, typename... ArgTypes>
+template <class F, class... ArgTypes>
 UTIL_SYMBOL_VISIBLE inline UTIL_NOSTD_INVOKE_RESULT_CONSTEXPR invoke_result_t<F, ArgTypes...>
 __invoke(F&& __fn, ArgTypes&&... __args) noexcept(noexcept(__invoke_impl<invoke_result_t<F, ArgTypes...>>(
     __invoke_tag_t<F, ArgTypes...>{}, ::std::declval<F>(), ::std::declval<ArgTypes>()...))) {
@@ -201,7 +201,7 @@ __invoke(F&& __fn, ArgTypes&&... __args) noexcept(noexcept(__invoke_impl<invoke_
 }
 }  // namespace details
 
-template <typename F, typename... ArgTypes>
+template <class F, class... ArgTypes>
 UTIL_SYMBOL_VISIBLE inline UTIL_NOSTD_INVOKE_RESULT_CONSTEXPR invoke_result_t<F, ArgTypes...> invoke(
     F&& __fn,
     ArgTypes&&... __args) noexcept(noexcept(details::__invoke(::std::declval<F>(), ::std::declval<ArgTypes>()...))) {
