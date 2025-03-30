@@ -156,9 +156,19 @@ struct ATFRAMEWORK_UTILS_API_HEAD_ONLY compact_storage_type<__inplace_result_sto
     if (out == reinterpret_cast<void *>(&in)) {
       return;
     }
-
+#if defined(__GNUC__) && !defined(__clang__) && !defined(__apple_build_version__)
+#  if (__GNUC__ * 100 + __GNUC_MINOR__ * 10) >= 460
+#    pragma GCC diagnostic push
+#  endif
+#  pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
+#endif
     // Placement new
     new (out) storage_type(std::move(in));
+#if defined(__GNUC__) && !defined(__clang__) && !defined(__apple_build_version__)
+#  if (__GNUC__ * 100 + __GNUC_MINOR__ * 10) >= 460
+#    pragma GCC diagnostic pop
+#  endif
+#endif
   }
 
   UTIL_FORCEINLINE static void swap(storage_type &l, storage_type &r) noexcept {
