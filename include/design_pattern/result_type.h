@@ -420,6 +420,12 @@ class ATFRAMEWORK_UTILS_API_HEAD_ONLY result_base_type {
 
       reset();
     } else {
+#if defined(__GNUC__) && !defined(__clang__) && !defined(__apple_build_version__)
+#  if (__GNUC__ * 100 + __GNUC_MINOR__ * 10) >= 460
+#    pragma GCC diagnostic push
+#  endif
+#  pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
+#endif
       if (mode::kSuccess == mode_) {
         // temporary data
         data_buffer_type t;
@@ -441,6 +447,11 @@ class ATFRAMEWORK_UTILS_API_HEAD_ONLY result_base_type {
         // destroy temporary data
         error_storage_type::destroy_storage(error_data_storage(t));
       }
+#if defined(__GNUC__) && !defined(__clang__) && !defined(__apple_build_version__)
+#  if (__GNUC__ * 100 + __GNUC_MINOR__ * 10) >= 460
+#    pragma GCC diagnostic pop
+#  endif
+#endif
     }
   }
 
