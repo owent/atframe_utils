@@ -27,8 +27,8 @@ cxx utils code
 
 ## Usage
 
-+ require [cmake][cmake] 3.16.0 or upper
-+ require gcc 4.8+/clang 3.8+/apple clang 6.0+/MSVC 14.10+
++ require [cmake][cmake] 3.24.0 or upper
++ require gcc 4.8+/clang 7+/apple clang 12.0+/MSVC(VS2019+)
 
 ~~~~~~~~~~bash
 # clone and make build directory
