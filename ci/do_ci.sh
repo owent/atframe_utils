@@ -77,7 +77,7 @@ elif [[ "$1" == "coverage" ]]; then
     "-DCMAKE_EXE_LINKER_FLAGS=$GCOV_FLAGS" "-DATFRAMEWORK_CMAKE_TOOLSET_THIRD_PARTY_LOW_MEMORY_MODE=ON"
   cd build_jobs_coverage
   cmake --build . -j --config $CONFIGURATION || cmake --build . --config $CONFIGURATION
-  ctest . -VV -C --config $CONFIGURATION -L atframe_utils
+  ctest . -VV -C $CONFIGURATION -L atframe_utils
   lcov --directory $PWD --capture --output-file coverage.info
 elif [[ "$1" == "codeql.configure" ]]; then
   CRYPTO_OPTIONS="-DATFRAMEWORK_CMAKE_TOOLSET_THIRD_PARTY_CRYPTO_USE_OPENSSL=ON"
@@ -96,7 +96,7 @@ elif [[ "$1" == "ssl.openssl" ]]; then
   fi
   cd build_jobs_ci
   cmake --build . -j --config $CONFIGURATION || cmake --build . --config $CONFIGURATION
-  ctest . -VV -C --config $CONFIGURATION -L atframe_utils
+  ctest . -VV -C $CONFIGURATION -L atframe_utils
 elif [[ "$1" == "ssl.openssl-1.1.1" ]]; then
   CRYPTO_OPTIONS="-DATFRAMEWORK_CMAKE_TOOLSET_THIRD_PARTY_CRYPTO_USE_OPENSSL=ON"
   if [[ "x${USE_CC:0:5}" == "xclang" ]]; then
@@ -110,14 +110,14 @@ elif [[ "$1" == "ssl.openssl-1.1.1" ]]; then
   fi
   cd build_jobs_ci
   cmake --build . -j --config $CONFIGURATION || cmake --build . --config $CONFIGURATION
-  ctest . -VV -C --config $CONFIGURATION -L atframe_utils
+  ctest . -VV -C $CONFIGURATION -L atframe_utils
 elif [[ "$1" == "ssl.libressl" ]]; then
   CRYPTO_OPTIONS="-DATFRAMEWORK_CMAKE_TOOLSET_THIRD_PARTY_CRYPTO_USE_LIBRESSL=ON"
   bash cmake_dev.sh -lus -b RelWithDebInfo -r build_jobs_ci -c $USE_CC -- $CRYPTO_OPTIONS \
     "-DATFRAMEWORK_CMAKE_TOOLSET_THIRD_PARTY_LOW_MEMORY_MODE=ON"
   cd build_jobs_ci
   cmake --build . -j --config $CONFIGURATION || cmake --build . --config $CONFIGURATION
-  ctest . -VV -C --config $CONFIGURATION -L atframe_utils
+  ctest . -VV -C $CONFIGURATION -L atframe_utils
 elif [[ "$1" == "ssl.boringssl" ]]; then
   CRYPTO_OPTIONS="-DATFRAMEWORK_CMAKE_TOOLSET_THIRD_PARTY_CRYPTO_USE_BORINGSSL=ON -DLIBATFRAME_UTILS_ENABLE_LIBUUID=OFF"
   echo 'int main() { return 0; }' | gcc -x c -Wl,-lgcov --coverage -o /dev/null - && CRYPTO_OPTIONS="$CRYPTO_OPTIONS -DCMAKE_C_FLAGS=--coverage -DCMAKE_CXX_FLAGS=--coverage -DCMAKE_EXE_LINKER_FLAGS=-lgcov"
@@ -126,7 +126,7 @@ elif [[ "$1" == "ssl.boringssl" ]]; then
     "-DATFRAMEWORK_CMAKE_TOOLSET_THIRD_PARTY_LOW_MEMORY_MODE=ON"
   cd build_jobs_ci
   cmake --build . -j --config $CONFIGURATION || cmake --build . --config $CONFIGURATION
-  ctest . -VV -C --config $CONFIGURATION -L atframe_utils
+  ctest . -VV -C $CONFIGURATION -L atframe_utils
 elif [[ "$1" == "ssl.mbedtls" ]]; then
   CRYPTO_OPTIONS="-DATFRAMEWORK_CMAKE_TOOLSET_THIRD_PARTY_CRYPTO_USE_MBEDTLS=ON=ON -DLIBATFRAME_UTILS_ENABLE_LIBUUID=OFF"
   if [[ "x${USE_CC:0:5}" == "xclang" ]]; then
@@ -138,24 +138,24 @@ elif [[ "$1" == "ssl.mbedtls" ]]; then
   fi
   cd build_jobs_ci
   cmake --build . -j --config $CONFIGURATION || cmake --build . --config $CONFIGURATION
-  ctest . -VV -C --config $CONFIGURATION -L atframe_utils
+  ctest . -VV -C $CONFIGURATION -L atframe_utils
 elif [[ "$1" == "gcc.no-rtti.test" ]]; then
   bash cmake_dev.sh -lus -b RelWithDebInfo -r build_jobs_ci -c $USE_CC -- "-DATFRAMEWORK_CMAKE_TOOLSET_THIRD_PARTY_LOW_MEMORY_MODE=ON" \
     "-DCOMPILER_OPTION_DEFAULT_ENABLE_RTTI=OFF"
   cd build_jobs_ci
   cmake --build . -j --config $CONFIGURATION || cmake --build . --config $CONFIGURATION
-  ctest . -VV -C --config $CONFIGURATION -L atframe_utils
+  ctest . -VV -C $CONFIGURATION -L atframe_utils
 elif [[ "$1" == "gcc.no-exceptions.test" ]]; then
   bash cmake_dev.sh -lus -b RelWithDebInfo -r build_jobs_ci -c $USE_CC -- "-DATFRAMEWORK_CMAKE_TOOLSET_THIRD_PARTY_LOW_MEMORY_MODE=ON" \
     "-DCOMPILER_OPTION_DEFAULT_ENABLE_EXCEPTION=OFF"
   cd build_jobs_ci
   cmake --build . -j --config $CONFIGURATION || cmake --build . --config $CONFIGURATION
-  ctest . -VV -C --config $CONFIGURATION -L atframe_utils
+  ctest . -VV -C $CONFIGURATION -L atframe_utils
 elif [[ "$1" == "gcc.legacy.test" ]]; then
   bash cmake_dev.sh -lus -b RelWithDebInfo -r build_jobs_ci -c $USE_CC -- "-DATFRAMEWORK_CMAKE_TOOLSET_THIRD_PARTY_LOW_MEMORY_MODE=ON"
   cd build_jobs_ci
   cmake --build . -j --config $CONFIGURATION || cmake --build . --config $CONFIGURATION
-  ctest . -VV -C --config $CONFIGURATION -L atframe_utils
+  ctest . -VV -C $CONFIGURATION -L atframe_utils
 elif [[ "$1" == "msys2.mingw.test" ]]; then
   pacman -S --needed --noconfirm mingw-w64-x86_64-cmake mingw-w64-x86_64-make \
     mingw-w64-x86_64-curl mingw-w64-x86_64-wget mingw-w64-x86_64-perl \
@@ -175,5 +175,5 @@ elif [[ "$1" == "msys2.mingw.test" ]]; then
     export PATH="$EXT_PATH:$PATH"
   done
   echo "PATH=$PATH"
-  ctest . -VV -C --config $CONFIGURATION -L atframe_utils
+  ctest . -VV -C $CONFIGURATION -L atframe_utils
 fi
