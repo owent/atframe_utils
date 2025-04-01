@@ -1,5 +1,5 @@
 # Lua模块
-if(ATFRAMEWORK_UTILS_LOG_ENABLE_LUA_SUPPORT AND LOG_WRAPPER_CHECK_LUA)
+if(ATFRAMEWORK_UTILS_LOG_ENABLE_LUA_SUPPORT AND ATFRAMEWORK_UTILS_LOG_WRAPPER_CHECK_LUA)
   if(TARGET lua::liblua-dynamic)
     list(APPEND PROJECT_ATFRAME_UTILS_EXTENTION_LINK_LIB lua::liblua-dynamic)
   elseif(TARGET lua::liblua-static)
@@ -17,9 +17,9 @@ endif()
 
 # traceback 检测 gcc可能需要加 -funwind-tables 选项，尽可能不要用 -fvisibility=hidden Android下需要 APP_STL := gnustl_static or
 # gnustl_shared
-if(LOG_WRAPPER_ENABLE_STACKTRACE)
+if(ATFRAMEWORK_UTILS_LOG_WRAPPER_ENABLE_STACKTRACE)
   # Libunwind may be in deadlock when using sanitizer
-  if(LIBUNWIND_ENABLED AND NOT PROJECT_COMPILER_OPTIONS_TARGET_USE_SANITIZER)
+  if(ATFRAMEWORK_UTILS_LIBUNWIND_ENABLED AND NOT PROJECT_COMPILER_OPTIONS_TARGET_USE_SANITIZER)
     if(Libunwind_FOUND AND Libunwind_HAS_UNW_INIT_LOCAL)
       set(ATFRAMEWORK_UTILS_LOG_STACKTRACE_USING_LIBUNWIND 1)
       if(TARGET Libunwind::libunwind)
@@ -62,9 +62,11 @@ if(LOG_WRAPPER_ENABLE_STACKTRACE)
       endif()
     else()
       if(NOT Libunwind_FOUND)
-        echowithcolor(COLOR YELLOW "-- Stacktrace: LIBUNWIND_ENABLED=YES but we can not find libunwind.")
+        echowithcolor(COLOR YELLOW
+                      "-- Stacktrace: ATFRAMEWORK_UTILS_LIBUNWIND_ENABLED=YES but we can not find libunwind.")
       else()
-        echowithcolor(COLOR YELLOW "-- Stacktrace: LIBUNWIND_ENABLED=YES but unw_init_local disabled.")
+        echowithcolor(COLOR YELLOW
+                      "-- Stacktrace: ATFRAMEWORK_UTILS_LIBUNWIND_ENABLED=YES but unw_init_local disabled.")
       endif()
     endif()
   endif()

@@ -27,24 +27,24 @@ if(ANDROID
    OR (CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS "4.9"))
   # There is a BUG in gcc 4.6-4.8 and fixed in gcc 4.9 https://gcc.gnu.org/bugzilla/show_bug.cgi?id=58016
   # https://gcc.gnu.org/gcc-4.9/changes.html
-  option(LIBUNWIND_ENABLED "Enable using libunwind." OFF)
+  option(ATFRAMEWORK_UTILS_LIBUNWIND_ENABLED "Enable using libunwind." OFF)
 else()
-  option(LIBUNWIND_ENABLED "Enable using libunwind." ON)
+  option(ATFRAMEWORK_UTILS_LIBUNWIND_ENABLED "Enable using libunwind." ON)
 endif()
 
 option(ATFRAMEWORK_UTILS_LOG_ENABLE_LUA_SUPPORT "Enable lua support." ON)
-option(LOG_WRAPPER_CHECK_LUA "Check lua support." ON)
+option(ATFRAMEWORK_UTILS_LOG_WRAPPER_CHECK_LUA "Check lua support." ON)
 set(ATFRAMEWORK_UTILS_LOG_MAX_SIZE_PER_LINE
     "2097152"
     CACHE STRING "Max size in one log line.")
 set(ATFRAMEWORK_UTILS_LOG_CATEGORIZE_SIZE
     "16"
     CACHE STRING "Default log categorize number.")
-option(ENABLE_NETWORK "Enable network support." ON)
-option(ENABLE_CXX_GSL "Enable C++ Core Guideline: The Guideline Support Library." ON)
-option(ENABLE_CXX_GSL_STD_STRING_VIEW "Enable alias gsl::string_view=std::string_view." ON)
+option(ATFRAMEWORK_UTILS_ENABLE_NETWORK "Enable network support." ON)
+option(ATFRAMEWORK_UTILS_ENABLE_CXX_GSL "Enable C++ Core Guideline: The Guideline Support Library." ON)
+option(ATFRAMEWORK_UTILS_ENABLE_CXX_GSL_STD_STRING_VIEW "Enable alias gsl::string_view=std::string_view." ON)
 
-option(ATFRAMEWORK_UTILS_ENABLE_LEGACY_ALIAS "Enable legacy alias for atframewok utils" ON)
+option(ATFRAMEWORK_UTILS_ENABLE_LEGACY_ALIAS "Enable legacy alias for atframework utils" ON)
 
 # Check pthread
 set(THREADS_PREFER_PTHREAD_FLAG TRUE)
@@ -96,9 +96,9 @@ cmake_pop_check_state()
 
 if(ANDROID)
   # Android发现偶现_Unwind_Backtrace调用崩溃,默认禁用掉这个功能。 可以用adb logcat | ./ndk-stack -sym $PROJECT_PATH/obj/local/armeabi 代替
-  option(LOG_WRAPPER_ENABLE_STACKTRACE "Try to enable stacktrace for log." OFF)
+  option(ATFRAMEWORK_UTILS_LOG_WRAPPER_ENABLE_STACKTRACE "Try to enable stacktrace for log." OFF)
 else()
-  option(LOG_WRAPPER_ENABLE_STACKTRACE "Try to enable stacktrace for log." ON)
+  option(ATFRAMEWORK_UTILS_LOG_WRAPPER_ENABLE_STACKTRACE "Try to enable stacktrace for log." ON)
 endif()
 option(ATFRAMEWORK_UTILS_LOCK_DISABLE_MT "Disable multi-thread support lua support." OFF)
 set(ATFRAMEWORK_UTILS_LOG_STACKTRACE_MAX_STACKS
@@ -115,14 +115,14 @@ endif()
 
 # third_party
 
-if(ATFRAMEWORK_UTILS_LOG_ENABLE_LUA_SUPPORT AND LOG_WRAPPER_CHECK_LUA)
+if(ATFRAMEWORK_UTILS_LOG_ENABLE_LUA_SUPPORT AND ATFRAMEWORK_UTILS_LOG_WRAPPER_CHECK_LUA)
   project_third_party_include_port("lua/lua.cmake")
 endif()
 
-if(LOG_WRAPPER_ENABLE_STACKTRACE)
+if(ATFRAMEWORK_UTILS_LOG_WRAPPER_ENABLE_STACKTRACE)
   if(NOT ANDROID AND NOT CMAKE_HOST_APPLE)
     # project_third_party_include_port("jemalloc/jemalloc.cmake")
-    if(LIBUNWIND_ENABLED)
+    if(ATFRAMEWORK_UTILS_LIBUNWIND_ENABLED)
       project_third_party_include_port("libunwind/libunwind.cmake")
     endif()
   endif()
@@ -156,7 +156,7 @@ if(NOT ATFRAMEWORK_CMAKE_TOOLSET_THIRD_PARTY_CRYPTO_DISABLED)
   project_third_party_include_port("ssl/port.cmake")
 endif()
 
-if(ENABLE_NETWORK)
+if(ATFRAMEWORK_UTILS_ENABLE_NETWORK)
   project_third_party_include_port("libuv/libuv.cmake")
   project_third_party_include_port("compression/import.cmake")
   find_package(c-ares QUIET)
@@ -222,7 +222,7 @@ else()
 endif()
 
 # libuv
-if(ENABLE_NETWORK)
+if(ATFRAMEWORK_UTILS_ENABLE_NETWORK)
   if(ATFRAMEWORK_CMAKE_TOOLSET_THIRD_PARTY_LIBUV_LINK_NAME)
     set(ATFRAMEWORK_UTILS_NETWORK_EVPOLL_ENABLE_LIBUV 1)
     message(STATUS "libuv using target(${PROJECT_NAME}): ${ATFRAMEWORK_CMAKE_TOOLSET_THIRD_PARTY_LIBUV_LINK_NAME}")
@@ -485,6 +485,6 @@ endif()
 
 option(ATFRAMEWORK_USE_DYNAMIC_LIBRARY "Build and linking with dynamic libraries." OFF)
 
-if(ENABLE_CXX_GSL)
+if(ATFRAMEWORK_UTILS_ENABLE_CXX_GSL)
   include("${CMAKE_CURRENT_LIST_DIR}/GSLSupport.cmake")
 endif()
