@@ -15,6 +15,10 @@
 #  if _MSC_VER >= 1922
 #    include <version>
 #  endif
+#elif defined(__cplusplus) && __cplusplus < 201703L
+#  include <ciso646>
+#else
+#  include <iso646.h>
 #endif
 
 int main() {

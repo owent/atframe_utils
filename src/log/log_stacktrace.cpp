@@ -155,7 +155,7 @@ class log_stacktrace_com_holder {
 ATFRAMEWORK_UTILS_NAMESPACE_BEGIN
 namespace log {
 
-class UTIL_SYMBOL_LOCAL stacktrace_symbol_impl : public stacktrace_symbol {
+class ATFW_UTIL_SYMBOL_LOCAL stacktrace_symbol_impl : public stacktrace_symbol {
  public:
   stacktrace_symbol_impl(uintptr_t address, std::string demangle_name, std::string raw_name, std::string offset_hint,
                          std::chrono::system_clock::time_point timeout) noexcept
@@ -187,7 +187,7 @@ class UTIL_SYMBOL_LOCAL stacktrace_symbol_impl : public stacktrace_symbol {
 
 namespace {
 
-struct UTIL_SYMBOL_LOCAL stacktrace_global_settings {
+struct ATFW_UTIL_SYMBOL_LOCAL stacktrace_global_settings {
   bool need_clear = false;
   size_t lru_cache_size = 300000;
   std::chrono::microseconds lru_cache_timeout =
@@ -195,7 +195,7 @@ struct UTIL_SYMBOL_LOCAL stacktrace_global_settings {
   inline stacktrace_global_settings() noexcept {}
 };
 
-struct UTIL_SYMBOL_LOCAL stacktrace_global_manager
+struct ATFW_UTIL_SYMBOL_LOCAL stacktrace_global_manager
     : public ATFRAMEWORK_UTILS_NAMESPACE_ID::design_pattern::local_singleton<stacktrace_global_manager> {
   std::mutex lock;
   memory::lru_map<stacktrace_handle, stacktrace_symbol> stack_caches;
@@ -211,28 +211,28 @@ static stacktrace_global_settings &get_stacktrace_settings() {
   return instance;
 }
 
-static UTIL_SANITIZER_NO_THREAD void internal_set_stacktrace_lru_cache_size(size_t sz) noexcept {
+static ATFW_UTIL_SANITIZER_NO_THREAD void internal_set_stacktrace_lru_cache_size(size_t sz) noexcept {
   get_stacktrace_settings().lru_cache_size = sz;
 }
 
-static UTIL_SANITIZER_NO_THREAD size_t internal_get_stacktrace_lru_cache_size() noexcept {
+static ATFW_UTIL_SANITIZER_NO_THREAD size_t internal_get_stacktrace_lru_cache_size() noexcept {
   return get_stacktrace_settings().lru_cache_size;
 }
 
-static UTIL_SANITIZER_NO_THREAD void internal_set_stacktrace_lru_cache_timeout(
+static ATFW_UTIL_SANITIZER_NO_THREAD void internal_set_stacktrace_lru_cache_timeout(
     std::chrono::microseconds timeout) noexcept {
   get_stacktrace_settings().lru_cache_timeout = timeout;
 }
 
-static UTIL_SANITIZER_NO_THREAD std::chrono::microseconds internal_get_stacktrace_lru_cache_timeout() noexcept {
+static ATFW_UTIL_SANITIZER_NO_THREAD std::chrono::microseconds internal_get_stacktrace_lru_cache_timeout() noexcept {
   return get_stacktrace_settings().lru_cache_timeout;
 }
 
-static UTIL_SANITIZER_NO_THREAD void internal_set_clear_stacktrace_lru_cache(bool v) noexcept {
+static ATFW_UTIL_SANITIZER_NO_THREAD void internal_set_clear_stacktrace_lru_cache(bool v) noexcept {
   get_stacktrace_settings().need_clear = v;
 }
 
-static UTIL_SANITIZER_NO_THREAD bool internal_get_clear_stacktrace_lru_cache() noexcept {
+static ATFW_UTIL_SANITIZER_NO_THREAD bool internal_get_clear_stacktrace_lru_cache() noexcept {
   return get_stacktrace_settings().need_clear;
 }
 
@@ -702,7 +702,7 @@ static void stacktrace_fill_symbol_info(gsl::span<stacktrace_handle> stack_handl
   internal_replace_stacktrace_symbol(gsl::make_span(new_handle_pairs));
 }
 #  elif (defined(ATFRAMEWORK_UTILS_LOG_STACKTRACE_USING_DBGHELP) && ATFRAMEWORK_UTILS_LOG_STACKTRACE_USING_DBGHELP)
-struct UTIL_SYMBOL_LOCAL stacktrace_symbol_group_t {
+struct ATFW_UTIL_SYMBOL_LOCAL stacktrace_symbol_group_t {
   std::string demangle_name;
   std::string raw_name;
   std::string offset_hint;
@@ -710,11 +710,12 @@ struct UTIL_SYMBOL_LOCAL stacktrace_symbol_group_t {
   std::chrono::system_clock::time_point timeout;
 };
 
-struct UTIL_SYMBOL_LOCAL dbghelper_cache_key_hash{size_t operator()(const std::pair<HANDLE, PVOID> &key)
-                                                      const noexcept {size_t result = std::hash<HANDLE>()(key.first);
-result ^= std::hash<PVOID>()(key.second) + 0x9e3779b9 + (result << 6) + (result >> 2);
-return result;
-}
+struct ATFW_UTIL_SYMBOL_LOCAL dbghelper_cache_key_hash {
+  size_t operator()(const std::pair<HANDLE, PVOID> &key) const noexcept {
+    size_t result = std::hash<HANDLE>()(key.first);
+    result ^= std::hash<PVOID>()(key.second) + 0x9e3779b9 + (result << 6) + (result >> 2);
+    return result;
+  }
 };
 
 static stacktrace_symbol_group_t dbghelper_mutable_symbol_from_cache(HANDLE process, PVOID stack) {
@@ -1067,7 +1068,7 @@ ATFRAMEWORK_UTILS_API void stacktrace_parse_symbols(gsl::span<stacktrace_handle>
 }
 
 #elif defined(ATFRAMEWORK_UTILS_LOG_STACKTRACE_USING_UNWIND) && ATFRAMEWORK_UTILS_LOG_STACKTRACE_USING_UNWIND
-struct UTIL_SYMBOL_LOCAL stacktrace_unwind_state_t {
+struct ATFW_UTIL_SYMBOL_LOCAL stacktrace_unwind_state_t {
   size_t frames_to_skip;
   _Unwind_Word *current;
   _Unwind_Word *end;

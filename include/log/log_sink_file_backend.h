@@ -97,16 +97,16 @@ class log_sink_file_backend {
   ATFRAMEWORK_UTILS_API log_sink_file_backend &set_rotate_size(uint32_t sz);
 
  private:
-  ATFRAMEWORK_UTILS_API UTIL_SANITIZER_NO_THREAD void init();
+  ATFRAMEWORK_UTILS_API ATFW_UTIL_SANITIZER_NO_THREAD void init();
 
   ATFRAMEWORK_UTILS_API std::shared_ptr<std::FILE> open_log_file(bool destroy_content);
 
-  ATFRAMEWORK_UTILS_API UTIL_SANITIZER_NO_THREAD void maybe_rotate_log();
+  ATFRAMEWORK_UTILS_API ATFW_UTIL_SANITIZER_NO_THREAD void maybe_rotate_log();
 
-  ATFRAMEWORK_UTILS_API UTIL_SANITIZER_NO_THREAD void rotate_log();
+  ATFRAMEWORK_UTILS_API ATFW_UTIL_SANITIZER_NO_THREAD void rotate_log();
 
-  ATFRAMEWORK_UTILS_API UTIL_SANITIZER_NO_THREAD void after_write_log(const log_formatter::caller_info_t &caller,
-                                                                      FILE &f, size_t content_size);
+  ATFRAMEWORK_UTILS_API ATFW_UTIL_SANITIZER_NO_THREAD void after_write_log(const log_formatter::caller_info_t &caller,
+                                                                           FILE &f, size_t content_size);
 
   ATFRAMEWORK_UTILS_API void check_update();
 
