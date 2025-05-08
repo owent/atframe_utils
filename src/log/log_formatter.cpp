@@ -16,7 +16,7 @@
 ATFRAMEWORK_UTILS_NAMESPACE_BEGIN
 namespace log {
 namespace detail {
-UTIL_SANITIZER_NO_THREAD static const char *log_formatter_get_level_name(int l) {
+ATFW_UTIL_SANITIZER_NO_THREAD static const char *log_formatter_get_level_name(int l) {
   static const char *all_level_name[log_formatter::level_t::LOG_LW_TRACE + 1] = {nullptr};
 
   if (l > log_formatter::level_t::LOG_LW_TRACE || l < 0) {
@@ -424,8 +424,8 @@ ATFRAMEWORK_UTILS_API bool log_formatter::has_format(const char *fmt, size_t fmt
   return false;
 }
 
-ATFRAMEWORK_UTILS_API UTIL_SANITIZER_NO_THREAD void log_formatter::set_project_directory(const char *dirbuf,
-                                                                                         size_t dirsz) {
+ATFRAMEWORK_UTILS_API ATFW_UTIL_SANITIZER_NO_THREAD void log_formatter::set_project_directory(const char *dirbuf,
+                                                                                              size_t dirsz) {
   if (nullptr == dirbuf) {
     project_dir_.clear();
   } else if (dirsz <= 0) {

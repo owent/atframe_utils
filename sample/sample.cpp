@@ -112,7 +112,7 @@ struct formatter<test_custom_object_for_log_formatter, CharT> : public formatter
                                                               LOG_WRAPPER_FWAPI_MAKE_FORMAT_ARGS(obj.x, obj.y))
               << std::endl;
     return ATFRAMEWORK_UTILS_NAMESPACE_ID::log::vformat_to(
-        ctx.out(), "({}, {}, {})", ATFRAMEWORK_UTILS_NAMESPACE_ID::log::make_format_args(obj.x, obj.y, x));
+        ctx.out(), "({}, {}, {})", ATFRAMEWORK_UTILS_NAMESPACE_ID::string::make_format_args(obj.x, obj.y, x));
   }
 };
 
@@ -184,7 +184,7 @@ void log_sample_func1(int times) {
   for (int32_t i = 0; i < 16; ++i) {
     custom_obj.x = i * i;
     custom_obj.y += "H";
-    std::string origin_fmt_str = ATFRAMEWORK_UTILS_STRING_FWAPI_NAMESPACE format("{}", custom_obj);
+    std::string origin_fmt_str = ATFRAMEWORK_UTILS_STRING_FWAPI_NAMESPACE_ID::format("{}", custom_obj);
 
     std::string fmt_str = LOG_WRAPPER_FWAPI_FORMAT("{}", custom_obj);
     char buffer1[256] = {0};
@@ -344,47 +344,47 @@ void log_sample_func7() {
   std::cout << "vformat: "
             << ATFRAMEWORK_UTILS_NAMESPACE_ID::log::vformat(
                    "{},{},{},{}",
-                   ATFRAMEWORK_UTILS_NAMESPACE_ID::log::make_format_args(integer_1, integer_2, integer_3))
+                   ATFRAMEWORK_UTILS_NAMESPACE_ID::string::make_format_args(integer_1, integer_2, integer_3))
             << std::endl;
 #    endif
   std::cout << "vformat: "
             << ATFRAMEWORK_UTILS_NAMESPACE_ID::log::vformat(
-                   "{},{}", ATFRAMEWORK_UTILS_NAMESPACE_ID::log::make_format_args(integer_1, te1))
+                   "{},{}", ATFRAMEWORK_UTILS_NAMESPACE_ID::string::make_format_args(integer_1, te1))
             << std::endl;
   std::cout << "vformat: "
             << ATFRAMEWORK_UTILS_NAMESPACE_ID::log::vformat(
-                   "{},{}", ATFRAMEWORK_UTILS_NAMESPACE_ID::log::make_format_args(integer_1, te2))
+                   "{},{}", ATFRAMEWORK_UTILS_NAMESPACE_ID::string::make_format_args(integer_1, te2))
             << std::endl;
 
 #    if defined(ATFRAMEWORK_UTILS_ENABLE_STD_FORMAT) && ATFRAMEWORK_UTILS_ENABLE_STD_FORMAT
   ATFRAMEWORK_UTILS_NAMESPACE_ID::log::vformat_to(
       string_buffer, "{},{},{},{}",
-      ATFRAMEWORK_UTILS_NAMESPACE_ID::log::make_format_args(integer_1, integer_2, integer_3));
+      ATFRAMEWORK_UTILS_NAMESPACE_ID::string::make_format_args(integer_1, integer_2, integer_3));
   std::cout << "vformat_to: " << string_buffer << std::endl;
   memset(string_buffer, 0, sizeof(string_buffer));
 
   ATFRAMEWORK_UTILS_NAMESPACE_ID::log::vformat_to(
-      string_buffer, "{},{}", ATFRAMEWORK_UTILS_NAMESPACE_ID::log::make_format_args(integer_1, te1));
+      string_buffer, "{},{}", ATFRAMEWORK_UTILS_NAMESPACE_ID::string::make_format_args(integer_1, te1));
   std::cout << "vformat_to: " << string_buffer << std::endl;
   memset(string_buffer, 0, sizeof(string_buffer));
 
   ATFRAMEWORK_UTILS_NAMESPACE_ID::log::vformat_to(
-      string_buffer, "{},{}", ATFRAMEWORK_UTILS_NAMESPACE_ID::log::make_format_args(integer_1, te2));
+      string_buffer, "{},{}", ATFRAMEWORK_UTILS_NAMESPACE_ID::string::make_format_args(integer_1, te2));
   std::cout << "vformat_to: " << string_buffer << std::endl;
 #    else
   ATFRAMEWORK_UTILS_NAMESPACE_ID::log::vformat_to(
       string_buffer, "{},{},{}",
-      ATFRAMEWORK_UTILS_NAMESPACE_ID::log::make_format_args(integer_1, integer_2, integer_3));
+      ATFRAMEWORK_UTILS_NAMESPACE_ID::string::make_format_args(integer_1, integer_2, integer_3));
   std::cout << "vformat_to: " << string_buffer << std::endl;
   memset(string_buffer, 0, sizeof(string_buffer));
 
   ATFRAMEWORK_UTILS_NAMESPACE_ID::log::vformat_to(
-      string_buffer, "{},{}", ATFRAMEWORK_UTILS_NAMESPACE_ID::log::make_format_args(integer_1, te1));
+      string_buffer, "{},{}", ATFRAMEWORK_UTILS_NAMESPACE_ID::string::make_format_args(integer_1, te1));
   std::cout << "vformat_to: " << string_buffer << std::endl;
   memset(string_buffer, 0, sizeof(string_buffer));
 
   ATFRAMEWORK_UTILS_NAMESPACE_ID::log::vformat_to(
-      string_buffer, "{},{}", ATFRAMEWORK_UTILS_NAMESPACE_ID::log::make_format_args(integer_1, te2));
+      string_buffer, "{},{}", ATFRAMEWORK_UTILS_NAMESPACE_ID::string::make_format_args(integer_1, te2));
   std::cout << "vformat_to: " << string_buffer << std::endl;
 #    endif
 }

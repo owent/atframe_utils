@@ -110,10 +110,10 @@ ATFRAMEWORK_UTILS_API uint32_t murmur_hash2(const void *key, int len, uint32_t s
   switch (len) {
     case 3:
       h ^= static_cast<uint32_t>(data[2]) << 16;
-      EXPLICIT_FALLTHROUGH
+      ATFW_EXPLICIT_FALLTHROUGH
     case 2:
       h ^= static_cast<uint32_t>(data[1]) << 8;
-      EXPLICIT_FALLTHROUGH
+      ATFW_EXPLICIT_FALLTHROUGH
     case 1:
       h ^= static_cast<uint32_t>(data[0]);
       h *= m;
@@ -162,22 +162,22 @@ ATFRAMEWORK_UTILS_API uint64_t murmur_hash2_64a(const void *key, int len, uint64
   switch (len & 7) {
     case 7:
       h ^= uint64_t(data2[6]) << 48;
-      EXPLICIT_FALLTHROUGH
+      ATFW_EXPLICIT_FALLTHROUGH
     case 6:
       h ^= uint64_t(data2[5]) << 40;
-      EXPLICIT_FALLTHROUGH
+      ATFW_EXPLICIT_FALLTHROUGH
     case 5:
       h ^= uint64_t(data2[4]) << 32;
-      EXPLICIT_FALLTHROUGH
+      ATFW_EXPLICIT_FALLTHROUGH
     case 4:
       h ^= uint64_t(data2[3]) << 24;
-      EXPLICIT_FALLTHROUGH
+      ATFW_EXPLICIT_FALLTHROUGH
     case 3:
       h ^= uint64_t(data2[2]) << 16;
-      EXPLICIT_FALLTHROUGH
+      ATFW_EXPLICIT_FALLTHROUGH
     case 2:
       h ^= uint64_t(data2[1]) << 8;
-      EXPLICIT_FALLTHROUGH
+      ATFW_EXPLICIT_FALLTHROUGH
     case 1:
       h ^= uint64_t(data2[0]);
       h *= m;
@@ -232,10 +232,10 @@ ATFRAMEWORK_UTILS_API uint64_t murmur_hash2_64b(const void *key, int len, uint64
   switch (len) {
     case 3:
       h2 ^= static_cast<uint32_t>(((unsigned char *)data)[2]) << 16;
-      EXPLICIT_FALLTHROUGH
+      ATFW_EXPLICIT_FALLTHROUGH
     case 2:
       h2 ^= static_cast<uint32_t>(((unsigned char *)data)[1]) << 8;
-      EXPLICIT_FALLTHROUGH
+      ATFW_EXPLICIT_FALLTHROUGH
     case 1:
       h2 ^= static_cast<uint32_t>(((unsigned char *)data)[0]);
       h2 *= m;
@@ -294,10 +294,10 @@ ATFRAMEWORK_UTILS_API uint32_t murmur_hash3_x86_32(const void *key, int len, uin
   switch (len & 3) {
     case 3:
       k1 ^= static_cast<uint32_t>(tail[2]) << 16;
-      EXPLICIT_FALLTHROUGH
+      ATFW_EXPLICIT_FALLTHROUGH
     case 2:
       k1 ^= static_cast<uint32_t>(tail[1]) << 8;
-      EXPLICIT_FALLTHROUGH
+      ATFW_EXPLICIT_FALLTHROUGH
     case 1:
       k1 ^= static_cast<uint32_t>(tail[0]);
       k1 *= c1;
@@ -393,58 +393,58 @@ ATFRAMEWORK_UTILS_API void murmur_hash3_x86_128(const void *key, const int len, 
   switch (len & 15) {
     case 15:
       k4 ^= static_cast<uint32_t>(tail[14]) << 16;
-      EXPLICIT_FALLTHROUGH
+      ATFW_EXPLICIT_FALLTHROUGH
     case 14:
       k4 ^= static_cast<uint32_t>(tail[13]) << 8;
-      EXPLICIT_FALLTHROUGH
+      ATFW_EXPLICIT_FALLTHROUGH
     case 13:
       k4 ^= static_cast<uint32_t>(tail[12]) << 0;
       k4 *= c4;
       k4 = ROTL32(k4, 18);
       k4 *= c1;
       h4 ^= k4;
-      EXPLICIT_FALLTHROUGH
+      ATFW_EXPLICIT_FALLTHROUGH
     case 12:
       k3 ^= static_cast<uint32_t>(tail[11]) << 24;
-      EXPLICIT_FALLTHROUGH
+      ATFW_EXPLICIT_FALLTHROUGH
     case 11:
       k3 ^= static_cast<uint32_t>(tail[10]) << 16;
-      EXPLICIT_FALLTHROUGH
+      ATFW_EXPLICIT_FALLTHROUGH
     case 10:
       k3 ^= static_cast<uint32_t>(tail[9]) << 8;
-      EXPLICIT_FALLTHROUGH
+      ATFW_EXPLICIT_FALLTHROUGH
     case 9:
       k3 ^= static_cast<uint32_t>(tail[8]) << 0;
       k3 *= c3;
       k3 = ROTL32(k3, 17);
       k3 *= c4;
       h3 ^= k3;
-      EXPLICIT_FALLTHROUGH
+      ATFW_EXPLICIT_FALLTHROUGH
     case 8:
       k2 ^= static_cast<uint32_t>(tail[7]) << 24;
-      EXPLICIT_FALLTHROUGH
+      ATFW_EXPLICIT_FALLTHROUGH
     case 7:
       k2 ^= static_cast<uint32_t>(tail[6]) << 16;
-      EXPLICIT_FALLTHROUGH
+      ATFW_EXPLICIT_FALLTHROUGH
     case 6:
       k2 ^= static_cast<uint32_t>(tail[5]) << 8;
-      EXPLICIT_FALLTHROUGH
+      ATFW_EXPLICIT_FALLTHROUGH
     case 5:
       k2 ^= static_cast<uint32_t>(tail[4]) << 0;
       k2 *= c2;
       k2 = ROTL32(k2, 16);
       k2 *= c3;
       h2 ^= k2;
-      EXPLICIT_FALLTHROUGH
+      ATFW_EXPLICIT_FALLTHROUGH
     case 4:
       k1 ^= static_cast<uint32_t>(tail[3]) << 24;
-      EXPLICIT_FALLTHROUGH
+      ATFW_EXPLICIT_FALLTHROUGH
     case 3:
       k1 ^= static_cast<uint32_t>(tail[2]) << 16;
-      EXPLICIT_FALLTHROUGH
+      ATFW_EXPLICIT_FALLTHROUGH
     case 2:
       k1 ^= static_cast<uint32_t>(tail[1]) << 8;
-      EXPLICIT_FALLTHROUGH
+      ATFW_EXPLICIT_FALLTHROUGH
     case 1:
       k1 ^= static_cast<uint32_t>(tail[0]) << 0;
       k1 *= c1;
@@ -537,50 +537,50 @@ ATFRAMEWORK_UTILS_API void murmur_hash3_x64_128(const void *key, const int len, 
   switch (len & 15) {
     case 15:
       k2 ^= ((uint64_t)tail[14]) << 48;
-      EXPLICIT_FALLTHROUGH
+      ATFW_EXPLICIT_FALLTHROUGH
     case 14:
       k2 ^= ((uint64_t)tail[13]) << 40;
-      EXPLICIT_FALLTHROUGH
+      ATFW_EXPLICIT_FALLTHROUGH
     case 13:
       k2 ^= ((uint64_t)tail[12]) << 32;
-      EXPLICIT_FALLTHROUGH
+      ATFW_EXPLICIT_FALLTHROUGH
     case 12:
       k2 ^= ((uint64_t)tail[11]) << 24;
-      EXPLICIT_FALLTHROUGH
+      ATFW_EXPLICIT_FALLTHROUGH
     case 11:
       k2 ^= ((uint64_t)tail[10]) << 16;
-      EXPLICIT_FALLTHROUGH
+      ATFW_EXPLICIT_FALLTHROUGH
     case 10:
       k2 ^= ((uint64_t)tail[9]) << 8;
-      EXPLICIT_FALLTHROUGH
+      ATFW_EXPLICIT_FALLTHROUGH
     case 9:
       k2 ^= ((uint64_t)tail[8]) << 0;
       k2 *= c2;
       k2 = ROTL64(k2, 33);
       k2 *= c1;
       h2 ^= k2;
-      EXPLICIT_FALLTHROUGH
+      ATFW_EXPLICIT_FALLTHROUGH
     case 8:
       k1 ^= ((uint64_t)tail[7]) << 56;
-      EXPLICIT_FALLTHROUGH
+      ATFW_EXPLICIT_FALLTHROUGH
     case 7:
       k1 ^= ((uint64_t)tail[6]) << 48;
-      EXPLICIT_FALLTHROUGH
+      ATFW_EXPLICIT_FALLTHROUGH
     case 6:
       k1 ^= ((uint64_t)tail[5]) << 40;
-      EXPLICIT_FALLTHROUGH
+      ATFW_EXPLICIT_FALLTHROUGH
     case 5:
       k1 ^= ((uint64_t)tail[4]) << 32;
-      EXPLICIT_FALLTHROUGH
+      ATFW_EXPLICIT_FALLTHROUGH
     case 4:
       k1 ^= ((uint64_t)tail[3]) << 24;
-      EXPLICIT_FALLTHROUGH
+      ATFW_EXPLICIT_FALLTHROUGH
     case 3:
       k1 ^= ((uint64_t)tail[2]) << 16;
-      EXPLICIT_FALLTHROUGH
+      ATFW_EXPLICIT_FALLTHROUGH
     case 2:
       k1 ^= ((uint64_t)tail[1]) << 8;
-      EXPLICIT_FALLTHROUGH
+      ATFW_EXPLICIT_FALLTHROUGH
     case 1:
       k1 ^= ((uint64_t)tail[0]) << 0;
       k1 *= c1;

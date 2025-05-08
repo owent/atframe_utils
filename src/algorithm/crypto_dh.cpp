@@ -406,7 +406,7 @@ static DH *EVP_PKEY_get0_DH(EVP_PKEY *pkey) {
 /**
  * @see crypto/dh/dh_lib.c in openssl 1.1.x or upper
  */
-EXPLICIT_UNUSED_ATTR static inline int DH_set0_key(DH *dh, BIGNUM *pub_key, BIGNUM *priv_key) {
+ATFW_EXPLICIT_UNUSED_ATTR static inline int DH_set0_key(DH *dh, BIGNUM *pub_key, BIGNUM *priv_key) {
   /* If the field pub_key in dh is nullptr, the corresponding input
    * parameters MUST be non-nullptr.  The priv_key field may
    * be left nullptr.

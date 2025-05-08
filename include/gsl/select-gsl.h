@@ -70,7 +70,7 @@ using std::make_shared;
 using std::make_unique;
 #  else
 template <class T, class... Args>
-EXPLICIT_NODISCARD_ATTR unique_ptr<T> make_unique(Args &&...args) {
+ATFW_EXPLICIT_NODISCARD_ATTR unique_ptr<T> make_unique(Args &&...args) {
   return unique_ptr<T>(new T(std::forward<Args>(args)...));
 }
 #  endif
@@ -99,24 +99,24 @@ using std::unique_ptr;
 using std::make_unique;
 #  else
 template <class T, class... Args>
-EXPLICIT_NODISCARD_ATTR unique_ptr<T> make_unique(Args&&... args) {
+ATFW_EXPLICIT_NODISCARD_ATTR unique_ptr<T> make_unique(Args&&... args) {
   return unique_ptr<T>(new T(std::forward<Args>(args)...));
 }
 #  endif
 
 template <class T, size_t N>
-EXPLICIT_NODISCARD_ATTR ATFRAMEWORK_UTILS_API_HEAD_ONLY constexpr inline T& at(T (&arr)[N], size_t pos) {
+ATFW_EXPLICIT_NODISCARD_ATTR ATFRAMEWORK_UTILS_API_HEAD_ONLY constexpr inline T& at(T (&arr)[N], size_t pos) {
   return arr[pos];
 }
 
 template <class Container>
-EXPLICIT_NODISCARD_ATTR ATFRAMEWORK_UTILS_API_HEAD_ONLY constexpr inline typename Container::value_type& at(
+ATFW_EXPLICIT_NODISCARD_ATTR ATFRAMEWORK_UTILS_API_HEAD_ONLY constexpr inline typename Container::value_type& at(
     Container& cont, size_t pos) {
   return cont[pos];
 }
 
 template <class Container>
-EXPLICIT_NODISCARD_ATTR ATFRAMEWORK_UTILS_API_HEAD_ONLY constexpr inline typename Container::value_type const& at(
+ATFW_EXPLICIT_NODISCARD_ATTR ATFRAMEWORK_UTILS_API_HEAD_ONLY constexpr inline typename Container::value_type const& at(
     Container const& cont, size_t pos) {
   return cont[pos];
 }
@@ -124,14 +124,14 @@ EXPLICIT_NODISCARD_ATTR ATFRAMEWORK_UTILS_API_HEAD_ONLY constexpr inline typenam
 #  if gsl_HAVE(INITIALIZER_LIST)
 
 template <class T>
-EXPLICIT_NODISCARD_ATTR ATFRAMEWORK_UTILS_API_HEAD_ONLY constexpr inline const T at(std::initializer_list<T> cont,
-                                                                                    size_t pos) {
+ATFW_EXPLICIT_NODISCARD_ATTR ATFRAMEWORK_UTILS_API_HEAD_ONLY constexpr inline const T at(std::initializer_list<T> cont,
+                                                                                         size_t pos) {
   return *(cont.begin() + pos);
 }
 #  endif
 
 template <class T>
-EXPLICIT_NODISCARD_ATTR ATFRAMEWORK_UTILS_API_HEAD_ONLY constexpr inline T& at(span<T> s, size_t pos) {
+ATFW_EXPLICIT_NODISCARD_ATTR ATFRAMEWORK_UTILS_API_HEAD_ONLY constexpr inline T& at(span<T> s, size_t pos) {
   return s[pos];
 }
 
@@ -169,51 +169,51 @@ ATFRAMEWORK_UTILS_API_HEAD_ONLY constexpr inline const TELEMENT* data(std::initi
       ATFRAMEWORK_UTILS_ENABLE_GSL_WITH_FALLBACK_STL_SPAN
 using std::span;
 template <class T>
-EXPLICIT_NODISCARD_ATTR ATFRAMEWORK_UTILS_API_HEAD_ONLY inline constexpr span<T> make_span(
+ATFW_EXPLICIT_NODISCARD_ATTR ATFRAMEWORK_UTILS_API_HEAD_ONLY inline constexpr span<T> make_span(
     T* ptr, typename span<T>::index_type count) {
   return span<T>(ptr, count);
 }
 
 template <class T>
-EXPLICIT_NODISCARD_ATTR ATFRAMEWORK_UTILS_API_HEAD_ONLY inline constexpr span<T> make_span(T* first, T* last) {
+ATFW_EXPLICIT_NODISCARD_ATTR ATFRAMEWORK_UTILS_API_HEAD_ONLY inline constexpr span<T> make_span(T* first, T* last) {
   return span<T>(first, last);
 }
 
 template <class T, size_t N>
-EXPLICIT_NODISCARD_ATTR ATFRAMEWORK_UTILS_API_HEAD_ONLY inline constexpr span<T> make_span(T (&arr)[N]) {
+ATFW_EXPLICIT_NODISCARD_ATTR ATFRAMEWORK_UTILS_API_HEAD_ONLY inline constexpr span<T> make_span(T (&arr)[N]) {
   return span<T>(&arr[0], N);
 }
 
 template <class T, size_t N>
-EXPLICIT_NODISCARD_ATTR inline constexpr span<T> make_span(std::array<T, N>& arr) {
+ATFW_EXPLICIT_NODISCARD_ATTR inline constexpr span<T> make_span(std::array<T, N>& arr) {
   return span<T>(arr);
 }
 
 template <class T, size_t N>
-EXPLICIT_NODISCARD_ATTR inline constexpr span<const T> make_span(std::array<T, N> const& arr) {
+ATFW_EXPLICIT_NODISCARD_ATTR inline constexpr span<const T> make_span(std::array<T, N> const& arr) {
   return span<const T>(arr);
 }
 
 template <class Container, class EP = decltype(data(std::declval<Container&>()))>
-EXPLICIT_NODISCARD_ATTR inline constexpr auto make_span(Container& cont)
+ATFW_EXPLICIT_NODISCARD_ATTR inline constexpr auto make_span(Container& cont)
     -> span<typename std::remove_pointer<EP>::type> {
   return span<typename std::remove_pointer<EP>::type>(cont);
 }
 
 template <class Container, class EP = decltype(data(std::declval<Container&>()))>
-EXPLICIT_NODISCARD_ATTR inline constexpr auto make_span(Container const& cont)
+ATFW_EXPLICIT_NODISCARD_ATTR inline constexpr auto make_span(Container const& cont)
     -> span<const typename std::remove_pointer<EP>::type> {
   return span<const typename std::remove_pointer<EP>::type>(cont);
 }
 
 template <class Container>
-EXPLICIT_NODISCARD_ATTR inline constexpr span<typename Container::value_type> make_span(with_container_t,
-                                                                                        Container& cont) noexcept {
+ATFW_EXPLICIT_NODISCARD_ATTR inline constexpr span<typename Container::value_type> make_span(with_container_t,
+                                                                                             Container& cont) noexcept {
   return span<typename Container::value_type>(with_container, cont);
 }
 
 template <class Container>
-EXPLICIT_NODISCARD_ATTR inline constexpr span<const typename Container::value_type> make_span(
+ATFW_EXPLICIT_NODISCARD_ATTR inline constexpr span<const typename Container::value_type> make_span(
     with_container_t, Container const& cont) noexcept {
   return span<const typename Container::value_type>(with_container, cont);
 }
@@ -237,7 +237,7 @@ using std::byte;
 #    if defined(ATFRAMEWORK_UTILS_ENABLE_GSL_WITH_FALLBACK_STL_SPAN) && \
         ATFRAMEWORK_UTILS_ENABLE_GSL_WITH_FALLBACK_STL_SPAN
 template <class T>
-EXPLICIT_NODISCARD_ATTR ATFRAMEWORK_UTILS_API_HEAD_ONLY inline span<const byte> as_bytes(span<T> spn) noexcept {
+ATFW_EXPLICIT_NODISCARD_ATTR ATFRAMEWORK_UTILS_API_HEAD_ONLY inline span<const byte> as_bytes(span<T> spn) noexcept {
   return span<const byte>(reinterpret_cast<const byte*>(spn.data()), spn.size_bytes());  // NOLINT
 }
 #    endif
@@ -270,17 +270,17 @@ class ATFRAMEWORK_UTILS_API_HEAD_ONLY final_action {
 };
 
 template <class F>
-EXPLICIT_NODISCARD_ATTR inline final_action<F> finally(F const& action) noexcept {
+ATFW_EXPLICIT_NODISCARD_ATTR inline final_action<F> finally(F const& action) noexcept {
   return final_action<F>(action);
 }
 
 template <class F>
-EXPLICIT_NODISCARD_ATTR inline final_action<F> finally(F&& action) noexcept {
+ATFW_EXPLICIT_NODISCARD_ATTR inline final_action<F> finally(F&& action) noexcept {
   return final_action<F>(std::forward<F>(action));
 }
 
 template <class T, class U>
-EXPLICIT_NODISCARD_ATTR ATFRAMEWORK_UTILS_API_HEAD_ONLY inline constexpr T narrow_cast(U&& u) noexcept {
+ATFW_EXPLICIT_NODISCARD_ATTR ATFRAMEWORK_UTILS_API_HEAD_ONLY inline constexpr T narrow_cast(U&& u) noexcept {
   return static_cast<T>(std::forward<U>(u));
 }
 

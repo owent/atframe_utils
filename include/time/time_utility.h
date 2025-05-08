@@ -69,19 +69,19 @@ class time_utility {
    * @brief 更新时间
    * @param t 可以指定时间对象
    */
-  static ATFRAMEWORK_UTILS_API UTIL_SANITIZER_NO_THREAD void update(raw_time_t *t = nullptr);
+  static ATFRAMEWORK_UTILS_API ATFW_UTIL_SANITIZER_NO_THREAD void update(raw_time_t *t = nullptr);
 
   /**
    * @brief 获取原始系统时间对象
    * @return 最后一次update的时间
    */
-  static ATFRAMEWORK_UTILS_API UTIL_SANITIZER_NO_THREAD raw_time_t now();
+  static ATFRAMEWORK_UTILS_API ATFW_UTIL_SANITIZER_NO_THREAD raw_time_t now();
 
   /**
    * @brief 获取当前Unix时间戳
    * @return 最后一次update的时间
    */
-  static ATFRAMEWORK_UTILS_API UTIL_SANITIZER_NO_THREAD time_t get_now();
+  static ATFRAMEWORK_UTILS_API ATFW_UTIL_SANITIZER_NO_THREAD time_t get_now();
 
   /**
    * @brief 获取当前时间的微秒部分
@@ -90,7 +90,7 @@ class time_utility {
    * @note update接口不加锁，所以一般情况下，返回值在[0, 1000000)之间
    * @return 当前时间的微妙部分
    */
-  static ATFRAMEWORK_UTILS_API UTIL_SANITIZER_NO_THREAD int32_t get_now_usec();
+  static ATFRAMEWORK_UTILS_API ATFW_UTIL_SANITIZER_NO_THREAD int32_t get_now_usec();
 
   /**
    * @brief 获取当前时间的纳秒部分
@@ -99,25 +99,25 @@ class time_utility {
    * @note update接口不加锁，所以一般情况下，返回值在[0, 1000000000)之间
    * @return 当前时间的微秒部分
    */
-  static ATFRAMEWORK_UTILS_API UTIL_SANITIZER_NO_THREAD int32_t get_now_nanos();
+  static ATFRAMEWORK_UTILS_API ATFW_UTIL_SANITIZER_NO_THREAD int32_t get_now_nanos();
 
   /**
    * @brief 获取原始系统时间对象,不受set_global_now_offset()影响
    * @return 最后一次update的时间
    */
-  static ATFRAMEWORK_UTILS_API UTIL_SANITIZER_NO_THREAD raw_time_t sys_now();
+  static ATFRAMEWORK_UTILS_API ATFW_UTIL_SANITIZER_NO_THREAD raw_time_t sys_now();
 
   /**
    * @brief 获取系统当前Unix时间戳,不受set_global_now_offset()影响
    * @return 最后一次update的时间
    */
-  static ATFRAMEWORK_UTILS_API UTIL_SANITIZER_NO_THREAD time_t get_sys_now();
+  static ATFRAMEWORK_UTILS_API ATFW_UTIL_SANITIZER_NO_THREAD time_t get_sys_now();
 
   /**
    * @brief 设置时间的全局偏移（Debug功能）
    * @note 影响now()、get_now()和get_now_usec()的返回结果，用于模拟时间
    */
-  static ATFRAMEWORK_UTILS_API UTIL_SANITIZER_NO_THREAD void set_global_now_offset(
+  static ATFRAMEWORK_UTILS_API ATFW_UTIL_SANITIZER_NO_THREAD void set_global_now_offset(
       const std::chrono::system_clock::duration &offset);
 
   /**
@@ -125,39 +125,40 @@ class time_utility {
    * @note 影响now()、get_now()和get_now_usec()的返回结果，用于模拟时间
    * @return 当前的时间全局偏移
    */
-  static ATFRAMEWORK_UTILS_API UTIL_SANITIZER_NO_THREAD std::chrono::system_clock::duration get_global_now_offset();
+  static ATFRAMEWORK_UTILS_API ATFW_UTIL_SANITIZER_NO_THREAD std::chrono::system_clock::duration
+  get_global_now_offset();
 
   /**
    * @brief 重置时间的全局偏移（Debug功能）
    * @note 影响now()、get_now()和get_now_usec()的返回结果，还原成真实时间
    */
-  static ATFRAMEWORK_UTILS_API UTIL_SANITIZER_NO_THREAD void reset_global_now_offset();
+  static ATFRAMEWORK_UTILS_API ATFW_UTIL_SANITIZER_NO_THREAD void reset_global_now_offset();
 
   // ====================== 后面的函数都和时区相关 ======================
   /**
    * @brief 获取系统时区时间偏移(忽略自定义偏移)
    * @return 系统时区的时间偏移
    */
-  static ATFRAMEWORK_UTILS_API UTIL_SANITIZER_NO_THREAD time_t get_sys_zone_offset();
+  static ATFRAMEWORK_UTILS_API ATFW_UTIL_SANITIZER_NO_THREAD time_t get_sys_zone_offset();
 
   /**
    * @brief 获取时区时间偏移（如果设置过自定义偏移，使用自定义的值，否则和get_sys_zone_offset()的结果一样)
    * @return 时区的时间偏移
    */
-  static ATFRAMEWORK_UTILS_API UTIL_SANITIZER_NO_THREAD time_t get_zone_offset();
+  static ATFRAMEWORK_UTILS_API ATFW_UTIL_SANITIZER_NO_THREAD time_t get_zone_offset();
 
   /**
    * @brief 设置时区时间偏移
    * @param t 可以指定时区时间偏移
    * @note 比如要设置凌晨5点视为0点: set_zone_offset(get_sys_zone_offset() - 5 * HOUR_SECONDS)
    */
-  static ATFRAMEWORK_UTILS_API UTIL_SANITIZER_NO_THREAD void set_zone_offset(time_t t);
+  static ATFRAMEWORK_UTILS_API ATFW_UTIL_SANITIZER_NO_THREAD void set_zone_offset(time_t t);
 
   /**
    * @brief 获取当前时区今天过了多少秒(不计自定义时区)
    * @return 目前时间的相对今天的偏移
    */
-  static ATFRAMEWORK_UTILS_API UTIL_SANITIZER_NO_THREAD time_t get_today_now_offset();
+  static ATFRAMEWORK_UTILS_API ATFW_UTIL_SANITIZER_NO_THREAD time_t get_today_now_offset();
 
   /**
    * @brief [快速非严格]判定当前时区，两个时间是否是同一天

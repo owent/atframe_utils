@@ -132,7 +132,7 @@ ATFRAMEWORK_UTILS_API const std::string &log_sink_file_backend::get_writing_alia
   return file_name_pattern;
 }
 
-ATFRAMEWORK_UTILS_API UTIL_SANITIZER_NO_THREAD void log_sink_file_backend::maybe_rotate_log() {
+ATFRAMEWORK_UTILS_API ATFW_UTIL_SANITIZER_NO_THREAD void log_sink_file_backend::maybe_rotate_log() {
   if (log_file_.written_size > 0 && log_file_.written_size >= max_file_size_) {
     rotate_log();
   }
@@ -158,7 +158,7 @@ ATFRAMEWORK_UTILS_API void log_sink_file_backend::operator()(const log_formatter
   after_write_log(caller, *f, content_size);
 }
 
-ATFRAMEWORK_UTILS_API UTIL_SANITIZER_NO_THREAD void log_sink_file_backend::after_write_log(
+ATFRAMEWORK_UTILS_API ATFW_UTIL_SANITIZER_NO_THREAD void log_sink_file_backend::after_write_log(
     const log_formatter::caller_info_t &caller, FILE &f, size_t content_size) {
   time_t now = ATFRAMEWORK_UTILS_NAMESPACE_ID::time::time_utility::get_sys_now();
 
@@ -217,7 +217,7 @@ ATFRAMEWORK_UTILS_API log_sink_file_backend &log_sink_file_backend::set_rotate_s
   return *this;
 }
 
-ATFRAMEWORK_UTILS_API UTIL_SANITIZER_NO_THREAD void log_sink_file_backend::init() {
+ATFRAMEWORK_UTILS_API ATFW_UTIL_SANITIZER_NO_THREAD void log_sink_file_backend::init() {
   if (inited_) {
     return;
   }
@@ -351,7 +351,7 @@ ATFRAMEWORK_UTILS_API std::shared_ptr<std::FILE> log_sink_file_backend::open_log
   return log_file_.opened_file;
 }
 
-ATFRAMEWORK_UTILS_API UTIL_SANITIZER_NO_THREAD void log_sink_file_backend::rotate_log() {
+ATFRAMEWORK_UTILS_API ATFW_UTIL_SANITIZER_NO_THREAD void log_sink_file_backend::rotate_log() {
   if (rotation_size_ > 0) {
     log_file_.rotation_index = (log_file_.rotation_index + 1) % rotation_size_;
   } else {

@@ -32,6 +32,7 @@
 #  endif
 
 #  include <fmt/format.h>
+#  include <fmt/xchar.h>
 
 #  if defined(_MSC_VER)
 #    pragma warning(pop)
@@ -46,15 +47,13 @@
 #  ifndef ATFRAMEWORK_UTILS_STRING_FWAPI_FMT_STRING
 #    define ATFRAMEWORK_UTILS_STRING_FWAPI_FMT_STRING(S) FMT_STRING(S)
 #  endif
-#  if FMT_VERSION >= 80000
-#    define ATFRAMEWORK_UTILS_STRING_FWAPI_FORMAT_STRING_TYPE(...) fmt::format_string<__VA_ARGS__>
-#  endif
+
+static_assert(FMT_VERSION >= 100000, "Requires fmtlib 10.0 or upper");
+#  define ATFRAMEWORK_UTILS_STRING_FWAPI_FORMAT_STRING_TYPE(...) fmt::format_string<__VA_ARGS__>
+#  define LOG_WRAPPER_FWAPI_USING_FORMAT_STRING(...) ATFRAMEWORK_UTILS_STRING_FWAPI_FORMAT_STRING_TYPE(__VA_ARGS__)
 
 // Compatiibility for old versions of atframe_utils
 #  define LOG_WRAPPER_FWAPI_FMT_STRING(S) ATFRAMEWORK_UTILS_STRING_FWAPI_FMT_STRING(S)
-#  if FMT_VERSION >= 80000
-#    define LOG_WRAPPER_FWAPI_USING_FORMAT_STRING(...) ATFRAMEWORK_UTILS_STRING_FWAPI_FORMAT_STRING_TYPE(__VA_ARGS__)
-#  endif
 #endif
 
 #if defined(ATFRAMEWORK_UTILS_ENABLE_EXCEPTION) && ATFRAMEWORK_UTILS_ENABLE_EXCEPTION
@@ -66,10 +65,13 @@
 #include <type_traits>
 #include <utility>
 
+#include "nostd/string_view.h"
+
 ATFRAMEWORK_UTILS_NAMESPACE_BEGIN
 namespace string {
-#if defined(ATFRAMEWORK_UTILS_STRING_ENABLE_FWAPI) && ATFRAMEWORK_UTILS_STRING_ENABLE_FWAPI
 namespace details {
+
+#if defined(ATFRAMEWORK_UTILS_STRING_ENABLE_FWAPI) && ATFRAMEWORK_UTILS_STRING_ENABLE_FWAPI
 template <class OutputIt>
 class ATFRAMEWORK_UTILS_API_HEAD_ONLY truncating_iterator_base {
  public:
@@ -84,10 +86,11 @@ class ATFRAMEWORK_UTILS_API_HEAD_ONLY truncating_iterator_base {
   using pointer = typename std::iterator_traits<OutputIt>::pointer;
   using reference = typename std::iterator_traits<OutputIt>::reference;
 
-  truncating_iterator_base(OutputIt out, size_type limit) : out_(out), limit_(limit), count_(0) {}
+  ATFW_UTIL_ATTRIBUTE_CXX20_CONSTEXPR truncating_iterator_base(OutputIt out, size_type limit)
+      : out_(out), limit_(limit), count_(0) {}
 
-  OutputIt base() const noexcept { return out_; }
-  size_type count() const noexcept { return count_; }
+  ATFW_UTIL_ATTRIBUTE_CXX20_CONSTEXPR OutputIt base() const noexcept { return out_; }
+  ATFW_UTIL_ATTRIBUTE_CXX20_CONSTEXPR size_type count() const noexcept { return count_; }
 
  protected:
   OutputIt out_;
@@ -102,46 +105,47 @@ template <class OutputIt,
 class ATFRAMEWORK_UTILS_API_HEAD_ONLY truncating_iterator;
 
 template <class OutputIt>
-class ATFRAMEWORK_UTILS_API_HEAD_ONLY truncating_iterator<OutputIt, std::false_type>
-    : public truncating_iterator_base<OutputIt> {
+class ATFRAMEWORK_UTILS_API_HEAD_ONLY
+truncating_iterator<OutputIt, std::false_type> : public truncating_iterator_base<OutputIt> {
  public:
   using value_type = typename truncating_iterator_base<OutputIt>::value_type;
   using size_type = typename truncating_iterator_base<OutputIt>::size_type;
 
-  truncating_iterator(OutputIt out, size_type limit) : truncating_iterator_base<OutputIt>(out, limit) {}
+  ATFW_UTIL_ATTRIBUTE_CXX20_CONSTEXPR truncating_iterator(OutputIt out, size_type limit)
+      : truncating_iterator_base<OutputIt>(out, limit) {}
 
-  inline truncating_iterator &operator++() noexcept {
+  ATFW_UTIL_ATTRIBUTE_CXX20_CONSTEXPR inline truncating_iterator &operator++() noexcept {
     if (this->count_++ < this->limit_) {
       ++this->out_;
     }
     return *this;
   }
 
-  inline truncating_iterator operator++(int) noexcept {
+  ATFW_UTIL_ATTRIBUTE_CXX20_CONSTEXPR inline truncating_iterator operator++(int) noexcept {
     auto it = *this;
     ++*this;
     return it;
   }
 
   template <typename T>
-  inline void push_back(T &&val) {
+  ATFW_UTIL_ATTRIBUTE_CXX20_CONSTEXPR inline void push_back(T &&val) {
     if (this->count_++ < this->limit_) {
       *this->out_++ = std::forward<T>(val);
     }
   }
 
   template <typename T>
-  inline truncating_iterator &operator=(T &&val) {
+  ATFW_UTIL_ATTRIBUTE_CXX20_CONSTEXPR inline truncating_iterator &operator=(T &&val) {
     push_back(std::forward<T>(val));
     return *this;
   }
 
-  inline truncating_iterator &operator*() noexcept { return *this; }
+  ATFW_UTIL_ATTRIBUTE_CXX20_CONSTEXPR inline truncating_iterator &operator*() noexcept { return *this; }
 };
 
 template <class OutputIt>
-class ATFRAMEWORK_UTILS_API_HEAD_ONLY truncating_iterator<OutputIt, std::true_type>
-    : public truncating_iterator_base<OutputIt> {
+class ATFRAMEWORK_UTILS_API_HEAD_ONLY
+truncating_iterator<OutputIt, std::true_type> : public truncating_iterator_base<OutputIt> {
  public:
   using value_type = typename truncating_iterator_base<OutputIt>::value_type;
   using size_type = typename truncating_iterator_base<OutputIt>::size_type;
@@ -168,93 +172,206 @@ class ATFRAMEWORK_UTILS_API_HEAD_ONLY truncating_iterator<OutputIt, std::true_ty
   inline truncating_iterator &operator++(int) noexcept { return *this; }
   inline truncating_iterator &operator*() noexcept { return *this; }
 };
-
-}  // namespace details
 #endif
 
-template <class OutputIt>
-using format_to_n_result = ATFRAMEWORK_UTILS_STRING_FWAPI_NAMESPACE format_to_n_result<OutputIt>;
+template <class>
+struct fmtapi_is_char : std::false_type {};
 
-#if defined(ATFRAMEWORK_UTILS_STRING_ENABLE_FWAPI) && ATFRAMEWORK_UTILS_STRING_ENABLE_FWAPI
-template <class TCONTEXT = ATFRAMEWORK_UTILS_STRING_FWAPI_NAMESPACE format_context, class... TARGS>
-ATFRAMEWORK_UTILS_API_HEAD_ONLY auto make_format_args(TARGS &&...args) {
-#  if defined(ATFRAMEWORK_UTILS_ENABLE_FMTLIB) && ATFRAMEWORK_UTILS_ENABLE_FMTLIB && defined(FMT_VERSION) && \
-      FMT_VERSION >= 100000
-  return ATFRAMEWORK_UTILS_STRING_FWAPI_NAMESPACE make_format_args<TCONTEXT>(args...);
-#  else
-  return ATFRAMEWORK_UTILS_STRING_FWAPI_NAMESPACE make_format_args<TCONTEXT>(std::forward<TARGS>(args)...);
-#  endif
+template <>
+struct fmtapi_is_char<char> : std::true_type {};
+template <>
+struct fmtapi_is_char<wchar_t> : std::true_type {};
+#ifdef __cpp_unicode_characters
+template <>
+struct fmtapi_is_char<char16_t> : std::true_type {};
+template <>
+struct fmtapi_is_char<char32_t> : std::true_type {};
+#endif
+#ifdef __cpp_char8_t
+template <>
+struct fmtapi_is_char<char8_t> : std::true_type {};
+#endif
+
+template <typename T,
+          bool = std::is_convertible<decltype(nostd::data(std::declval<T>())), const typename T::value_type *>::value>
+struct fmtapi_is_std_string_like;
+
+template <typename T>
+struct fmtapi_is_std_string_like<T, true> : std::true_type {};
+
+template <typename T>
+struct fmtapi_is_std_string_like<T, false> : std::false_type {};
+
+template <class CharT,
+          class = typename std::enable_if<fmtapi_is_char<typename std::remove_cvref<CharT>::type>::value>::type>
+constexpr auto fmtapi_to_string_view(const CharT *s)
+    -> ATFRAMEWORK_UTILS_STRING_FWAPI_NAMESPACE_ID::basic_string_view<CharT> {
+  return s;
+}
+template <class T, class = typename std::enable_if<fmtapi_is_std_string_like<T>::value>::type>
+constexpr auto fmtapi_to_string_view(const T &s)
+    -> ATFRAMEWORK_UTILS_STRING_FWAPI_NAMESPACE_ID::basic_string_view<typename T::value_type> {
+  return s;
+}
+template <class CharT>
+constexpr auto fmtapi_to_string_view(ATFRAMEWORK_UTILS_STRING_FWAPI_NAMESPACE_ID::basic_string_view<CharT> s)
+    -> ATFRAMEWORK_UTILS_STRING_FWAPI_NAMESPACE_ID::basic_string_view<CharT> {
+  return s;
 }
 
-#  ifdef ATFRAMEWORK_UTILS_STRING_FWAPI_FORMAT_STRING_TYPE
-template <class... TARGS>
-ATFRAMEWORK_UTILS_API_HEAD_ONLY std::string format(ATFRAMEWORK_UTILS_STRING_FWAPI_FORMAT_STRING_TYPE(TARGS...) fmt_text,
-                                                   TARGS &&...args)
-#  else
-template <class TFMT, class... TARGS>
-ATFRAMEWORK_UTILS_API_HEAD_ONLY std::string format(TFMT &&fmt_text, TARGS &&...args)
+template <class CharT, class Traits>
+constexpr auto fmtapi_to_string_view(nostd::basic_string_view<CharT, Traits> s)
+    -> ATFRAMEWORK_UTILS_STRING_FWAPI_NAMESPACE_ID::basic_string_view<CharT> {
+  return ATFRAMEWORK_UTILS_STRING_FWAPI_NAMESPACE_ID::basic_string_view<CharT>{s.data(), s.size()};
+}
+
+#if !(defined(ATFRAMEWORK_UTILS_ENABLE_STD_FORMAT) && ATFRAMEWORK_UTILS_ENABLE_STD_FORMAT)
+#  if defined(ATFRAMEWORK_UTILS_GSL_TEST_STL_STRING_VIEW) && ATFRAMEWORK_UTILS_GSL_TEST_STL_STRING_VIEW
+template <class CharT, class Traits>
+constexpr auto fmtapi_to_string_view(std::basic_string_view<CharT, Traits> s)
+    -> ATFRAMEWORK_UTILS_STRING_FWAPI_NAMESPACE_ID::basic_string_view<CharT> {
+  return ATFRAMEWORK_UTILS_STRING_FWAPI_NAMESPACE_ID::basic_string_view<CharT>{s.data(), s.size()};
+}
 #  endif
-{
+#endif
+
+template <class TFMT>
+struct fmtapi_detect_char_t_from_fmt_base;
+
+template <class CharT, size_t N>
+struct fmtapi_detect_char_t_from_fmt_base<CharT[N]> {
+  using value_type = CharT;
+};
+
+template <class CharT>
+struct fmtapi_detect_char_t_from_fmt_base<CharT *> {
+  using value_type = CharT;
+};
+
+template <class CharT>
+struct fmtapi_detect_char_t_from_fmt_base<ATFRAMEWORK_UTILS_STRING_FWAPI_NAMESPACE_ID::basic_string_view<CharT>> {
+  using value_type = CharT;
+};
+
+template <class CharT, class Traits>
+struct fmtapi_detect_char_t_from_fmt_base<nostd::basic_string_view<CharT, Traits>> {
+  using value_type = CharT;
+};
+
+#if !(defined(ATFRAMEWORK_UTILS_ENABLE_STD_FORMAT) && ATFRAMEWORK_UTILS_ENABLE_STD_FORMAT)
+#  if defined(ATFRAMEWORK_UTILS_GSL_TEST_STL_STRING_VIEW) && ATFRAMEWORK_UTILS_GSL_TEST_STL_STRING_VIEW
+template <class CharT, class Traits>
+struct fmtapi_detect_char_t_from_fmt_base<std::basic_string_view<CharT, Traits>> {
+  using value_type = CharT;
+};
+#  endif
+#endif
+
+template <class T>
+struct fmtapi_detect_char_t_from_fmt_base {
+  using value_type = typename T::value_type;
+};
+
+template <class TFMT>
+struct fmtapi_detect_char_t_from_fmt
+    : public fmtapi_detect_char_t_from_fmt_base<typename std::remove_cvref<TFMT>::type> {};
+
+template <class CharT>
+struct make_format_args_helper_base;
+
+template <>
+struct make_format_args_helper_base<wchar_t> {
+  template <class... TARGS>
+  ATFW_UTIL_FORCEINLINE static auto make(TARGS &...args) {
+    return ATFRAMEWORK_UTILS_STRING_FWAPI_NAMESPACE_ID::make_wformat_args(args...);
+  }
+};
+
+template <>
+struct make_format_args_helper_base<char> {
+  template <class... TARGS>
+  ATFW_UTIL_FORCEINLINE static auto make(TARGS &...args) {
+    return ATFRAMEWORK_UTILS_STRING_FWAPI_NAMESPACE_ID::make_format_args(args...);
+  }
+};
+
+template <class CharT>
+struct make_format_args_helper_base {
+  template <class... TARGS>
+  ATFW_UTIL_FORCEINLINE static auto make(TARGS &...args) {
+#if defined(ATFRAMEWORK_UTILS_ENABLE_STD_FORMAT) && ATFRAMEWORK_UTILS_ENABLE_STD_FORMAT
+    return std::make_format_args<std::basic_format_context<std::back_insert_iterator<std::basic_string<CharT>>, CharT>>(
+        args...);
+#else
+#  if FMT_VERSION >= 110000
+    return fmt::make_format_args<fmt::buffered_context<CharT>>(args...);
+#  else
+    return fmt::make_format_args<fmt::buffer_context<CharT>>(args...);
+#  endif
+#endif
+  }
+};
+
+template <class CharT>
+struct make_format_args_helper : public make_format_args_helper_base<typename std::remove_cvref<CharT>::type> {};
+
+}  // namespace details
+
+template <class OutputIt>
+using format_to_n_result = ATFRAMEWORK_UTILS_STRING_FWAPI_NAMESPACE_ID::format_to_n_result<OutputIt>;
+
+using ATFRAMEWORK_UTILS_STRING_FWAPI_NAMESPACE_ID::make_format_args;
+using ATFRAMEWORK_UTILS_STRING_FWAPI_NAMESPACE_ID::make_wformat_args;
+
+#if defined(ATFRAMEWORK_UTILS_STRING_ENABLE_FWAPI) && ATFRAMEWORK_UTILS_STRING_ENABLE_FWAPI
+
+template <class TFMT, class... TARGS>
+ATFRAMEWORK_UTILS_API_HEAD_ONLY auto format(TFMT &&fmt_text, TARGS &&...args)
+    -> std::basic_string<typename details::fmtapi_detect_char_t_from_fmt<TFMT>::value_type> {
+  using return_type = std::basic_string<typename details::fmtapi_detect_char_t_from_fmt<TFMT>::value_type>;
 #  if defined(ATFRAMEWORK_UTILS_ENABLE_EXCEPTION) && ATFRAMEWORK_UTILS_ENABLE_EXCEPTION
   try {
 #  endif
-#  ifdef ATFRAMEWORK_UTILS_STRING_FWAPI_FORMAT_STRING_TYPE
-    return ATFRAMEWORK_UTILS_STRING_FWAPI_NAMESPACE format(fmt_text, std::forward<TARGS>(args)...);
-#  elif defined(ATFRAMEWORK_UTILS_ENABLE_FORWARD_FMTTEXT) && ATFRAMEWORK_UTILS_ENABLE_FORWARD_FMTTEXT
-  return ATFRAMEWORK_UTILS_STRING_FWAPI_NAMESPACE format(std::forward<TFMT>(fmt_text), std::forward<TARGS>(args)...);
-#  else
-  return ATFRAMEWORK_UTILS_STRING_FWAPI_NAMESPACE vformat(
-      std::forward<TFMT>(fmt_text),
-#    if defined(ATFRAMEWORK_UTILS_ENABLE_FMTLIB) && ATFRAMEWORK_UTILS_ENABLE_FMTLIB && defined(FMT_VERSION) && \
-        FMT_VERSION >= 100000
-      ATFRAMEWORK_UTILS_STRING_FWAPI_NAMESPACE make_format_args(args...)
-#    else
-      ATFRAMEWORK_UTILS_STRING_FWAPI_NAMESPACE make_format_args(std::forward<TARGS>(args)...)
-#    endif
-  );
-#  endif
+    return ATFRAMEWORK_UTILS_STRING_FWAPI_NAMESPACE_ID::vformat(
+        details::fmtapi_to_string_view(fmt_text),
+        details::make_format_args_helper<typename details::fmtapi_detect_char_t_from_fmt<TFMT>::value_type>::make(
+            args...));
 #  if defined(ATFRAMEWORK_UTILS_ENABLE_EXCEPTION) && ATFRAMEWORK_UTILS_ENABLE_EXCEPTION
-  } catch (const ATFRAMEWORK_UTILS_STRING_FWAPI_NAMESPACE format_error &e) {
-    return e.what();
+  } catch (const ATFRAMEWORK_UTILS_STRING_FWAPI_NAMESPACE_ID::format_error &e) {
+    const char *input_begin = e.what();
+    const char *input_end = input_begin + strlen(input_begin);
+    return_type ret;
+    ret.resize(static_cast<return_type::size_type>(input_end - input_begin));
+    std::copy(input_begin, input_end, ret.data());
+    return ret;
   } catch (const std::runtime_error &e) {
-    return e.what();
+    const char *input_begin = e.what();
+    const char *input_end = input_begin + strlen(input_begin);
+    return_type ret;
+    ret.resize(static_cast<return_type::size_type>(input_end - input_begin));
+    std::copy(input_begin, input_end, ret.data());
+    return ret;
   } catch (...) {
-    return "format got unknown exception";
+    const char *input_begin = "format got unknown exception";
+    const char *input_end = input_begin + strlen(input_begin);
+    return_type ret;
+    ret.resize(static_cast<return_type::size_type>(input_end - input_begin));
+    std::copy(input_begin, input_end, ret.data());
+    return ret;
   }
 #  endif
 }
 
-#  ifdef ATFRAMEWORK_UTILS_STRING_FWAPI_FORMAT_STRING_TYPE
-template <class OutputIt, class... TARGS>
-ATFRAMEWORK_UTILS_API_HEAD_ONLY auto format_to(OutputIt out,
-                                               ATFRAMEWORK_UTILS_STRING_FWAPI_FORMAT_STRING_TYPE(TARGS...) fmt_text,
-                                               TARGS &&...args)
-#  else
 template <class OutputIt, class TFMT, class... TARGS>
-ATFRAMEWORK_UTILS_API_HEAD_ONLY auto format_to(OutputIt out, TFMT &&fmt_text, TARGS &&...args)
-#  endif
-{
+ATFRAMEWORK_UTILS_API_HEAD_ONLY auto format_to(OutputIt out, TFMT &&fmt_text, TARGS &&...args) -> OutputIt {
 #  if defined(ATFRAMEWORK_UTILS_ENABLE_EXCEPTION) && ATFRAMEWORK_UTILS_ENABLE_EXCEPTION
   try {
 #  endif
-#  ifdef ATFRAMEWORK_UTILS_STRING_FWAPI_FORMAT_STRING_TYPE
-    return ATFRAMEWORK_UTILS_STRING_FWAPI_NAMESPACE format_to(out, fmt_text, std::forward<TARGS>(args)...);
-#  elif defined(ATFRAMEWORK_UTILS_ENABLE_FORWARD_FMTTEXT) && ATFRAMEWORK_UTILS_ENABLE_FORWARD_FMTTEXT
-  return ATFRAMEWORK_UTILS_STRING_FWAPI_NAMESPACE format_to(out, std::forward<TFMT>(fmt_text),
-                                                            std::forward<TARGS>(args)...);
-#  else
-  return ATFRAMEWORK_UTILS_STRING_FWAPI_NAMESPACE vformat_to(
-      out, std::forward<TFMT>(fmt_text),
-#    if defined(ATFRAMEWORK_UTILS_ENABLE_FMTLIB) && ATFRAMEWORK_UTILS_ENABLE_FMTLIB && defined(FMT_VERSION) && \
-        FMT_VERSION >= 100000
-      ATFRAMEWORK_UTILS_STRING_FWAPI_NAMESPACE make_format_args(args...)
-#    else
-      ATFRAMEWORK_UTILS_STRING_FWAPI_NAMESPACE make_format_args(std::forward<TARGS>(args)...)
-#    endif
-  );
-#  endif
+    return ATFRAMEWORK_UTILS_STRING_FWAPI_NAMESPACE_ID::vformat_to(
+        out, details::fmtapi_to_string_view(std::forward<TFMT>(fmt_text)),
+        details::make_format_args_helper<typename std::iterator_traits<OutputIt>::value_type>::make(args...));
 #  if defined(ATFRAMEWORK_UTILS_ENABLE_EXCEPTION) && ATFRAMEWORK_UTILS_ENABLE_EXCEPTION
-  } catch (const ATFRAMEWORK_UTILS_STRING_FWAPI_NAMESPACE format_error &e) {
+  } catch (const ATFRAMEWORK_UTILS_STRING_FWAPI_NAMESPACE_ID::format_error &e) {
     const char *input_begin = e.what();
     const char *input_end = input_begin + strlen(input_begin);
     while (input_begin && *input_begin && input_begin < input_end) {
@@ -286,48 +403,18 @@ ATFRAMEWORK_UTILS_API_HEAD_ONLY auto format_to(OutputIt out, TFMT &&fmt_text, TA
 }
 
 template <class OutputIt, class TFMT, class... TARGS>
-ATFRAMEWORK_UTILS_API_HEAD_ONLY ATFRAMEWORK_UTILS_STRING_FWAPI_NAMESPACE format_to_n_result<OutputIt> format_to_n(
+ATFRAMEWORK_UTILS_API_HEAD_ONLY ATFRAMEWORK_UTILS_STRING_FWAPI_NAMESPACE_ID::format_to_n_result<OutputIt> format_to_n(
     OutputIt out, size_t n, TFMT &&fmt_text, TARGS &&...args) {
 #  if defined(ATFRAMEWORK_UTILS_ENABLE_EXCEPTION) && ATFRAMEWORK_UTILS_ENABLE_EXCEPTION
   try {
 #  endif
-#  ifdef ATFRAMEWORK_UTILS_STRING_FWAPI_FORMAT_STRING_TYPE
-    return ATFRAMEWORK_UTILS_STRING_FWAPI_NAMESPACE vformat_to_n(
-        out, static_cast<typename details::truncating_iterator<OutputIt>::size_type>(n),
-#    if defined(FMT_VERSION) && FMT_VERSION >= 100000
-        ATFRAMEWORK_UTILS_STRING_FWAPI_NAMESPACE string_view{std::forward<TFMT>(fmt_text)},
-#    else
-        std::forward<TFMT>(fmt_text),
-#    endif
-#    if defined(ATFRAMEWORK_UTILS_ENABLE_FMTLIB) && ATFRAMEWORK_UTILS_ENABLE_FMTLIB && defined(FMT_VERSION) && \
-        FMT_VERSION >= 100000
-        ATFRAMEWORK_UTILS_STRING_FWAPI_NAMESPACE make_format_args(args...)
-#    else
-        ATFRAMEWORK_UTILS_STRING_FWAPI_NAMESPACE make_format_args(std::forward<TARGS>(args)...)
-#    endif
-    );  // NOLINT: whitespace/parens
-#  elif defined(ATFRAMEWORK_UTILS_ENABLE_FORWARD_FMTTEXT) && ATFRAMEWORK_UTILS_ENABLE_FORWARD_FMTTEXT
-  return ATFRAMEWORK_UTILS_STRING_FWAPI_NAMESPACE format_to_n(
-      out, static_cast<typename details::truncating_iterator<OutputIt>::size_type>(n), std::forward<TFMT>(fmt_text),
-      std::forward<TARGS>(args)...);
-#  else
-  typename details::truncating_iterator<OutputIt> buf(std::move(out), n);
-  ATFRAMEWORK_UTILS_STRING_FWAPI_NAMESPACE vformat_to(std::back_inserter(buf), std::forward<TFMT>(fmt_text),
-#    if defined(ATFRAMEWORK_UTILS_ENABLE_FMTLIB) && ATFRAMEWORK_UTILS_ENABLE_FMTLIB && defined(FMT_VERSION) && \
-        FMT_VERSION >= 100000
-                                                      ATFRAMEWORK_UTILS_STRING_FWAPI_NAMESPACE make_format_args(args...)
-#    else
-                                                      ATFRAMEWORK_UTILS_STRING_FWAPI_NAMESPACE make_format_args(
-                                                          std::forward<TARGS>(args)...)
-#    endif
-  );  // NOLINT: whitespace/parens
-  ATFRAMEWORK_UTILS_STRING_FWAPI_NAMESPACE format_to_n_result<OutputIt> ret;
-  ret.out = buf.base();
-  ret.size = static_cast<decltype(ret.size)>(buf.count());
-  return ret;
-#  endif
+    details::truncating_iterator<OutputIt> res(out, n);
+    ATFRAMEWORK_UTILS_STRING_FWAPI_NAMESPACE_ID::vformat_to(
+        res, details::fmtapi_to_string_view(std::forward<TFMT>(fmt_text)),
+        details::make_format_args_helper<typename std::iterator_traits<OutputIt>::value_type>::make(args...));
+    return {res.base(), res.count()};
 #  if defined(ATFRAMEWORK_UTILS_ENABLE_EXCEPTION) && ATFRAMEWORK_UTILS_ENABLE_EXCEPTION
-  } catch (const ATFRAMEWORK_UTILS_STRING_FWAPI_NAMESPACE format_error &e) {
+  } catch (const ATFRAMEWORK_UTILS_STRING_FWAPI_NAMESPACE_ID::format_error &e) {
     const char *input_begin = e.what();
     const char *input_end = input_begin + strlen(input_begin);
     details::truncating_iterator<OutputIt> res =
@@ -350,18 +437,36 @@ ATFRAMEWORK_UTILS_API_HEAD_ONLY ATFRAMEWORK_UTILS_STRING_FWAPI_NAMESPACE format_
 }
 
 template <class TFMT, class TARGS>
-ATFRAMEWORK_UTILS_API_HEAD_ONLY std::string vformat(TFMT &&fmt_text, TARGS &&args) {
+ATFRAMEWORK_UTILS_API_HEAD_ONLY auto vformat(TFMT &&fmt_text, TARGS &&args)
+    -> std::basic_string<typename details::fmtapi_detect_char_t_from_fmt<TFMT>::value_type> {
+  using return_type = std::basic_string<typename details::fmtapi_detect_char_t_from_fmt<TFMT>::value_type>;
 #  if defined(ATFRAMEWORK_UTILS_ENABLE_EXCEPTION) && ATFRAMEWORK_UTILS_ENABLE_EXCEPTION
   try {
 #  endif
-    return ATFRAMEWORK_UTILS_STRING_FWAPI_NAMESPACE vformat(std::forward<TFMT>(fmt_text), std::forward<TARGS>(args));
+    return ATFRAMEWORK_UTILS_STRING_FWAPI_NAMESPACE_ID::vformat(
+        details::fmtapi_to_string_view(std::forward<TFMT>(fmt_text)), std::forward<TARGS>(args));
 #  if defined(ATFRAMEWORK_UTILS_ENABLE_EXCEPTION) && ATFRAMEWORK_UTILS_ENABLE_EXCEPTION
-  } catch (const ATFRAMEWORK_UTILS_STRING_FWAPI_NAMESPACE format_error &e) {
-    return e.what();
+  } catch (const ATFRAMEWORK_UTILS_STRING_FWAPI_NAMESPACE_ID::format_error &e) {
+    const char *input_begin = e.what();
+    const char *input_end = input_begin + strlen(input_begin);
+    return_type ret;
+    ret.resize(static_cast<return_type::size_type>(input_end - input_begin));
+    std::copy(input_begin, input_end, ret.data());
+    return ret;
   } catch (const std::runtime_error &e) {
-    return e.what();
+    const char *input_begin = e.what();
+    const char *input_end = input_begin + strlen(input_begin);
+    return_type ret;
+    ret.resize(static_cast<return_type::size_type>(input_end - input_begin));
+    std::copy(input_begin, input_end, ret.data());
+    return ret;
   } catch (...) {
-    return "format got unknown exception";
+    const char *input_begin = "format got unknown exception";
+    const char *input_end = input_begin + strlen(input_begin);
+    return_type ret;
+    ret.resize(static_cast<return_type::size_type>(input_end - input_begin));
+    std::copy(input_begin, input_end, ret.data());
+    return ret;
   }
 #  endif
 }
@@ -371,10 +476,10 @@ ATFRAMEWORK_UTILS_API_HEAD_ONLY OutputIt vformat_to(OutputIt out, TFMT &&fmt_tex
 #  if defined(ATFRAMEWORK_UTILS_ENABLE_EXCEPTION) && ATFRAMEWORK_UTILS_ENABLE_EXCEPTION
   try {
 #  endif
-    return ATFRAMEWORK_UTILS_STRING_FWAPI_NAMESPACE vformat_to(out, std::forward<TFMT>(fmt_text),
-                                                               std::forward<TARGS>(args));
+    return ATFRAMEWORK_UTILS_STRING_FWAPI_NAMESPACE_ID::vformat_to(
+        out, details::fmtapi_to_string_view(std::forward<TFMT>(fmt_text)), std::forward<TARGS>(args));
 #  if defined(ATFRAMEWORK_UTILS_ENABLE_EXCEPTION) && ATFRAMEWORK_UTILS_ENABLE_EXCEPTION
-  } catch (const ATFRAMEWORK_UTILS_STRING_FWAPI_NAMESPACE format_error &e) {
+  } catch (const ATFRAMEWORK_UTILS_STRING_FWAPI_NAMESPACE_ID::format_error &e) {
     const char *input_begin = e.what();
     const char *input_end = input_begin + strlen(input_begin);
     while (input_begin && *input_begin && input_begin < input_end) {
@@ -410,27 +515,29 @@ ATFRAMEWORK_UTILS_API_HEAD_ONLY OutputIt vformat_to(OutputIt out, TFMT &&fmt_tex
 ATFRAMEWORK_UTILS_NAMESPACE_END
 
 #if defined(ATFRAMEWORK_UTILS_STRING_ENABLE_FWAPI) && ATFRAMEWORK_UTILS_STRING_ENABLE_FWAPI
-#  define ATFRAMEWORK_UTILS_STRING_FWAPI_FORMAT(...) ::ATFRAMEWORK_UTILS_NAMESPACE_ID::log::format(__VA_ARGS__)
-#  define ATFRAMEWORK_UTILS_STRING_FWAPI_FORMAT_TO(...) ::ATFRAMEWORK_UTILS_NAMESPACE_ID::log::format_to(__VA_ARGS__)
+#  define ATFRAMEWORK_UTILS_STRING_FWAPI_FORMAT(...) ::ATFRAMEWORK_UTILS_NAMESPACE_ID::string::format(__VA_ARGS__)
+#  define ATFRAMEWORK_UTILS_STRING_FWAPI_FORMAT_TO(...) ::ATFRAMEWORK_UTILS_NAMESPACE_ID::string::format_to(__VA_ARGS__)
 #  define ATFRAMEWORK_UTILS_STRING_FWAPI_FORMAT_TO_N(...) \
-    ::ATFRAMEWORK_UTILS_NAMESPACE_ID::log::format_to_n(__VA_ARGS__)
-#  define ATFRAMEWORK_UTILS_STRING_FWAPI_VFORMAT(...) ::ATFRAMEWORK_UTILS_NAMESPACE_ID::log::vformat(__VA_ARGS__)
-#  define ATFRAMEWORK_UTILS_STRING_FWAPI_VFORMAT_TO(...) ::ATFRAMEWORK_UTILS_NAMESPACE_ID::log::vformat_to(__VA_ARGS__)
+    ::ATFRAMEWORK_UTILS_NAMESPACE_ID::string::format_to_n(__VA_ARGS__)
+#  define ATFRAMEWORK_UTILS_STRING_FWAPI_VFORMAT(...) ::ATFRAMEWORK_UTILS_NAMESPACE_ID::string::vformat(__VA_ARGS__)
+#  define ATFRAMEWORK_UTILS_STRING_FWAPI_VFORMAT_TO(...) \
+    ::ATFRAMEWORK_UTILS_NAMESPACE_ID::string::vformat_to(__VA_ARGS__)
 #  define ATFRAMEWORK_UTILS_STRING_FWAPI_MAKE_FORMAT_ARGS(...) \
-    ::ATFRAMEWORK_UTILS_NAMESPACE_ID::log::make_format_args(__VA_ARGS__)
+    ATFRAMEWORK_UTILS_STRING_FWAPI_NAMESPACE_ID::make_format_args(__VA_ARGS__)
 #else
 #  define ATFRAMEWORK_UTILS_STRING_FWAPI_FORMAT(FMT, args...) \
-    ::ATFRAMEWORK_UTILS_NAMESPACE_ID::log::format(ATFRAMEWORK_UTILS_STRING_FWAPI_FMT_STRING(FMT), ##args)
+    ::ATFRAMEWORK_UTILS_NAMESPACE_ID::string::format(ATFRAMEWORK_UTILS_STRING_FWAPI_FMT_STRING(FMT), ##args)
 #  define ATFRAMEWORK_UTILS_STRING_FWAPI_FORMAT_TO(OUT, FMT, args...) \
-    ::ATFRAMEWORK_UTILS_NAMESPACE_ID::log::format_to(OUT, ATFRAMEWORK_UTILS_STRING_FWAPI_FMT_STRING(FMT), ##args)
-#  define ATFRAMEWORK_UTILS_STRING_FWAPI_FORMAT_TO_N(OUT, N, FMT, args...) \
-    ::ATFRAMEWORK_UTILS_NAMESPACE_ID::log::format_to_n(OUT, N, ATFRAMEWORK_UTILS_STRING_FWAPI_FMT_STRING(FMT), ##args)
+    ::ATFRAMEWORK_UTILS_NAMESPACE_ID::string::format_to(OUT, ATFRAMEWORK_UTILS_STRING_FWAPI_FMT_STRING(FMT), ##args)
+#  define ATFRAMEWORK_UTILS_STRING_FWAPI_FORMAT_TO_N(OUT, N, FMT, args...)                                        \
+    ::ATFRAMEWORK_UTILS_NAMESPACE_ID::string::format_to_n(OUT, N, ATFRAMEWORK_UTILS_STRING_FWAPI_FMT_STRING(FMT), \
+                                                          ##args)
 #  define ATFRAMEWORK_UTILS_STRING_FWAPI_VFORMAT(FMT, args) \
-    ::ATFRAMEWORK_UTILS_NAMESPACE_ID::log::vformat(ATFRAMEWORK_UTILS_STRING_FWAPI_FMT_STRING(FMT), ##args)
+    ::ATFRAMEWORK_UTILS_NAMESPACE_ID::string::vformat(ATFRAMEWORK_UTILS_STRING_FWAPI_FMT_STRING(FMT), ##args)
 #  define ATFRAMEWORK_UTILS_STRING_FWAPI_VFORMAT_TO(OUT, FMT, args...) \
-    ::ATFRAMEWORK_UTILS_NAMESPACE_ID::log::vformat_to(OUT, ATFRAMEWORK_UTILS_STRING_FWAPI_FMT_STRING(FMT), ##args)
+    ::ATFRAMEWORK_UTILS_NAMESPACE_ID::string::vformat_to(OUT, ATFRAMEWORK_UTILS_STRING_FWAPI_FMT_STRING(FMT), ##args)
 #  define ATFRAMEWORK_UTILS_STRING_FWAPI_MAKE_FORMAT_ARGS(...) \
-    ::ATFRAMEWORK_UTILS_NAMESPACE_ID::log::make_format_args(__VA_ARGS__)
+    ATFRAMEWORK_UTILS_STRING_FWAPI_NAMESPACE_ID::make_format_args(__VA_ARGS__)
 #endif
 
 #if defined(ATFRAMEWORK_UTILS_STRING_ENABLE_FWAPI) && ATFRAMEWORK_UTILS_STRING_ENABLE_FWAPI
@@ -455,12 +562,12 @@ ATFRAMEWORK_UTILS_NAMESPACE_END
 ATFRAMEWORK_UTILS_STRING_FWAPI_DECL_NAMESPACE() {
   template <class CharT, class Traits>
   struct formatter<ATFRAMEWORK_UTILS_NAMESPACE_ID::nostd::basic_string_view<CharT, Traits>, CharT>
-      : formatter<ATFRAMEWORK_UTILS_STRING_FWAPI_NAMESPACE basic_string_view<CharT>, CharT> {
+      : formatter<ATFRAMEWORK_UTILS_STRING_FWAPI_NAMESPACE_ID::basic_string_view<CharT>, CharT> {
     template <class FormatContext>
     auto format(ATFRAMEWORK_UTILS_NAMESPACE_ID::nostd::basic_string_view<CharT, Traits> const &val,
                 FormatContext &ctx) const -> decltype(ctx.out()) {
-      return formatter<ATFRAMEWORK_UTILS_STRING_FWAPI_NAMESPACE basic_string_view<CharT>, CharT>::format(
-          ATFRAMEWORK_UTILS_STRING_FWAPI_NAMESPACE basic_string_view<CharT>{val.data(), val.size()}, ctx);
+      return formatter<ATFRAMEWORK_UTILS_STRING_FWAPI_NAMESPACE_ID::basic_string_view<CharT>, CharT>::format(
+          ATFRAMEWORK_UTILS_STRING_FWAPI_NAMESPACE_ID::basic_string_view<CharT>{val.data(), val.size()}, ctx);
     }
   };
 }
