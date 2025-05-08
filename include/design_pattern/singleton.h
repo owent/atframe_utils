@@ -158,7 +158,7 @@ ATFRAMEWORK_UTILS_NAMESPACE_END
 
 #  define UTIL_DESIGN_PATTERN_SINGLETON_MEMBER_DECL_IMPL(LABEL, CLAZZ) \
    private:                                                            \
-    class UTIL_SYMBOL_LOCAL singleton_wrapper_type {                   \
+    class ATFW_UTIL_SYMBOL_LOCAL singleton_wrapper_type {              \
      public:                                                           \
       using ptr_t = std::shared_ptr<CLAZZ>;                            \
                                                                        \
@@ -178,22 +178,24 @@ ATFRAMEWORK_UTILS_NAMESPACE_END
    private:                                                            \
     friend class singleton_wrapper_type;
 
-#  define UTIL_DESIGN_PATTERN_SINGLETON_MEMBER_DEFINITION_IMPL(LABEL, CLAZZ)                                          \
-    UTIL_SYMBOL_LOCAL CLAZZ::singleton_wrapper_type::deleter::deleter() {}                                            \
-    UTIL_SYMBOL_LOCAL CLAZZ::singleton_wrapper_type::deleter::deleter(const deleter &) {}                             \
-    UTIL_SYMBOL_LOCAL CLAZZ::singleton_wrapper_type::deleter::~deleter() {}                                           \
-    UTIL_SYMBOL_LOCAL void CLAZZ::singleton_wrapper_type::deleter::operator()(CLAZZ *p) const noexcept {              \
-      __is_destroyed = true;                                                                                          \
-      UTIL_LOCK_ATOMIC_THREAD_FENCE(ATFRAMEWORK_UTILS_NAMESPACE_ID::lock::memory_order_release);                      \
-      delete p;                                                                                                       \
-    }                                                                                                                 \
-    UTIL_SYMBOL_LOCAL const CLAZZ::singleton_wrapper_type::ptr_t &CLAZZ::singleton_wrapper_type::me() {               \
-      static ptr_t data =                                                                                             \
-          ::ATFRAMEWORK_UTILS_NAMESPACE_ID::design_pattern::details::create_shared_ptr(new CLAZZ(), deleter());       \
-      return data;                                                                                                    \
-    }                                                                                                                 \
-    UTIL_SYMBOL_LOCAL bool CLAZZ::singleton_wrapper_type::is_instance_destroyed() noexcept { return __is_destroyed; } \
-    UTIL_SYMBOL_LOCAL bool CLAZZ::singleton_wrapper_type::__is_destroyed = false
+#  define UTIL_DESIGN_PATTERN_SINGLETON_MEMBER_DEFINITION_IMPL(LABEL, CLAZZ)                                    \
+    ATFW_UTIL_SYMBOL_LOCAL CLAZZ::singleton_wrapper_type::deleter::deleter() {}                                 \
+    ATFW_UTIL_SYMBOL_LOCAL CLAZZ::singleton_wrapper_type::deleter::deleter(const deleter &) {}                  \
+    ATFW_UTIL_SYMBOL_LOCAL CLAZZ::singleton_wrapper_type::deleter::~deleter() {}                                \
+    ATFW_UTIL_SYMBOL_LOCAL void CLAZZ::singleton_wrapper_type::deleter::operator()(CLAZZ *p) const noexcept {   \
+      __is_destroyed = true;                                                                                    \
+      UTIL_LOCK_ATOMIC_THREAD_FENCE(ATFRAMEWORK_UTILS_NAMESPACE_ID::lock::memory_order_release);                \
+      delete p;                                                                                                 \
+    }                                                                                                           \
+    ATFW_UTIL_SYMBOL_LOCAL const CLAZZ::singleton_wrapper_type::ptr_t &CLAZZ::singleton_wrapper_type::me() {    \
+      static ptr_t data =                                                                                       \
+          ::ATFRAMEWORK_UTILS_NAMESPACE_ID::design_pattern::details::create_shared_ptr(new CLAZZ(), deleter()); \
+      return data;                                                                                              \
+    }                                                                                                           \
+    ATFW_UTIL_SYMBOL_LOCAL bool CLAZZ::singleton_wrapper_type::is_instance_destroyed() noexcept {               \
+      return __is_destroyed;                                                                                    \
+    }                                                                                                           \
+    ATFW_UTIL_SYMBOL_LOCAL bool CLAZZ::singleton_wrapper_type::__is_destroyed = false
 
 #else
 
@@ -250,12 +252,12 @@ ATFRAMEWORK_UTILS_NAMESPACE_END
 
 #  define UTIL_DESIGN_PATTERN_SINGLETON_MEMBER_DECL_IMPL(LABEL, CLAZZ) \
    private:                                                            \
-    class UTIL_SYMBOL_LOCAL singleton_data_type {                      \
+    class ATFW_UTIL_SYMBOL_LOCAL singleton_data_type {                 \
      public:                                                           \
       std::shared_ptr<CLAZZ> instance;                                 \
       ATFRAMEWORK_UTILS_NAMESPACE_ID::lock::spin_lock lock;            \
     };                                                                 \
-    class UTIL_SYMBOL_LOCAL singleton_wrapper_type {                   \
+    class ATFW_UTIL_SYMBOL_LOCAL singleton_wrapper_type {              \
      public:                                                           \
       using ptr_t = std::shared_ptr<CLAZZ>;                            \
                                                                        \
@@ -278,15 +280,15 @@ ATFRAMEWORK_UTILS_NAMESPACE_END
     friend class singleton_wrapper_type;
 
 #  define UTIL_DESIGN_PATTERN_SINGLETON_MEMBER_DEFINITION_IMPL(LABEL, CLAZZ)                                         \
-    UTIL_SYMBOL_LOCAL CLAZZ::singleton_wrapper_type::deleter::deleter() {}                                           \
-    UTIL_SYMBOL_LOCAL CLAZZ::singleton_wrapper_type::deleter::deleter(const deleter &) {}                            \
-    UTIL_SYMBOL_LOCAL CLAZZ::singleton_wrapper_type::deleter::~deleter() {}                                          \
-    UTIL_SYMBOL_LOCAL void CLAZZ::singleton_wrapper_type::deleter::operator()(CLAZZ *p) const noexcept {             \
+    ATFW_UTIL_SYMBOL_LOCAL CLAZZ::singleton_wrapper_type::deleter::deleter() {}                                      \
+    ATFW_UTIL_SYMBOL_LOCAL CLAZZ::singleton_wrapper_type::deleter::deleter(const deleter &) {}                       \
+    ATFW_UTIL_SYMBOL_LOCAL CLAZZ::singleton_wrapper_type::deleter::~deleter() {}                                     \
+    ATFW_UTIL_SYMBOL_LOCAL void CLAZZ::singleton_wrapper_type::deleter::operator()(CLAZZ *p) const noexcept {        \
       __is_destroyed = true;                                                                                         \
       UTIL_LOCK_ATOMIC_THREAD_FENCE(ATFRAMEWORK_UTILS_NAMESPACE_ID::lock::memory_order_release);                     \
       delete p;                                                                                                      \
     }                                                                                                                \
-    UTIL_SYMBOL_LOCAL const CLAZZ::singleton_wrapper_type::ptr_t &CLAZZ::singleton_wrapper_type::me() {              \
+    ATFW_UTIL_SYMBOL_LOCAL const CLAZZ::singleton_wrapper_type::ptr_t &CLAZZ::singleton_wrapper_type::me() {         \
       if (!__data().instance) {                                                                                      \
         ATFRAMEWORK_UTILS_NAMESPACE_ID::lock::lock_holder<ATFRAMEWORK_UTILS_NAMESPACE_ID::lock::spin_lock> lock_opr( \
             __data().lock);                                                                                          \
@@ -304,12 +306,12 @@ ATFRAMEWORK_UTILS_NAMESPACE_END
       }                                                                                                              \
       return __data().instance;                                                                                      \
     }                                                                                                                \
-    UTIL_SYMBOL_LOCAL void CLAZZ::singleton_wrapper_type::__use(CLAZZ const &) {}                                    \
-    UTIL_SYMBOL_LOCAL CLAZZ::singleton_data_type &CLAZZ::singleton_wrapper_type::__data() {                          \
+    ATFW_UTIL_SYMBOL_LOCAL void CLAZZ::singleton_wrapper_type::__use(CLAZZ const &) {}                               \
+    ATFW_UTIL_SYMBOL_LOCAL CLAZZ::singleton_data_type &CLAZZ::singleton_wrapper_type::__data() {                     \
       static singleton_data_type data;                                                                               \
       return data;                                                                                                   \
     }                                                                                                                \
-    UTIL_SYMBOL_LOCAL bool CLAZZ::singleton_wrapper_type::__is_destroyed = false
+    ATFW_UTIL_SYMBOL_LOCAL bool CLAZZ::singleton_wrapper_type::__is_destroyed = false
 
 #endif
 
@@ -359,7 +361,7 @@ ATFRAMEWORK_UTILS_NAMESPACE_END
   UTIL_DESIGN_PATTERN_SINGLETON_MEMBER_DECL(UTIL_SYMBOL_VISIBLE, CLAZZ, CLAZZ)
 
 #define UTIL_DESIGN_PATTERN_SINGLETON_LOCAL_DECL(CLAZZ) \
-  UTIL_DESIGN_PATTERN_SINGLETON_MEMBER_DECL(UTIL_SYMBOL_LOCAL, CLAZZ, CLAZZ)
+  UTIL_DESIGN_PATTERN_SINGLETON_MEMBER_DECL(ATFW_UTIL_SYMBOL_LOCAL, CLAZZ, CLAZZ)
 
 #define UTIL_DESIGN_PATTERN_SINGLETON_IMPORT_DATA_DEFINITION(CLAZZ) \
   UTIL_DESIGN_PATTERN_SINGLETON_MEMBER_DEFINITION(UTIL_SYMBOL_IMPORT, CLAZZ, CLAZZ)
@@ -371,7 +373,7 @@ ATFRAMEWORK_UTILS_NAMESPACE_END
   UTIL_DESIGN_PATTERN_SINGLETON_MEMBER_DEFINITION(UTIL_SYMBOL_VISIBLE, CLAZZ, CLAZZ)
 
 #define UTIL_DESIGN_PATTERN_SINGLETON_LOCAL_DATA_DEFINITION(CLAZZ) \
-  UTIL_DESIGN_PATTERN_SINGLETON_MEMBER_DEFINITION(UTIL_SYMBOL_LOCAL, CLAZZ, CLAZZ)
+  UTIL_DESIGN_PATTERN_SINGLETON_MEMBER_DEFINITION(ATFW_UTIL_SYMBOL_LOCAL, CLAZZ, CLAZZ)
 
 ATFRAMEWORK_UTILS_NAMESPACE_BEGIN
 namespace design_pattern {
@@ -401,13 +403,13 @@ class local_singleton {
   using self_type = T;
   using ptr_t = std::shared_ptr<self_type>;
 
-  UTIL_SYMBOL_LOCAL local_singleton() {}
-  UTIL_SYMBOL_LOCAL ~local_singleton() {}
+  ATFW_UTIL_SYMBOL_LOCAL local_singleton() {}
+  ATFW_UTIL_SYMBOL_LOCAL ~local_singleton() {}
 
-  UTIL_DESIGN_PATTERN_SINGLETON_DEF_FUNCS(UTIL_SYMBOL_LOCAL, self_type, local_singleton)
+  UTIL_DESIGN_PATTERN_SINGLETON_DEF_FUNCS(ATFW_UTIL_SYMBOL_LOCAL, self_type, local_singleton)
 };
 template <class T>
-UTIL_SYMBOL_LOCAL bool local_singleton<T>::singleton_wrapper_t::__is_destroyed = false;
+ATFW_UTIL_SYMBOL_LOCAL bool local_singleton<T>::singleton_wrapper_t::__is_destroyed = false;
 
 }  // namespace design_pattern
 ATFRAMEWORK_UTILS_NAMESPACE_END
