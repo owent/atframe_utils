@@ -213,11 +213,14 @@ constexpr auto fmtapi_to_string_view(const T &s)
     -> ATFRAMEWORK_UTILS_STRING_FWAPI_NAMESPACE_ID::basic_string_view<typename T::value_type> {
   return s;
 }
+
+#if !(defined(ATFRAMEWORK_UTILS_ENABLE_STD_FORMAT) && ATFRAMEWORK_UTILS_ENABLE_STD_FORMAT)
 template <class CharT>
 constexpr auto fmtapi_to_string_view(ATFRAMEWORK_UTILS_STRING_FWAPI_NAMESPACE_ID::basic_string_view<CharT> s)
     -> ATFRAMEWORK_UTILS_STRING_FWAPI_NAMESPACE_ID::basic_string_view<CharT> {
   return s;
 }
+#endif
 
 template <class CharT, class Traits>
 constexpr auto fmtapi_to_string_view(nostd::basic_string_view<CharT, Traits> s)
@@ -225,14 +228,12 @@ constexpr auto fmtapi_to_string_view(nostd::basic_string_view<CharT, Traits> s)
   return ATFRAMEWORK_UTILS_STRING_FWAPI_NAMESPACE_ID::basic_string_view<CharT>{s.data(), s.size()};
 }
 
-#if !(defined(ATFRAMEWORK_UTILS_ENABLE_STD_FORMAT) && ATFRAMEWORK_UTILS_ENABLE_STD_FORMAT)
-#  if defined(ATFRAMEWORK_UTILS_GSL_TEST_STL_STRING_VIEW) && ATFRAMEWORK_UTILS_GSL_TEST_STL_STRING_VIEW
+#if defined(ATFRAMEWORK_UTILS_GSL_TEST_STL_STRING_VIEW) && ATFRAMEWORK_UTILS_GSL_TEST_STL_STRING_VIEW
 template <class CharT, class Traits>
 constexpr auto fmtapi_to_string_view(std::basic_string_view<CharT, Traits> s)
     -> ATFRAMEWORK_UTILS_STRING_FWAPI_NAMESPACE_ID::basic_string_view<CharT> {
   return ATFRAMEWORK_UTILS_STRING_FWAPI_NAMESPACE_ID::basic_string_view<CharT>{s.data(), s.size()};
 }
-#  endif
 #endif
 
 template <class TFMT>
@@ -248,23 +249,23 @@ struct fmtapi_detect_char_t_from_fmt_base<CharT *> {
   using value_type = CharT;
 };
 
+#if !(defined(ATFRAMEWORK_UTILS_ENABLE_STD_FORMAT) && ATFRAMEWORK_UTILS_ENABLE_STD_FORMAT)
 template <class CharT>
 struct fmtapi_detect_char_t_from_fmt_base<ATFRAMEWORK_UTILS_STRING_FWAPI_NAMESPACE_ID::basic_string_view<CharT>> {
   using value_type = CharT;
 };
+#endif
 
 template <class CharT, class Traits>
 struct fmtapi_detect_char_t_from_fmt_base<nostd::basic_string_view<CharT, Traits>> {
   using value_type = CharT;
 };
 
-#if !(defined(ATFRAMEWORK_UTILS_ENABLE_STD_FORMAT) && ATFRAMEWORK_UTILS_ENABLE_STD_FORMAT)
-#  if defined(ATFRAMEWORK_UTILS_GSL_TEST_STL_STRING_VIEW) && ATFRAMEWORK_UTILS_GSL_TEST_STL_STRING_VIEW
+#if defined(ATFRAMEWORK_UTILS_GSL_TEST_STL_STRING_VIEW) && ATFRAMEWORK_UTILS_GSL_TEST_STL_STRING_VIEW
 template <class CharT, class Traits>
 struct fmtapi_detect_char_t_from_fmt_base<std::basic_string_view<CharT, Traits>> {
   using value_type = CharT;
 };
-#  endif
 #endif
 
 template <class T>
@@ -542,34 +543,38 @@ ATFRAMEWORK_UTILS_NAMESPACE_END
 
 #if defined(ATFRAMEWORK_UTILS_STRING_ENABLE_FWAPI) && ATFRAMEWORK_UTILS_STRING_ENABLE_FWAPI
 #  if defined(ATFRAMEWORK_UTILS_ENABLE_STD_FORMAT) && ATFRAMEWORK_UTILS_ENABLE_STD_FORMAT
-#    define ATFRAMEWORK_UTILS_STRING_FWAPI_DECL_NAMESPACE() namespace std
-#    define ATFRAMEWORK_UTILS_STRING_FWAPI_FORMAT_AS(Type, Base)                          \
-      ATFRAMEWORK_UTILS_STRING_FWAPI_DECL_NAMESPACE() {                                   \
-        template <class CharT>                                                            \
-        struct formatter<Type, CharT> : formatter<Base, CharT> {                          \
-          template <class FormatContext>                                                  \
-          auto format(Type const &val, FormatContext &ctx) -> decltype(ctx.out()) const { \
-            return formatter<Base, CharT>::format(val, ctx);                              \
-          }                                                                               \
-        };                                                                                \
-      }
+#    define ATFRAMEWORK_UTILS_STRING_FWAPI_NAMESPACE_BEGIN namespace std {
+#    define ATFRAMEWORK_UTILS_STRING_FWAPI_NAMESPACE_END }
+#    define ATFRAMEWORK_UTILS_STRING_FWAPI_FORMAT_AS(Type, Base)                        \
+      ATFRAMEWORK_UTILS_STRING_FWAPI_NAMESPACE_BEGIN                                    \
+      template <class CharT>                                                            \
+      struct formatter<Type, CharT> : formatter<Base, CharT> {                          \
+        template <class FormatContext>                                                  \
+        auto format(Type const &val, FormatContext &ctx) -> decltype(ctx.out()) const { \
+          return formatter<Base, CharT>::format(val, ctx);                              \
+        }                                                                               \
+      };                                                                                \
+      ATFRAMEWORK_UTILS_STRING_FWAPI_NAMESPACE_END
 #  else
-#    define ATFRAMEWORK_UTILS_STRING_FWAPI_DECL_NAMESPACE() namespace fmt
+#    define ATFRAMEWORK_UTILS_STRING_FWAPI_NAMESPACE_BEGIN FMT_BEGIN_NAMESPACE
+#    define ATFRAMEWORK_UTILS_STRING_FWAPI_NAMESPACE_END FMT_END_NAMESPACE
 #    define ATFRAMEWORK_UTILS_STRING_FWAPI_FORMAT_AS(Type, Base) \
-      ATFRAMEWORK_UTILS_STRING_FWAPI_DECL_NAMESPACE() { FMT_FORMAT_AS(Type, Base); }
+      ATFRAMEWORK_UTILS_STRING_FWAPI_NAMESPACE_BEGIN             \
+      FMT_FORMAT_AS(Type, Base);                                 \
+      ATFRAMEWORK_UTILS_STRING_FWAPI_NAMESPACE_END
 #  endif
 
-ATFRAMEWORK_UTILS_STRING_FWAPI_DECL_NAMESPACE() {
-  template <class CharT, class Traits>
-  struct formatter<ATFRAMEWORK_UTILS_NAMESPACE_ID::nostd::basic_string_view<CharT, Traits>, CharT>
-      : formatter<ATFRAMEWORK_UTILS_STRING_FWAPI_NAMESPACE_ID::basic_string_view<CharT>, CharT> {
-    template <class FormatContext>
-    auto format(ATFRAMEWORK_UTILS_NAMESPACE_ID::nostd::basic_string_view<CharT, Traits> const &val,
-                FormatContext &ctx) const -> decltype(ctx.out()) {
-      return formatter<ATFRAMEWORK_UTILS_STRING_FWAPI_NAMESPACE_ID::basic_string_view<CharT>, CharT>::format(
-          ATFRAMEWORK_UTILS_STRING_FWAPI_NAMESPACE_ID::basic_string_view<CharT>{val.data(), val.size()}, ctx);
-    }
-  };
-}
+ATFRAMEWORK_UTILS_STRING_FWAPI_NAMESPACE_BEGIN
+template <class CharT, class Traits>
+struct formatter<ATFRAMEWORK_UTILS_NAMESPACE_ID::nostd::basic_string_view<CharT, Traits>, CharT>
+    : formatter<ATFRAMEWORK_UTILS_STRING_FWAPI_NAMESPACE_ID::basic_string_view<CharT>, CharT> {
+  template <class FormatContext>
+  auto format(ATFRAMEWORK_UTILS_NAMESPACE_ID::nostd::basic_string_view<CharT, Traits> const &val,
+              FormatContext &ctx) const -> decltype(ctx.out()) {
+    return formatter<ATFRAMEWORK_UTILS_STRING_FWAPI_NAMESPACE_ID::basic_string_view<CharT>, CharT>::format(
+        ATFRAMEWORK_UTILS_STRING_FWAPI_NAMESPACE_ID::basic_string_view<CharT>{val.data(), val.size()}, ctx);
+  }
+};
+ATFRAMEWORK_UTILS_STRING_FWAPI_NAMESPACE_END
 
 #endif
