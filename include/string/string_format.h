@@ -86,10 +86,11 @@ class ATFRAMEWORK_UTILS_API_HEAD_ONLY truncating_iterator_base {
   using pointer = typename std::iterator_traits<OutputIt>::pointer;
   using reference = typename std::iterator_traits<OutputIt>::reference;
 
-  truncating_iterator_base(OutputIt out, size_type limit) : out_(out), limit_(limit), count_(0) {}
+  ATFW_UTIL_ATTRIBUTE_CXX20_CONSTEXPR truncating_iterator_base(OutputIt out, size_type limit)
+      : out_(out), limit_(limit), count_(0) {}
 
-  OutputIt base() const noexcept { return out_; }
-  size_type count() const noexcept { return count_; }
+  ATFW_UTIL_ATTRIBUTE_CXX20_CONSTEXPR OutputIt base() const noexcept { return out_; }
+  ATFW_UTIL_ATTRIBUTE_CXX20_CONSTEXPR size_type count() const noexcept { return count_; }
 
  protected:
   OutputIt out_;
@@ -298,7 +299,11 @@ struct make_format_args_helper_base {
     return std::make_format_args<std::basic_format_context<std::back_insert_iterator<std::basic_string<CharT>>, CharT>>(
         args...);
 #else
+#  if FMT_VERSION >= 110000
     return fmt::make_format_args<fmt::buffered_context<CharT>>(args...);
+#  else
+    return fmt::make_format_args<fmt::buffer_context<CharT>>(args...);
+#  endif
 #endif
   }
 };
