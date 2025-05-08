@@ -57,14 +57,14 @@
 #endif
 
 #if (defined(_MSC_VER) && _MSC_VER >= 1600) || (defined(__STDC_VERSION__) && __STDC_VERSION__ >= 201112L)
-#  define UTIL_FS_OPEN(e, f, path, mode) EXPLICIT_UNUSED_ATTR errno_t e = fopen_s(&f, path, mode)
+#  define UTIL_FS_OPEN(e, f, path, mode) ATFW_EXPLICIT_UNUSED_ATTR errno_t e = fopen_s(&f, path, mode)
 #  define UTIL_FS_CLOSE(f) fclose(f)
 #  define UTIL_FS_C11_API
 #else
 #  include <errno.h>
 #  define UTIL_FS_OPEN(e, f, path, mode) \
     f = fopen(path, mode);               \
-    EXPLICIT_UNUSED_ATTR int e = errno
+    ATFW_EXPLICIT_UNUSED_ATTR int e = errno
 #  define UTIL_FS_CLOSE(f) fclose(f)
 #endif
 

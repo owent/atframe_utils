@@ -742,3 +742,52 @@
 #ifndef UTIL_ATTRIBUTE_RETURNS_NONNULL
 #  define UTIL_ATTRIBUTE_RETURNS_NONNULL ATFW_UTIL_ATTRIBUTE_RETURNS_NONNULL
 #endif
+
+// Macro for constexpr, to support in mixed 03/0x mode.
+#ifndef ATFW_UTIL_ATTRIBUTE_CXX14_CONSTEXPR
+#  if (defined(__cplusplus) && __cplusplus >= 201402L) || (defined(_MSVC_LANG) && _MSVC_LANG >= 201703L)
+#    define ATFW_UTIL_ATTRIBUTE_CXX14_CONSTEXPR constexpr
+#  else
+#    define ATFW_UTIL_ATTRIBUTE_CXX14_CONSTEXPR
+#  endif
+#endif
+
+#ifndef ATFW_UTIL_ATTRIBUTE_CXX17_CONSTEXPR
+#  if (defined(__cplusplus) && __cplusplus >= 201703L) || (defined(_MSVC_LANG) && _MSVC_LANG >= 201703L)
+#    define ATFW_UTIL_ATTRIBUTE_CXX17_CONSTEXPR constexpr
+#  else
+#    define ATFW_UTIL_ATTRIBUTE_CXX17_CONSTEXPR
+#  endif
+#endif
+
+#ifndef ATFW_UTIL_ATTRIBUTE_CXX20_CONSTEXPR
+#  if (defined(__cplusplus) && __cplusplus >= 202002L) || (defined(_MSVC_LANG) && _MSVC_LANG >= 202002L)
+#    define ATFW_UTIL_ATTRIBUTE_CXX20_CONSTEXPR constexpr
+#  else
+#    define ATFW_UTIL_ATTRIBUTE_CXX20_CONSTEXPR
+#  endif
+#endif
+
+#ifndef ATFW_UTIL_ATTRIBUTE_CXX23_CONSTEXPR
+#  if (defined(__cplusplus) && __cplusplus >= 202100L) || (defined(_MSVC_LANG) && _MSVC_LANG >= 202100L)
+#    define ATFW_UTIL_ATTRIBUTE_CXX23_CONSTEXPR constexpr
+#  else
+#    define ATFW_UTIL_ATTRIBUTE_CXX23_CONSTEXPR
+#  endif
+#endif
+
+#ifndef ATFW_UTIL_ATTRIBUTE_CXX26_CONSTEXPR
+#  if (defined(__cplusplus) && __cplusplus >= 202400L) || (defined(_MSVC_LANG) && _MSVC_LANG >= 202400L)
+#    define ATFW_UTIL_ATTRIBUTE_CXX26_CONSTEXPR constexpr
+#  else
+#    define ATFW_UTIL_ATTRIBUTE_CXX26_CONSTEXPR
+#  endif
+#endif
+
+#ifndef ATFW_UTIL_ATTRIBUTE_CXX17_INLINE
+#  if (defined(__cplusplus) && __cplusplus >= 201703L) || (defined(_MSVC_LANG) && _MSVC_LANG >= 201703L)
+#    define ATFW_UTIL_ATTRIBUTE_CXX17_INLINE inline
+#  else
+#    define ATFW_UTIL_ATTRIBUTE_CXX17_INLINE
+#  endif
+#endif

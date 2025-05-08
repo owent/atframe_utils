@@ -19,6 +19,7 @@
 #endif
 
 #include "config/atframe_utils_build_feature.h"
+#include "std/explicit_declare.h"
 
 #include "nostd/nullability.h"
 #include "nostd/utility_data_size.h"
@@ -32,22 +33,14 @@
 #endif
 
 #if (defined(__GNUC__) && !defined(__clang__))
-#  define UTIL_NOSTD_INTERNAL_STRING_VIEW_MEMCMP __builtin_memcmp
+#  define ATFW_UTIL_NOSTD_INTERNAL_STRING_VIEW_MEMCMP __builtin_memcmp
 #elif defined(__clang__)
 #  if __has_builtin(__builtin_memcmp)
-#    define UTIL_NOSTD_INTERNAL_STRING_VIEW_MEMCMP __builtin_memcmp
+#    define ATFW_UTIL_NOSTD_INTERNAL_STRING_VIEW_MEMCMP __builtin_memcmp
 #  endif
 #endif
-#if !defined(UTIL_NOSTD_INTERNAL_STRING_VIEW_MEMCMP)
-#  define UTIL_NOSTD_INTERNAL_STRING_VIEW_MEMCMP memcmp
-#endif
-
-#if defined(__cplusplus) && __cplusplus >= 201402L
-#  define UTIL_NOSTD_STRING_VIEW_CXX14_CONSTEXPR constexpr
-#elif defined(_MSVC_LANG) && _MSVC_LANG >= 201402L
-#  define UTIL_NOSTD_STRING_VIEW_CXX14_CONSTEXPR constexpr
-#else
-#  define UTIL_NOSTD_STRING_VIEW_CXX14_CONSTEXPR
+#if !defined(ATFW_UTIL_NOSTD_INTERNAL_STRING_VIEW_MEMCMP)
+#  define ATFW_UTIL_NOSTD_INTERNAL_STRING_VIEW_MEMCMP memcmp
 #endif
 
 ATFRAMEWORK_UTILS_NAMESPACE_BEGIN
@@ -149,8 +142,8 @@ class ATFRAMEWORK_UTILS_API_HEAD_ONLY basic_string_view {
   }
 
   template <class Allocator>
-  constexpr basic_string_view& operator=(
-      const common_type_t<::std::basic_string<CharT, Traits, Allocator>>& str UTIL_ATTRIBUTE_LIFETIME_BOUND) noexcept {
+  constexpr basic_string_view& operator=(const common_type_t<::std::basic_string<CharT, Traits, Allocator>>& str
+                                         UTIL_ATTRIBUTE_LIFETIME_BOUND) noexcept {
     basic_string_view(str.data(), str.size()).swap(*this);
     static_assert(
         __basic_string_view_lifetime_guard<CharT, Traits, const ::std::basic_string<CharT, Traits, Allocator>&>::value,
@@ -272,7 +265,7 @@ class ATFRAMEWORK_UTILS_API_HEAD_ONLY basic_string_view {
   //
   // Removes the first `n` characters from the `basic_string_view`. Note that the
   // underlying string is not changed, only the view.
-  UTIL_NOSTD_STRING_VIEW_CXX14_CONSTEXPR void remove_prefix(size_type n) {
+  ATFW_UTIL_ATTRIBUTE_CXX14_CONSTEXPR void remove_prefix(size_type n) {
     if (n <= length_) {
       ptr_ += n;
       length_ -= n;
@@ -286,7 +279,7 @@ class ATFRAMEWORK_UTILS_API_HEAD_ONLY basic_string_view {
   //
   // Removes the last `n` characters from the `basic_string_view`. Note that the
   // underlying string is not changed, only the view.
-  UTIL_NOSTD_STRING_VIEW_CXX14_CONSTEXPR void remove_suffix(size_type n) {
+  ATFW_UTIL_ATTRIBUTE_CXX14_CONSTEXPR void remove_suffix(size_type n) {
     if (n <= length_) {
       length_ -= n;
     } else {
@@ -297,7 +290,7 @@ class ATFRAMEWORK_UTILS_API_HEAD_ONLY basic_string_view {
   // basic_string_view::swap()
   //
   // Swaps this `basic_string_view` with another `basic_string_view`.
-  UTIL_NOSTD_STRING_VIEW_CXX14_CONSTEXPR void swap(basic_string_view& s) noexcept {
+  ATFW_UTIL_ATTRIBUTE_CXX14_CONSTEXPR void swap(basic_string_view& s) noexcept {
     const_pointer swap_ptr = ptr_;
     ptr_ = s.ptr_;
     s.ptr_ = swap_ptr;
@@ -356,7 +349,7 @@ class ATFRAMEWORK_UTILS_API_HEAD_ONLY basic_string_view {
     return _compare_impl(length_, x.length_,
                          Min(length_, x.length_) == 0
                              ? 0
-                             : UTIL_NOSTD_INTERNAL_STRING_VIEW_MEMCMP(ptr_, x.ptr_, Min(length_, x.length_)));
+                             : ATFW_UTIL_NOSTD_INTERNAL_STRING_VIEW_MEMCMP(ptr_, x.ptr_, Min(length_, x.length_)));
   }
 
   // Overload of `basic_string_view::compare()` for comparing a substring of the
@@ -464,6 +457,116 @@ class ATFRAMEWORK_UTILS_API_HEAD_ONLY basic_string_view {
   // `s` within the `basic_string_view`.
   size_type rfind(const CharT* s, size_type pos = npos) const { return rfind(basic_string_view(s), pos); }
 
+  ATFW_EXPLICIT_NODISCARD_ATTR
+  constexpr size_type find_first_of(basic_string_view __str, size_type __pos = 0) const noexcept {
+    return this->find_first_of(__str.ptr_, __pos, __str.length_);
+  }
+
+  ATFW_EXPLICIT_NODISCARD_ATTR
+  constexpr size_type find_first_of(CharT __c, size_type __pos = 0) const noexcept { return this->find(__c, __pos); }
+
+  ATFW_EXPLICIT_NODISCARD_ATTR
+  constexpr size_type find_first_of(const CharT* __str, size_type __pos, size_type __n) const noexcept {
+    {
+      for (; __n && __pos < this->length_; ++__pos) {
+        const CharT* __p = traits_type::find(__str, __n, this->ptr_[__pos]);
+        if (__p) return __pos;
+      }
+      return npos;
+    }
+  }
+
+  ATFW_EXPLICIT_NODISCARD_ATTR
+  constexpr size_type find_first_of(const CharT* __str, size_type __pos = 0) const noexcept {
+    return this->find_first_of(__str, __pos, traits_type::length(__str));
+  }
+
+  ATFW_EXPLICIT_NODISCARD_ATTR
+  constexpr size_type find_last_of(basic_string_view __str, size_type __pos = npos) const noexcept {
+    return this->find_last_of(__str.ptr_, __pos, __str.length_);
+  }
+
+  ATFW_EXPLICIT_NODISCARD_ATTR
+  constexpr size_type find_last_of(CharT __c, size_type __pos = npos) const noexcept { return this->rfind(__c, __pos); }
+
+  ATFW_EXPLICIT_NODISCARD_ATTR
+  constexpr size_type find_last_of(const CharT* __str, size_type __pos, size_type __n) const noexcept {
+    {
+      size_type __size = this->size();
+      if (__size && __n) {
+        if (--__size > __pos) __size = __pos;
+        do {
+          if (traits_type::find(__str, __n, this->ptr_[__size])) return __size;
+        } while (__size-- != 0);
+      }
+      return npos;
+    }
+  }
+
+  ATFW_EXPLICIT_NODISCARD_ATTR
+  constexpr size_type find_last_of(const CharT* __str, size_type __pos = npos) const noexcept {
+    return this->find_last_of(__str, __pos, traits_type::length(__str));
+  }
+
+  ATFW_EXPLICIT_NODISCARD_ATTR
+  constexpr size_type find_first_not_of(basic_string_view __str, size_type __pos = 0) const noexcept {
+    return this->find_first_not_of(__str.ptr_, __pos, __str.length_);
+  }
+
+  ATFW_EXPLICIT_NODISCARD_ATTR
+  constexpr size_type find_first_not_of(CharT __c, size_type __pos = 0) const noexcept {
+    for (; __pos < this->length_; ++__pos)
+      if (!traits_type::eq(this->ptr_[__pos], __c)) return __pos;
+    return npos;
+  }
+
+  ATFW_EXPLICIT_NODISCARD_ATTR
+  constexpr size_type find_first_not_of(const CharT* __str, size_type __pos, size_type __n) const noexcept {
+    for (; __pos < this->length_; ++__pos)
+      if (!traits_type::find(__str, __n, this->ptr_[__pos])) return __pos;
+    return npos;
+  }
+
+  ATFW_EXPLICIT_NODISCARD_ATTR
+  constexpr size_type find_first_not_of(const CharT* __str, size_type __pos = 0) const noexcept {
+    return this->find_first_not_of(__str, __pos, traits_type::length(__str));
+  }
+
+  ATFW_EXPLICIT_NODISCARD_ATTR
+  constexpr size_type find_last_not_of(basic_string_view __str, size_type __pos = npos) const noexcept {
+    return this->find_last_not_of(__str.ptr_, __pos, __str.length_);
+  }
+
+  ATFW_EXPLICIT_NODISCARD_ATTR
+  constexpr size_type find_last_not_of(CharT __c, size_type __pos = npos) const noexcept {
+    size_type __size = this->length_;
+    if (__size) {
+      if (--__size > __pos) __size = __pos;
+      do {
+        if (!traits_type::eq(this->ptr_[__size], __c)) return __size;
+      } while (__size--);
+    }
+    return npos;
+  }
+
+  ATFW_EXPLICIT_NODISCARD_ATTR
+  constexpr size_type find_last_not_of(const CharT* __str, size_type __pos, size_type __n) const noexcept {
+    __glibcxx_requires_string_len(__str, __n);
+    size_type __size = this->length_;
+    if (__size) {
+      if (--__size > __pos) __size = __pos;
+      do {
+        if (!traits_type::find(__str, __n, this->ptr_[__size])) return __size;
+      } while (__size--);
+    }
+    return npos;
+  }
+
+  ATFW_EXPLICIT_NODISCARD_ATTR
+  constexpr size_type find_last_not_of(const CharT* __str, size_type __pos = npos) const noexcept {
+    return this->find_last_not_of(__str, __pos, traits_type::length(__str));
+  }
+
  private:
   static constexpr size_type kMaxSize = (std::numeric_limits<difference_type>::max)();
 
@@ -514,7 +617,7 @@ class ATFRAMEWORK_UTILS_API_HEAD_ONLY basic_string_view {
         break;
       }
 
-      if (UTIL_NOSTD_INTERNAL_STRING_VIEW_MEMCMP(match, pneedle, neelen) == 0)
+      if (ATFW_UTIL_NOSTD_INTERNAL_STRING_VIEW_MEMCMP(match, pneedle, neelen) == 0)
         return match;
       else
         phaystack = match + 1;
@@ -561,7 +664,7 @@ template <class CharT, class Traits>
 ATFRAMEWORK_UTILS_API_HEAD_ONLY constexpr bool operator==(basic_string_view<CharT, Traits> x,
                                                           basic_string_view<CharT, Traits> y) noexcept {
   return x.size() == y.size() &&
-         (x.empty() || UTIL_NOSTD_INTERNAL_STRING_VIEW_MEMCMP(x.data(), y.data(), x.size()) == 0);
+         (x.empty() || ATFW_UTIL_NOSTD_INTERNAL_STRING_VIEW_MEMCMP(x.data(), y.data(), x.size()) == 0);
 }
 
 #  if UTIL_NOSTD_INTERNAL_STRING_VIEW_USE_COMMON_TYPE_TRANSITION_LEFT
@@ -573,7 +676,7 @@ template <class CharT, class Traits>
 ATFRAMEWORK_UTILS_API_HEAD_ONLY constexpr bool operator==(
     typename std::common_type<basic_string_view<CharT, Traits>>::type x, basic_string_view<CharT, Traits> y) noexcept {
   return x.size() == y.size() &&
-         (x.empty() || UTIL_NOSTD_INTERNAL_STRING_VIEW_MEMCMP(x.data(), y.data(), x.size()) == 0);
+         (x.empty() || ATFW_UTIL_NOSTD_INTERNAL_STRING_VIEW_MEMCMP(x.data(), y.data(), x.size()) == 0);
 }
 #  endif
 #endif
@@ -586,7 +689,7 @@ template <class CharT, class Traits>
 ATFRAMEWORK_UTILS_API_HEAD_ONLY constexpr bool operator==(
     basic_string_view<CharT, Traits> x, typename std::common_type<basic_string_view<CharT, Traits>>::type y) noexcept {
   return x.size() == y.size() &&
-         (x.empty() || UTIL_NOSTD_INTERNAL_STRING_VIEW_MEMCMP(x.data(), y.data(), x.size()) == 0);
+         (x.empty() || ATFW_UTIL_NOSTD_INTERNAL_STRING_VIEW_MEMCMP(x.data(), y.data(), x.size()) == 0);
 }
 
 template <class CharT, class Traits>
@@ -879,7 +982,7 @@ using wstring_view = basic_string_view<wchar_t>;
 }  // namespace nostd
 ATFRAMEWORK_UTILS_NAMESPACE_END
 
-#undef UTIL_NOSTD_STRING_VIEW_CXX14_CONSTEXPR
-#undef UTIL_NOSTD_INTERNAL_STRING_VIEW_MEMCMP
+#undef ATFW_UTIL_ATTRIBUTE_CXX14_CONSTEXPR
+#undef ATFW_UTIL_NOSTD_INTERNAL_STRING_VIEW_MEMCMP
 #undef UTIL_NOSTD_INTERNAL_STRING_VIEW_USE_COMMON_TYPE
 #undef UTIL_NOSTD_INTERNAL_STRING_VIEW_USE_COMMON_TYPE_TRANSITION_LEFT

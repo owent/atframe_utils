@@ -449,8 +449,8 @@ ATFRAMEWORK_UTILS_API void http_request::set_opt_http_content_decoding(bool v) {
   set_opt_bool(CURLOPT_HTTP_CONTENT_DECODING, v);
 }
 
-ATFRAMEWORK_UTILS_API bool http_request::set_opt_keepalive(EXPLICIT_UNUSED_ATTR time_t idle,
-                                                           EXPLICIT_UNUSED_ATTR time_t interval) {
+ATFRAMEWORK_UTILS_API bool http_request::set_opt_keepalive(ATFW_EXPLICIT_UNUSED_ATTR time_t idle,
+                                                           ATFW_EXPLICIT_UNUSED_ATTR time_t interval) {
 #    if LIBCURL_VERSION_NUM >= 0x071900
   if (0 == idle && 0 == interval) {
     set_opt_bool(CURLOPT_TCP_KEEPALIVE, false);

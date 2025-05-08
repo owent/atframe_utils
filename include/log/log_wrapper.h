@@ -28,7 +28,6 @@ using ::ATFRAMEWORK_UTILS_NAMESPACE_ID::string::format;
 using ::ATFRAMEWORK_UTILS_NAMESPACE_ID::string::format_to;
 using ::ATFRAMEWORK_UTILS_NAMESPACE_ID::string::format_to_n;
 using ::ATFRAMEWORK_UTILS_NAMESPACE_ID::string::format_to_n_result;
-using ::ATFRAMEWORK_UTILS_NAMESPACE_ID::string::make_format_args;
 using ::ATFRAMEWORK_UTILS_NAMESPACE_ID::string::vformat;
 using ::ATFRAMEWORK_UTILS_NAMESPACE_ID::string::vformat_to;
 
@@ -64,7 +63,7 @@ class log_wrapper {
   };
 
  private:
-  struct ATFRAMEWORK_UTILS_API construct_helper_t{};
+  struct ATFRAMEWORK_UTILS_API construct_helper_t {};
   struct ATFRAMEWORK_UTILS_API log_operation_t {
     char *buffer;
     size_t total_size;
@@ -113,26 +112,26 @@ class log_wrapper {
 #  if defined(ATFRAMEWORK_UTILS_ENABLE_EXCEPTION) && ATFRAMEWORK_UTILS_ENABLE_EXCEPTION
       try {
 #  endif
-        ATFRAMEWORK_UTILS_STRING_FWAPI_NAMESPACE format_to_n_result<char *> result =
+        ATFRAMEWORK_UTILS_STRING_FWAPI_NAMESPACE_ID::format_to_n_result<char *> result =
 #  ifdef ATFRAMEWORK_UTILS_STRING_FWAPI_FORMAT_STRING_TYPE
-            ATFRAMEWORK_UTILS_STRING_FWAPI_NAMESPACE vformat_to_n<char *>(
+            ATFRAMEWORK_UTILS_STRING_FWAPI_NAMESPACE_ID::vformat_to_n<char *>(
                 writer.buffer + writer.writen_size, writer.total_size - writer.writen_size - 1,
 #    if defined(FMT_VERSION) && FMT_VERSION >= 100000
-                ATFRAMEWORK_UTILS_STRING_FWAPI_NAMESPACE string_view{std::forward<FMT>(fmt_text)},
+                ATFRAMEWORK_UTILS_STRING_FWAPI_NAMESPACE_ID::string_view{std::forward<FMT>(fmt_text)},
 #    else
                 std::forward<FMT>(fmt_text),
 #    endif
 #    if defined(ATFRAMEWORK_UTILS_ENABLE_FMTLIB) && ATFRAMEWORK_UTILS_ENABLE_FMTLIB && defined(FMT_VERSION) && \
         FMT_VERSION >= 100000
-                ATFRAMEWORK_UTILS_STRING_FWAPI_NAMESPACE make_format_args(args...)
+                ATFRAMEWORK_UTILS_STRING_FWAPI_NAMESPACE_ID::make_format_args(args...)
 #    else
-                ATFRAMEWORK_UTILS_STRING_FWAPI_NAMESPACE make_format_args(std::forward<TARGS>(args)...)
+                ATFRAMEWORK_UTILS_STRING_FWAPI_NAMESPACE_ID::make_format_args(std::forward<TARGS>(args)...)
 #    endif
             );  // NOLINT: whitespace/parens
 #  else
-          ATFRAMEWORK_UTILS_NAMESPACE_ID::log::format_to_n<char *>(writer.buffer + writer.writen_size,
-                                                                   writer.total_size - writer.writen_size - 1,
-                                                                   std::forward<TARGS>(args)...);
+          ATFRAMEWORK_UTILS_NAMESPACE_ID::string::format_to_n<char *>(writer.buffer + writer.writen_size,
+                                                                      writer.total_size - writer.writen_size - 1,
+                                                                      std::forward<TARGS>(args)...);
 #  endif
         if (result.size > 0) {
           writer.writen_size += static_cast<size_t>(result.size);
@@ -144,7 +143,7 @@ class log_wrapper {
           *(writer.buffer + writer.total_size - 1) = 0;
         }
 #  if defined(ATFRAMEWORK_UTILS_ENABLE_EXCEPTION) && ATFRAMEWORK_UTILS_ENABLE_EXCEPTION
-      } catch (const ATFRAMEWORK_UTILS_STRING_FWAPI_NAMESPACE format_error &e) {
+      } catch (const ATFRAMEWORK_UTILS_STRING_FWAPI_NAMESPACE_ID::format_error &e) {
         append_log(writer, "\r\nGot format error:\r\n", 0);
         append_log(writer, e.what(), 0);
       } catch (const std::runtime_error &e) {

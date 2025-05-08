@@ -262,7 +262,7 @@ struct UTIL_SYMBOL_VISIBLE allocator_traits {
   template <typename U>
   using rebind_traits = allocator_traits<rebind_alloc<U>>;
 
-  EXPLICIT_NODISCARD_ATTR UTIL_SYMBOL_VISIBLE inline static ATFRAMEWORK_UTILS_MEMORY_ALLOCATOR_CONSTEXPR pointer
+  ATFW_EXPLICIT_NODISCARD_ATTR UTIL_SYMBOL_VISIBLE inline static ATFRAMEWORK_UTILS_MEMORY_ALLOCATOR_CONSTEXPR pointer
   allocate(allocator_type& a, size_type n) {
     return a.allocate(n);
   }
@@ -364,14 +364,14 @@ struct UTIL_SYMBOL_VISIBLE allocator_traits {
   }
 
  public:
-  EXPLICIT_NODISCARD_ATTR UTIL_SYMBOL_VISIBLE inline static ATFRAMEWORK_UTILS_MEMORY_ALLOCATOR_CONSTEXPR pointer
+  ATFW_EXPLICIT_NODISCARD_ATTR UTIL_SYMBOL_VISIBLE inline static ATFRAMEWORK_UTILS_MEMORY_ALLOCATOR_CONSTEXPR pointer
   allocate(allocator_type& a, size_type n, const_void_pointer hint) {
     return _S_allocate(a, n, hint, 0);
   }
 
 #if ((defined(__cplusplus) && __cplusplus >= 202302L) || (defined(_MSVC_LANG) && _MSVC_LANG >= 202302L)) && \
     defined(__cpp_lib_allocate_at_least) && __cpp_lib_allocate_at_least >= 202302L
-  EXPLICIT_NODISCARD_ATTR
+  ATFW_EXPLICIT_NODISCARD_ATTR
   UTIL_SYMBOL_VISIBLE inline static UTIL_CONFIG_CONSTEXPR ::std::allocation_result<pointer, size_type>
   allocate_at_least(allocator_type& a, size_type n) {
     return a.allocate_at_least(n);
