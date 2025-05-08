@@ -225,12 +225,14 @@ constexpr auto fmtapi_to_string_view(nostd::basic_string_view<CharT, Traits> s)
   return ATFRAMEWORK_UTILS_STRING_FWAPI_NAMESPACE_ID::basic_string_view<CharT>{s.data(), s.size()};
 }
 
-#if defined(ATFRAMEWORK_UTILS_GSL_TEST_STL_STRING_VIEW) && ATFRAMEWORK_UTILS_GSL_TEST_STL_STRING_VIEW
+#if !(defined(ATFRAMEWORK_UTILS_ENABLE_STD_FORMAT) && ATFRAMEWORK_UTILS_ENABLE_STD_FORMAT)
+#  if defined(ATFRAMEWORK_UTILS_GSL_TEST_STL_STRING_VIEW) && ATFRAMEWORK_UTILS_GSL_TEST_STL_STRING_VIEW
 template <class CharT, class Traits>
 constexpr auto fmtapi_to_string_view(std::basic_string_view<CharT, Traits> s)
     -> ATFRAMEWORK_UTILS_STRING_FWAPI_NAMESPACE_ID::basic_string_view<CharT> {
   return ATFRAMEWORK_UTILS_STRING_FWAPI_NAMESPACE_ID::basic_string_view<CharT>{s.data(), s.size()};
 }
+#  endif
 #endif
 
 template <class TFMT>
@@ -256,11 +258,13 @@ struct fmtapi_detect_char_t_from_fmt_base<nostd::basic_string_view<CharT, Traits
   using value_type = CharT;
 };
 
-#if defined(ATFRAMEWORK_UTILS_GSL_TEST_STL_STRING_VIEW) && ATFRAMEWORK_UTILS_GSL_TEST_STL_STRING_VIEW
+#if !(defined(ATFRAMEWORK_UTILS_ENABLE_STD_FORMAT) && ATFRAMEWORK_UTILS_ENABLE_STD_FORMAT)
+#  if defined(ATFRAMEWORK_UTILS_GSL_TEST_STL_STRING_VIEW) && ATFRAMEWORK_UTILS_GSL_TEST_STL_STRING_VIEW
 template <class CharT, class Traits>
 struct fmtapi_detect_char_t_from_fmt_base<std::basic_string_view<CharT, Traits>> {
   using value_type = CharT;
 };
+#  endif
 #endif
 
 template <class T>
