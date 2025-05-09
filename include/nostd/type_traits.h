@@ -421,97 +421,100 @@ using detected_or_t = typename detected_or<DefaultType, DetectTemplateOp, Templa
 #if ((defined(__cplusplus) && __cplusplus >= 201703L) || (defined(_MSVC_LANG) && _MSVC_LANG >= 201703L))
 // Not all compilers support detected_or for template template_args now
 #  if 0 && (defined(__cpp_template_template_args) && __cpp_template_template_args)
-#    define UTIL_NOSTD_TYPE_TRAITS_CONDITION_NESTED_TYPE_AS_MEMBER(TEST_CLASS, NESTED_TYPE, TYPE_ALIAS, DEFAULT_TYPE) \
-     private:                                                                                                         \
-      template <class __TCNT>                                                                                         \
-      using __UTIL_NOSTD_TYPE_TRAITS_CNTM_##TEST_CLASS##_##NESTED_TYPE = typename TEST_CLASS::NESTED_TYPE;            \
-                                                                                                                      \
-     public:                                                                                                          \
-      using TYPE_ALIAS = ::ATFRAMEWORK_UTILS_NAMESPACE_ID::nostd::detected_or_t<                                      \
+#    define ATFW_UTIL_NOSTD_TYPE_TRAITS_CONDITION_NESTED_TYPE_AS_MEMBER(TEST_CLASS, NESTED_TYPE, TYPE_ALIAS, \
+                                                                        DEFAULT_TYPE)                        \
+     private:                                                                                                \
+      template <class __TCNT>                                                                                \
+      using __UTIL_NOSTD_TYPE_TRAITS_CNTM_##TEST_CLASS##_##NESTED_TYPE = typename TEST_CLASS::NESTED_TYPE;   \
+                                                                                                             \
+     public:                                                                                                 \
+      using TYPE_ALIAS = ::ATFRAMEWORK_UTILS_NAMESPACE_ID::nostd::detected_or_t<                             \
           DEFAULT_TYPE, __UTIL_NOSTD_TYPE_TRAITS_CNTM_##TEST_CLASS##_##NESTED_TYPE, TEST_CLASS>
 
-#    define UTIL_NOSTD_TYPE_TRAITS_CONDITION_NESTED_TYPE_AS_MEMBER(TEST_CLASS, NESTED_TYPE, TYPE_ALIAS, DEFAULT_TYPE) \
-      template <class __TCNT>                                                                                         \
-      using __UTIL_NOSTD_TYPE_TRAITS_CNTM_##TEST_CLASS##_##NESTED_TYPE = typename TEST_CLASS::NESTED_TYPE;            \
-                                                                                                                      \
-      using TYPE_ALIAS = ::ATFRAMEWORK_UTILS_NAMESPACE_ID::nostd::detected_or_t<                                      \
+#    define ATFW_UTIL_NOSTD_TYPE_TRAITS_CONDITION_NESTED_TYPE_AS_MEMBER(TEST_CLASS, NESTED_TYPE, TYPE_ALIAS, \
+                                                                        DEFAULT_TYPE)                        \
+      template <class __TCNT>                                                                                \
+      using __UTIL_NOSTD_TYPE_TRAITS_CNTM_##TEST_CLASS##_##NESTED_TYPE = typename TEST_CLASS::NESTED_TYPE;   \
+                                                                                                             \
+      using TYPE_ALIAS = ::ATFRAMEWORK_UTILS_NAMESPACE_ID::nostd::detected_or_t<                             \
           DEFAULT_TYPE, __UTIL_NOSTD_TYPE_TRAITS_CNTM_##TEST_CLASS##_##NESTED_TYPE, TEST_CLASS>
 
 #  else
 #    if defined(__cpp_concepts) && __cpp_concepts
-#      define UTIL_NOSTD_TYPE_TRAITS_CONDITION_NESTED_TYPE_AS_MEMBER(TEST_CLASS, NESTED_TYPE, TYPE_ALIAS, \
-                                                                     DEFAULT_TYPE)                        \
-       private:                                                                                           \
-        template <class DefaultType, class TemplateType>                                                  \
-        struct __UTIL_NOSTD_TYPE_TRAITS_CNTG_##NESTED_TYPE {                                              \
-          using type = DefaultType;                                                                       \
-          using value_t = ::std::false_type;                                                              \
-        };                                                                                                \
-        template <class DefaultType, class TemplateType>                                                  \
-          requires requires { typename TemplateType::NESTED_TYPE; }                                       \
-        struct __UTIL_NOSTD_TYPE_TRAITS_CNTG_##NESTED_TYPE<DefaultType, TemplateType> {                   \
-          using type = typename TemplateType::NESTED_TYPE;                                                \
-          using value_t = ::std::true_type;                                                               \
-        };                                                                                                \
-                                                                                                          \
-       public:                                                                                            \
+#      define ATFW_UTIL_NOSTD_TYPE_TRAITS_CONDITION_NESTED_TYPE_AS_MEMBER(TEST_CLASS, NESTED_TYPE, TYPE_ALIAS, \
+                                                                          DEFAULT_TYPE)                        \
+       private:                                                                                                \
+        template <class DefaultType, class TemplateType>                                                       \
+        struct __UTIL_NOSTD_TYPE_TRAITS_CNTG_##NESTED_TYPE {                                                   \
+          using type = DefaultType;                                                                            \
+          using value_t = ::std::false_type;                                                                   \
+        };                                                                                                     \
+        template <class DefaultType, class TemplateType>                                                       \
+          requires requires { typename TemplateType::NESTED_TYPE; }                                            \
+        struct __UTIL_NOSTD_TYPE_TRAITS_CNTG_##NESTED_TYPE<DefaultType, TemplateType> {                        \
+          using type = typename TemplateType::NESTED_TYPE;                                                     \
+          using value_t = ::std::true_type;                                                                    \
+        };                                                                                                     \
+                                                                                                               \
+       public:                                                                                                 \
         using TYPE_ALIAS = typename __UTIL_NOSTD_TYPE_TRAITS_CNTG_##NESTED_TYPE<DEFAULT_TYPE, TEST_CLASS>::type
 
-#      define UTIL_NOSTD_TYPE_TRAITS_CONDITION_NESTED_TYPE_AS_GLOBAL(TEST_CLASS, NESTED_TYPE, TYPE_ALIAS, \
-                                                                     DEFAULT_TYPE)                        \
-        template <class DefaultType, class TemplateType>                                                  \
-        struct __UTIL_NOSTD_TYPE_TRAITS_CNTG_##NESTED_TYPE {                                              \
-          using type = DefaultType;                                                                       \
-          using value_t = ::std::false_type;                                                              \
-        };                                                                                                \
-        template <class DefaultType, class TemplateType>                                                  \
-          requires requires { typename TemplateType::NESTED_TYPE; }                                       \
-        struct __UTIL_NOSTD_TYPE_TRAITS_CNTG_##NESTED_TYPE<DefaultType, TemplateType> {                   \
-          using type = typename TemplateType::NESTED_TYPE;                                                \
-          using value_t = ::std::true_type;                                                               \
-        };                                                                                                \
-                                                                                                          \
+#      define ATFW_UTIL_NOSTD_TYPE_TRAITS_CONDITION_NESTED_TYPE_AS_GLOBAL(TEST_CLASS, NESTED_TYPE, TYPE_ALIAS, \
+                                                                          DEFAULT_TYPE)                        \
+        template <class DefaultType, class TemplateType>                                                       \
+        struct __UTIL_NOSTD_TYPE_TRAITS_CNTG_##NESTED_TYPE {                                                   \
+          using type = DefaultType;                                                                            \
+          using value_t = ::std::false_type;                                                                   \
+        };                                                                                                     \
+        template <class DefaultType, class TemplateType>                                                       \
+          requires requires { typename TemplateType::NESTED_TYPE; }                                            \
+        struct __UTIL_NOSTD_TYPE_TRAITS_CNTG_##NESTED_TYPE<DefaultType, TemplateType> {                        \
+          using type = typename TemplateType::NESTED_TYPE;                                                     \
+          using value_t = ::std::true_type;                                                                    \
+        };                                                                                                     \
+                                                                                                               \
         using TYPE_ALIAS = typename __UTIL_NOSTD_TYPE_TRAITS_CNTG_##NESTED_TYPE<DEFAULT_TYPE, TEST_CLASS>::type
 #    else
-#      define UTIL_NOSTD_TYPE_TRAITS_CONDITION_NESTED_TYPE_AS_MEMBER(TEST_CLASS, NESTED_TYPE, TYPE_ALIAS, \
-                                                                     DEFAULT_TYPE)                        \
-       private:                                                                                           \
-        template <class DefaultType, class TemplateType, class = void>                                    \
-        struct __GLOBAL_OBJECT_POOL_ALLOCATOR_NESTED_TYPE_##NESTED_TYPE {                                 \
-          using type = DefaultType;                                                                       \
-          using value_t = ::std::false_type;                                                              \
-        };                                                                                                \
-        template <class DefaultType, class TemplateType>                                                  \
-        struct __GLOBAL_OBJECT_POOL_ALLOCATOR_NESTED_TYPE_##NESTED_TYPE<                                  \
-            DefaultType, TemplateType, ::std::void_t<typename TemplateType::NESTED_TYPE>> {               \
-          using type = typename TemplateType::NESTED_TYPE;                                                \
-          using value_t = ::std::true_type;                                                               \
-        };                                                                                                \
-                                                                                                          \
-       public:                                                                                            \
-        using TYPE_ALIAS =                                                                                \
+#      define ATFW_UTIL_NOSTD_TYPE_TRAITS_CONDITION_NESTED_TYPE_AS_MEMBER(TEST_CLASS, NESTED_TYPE, TYPE_ALIAS, \
+                                                                          DEFAULT_TYPE)                        \
+       private:                                                                                                \
+        template <class DefaultType, class TemplateType, class = void>                                         \
+        struct __GLOBAL_OBJECT_POOL_ALLOCATOR_NESTED_TYPE_##NESTED_TYPE {                                      \
+          using type = DefaultType;                                                                            \
+          using value_t = ::std::false_type;                                                                   \
+        };                                                                                                     \
+        template <class DefaultType, class TemplateType>                                                       \
+        struct __GLOBAL_OBJECT_POOL_ALLOCATOR_NESTED_TYPE_##NESTED_TYPE<                                       \
+            DefaultType, TemplateType, ::std::void_t<typename TemplateType::NESTED_TYPE>> {                    \
+          using type = typename TemplateType::NESTED_TYPE;                                                     \
+          using value_t = ::std::true_type;                                                                    \
+        };                                                                                                     \
+                                                                                                               \
+       public:                                                                                                 \
+        using TYPE_ALIAS =                                                                                     \
             typename __GLOBAL_OBJECT_POOL_ALLOCATOR_NESTED_TYPE_##NESTED_TYPE<DEFAULT_TYPE, TEST_CLASS>::type
 
-#      define UTIL_NOSTD_TYPE_TRAITS_CONDITION_NESTED_TYPE_AS_GLOBAL(TEST_CLASS, NESTED_TYPE, TYPE_ALIAS, \
-                                                                     DEFAULT_TYPE)                        \
-        template <class DefaultType, class TemplateType, class = void>                                    \
-        struct __GLOBAL_OBJECT_POOL_ALLOCATOR_NESTED_TYPE_##NESTED_TYPE {                                 \
-          using type = DefaultType;                                                                       \
-          using value_t = ::std::false_type;                                                              \
-        };                                                                                                \
-        template <class DefaultType, class TemplateType>                                                  \
-        struct __GLOBAL_OBJECT_POOL_ALLOCATOR_NESTED_TYPE_##NESTED_TYPE<                                  \
-            DefaultType, TemplateType, ::std::void_t<typename TemplateType::NESTED_TYPE>> {               \
-          using type = typename TemplateType::NESTED_TYPE;                                                \
-          using value_t = ::std::true_type;                                                               \
-        };                                                                                                \
-                                                                                                          \
-        using TYPE_ALIAS =                                                                                \
+#      define ATFW_UTIL_NOSTD_TYPE_TRAITS_CONDITION_NESTED_TYPE_AS_GLOBAL(TEST_CLASS, NESTED_TYPE, TYPE_ALIAS, \
+                                                                          DEFAULT_TYPE)                        \
+        template <class DefaultType, class TemplateType, class = void>                                         \
+        struct __GLOBAL_OBJECT_POOL_ALLOCATOR_NESTED_TYPE_##NESTED_TYPE {                                      \
+          using type = DefaultType;                                                                            \
+          using value_t = ::std::false_type;                                                                   \
+        };                                                                                                     \
+        template <class DefaultType, class TemplateType>                                                       \
+        struct __GLOBAL_OBJECT_POOL_ALLOCATOR_NESTED_TYPE_##NESTED_TYPE<                                       \
+            DefaultType, TemplateType, ::std::void_t<typename TemplateType::NESTED_TYPE>> {                    \
+          using type = typename TemplateType::NESTED_TYPE;                                                     \
+          using value_t = ::std::true_type;                                                                    \
+        };                                                                                                     \
+                                                                                                               \
+        using TYPE_ALIAS =                                                                                     \
             typename __GLOBAL_OBJECT_POOL_ALLOCATOR_NESTED_TYPE_##NESTED_TYPE<DEFAULT_TYPE, TEST_CLASS>::type
 #    endif
 #  endif
 #else
-#  define UTIL_NOSTD_TYPE_TRAITS_CONDITION_NESTED_TYPE_AS_MEMBER(TEST_CLASS, NESTED_TYPE, TYPE_ALIAS, DEFAULT_TYPE)   \
+#  define ATFW_UTIL_NOSTD_TYPE_TRAITS_CONDITION_NESTED_TYPE_AS_MEMBER(TEST_CLASS, NESTED_TYPE, TYPE_ALIAS,            \
+                                                                      DEFAULT_TYPE)                                   \
    private:                                                                                                           \
     template <class __TCNT>                                                                                           \
     static typename __TCNT::NESTED_TYPE __UTIL_NOSTD_TYPE_TRAITS_CNTM_##TEST_CLASS##_##NESTED_TYPE##_helper(__TCNT*); \
@@ -521,7 +524,8 @@ using detected_or_t = typename detected_or<DefaultType, DetectTemplateOp, Templa
     using TYPE_ALIAS = decltype(__UTIL_NOSTD_TYPE_TRAITS_CNTM_##TEST_CLASS##_##NESTED_TYPE##_helper(                  \
         static_cast<TEST_CLASS*>(nullptr)))
 
-#  define UTIL_NOSTD_TYPE_TRAITS_CONDITION_NESTED_TYPE_AS_GLOBAL(TEST_CLASS, NESTED_TYPE, TYPE_ALIAS, DEFAULT_TYPE)   \
+#  define ATFW_UTIL_NOSTD_TYPE_TRAITS_CONDITION_NESTED_TYPE_AS_GLOBAL(TEST_CLASS, NESTED_TYPE, TYPE_ALIAS,            \
+                                                                      DEFAULT_TYPE)                                   \
     template <class __TCNT>                                                                                           \
     static typename __TCNT::NESTED_TYPE __UTIL_NOSTD_TYPE_TRAITS_CNTG_##TEST_CLASS##_##NESTED_TYPE##_helper(__TCNT*); \
     static DEFAULT_TYPE __UTIL_NOSTD_TYPE_TRAITS_CNTG_##TEST_CLASS##_##NESTED_TYPE##_helper(...);                     \
