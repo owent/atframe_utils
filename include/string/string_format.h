@@ -508,9 +508,9 @@ __internal_format_to_n(OutputIt out, size_t n, const details::fmtapi_format_stri
 #  if defined(ATFRAMEWORK_UTILS_ENABLE_EXCEPTION) && ATFRAMEWORK_UTILS_ENABLE_EXCEPTION
   try {
 #  endif
-    details::truncating_iterator<OutputIt> res(out, n);
-    ATFRAMEWORK_UTILS_STRING_FWAPI_NAMESPACE_ID::vformat_to(res, details::fmtapi_to_string_view<char_type>(fmt_text),
-                                                            details::make_format_args_helper<char_type>::make(args...));
+    details::truncating_iterator<OutputIt> res = ATFRAMEWORK_UTILS_STRING_FWAPI_NAMESPACE_ID::vformat_to(
+        details::truncating_iterator<OutputIt>{out, n}, details::fmtapi_to_string_view<char_type>(fmt_text),
+        details::make_format_args_helper<char_type>::make(args...));
     return {res.base(), res.count()};
 #  if defined(ATFRAMEWORK_UTILS_ENABLE_EXCEPTION) && ATFRAMEWORK_UTILS_ENABLE_EXCEPTION
   } catch (const ATFRAMEWORK_UTILS_STRING_FWAPI_NAMESPACE_ID::format_error &e) {
