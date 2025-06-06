@@ -18,7 +18,7 @@ ATFRAMEWORK_UTILS_NAMESPACE_BEGIN
 namespace nostd {
 
 namespace details {
-struct UTIL_SYMBOL_VISIBLE functional_ref_void_ptr {
+struct ATFW_UTIL_SYMBOL_VISIBLE functional_ref_void_ptr {
   const void* obj;
   void (*fn)();
 };
@@ -27,10 +27,10 @@ struct UTIL_SYMBOL_VISIBLE functional_ref_void_ptr {
 // Attempt to be close to SystemV AMD64 ABI. Objects with trivial copy ctor are
 // passed by value.
 template <class T, bool IsLValueReference = ::std::is_lvalue_reference<T>::value>
-struct UTIL_SYMBOL_VISIBLE functional_ref_pass_by_value : ::std::false_type {};
+struct ATFW_UTIL_SYMBOL_VISIBLE functional_ref_pass_by_value : ::std::false_type {};
 
 template <class T>
-struct UTIL_SYMBOL_VISIBLE functional_ref_pass_by_value<T, /*IsLValueReference=*/false> :
+struct ATFW_UTIL_SYMBOL_VISIBLE functional_ref_pass_by_value<T, /*IsLValueReference=*/false> :
 #if (defined(__cplusplus) && __cplusplus >= 201402L) || ((defined(_MSVC_LANG) && _MSVC_LANG >= 201402L))
     ::std::integral_constant<
         bool, ::std::is_trivially_copy_constructible<T>::value&& ::std::is_trivially_copy_assignable<
@@ -43,14 +43,14 @@ struct UTIL_SYMBOL_VISIBLE functional_ref_pass_by_value<T, /*IsLValueReference=*
 };
 
 template <class T>
-struct UTIL_SYMBOL_VISIBLE functional_ref_forward_type
+struct ATFW_UTIL_SYMBOL_VISIBLE functional_ref_forward_type
     : public ::std::conditional<functional_ref_pass_by_value<T>::value, T, T&&> {};
 
 template <class R, class... Args>
 using functional_ref_invoker = R (*)(functional_ref_void_ptr, typename functional_ref_forward_type<Args>::type...);
 
 template <class R>
-struct UTIL_SYMBOL_VISIBLE functional_ref_invoker_action;
+struct ATFW_UTIL_SYMBOL_VISIBLE functional_ref_invoker_action;
 
 //
 // InvokeObject and InvokeFunction provide static "Invoke" functions that can be
@@ -58,31 +58,31 @@ struct UTIL_SYMBOL_VISIBLE functional_ref_invoker_action;
 //
 // static_cast<R> handles the case the return type is void.
 template <typename Obj, typename R, typename... Args>
-UTIL_SYMBOL_VISIBLE UTIL_NOSTD_INVOKE_RESULT_CONSTEXPR R
+ATFW_UTIL_SYMBOL_VISIBLE ATFW_UTIL_NOSTD_INVOKE_RESULT_CONSTEXPR R
 functional_ref_invoke_object(functional_ref_void_ptr ptr, typename functional_ref_forward_type<Args>::type... args) {
   auto o = static_cast<const Obj*>(ptr.obj);
   return static_cast<R>(::ATFRAMEWORK_UTILS_NAMESPACE_ID::nostd::invoke(*o, ::std::forward<Args>(args)...));
 }
 
 template <typename Fun, typename R, typename... Args>
-UTIL_SYMBOL_VISIBLE UTIL_NOSTD_INVOKE_RESULT_CONSTEXPR R
+ATFW_UTIL_SYMBOL_VISIBLE ATFW_UTIL_NOSTD_INVOKE_RESULT_CONSTEXPR R
 functional_ref_invoke_function(functional_ref_void_ptr ptr, typename functional_ref_forward_type<Args>::type... args) {
   auto f = reinterpret_cast<Fun>(ptr.fn);
   return static_cast<R>(::ATFRAMEWORK_UTILS_NAMESPACE_ID::nostd::invoke(f, ::std::forward<Args>(args)...));
 }
 
 template <typename Sig>
-UTIL_SYMBOL_VISIBLE UTIL_NOSTD_INVOKE_RESULT_CONSTEXPR void functional_ref_assert_non_null(
+ATFW_UTIL_SYMBOL_VISIBLE ATFW_UTIL_NOSTD_INVOKE_RESULT_CONSTEXPR void functional_ref_assert_non_null(
     const std::function<Sig>& f) {
   assert(f != nullptr);
   (void)f;
 }
 
 template <typename F>
-UTIL_SYMBOL_VISIBLE UTIL_NOSTD_INVOKE_RESULT_CONSTEXPR void functional_ref_assert_non_null(const F&) {}
+ATFW_UTIL_SYMBOL_VISIBLE ATFW_UTIL_NOSTD_INVOKE_RESULT_CONSTEXPR void functional_ref_assert_non_null(const F&) {}
 
 template <typename F, typename C>
-UTIL_SYMBOL_VISIBLE UTIL_NOSTD_INVOKE_RESULT_CONSTEXPR void functional_ref_assert_non_null(F C::* f) {
+ATFW_UTIL_SYMBOL_VISIBLE ATFW_UTIL_NOSTD_INVOKE_RESULT_CONSTEXPR void functional_ref_assert_non_null(F C::* f) {
   assert(f != nullptr);
   (void)f;
 }
@@ -94,7 +94,7 @@ UTIL_SYMBOL_VISIBLE UTIL_NOSTD_INVOKE_RESULT_CONSTEXPR void functional_ref_asser
 // Dummy class declaration to allow the partial specialization based on function
 // types below.
 template <class T>
-class UTIL_SYMBOL_VISIBLE function_ref;
+class ATFW_UTIL_SYMBOL_VISIBLE function_ref;
 
 // function_ref
 //
@@ -119,7 +119,7 @@ class UTIL_SYMBOL_VISIBLE function_ref;
 // deleted to prevent misuse; because the `nostd::function_ref` does not own the
 // underlying type, assignment likely indicates misuse.
 template <class R, class... Args>
-class UTIL_SYMBOL_VISIBLE function_ref<R(Args...)> {
+class ATFW_UTIL_SYMBOL_VISIBLE function_ref<R(Args...)> {
  private:
   // Used to disable constructors for objects that are not compatible with the
   // signature of this function_ref.
@@ -138,7 +138,7 @@ class UTIL_SYMBOL_VISIBLE function_ref<R(Args...)> {
   // Constructs a function_ref from any invocable type.
   template <class F, class = enable_if_compatible<const F&>>
   // NOLINTNEXTLINE(runtime/explicit)
-  UTIL_NOSTD_INVOKE_RESULT_CONSTEXPR function_ref(const F& f UTIL_ATTRIBUTE_LIFETIME_BOUND)
+  ATFW_UTIL_NOSTD_INVOKE_RESULT_CONSTEXPR function_ref(const F& f UTIL_ATTRIBUTE_LIFETIME_BOUND)
       : invoker_(&details::functional_ref_invoke_object<F, R, Args...>) {
     details::functional_ref_assert_non_null(f);
     ptr_.obj = &f;
@@ -151,14 +151,14 @@ class UTIL_SYMBOL_VISIBLE function_ref<R(Args...)> {
   // This overload is also used for references to functions, since references to
   // functions can decay to function pointers implicitly.
   template <class F, class = enable_if_compatible<F*>, enable_if_t<is_function<F>::value, int> = 0>
-  UTIL_NOSTD_INVOKE_RESULT_CONSTEXPR function_ref(F* f)  // NOLINT(runtime/explicit)
+  ATFW_UTIL_NOSTD_INVOKE_RESULT_CONSTEXPR function_ref(F* f)  // NOLINT(runtime/explicit)
       : invoker_(&details::functional_ref_invoke_function<F*, R, Args...>) {
     assert(f != nullptr);
     ptr_.fn = reinterpret_cast<decltype(ptr_.fn)>(f);
   }
 
   // Call the underlying object.
-  UTIL_NOSTD_INVOKE_RESULT_CONSTEXPR R operator()(Args... args) const {
+  ATFW_UTIL_NOSTD_INVOKE_RESULT_CONSTEXPR R operator()(Args... args) const {
     return invoker_(ptr_, std::forward<Args>(args)...);
   }
 
