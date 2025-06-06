@@ -50,7 +50,7 @@ struct test_exception_for_log_formatter {
   explicit inline test_exception_for_log_formatter(bool a, bool b) : runtime_error(a), throw_exception(b) {};
 };
 
-namespace ATFRAMEWORK_UTILS_STRING_FWAPI_NAMESPACE_ID {
+ATFRAMEWORK_UTILS_STRING_FWAPI_NAMESPACE_BEGIN
 template <class CharT>
 struct formatter<test_auto_enum_conversation_for_log_formatter::type, CharT> : formatter<CharT *, CharT> {
   template <class FormatContext>
@@ -95,14 +95,14 @@ struct formatter<test_exception_for_log_formatter, CharT> : public formatter<Cha
     return ret;
   }
 };
-}  // namespace ATFRAMEWORK_UTILS_STRING_FWAPI_NAMESPACE_ID
+ATFRAMEWORK_UTILS_STRING_FWAPI_NAMESPACE_END
 
 struct test_custom_object_for_log_formatter {
   int32_t x;
   std::string y;
 };
 
-namespace ATFRAMEWORK_UTILS_STRING_FWAPI_NAMESPACE_ID {
+ATFRAMEWORK_UTILS_STRING_FWAPI_NAMESPACE_BEGIN
 template <class CharT>
 struct formatter<test_custom_object_for_log_formatter, CharT> : public formatter<CharT *, CharT> {
   template <class FormatContext>
@@ -116,7 +116,7 @@ struct formatter<test_custom_object_for_log_formatter, CharT> : public formatter
   }
 };
 
-}  // namespace ATFRAMEWORK_UTILS_STRING_FWAPI_NAMESPACE_ID
+ATFRAMEWORK_UTILS_STRING_FWAPI_NAMESPACE_END
 
 #endif
 
