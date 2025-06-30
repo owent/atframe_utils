@@ -407,9 +407,9 @@ CASE_TEST(time_test, jiffies_timer_basic) {
   short_timer_t short_timer;
   int count = 0;
   time_t max_tick = short_timer.get_max_tick_distance() + 1;
+  jiffies_timer_fn no_cheking_lv{nullptr};
 
-  CASE_EXPECT_EQ(short_timer_t::error_type_t::EN_JTET_NOT_INITED,
-                 short_timer.add_timer(123, jiffies_timer_fn(nullptr), nullptr));
+  CASE_EXPECT_EQ(short_timer_t::error_type_t::EN_JTET_NOT_INITED, short_timer.add_timer(123, no_cheking_lv, nullptr));
   CASE_EXPECT_EQ(short_timer_t::error_type_t::EN_JTET_NOT_INITED, short_timer.tick(456));
 
   CASE_EXPECT_EQ(short_timer_t::error_type_t::EN_JTET_SUCCESS, short_timer.init(max_tick));
@@ -417,7 +417,7 @@ CASE_TEST(time_test, jiffies_timer_basic) {
 
   CASE_EXPECT_EQ(32767, short_timer.get_max_tick_distance());
   CASE_EXPECT_EQ(short_timer_t::error_type_t::EN_JTET_TIMEOUT_EXTENDED,
-                 short_timer.add_timer(short_timer.get_max_tick_distance() + 1, jiffies_timer_fn(nullptr), nullptr));
+                 short_timer.add_timer(short_timer.get_max_tick_distance() + 1, no_cheking_lv, nullptr));
 
   // 理论上会被放在（数组下标: 2^6*3=192）
   CASE_EXPECT_EQ(
@@ -431,14 +431,12 @@ CASE_TEST(time_test, jiffies_timer_basic) {
   {
     short_timer_t::timer_wptr_t timer_watcher;
     CASE_EXPECT_EQ(short_timer_t::error_type_t::EN_JTET_SUCCESS,
-                   short_timer.add_timer(-123, jiffies_timer_fn(nullptr), &count, &timer_watcher));
+                   short_timer.add_timer(-123, no_cheking_lv, &count, &timer_watcher));
 
     CASE_EXPECT_EQ(short_timer.get_last_tick() + 1, short_timer_t::get_timer_timeout(*timer_watcher.lock()));
   }
-  CASE_EXPECT_EQ(short_timer_t::error_type_t::EN_JTET_SUCCESS,
-                 short_timer.add_timer(30, jiffies_timer_fn(nullptr), &count));
-  CASE_EXPECT_EQ(short_timer_t::error_type_t::EN_JTET_SUCCESS,
-                 short_timer.add_timer(40, jiffies_timer_fn(nullptr), &count));
+  CASE_EXPECT_EQ(short_timer_t::error_type_t::EN_JTET_SUCCESS, short_timer.add_timer(30, no_cheking_lv, &count));
+  CASE_EXPECT_EQ(short_timer_t::error_type_t::EN_JTET_SUCCESS, short_timer.add_timer(40, no_cheking_lv, &count));
   CASE_EXPECT_EQ(5, static_cast<int>(short_timer.size()));
 
   CASE_EXPECT_EQ(0, count);
@@ -462,7 +460,7 @@ CASE_TEST(time_test, jiffies_timer_basic) {
   short_timer_t::timer_wptr_t timer_watcher_831;
   short_timer_t::timer_wptr_t timer_watcher_832;
   CASE_EXPECT_EQ(short_timer_t::error_type_t::EN_JTET_SUCCESS,
-                 short_timer.add_timer(831, jiffies_timer_fn(nullptr), &count, &timer_watcher_831));
+                 short_timer.add_timer(831, no_cheking_lv, &count, &timer_watcher_831));
   CASE_EXPECT_EQ(short_timer_t::error_type_t::EN_JTET_SUCCESS,
                  short_timer.add_timer(832, jiffies_timer_fn(nullptr), &count, &timer_watcher_832));
   size_t wheel_idx_831 = short_timer_t::get_timer_wheel_index(*timer_watcher_831.lock());
@@ -487,12 +485,107 @@ CASE_TEST(time_test, jiffies_timer_basic) {
   short_timer.tick(32767 + max_tick);
 
   // 这个应该会放在数组下标为0的位置
-  CASE_EXPECT_EQ(short_timer_t::error_type_t::EN_JTET_SUCCESS,
-                 short_timer.add_timer(0, jiffies_timer_fn(nullptr), &count));
+  CASE_EXPECT_EQ(short_timer_t::error_type_t::EN_JTET_SUCCESS, short_timer.add_timer(0, no_cheking_lv, &count));
 
   // 环状数组的复用
   CASE_EXPECT_EQ(short_timer_t::error_type_t::EN_JTET_SUCCESS,
                  short_timer.add_timer(1000, jiffies_timer_fn(nullptr), &count));
+
+  // 全部执行掉
+  short_timer.tick(32767 + max_tick + 2000);
+  CASE_EXPECT_EQ(7, count);
+  CASE_EXPECT_EQ(0, static_cast<int>(short_timer.size()));
+}
+
+CASE_TEST(time_test, jiffies_timer_with_allocator) {
+  short_timer_t short_timer;
+  int count = 0;
+  time_t max_tick = short_timer.get_max_tick_distance() + 1;
+  jiffies_timer_fn no_cheking_lv{nullptr};
+  std::allocator<short_timer_t::timer_t> alloc;
+
+  CASE_EXPECT_EQ(short_timer_t::error_type_t::EN_JTET_NOT_INITED,
+                 short_timer.add_timer(alloc, 123, no_cheking_lv, nullptr));
+  CASE_EXPECT_EQ(short_timer_t::error_type_t::EN_JTET_NOT_INITED, short_timer.tick(456));
+
+  CASE_EXPECT_EQ(short_timer_t::error_type_t::EN_JTET_SUCCESS, short_timer.init(max_tick));
+  CASE_EXPECT_EQ(short_timer_t::error_type_t::EN_JTET_ALREADY_INITED, short_timer.init(max_tick));
+
+  CASE_EXPECT_EQ(32767, short_timer.get_max_tick_distance());
+  CASE_EXPECT_EQ(short_timer_t::error_type_t::EN_JTET_TIMEOUT_EXTENDED,
+                 short_timer.add_timer(alloc, short_timer.get_max_tick_distance() + 1, no_cheking_lv, nullptr));
+
+  // 理论上会被放在（数组下标: 2^6*3=192）
+  CASE_EXPECT_EQ(
+      short_timer_t::error_type_t::EN_JTET_SUCCESS,
+      short_timer.add_timer(alloc, short_timer.get_max_tick_distance(), jiffies_timer_fn(&short_timer), &short_timer));
+  // 理论上会被放在（数组下标: 2^6*4-1=255）
+  CASE_EXPECT_EQ(short_timer_t::error_type_t::EN_JTET_SUCCESS,
+                 short_timer.add_timer(alloc, short_timer.get_max_tick_distance() - short_timer_t::LVL_GRAN(3),
+                                       jiffies_timer_fn(&short_timer), &short_timer));
+
+  {
+    short_timer_t::timer_wptr_t timer_watcher;
+    CASE_EXPECT_EQ(short_timer_t::error_type_t::EN_JTET_SUCCESS,
+                   short_timer.add_timer(alloc, -123, no_cheking_lv, &count, &timer_watcher));
+
+    CASE_EXPECT_EQ(short_timer.get_last_tick() + 1, short_timer_t::get_timer_timeout(*timer_watcher.lock()));
+  }
+  CASE_EXPECT_EQ(short_timer_t::error_type_t::EN_JTET_SUCCESS, short_timer.add_timer(alloc, 30, no_cheking_lv, &count));
+  CASE_EXPECT_EQ(short_timer_t::error_type_t::EN_JTET_SUCCESS, short_timer.add_timer(alloc, 40, no_cheking_lv, &count));
+  CASE_EXPECT_EQ(5, static_cast<int>(short_timer.size()));
+
+  CASE_EXPECT_EQ(0, count);
+  short_timer.tick(max_tick);
+  CASE_EXPECT_EQ(0, count);
+  short_timer.tick(max_tick + 1);
+  CASE_EXPECT_EQ(1, count);
+  CASE_EXPECT_EQ(4, static_cast<int>(short_timer.size()));
+
+  short_timer.tick(max_tick + 29);
+  CASE_EXPECT_EQ(1, count);
+  short_timer.tick(max_tick + 30);
+  CASE_EXPECT_EQ(2, count);
+
+  // 跨tick
+  short_timer.tick(max_tick + 64);
+  CASE_EXPECT_EQ(3, count);
+  CASE_EXPECT_EQ(2, static_cast<int>(short_timer.size()));
+
+  // 非第一层、非第一个定时器组.（512+64*5-1 = 831）
+  short_timer_t::timer_wptr_t timer_watcher_831;
+  short_timer_t::timer_wptr_t timer_watcher_832;
+  CASE_EXPECT_EQ(short_timer_t::error_type_t::EN_JTET_SUCCESS,
+                 short_timer.add_timer(alloc, 831, no_cheking_lv, &count, &timer_watcher_831));
+  CASE_EXPECT_EQ(short_timer_t::error_type_t::EN_JTET_SUCCESS,
+                 short_timer.add_timer(alloc, 832, jiffies_timer_fn(nullptr), &count, &timer_watcher_832));
+  size_t wheel_idx_831 = short_timer_t::get_timer_wheel_index(*timer_watcher_831.lock());
+  size_t wheel_idx_832 = short_timer_t::get_timer_wheel_index(*timer_watcher_832.lock());
+  CASE_EXPECT_NE(wheel_idx_831, wheel_idx_832);
+  CASE_EXPECT_GE(wheel_idx_831, 128);
+  CASE_EXPECT_GE(wheel_idx_832, 128);
+
+  // 768-831 share tick, it will move timer but will not trigger it
+  short_timer.tick(max_tick + 64 + 830);
+  size_t wheel_idx_831_moved = short_timer_t::get_timer_wheel_index(*timer_watcher_831.lock());
+  CASE_EXPECT_NE(wheel_idx_831, wheel_idx_831_moved);
+  CASE_EXPECT_LT(wheel_idx_831_moved, 64);
+
+  CASE_EXPECT_EQ(3, count);
+  short_timer.tick(max_tick + 64 + 831);
+  CASE_EXPECT_EQ(4, count);
+  short_timer.tick(max_tick + 64 + 832);
+  CASE_EXPECT_EQ(5, count);
+
+  // 32767
+  short_timer.tick(32767 + max_tick);
+
+  // 这个应该会放在数组下标为0的位置
+  CASE_EXPECT_EQ(short_timer_t::error_type_t::EN_JTET_SUCCESS, short_timer.add_timer(alloc, 0, no_cheking_lv, &count));
+
+  // 环状数组的复用
+  CASE_EXPECT_EQ(short_timer_t::error_type_t::EN_JTET_SUCCESS,
+                 short_timer.add_timer(alloc, 1000, jiffies_timer_fn(nullptr), &count));
 
   // 全部执行掉
   short_timer.tick(32767 + max_tick + 2000);
