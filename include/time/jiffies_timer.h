@@ -266,7 +266,7 @@ class ATFRAMEWORK_UTILS_API_HEAD_ONLY jiffies_timer {
    */
   template <class TCALLBACK,
             class = nostd::enable_if_t<!::std::is_same<nostd::remove_cvref_t<TCALLBACK>, timer_callback_fn_t>::value>>
-  UTIL_FORCEINLINE int add_timer(time_t delta, TCALLBACK &&fn, void *priv_data, timer_wptr_t *watcher) {
+  ATFW_UTIL_FORCEINLINE int add_timer(time_t delta, TCALLBACK &&fn, void *priv_data, timer_wptr_t *watcher) {
     return internal_add_timer(static_cast<::std::allocator<timer_type> *>(nullptr), delta,
                               timer_callback_fn_t(std::forward<TCALLBACK>(fn)), priv_data, watcher);
   }
@@ -286,8 +286,8 @@ class ATFRAMEWORK_UTILS_API_HEAD_ONLY jiffies_timer {
    */
   template <class TALLOCATOR, class TCALLBACK,
             class = nostd::enable_if_t<!::std::is_same<nostd::remove_cvref_t<TCALLBACK>, timer_callback_fn_t>::value>>
-  UTIL_FORCEINLINE int add_timer(const TALLOCATOR &alloc, time_t delta, TCALLBACK &&fn, void *priv_data,
-                                 timer_wptr_t *watcher) {
+  ATFW_UTIL_FORCEINLINE int add_timer(const TALLOCATOR &alloc, time_t delta, TCALLBACK &&fn, void *priv_data,
+                                    timer_wptr_t *watcher) {
     return internal_add_timer(&alloc, delta, timer_callback_fn_t(std::forward<TCALLBACK>(fn)), priv_data, watcher);
   }
 
@@ -340,7 +340,7 @@ class ATFRAMEWORK_UTILS_API_HEAD_ONLY jiffies_timer {
    * @note 请尽量不要在外部直接保存定时器的智能指针(timer_ptr_t)，而仅仅使用监视器
    * @return 0或错误码
    */
-  UTIL_FORCEINLINE int add_timer(time_t delta, const timer_callback_fn_t &fn, void *priv_data) {
+  ATFW_UTIL_FORCEINLINE int add_timer(time_t delta, const timer_callback_fn_t &fn, void *priv_data) {
     return internal_add_timer(static_cast<::std::allocator<timer_type> *>(nullptr), delta, timer_callback_fn_t(fn),
                               priv_data, nullptr);
   }
@@ -359,8 +359,8 @@ class ATFRAMEWORK_UTILS_API_HEAD_ONLY jiffies_timer {
    * @return 0或错误码
    */
   template <class TALLOCATOR>
-  UTIL_FORCEINLINE int add_timer(const TALLOCATOR &alloc, time_t delta, const timer_callback_fn_t &fn,
-                                 void *priv_data) {
+  ATFW_UTIL_FORCEINLINE int add_timer(const TALLOCATOR &alloc, time_t delta, const timer_callback_fn_t &fn,
+                                    void *priv_data) {
     return internal_add_timer(&alloc, delta, timer_callback_fn_t(fn), priv_data, nullptr);
   }
 
@@ -376,7 +376,7 @@ class ATFRAMEWORK_UTILS_API_HEAD_ONLY jiffies_timer {
    * @note 请尽量不要在外部直接保存定时器的智能指针(timer_ptr_t)，而仅仅使用监视器
    * @return 0或错误码
    */
-  UTIL_FORCEINLINE int add_timer(time_t delta, timer_callback_fn_t &&fn, void *priv_data) {
+  ATFW_UTIL_FORCEINLINE int add_timer(time_t delta, timer_callback_fn_t &&fn, void *priv_data) {
     return internal_add_timer(static_cast<::std::allocator<timer_type> *>(nullptr), delta, std::move(fn), priv_data,
                               nullptr);
   }
@@ -395,7 +395,7 @@ class ATFRAMEWORK_UTILS_API_HEAD_ONLY jiffies_timer {
    * @return 0或错误码
    */
   template <class TALLOCATOR>
-  UTIL_FORCEINLINE int add_timer(const TALLOCATOR &alloc, time_t delta, timer_callback_fn_t &&fn, void *priv_data) {
+  ATFW_UTIL_FORCEINLINE int add_timer(const TALLOCATOR &alloc, time_t delta, timer_callback_fn_t &&fn, void *priv_data) {
     return internal_add_timer(&alloc, delta, std::move(fn), priv_data, nullptr);
   }
 
@@ -470,26 +470,26 @@ class ATFRAMEWORK_UTILS_API_HEAD_ONLY jiffies_timer {
    * @brief 获取最后一次定时器滴答时间（当前定时器时间）
    * @return 最后一次定时器滴答时间（当前定时器时间）
    */
-  UTIL_FORCEINLINE time_t get_last_tick() const { return last_tick_; }
+  ATFW_UTIL_FORCEINLINE time_t get_last_tick() const { return last_tick_; }
 
   /**
    * @brief 获取定时器数量
    * @return 定时器数量
    */
-  UTIL_FORCEINLINE size_t size() const { return size_; }
+  ATFW_UTIL_FORCEINLINE size_t size() const { return size_; }
 
   /**
    * @brief 获取绑定的私有数据
    * @return 绑定的私有数据
    */
-  UTIL_FORCEINLINE void *get_private_data() const noexcept { return private_data_; }
+  ATFW_UTIL_FORCEINLINE void *get_private_data() const noexcept { return private_data_; }
 
   /**
    * @brief 绑定私有数据
    * @param priv_data 私有数据
    * @return 上一次绑定的私有数据
    */
-  UTIL_FORCEINLINE void *set_private_data(void *priv_data) noexcept {
+  ATFW_UTIL_FORCEINLINE void *set_private_data(void *priv_data) noexcept {
     void *old_value = private_data_;
     private_data_ = priv_data;
     return old_value;
@@ -500,7 +500,7 @@ class ATFRAMEWORK_UTILS_API_HEAD_ONLY jiffies_timer {
    * @brief 获取当前定时器类型的最大时间范围（tick）
    * @return 当前定时器类型的最大时间范围（tick）
    */
-  UTIL_FORCEINLINE constexpr static time_t get_max_tick_distance() { return LVL_START(LVL_DEPTH) - 1; }
+  ATFW_UTIL_FORCEINLINE constexpr static time_t get_max_tick_distance() { return LVL_START(LVL_DEPTH) - 1; }
 
   static inline size_t calc_index(time_t expires, size_t lvl) noexcept {
     // 这里的expires 必然大于等于last_tick_，并且至少加一帧
@@ -526,22 +526,24 @@ class ATFRAMEWORK_UTILS_API_HEAD_ONLY jiffies_timer {
   }
 
  public:
-  UTIL_FORCEINLINE static void *get_timer_private_data(const timer_type &timer) noexcept { return timer.private_data; }
-  UTIL_FORCEINLINE static void *set_timer_private_data(timer_type &timer, void *priv_data) noexcept {
+  ATFW_UTIL_FORCEINLINE static void *get_timer_private_data(const timer_type &timer) noexcept {
+    return timer.private_data;
+  }
+  ATFW_UTIL_FORCEINLINE static void *set_timer_private_data(timer_type &timer, void *priv_data) noexcept {
     void *old_value = timer.private_data;
     timer.private_data = priv_data;
     return old_value;
   }
-  UTIL_FORCEINLINE static uint32_t get_timer_sequence(const timer_type &timer) noexcept { return timer.sequence; }
-  UTIL_FORCEINLINE static size_t get_timer_wheel_index(const timer_type &timer) noexcept { return timer.owner_idx; }
-  UTIL_FORCEINLINE static time_t get_timer_timeout(const timer_type &timer) noexcept { return timer.timeout; }
-  UTIL_FORCEINLINE static bool check_timer_flags(const timer_type &timer, typename timer_flag_t::type f) noexcept {
+  ATFW_UTIL_FORCEINLINE static uint32_t get_timer_sequence(const timer_type &timer) noexcept { return timer.sequence; }
+  ATFW_UTIL_FORCEINLINE static size_t get_timer_wheel_index(const timer_type &timer) noexcept { return timer.owner_idx; }
+  ATFW_UTIL_FORCEINLINE static time_t get_timer_timeout(const timer_type &timer) noexcept { return timer.timeout; }
+  ATFW_UTIL_FORCEINLINE static bool check_timer_flags(const timer_type &timer, typename timer_flag_t::type f) noexcept {
     return !!(timer.flags & static_cast<uint32_t>(f));
   }
-  UTIL_FORCEINLINE static void set_timer_flags(const timer_type &timer, typename timer_flag_t::type f) noexcept {
+  ATFW_UTIL_FORCEINLINE static void set_timer_flags(const timer_type &timer, typename timer_flag_t::type f) noexcept {
     timer.flags |= static_cast<uint32_t>(f);
   }
-  UTIL_FORCEINLINE static void unset_timer_flags(const timer_type &timer, typename timer_flag_t::type f) noexcept {
+  ATFW_UTIL_FORCEINLINE static void unset_timer_flags(const timer_type &timer, typename timer_flag_t::type f) noexcept {
     timer.flags &= ~static_cast<uint32_t>(f);
   }
   static inline void remove_timer(timer_type &timer) noexcept {

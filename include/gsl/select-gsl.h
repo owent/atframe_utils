@@ -45,23 +45,6 @@
 // narrow
 // ...
 
-#if (defined(ATFRAMEWORK_UTILS_GSL_TEST_STL_STRING_VIEW) && ATFRAMEWORK_UTILS_GSL_TEST_STL_STRING_VIEW) && \
-    (defined(ATFRAMEWORK_UTILS_ENABLE_GSL_STRING_VIEW_FROM_STD) && ATFRAMEWORK_UTILS_ENABLE_GSL_STRING_VIEW_FROM_STD)
-#  include <string_view>
-namespace gsl {
-using std::basic_string_view;
-using std::string_view;
-using std::wstring_view;
-}  // namespace gsl
-#else
-#  include <nostd/string_view.h>
-namespace gsl {
-using ATFRAMEWORK_UTILS_NAMESPACE_ID::nostd::basic_string_view;
-using ATFRAMEWORK_UTILS_NAMESPACE_ID::nostd::string_view;
-using ATFRAMEWORK_UTILS_NAMESPACE_ID::nostd::wstring_view;
-}  // namespace gsl
-#endif
-
 #if defined(ATFRAMEWORK_UTILS_ENABLE_GSL_WITH_MS_GSL) && ATFRAMEWORK_UTILS_ENABLE_GSL_WITH_MS_GSL
 #  include <gsl/gsl>
 namespace gsl {
@@ -76,8 +59,18 @@ ATFW_EXPLICIT_NODISCARD_ATTR unique_ptr<T> make_unique(Args &&...args) {
 #  endif
 }  // namespace gsl
 
+// Import gsl-lite if enabled with standalone namespace
+#  if defined(ATFRAMEWORK_UTILS_ENABLE_GSL_LITE_STANDALONE_NS) && ATFRAMEWORK_UTILS_ENABLE_GSL_LITE_STANDALONE_NS
+#    include <gsl-lite/gsl-lite.hpp>
+#  endif
+
 #elif defined(ATFRAMEWORK_UTILS_ENABLE_GSL_WITH_GSL_LITE) && ATFRAMEWORK_UTILS_ENABLE_GSL_WITH_GSL_LITE
-#  include <gsl/gsl-lite.hpp>
+#  include <gsl-lite/gsl-lite.hpp>
+#  if defined(ATFRAMEWORK_UTILS_ENABLE_GSL_LITE_STANDALONE_NS) && ATFRAMEWORK_UTILS_ENABLE_GSL_LITE_STANDALONE_NS
+namespace gsl = ::gsl_lite;
+#    define ATFRAMEWORK_UTILS_ENABLE_GSL_NAMESPACE_BEGIN namespace gsl_lite {
+#    define ATFRAMEWORK_UTILS_ENABLE_GSL_NAMESPACE_END }
+#  endif
 #elif defined(ATFRAMEWORK_UTILS_ENABLE_GSL_WITH_FALLBACK_STL) && ATFRAMEWORK_UTILS_ENABLE_GSL_WITH_FALLBACK_STL
 #  include <array>
 #  include <cstddef>
@@ -291,6 +284,28 @@ ATFW_EXPLICIT_NODISCARD_ATTR ATFRAMEWORK_UTILS_API_HEAD_ONLY inline constexpr T 
 #  else
 #    error "GSL Unsupported"
 #  endif
+#endif
+
+#if !defined(ATFRAMEWORK_UTILS_ENABLE_GSL_NAMESPACE_BEGIN)
+#  define ATFRAMEWORK_UTILS_ENABLE_GSL_NAMESPACE_BEGIN namespace gsl {
+#  define ATFRAMEWORK_UTILS_ENABLE_GSL_NAMESPACE_END }
+#endif
+
+#if (defined(ATFRAMEWORK_UTILS_GSL_TEST_STL_STRING_VIEW) && ATFRAMEWORK_UTILS_GSL_TEST_STL_STRING_VIEW) && \
+    (defined(ATFRAMEWORK_UTILS_ENABLE_GSL_STRING_VIEW_FROM_STD) && ATFRAMEWORK_UTILS_ENABLE_GSL_STRING_VIEW_FROM_STD)
+#  include <string_view>
+ATFRAMEWORK_UTILS_ENABLE_GSL_NAMESPACE_BEGIN
+using std::basic_string_view;
+using std::string_view;
+using std::wstring_view;
+ATFRAMEWORK_UTILS_ENABLE_GSL_NAMESPACE_END
+#else
+#  include <nostd/string_view.h>
+ATFRAMEWORK_UTILS_ENABLE_GSL_NAMESPACE_BEGIN
+using ATFRAMEWORK_UTILS_NAMESPACE_ID::nostd::basic_string_view;
+using ATFRAMEWORK_UTILS_NAMESPACE_ID::nostd::string_view;
+using ATFRAMEWORK_UTILS_NAMESPACE_ID::nostd::wstring_view;
+ATFRAMEWORK_UTILS_ENABLE_GSL_NAMESPACE_END
 #endif
 
 #endif  // GSL_SELECT_GSL_H
