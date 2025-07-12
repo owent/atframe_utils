@@ -20,17 +20,22 @@
  *   2023-07-09 修订宏接口，修订更严谨的符号导出问题
  *
  * @note 如果在Windows下dll请使用宏来生成函数
- *          UTIL_DESIGN_PATTERN_SINGLETON_VISIBLE_DECL(类名): visiable 标记(.lib)
- *          UTIL_DESIGN_PATTERN_SINGLETON_IMPORT_DECL(类名): __attribute__((__dllimport__))/__declspec(dllimport)
- * 标记(从其他dll中导入) UTIL_DESIGN_PATTERN_SINGLETON_EXPORT_DECL(类名):
+ *           ATFW_UTIL_DESIGN_PATTERN_SINGLETON_VISIBLE_DECL(类名): visiable 标记(.lib)
+ *           ATFW_UTIL_DESIGN_PATTERN_SINGLETON_IMPORT_DECL(类名): __attribute__((__dllimport__))/__declspec(dllimport)
+ * 标记(从其他dll中导入) ATFW_UTIL_DESIGN_PATTERN_SINGLETON_EXPORT_DECL(类名):
  * __attribute__((__dllexport__))/__declspec(dllexport) 标记(dll导出符号)
  *       然后需要在源文件中请使用宏来定义部分静态数据的存放位置
- *          UTIL_DESIGN_PATTERN_SINGLETON_VISIBLE_DATA_DEFINITION(类名): visiable 标记(.lib)
- *          UTIL_DESIGN_PATTERN_SINGLETON_IMPORT_DATA_DEFINITION(类名):
+ *           ATFW_UTIL_DESIGN_PATTERN_SINGLETON_VISIBLE_DATA_DEFINITION(类名): visiable 标记(.lib)
+ *           ATFW_UTIL_DESIGN_PATTERN_SINGLETON_IMPORT_DATA_DEFINITION(类名):
  * __attribute__((__dllimport__))/__declspec(dllimport) 标记(从其他dll中导入)
- *          UTIL_DESIGN_PATTERN_SINGLETON_EXPORT_DATA_DEFINITION(类名):
+ *           ATFW_UTIL_DESIGN_PATTERN_SINGLETON_EXPORT_DATA_DEFINITION(类名):
  * __attribute__((__dllexport__))/__declspec(dllexport) 标记(dll导出符号)
  *       如果单例对象不需要导出则也可以直接util::design_pattern::singleton<类名>或者用VISIBLE导出规则
+ * @note 如果使用构建系统适配的API宏来声明单例类。
+ *       则可以在.h里使用：
+ *           ATFW_UTIL_DESIGN_PATTERN_SINGLETON_API_DECL(API宏, 类名) 来声明单例类接口
+ *       然后在.cpp里使用：
+ *           ATFW_UTIL_DESIGN_PATTERN_SINGLETON_API_DATA_DEFINITION(API宏, 类名) 来定义单例类符号
  * @example
  *      // singleton_class.h
  *      class singleton_class : public atfw::util::design_pattern::singleton<singleton_class> {};
@@ -38,21 +43,28 @@
  *      // singleton_class.h
  *      class singleton_class {
  *      #if (defined(LIB_EXPORT) && LIB_EXPORT) || (defined(EXE_EXPORT) && EXE_EXPORT)
- *         UTIL_DESIGN_PATTERN_SINGLETON_VISIBLE_DECL(singleton_class)
+ *         ATFW_UTIL_DESIGN_PATTERN_SINGLETON_VISIBLE_DECL(singleton_class)
  *      #elif defined(DLL_EXPORT) && DLL_EXPORT
- *         UTIL_DESIGN_PATTERN_SINGLETON_EXPORT_DECL(singleton_class)
+ *         ATFW_UTIL_DESIGN_PATTERN_SINGLETON_EXPORT_DECL(singleton_class)
  *      #else
- *         UTIL_DESIGN_PATTERN_SINGLETON_IMPORT_DECL(singleton_class)
+ *         ATFW_UTIL_DESIGN_PATTERN_SINGLETON_IMPORT_DECL(singleton_class)
  *      #endif
  *      };
  *      // singleton_class.cpp
  *      #if (defined(LIB_EXPORT) && LIB_EXPORT) || (defined(EXE_EXPORT) && EXE_EXPORT)
- *          UTIL_DESIGN_PATTERN_SINGLETON_VISIBLE_DATA_DEFINITION(singleton_class);
+ *          ATFW_UTIL_DESIGN_PATTERN_SINGLETON_VISIBLE_DATA_DEFINITION(singleton_class);
  *      #elif defined(DLL_EXPORT) && DLL_EXPORT
- *          UTIL_DESIGN_PATTERN_SINGLETON_IMPORT_DATA_DEFINITION(singleton_class);
+ *          ATFW_UTIL_DESIGN_PATTERN_SINGLETON_IMPORT_DATA_DEFINITION(singleton_class);
  *      #else
- *          UTIL_DESIGN_PATTERN_SINGLETON_EXPORT_DATA_DEFINITION(singleton_class);
+ *          ATFW_UTIL_DESIGN_PATTERN_SINGLETON_EXPORT_DATA_DEFINITION(singleton_class);
  *      #endif
+ * @example
+ *      // singleton_class.h
+ *      class singleton_class {
+ *        ATFW_UTIL_DESIGN_PATTERN_SINGLETON_API_DECL(LIB_API, singleton_class);
+ *      };
+ *      // singleton_class.cpp
+ *      ATFW_UTIL_DESIGN_PATTERN_SINGLETON_API_DATA_DEFINITION(LIB_API, singleton_class);
  */
 
 #ifndef UTILS_DESIGNPATTERN_SINGLETON_H
@@ -74,10 +86,12 @@ ATFRAMEWORK_UTILS_NAMESPACE_BEGIN
 namespace design_pattern {
 namespace details {
 template <class T, class Deletor>
-UTIL_SYMBOL_VISIBLE inline std::shared_ptr<T> create_shared_ptr(T *ptr, Deletor &&deletor) {
-#include "config/compiler/internal/stl_compact_prefix.h.inc"  // NOLINT: build/include
+ATFW_UTIL_SYMBOL_VISIBLE inline std::shared_ptr<T> create_shared_ptr(T *ptr, Deletor &&deletor) {
+// NOLINT: build/include
+#include "config/compiler/internal/stl_compact_prefix.h.inc"  // IWYU pragma: keep
   return std::shared_ptr<T>(ptr, std::forward<Deletor>(deletor));
-#include "config/compiler/internal/stl_compact_suffix.h.inc"  // NOLINT: build/include
+// NOLINT: build/include
+#include "config/compiler/internal/stl_compact_suffix.h.inc"  // IWYU pragma: keep
 }
 }  // namespace details
 }  // namespace design_pattern
@@ -85,50 +99,50 @@ ATFRAMEWORK_UTILS_NAMESPACE_END
 
 /**
  * @brief if you are under Windows, you may want to declare import/export of singleton<T>
- * @usage UTIL_DESIGN_PATTERN_SINGLETON_IMPORT(Your Class Name)
- *        UTIL_DESIGN_PATTERN_SINGLETON_EXPORT(Your Class Name)
+ * @usage ATFW_UTIL_DESIGN_PATTERN_SINGLETON_IMPORT(Your Class Name)
+ *        ATFW_UTIL_DESIGN_PATTERN_SINGLETON_EXPORT(Your Class Name)
  */
 #if defined(_WIN32) || defined(__WIN32__) || defined(WIN32) || defined(__CYGWIN__)
-#  define UTIL_DESIGN_PATTERN_SINGLETON_IMPORT(T)                                                          \
-    UTIL_SYMBOL_IMPORT bool                                                                                \
+#  define ATFW_UTIL_DESIGN_PATTERN_SINGLETON_IMPORT(T)                                                     \
+    ATFW_UTIL_SYMBOL_IMPORT bool                                                                           \
         ATFRAMEWORK_UTILS_NAMESPACE_ID::design_pattern::wrapper::singleton_wrapper<T>::destroyed_ = false; \
-    template class UTIL_SYMBOL_IMPORT ATFRAMEWORK_UTILS_NAMESPACE_ID::design_pattern::singleton<T>;
+    template class ATFW_UTIL_SYMBOL_IMPORT ATFRAMEWORK_UTILS_NAMESPACE_ID::design_pattern::singleton<T>;
 
-#  define UTIL_DESIGN_PATTERN_SINGLETON_EXPORT(T)                                                          \
-    UTIL_SYMBOL_EXPORT bool                                                                                \
+#  define ATFW_UTIL_DESIGN_PATTERN_SINGLETON_EXPORT(T)                                                     \
+    ATFW_UTIL_SYMBOL_EXPORT bool                                                                           \
         ATFRAMEWORK_UTILS_NAMESPACE_ID::design_pattern::wrapper::singleton_wrapper<T>::destroyed_ = false; \
-    template class UTIL_SYMBOL_EXPORT ATFRAMEWORK_UTILS_NAMESPACE_ID::design_pattern::singleton<T>;
+    template class ATFW_UTIL_SYMBOL_EXPORT ATFRAMEWORK_UTILS_NAMESPACE_ID::design_pattern::singleton<T>;
 
 #else
-#  define UTIL_DESIGN_PATTERN_SINGLETON_IMPORT(T)
-#  define UTIL_DESIGN_PATTERN_SINGLETON_EXPORT(T)
+#  define ATFW_UTIL_DESIGN_PATTERN_SINGLETON_IMPORT(T)
+#  define ATFW_UTIL_DESIGN_PATTERN_SINGLETON_EXPORT(T)
 #endif
 
-#define UTIL_DESIGN_PATTERN_SINGLETON_NOMAVLBLE(CLAZZ) \
-  CLAZZ(CLAZZ &&) = delete;                            \
+#define ATFW_UTIL_DESIGN_PATTERN_SINGLETON_NOMAVLBLE(CLAZZ) \
+  CLAZZ(CLAZZ &&) = delete;                                 \
   CLAZZ &operator=(CLAZZ &&) = delete;
 
 #if defined(__cpp_threadsafe_static_init)
 #  if __cpp_threadsafe_static_init >= 200806L
-#    define UTIL_DESIGN_PATTERN_SINGLETON_DATA_IMPL_N2660 1
+#    define ATFW_UTIL_DESIGN_PATTERN_SINGLETON_DATA_IMPL_N2660 1
 #  endif
 #elif defined(__cplusplus)
 // @see https://gcc.gnu.org/projects/cxx-status.html
 // @see http://clang.llvm.org/cxx_status.html
 #  if __cplusplus >= 201103L
-#    define UTIL_DESIGN_PATTERN_SINGLETON_DATA_IMPL_N2660 1
+#    define ATFW_UTIL_DESIGN_PATTERN_SINGLETON_DATA_IMPL_N2660 1
 #  endif
 #elif defined(_MSC_VER) && defined(_MSVC_LANG)
 // @see https://docs.microsoft.com/en-us/cpp/build/reference/zc-threadsafeinit-thread-safe-local-static-initialization
 #  if _MSC_VER >= 1900 && _MSVC_LANG >= 201103L
-#    define UTIL_DESIGN_PATTERN_SINGLETON_DATA_IMPL_N2660 1
+#    define ATFW_UTIL_DESIGN_PATTERN_SINGLETON_DATA_IMPL_N2660 1
 #  endif
 #endif
 
-#if defined(UTIL_DESIGN_PATTERN_SINGLETON_DATA_IMPL_N2660) && UTIL_DESIGN_PATTERN_SINGLETON_DATA_IMPL_N2660
+#if defined(ATFW_UTIL_DESIGN_PATTERN_SINGLETON_DATA_IMPL_N2660) && ATFW_UTIL_DESIGN_PATTERN_SINGLETON_DATA_IMPL_N2660
 
 // @see https://wg21.link/n2660
-#  define UTIL_DESIGN_PATTERN_SINGLETON_DATA_IMPL(LABEL, CLAZZ, BASE_CLAZZ)                          \
+#  define ATFW_UTIL_DESIGN_PATTERN_SINGLETON_DATA_IMPL(LABEL, CLAZZ, BASE_CLAZZ)                     \
    private:                                                                                          \
     template <class TCLASS>                                                                          \
     class singleton_wrapper_permission_t : public TCLASS {};                                         \
@@ -156,29 +170,29 @@ ATFRAMEWORK_UTILS_NAMESPACE_END
    private:                                                                                          \
     friend class singleton_wrapper_t;
 
-#  define UTIL_DESIGN_PATTERN_SINGLETON_MEMBER_DECL_IMPL(LABEL, CLAZZ) \
-   private:                                                            \
-    class ATFW_UTIL_SYMBOL_LOCAL singleton_wrapper_type {              \
-     public:                                                           \
-      using ptr_t = std::shared_ptr<CLAZZ>;                            \
-                                                                       \
-      struct deleter {                                                 \
-        deleter();                                                     \
-        deleter(const deleter &);                                      \
-        ~deleter();                                                    \
-        void operator()(CLAZZ *p) const noexcept;                      \
-      };                                                               \
-      static const ptr_t &me();                                        \
-      static bool is_instance_destroyed() noexcept;                    \
-                                                                       \
-     private:                                                          \
-      static bool __is_destroyed;                                      \
-    };                                                                 \
-                                                                       \
-   private:                                                            \
+#  define ATFW_UTIL_DESIGN_PATTERN_SINGLETON_MEMBER_DECL_IMPL(LABEL, CLAZZ) \
+   private:                                                                 \
+    class ATFW_UTIL_SYMBOL_LOCAL singleton_wrapper_type {                   \
+     public:                                                                \
+      using ptr_t = std::shared_ptr<CLAZZ>;                                 \
+                                                                            \
+      struct deleter {                                                      \
+        deleter();                                                          \
+        deleter(const deleter &);                                           \
+        ~deleter();                                                         \
+        void operator()(CLAZZ *p) const noexcept;                           \
+      };                                                                    \
+      static const ptr_t &me();                                             \
+      static bool is_instance_destroyed() noexcept;                         \
+                                                                            \
+     private:                                                               \
+      static bool __is_destroyed;                                           \
+    };                                                                      \
+                                                                            \
+   private:                                                                 \
     friend class singleton_wrapper_type;
 
-#  define UTIL_DESIGN_PATTERN_SINGLETON_MEMBER_DEFINITION_IMPL(LABEL, CLAZZ)                                    \
+#  define ATFW_UTIL_DESIGN_PATTERN_SINGLETON_MEMBER_DEFINITION_IMPL(LABEL, CLAZZ)                               \
     ATFW_UTIL_SYMBOL_LOCAL CLAZZ::singleton_wrapper_type::deleter::deleter() {}                                 \
     ATFW_UTIL_SYMBOL_LOCAL CLAZZ::singleton_wrapper_type::deleter::deleter(const deleter &) {}                  \
     ATFW_UTIL_SYMBOL_LOCAL CLAZZ::singleton_wrapper_type::deleter::~deleter() {}                                \
@@ -199,7 +213,7 @@ ATFRAMEWORK_UTILS_NAMESPACE_END
 
 #else
 
-#  define UTIL_DESIGN_PATTERN_SINGLETON_DATA_IMPL(LABEL, CLAZZ, BASE_CLAZZ)                                            \
+#  define ATFW_UTIL_DESIGN_PATTERN_SINGLETON_DATA_IMPL(LABEL, CLAZZ, BASE_CLAZZ)                                       \
    private:                                                                                                            \
     template <class TCLASS>                                                                                            \
     class singleton_wrapper_permission_t : public TCLASS {};                                                           \
@@ -250,36 +264,36 @@ ATFRAMEWORK_UTILS_NAMESPACE_END
       return data;                                                                                                     \
     }
 
-#  define UTIL_DESIGN_PATTERN_SINGLETON_MEMBER_DECL_IMPL(LABEL, CLAZZ) \
-   private:                                                            \
-    class ATFW_UTIL_SYMBOL_LOCAL singleton_data_type {                 \
-     public:                                                           \
-      std::shared_ptr<CLAZZ> instance;                                 \
-      ATFRAMEWORK_UTILS_NAMESPACE_ID::lock::spin_lock lock;            \
-    };                                                                 \
-    class ATFW_UTIL_SYMBOL_LOCAL singleton_wrapper_type {              \
-     public:                                                           \
-      using ptr_t = std::shared_ptr<CLAZZ>;                            \
-                                                                       \
-      struct deleter {                                                 \
-        deleter();                                                     \
-        deleter(const deleter &);                                      \
-        ~deleter();                                                    \
-        void operator()(CLAZZ *p) const noexcept;                      \
-      };                                                               \
-      static const ptr_t &me();                                        \
-      static bool is_instance_destroyed();                             \
-                                                                       \
-     private:                                                          \
-      static bool __is_destroyed;                                      \
-      static void __use(CLAZZ const &);                                \
-      static singleton_data_type &__data();                            \
-    };                                                                 \
-                                                                       \
-   private:                                                            \
+#  define ATFW_UTIL_DESIGN_PATTERN_SINGLETON_MEMBER_DECL_IMPL(LABEL, CLAZZ) \
+   private:                                                                 \
+    class ATFW_UTIL_SYMBOL_LOCAL singleton_data_type {                      \
+     public:                                                                \
+      std::shared_ptr<CLAZZ> instance;                                      \
+      ATFRAMEWORK_UTILS_NAMESPACE_ID::lock::spin_lock lock;                 \
+    };                                                                      \
+    class ATFW_UTIL_SYMBOL_LOCAL singleton_wrapper_type {                   \
+     public:                                                                \
+      using ptr_t = std::shared_ptr<CLAZZ>;                                 \
+                                                                            \
+      struct deleter {                                                      \
+        deleter();                                                          \
+        deleter(const deleter &);                                           \
+        ~deleter();                                                         \
+        void operator()(CLAZZ *p) const noexcept;                           \
+      };                                                                    \
+      static const ptr_t &me();                                             \
+      static bool is_instance_destroyed();                                  \
+                                                                            \
+     private:                                                               \
+      static bool __is_destroyed;                                           \
+      static void __use(CLAZZ const &);                                     \
+      static singleton_data_type &__data();                                 \
+    };                                                                      \
+                                                                            \
+   private:                                                                 \
     friend class singleton_wrapper_type;
 
-#  define UTIL_DESIGN_PATTERN_SINGLETON_MEMBER_DEFINITION_IMPL(LABEL, CLAZZ)                                         \
+#  define ATFW_UTIL_DESIGN_PATTERN_SINGLETON_MEMBER_DEFINITION_IMPL(LABEL, CLAZZ)                                    \
     ATFW_UTIL_SYMBOL_LOCAL CLAZZ::singleton_wrapper_type::deleter::deleter() {}                                      \
     ATFW_UTIL_SYMBOL_LOCAL CLAZZ::singleton_wrapper_type::deleter::deleter(const deleter &) {}                       \
     ATFW_UTIL_SYMBOL_LOCAL CLAZZ::singleton_wrapper_type::deleter::~deleter() {}                                     \
@@ -315,11 +329,11 @@ ATFRAMEWORK_UTILS_NAMESPACE_END
 
 #endif
 
-#define UTIL_DESIGN_PATTERN_SINGLETON_DEF_FUNCS(LABEL, CLAZZ, BASE_CLAZZ)                   \
-  UTIL_DESIGN_PATTERN_SINGLETON_DATA_IMPL(LABEL, CLAZZ, BASE_CLAZZ)                         \
+#define ATFW_UTIL_DESIGN_PATTERN_SINGLETON_DEF_FUNCS(LABEL, CLAZZ, BASE_CLAZZ)              \
+  ATFW_UTIL_DESIGN_PATTERN_SINGLETON_DATA_IMPL(LABEL, CLAZZ, BASE_CLAZZ)                    \
   BASE_CLAZZ(const BASE_CLAZZ &) = delete;                                                  \
   BASE_CLAZZ &operator=(const BASE_CLAZZ &) = delete;                                       \
-  UTIL_DESIGN_PATTERN_SINGLETON_NOMAVLBLE(BASE_CLAZZ)                                       \
+  ATFW_UTIL_DESIGN_PATTERN_SINGLETON_NOMAVLBLE(BASE_CLAZZ)                                  \
  public:                                                                                    \
   static LABEL CLAZZ &get_instance() { return *singleton_wrapper_t::me(); }                 \
   static LABEL const CLAZZ &get_const_instance() { return get_instance(); }                 \
@@ -328,52 +342,60 @@ ATFRAMEWORK_UTILS_NAMESPACE_END
   static LABEL bool is_instance_destroyed() { return singleton_wrapper_t::__is_destroyed; } \
                                                                                             \
  private:
+// NOLINT: whitespace/blank_line
 
-#define UTIL_DESIGN_PATTERN_SINGLETON_MEMBER_DECL(LABEL, CLAZZ, BASE_CLAZZ) \
-  UTIL_DESIGN_PATTERN_SINGLETON_MEMBER_DECL_IMPL(LABEL, CLAZZ)              \
-  BASE_CLAZZ(const BASE_CLAZZ &) = delete;                                  \
-  BASE_CLAZZ &operator=(const BASE_CLAZZ &) = delete;                       \
-  UTIL_DESIGN_PATTERN_SINGLETON_NOMAVLBLE(BASE_CLAZZ)                       \
- public:                                                                    \
-  static LABEL CLAZZ &get_instance();                                       \
-  static LABEL const CLAZZ &get_const_instance();                           \
-  static LABEL CLAZZ *instance();                                           \
-  static LABEL const std::shared_ptr<CLAZZ> &me();                          \
-  static LABEL bool is_instance_destroyed();                                \
-                                                                            \
+#define ATFW_UTIL_DESIGN_PATTERN_SINGLETON_MEMBER_DECL(LABEL, CLAZZ, BASE_CLAZZ) \
+  ATFW_UTIL_DESIGN_PATTERN_SINGLETON_MEMBER_DECL_IMPL(LABEL, CLAZZ)              \
+  BASE_CLAZZ(const BASE_CLAZZ &) = delete;                                       \
+  BASE_CLAZZ &operator=(const BASE_CLAZZ &) = delete;                            \
+  ATFW_UTIL_DESIGN_PATTERN_SINGLETON_NOMAVLBLE(BASE_CLAZZ)                       \
+ public:                                                                         \
+  static LABEL CLAZZ &get_instance();                                            \
+  static LABEL const CLAZZ &get_const_instance();                                \
+  static LABEL CLAZZ *instance();                                                \
+  static LABEL const std::shared_ptr<CLAZZ> &me();                               \
+  static LABEL bool is_instance_destroyed();                                     \
+                                                                                 \
  private:
+// NOLINT: whitespace/blank_line
 
-#define UTIL_DESIGN_PATTERN_SINGLETON_MEMBER_DEFINITION(LABEL, CLAZZ, BASE_CLAZZ)          \
-  UTIL_DESIGN_PATTERN_SINGLETON_MEMBER_DEFINITION_IMPL(LABEL, CLAZZ);                      \
+#define ATFW_UTIL_DESIGN_PATTERN_SINGLETON_MEMBER_DEFINITION(LABEL, CLAZZ, BASE_CLAZZ)     \
+  ATFW_UTIL_DESIGN_PATTERN_SINGLETON_MEMBER_DEFINITION_IMPL(LABEL, CLAZZ);                 \
   LABEL CLAZZ &CLAZZ::get_instance() { return *singleton_wrapper_type::me(); }             \
   LABEL const CLAZZ &CLAZZ::get_const_instance() { return get_instance(); }                \
   LABEL CLAZZ *CLAZZ::instance() { return singleton_wrapper_type::me().get(); }            \
   LABEL const std::shared_ptr<CLAZZ> &CLAZZ::me() { return singleton_wrapper_type::me(); } \
   LABEL bool CLAZZ::is_instance_destroyed() { return singleton_wrapper_type::is_instance_destroyed(); }
 
-#define UTIL_DESIGN_PATTERN_SINGLETON_IMPORT_DECL(CLAZZ) \
-  UTIL_DESIGN_PATTERN_SINGLETON_MEMBER_DECL(UTIL_SYMBOL_IMPORT, CLAZZ, CLAZZ)
+#define ATFW_UTIL_DESIGN_PATTERN_SINGLETON_IMPORT_DECL(CLAZZ) \
+  ATFW_UTIL_DESIGN_PATTERN_SINGLETON_MEMBER_DECL(ATFW_UTIL_SYMBOL_IMPORT, CLAZZ, CLAZZ)
 
-#define UTIL_DESIGN_PATTERN_SINGLETON_EXPORT_DECL(CLAZZ) \
-  UTIL_DESIGN_PATTERN_SINGLETON_MEMBER_DECL(UTIL_SYMBOL_EXPORT, CLAZZ, CLAZZ)
+#define ATFW_UTIL_DESIGN_PATTERN_SINGLETON_EXPORT_DECL(CLAZZ) \
+  ATFW_UTIL_DESIGN_PATTERN_SINGLETON_MEMBER_DECL(ATFW_UTIL_SYMBOL_EXPORT, CLAZZ, CLAZZ)
 
-#define UTIL_DESIGN_PATTERN_SINGLETON_VISIBLE_DECL(CLAZZ) \
-  UTIL_DESIGN_PATTERN_SINGLETON_MEMBER_DECL(UTIL_SYMBOL_VISIBLE, CLAZZ, CLAZZ)
+#define ATFW_UTIL_DESIGN_PATTERN_SINGLETON_VISIBLE_DECL(CLAZZ) \
+  ATFW_UTIL_DESIGN_PATTERN_SINGLETON_MEMBER_DECL(ATFW_UTIL_SYMBOL_VISIBLE, CLAZZ, CLAZZ)
 
-#define UTIL_DESIGN_PATTERN_SINGLETON_LOCAL_DECL(CLAZZ) \
-  UTIL_DESIGN_PATTERN_SINGLETON_MEMBER_DECL(ATFW_UTIL_SYMBOL_LOCAL, CLAZZ, CLAZZ)
+#define ATFW_UTIL_DESIGN_PATTERN_SINGLETON_LOCAL_DECL(CLAZZ) \
+  ATFW_UTIL_DESIGN_PATTERN_SINGLETON_MEMBER_DECL(ATFW_UTIL_SYMBOL_LOCAL, CLAZZ, CLAZZ)
 
-#define UTIL_DESIGN_PATTERN_SINGLETON_IMPORT_DATA_DEFINITION(CLAZZ) \
-  UTIL_DESIGN_PATTERN_SINGLETON_MEMBER_DEFINITION(UTIL_SYMBOL_IMPORT, CLAZZ, CLAZZ)
+#define ATFW_UTIL_DESIGN_PATTERN_SINGLETON_API_DECL(API_MACRO, CLAZZ) \
+  ATFW_UTIL_DESIGN_PATTERN_SINGLETON_MEMBER_DECL(API_MACRO, CLAZZ, CLAZZ)
 
-#define UTIL_DESIGN_PATTERN_SINGLETON_EXPORT_DATA_DEFINITION(CLAZZ) \
-  UTIL_DESIGN_PATTERN_SINGLETON_MEMBER_DEFINITION(UTIL_SYMBOL_EXPORT, CLAZZ, CLAZZ)
+#define ATFW_UTIL_DESIGN_PATTERN_SINGLETON_IMPORT_DATA_DEFINITION(CLAZZ) \
+  ATFW_UTIL_DESIGN_PATTERN_SINGLETON_MEMBER_DEFINITION(ATFW_UTIL_SYMBOL_IMPORT, CLAZZ, CLAZZ)
 
-#define UTIL_DESIGN_PATTERN_SINGLETON_VISIBLE_DATA_DEFINITION(CLAZZ) \
-  UTIL_DESIGN_PATTERN_SINGLETON_MEMBER_DEFINITION(UTIL_SYMBOL_VISIBLE, CLAZZ, CLAZZ)
+#define ATFW_UTIL_DESIGN_PATTERN_SINGLETON_EXPORT_DATA_DEFINITION(CLAZZ) \
+  ATFW_UTIL_DESIGN_PATTERN_SINGLETON_MEMBER_DEFINITION(ATFW_UTIL_SYMBOL_EXPORT, CLAZZ, CLAZZ)
 
-#define UTIL_DESIGN_PATTERN_SINGLETON_LOCAL_DATA_DEFINITION(CLAZZ) \
-  UTIL_DESIGN_PATTERN_SINGLETON_MEMBER_DEFINITION(ATFW_UTIL_SYMBOL_LOCAL, CLAZZ, CLAZZ)
+#define ATFW_UTIL_DESIGN_PATTERN_SINGLETON_VISIBLE_DATA_DEFINITION(CLAZZ) \
+  ATFW_UTIL_DESIGN_PATTERN_SINGLETON_MEMBER_DEFINITION(ATFW_UTIL_SYMBOL_VISIBLE, CLAZZ, CLAZZ)
+
+#define ATFW_UTIL_DESIGN_PATTERN_SINGLETON_LOCAL_DATA_DEFINITION(CLAZZ) \
+  ATFW_UTIL_DESIGN_PATTERN_SINGLETON_MEMBER_DEFINITION(ATFW_UTIL_SYMBOL_LOCAL, CLAZZ, CLAZZ)
+
+#define ATFW_UTIL_DESIGN_PATTERN_SINGLETON_API_DATA_DEFINITION(API_MACRO, CLAZZ) \
+  ATFW_UTIL_DESIGN_PATTERN_SINGLETON_MEMBER_DEFINITION(API_MACRO, CLAZZ, CLAZZ)
 
 ATFRAMEWORK_UTILS_NAMESPACE_BEGIN
 namespace design_pattern {
@@ -386,13 +408,13 @@ class singleton {
   using self_type = T;
   using ptr_t = std::shared_ptr<self_type>;
 
-  UTIL_SYMBOL_VISIBLE singleton() {}
-  UTIL_SYMBOL_VISIBLE ~singleton() {}
+  ATFW_UTIL_SYMBOL_VISIBLE singleton() {}
+  ATFW_UTIL_SYMBOL_VISIBLE ~singleton() {}
 
-  UTIL_DESIGN_PATTERN_SINGLETON_DEF_FUNCS(UTIL_SYMBOL_VISIBLE, self_type, singleton)
+  ATFW_UTIL_DESIGN_PATTERN_SINGLETON_DEF_FUNCS(ATFW_UTIL_SYMBOL_VISIBLE, self_type, singleton)
 };
 template <class T>
-UTIL_SYMBOL_VISIBLE bool singleton<T>::singleton_wrapper_t::__is_destroyed = false;
+ATFW_UTIL_SYMBOL_VISIBLE bool singleton<T>::singleton_wrapper_t::__is_destroyed = false;
 
 template <class T>
 class local_singleton {
@@ -406,11 +428,35 @@ class local_singleton {
   ATFW_UTIL_SYMBOL_LOCAL local_singleton() {}
   ATFW_UTIL_SYMBOL_LOCAL ~local_singleton() {}
 
-  UTIL_DESIGN_PATTERN_SINGLETON_DEF_FUNCS(ATFW_UTIL_SYMBOL_LOCAL, self_type, local_singleton)
+  ATFW_UTIL_DESIGN_PATTERN_SINGLETON_DEF_FUNCS(ATFW_UTIL_SYMBOL_LOCAL, self_type, local_singleton)
 };
 template <class T>
 ATFW_UTIL_SYMBOL_LOCAL bool local_singleton<T>::singleton_wrapper_t::__is_destroyed = false;
 
 }  // namespace design_pattern
 ATFRAMEWORK_UTILS_NAMESPACE_END
+
+// Legacy macros for backward compatibility
+#if !defined(UTIL_DESIGN_PATTERN_SINGLETON_VISIBLE_DECL)
+#  define UTIL_DESIGN_PATTERN_SINGLETON_VISIBLE_DECL(...) ATFW_UTIL_DESIGN_PATTERN_SINGLETON_VISIBLE_DECL(__VA_ARGS__)
+#endif
+#if !defined(UTIL_DESIGN_PATTERN_SINGLETON_IMPORT_DECL)
+#  define UTIL_DESIGN_PATTERN_SINGLETON_IMPORT_DECL(...) ATFW_UTIL_DESIGN_PATTERN_SINGLETON_IMPORT_DECL(__VA_ARGS__)
+#endif
+#if !defined(UTIL_DESIGN_PATTERN_SINGLETON_EXPORT_DECL)
+#  define UTIL_DESIGN_PATTERN_SINGLETON_EXPORT_DECL(...) ATFW_UTIL_DESIGN_PATTERN_SINGLETON_EXPORT_DECL(__VA_ARGS__)
+#endif
+#if !defined(UTIL_DESIGN_PATTERN_SINGLETON_VISIBLE_DATA_DEFINITION)
+#  define UTIL_DESIGN_PATTERN_SINGLETON_VISIBLE_DATA_DEFINITION(...) \
+    ATFW_UTIL_DESIGN_PATTERN_SINGLETON_VISIBLE_DATA_DEFINITION(__VA_ARGS__)
+#endif
+#if !defined(UTIL_DESIGN_PATTERN_SINGLETON_IMPORT_DATA_DEFINITION)
+#  define UTIL_DESIGN_PATTERN_SINGLETON_IMPORT_DATA_DEFINITION(...) \
+    ATFW_UTIL_DESIGN_PATTERN_SINGLETON_IMPORT_DATA_DEFINITION(__VA_ARGS__)
+#endif
+#if !defined(UTIL_DESIGN_PATTERN_SINGLETON_EXPORT_DATA_DEFINITION)
+#  define UTIL_DESIGN_PATTERN_SINGLETON_EXPORT_DATA_DEFINITION(...) \
+    ATFW_UTIL_DESIGN_PATTERN_SINGLETON_EXPORT_DATA_DEFINITION(__VA_ARGS__)
+#endif
+
 #endif

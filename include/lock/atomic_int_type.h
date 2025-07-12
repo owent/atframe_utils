@@ -57,13 +57,13 @@
 #if (defined(__cplusplus) && __cplusplus >= 201103L) || (defined(_MSVC_LANG) && _MSVC_LANG >= 201103L)
 
 #  include <atomic>
-#  define __UTIL_LOCK_ATOMIC_INT_TYPE_ATOMIC_STD
+#  define __ATFW_UTIL_LOCK_ATOMIC_INT_TYPE_ATOMIC_STD
 
 #elif defined(__clang__) && (__clang_major__ > 3 || (__clang_major__ == 3 && __clang_minor__ >= 1)) && \
     __cplusplus >= 201103L
 
 #  include <atomic>
-#  define __UTIL_LOCK_ATOMIC_INT_TYPE_ATOMIC_STD
+#  define __ATFW_UTIL_LOCK_ATOMIC_INT_TYPE_ATOMIC_STD
 
 #elif defined(_MSC_VER)
 #  if _MSC_VER >= 1900  // 1900 means VC 14.0,2015, there some problem with std::atomic implement in old MSVC
@@ -72,7 +72,7 @@
 //   https://devblogs.microsoft.com/cppblog/stl-fixes-in-vs-2015-part-2/
 
 #    include <atomic>
-#    define __UTIL_LOCK_ATOMIC_INT_TYPE_ATOMIC_STD
+#    define __ATFW_UTIL_LOCK_ATOMIC_INT_TYPE_ATOMIC_STD
 #  else
 #    error atomic_int_type only support MSVC 1900 or upper
 #  endif
@@ -84,7 +84,7 @@
 // defined(__GXX_EXPERIMENTAL_CXX0X__)
 //
 // #include <atomic>
-// #define __UTIL_LOCK_ATOMIC_INT_TYPE_ATOMIC_STD
+// #define __ATFW_UTIL_LOCK_ATOMIC_INT_TYPE_ATOMIC_STD
 
 #endif
 
@@ -96,7 +96,7 @@
 
 ATFRAMEWORK_UTILS_NAMESPACE_BEGIN
 namespace lock {
-#ifdef __UTIL_LOCK_ATOMIC_INT_TYPE_ATOMIC_STD
+#ifdef __ATFW_UTIL_LOCK_ATOMIC_INT_TYPE_ATOMIC_STD
 using ::std::memory_order;
 using ::std::memory_order_acq_rel;
 using ::std::memory_order_acquire;
@@ -105,12 +105,12 @@ using ::std::memory_order_relaxed;
 using ::std::memory_order_release;
 using ::std::memory_order_seq_cst;
 
-#  if UTIL_HAVE_THREAD_SANITIZER
-#    define UTIL_LOCK_ATOMIC_THREAD_FENCE(order) ::std::atomic_thread_fence(order)
+#  if ATFW_UTIL_HAVE_THREAD_SANITIZER
+#    define ATFW_UTIL_LOCK_ATOMIC_THREAD_FENCE(order) ::std::atomic_thread_fence(order)
 #  else
-#    define UTIL_LOCK_ATOMIC_THREAD_FENCE(order)
+#    define ATFW_UTIL_LOCK_ATOMIC_THREAD_FENCE(order)
 #  endif
-#  define UTIL_LOCK_ATOMIC_SIGNAL_FENCE(order) ::std::atomic_signal_fence(order)
+#  define ATFW_UTIL_LOCK_ATOMIC_SIGNAL_FENCE(order) ::std::atomic_signal_fence(order)
 
 /**
  * @brief atomic - C++ 0x/11版实现
@@ -133,7 +133,8 @@ class ATFRAMEWORK_UTILS_API_HEAD_ONLY atomic_int_type {
 
  public:
   atomic_int_type() noexcept : data_() {}
-  atomic_int_type(value_type desired) noexcept : data_(desired) {}
+  atomic_int_type(value_type desired) noexcept  // NOLINT: runtime/explicit
+      : data_(desired) {}
 
   inline void store(value_type desired, ATFRAMEWORK_UTILS_NAMESPACE_ID::lock::memory_order order =
                                             ATFRAMEWORK_UTILS_NAMESPACE_ID::lock::memory_order_seq_cst) noexcept {
@@ -323,12 +324,12 @@ enum memory_order {
   memory_order_seq_cst = __ATOMIC_SEQ_CST
 };
 
-#    if UTIL_HAVE_THREAD_SANITIZER
-#      define UTIL_LOCK_ATOMIC_THREAD_FENCE(order) __atomic_thread_fence(order)
+#    if ATFW_UTIL_HAVE_THREAD_SANITIZER
+#      define ATFW_UTIL_LOCK_ATOMIC_THREAD_FENCE(order) __atomic_thread_fence(order)
 #    else
-#      define UTIL_LOCK_ATOMIC_THREAD_FENCE(order)
+#      define ATFW_UTIL_LOCK_ATOMIC_THREAD_FENCE(order)
 #    endif
-#    define UTIL_LOCK_ATOMIC_SIGNAL_FENCE(order) __atomic_signal_fence(order)
+#    define ATFW_UTIL_LOCK_ATOMIC_SIGNAL_FENCE(order) __atomic_signal_fence(order)
 
 #  else  // old gcc and old msvc use this
 enum memory_order {
@@ -341,12 +342,12 @@ enum memory_order {
 };
 #  endif
 
-#  ifndef UTIL_LOCK_ATOMIC_THREAD_FENCE
-#    define UTIL_LOCK_ATOMIC_THREAD_FENCE(x)
+#  ifndef ATFW_UTIL_LOCK_ATOMIC_THREAD_FENCE
+#    define ATFW_UTIL_LOCK_ATOMIC_THREAD_FENCE(x)
 #  endif
 
-#  ifndef UTIL_LOCK_ATOMIC_SIGNAL_FENCE
-#    define UTIL_LOCK_ATOMIC_SIGNAL_FENCE(x)
+#  ifndef ATFW_UTIL_LOCK_ATOMIC_SIGNAL_FENCE
+#    define ATFW_UTIL_LOCK_ATOMIC_SIGNAL_FENCE(x)
 #  endif
 
 template <typename Ty = int>
@@ -761,7 +762,7 @@ class ATFRAMEWORK_UTILS_API_HEAD_ONLY atomic_int_type<unsafe_int_type<Ty> > {
 
  private:
   inline bool cas(value_type &expected, value_type desired) noexcept {
-    if UTIL_LIKELY_CONDITION (data_ == expected) {
+    if ATFW_UTIL_LIKELY_CONDITION (data_ == expected) {
       data_ = desired;
       return true;
     } else {
@@ -897,5 +898,14 @@ class ATFRAMEWORK_UTILS_API_HEAD_ONLY atomic_int_type<unsafe_int_type<Ty> > {
 };
 }  // namespace lock
 ATFRAMEWORK_UTILS_NAMESPACE_END
+
+// Legacy macros
+#ifndef UTIL_LOCK_ATOMIC_THREAD_FENCE
+#  define UTIL_LOCK_ATOMIC_THREAD_FENCE(x) ATFW_UTIL_LOCK_ATOMIC_THREAD_FENCE(x)
+#endif
+
+#ifndef UTIL_LOCK_ATOMIC_SIGNAL_FENCE
+#  define UTIL_LOCK_ATOMIC_SIGNAL_FENCE(x) ATFW_UTIL_LOCK_ATOMIC_SIGNAL_FENCE(x)
+#endif
 
 #endif /* _UTIL_LOCK_ATOMIC_INT_TYPE_H_ */

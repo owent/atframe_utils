@@ -16,11 +16,11 @@
 #  undef max
 #endif
 
-#ifndef UTIL_NOSTD_INVOKE_RESULT_CONSTEXPR
+#ifndef ATFW_UTIL_NOSTD_INVOKE_RESULT_CONSTEXPR
 #  if __cplusplus >= 202002L
-#    define UTIL_NOSTD_INVOKE_RESULT_CONSTEXPR constexpr
+#    define ATFW_UTIL_NOSTD_INVOKE_RESULT_CONSTEXPR constexpr
 #  else
-#    define UTIL_NOSTD_INVOKE_RESULT_CONSTEXPR
+#    define ATFW_UTIL_NOSTD_INVOKE_RESULT_CONSTEXPR
 #  endif
 #endif
 
@@ -126,41 +126,41 @@ struct UTIL_SYMBOL_VISIBLE __invoke_memobj_deref {};
 struct UTIL_SYMBOL_VISIBLE __invoke_other {};
 
 template <class _Tp, class _Up = typename __inv_unwrap<_Tp>::type>
-UTIL_SYMBOL_VISIBLE inline UTIL_NOSTD_INVOKE_RESULT_CONSTEXPR _Up&& __invfwd(
+UTIL_SYMBOL_VISIBLE inline ATFW_UTIL_NOSTD_INVOKE_RESULT_CONSTEXPR _Up&& __invfwd(
     typename ::std::remove_reference<_Tp>::type& __t) noexcept {
   return static_cast<_Up&&>(__t);
 }
 
 template <class R, class _Fn, class... _Args>
-UTIL_SYMBOL_VISIBLE inline UTIL_NOSTD_INVOKE_RESULT_CONSTEXPR R
+UTIL_SYMBOL_VISIBLE inline ATFW_UTIL_NOSTD_INVOKE_RESULT_CONSTEXPR R
 __invoke_impl(__invoke_other, _Fn&& __f,
               _Args&&... __args) noexcept(noexcept(::std::declval<_Fn>()(::std::declval<_Args>()...))) {
   return ::std::forward<_Fn>(__f)(::std::forward<_Args>(__args)...);
 }
 
 template <class R, class _MemFun, class _Tp, class... _Args>
-UTIL_SYMBOL_VISIBLE inline UTIL_NOSTD_INVOKE_RESULT_CONSTEXPR R __invoke_impl(
+UTIL_SYMBOL_VISIBLE inline ATFW_UTIL_NOSTD_INVOKE_RESULT_CONSTEXPR R __invoke_impl(
     __invoke_memfun_ref, _MemFun&& __f, _Tp&& __t,
     _Args&&... __args) noexcept(noexcept((__invfwd<_Tp>(::std::declval<_Tp>()).*__f)(::std::declval<_Args>()...))) {
   return (__invfwd<_Tp>(__t).*__f)(::std::forward<_Args>(__args)...);
 }
 
 template <class R, class _MemFun, class _Tp, class... _Args>
-UTIL_SYMBOL_VISIBLE inline UTIL_NOSTD_INVOKE_RESULT_CONSTEXPR R
+UTIL_SYMBOL_VISIBLE inline ATFW_UTIL_NOSTD_INVOKE_RESULT_CONSTEXPR R
 __invoke_impl(__invoke_memfun_deref, _MemFun&& __f, _Tp&& __t,
               _Args&&... __args) noexcept(noexcept(((*::std::declval<_Tp>()).*__f)(::std::declval<_Args>()...))) {
   return ((*::std::forward<_Tp>(__t)).*__f)(::std::forward<_Args>(__args)...);
 }
 
 template <class R, class _MemPtr, class _Tp>
-UTIL_SYMBOL_VISIBLE inline UTIL_NOSTD_INVOKE_RESULT_CONSTEXPR R __invoke_impl(__invoke_memobj_ref, _MemPtr&& __f,
-                                                                              _Tp&& __t) noexcept {
+UTIL_SYMBOL_VISIBLE inline ATFW_UTIL_NOSTD_INVOKE_RESULT_CONSTEXPR R __invoke_impl(__invoke_memobj_ref, _MemPtr&& __f,
+                                                                                   _Tp&& __t) noexcept {
   return __invfwd<_Tp>(__t).*__f;
 }
 
 template <class R, class _MemPtr, class _Tp>
-UTIL_SYMBOL_VISIBLE inline UTIL_NOSTD_INVOKE_RESULT_CONSTEXPR R __invoke_impl(__invoke_memobj_deref, _MemPtr&& __f,
-                                                                              _Tp&& __t) noexcept {
+UTIL_SYMBOL_VISIBLE inline ATFW_UTIL_NOSTD_INVOKE_RESULT_CONSTEXPR R __invoke_impl(__invoke_memobj_deref, _MemPtr&& __f,
+                                                                                   _Tp&& __t) noexcept {
   return (*::std::forward<_Tp>(__t)).*__f;
 }
 
@@ -192,7 +192,7 @@ template <class _Functor, class... _ArgTypes>
 using __invoke_tag_t = typename __invoke_tag<_Functor, _ArgTypes...>::type;
 
 template <class F, class... ArgTypes>
-UTIL_SYMBOL_VISIBLE inline UTIL_NOSTD_INVOKE_RESULT_CONSTEXPR invoke_result_t<F, ArgTypes...>
+UTIL_SYMBOL_VISIBLE inline ATFW_UTIL_NOSTD_INVOKE_RESULT_CONSTEXPR invoke_result_t<F, ArgTypes...>
 __invoke(F&& __fn, ArgTypes&&... __args) noexcept(noexcept(__invoke_impl<invoke_result_t<F, ArgTypes...>>(
     __invoke_tag_t<F, ArgTypes...>{}, ::std::declval<F>(), ::std::declval<ArgTypes>()...))) {
   using __tag = __invoke_tag_t<F, ArgTypes...>;
@@ -202,7 +202,7 @@ __invoke(F&& __fn, ArgTypes&&... __args) noexcept(noexcept(__invoke_impl<invoke_
 }  // namespace details
 
 template <class F, class... ArgTypes>
-UTIL_SYMBOL_VISIBLE inline UTIL_NOSTD_INVOKE_RESULT_CONSTEXPR invoke_result_t<F, ArgTypes...> invoke(
+UTIL_SYMBOL_VISIBLE inline ATFW_UTIL_NOSTD_INVOKE_RESULT_CONSTEXPR invoke_result_t<F, ArgTypes...> invoke(
     F&& __fn,
     ArgTypes&&... __args) noexcept(noexcept(details::__invoke(::std::declval<F>(), ::std::declval<ArgTypes>()...))) {
   return details::__invoke(::std::forward<F>(__fn), ::std::forward<ArgTypes>(__args)...);

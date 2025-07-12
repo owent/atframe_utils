@@ -34,12 +34,12 @@ CASE_TEST(gsl, span) {
 }
 
 CASE_TEST(gsl, shared_ptr) {
-  gsl::shared_ptr<int> p = gsl::make_shared<int>(123);
+  std::shared_ptr<int> p = gsl::make_shared<int>(123);
   CASE_EXPECT_EQ(123, *p);
 }
 
 CASE_TEST(gsl, unique_ptr) {
-  gsl::unique_ptr<int> p = gsl::make_unique<int>(456);
+  std::unique_ptr<int> p = gsl::make_unique<int>(456);
   CASE_EXPECT_EQ(456, *p);
 }
 

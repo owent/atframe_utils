@@ -12,6 +12,7 @@
  * @date 2017-02-16
  * @history
  *      2017-02-17: 第一版实现，暂时不加锁
+ *      2025-06-30: 默认使用非线程安全的智能指针，支持自定义 allocator (除回调函数外)
  */
 
 #pragma once
@@ -32,14 +33,14 @@
  *
  * HZ  250, LVL_BITS=6,LVL_CLK_SHIFT=3,LVL_DEPTH=9
  * Level Offset  Granularity            Range
- *  0	   0         4 ms                0 ms -        255 ms
- *  1	  64        32 ms              256 ms -       2047 ms (256ms - ~2s)
- *  2	 128       256 ms             2048 ms -      16383 ms (~2s - ~16s)
- *  3	 192      2048 ms (~2s)      16384 ms -     131071 ms (~16s - ~2m)
- *  4	 256     16384 ms (~16s)    131072 ms -    1048575 ms (~2m - ~17m)
- *  5	 320    131072 ms (~2m)    1048576 ms -    8388607 ms (~17m - ~2h)
- *  6	 384   1048576 ms (~17m)   8388608 ms -   67108863 ms (~2h - ~18h)
- *  7	 448   8388608 ms (~2h)   67108864 ms -  536870911 ms (~18h - ~6d)
+ *  0	     0         4 ms                0 ms -        255 ms
+ *  1	    64        32 ms              256 ms -       2047 ms (256ms - ~2s)
+ *  2	   128       256 ms             2048 ms -      16383 ms (~2s - ~16s)
+ *  3	   192      2048 ms (~2s)      16384 ms -     131071 ms (~16s - ~2m)
+ *  4	   256     16384 ms (~16s)    131072 ms -    1048575 ms (~2m - ~17m)
+ *  5	   320    131072 ms (~2m)    1048576 ms -    8388607 ms (~17m - ~2h)
+ *  6	   384   1048576 ms (~17m)   8388608 ms -   67108863 ms (~2h - ~18h)
+ *  7	   448   8388608 ms (~2h)   67108864 ms -  536870911 ms (~18h - ~6d)
  *  8    512  67108864 ms (~18h) 536870912 ms - 4294967288 ms (~6d - ~49d)
  *
  * HZ  100, LVL_BITS=6,LVL_CLK_SHIFT=3,LVL_DEPTH=8
@@ -55,10 +56,10 @@
  *
  * HZ  10, LVL_BITS=8,LVL_CLK_SHIFT=3,LVL_DEPTH=8
  * Level Offset  Granularity              Range
- *  0	   0        100 ms                 0 ms -       25500 ms (0s - ~25s)
- *  1	 256        800 ms             25600 ms -      204700 ms (25s - ~204s)
- *  2	 512       6400 ms (~6s)      204800 ms -     1638300 ms (~204s - ~27m)
- *  3	 768      51200 ms (~51s)    1638400 ms -    13107100 ms (~27m - ~3h)
+ *  0	     0        100 ms                 0 ms -       25500 ms (0s - ~25s)
+ *  1	   256        800 ms             25600 ms -      204700 ms (25s - ~204s)
+ *  2	   512       6400 ms (~6s)      204800 ms -     1638300 ms (~204s - ~27m)
+ *  3	   768      51200 ms (~51s)    1638400 ms -    13107100 ms (~27m - ~3h)
  *  4   1024     409600 ms (~409s)  13107200 ms -   104857500 ms (~3h - ~29h)
  *  5   1280    3276800 ms (~55m)  104857600 ms -   838860700 ms (~29h - ~9d)
  *  6   1536   26214400 ms (~7h)   838860800 ms -  6710886300 ms (~9d - ~77d)
@@ -93,7 +94,7 @@ namespace time {
  * @note 如果外部需要引用定时器对象，请使用 timer_t 代替函数签名中的 timer_type
  */
 template <time_t LVL_BITS = 6, time_t LVL_CLK_SHIFT = 3, size_t LVL_DEPTH = 8,
-          memory::compat_strong_ptr_mode PTR_MODE = memory::compat_strong_ptr_mode::kStl>
+          memory::compat_strong_ptr_mode PTR_MODE = memory::compat_strong_ptr_mode::kStrongRc>
 class ATFRAMEWORK_UTILS_API_HEAD_ONLY jiffies_timer {
  public:
   UTIL_CONFIG_STATIC_ASSERT(LVL_CLK_SHIFT < LVL_BITS);
@@ -133,7 +134,7 @@ class ATFRAMEWORK_UTILS_API_HEAD_ONLY jiffies_timer {
     uint32_t sequence;                                     // 定时器序号
     time_t timeout;                                        // 原始的超时时间
     void *private_data;                                    // 私有数据指针
-    timer_callback_fn_t fn;                                // 回掉函数
+    timer_callback_fn_t fn;                                // 回调函数
     jiffies_timer *owner;                                  // 所属的定时器管理器
     size_t owner_idx;                                      // 所属的定时器管理器所在时间轮下标
     std::list<timer_ptr_t> *owner_round;                   // 所属的时间轮
@@ -187,6 +188,7 @@ class ATFRAMEWORK_UTILS_API_HEAD_ONLY jiffies_timer {
     return error_type_t::EN_JTET_SUCCESS;
   }
 
+ private:
   /**
    * @brief 添加定时器
    * @param delta 定时器间隔，相对时间（向下取整，即如果应该是3.8个后tick触发，这里应该取3）
@@ -199,12 +201,10 @@ class ATFRAMEWORK_UTILS_API_HEAD_ONLY jiffies_timer {
    * @note 请尽量不要在外部直接保存定时器的智能指针(timer_ptr_t)，而仅仅使用监视器
    * @return 0或错误码
    */
-  template <class TCALLBACK>
-  UTIL_FORCEINLINE int add_timer(time_t delta, TCALLBACK &&fn, void *priv_data, timer_wptr_t *watcher) {
-    return add_timer(delta, timer_callback_fn_t(std::forward<TCALLBACK>(fn)), priv_data, watcher);
-  }
 
-  int add_timer(time_t delta, timer_callback_fn_t &&fn, void *priv_data, timer_wptr_t *watcher) {
+  template <class AllocatorType>
+  int internal_add_timer(const AllocatorType *alloc, time_t delta, timer_callback_fn_t &&fn, void *priv_data,
+                         timer_wptr_t *watcher) {
     if (!flags_.test(flag_t::EN_JTFT_INITED)) {
       return error_type_t::EN_JTET_NOT_INITED;
     }
@@ -222,7 +222,13 @@ class ATFRAMEWORK_UTILS_API_HEAD_ONLY jiffies_timer {
       delta = 1;
     }
 
-    timer_ptr_t timer_inst = memory::compat_strong_ptr_function_trait<PTR_MODE>::template make_shared<timer_type>();
+    timer_ptr_t timer_inst;
+    if (nullptr == alloc) {
+      timer_inst = memory::compat_strong_ptr_function_trait<PTR_MODE>::template make_shared<timer_type>();
+    } else {
+      timer_inst = memory::compat_strong_ptr_function_trait<PTR_MODE>::template allocate_shared<timer_type>(*alloc);
+    }
+
     timer_inst->flags = 0;
     timer_inst->timeout = last_tick_ + delta;
     timer_inst->private_data = priv_data;
@@ -245,12 +251,152 @@ class ATFRAMEWORK_UTILS_API_HEAD_ONLY jiffies_timer {
     return error_type_t::EN_JTET_SUCCESS;
   }
 
-  UTIL_FORCEINLINE int add_timer(time_t delta, const timer_callback_fn_t &fn, void *priv_data) {
-    return add_timer(delta, fn, priv_data, nullptr);
+ public:
+  /**
+   * @brief 添加定时器
+   * @param delta 定时器间隔，相对时间（向下取整，即如果应该是3.8个后tick触发，这里应该取3）
+   * @param fn 定时器回掉函数
+   * @param priv_data
+   * @param watcher 定时器的监视器指针，如果非空，这个weak_ptr会指向定时器对象，用于以后查询或修改数据
+   * @note 定时器回调保证晚于指定时间间隔后的下一个误差范围内时间触发。
+   *       这里有一个特殊的设计是认为当前tick的时间已被向下取整，即第3.8个tick的时间在定时器里记录的是3。
+   *       所以会保证定时器的触发时间一定晚于指定的时间（即，3.8+2=5.8意味着第6个tick才会触发定时器）
+   * @note 请尽量不要在外部直接保存定时器的智能指针(timer_ptr_t)，而仅仅使用监视器
+   * @return 0或错误码
+   */
+  template <class TCALLBACK,
+            class = nostd::enable_if_t<!::std::is_same<nostd::remove_cvref_t<TCALLBACK>, timer_callback_fn_t>::value>>
+  ATFW_UTIL_FORCEINLINE int add_timer(time_t delta, TCALLBACK &&fn, void *priv_data, timer_wptr_t *watcher) {
+    return internal_add_timer(static_cast<::std::allocator<timer_type> *>(nullptr), delta,
+                              timer_callback_fn_t(std::forward<TCALLBACK>(fn)), priv_data, watcher);
   }
 
-  UTIL_FORCEINLINE int add_timer(time_t delta, timer_callback_fn_t &&fn, void *priv_data) {
-    return add_timer(delta, fn, priv_data, nullptr);
+  /**
+   * @brief 添加定时器
+   * @param alloc 内存分配器
+   * @param delta 定时器间隔，相对时间（向下取整，即如果应该是3.8个后tick触发，这里应该取3）
+   * @param fn 定时器回掉函数
+   * @param priv_data
+   * @param watcher 定时器的监视器指针，如果非空，这个weak_ptr会指向定时器对象，用于以后查询或修改数据
+   * @note 定时器回调保证晚于指定时间间隔后的下一个误差范围内时间触发。
+   *       这里有一个特殊的设计是认为当前tick的时间已被向下取整，即第3.8个tick的时间在定时器里记录的是3。
+   *       所以会保证定时器的触发时间一定晚于指定的时间（即，3.8+2=5.8意味着第6个tick才会触发定时器）
+   * @note 请尽量不要在外部直接保存定时器的智能指针(timer_ptr_t)，而仅仅使用监视器
+   * @return 0或错误码
+   */
+  template <class TALLOCATOR, class TCALLBACK,
+            class = nostd::enable_if_t<!::std::is_same<nostd::remove_cvref_t<TCALLBACK>, timer_callback_fn_t>::value>>
+  ATFW_UTIL_FORCEINLINE int add_timer(const TALLOCATOR &alloc, time_t delta, TCALLBACK &&fn, void *priv_data,
+                                    timer_wptr_t *watcher) {
+    return internal_add_timer(&alloc, delta, timer_callback_fn_t(std::forward<TCALLBACK>(fn)), priv_data, watcher);
+  }
+
+  /**
+   * @brief 添加定时器
+   * @param delta 定时器间隔，相对时间（向下取整，即如果应该是3.8个后tick触发，这里应该取3）
+   * @param fn 定时器回掉函数
+   * @param priv_data
+   * @param watcher 定时器的监视器指针，如果非空，这个weak_ptr会指向定时器对象，用于以后查询或修改数据
+   * @note 定时器回调保证晚于指定时间间隔后的下一个误差范围内时间触发。
+   *       这里有一个特殊的设计是认为当前tick的时间已被向下取整，即第3.8个tick的时间在定时器里记录的是3。
+   *       所以会保证定时器的触发时间一定晚于指定的时间（即，3.8+2=5.8意味着第6个tick才会触发定时器）
+   * @note 请尽量不要在外部直接保存定时器的智能指针(timer_ptr_t)，而仅仅使用监视器
+   * @return 0或错误码
+   */
+
+  int add_timer(time_t delta, timer_callback_fn_t &&fn, void *priv_data, timer_wptr_t *watcher) {
+    return internal_add_timer(static_cast<::std::allocator<timer_type> *>(nullptr), delta, std::move(fn), priv_data,
+                              watcher);
+  }
+
+  /**
+   * @brief 添加定时器
+   * @param alloc 内存分配器
+   * @param delta 定时器间隔，相对时间（向下取整，即如果应该是3.8个后tick触发，这里应该取3）
+   * @param fn 定时器回掉函数
+   * @param priv_data
+   * @param watcher 定时器的监视器指针，如果非空，这个weak_ptr会指向定时器对象，用于以后查询或修改数据
+   * @note 定时器回调保证晚于指定时间间隔后的下一个误差范围内时间触发。
+   *       这里有一个特殊的设计是认为当前tick的时间已被向下取整，即第3.8个tick的时间在定时器里记录的是3。
+   *       所以会保证定时器的触发时间一定晚于指定的时间（即，3.8+2=5.8意味着第6个tick才会触发定时器）
+   * @note 请尽量不要在外部直接保存定时器的智能指针(timer_ptr_t)，而仅仅使用监视器
+   * @return 0或错误码
+   */
+  template <class TALLOCATOR>
+  int add_timer(const TALLOCATOR &alloc, time_t delta, timer_callback_fn_t &&fn, void *priv_data,
+                timer_wptr_t *watcher) {
+    return internal_add_timer(&alloc, delta, std::move(fn), priv_data, watcher);
+  }
+
+  /**
+   * @brief 添加定时器
+   * @param delta 定时器间隔，相对时间（向下取整，即如果应该是3.8个后tick触发，这里应该取3）
+   * @param fn 定时器回掉函数
+   * @param priv_data
+   * @param watcher 定时器的监视器指针，如果非空，这个weak_ptr会指向定时器对象，用于以后查询或修改数据
+   * @note 定时器回调保证晚于指定时间间隔后的下一个误差范围内时间触发。
+   *       这里有一个特殊的设计是认为当前tick的时间已被向下取整，即第3.8个tick的时间在定时器里记录的是3。
+   *       所以会保证定时器的触发时间一定晚于指定的时间（即，3.8+2=5.8意味着第6个tick才会触发定时器）
+   * @note 请尽量不要在外部直接保存定时器的智能指针(timer_ptr_t)，而仅仅使用监视器
+   * @return 0或错误码
+   */
+  ATFW_UTIL_FORCEINLINE int add_timer(time_t delta, const timer_callback_fn_t &fn, void *priv_data) {
+    return internal_add_timer(static_cast<::std::allocator<timer_type> *>(nullptr), delta, timer_callback_fn_t(fn),
+                              priv_data, nullptr);
+  }
+
+  /**
+   * @brief 添加定时器
+   * @param alloc 内存分配器
+   * @param delta 定时器间隔，相对时间（向下取整，即如果应该是3.8个后tick触发，这里应该取3）
+   * @param fn 定时器回掉函数
+   * @param priv_data
+   * @param watcher 定时器的监视器指针，如果非空，这个weak_ptr会指向定时器对象，用于以后查询或修改数据
+   * @note 定时器回调保证晚于指定时间间隔后的下一个误差范围内时间触发。
+   *       这里有一个特殊的设计是认为当前tick的时间已被向下取整，即第3.8个tick的时间在定时器里记录的是3。
+   *       所以会保证定时器的触发时间一定晚于指定的时间（即，3.8+2=5.8意味着第6个tick才会触发定时器）
+   * @note 请尽量不要在外部直接保存定时器的智能指针(timer_ptr_t)，而仅仅使用监视器
+   * @return 0或错误码
+   */
+  template <class TALLOCATOR>
+  ATFW_UTIL_FORCEINLINE int add_timer(const TALLOCATOR &alloc, time_t delta, const timer_callback_fn_t &fn,
+                                    void *priv_data) {
+    return internal_add_timer(&alloc, delta, timer_callback_fn_t(fn), priv_data, nullptr);
+  }
+
+  /**
+   * @brief 添加定时器
+   * @param delta 定时器间隔，相对时间（向下取整，即如果应该是3.8个后tick触发，这里应该取3）
+   * @param fn 定时器回掉函数
+   * @param priv_data
+   * @param watcher 定时器的监视器指针，如果非空，这个weak_ptr会指向定时器对象，用于以后查询或修改数据
+   * @note 定时器回调保证晚于指定时间间隔后的下一个误差范围内时间触发。
+   *       这里有一个特殊的设计是认为当前tick的时间已被向下取整，即第3.8个tick的时间在定时器里记录的是3。
+   *       所以会保证定时器的触发时间一定晚于指定的时间（即，3.8+2=5.8意味着第6个tick才会触发定时器）
+   * @note 请尽量不要在外部直接保存定时器的智能指针(timer_ptr_t)，而仅仅使用监视器
+   * @return 0或错误码
+   */
+  ATFW_UTIL_FORCEINLINE int add_timer(time_t delta, timer_callback_fn_t &&fn, void *priv_data) {
+    return internal_add_timer(static_cast<::std::allocator<timer_type> *>(nullptr), delta, std::move(fn), priv_data,
+                              nullptr);
+  }
+
+  /**
+   * @brief 添加定时器
+   * @param alloc 内存分配器
+   * @param delta 定时器间隔，相对时间（向下取整，即如果应该是3.8个后tick触发，这里应该取3）
+   * @param fn 定时器回掉函数
+   * @param priv_data
+   * @param watcher 定时器的监视器指针，如果非空，这个weak_ptr会指向定时器对象，用于以后查询或修改数据
+   * @note 定时器回调保证晚于指定时间间隔后的下一个误差范围内时间触发。
+   *       这里有一个特殊的设计是认为当前tick的时间已被向下取整，即第3.8个tick的时间在定时器里记录的是3。
+   *       所以会保证定时器的触发时间一定晚于指定的时间（即，3.8+2=5.8意味着第6个tick才会触发定时器）
+   * @note 请尽量不要在外部直接保存定时器的智能指针(timer_ptr_t)，而仅仅使用监视器
+   * @return 0或错误码
+   */
+  template <class TALLOCATOR>
+  ATFW_UTIL_FORCEINLINE int add_timer(const TALLOCATOR &alloc, time_t delta, timer_callback_fn_t &&fn, void *priv_data) {
+    return internal_add_timer(&alloc, delta, std::move(fn), priv_data, nullptr);
   }
 
   /**
@@ -324,26 +470,26 @@ class ATFRAMEWORK_UTILS_API_HEAD_ONLY jiffies_timer {
    * @brief 获取最后一次定时器滴答时间（当前定时器时间）
    * @return 最后一次定时器滴答时间（当前定时器时间）
    */
-  UTIL_FORCEINLINE time_t get_last_tick() const { return last_tick_; }
+  ATFW_UTIL_FORCEINLINE time_t get_last_tick() const { return last_tick_; }
 
   /**
    * @brief 获取定时器数量
    * @return 定时器数量
    */
-  UTIL_FORCEINLINE size_t size() const { return size_; }
+  ATFW_UTIL_FORCEINLINE size_t size() const { return size_; }
 
   /**
    * @brief 获取绑定的私有数据
    * @return 绑定的私有数据
    */
-  UTIL_FORCEINLINE void *get_private_data() const noexcept { return private_data_; }
+  ATFW_UTIL_FORCEINLINE void *get_private_data() const noexcept { return private_data_; }
 
   /**
    * @brief 绑定私有数据
    * @param priv_data 私有数据
    * @return 上一次绑定的私有数据
    */
-  UTIL_FORCEINLINE void *set_private_data(void *priv_data) noexcept {
+  ATFW_UTIL_FORCEINLINE void *set_private_data(void *priv_data) noexcept {
     void *old_value = private_data_;
     private_data_ = priv_data;
     return old_value;
@@ -354,7 +500,7 @@ class ATFRAMEWORK_UTILS_API_HEAD_ONLY jiffies_timer {
    * @brief 获取当前定时器类型的最大时间范围（tick）
    * @return 当前定时器类型的最大时间范围（tick）
    */
-  UTIL_FORCEINLINE constexpr static time_t get_max_tick_distance() { return LVL_START(LVL_DEPTH) - 1; }
+  ATFW_UTIL_FORCEINLINE constexpr static time_t get_max_tick_distance() { return LVL_START(LVL_DEPTH) - 1; }
 
   static inline size_t calc_index(time_t expires, size_t lvl) noexcept {
     // 这里的expires 必然大于等于last_tick_，并且至少加一帧
@@ -380,22 +526,24 @@ class ATFRAMEWORK_UTILS_API_HEAD_ONLY jiffies_timer {
   }
 
  public:
-  UTIL_FORCEINLINE static void *get_timer_private_data(const timer_type &timer) noexcept { return timer.private_data; }
-  UTIL_FORCEINLINE static void *set_timer_private_data(timer_type &timer, void *priv_data) noexcept {
+  ATFW_UTIL_FORCEINLINE static void *get_timer_private_data(const timer_type &timer) noexcept {
+    return timer.private_data;
+  }
+  ATFW_UTIL_FORCEINLINE static void *set_timer_private_data(timer_type &timer, void *priv_data) noexcept {
     void *old_value = timer.private_data;
     timer.private_data = priv_data;
     return old_value;
   }
-  UTIL_FORCEINLINE static uint32_t get_timer_sequence(const timer_type &timer) noexcept { return timer.sequence; }
-  UTIL_FORCEINLINE static size_t get_timer_wheel_index(const timer_type &timer) noexcept { return timer.owner_idx; }
-  UTIL_FORCEINLINE static time_t get_timer_timeout(const timer_type &timer) noexcept { return timer.timeout; }
-  UTIL_FORCEINLINE static bool check_timer_flags(const timer_type &timer, typename timer_flag_t::type f) noexcept {
+  ATFW_UTIL_FORCEINLINE static uint32_t get_timer_sequence(const timer_type &timer) noexcept { return timer.sequence; }
+  ATFW_UTIL_FORCEINLINE static size_t get_timer_wheel_index(const timer_type &timer) noexcept { return timer.owner_idx; }
+  ATFW_UTIL_FORCEINLINE static time_t get_timer_timeout(const timer_type &timer) noexcept { return timer.timeout; }
+  ATFW_UTIL_FORCEINLINE static bool check_timer_flags(const timer_type &timer, typename timer_flag_t::type f) noexcept {
     return !!(timer.flags & static_cast<uint32_t>(f));
   }
-  UTIL_FORCEINLINE static void set_timer_flags(const timer_type &timer, typename timer_flag_t::type f) noexcept {
+  ATFW_UTIL_FORCEINLINE static void set_timer_flags(const timer_type &timer, typename timer_flag_t::type f) noexcept {
     timer.flags |= static_cast<uint32_t>(f);
   }
-  UTIL_FORCEINLINE static void unset_timer_flags(const timer_type &timer, typename timer_flag_t::type f) noexcept {
+  ATFW_UTIL_FORCEINLINE static void unset_timer_flags(const timer_type &timer, typename timer_flag_t::type f) noexcept {
     timer.flags &= ~static_cast<uint32_t>(f);
   }
   static inline void remove_timer(timer_type &timer) noexcept {
