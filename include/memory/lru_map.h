@@ -79,7 +79,7 @@ class ATFRAMEWORK_UTILS_API_HEAD_ONLY lru_map {
 
   lru_map() noexcept(std::is_nothrow_constructible<lru_history_list_type>::value &&
                      std::is_nothrow_constructible<lru_key_value_map_type>::value) {}
-  ~lru_map() {}
+  ~lru_map() = default;
 
   template <class TCONTAINER>
   ATFRAMEWORK_UTILS_API_HEAD_ONLY lru_map(const TCONTAINER &other) {

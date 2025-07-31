@@ -123,7 +123,7 @@ class ATFRAMEWORK_UTILS_API_HEAD_ONLY read_lock_holder
   read_lock_holder(TLock &lock)  // NOLINT: runtime/explicit
       : lock_holder<TLock, detail::default_read_lock_action<TLock>, detail::default_read_unlock_action<TLock> >(lock) {}
 
-  ~read_lock_holder() {}
+  ~read_lock_holder() = default;
 
   inline read_lock_holder() noexcept = default;
   read_lock_holder(read_lock_holder &&) = default;
@@ -141,7 +141,7 @@ class ATFRAMEWORK_UTILS_API_HEAD_ONLY write_lock_holder
       : lock_holder<TLock, detail::default_write_lock_action<TLock>, detail::default_write_unlock_action<TLock> >(
             lock) {}
 
-  ~write_lock_holder() {}
+  ~write_lock_holder() = default;
 
   inline write_lock_holder() noexcept = default;
   write_lock_holder(write_lock_holder &&) = default;
