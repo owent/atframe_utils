@@ -1242,9 +1242,9 @@ ATFRAMEWORK_UTILS_API size_t stacktrace_write(char *buf, size_t bufsz, const sta
       break;
     }
 
-    ret += res.size;
+    ret += static_cast<size_t>(res.size);
     buf += res.size;
-    bufsz -= res.size;
+    bufsz -= static_cast<size_t>(res.size);
 
     ++frame_id;
   }
