@@ -363,7 +363,7 @@ static int get_clock(uint32_t *clock_high, uint32_t *clock_low, uint16_t *ret_cl
       ret = -1;
   }
   if (uuid_generator_state_file.state_fd >= 0) {
-    rewind(uuid_generator_state_file.state_f);
+    fseek(uuid_generator_state_file.state_f, 0, SEEK_SET);
     while (flock(uuid_generator_state_file.state_fd, LOCK_EX) < 0) {
       if ((errno == EAGAIN) || (errno == EINTR)) continue;
       uuid_generator_state_file.close_file();
@@ -411,7 +411,7 @@ try_again:
   clock_reg += (((uint64_t)0x01B21DD2) << 32) + 0x13814000;
 
   if (uuid_generator_state_file.state_fd >= 0) {
-    rewind(uuid_generator_state_file.state_f);
+    fseek(uuid_generator_state_file.state_f, 0, SEEK_SET);
     len = fprintf(uuid_generator_state_file.state_f, "clock: %04x tv: %016llu %08llu adj: %08d\n", clock_seq,
                   static_cast<unsigned long long>(last.tv_sec), static_cast<unsigned long long>(last.tv_usec),
                   adjustment);
@@ -420,7 +420,7 @@ try_again:
       fprintf(uuid_generator_state_file.state_f, "                   \n");
       fflush(uuid_generator_state_file.state_f);
     }
-    rewind(uuid_generator_state_file.state_f);
+    fseek(uuid_generator_state_file.state_f, 0, SEEK_SET);
     flock(uuid_generator_state_file.state_fd, LOCK_UN);
   }
 

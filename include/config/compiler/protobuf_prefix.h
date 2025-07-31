@@ -1,6 +1,6 @@
 // Copyright 2021 atframework
-#ifndef UTIL_CONFIG_COMPILER_PROTOBUF_PREFIX_H
-#define UTIL_CONFIG_COMPILER_PROTOBUF_PREFIX_H
+#ifndef ATFW_UTIL_CONFIG_COMPILER_PROTOBUF_PREFIX_H
+#define ATFW_UTIL_CONFIG_COMPILER_PROTOBUF_PREFIX_H
 
 // https://docs.microsoft.com/en-us/cpp/error-messages/compiler-warnings/compiler-warnings-by-compiler-version
 

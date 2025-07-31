@@ -287,7 +287,7 @@ class ATFRAMEWORK_UTILS_API_HEAD_ONLY jiffies_timer {
   template <class TALLOCATOR, class TCALLBACK,
             class = nostd::enable_if_t<!::std::is_same<nostd::remove_cvref_t<TCALLBACK>, timer_callback_fn_t>::value>>
   ATFW_UTIL_FORCEINLINE int add_timer(const TALLOCATOR &alloc, time_t delta, TCALLBACK &&fn, void *priv_data,
-                                    timer_wptr_t *watcher) {
+                                      timer_wptr_t *watcher) {
     return internal_add_timer(&alloc, delta, timer_callback_fn_t(std::forward<TCALLBACK>(fn)), priv_data, watcher);
   }
 
@@ -360,7 +360,7 @@ class ATFRAMEWORK_UTILS_API_HEAD_ONLY jiffies_timer {
    */
   template <class TALLOCATOR>
   ATFW_UTIL_FORCEINLINE int add_timer(const TALLOCATOR &alloc, time_t delta, const timer_callback_fn_t &fn,
-                                    void *priv_data) {
+                                      void *priv_data) {
     return internal_add_timer(&alloc, delta, timer_callback_fn_t(fn), priv_data, nullptr);
   }
 
@@ -395,7 +395,8 @@ class ATFRAMEWORK_UTILS_API_HEAD_ONLY jiffies_timer {
    * @return 0或错误码
    */
   template <class TALLOCATOR>
-  ATFW_UTIL_FORCEINLINE int add_timer(const TALLOCATOR &alloc, time_t delta, timer_callback_fn_t &&fn, void *priv_data) {
+  ATFW_UTIL_FORCEINLINE int add_timer(const TALLOCATOR &alloc, time_t delta, timer_callback_fn_t &&fn,
+                                      void *priv_data) {
     return internal_add_timer(&alloc, delta, std::move(fn), priv_data, nullptr);
   }
 
@@ -535,7 +536,9 @@ class ATFRAMEWORK_UTILS_API_HEAD_ONLY jiffies_timer {
     return old_value;
   }
   ATFW_UTIL_FORCEINLINE static uint32_t get_timer_sequence(const timer_type &timer) noexcept { return timer.sequence; }
-  ATFW_UTIL_FORCEINLINE static size_t get_timer_wheel_index(const timer_type &timer) noexcept { return timer.owner_idx; }
+  ATFW_UTIL_FORCEINLINE static size_t get_timer_wheel_index(const timer_type &timer) noexcept {
+    return timer.owner_idx;
+  }
   ATFW_UTIL_FORCEINLINE static time_t get_timer_timeout(const timer_type &timer) noexcept { return timer.timeout; }
   ATFW_UTIL_FORCEINLINE static bool check_timer_flags(const timer_type &timer, typename timer_flag_t::type f) noexcept {
     return !!(timer.flags & static_cast<uint32_t>(f));
@@ -565,7 +568,7 @@ class ATFRAMEWORK_UTILS_API_HEAD_ONLY jiffies_timer {
     set_timer_flags(timer, timer_flag_t::EN_JTTF_REMOVED);
   }
 
-  inline void insert_timer(timer_ptr_t timer_inst) noexcept {
+  inline void insert_timer(timer_ptr_t timer_inst) noexcept {  // NOLINT(performance-unnecessary-value-param)
     if (!timer_inst) {
       return;
     }

@@ -313,10 +313,10 @@ class ATFRAMEWORK_UTILS_API_HEAD_ONLY __rc_ptr_counted_data_with_deleter_allocat
 };
 
 template <class T>
-struct ATFRAMEWORK_UTILS_API_HEAD_ONLY __strong_rc_default_alloc_shared_tag{};
+struct ATFRAMEWORK_UTILS_API_HEAD_ONLY __strong_rc_default_alloc_shared_tag {};
 
 template <class T>
-struct ATFRAMEWORK_UTILS_API_HEAD_ONLY __strong_rc_with_alloc_shared_tag{};
+struct ATFRAMEWORK_UTILS_API_HEAD_ONLY __strong_rc_with_alloc_shared_tag {};
 
 template <class T>
 class ATFRAMEWORK_UTILS_API_HEAD_ONLY __weak_rc_counter;
@@ -512,6 +512,10 @@ class ATFRAMEWORK_UTILS_API_HEAD_ONLY __strong_rc_counter {
   }
 
   __strong_rc_counter& operator=(const __strong_rc_counter& r) noexcept {
+    if (this == &r) {
+      return *this;
+    }
+
     if (pi_ != r.pi_) {
       __rc_ptr_counted_data_base* origin_pi = pi_;
 
@@ -602,6 +606,10 @@ class ATFRAMEWORK_UTILS_API_HEAD_ONLY __weak_rc_counter {
   }
 
   __weak_rc_counter& operator=(const __weak_rc_counter& r) noexcept {
+    if (this == &r) {
+      return *this;
+    }
+
     if (pi_ != r.pi_) {
       __rc_ptr_counted_data_base* origin_pi = pi_;
       pi_ = r.pi_;
@@ -808,7 +816,7 @@ class ATFRAMEWORK_UTILS_API_HEAD_ONLY strong_rc_ptr : public strong_rc_ptr_acces
   strong_rc_ptr(Y* ptr) noexcept  // NOLINT: runtime/explicit
       : ptr_(ptr), ref_counter_(ptr) {
     static_assert(!std::is_void<Y>::value, "incomplete type");
-    static_assert(sizeof(Y) > 0, "incomplete type");
+    static_assert(sizeof(Y) > 0, "incomplete type");  // NOLINT(bugprone-sizeof-expression)
     __enable_shared_from_this_with(&ref_counter_, ptr, ptr);
   }
 

@@ -366,6 +366,8 @@
 #ifndef ATFW_UTIL_ATTRIBUTE_LIFETIME_BOUND
 #  if ATFW_UTIL_HAVE_CPP_ATTRIBUTE(clang::lifetimebound)
 #    define ATFW_UTIL_ATTRIBUTE_LIFETIME_BOUND [[clang::lifetimebound]]
+#  elif defined(_MSC_VER) && ATFW_UTIL_HAVE_CPP_ATTRIBUTE(msvc::lifetimebound)
+#    define ATFW_UTIL_ATTRIBUTE_LIFETIME_BOUND [[msvc::lifetimebound]]
 #  elif ATFW_UTIL_HAVE_ATTRIBUTE(lifetimebound)
 #    define ATFW_UTIL_ATTRIBUTE_LIFETIME_BOUND __attribute__((lifetimebound))
 #  else

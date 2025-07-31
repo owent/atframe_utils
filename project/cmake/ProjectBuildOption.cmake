@@ -299,9 +299,9 @@ struct custom_object {
 
 // Some STL implement may have BUGs on some APIs, we need check it
 template <class CharT>
-struct std::formatter<custom_object, CharT> : std::formatter<CharT*, CharT> {
+struct std::formatter<custom_object, CharT> : std::formatter<std::basic_string_view<CharT>, CharT> {
   template <class FormatContext>
-  auto format(const custom_object &vec, FormatContext &ctx) {
+  auto format(const custom_object &vec, FormatContext &ctx) const {
     return std::vformat_to(ctx.out(), \"({},{})\", std::make_format_args(vec.x, vec.y));
   }
 };
@@ -316,28 +316,6 @@ int main() {
   return 0;
 }"
     ATFRAMEWORK_UTILS_ENABLE_STD_FORMAT)
-  if(ATFRAMEWORK_UTILS_ENABLE_STD_FORMAT)
-    check_cxx_source_compiles(
-      "
-#include <format>
-#include <iostream>
-#include <string>
-
-template<class TFMT, class... TARGS>
-std::string forward_fmt_text(TFMT&& fmt, TARGS&&... args) {
-    return std::format(std::forward<TFMT>(fmt), std::forward<TARGS>(args)...);
-}
-
-int main() {
-  std::cout<< forward_fmt_text(\"Hello {}!{}\", \"World\", 123)<< std::endl;
-  return 0;
-}
-"
-      ATFRAMEWORK_UTILS_ENABLE_FORWARD_FMTTEXT)
-    set(ATFRAMEWORK_UTILS_ENABLE_FORWARD_FMTTEXT
-        ${ATFRAMEWORK_UTILS_ENABLE_FORWARD_FMTTEXT}
-        CACHE BOOL "fmttext is allowed to be forward when using std format")
-  endif()
   set(ATFRAMEWORK_UTILS_ENABLE_STD_FORMAT
       ${ATFRAMEWORK_UTILS_ENABLE_STD_FORMAT}
       CACHE BOOL "Using std format for log formatter")
@@ -365,34 +343,11 @@ int main() {
 }
 "
       ATFRAMEWORK_UTILS_ENABLE_FMTLIB)
-    if(ATFRAMEWORK_UTILS_ENABLE_FMTLIB)
-      check_cxx_source_compiles(
-        "
-#include <fmt/format.h>
-#include <iostream>
-
-template<class TFMT, class... TARGS>
-void forward_fmt_text(TFMT&& fmt, TARGS&&... args) {
-    std::cout<< fmt::format(std::forward<TFMT>(fmt), std::forward<TARGS>(args)...)<< std::endl;
-}
-
-int main() {
-  forward_fmt_text(\"Hello {}!{}\", \"World\", 123);
-  return 0;
-}
-"
-        ATFRAMEWORK_UTILS_ENABLE_FORWARD_FMTTEXT)
-    endif()
     cmake_pop_check_state()
 
     set(ATFRAMEWORK_UTILS_ENABLE_FMTLIB
         ${ATFRAMEWORK_UTILS_ENABLE_FMTLIB}
         CACHE BOOL "Using fmt.dev for log formatter")
-    if(ATFRAMEWORK_UTILS_ENABLE_FORWARD_FMTTEXT)
-      set(ATFRAMEWORK_UTILS_ENABLE_FORWARD_FMTTEXT
-          ${ATFRAMEWORK_UTILS_ENABLE_FORWARD_FMTTEXT}
-          CACHE BOOL "fmttext is allowed to be forward when using fmt.dev")
-    endif()
   endif()
 
   if(ATFRAMEWORK_UTILS_ENABLE_FMTLIB)

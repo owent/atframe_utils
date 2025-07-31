@@ -31,7 +31,12 @@ ATFRAMEWORK_UTILS_NAMESPACE_END
 /**
  * @brief 侵入式的禁止copy实现，有一些场景下需要使用dllexport或者-fvisibility=hidden
  */
-#define UTIL_DESIGN_PATTERN_NOCOPYABLE(CLAZZ) \
+#define ATFW_UTIL_DESIGN_PATTERN_NOCOPYABLE(CLAZZ) \
  private:                                     \
   CLAZZ(const CLAZZ &) = delete;              \
   CLAZZ &operator=(const CLAZZ &) = delete;
+
+// Legacy macros
+#ifndef UTIL_DESIGN_PATTERN_NOCOPYABLE
+#  define UTIL_DESIGN_PATTERN_NOCOPYABLE(CLAZZ) ATFW_UTIL_DESIGN_PATTERN_NOCOPYABLE(CLAZZ)
+#endif

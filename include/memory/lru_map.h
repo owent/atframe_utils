@@ -17,8 +17,8 @@
 #include <config/atframe_utils_build_feature.h>
 #include <config/compiler_features.h>
 #include <memory/rc_ptr.h>
+#include <std/explicit_declare.h>
 
-#include <stdint.h>
 #include <cstddef>
 #include <functional>
 #include <list>
@@ -79,6 +79,7 @@ class ATFRAMEWORK_UTILS_API_HEAD_ONLY lru_map {
 
   lru_map() noexcept(std::is_nothrow_constructible<lru_history_list_type>::value &&
                      std::is_nothrow_constructible<lru_key_value_map_type>::value) {}
+  ~lru_map() {}
 
   template <class TCONTAINER>
   ATFRAMEWORK_UTILS_API_HEAD_ONLY lru_map(const TCONTAINER &other) {
@@ -141,7 +142,7 @@ class ATFRAMEWORK_UTILS_API_HEAD_ONLY lru_map {
     erase(back().first);
   }
 
-  inline bool empty() const { return kv_data_.empty(); }
+  ATFW_EXPLICIT_NODISCARD_ATTR inline bool empty() const { return kv_data_.empty(); }
   inline size_type size() const { return kv_data_.size(); }
 
 #if defined(ATFRAMEWORK_UTILS_UNORDERED_MAP_SET_HAS_RESERVE) && ATFRAMEWORK_UTILS_UNORDERED_MAP_SET_HAS_RESERVE
@@ -151,7 +152,7 @@ class ATFRAMEWORK_UTILS_API_HEAD_ONLY lru_map {
   inline void reserve(size_type) { /* do nothing, some old compiler don't support this. */ }
 #endif
 
-  void swap(self_type &other) {
+  void swap(self_type &other) noexcept {
     other.visit_history_.swap(visit_history_);
     other.kv_data_.swap(kv_data_);
   }

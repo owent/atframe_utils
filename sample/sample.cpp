@@ -300,21 +300,10 @@ void log_sample_func7() {
   test_exception_for_log_formatter te1{true, true};
   test_exception_for_log_formatter te2{false, true};
   std::cout << "---------------- catch exception of log format APIs --------------" << std::endl;
-#    ifndef ATFRAMEWORK_UTILS_STRING_FWAPI_FORMAT_STRING_TYPE
-#      if defined(ATFRAMEWORK_UTILS_ENABLE_STD_FORMAT) && ATFRAMEWORK_UTILS_ENABLE_STD_FORMAT
-  std::cout << "format: " << ATFRAMEWORK_UTILS_NAMESPACE_ID::log::format("{},{},{},{}", 1, 2, 3) << std::endl;
-#      endif
-#    endif
   std::cout << "format: " << ATFRAMEWORK_UTILS_NAMESPACE_ID::log::format("{},{}", 1, te1) << std::endl;
   std::cout << "format: " << ATFRAMEWORK_UTILS_NAMESPACE_ID::log::format("{},{}", 1, te2) << std::endl;
 
   char string_buffer[256] = {0};
-#    ifndef ATFRAMEWORK_UTILS_STRING_FWAPI_FORMAT_STRING_TYPE
-#      if defined(ATFRAMEWORK_UTILS_ENABLE_STD_FORMAT) && ATFRAMEWORK_UTILS_ENABLE_STD_FORMAT
-  ATFRAMEWORK_UTILS_NAMESPACE_ID::log::format_to(string_buffer, "{},{},{},{}", 1, 2, 3);
-  std::cout << "format_to: " << string_buffer << std::endl;
-#      endif
-#    endif
   memset(string_buffer, 0, sizeof(string_buffer));
   ATFRAMEWORK_UTILS_NAMESPACE_ID::log::format_to(string_buffer, "{},{}", 1, te1);
   std::cout << "format_to: " << string_buffer << std::endl;
@@ -323,12 +312,6 @@ void log_sample_func7() {
   std::cout << "format_to: " << string_buffer << std::endl;
   memset(string_buffer, 0, sizeof(string_buffer));
 
-#    ifndef ATFRAMEWORK_UTILS_STRING_FWAPI_FORMAT_STRING_TYPE
-#      if defined(ATFRAMEWORK_UTILS_ENABLE_STD_FORMAT) && ATFRAMEWORK_UTILS_ENABLE_STD_FORMAT
-  ATFRAMEWORK_UTILS_NAMESPACE_ID::log::format_to_n(string_buffer, 100, "{},{},{},{}", 1, 2, 3);
-  std::cout << "format_to_n: " << string_buffer << std::endl;
-#      endif
-#    endif
   memset(string_buffer, 0, sizeof(string_buffer));
   ATFRAMEWORK_UTILS_NAMESPACE_ID::log::format_to_n(string_buffer, 100, "{},{}", 1, te1);
   std::cout << "format_to_n: " << string_buffer << std::endl;

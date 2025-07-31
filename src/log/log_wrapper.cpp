@@ -24,12 +24,12 @@
     defined(THREAD_TLS_ENABLED) && 1 == THREAD_TLS_ENABLED
 ATFRAMEWORK_UTILS_NAMESPACE_BEGIN
 namespace log {
-namespace detail {
+namespace {
 static char *get_log_tls_buffer() {
-  static THREAD_TLS char ret[ATFRAMEWORK_UTILS_LOG_MAX_SIZE_PER_LINE];
-  return ret;
+  static THREAD_TLS std::unique_ptr<char[]> ret(new char[ATFRAMEWORK_UTILS_LOG_MAX_SIZE_PER_LINE]);
+  return ret.get();
 }
-}  // namespace detail
+}  // namespace
 }  // namespace log
 ATFRAMEWORK_UTILS_NAMESPACE_END
 #else
@@ -37,7 +37,7 @@ ATFRAMEWORK_UTILS_NAMESPACE_END
 #  include <pthread.h>
 ATFRAMEWORK_UTILS_NAMESPACE_BEGIN
 namespace log {
-namespace detail {
+namespace {
 static pthread_once_t gt_get_log_tls_once = PTHREAD_ONCE_INIT;
 static pthread_key_t gt_get_log_tls_key;
 
@@ -75,7 +75,7 @@ static char *get_log_tls_buffer() {
   }
   return buffer_block;
 }
-}  // namespace detail
+}  // namespace
 }  // namespace log
 ATFRAMEWORK_UTILS_NAMESPACE_END
 
@@ -83,7 +83,7 @@ ATFRAMEWORK_UTILS_NAMESPACE_END
 
 ATFRAMEWORK_UTILS_NAMESPACE_BEGIN
 namespace log {
-namespace detail {
+namespace {
 static bool log_wrapper_global_destroyed_ = false;
 }
 
@@ -104,7 +104,7 @@ ATFRAMEWORK_UTILS_API log_wrapper::log_wrapper(construct_helper_t &)
 
 ATFRAMEWORK_UTILS_API log_wrapper::~log_wrapper() {
   if (get_option(options_t::OPT_IS_GLOBAL)) {
-    detail::log_wrapper_global_destroyed_ = true;
+    log_wrapper_global_destroyed_ = true;
   }
 
   // 重置level，只要内存没释放，就还可以内存访问，但是不能写出日志
@@ -233,7 +233,7 @@ ATFRAMEWORK_UTILS_API void log_wrapper::write_log(const caller_info_t &caller, c
 }
 
 ATFRAMEWORK_UTILS_API log_wrapper *log_wrapper::mutable_log_cat(uint32_t cats) {
-  if (detail::log_wrapper_global_destroyed_) {
+  if (log_wrapper_global_destroyed_) {
     return nullptr;
   }
 
@@ -264,7 +264,7 @@ ATFRAMEWORK_UTILS_API void log_wrapper::start_log(const caller_info_t &caller, l
     return;
   }
 
-  writer.buffer = detail::get_log_tls_buffer();
+  writer.buffer = get_log_tls_buffer();
   writer.total_size = ATFRAMEWORK_UTILS_LOG_MAX_SIZE_PER_LINE;
   writer.writen_size = 0;
 

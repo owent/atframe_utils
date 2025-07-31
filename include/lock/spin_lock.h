@@ -209,7 +209,7 @@ class ATFRAMEWORK_UTILS_API_HEAD_ONLY spin_lock {
     unsigned char try_times = 0;
     while (lock_status_.exchange(static_cast<unsigned int>(LOCKED),
                                  ATFRAMEWORK_UTILS_NAMESPACE_ID::lock::memory_order_acq_rel) == LOCKED)
-      __UTIL_LOCK_SPIN_LOCK_WAIT(try_times++); /* busy-wait */
+      __UTIL_LOCK_SPIN_LOCK_WAIT(try_times++); /* busy-wait */  // NOLINT(bugprone-branch-clone)
   }
 
   void unlock() {

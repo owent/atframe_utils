@@ -9,8 +9,6 @@
 
 #if defined(_MSC_VER)
 
-#  define FORCE_INLINE __forceinline
-
 #  include <stdlib.h>
 
 #  define ROTL32(x, y) _rotl(x, y)
@@ -21,8 +19,6 @@
 // Other compilers
 
 #else  // defined(_MSC_VER)
-
-#  define FORCE_INLINE inline __attribute__((always_inline))
 
 inline uint32_t rotl32(uint32_t x, int8_t r) { return (x << r) | (x >> (32 - r)); }
 
@@ -39,14 +35,14 @@ inline uint64_t rotl64(uint64_t x, int8_t r) { return (x << r) | (x >> (64 - r))
 // Block read - if your platform needs to do endian-swapping or can only
 // handle aligned reads, do the conversion here
 
-FORCE_INLINE uint32_t getblock32(const uint32_t *p, int i) { return p[i]; }
+ATFW_UTIL_FORCEINLINE uint32_t getblock32(const uint32_t *p, int i) { return p[i]; }
 
-FORCE_INLINE uint64_t getblock64(const uint64_t *p, int i) { return p[i]; }
+ATFW_UTIL_FORCEINLINE uint64_t getblock64(const uint64_t *p, int i) { return p[i]; }
 
 //-----------------------------------------------------------------------------
 // Finalization mix - force all bits of a hash block to avalanche
 
-FORCE_INLINE uint32_t fmix32(uint32_t h) {
+ATFW_UTIL_FORCEINLINE uint32_t fmix32(uint32_t h) {
   h ^= h >> 16;
   h *= 0x85ebca6b;
   h ^= h >> 13;
@@ -58,7 +54,7 @@ FORCE_INLINE uint32_t fmix32(uint32_t h) {
 
 //----------
 
-FORCE_INLINE uint64_t fmix64(uint64_t k) {
+ATFW_UTIL_FORCEINLINE uint64_t fmix64(uint64_t k) {
   k ^= k >> 33;
   k *= BIG_CONSTANT(0xff51afd7ed558ccd);
   k ^= k >> 33;
@@ -117,7 +113,7 @@ ATFRAMEWORK_UTILS_API uint32_t murmur_hash2(const void *key, int len, uint32_t s
     case 1:
       h ^= static_cast<uint32_t>(data[0]);
       h *= m;
-  };
+  }
 
   // Do a few final mixes of the hash to ensure the last few
   // bytes are well-incorporated.
@@ -181,7 +177,7 @@ ATFRAMEWORK_UTILS_API uint64_t murmur_hash2_64a(const void *key, int len, uint64
     case 1:
       h ^= uint64_t(data2[0]);
       h *= m;
-  };
+  }
 
   h ^= h >> r;
   h *= m;
@@ -239,7 +235,7 @@ ATFRAMEWORK_UTILS_API uint64_t murmur_hash2_64b(const void *key, int len, uint64
     case 1:
       h2 ^= static_cast<uint32_t>(((unsigned char *)data)[0]);
       h2 *= m;
-  };
+  }
 
   h1 ^= h2 >> 18;
   h1 *= m;
@@ -304,7 +300,7 @@ ATFRAMEWORK_UTILS_API uint32_t murmur_hash3_x86_32(const void *key, int len, uin
       k1 = ROTL32(k1, 15);
       k1 *= c2;
       h1 ^= k1;
-  };
+  }
 
   //----------
   // finalization
@@ -451,7 +447,7 @@ ATFRAMEWORK_UTILS_API void murmur_hash3_x86_128(const void *key, const int len, 
       k1 = ROTL32(k1, 15);
       k1 *= c2;
       h1 ^= k1;
-  };
+  }
 
   //----------
   // finalization

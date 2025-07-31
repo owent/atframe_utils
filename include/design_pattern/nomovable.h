@@ -26,7 +26,12 @@ ATFRAMEWORK_UTILS_NAMESPACE_END
 /**
  * @brief 侵入式的禁止move实现，有一些场景下需要使用dllexport或者-fvisibility=hidden
  */
-#define UTIL_DESIGN_PATTERN_NOMOVABLE(CLAZZ) \
+#define ATFW_UTIL_DESIGN_PATTERN_NOMOVABLE(CLAZZ) \
  private:                                    \
   CLAZZ(CLAZZ &&) = delete;                  \
   CLAZZ &operator=(CLAZZ &&) = delete;
+
+// Legacy macros
+#ifndef UTIL_DESIGN_PATTERN_NOMOVABLE
+#  define UTIL_DESIGN_PATTERN_NOMOVABLE(CLAZZ) ATFW_UTIL_DESIGN_PATTERN_NOMOVABLE(CLAZZ)
+#endif

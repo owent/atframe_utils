@@ -81,58 +81,40 @@ class log_wrapper {
 
   static ATFRAMEWORK_UTILS_API void update();
 
-  ATFRAMEWORK_UTILS_API void log(const caller_info_t &caller,
 #ifdef _MSC_VER
-                                 _In_z_ _Printf_format_string_ const char *fmt_text, ...);
+  ATFRAMEWORK_UTILS_API void log(const caller_info_t &caller, _In_z_ _Printf_format_string_ const char *fmt_text, ...);
 #elif (defined(__clang__) && __clang_major__ >= 3)
-                                 const char *fmt_text, ...) __attribute__((__format__(__printf__, 3, 4)));
+  ATFRAMEWORK_UTILS_API void log(const caller_info_t &caller, const char *fmt_text, ...)
+      __attribute__((__format__(__printf__, 3, 4)));
 #elif (defined(__GNUC__) && __GNUC__ >= 4)
 // 格式检查(成员函数有个隐含的this参数)
 #  if defined(__MINGW32__) || defined(__MINGW64__)
-                                 const char *fmt_text, ...) __attribute__((format(__MINGW_PRINTF_FORMAT, 3, 4)));
+  ATFRAMEWORK_UTILS_API void log(const caller_info_t &caller, const char *fmt_text, ...)
+      __attribute__((format(__MINGW_PRINTF_FORMAT, 3, 4)));
 #  else
-                                 const char *fmt_text, ...) __attribute__((format(printf, 3, 4)));
+  ATFRAMEWORK_UTILS_API void log(const caller_info_t &caller, const char *fmt_text, ...)
+      __attribute__((format(printf, 3, 4)));
 #  endif
 #else
-                                 const char *fmt_text, ...);
+  ATFRAMEWORK_UTILS_API void log(const caller_info_t &caller, const char *fmt_text, ...);
 #endif
 
 #if defined(ATFRAMEWORK_UTILS_STRING_ENABLE_FWAPI) && ATFRAMEWORK_UTILS_STRING_ENABLE_FWAPI
-#  ifdef ATFRAMEWORK_UTILS_STRING_FWAPI_FORMAT_STRING_TYPE
-  template <class FMT, class... TARGS>
-  ATFRAMEWORK_UTILS_API_HEAD_ONLY void format_log(const caller_info_t &caller, FMT &&fmt_text, TARGS &&...args)
-#  else
-  template <class... TARGS>
-  ATFRAMEWORK_UTILS_API_HEAD_ONLY void format_log(const caller_info_t &caller, TARGS &&...args)
-#  endif
-  {
+  template <class CharT, class... TARGS>
+  ATFW_UTIL_NOINLINE_NOCLONE ATFRAMEWORK_UTILS_API_HEAD_ONLY void __format_log(
+      const caller_info_t &caller,
+      const ATFRAMEWORK_UTILS_NAMESPACE_ID::string::details::fmtapi_format_string_t<CharT, TARGS...> &fmt_text,
+      TARGS &&...args) {
     log_operation_t writer;
     start_log(caller, writer);
     if (!log_sinks_.empty()) {
 #  if defined(ATFRAMEWORK_UTILS_ENABLE_EXCEPTION) && ATFRAMEWORK_UTILS_ENABLE_EXCEPTION
       try {
 #  endif
-        ATFRAMEWORK_UTILS_STRING_FWAPI_NAMESPACE_ID::format_to_n_result<char *> result =
-#  ifdef ATFRAMEWORK_UTILS_STRING_FWAPI_FORMAT_STRING_TYPE
-            ATFRAMEWORK_UTILS_STRING_FWAPI_NAMESPACE_ID::vformat_to_n<char *>(
-                writer.buffer + writer.writen_size, writer.total_size - writer.writen_size - 1,
-#    if defined(FMT_VERSION) && FMT_VERSION >= 100000
-                ATFRAMEWORK_UTILS_STRING_FWAPI_NAMESPACE_ID::string_view{std::forward<FMT>(fmt_text)},
-#    else
-                std::forward<FMT>(fmt_text),
-#    endif
-#    if defined(ATFRAMEWORK_UTILS_ENABLE_FMTLIB) && ATFRAMEWORK_UTILS_ENABLE_FMTLIB && defined(FMT_VERSION) && \
-        FMT_VERSION >= 100000
-                ATFRAMEWORK_UTILS_STRING_FWAPI_NAMESPACE_ID::make_format_args(args...)
-#    else
-                ATFRAMEWORK_UTILS_STRING_FWAPI_NAMESPACE_ID::make_format_args(std::forward<TARGS>(args)...)
-#    endif
-            );  // NOLINT: whitespace/parens
-#  else
-          ATFRAMEWORK_UTILS_NAMESPACE_ID::string::format_to_n<char *>(writer.buffer + writer.writen_size,
-                                                                      writer.total_size - writer.writen_size - 1,
-                                                                      std::forward<TARGS>(args)...);
-#  endif
+        auto result = ATFRAMEWORK_UTILS_NAMESPACE_ID::string::__internal_format_to_n<CharT *, CharT>(
+            reinterpret_cast<CharT *>(writer.buffer + writer.writen_size),
+            (writer.total_size - writer.writen_size - 1) / sizeof(CharT), fmt_text, std::forward<TARGS>(args)...);
+
         if (result.size > 0) {
           writer.writen_size += static_cast<size_t>(result.size);
         }
@@ -156,6 +138,50 @@ class log_wrapper {
     }
     finish_log(caller, writer);
   }
+
+  template <class... TARGS>
+  inline ATFRAMEWORK_UTILS_API_HEAD_ONLY void format_log(
+      const caller_info_t &caller,
+      ATFRAMEWORK_UTILS_NAMESPACE_ID::string::details::fmtapi_format_string_t<char, TARGS...> fmt_text,
+      TARGS &&...args) {
+    __format_log<char>(caller, fmt_text, std::forward<TARGS>(args)...);
+  }
+
+  template <class... TARGS>
+  inline ATFRAMEWORK_UTILS_API_HEAD_ONLY void format_log(
+      const caller_info_t &caller,
+      ATFRAMEWORK_UTILS_NAMESPACE_ID::string::details::fmtapi_format_string_t<wchar_t, TARGS...> fmt_text,
+      TARGS &&...args) {
+    __format_log<wchar_t>(caller, fmt_text, std::forward<TARGS>(args)...);
+  }
+
+#  if defined(ATFRAMEWORK_UTILS_ENABLE_FMTLIB) && ATFRAMEWORK_UTILS_ENABLE_FMTLIB
+  template <class... TARGS>
+  inline ATFRAMEWORK_UTILS_API_HEAD_ONLY void format_log(
+      const caller_info_t &caller,
+      ATFRAMEWORK_UTILS_NAMESPACE_ID::string::details::fmtapi_format_string_t<char16_t, TARGS...> fmt_text,
+      TARGS &&...args) {
+    __format_log<char16_t>(caller, fmt_text, std::forward<TARGS>(args)...);
+  }
+
+  template <class... TARGS>
+  inline ATFRAMEWORK_UTILS_API_HEAD_ONLY void format_log(
+      const caller_info_t &caller,
+      ATFRAMEWORK_UTILS_NAMESPACE_ID::string::details::fmtapi_format_string_t<char32_t, TARGS...> fmt_text,
+      TARGS &&...args) {
+    __format_log<char32_t>(caller, fmt_text, std::forward<TARGS>(args)...);
+  }
+
+#    ifdef __cpp_char8_t
+  template <class... TARGS>
+  inline ATFRAMEWORK_UTILS_API_HEAD_ONLY void format_log(
+      const caller_info_t &caller,
+      ATFRAMEWORK_UTILS_NAMESPACE_ID::string::details::fmtapi_format_string_t<char8_t, TARGS...> fmt_text,
+      TARGS &&...args) {
+    __format_log<char8_t>(caller, fmt_text, std::forward<TARGS>(args)...);
+  }
+#    endif
+#  endif
 #endif
 
   // 一般日志级别检查
@@ -399,10 +425,9 @@ ATFRAMEWORK_UTILS_NAMESPACE_END
 
 #  if defined(ATFRAMEWORK_UTILS_STRING_ENABLE_FWAPI) && ATFRAMEWORK_UTILS_STRING_ENABLE_FWAPI
 /** 全局日志输出工具 - std::format **/
-#    define FWCLOGDEFLV(lv, lv_name, cat, FMT, args...)                                                          \
-      if (ATFRAMEWORK_UTILS_NAMESPACE_ID::log::log_wrapper::check_level(WDTLOGGETCAT(cat), lv))                  \
-        WDTLOGGETCAT(cat)->format_log(WDTLOGFILENF(lv, lv_name), ATFRAMEWORK_UTILS_STRING_FWAPI_FMT_STRING(FMT), \
-                                      ##args);
+#    define FWCLOGDEFLV(lv, lv_name, cat, FMT, args...)                                         \
+      if (ATFRAMEWORK_UTILS_NAMESPACE_ID::log::log_wrapper::check_level(WDTLOGGETCAT(cat), lv)) \
+        WDTLOGGETCAT(cat)->format_log(WDTLOGFILENF(lv, lv_name), FMT, ##args);
 
 #    define FWCLOGTRACE(...) \
       FWCLOGDEFLV(ATFRAMEWORK_UTILS_NAMESPACE_ID::log::log_wrapper::level_t::LOG_LW_TRACE, {}, __VA_ARGS__)
@@ -421,8 +446,7 @@ ATFRAMEWORK_UTILS_NAMESPACE_END
 
 /** 对指定log_wrapper的日志输出工具 - std::format **/
 #    define FWINSTLOGDEFLV(lv, lv_name, __inst, FMT, args...) \
-      if ((__inst).check_level(lv))                           \
-        (__inst).format_log(WDTLOGFILENF(lv, lv_name), ATFRAMEWORK_UTILS_STRING_FWAPI_FMT_STRING(FMT), ##args);
+      if ((__inst).check_level(lv)) (__inst).format_log(WDTLOGFILENF(lv, lv_name), FMT, ##args);
 
 #    define FWINSTLOGTRACE(...) \
       FWINSTLOGDEFLV(ATFRAMEWORK_UTILS_NAMESPACE_ID::log::log_wrapper::level_t::LOG_LW_TRACE, {}, __VA_ARGS__)

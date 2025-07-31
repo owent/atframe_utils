@@ -82,6 +82,8 @@
 #include "lock/lock_holder.h"
 #include "lock/spin_lock.h"
 
+// NOLINTBEGIN(bugprone-macro-parentheses)
+
 ATFRAMEWORK_UTILS_NAMESPACE_BEGIN
 namespace design_pattern {
 namespace details {
@@ -416,6 +418,7 @@ class singleton {
 template <class T>
 ATFW_UTIL_SYMBOL_VISIBLE bool singleton<T>::singleton_wrapper_t::__is_destroyed = false;
 
+// NOLINTBEGIN(bugprone-crtp-constructor-accessibility)
 template <class T>
 class local_singleton {
  public:
@@ -425,7 +428,10 @@ class local_singleton {
   using self_type = T;
   using ptr_t = std::shared_ptr<self_type>;
 
+ protected:
   ATFW_UTIL_SYMBOL_LOCAL local_singleton() {}
+
+ public:
   ATFW_UTIL_SYMBOL_LOCAL ~local_singleton() {}
 
   ATFW_UTIL_DESIGN_PATTERN_SINGLETON_DEF_FUNCS(ATFW_UTIL_SYMBOL_LOCAL, self_type, local_singleton)
@@ -433,6 +439,7 @@ class local_singleton {
 template <class T>
 ATFW_UTIL_SYMBOL_LOCAL bool local_singleton<T>::singleton_wrapper_t::__is_destroyed = false;
 
+// NOLINTEND(bugprone-crtp-constructor-accessibility)
 }  // namespace design_pattern
 ATFRAMEWORK_UTILS_NAMESPACE_END
 
@@ -458,5 +465,7 @@ ATFRAMEWORK_UTILS_NAMESPACE_END
 #  define UTIL_DESIGN_PATTERN_SINGLETON_EXPORT_DATA_DEFINITION(...) \
     ATFW_UTIL_DESIGN_PATTERN_SINGLETON_EXPORT_DATA_DEFINITION(__VA_ARGS__)
 #endif
+
+// NOLINTEND(bugprone-macro-parentheses)
 
 #endif

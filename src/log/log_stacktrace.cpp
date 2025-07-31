@@ -539,7 +539,6 @@ static std::shared_ptr<stacktrace_symbol> stacktrace_create_symbol(const stacktr
   }
 
   std::string module_name;
-  std::string demangle_name;
   std::string raw_name;
   std::string offset_hint;
 
@@ -602,7 +601,7 @@ static void stacktrace_fill_symbol_info(gsl::span<stacktrace_handle> stack_handl
     std::shared_ptr<stacktrace_symbol> symbol = internal_find_stacktrace_symbol(handle);
     if (!symbol) {
       parse_symbols_idx.push_back(symbols.size());
-      parse_symbols_ptr.push_back(reinterpret_cast<void *>(handle.get_address()));
+      parse_symbols_ptr.push_back(reinterpret_cast<void *>(handle.get_address()));  // NOLINT(performance-no-int-to-ptr)
       new_handle_pairs.push_back(std::pair<stacktrace_handle, std::shared_ptr<stacktrace_symbol>>{handle, nullptr});
     }
 

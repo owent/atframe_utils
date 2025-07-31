@@ -1,19 +1,10 @@
-/**
- * @file hash.h
- * @brief 常用Hash算法
- * Licensed under the MIT licenses.
- *
- * @version 1.0
- * @author OWenT
- * @date 2013.05.07
- *
- * @history
- *
- *
- */
+// Copyright 2025 atframework
+// @version 1.0
+// @author OWenT
+// @date 2013.05.07
+//
+// @history
 
-#ifndef UTIL_HASH_HASH_H
-#define UTIL_HASH_HASH_H
 
 #pragma once
 
@@ -61,8 +52,8 @@ struct ATFRAMEWORK_UTILS_API_HEAD_ONLY fnv_magic_offset_basis<Ty, 8> {
 template <typename Ty>
 ATFRAMEWORK_UTILS_API_HEAD_ONLY Ty fnv_n_buf(const void *buf, size_t len,
                                              Ty hval = fnv_magic_offset_basis<Ty, sizeof(Ty)>::value) {
-  unsigned char *bp = (unsigned char *)buf;
-  unsigned char *be = bp + len;
+  const unsigned char *bp = reinterpret_cast<const unsigned char *>(buf);
+  const unsigned char *be = bp + len;
   Ty mn = fnv_magic_prime_number<Ty, sizeof(Ty)>::value;
 
   while (bp < be) {
@@ -83,8 +74,8 @@ ATFRAMEWORK_UTILS_API_HEAD_ONLY Ty fnv_n_buf(const void *buf, size_t len,
 template <typename Ty>
 ATFRAMEWORK_UTILS_API_HEAD_ONLY Ty fnv_n_buf_a(const void *buf, size_t len,
                                                Ty hval = fnv_magic_offset_basis<Ty, sizeof(Ty)>::value) {
-  unsigned char *bp = (unsigned char *)buf;
-  unsigned char *be = bp + len;
+  const unsigned char *bp = reinterpret_cast<const unsigned char *>(buf);
+  const unsigned char *be = bp + len;
   Ty mn = fnv_magic_prime_number<Ty, sizeof(Ty)>::value;
 
   while (bp < be) {
@@ -131,7 +122,7 @@ hash_fnv1a(const void *bin, size_t len, THVal hval = core::fnv_magic_offset_basi
  */
 template <typename THVal>
 ATFRAMEWORK_UTILS_API_HEAD_ONLY THVal hash_sdbm(const void *bin, size_t len, THVal hval = 0) {
-  unsigned char *str_buff = (unsigned char *)bin;
+  const unsigned char *str_buff = reinterpret_cast<const unsigned char *>(bin);
   size_t index = 0;
   while (index < len) {
     // equivalent to: hval = 65599 * hval + str_buff[index ++]);
@@ -153,7 +144,7 @@ ATFRAMEWORK_UTILS_API_HEAD_ONLY THVal hash_rs(const void *bin, size_t len, THVal
   unsigned int b = 378551;
   unsigned int a = 63689;
   size_t index = 0;
-  unsigned char *str_buff = (unsigned char *)bin;
+  const unsigned char *str_buff = reinterpret_cast<const unsigned char *>(bin);
 
   while (index < len) {
     hval = hval * a + str_buff[index++];
@@ -173,7 +164,7 @@ ATFRAMEWORK_UTILS_API_HEAD_ONLY THVal hash_rs(const void *bin, size_t len, THVal
 template <typename THVal>
 ATFRAMEWORK_UTILS_API_HEAD_ONLY THVal hash_js(const void *bin, size_t len, THVal hval = 1315423911) {
   size_t index = 0;
-  unsigned char *str_buff = (unsigned char *)bin;
+  const unsigned char *str_buff = reinterpret_cast<const unsigned char *>(bin);
 
   while (index < len) {
     hval ^= ((hval << 5) + str_buff[index++] + (hval >> 2));
@@ -192,7 +183,7 @@ ATFRAMEWORK_UTILS_API_HEAD_ONLY THVal hash_js(const void *bin, size_t len, THVal
 template <typename THVal>
 ATFRAMEWORK_UTILS_API_HEAD_ONLY THVal hash_pjw(const void *bin, size_t len, THVal hval = 0) {
   size_t index = 0;
-  unsigned char *str_buff = (unsigned char *)bin;
+  const unsigned char *str_buff = reinterpret_cast<const unsigned char *>(bin);
 
   THVal bits_in_val_type = (THVal)(sizeof(THVal) * 8);
   THVal three_quarters = (THVal)((bits_in_val_type * 3) / 4);
@@ -219,12 +210,13 @@ ATFRAMEWORK_UTILS_API_HEAD_ONLY THVal hash_pjw(const void *bin, size_t len, THVa
 template <typename THVal>
 ATFRAMEWORK_UTILS_API_HEAD_ONLY THVal hash_elf(const void *bin, size_t len, THVal hval = 0) {
   size_t index = 0;
-  unsigned char *str_buff = (unsigned char *)bin;
+  const unsigned char *str_buff = reinterpret_cast<const unsigned char *>(bin);
 
   THVal x = 0;
   while (index < len) {
     hval = (hval << 4) + str_buff[index++];
-    if ((x = hval & 0xF0000000L) != 0) {
+    x = hval & 0xF0000000L;
+    if (x != 0) {
       hval ^= (x >> 24);
       hval &= ~x;
     }
@@ -243,7 +235,7 @@ ATFRAMEWORK_UTILS_API_HEAD_ONLY THVal hash_elf(const void *bin, size_t len, THVa
 template <typename THVal>
 ATFRAMEWORK_UTILS_API_HEAD_ONLY THVal hash_bkdr(const void *bin, size_t len, THVal hval = 0) {
   size_t index = 0;
-  unsigned char *str_buff = (unsigned char *)bin;
+  const unsigned char *str_buff = reinterpret_cast<const unsigned char *>(bin);
 
   THVal seed = 131;  // 31 131 1313 13131 131313 etc..
   while (index < len) {
@@ -263,7 +255,7 @@ ATFRAMEWORK_UTILS_API_HEAD_ONLY THVal hash_bkdr(const void *bin, size_t len, THV
 template <typename THVal>
 ATFRAMEWORK_UTILS_API_HEAD_ONLY THVal hash_djb(const void *bin, size_t len, THVal hval = 5381) {
   size_t index = 0;
-  unsigned char *str_buff = (unsigned char *)bin;
+  const unsigned char *str_buff = reinterpret_cast<const unsigned char *>(bin);
 
   while (index < len) {
     hval += (hval << 5) + str_buff[index++];
@@ -282,7 +274,7 @@ ATFRAMEWORK_UTILS_API_HEAD_ONLY THVal hash_djb(const void *bin, size_t len, THVa
 template <typename THVal>
 ATFRAMEWORK_UTILS_API_HEAD_ONLY THVal hash_ap(const void *bin, size_t len, THVal hval = 0) {
   size_t index = 0;
-  unsigned char *str_buff = (unsigned char *)bin;
+  const unsigned char *str_buff = reinterpret_cast<const unsigned char *>(bin);
 
   for (int i = 0; index < len; i++) {
     if ((i & 1) == 0) {
@@ -296,5 +288,3 @@ ATFRAMEWORK_UTILS_API_HEAD_ONLY THVal hash_ap(const void *bin, size_t len, THVal
 }
 }  // namespace hash
 ATFRAMEWORK_UTILS_NAMESPACE_END
-
-#endif /* HASH_H_ */
