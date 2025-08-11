@@ -192,7 +192,8 @@ ATFRAMEWORK_UTILS_API_HEAD_ONLY THVal hash_pjw(const void *bin, size_t len, THVa
   THVal test = 0;
   while (index < len) {
     hval = (hval << one_eighth) + str_buff[index++];
-    if ((test = hval & high_bits) != 0) {
+    test = hval & high_bits;
+    if (test != 0) {
       hval = ((hval ^ (test >> three_quarters)) & (~high_bits));
     }
   }

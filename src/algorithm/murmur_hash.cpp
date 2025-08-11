@@ -266,7 +266,8 @@ ATFRAMEWORK_UTILS_API uint32_t murmur_hash3_x86_32(const void *key, int len, uin
   //----------
   // body
 
-  const uint32_t *blocks = (const uint32_t *)(data + nblocks * 4);
+  const uint32_t *blocks =
+      (const uint32_t *)(data + nblocks * 4);  // NOLINT(bugprone-implicit-widening-of-multiplication-result)
 
   for (int i = -nblocks; i; i++) {
     uint32_t k1 = getblock32(blocks, i);
@@ -283,7 +284,8 @@ ATFRAMEWORK_UTILS_API uint32_t murmur_hash3_x86_32(const void *key, int len, uin
   //----------
   // tail
 
-  const uint8_t *tail = (const uint8_t *)(data + nblocks * 4);
+  const uint8_t *tail =
+      (const uint8_t *)(data + nblocks * 4);  // NOLINT(bugprone-implicit-widening-of-multiplication-result)
 
   uint32_t k1 = 0;
 
@@ -331,7 +333,8 @@ ATFRAMEWORK_UTILS_API void murmur_hash3_x86_128(const void *key, const int len, 
   //----------
   // body
 
-  const uint32_t *blocks = (const uint32_t *)(data + nblocks * 16);
+  const uint32_t *blocks =
+      (const uint32_t *)(data + nblocks * 16);  // NOLINT(bugprone-implicit-widening-of-multiplication-result)
 
   for (int i = -nblocks; i; i++) {
     uint32_t k1 = getblock32(blocks, i * 4 + 0);
@@ -379,7 +382,8 @@ ATFRAMEWORK_UTILS_API void murmur_hash3_x86_128(const void *key, const int len, 
   //----------
   // tail
 
-  const uint8_t *tail = (const uint8_t *)(data + nblocks * 16);
+  const uint8_t *tail =
+      (const uint8_t *)(data + nblocks * 16);  // NOLINT(bugprone-implicit-widening-of-multiplication-result)
 
   uint32_t k1 = 0;
   uint32_t k2 = 0;
@@ -525,7 +529,8 @@ ATFRAMEWORK_UTILS_API void murmur_hash3_x64_128(const void *key, const int len, 
   //----------
   // tail
 
-  const uint8_t *tail = (const uint8_t *)(data + nblocks * 16);
+  const uint8_t *tail =
+      (const uint8_t *)(data + nblocks * 16);  // NOLINT(bugprone-implicit-widening-of-multiplication-result)
 
   uint64_t k1 = 0;
   uint64_t k2 = 0;

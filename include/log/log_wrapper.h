@@ -115,8 +115,9 @@ class log_wrapper {
             reinterpret_cast<CharT *>(writer.buffer + writer.writen_size),
             (writer.total_size - writer.writen_size - 1) / sizeof(CharT), fmt_text, std::forward<TARGS>(args)...);
 
-        if (result.size > 0) {
-          writer.writen_size += static_cast<size_t>(result.size);
+        // Do not use result.size here, it's the total (not truncated) output size and may not be the real written size.
+        if (result.out > reinterpret_cast<CharT *>(writer.buffer + writer.writen_size)) {
+          writer.writen_size += static_cast<size_t>(result.out - reinterpret_cast<CharT *>(writer.buffer + writer.writen_size));
         }
         if (writer.writen_size < writer.total_size) {
           *(writer.buffer + writer.writen_size) = 0;
