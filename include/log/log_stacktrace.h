@@ -23,13 +23,13 @@
 #include <memory/rc_ptr.h>
 #include <nostd/string_view.h>
 
-#include <stdint.h>
 #include <chrono>
 #include <cstddef>
+#include <cstdint>
 #include <cstring>
 #include <functional>
 #include <memory>
-#include <utility>
+#include <utility>  // IWYU pragma: keep
 #include <vector>
 
 #if defined(ATFRAMEWORK_UTILS_LOG_STACKTRACE_USING_LIBUNWIND) && ATFRAMEWORK_UTILS_LOG_STACKTRACE_USING_LIBUNWIND

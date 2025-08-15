@@ -51,6 +51,7 @@ class UTIL_SYMBOL_VISIBLE __rc_ptr_counted_data_base {
 
   // Donohting when with -fno-exception/EHsc-
   ATFRAMEWORK_UTILS_API static void throw_bad_weak_ptr();
+  ATFRAMEWORK_UTILS_API static void abort_bad_weak_ptr() noexcept;
 
   // Increment the use count if it is non-zero, throw otherwise.
   UTIL_FORCEINLINE void add_ref() {
@@ -491,18 +492,31 @@ class ATFRAMEWORK_UTILS_API_HEAD_ONLY __strong_rc_counter {
     }
   }
 
-  __strong_rc_counter(const __strong_rc_counter& r) noexcept : pi_(r.pi_) {
+  __strong_rc_counter(const __strong_rc_counter& r) : pi_(r.pi_) {
     if (nullptr != pi_) {
       pi_->add_ref();
+    }
+  }
+
+  __strong_rc_counter(const __strong_rc_counter& r, std::nothrow_t) noexcept : pi_(r.pi_) {
+    if (nullptr != pi_) {
+      pi_->add_ref_nothrow();
     }
   }
 
   __strong_rc_counter(__strong_rc_counter&& r) noexcept : pi_(r.pi_) { r.pi_ = nullptr; }
 
   template <class Y>
-  __strong_rc_counter(const __strong_rc_counter<Y>& r) noexcept : pi_(r.pi_) {
+  __strong_rc_counter(const __strong_rc_counter<Y>& r) : pi_(r.pi_) {
     if (nullptr != pi_) {
       pi_->add_ref();
+    }
+  }
+
+  template <class Y>
+  __strong_rc_counter(const __strong_rc_counter<Y>& r, std::nothrow_t) noexcept : pi_(r.pi_) {
+    if (nullptr != pi_) {
+      pi_->add_ref_nothrow();
     }
   }
 
@@ -521,7 +535,7 @@ class ATFRAMEWORK_UTILS_API_HEAD_ONLY __strong_rc_counter {
 
       pi_ = r.pi_;
       if (nullptr != pi_) {
-        pi_->add_ref();
+        pi_->add_ref_nothrow();
       }
       if (nullptr != origin_pi) {
         origin_pi->release();
@@ -689,7 +703,7 @@ class ATFRAMEWORK_UTILS_API_HEAD_ONLY strong_rc_ptr_access {
     element_type* ret = get();
 #if defined(ATFRAMEWORK_UTILS_ENABLE_EXCEPTION) && ATFRAMEWORK_UTILS_ENABLE_EXCEPTION
     if (nullptr == ret) {
-      __rc_ptr_counted_data_base::throw_bad_weak_ptr();
+      __rc_ptr_counted_data_base::abort_bad_weak_ptr();
     }
 #endif
     return *ret;
@@ -699,7 +713,7 @@ class ATFRAMEWORK_UTILS_API_HEAD_ONLY strong_rc_ptr_access {
     element_type* ret = get();
 #if defined(ATFRAMEWORK_UTILS_ENABLE_EXCEPTION) && ATFRAMEWORK_UTILS_ENABLE_EXCEPTION
     if (nullptr == ret) {
-      __rc_ptr_counted_data_base::throw_bad_weak_ptr();
+      __rc_ptr_counted_data_base::abort_bad_weak_ptr();
     }
 #endif
     return ret;
@@ -721,7 +735,7 @@ class ATFRAMEWORK_UTILS_API_HEAD_ONLY strong_rc_ptr_access<T, false, true> {
     element_type* ret = get();
 #if defined(ATFRAMEWORK_UTILS_ENABLE_EXCEPTION) && ATFRAMEWORK_UTILS_ENABLE_EXCEPTION
     if (nullptr == ret) {
-      __rc_ptr_counted_data_base::throw_bad_weak_ptr();
+      __rc_ptr_counted_data_base::abort_bad_weak_ptr();
     }
 #endif
     return ret;
@@ -740,7 +754,7 @@ class ATFRAMEWORK_UTILS_API_HEAD_ONLY strong_rc_ptr_access<T, true, false> {
     element_type* ret = get();
 #if defined(ATFRAMEWORK_UTILS_ENABLE_EXCEPTION) && ATFRAMEWORK_UTILS_ENABLE_EXCEPTION
     if (nullptr == ret) {
-      __rc_ptr_counted_data_base::throw_bad_weak_ptr();
+      __rc_ptr_counted_data_base::abort_bad_weak_ptr();
     }
 #endif
     return ret[__i];
@@ -810,7 +824,8 @@ class ATFRAMEWORK_UTILS_API_HEAD_ONLY strong_rc_ptr : public strong_rc_ptr_acces
  public:
   UTIL_CONFIG_CONSTEXPR strong_rc_ptr() noexcept : ptr_(nullptr), ref_counter_() {}
 
-  UTIL_CONFIG_CONSTEXPR strong_rc_ptr(std::nullptr_t) noexcept : ptr_(nullptr), ref_counter_() {}
+  UTIL_CONFIG_CONSTEXPR strong_rc_ptr(std::nullptr_t) noexcept  // NOLINT(runtime/explicit)
+      : ptr_(nullptr), ref_counter_() {}                        // NOLINT(runtime/explicit)
 
   template <class Y>
   strong_rc_ptr(Y* ptr) noexcept  // NOLINT: runtime/explicit
@@ -837,7 +852,8 @@ class ATFRAMEWORK_UTILS_API_HEAD_ONLY strong_rc_ptr : public strong_rc_ptr_acces
   strong_rc_ptr(std::nullptr_t ptr, Deleter d, Alloc a) : ptr_(ptr), ref_counter_(ptr, std::move(d), std::move(a)) {}
 
   template <class Y>
-  strong_rc_ptr(const strong_rc_ptr<Y>& other) noexcept : ptr_(other.ptr_), ref_counter_(other.ref_counter_) {}
+  strong_rc_ptr(const strong_rc_ptr<Y>& other) noexcept
+      : ptr_(other.ptr_), ref_counter_(other.ref_counter_, std::nothrow) {}
 
   template <class Y>
   strong_rc_ptr(strong_rc_ptr<Y>&& other) noexcept : ptr_(other.ptr_), ref_counter_() {
@@ -847,7 +863,7 @@ class ATFRAMEWORK_UTILS_API_HEAD_ONLY strong_rc_ptr : public strong_rc_ptr_acces
 
   template <class Y>
   strong_rc_ptr(const strong_rc_ptr<Y>& other, element_type* ptr) noexcept
-      : ptr_(ptr), ref_counter_(other.ref_counter_) {}
+      : ptr_(ptr), ref_counter_(other.ref_counter_, std::nothrow) {}
 
   template <class Y>
   strong_rc_ptr(strong_rc_ptr<Y>&& other, element_type* ptr) noexcept : ptr_(ptr), ref_counter_() {
@@ -857,24 +873,25 @@ class ATFRAMEWORK_UTILS_API_HEAD_ONLY strong_rc_ptr : public strong_rc_ptr_acces
 
   strong_rc_ptr(const weak_rc_ptr<T>& other)  // NOLINT: runtime/explicit
       : ptr_(nullptr), ref_counter_(other.ref_counter_) {
-    ptr_ = other.ptr_;
+    ptr_ = other.ptr_;  // NOLINT(cppcoreguidelines-prefer-member-initializer)
   }
 
   strong_rc_ptr(const weak_rc_ptr<T>& other, std::nothrow_t) noexcept
       : ptr_(nullptr), ref_counter_(other.ref_counter_, std::nothrow) {
-    ptr_ = other.use_count() > 0 ? other.ptr_ : nullptr;
+    ptr_ = other.use_count() > 0 ? other.ptr_ : nullptr;  // NOLINT(cppcoreguidelines-prefer-member-initializer)
   }
 
   template <class Y>
   strong_rc_ptr(const weak_rc_ptr<Y>& other)  // NOLINT: runtime/explicit
       : ptr_(nullptr), ref_counter_(other.ref_counter_) {
-    ptr_ = other.ptr_;
+    ptr_ = other.ptr_;  // NOLINT(cppcoreguidelines-prefer-member-initializer)
   }
 
   template <class Y, class Deleter>
   strong_rc_ptr(std::unique_ptr<Y, Deleter>&& other)  // NOLINT: runtime/explicit
       : ptr_(other.get()), ref_counter_() {
-    ref_counter_ = __strong_rc_counter<element_type>{std::move(other)};
+    ref_counter_ =                                            // NOLINT(cppcoreguidelines-prefer-member-initializer)
+        __strong_rc_counter<element_type>{std::move(other)};  // NOLINT(cppcoreguidelines-prefer-member-initializer)
     __enable_shared_from_this_with(&ref_counter_, ptr_, ptr_);
   }
 
@@ -901,7 +918,8 @@ class ATFRAMEWORK_UTILS_API_HEAD_ONLY strong_rc_ptr : public strong_rc_ptr_acces
   }
 
   ~strong_rc_ptr() noexcept = default;
-  explicit strong_rc_ptr(const strong_rc_ptr&) noexcept = default;
+  explicit strong_rc_ptr(const strong_rc_ptr& other) noexcept
+      : ptr_(nullptr), ref_counter_(other.ref_counter_, std::nothrow) {}
   strong_rc_ptr& operator=(const strong_rc_ptr&) noexcept = default;
 
   explicit strong_rc_ptr(strong_rc_ptr&& other) noexcept : ptr_(other.ptr_), ref_counter_() {
@@ -1169,7 +1187,7 @@ class ATFRAMEWORK_UTILS_API_HEAD_ONLY weak_rc_ptr {
 
   template <class Y>
   weak_rc_ptr(const weak_rc_ptr<Y>& other) noexcept : ref_counter_(other.ref_counter_) {
-    ptr_ = other.lock().get();
+    ptr_ = other.lock().get();  // NOLINT(cppcoreguidelines-prefer-member-initializer)
   }
 
   template <class Y>
@@ -1490,10 +1508,10 @@ struct ATFRAMEWORK_UTILS_API_HEAD_ONLY compat_strong_ptr_function_trait<compat_s
     // Some versions os STL will cause warning by mistake, which may trigger -Werror/-WX to fail the build.
     // Use include guard to ignore them.
     // NOLINT: build/include
-#include "config/compiler/internal/stl_compact_prefix.h.inc"  // IWYU pragma: keep
+#include "config/compiler/internal/stl_compact_prefix.h.inc"  // IWYU pragma: keep NOLINT(build/include,readability-duplicate-include)
     return std::make_shared<Y>(std::forward<ArgsT>(args)...);
     // NOLINT: build/include
-#include "config/compiler/internal/stl_compact_suffix.h.inc"  // IWYU pragma: keep
+#include "config/compiler/internal/stl_compact_suffix.h.inc"  // IWYU pragma: keep NOLINT(build/include,readability-duplicate-include)
   }
 
   template <class Y, class Alloc, class... TArgs>
@@ -1501,10 +1519,10 @@ struct ATFRAMEWORK_UTILS_API_HEAD_ONLY compat_strong_ptr_function_trait<compat_s
     // Some versions os STL will cause warning by mistake, which may trigger -Werror/-WX to fail the build.
     // Use include guard to ignore them.
     // NOLINT: build/include
-#include "config/compiler/internal/stl_compact_prefix.h.inc"  // IWYU pragma: keep
+#include "config/compiler/internal/stl_compact_prefix.h.inc"  // IWYU pragma: keep NOLINT(build/include,readability-duplicate-include)
     return std::allocate_shared<Y>(alloc, std::forward<TArgs>(args)...);
     // NOLINT: build/include
-#include "config/compiler/internal/stl_compact_suffix.h.inc"  // IWYU pragma: keep
+#include "config/compiler/internal/stl_compact_suffix.h.inc"  // IWYU pragma: keep NOLINT(build/include,readability-duplicate-include)
   }
 
   template <class Y, class F>

@@ -71,6 +71,7 @@
 
 ATFRAMEWORK_UTILS_NAMESPACE_BEGIN
 namespace memory {
+// NOLINTBEGIN(bugprone-macro-parentheses)
 
 // __util_memory_allocator_traits_ALLOCATOR_NESTED_TYPE is used to bind allocator's nested type to allocator_traits
 // It will try to use allocator's nested type first, if not exists, it will use default type according to ISO instead.
@@ -141,6 +142,8 @@ namespace memory {
     using TYPE_ALIAS = decltype(__util_memory_allocator_traits_ALLOCATOR_NESTED_TYPE_##NESTED_TYPE##_helper(         \
         static_cast<TEST_CLASS*>(nullptr)))
 #endif
+
+// NOLINTEND(bugprone-macro-parentheses)
 
 // Inject std::allocator_traits for util_memory_allocator_traits::allocator
 template <class AllocatorSource, class TypeSource>

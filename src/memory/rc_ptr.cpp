@@ -3,6 +3,9 @@
 
 #include "memory/rc_ptr.h"
 
+#if defined(ATFRAMEWORK_UTILS_ENABLE_EXCEPTION) && ATFRAMEWORK_UTILS_ENABLE_EXCEPTION
+#  include <memory>
+#endif
 #include <cstdlib>
 
 ATFRAMEWORK_UTILS_NAMESPACE_BEGIN
@@ -17,6 +20,8 @@ ATFRAMEWORK_UTILS_API void __rc_ptr_counted_data_base::throw_bad_weak_ptr() {
   abort();
 #endif
 }
+
+ATFRAMEWORK_UTILS_API void __rc_ptr_counted_data_base::abort_bad_weak_ptr() noexcept { abort(); }
 
 }  // namespace memory
 ATFRAMEWORK_UTILS_NAMESPACE_END
