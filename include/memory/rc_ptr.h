@@ -919,7 +919,7 @@ class ATFRAMEWORK_UTILS_API_HEAD_ONLY strong_rc_ptr : public strong_rc_ptr_acces
 
   ~strong_rc_ptr() noexcept = default;
   explicit strong_rc_ptr(const strong_rc_ptr& other) noexcept
-      : ptr_(nullptr), ref_counter_(other.ref_counter_, std::nothrow) {}
+      : ptr_(other.ptr_), ref_counter_(other.ref_counter_, std::nothrow) {}
   strong_rc_ptr& operator=(const strong_rc_ptr&) noexcept = default;
 
   explicit strong_rc_ptr(strong_rc_ptr&& other) noexcept : ptr_(other.ptr_), ref_counter_() {
