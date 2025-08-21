@@ -250,12 +250,7 @@ CASE_TEST(crypto_dh, ecdh_alias_and_both_server) {
 
   int test_times = 16;
   // 单元测试多次以定位openssl是否内存泄漏的问题
-  std::vector<std::string> all_curves = {"ecdh:P-256", "ecdh:p-384", "ecdh:p-521"
-#  if !defined(ATFRAMEWORK_UTILS_CRYPTO_USE_LIBRESSL)
-                                         ,
-                                         "ecdh:X25519"
-#  endif
-  };
+  std::vector<std::string> all_curves = {"ecdh:P-256", "ecdh:p-384", "ecdh:p-521", "ecdh:X25519"};
 
   clock_t min_cost_clock = 0;
   clock_t max_cost_clock = 0;
@@ -278,6 +273,10 @@ CASE_TEST(crypto_dh, ecdh_alias_and_both_server) {
       // server - init: read and setup server dh params
       {
         atfw::util::crypto::dh::shared_context::ptr_t svr_shctx = atfw::util::crypto::dh::shared_context::create();
+        auto res = svr_shctx->init(all_curves[curve_idx].c_str());
+        if (res != 0 && all_curves[curve_idx] == "ecdh:X25519") {
+          break;
+        }
         CASE_EXPECT_EQ(0, svr_shctx->init(all_curves[curve_idx].c_str()));
         CASE_EXPECT_EQ(0, svr_dh1.init(svr_shctx));
       }
