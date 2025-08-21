@@ -273,12 +273,12 @@ CASE_TEST(crypto_dh, ecdh_alias_and_both_server) {
       // server - init: read and setup server dh params
       {
         atfw::util::crypto::dh::shared_context::ptr_t svr_shctx = atfw::util::crypto::dh::shared_context::create();
-        auto res = svr_shctx->init(all_curves[curve_idx].c_str());
-        if (res != 0 && all_curves[curve_idx] == "ecdh:X25519") {
+        CASE_EXPECT_EQ(0, svr_shctx->init(all_curves[curve_idx].c_str()));
+        auto svr_dh1_init_result = svr_dh1.init(svr_shctx);
+        if (svr_dh1_init_result != 0 && all_curves[curve_idx] == "ecdh:X25519") {
           break;
         }
-        CASE_EXPECT_EQ(0, svr_shctx->init(all_curves[curve_idx].c_str()));
-        CASE_EXPECT_EQ(0, svr_dh1.init(svr_shctx));
+        CASE_EXPECT_EQ(0, svr_dh1_init_result);
       }
 
       // client - init: read and setup client shared context
