@@ -250,7 +250,12 @@ CASE_TEST(crypto_dh, ecdh_alias_and_both_server) {
 
   int test_times = 16;
   // 单元测试多次以定位openssl是否内存泄漏的问题
-  std::vector<std::string> all_curves = {"ecdh:P-256", "ecdh:p-384", "ecdh:p-521", "ecdh:X25519"};
+  std::vector<std::string> all_curves = {"ecdh:P-256", "ecdh:p-384", "ecdh:p-521"
+#  if !defined(ATFRAMEWORK_UTILS_CRYPTO_USE_LIBRESSL)
+                                         ,
+                                         "ecdh:X25519"
+#  endif
+  };
 
   clock_t min_cost_clock = 0;
   clock_t max_cost_clock = 0;
