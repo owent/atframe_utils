@@ -50,6 +50,16 @@
 
 ATFRAMEWORK_UTILS_NAMESPACE_BEGIN
 namespace crypto {
+
+/**
+ * @brief DH and ECDH progress
+ * @note TLS handshake:
+ *         server process: shared_context::init(curve name)->make_params->read_public->calc_secret
+ *         client process: shared_context::init(EN_CDT_DH/EN_CDT_ECDH)->read_params->make_public->calc_secret
+ * @note Static configure:
+ *         server1 process: shared_context::init(curve name)->make_params->make_public->read_public->calc_secret
+ *         server2 process: shared_context::init(curve name)->make_params->make_public->read_public->calc_secret
+ */
 class dh {
  public:
   struct ATFRAMEWORK_UTILS_API method_t {
@@ -142,7 +152,7 @@ class dh {
     using ptr_t = std::shared_ptr<shared_context>;
 
    private:
-    struct ATFRAMEWORK_UTILS_API creator_helper{};
+    struct ATFRAMEWORK_UTILS_API creator_helper {};
 
     ATFRAMEWORK_UTILS_API shared_context();
 

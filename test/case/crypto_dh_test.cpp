@@ -240,4 +240,114 @@ CASE_TEST(crypto_dh, ecdh) {
   }
 }
 
+CASE_TEST(crypto_dh, ecdh_alias_and_both_server) {
+#  if defined(ATFRAMEWORK_UTILS_CRYPTO_USE_OPENSSL) || defined(ATFRAMEWORK_UTILS_CRYPTO_USE_LIBRESSL) || \
+      defined(ATFRAMEWORK_UTILS_CRYPTO_USE_BORINGSSL)
+  if (!openssl_test_inited_for_dh) {
+    openssl_test_inited_for_dh = std::make_shared<openssl_test_init_wrapper_for_dh>();
+  }
+#  endif
+
+  int test_times = 16;
+  // 单元测试多次以定位openssl是否内存泄漏的问题
+  std::vector<std::string> all_curves = {"ecdh:P-256", "ecdh:p-384", "ecdh:p-521", "ecdh:X25519"};
+
+  clock_t min_cost_clock = 0;
+  clock_t max_cost_clock = 0;
+  size_t min_cost_idx = 0;
+  size_t min_cost_bits = 0;
+  size_t max_cost_idx = 0;
+  size_t max_cost_bits = 0;
+  for (size_t curve_idx = 0; curve_idx < all_curves.size(); ++curve_idx) {
+    CASE_MSG_INFO() << "Test ECDH algorithm " << all_curves[curve_idx] << std::endl;
+    clock_t beg_time_clk = clock();
+    int left_times = test_times;
+    size_t secret_bits = 0;
+    while (left_times-- > 0) {
+      // client shared context & dh
+      atfw::util::crypto::dh svr_dh2;
+
+      // server shared context & dh
+      atfw::util::crypto::dh svr_dh1;
+
+      // server - init: read and setup server dh params
+      {
+        atfw::util::crypto::dh::shared_context::ptr_t svr_shctx = atfw::util::crypto::dh::shared_context::create();
+        CASE_EXPECT_EQ(0, svr_shctx->init(all_curves[curve_idx].c_str()));
+        CASE_EXPECT_EQ(0, svr_dh1.init(svr_shctx));
+      }
+
+      // client - init: read and setup client shared context
+      {
+        atfw::util::crypto::dh::shared_context::ptr_t svr_shctx = atfw::util::crypto::dh::shared_context::create();
+        CASE_EXPECT_EQ(0, svr_shctx->init(all_curves[curve_idx].c_str()));
+        CASE_EXPECT_EQ(0, svr_dh2.init(svr_shctx));
+      }
+
+      std::vector<unsigned char> switch_params;
+      std::vector<unsigned char> switch_public_svr1;
+      std::vector<unsigned char> switch_public_svr2;
+      std::vector<unsigned char> svr1_secret;
+      std::vector<unsigned char> svr2_secret;
+
+      // step 1 - server: make private key and public key
+      CASE_EXPECT_EQ(0, svr_dh1.make_params(switch_params));
+      CASE_EXPECT_EQ(0, svr_dh2.make_params(switch_params));
+
+      // step 2 - server: make and export public key
+      CASE_EXPECT_EQ(0, svr_dh1.make_public(switch_public_svr1));
+      CASE_EXPECT_EQ(0, svr_dh2.make_public(switch_public_svr2));
+
+      // step 3 - server: read remote public
+      CASE_EXPECT_EQ(0, svr_dh1.read_public(switch_public_svr2.data(), switch_public_svr2.size()));
+      CASE_EXPECT_EQ(0, svr_dh2.read_public(switch_public_svr1.data(), switch_public_svr1.size()));
+
+      // step 4 - client: calculate secret
+      CASE_EXPECT_EQ(0, svr_dh2.calc_secret(svr2_secret));
+      CASE_EXPECT_EQ(0, svr_dh1.calc_secret(svr1_secret));
+
+      // DH process done
+      CASE_EXPECT_EQ(svr2_secret.size(), svr1_secret.size());
+      if (svr2_secret.size() == svr1_secret.size()) {
+        CASE_EXPECT_EQ(0, memcmp(svr2_secret.data(), svr1_secret.data(), svr1_secret.size()));
+      }
+      secret_bits = svr2_secret.size();
+      CASE_EXPECT_GT(secret_bits, 0);
+    }
+
+    clock_t end_time_clk = clock();
+    if (0 == curve_idx) {
+      min_cost_clock = end_time_clk - beg_time_clk;
+      max_cost_clock = end_time_clk - beg_time_clk;
+      min_cost_idx = 0;
+      max_cost_idx = 0;
+      min_cost_bits = secret_bits * 8;
+      max_cost_bits = secret_bits * 8;
+    } else {
+      clock_t off_clk = end_time_clk - beg_time_clk;
+      if (off_clk > max_cost_clock) {
+        max_cost_clock = off_clk;
+        max_cost_idx = curve_idx;
+        max_cost_bits = secret_bits * 8;
+      }
+      if (off_clk < min_cost_clock) {
+        min_cost_clock = off_clk;
+        min_cost_idx = curve_idx;
+        min_cost_bits = secret_bits * 8;
+      }
+    }
+  }
+
+  CASE_MSG_INFO() << "Test ECDH algorithm " << test_times << " times for " << all_curves.size() << " curves done. "
+                  << std::endl;
+  if (!all_curves.empty()) {
+    CASE_MSG_INFO() << "  Fastest => " << all_curves[min_cost_idx] << " cost "
+                    << (1000.0 * min_cost_clock / CLOCKS_PER_SEC / test_times) << "ms(avg.) key len " << min_cost_bits
+                    << " bits. " << std::endl;
+    CASE_MSG_INFO() << "  Slowest => " << all_curves[max_cost_idx] << " cost "
+                    << (1000.0 * max_cost_clock / CLOCKS_PER_SEC / test_times) << "ms(avg.) key len " << max_cost_bits
+                    << " bits. " << std::endl;
+  }
+}
+
 #endif

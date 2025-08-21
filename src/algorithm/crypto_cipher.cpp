@@ -171,9 +171,9 @@ static constexpr const cipher_interface_info_t supported_ciphers[] = {
     {"camellia-256-cfb", EN_CIMT_CIPHER, nullptr, "CAMELLIA-256-CFB128", EN_CIFT_NONE},
 
 #  if defined(CRYPTO_USE_CHACHA20_WITH_CIPHER)
-    {"chacha20",  // only available on openssl 1.1.0 and upper
+    {"chacha20-ietf",  // only available on openssl 1.1.0 and upper
      EN_CIMT_CIPHER, nullptr,
-     "CHACHA20",  // only available on later mbedtls version, @see https://github.com/ARMmbed/mbedtls/pull/485
+     nullptr,  // mbedtls only support chacha20, do not support chacha20-ietf
      EN_CIFT_NONE},
 #  endif
 
@@ -197,7 +197,7 @@ static constexpr const cipher_interface_info_t supported_ciphers[] = {
 #  if defined(CRYPTO_USE_CHACHA20_POLY1305_WITH_CIPHER)
     {"chacha20-poly1305-ietf",  // only available on openssl 1.1.0 and upper or boringssl
      EN_CIMT_CIPHER, "chacha20-poly1305",
-     "CHACHA20-POLY1305",  // only available on later mbedtls version, @see https://github.com/ARMmbed/mbedtls/pull/485
+     nullptr,  // mbedtls only support chacha20-poly1305, do not support chacha20-poly1305-ietf
      EN_CIFT_AEAD | EN_CIFT_VARIABLE_IV_LEN},
 #  endif
 
@@ -221,6 +221,12 @@ static const cipher_interface_info_t *get_cipher_interface_by_name(const char *n
   }
 
   for (size_t i = 0; nullptr != details::supported_ciphers[i].name; ++i) {
+#  if defined(ATFRAMEWORK_UTILS_CRYPTO_USE_MBEDTLS)
+    if (EN_CIMT_CIPHER == details::supported_ciphers[i].method &&
+        nullptr == details::supported_ciphers[i].mbedtls_name) {
+      continue;
+    }
+#  endif
     if (0 == UTIL_STRFUNC_STRCASE_CMP(name, details::supported_ciphers[i].name)) {
       return &details::supported_ciphers[i];
     }
@@ -1408,6 +1414,9 @@ ATFRAMEWORK_UTILS_API const cipher::cipher_kt_t *cipher::get_cipher_by_name(cons
     return EVP_get_cipherbyname(interface->openssl_name);
   }
 #  elif defined(ATFRAMEWORK_UTILS_CRYPTO_USE_MBEDTLS)
+  if (nullptr == interface->mbedtls_name) {
+    return nullptr;
+  }
   return mbedtls_cipher_info_from_string(interface->mbedtls_name);
 #  endif
 }

@@ -22,6 +22,7 @@
 #include <config/compile_optimize.h>
 #include <config/compiler_features.h>
 #include <memory/allocator_ptr.h>
+#include <nostd/nullability.h>
 #include <nostd/type_traits.h>
 
 ATFRAMEWORK_UTILS_NAMESPACE_BEGIN
@@ -1554,4 +1555,12 @@ struct ATFRAMEWORK_UTILS_API_HEAD_ONLY compat_strong_ptr_type_trait {
 };
 
 }  // namespace memory
+
+namespace nostd {
+template <class T>
+struct __is_nullability_support<memory::strong_rc_ptr<T>> {
+  UTIL_MACRO_INLINE_VARIABLE static constexpr const bool value = true;
+};
+}  // namespace nostd
+
 ATFRAMEWORK_UTILS_NAMESPACE_END

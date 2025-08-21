@@ -587,22 +587,22 @@ static inline dh::error_code_t::type setup_errorno(dh &ci, int err, dh::error_co
   return ret;
 }
 
-static constexpr const char *supported_dh_curves[] = {
-    "",
-    "x25519",           // see ecp_supported_curves in ecp.c of mbedtls
-    "x448",             // mbedtls don't support right now but maybe support it in the future
-    "secp521r1",        // see ecp_supported_curves in ecp.c of mbedtls
-    "secp384r1",        // see ecp_supported_curves in ecp.c of mbedtls
-    "secp256r1",        // see ecp_supported_curves in ecp.c of mbedtls
-    "secp224r1",        // see ecp_supported_curves in ecp.c of mbedtls
-    "secp192r1",        // see ecp_supported_curves in ecp.c of mbedtls
-    "secp256k1",        // see ecp_supported_curves in ecp.c of mbedtls
-    "secp224k1",        // see ecp_supported_curves in ecp.c of mbedtls
-    "secp192k1",        // see ecp_supported_curves in ecp.c of mbedtls
-    "brainpoolP512r1",  // see ecp_supported_curves in ecp.c of mbedtls
-    "brainpoolP384r1",  // see ecp_supported_curves in ecp.c of mbedtls
-    "brainpoolP256r1",  // see ecp_supported_curves in ecp.c of mbedtls
-    nullptr,            // end
+static constexpr const char *supported_dh_curves[][2] = {
+    {"", nullptr},
+    {"x25519", nullptr},           // see ecp_supported_curves in ecp.c of mbedtls
+    {"x448", nullptr},             // mbedtls don't support right now but maybe support it in the future
+    {"secp521r1", "p-521"},        // see ecp_supported_curves in ecp.c of mbedtls
+    {"secp384r1", "p-384"},        // see ecp_supported_curves in ecp.c of mbedtls
+    {"secp256r1", "p-256"},        // see ecp_supported_curves in ecp.c of mbedtls
+    {"secp224r1", nullptr},        // see ecp_supported_curves in ecp.c of mbedtls
+    {"secp192r1", nullptr},        // see ecp_supported_curves in ecp.c of mbedtls
+    {"secp256k1", nullptr},        // see ecp_supported_curves in ecp.c of mbedtls
+    {"secp224k1", nullptr},        // see ecp_supported_curves in ecp.c of mbedtls
+    {"secp192k1", nullptr},        // see ecp_supported_curves in ecp.c of mbedtls
+    {"brainpoolP512r1", nullptr},  // see ecp_supported_curves in ecp.c of mbedtls
+    {"brainpoolP384r1", nullptr},  // see ecp_supported_curves in ecp.c of mbedtls
+    {"brainpoolP256r1", nullptr},  // see ecp_supported_curves in ecp.c of mbedtls
+    {nullptr, nullptr},            // end
 };
 
 #  if defined(ATFRAMEWORK_UTILS_CRYPTO_USE_OPENSSL) || defined(ATFRAMEWORK_UTILS_CRYPTO_USE_LIBRESSL) || \
@@ -958,14 +958,23 @@ ATFRAMEWORK_UTILS_API int dh::shared_context::init(const char *name) {
   if (0 == UTIL_STRFUNC_STRNCASE_CMP("ecdh:", name, 5)) {
     method = method_t::EN_CDT_ECDH;
 
-    while (nullptr != details::supported_dh_curves[ecp_idx]) {
-      if (0 == UTIL_STRFUNC_STRCASE_CMP(name + 5, details::supported_dh_curves[ecp_idx])) {
+    while (nullptr != details::supported_dh_curves[ecp_idx][0]) {
+      bool found = false;
+      for (const auto &check_name : details::supported_dh_curves[ecp_idx]) {
+        if (nullptr != check_name && 0 == UTIL_STRFUNC_STRCASE_CMP(name + 5, check_name)) {
+          found = true;
+          break;
+        }
+      }
+
+      if (found) {
         break;
       }
+
       ++ecp_idx;
     }
 
-    if (nullptr == details::supported_dh_curves[ecp_idx]) {
+    if (nullptr == details::supported_dh_curves[ecp_idx][0]) {
       return error_code_t::NOT_SUPPORT;
     }
 
@@ -1136,7 +1145,7 @@ ATFRAMEWORK_UTILS_API int dh::shared_context::init(const char *name) {
         }
       } while (false);
 #  elif defined(ATFRAMEWORK_UTILS_CRYPTO_USE_MBEDTLS)
-      const mbedtls_ecp_curve_info *curve = mbedtls_ecp_curve_info_from_name(details::supported_dh_curves[ecp_idx]);
+      const mbedtls_ecp_curve_info *curve = mbedtls_ecp_curve_info_from_name(details::supported_dh_curves[ecp_idx][0]);
       if (nullptr == curve) {
         ret = error_code_t::NOT_SUPPORT;
         break;
@@ -2327,8 +2336,8 @@ ATFRAMEWORK_UTILS_API int dh::calc_secret(std::vector<unsigned char> &output) {
 ATFRAMEWORK_UTILS_API const std::vector<std::string> &dh::get_all_curve_names() {
   static std::vector<std::string> ret;
   if (ret.empty()) {
-    for (int i = 1; details::supported_dh_curves[i] != nullptr; ++i) {
-      if (0 == strlen(details::supported_dh_curves[i])) {
+    for (int i = 1; details::supported_dh_curves[i][0] != nullptr; ++i) {
+      if (nullptr == details::supported_dh_curves[i][0] || 0 == strlen(details::supported_dh_curves[i][0])) {
         continue;
       }
 #  if defined(ATFRAMEWORK_UTILS_CRYPTO_USE_OPENSSL) || defined(ATFRAMEWORK_UTILS_CRYPTO_USE_LIBRESSL) || \
@@ -2386,11 +2395,21 @@ ATFRAMEWORK_UTILS_API const std::vector<std::string> &dh::get_all_curve_names() 
           }
         }
 
-        ret.push_back(std::string("ecdh:") + details::supported_dh_curves[i]);
+        for (const auto &curve_name : details::supported_dh_curves[i]) {
+          if (nullptr != curve_name && 0 != curve_name[0]) {
+            ret.push_back(std::string("ecdh:") + curve_name);
+            break;
+          }
+        }
       }
 #  else
-      if (nullptr != mbedtls_ecp_curve_info_from_name(details::supported_dh_curves[i])) {
-        ret.push_back(std::string("ecdh:") + details::supported_dh_curves[i]);
+      if (nullptr != mbedtls_ecp_curve_info_from_name(details::supported_dh_curves[i][0])) {
+        for (const auto &curve_name : details::supported_dh_curves[i]) {
+          if (nullptr != curve_name && 0 != curve_name[0]) {
+            ret.push_back(std::string("ecdh:") + curve_name);
+            break;
+          }
+        }
       }
 #  endif
     }
