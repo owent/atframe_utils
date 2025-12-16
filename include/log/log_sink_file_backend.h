@@ -16,6 +16,7 @@
 #include <vector>
 
 #include "lock/spin_lock.h"
+#include "lock/spin_rw_lock.h"
 #include "log/log_formatter.h"
 
 ATFRAMEWORK_UTILS_NAMESPACE_BEGIN
@@ -107,7 +108,6 @@ class log_sink_file_backend {
 
   ATFRAMEWORK_UTILS_API ATFW_UTIL_SANITIZER_NO_THREAD void after_write_log(const log_formatter::caller_info_t &caller,
                                                                            FILE &f, size_t content_size);
-
   ATFRAMEWORK_UTILS_API void check_update();
 
   ATFRAMEWORK_UTILS_API void reset_log_file();
@@ -124,7 +124,7 @@ class log_sink_file_backend {
   time_t check_interval_;  // 更换文件或目录的检查周期
   time_t flush_interval_;  // 定时执行文件flush
   bool inited_;
-  lock::spin_lock fs_lock_;
+  lock::spin_rw_lock fs_lock_;
   lock::spin_lock init_lock_;
 
   struct file_impl_t {

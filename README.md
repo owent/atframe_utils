@@ -17,18 +17,16 @@ cxx utils code
 | Linux         | GCC                | With MbedTLS          |
 | Linux         | GCC-11             | -                     |
 | Linux         | Clang              | With libc++           |
-| Linux         | GCC 4.8            | -                     |
 | MinGW64       | GCC                | Static linking        |
 | MinGW64       | GCC                | Dynamic linking       |
 | Windows       | Visual Studio 2022 | Static linking        |
 | Windows       | Visual Studio 2022 | Dynamic linking       |
-| Windows       | Visual Studio 2019 | -                     |
 | macOS         | AppleClang         | With libc++           |
 
 ## Usage
 
 + require [cmake][cmake] 3.24.0 or upper
-+ require gcc 4.8+/clang 7+/apple clang 12.0+/MSVC(VS2019+)
++ require gcc 7.1+/clang 7+/apple clang 12.0+/MSVC(VS2022+)
 
 ~~~~~~~~~~bash
 # clone and make build directory

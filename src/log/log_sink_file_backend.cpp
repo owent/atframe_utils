@@ -252,14 +252,17 @@ ATFRAMEWORK_UTILS_API ATFW_UTIL_SANITIZER_NO_THREAD void log_sink_file_backend::
 }
 
 ATFRAMEWORK_UTILS_API std::shared_ptr<std::FILE> log_sink_file_backend::open_log_file(bool destroy_content) {
-  if (log_file_.opened_file) {
-    return log_file_.opened_file;
+  {
+    lock::read_lock_holder<lock::spin_rw_lock> lkholder_read(fs_lock_);
+    if (log_file_.opened_file) {
+      return log_file_.opened_file;
+    }
   }
 
   reset_log_file();
 
   // 打开新文件要加锁
-  lock::lock_holder<lock::spin_lock> lkholder(fs_lock_);
+  lock::write_lock_holder<lock::spin_rw_lock> lkholder(fs_lock_);
 
   char log_file[file_system::MAX_PATH_LEN + 1];
   log_formatter::caller_info_t caller;
@@ -360,6 +363,24 @@ ATFRAMEWORK_UTILS_API ATFW_UTIL_SANITIZER_NO_THREAD void log_sink_file_backend::
   reset_log_file();
 }
 
+ATFW_UTIL_SANITIZER_NO_THREAD static bool _check_update_file_path_not_changed(lock::spin_rw_lock &fs_lock,
+                                                                              const std::string &new_file_path,
+                                                                              std::string &old_file_path,
+                                                                              const std::string &log_file_file_path,
+                                                                              time_t &log_file_opened_file_point) {
+  // 短时间加锁，防止文件路径变更
+  lock::read_lock_holder<lock::spin_rw_lock> lkholder(fs_lock);
+  if (new_file_path == log_file_file_path) {
+    // 本次刷新周期内的文件名未变化，说明检测周期小于实际周期，所以这个周期内不需要再检测了
+    // 因为考虑到夏时令，只要大于小时的配置检测周期都设置为小时，必然会小于实际周期然后走到这里
+    log_file_opened_file_point = ATFRAMEWORK_UTILS_NAMESPACE_ID::time::time_utility::get_sys_now();
+    return true;
+  }
+
+  old_file_path = log_file_file_path;
+  return false;
+}
+
 ATFRAMEWORK_UTILS_API void log_sink_file_backend::check_update() {
   if (0 != log_file_.opened_file_point_) {
     if (0 == check_interval_ || ATFRAMEWORK_UTILS_NAMESPACE_ID::time::time_utility::get_sys_now() / check_interval_ ==
@@ -382,17 +403,9 @@ ATFRAMEWORK_UTILS_API void log_sink_file_backend::check_update() {
 
   new_file_path.assign(log_file, file_path_len);
 
-  {
-    // 短时间加锁，防止文件路径变更
-    lock::lock_holder<lock::spin_lock> lkholder(fs_lock_);
-    if (new_file_path == log_file_.file_path) {
-      // 本次刷新周期内的文件名未变化，说明检测周期小于实际周期，所以这个周期内不需要再检测了
-      // 因为考虑到夏时令，只要大于小时的配置检测周期都设置为小时，必然会小于实际周期然后走到这里
-      log_file_.opened_file_point_ = ATFRAMEWORK_UTILS_NAMESPACE_ID::time::time_utility::get_sys_now();
-      return;
-    }
-
-    old_file_path = log_file_.file_path;
+  if (_check_update_file_path_not_changed(fs_lock_, new_file_path, old_file_path, log_file_.file_path,
+                                          log_file_.opened_file_point_)) {
+    return;
   }
 
   std::string new_dir;
@@ -410,7 +423,7 @@ ATFRAMEWORK_UTILS_API void log_sink_file_backend::check_update() {
 
 ATFRAMEWORK_UTILS_API void log_sink_file_backend::reset_log_file() {
   // 更换日志文件需要加锁
-  lock::lock_holder<lock::spin_lock> lkholder(fs_lock_);
+  lock::write_lock_holder<lock::spin_rw_lock> lkholder(fs_lock_);
 
   // 必须依赖析构来关闭文件，以防这个文件正在其他地方被引用
   log_file_.opened_file.reset();
