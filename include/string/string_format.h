@@ -147,7 +147,9 @@ truncating_iterator<OutputIt, std::false_type> : public truncating_iterator_base
 
   template <typename T>
   ATFW_UTIL_ATTRIBUTE_CXX20_CONSTEXPR inline truncating_iterator &operator=(T &&val) {
-    push_back(std::forward<T>(val));
+    if (this->count_ < this->limit_) {
+      *this->out_ = std::forward<T>(val);
+    }
     return *this;
   }
 
