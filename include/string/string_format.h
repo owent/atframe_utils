@@ -476,21 +476,21 @@ ATFRAMEWORK_UTILS_API_HEAD_ONLY auto __internal_format(const details::fmtapi_for
     const char *input_end = input_begin + strlen(input_begin);
     return_type ret;
     ret.resize(static_cast<typename return_type::size_type>(input_end - input_begin));
-    std::copy(input_begin, input_end, ret.data());
+    ret.assign(input_begin, input_end);
     return ret;
   } catch (const std::runtime_error &e) {
     const char *input_begin = e.what();
     const char *input_end = input_begin + strlen(input_begin);
     return_type ret;
     ret.resize(static_cast<typename return_type::size_type>(input_end - input_begin));
-    std::copy(input_begin, input_end, ret.data());
+    ret.assign(input_begin, input_end);
     return ret;
   } catch (...) {
     const char *input_begin = "format got unknown exception";
     const char *input_end = input_begin + strlen(input_begin);
     return_type ret;
     ret.resize(static_cast<typename return_type::size_type>(input_end - input_begin));
-    std::copy(input_begin, input_end, ret.data());
+    ret.assign(input_begin, input_end);
     return ret;
   }
 #  endif
@@ -703,21 +703,21 @@ ATFRAMEWORK_UTILS_API_HEAD_ONLY auto vformat(TFMT &&fmt_text, TARGS &&args)
     const char *input_end = input_begin + strlen(input_begin);
     return_type ret;
     ret.resize(static_cast<typename return_type::size_type>(input_end - input_begin));
-    std::copy(input_begin, input_end, ret.data());
+    ret.assign(input_begin, input_end);
     return ret;
   } catch (const std::runtime_error &e) {
     const char *input_begin = e.what();
     const char *input_end = input_begin + strlen(input_begin);
     return_type ret;
     ret.resize(static_cast<typename return_type::size_type>(input_end - input_begin));
-    std::copy(input_begin, input_end, ret.data());
+    ret.assign(input_begin, input_end);
     return ret;
   } catch (...) {
     const char *input_begin = "format got unknown exception";
     const char *input_end = input_begin + strlen(input_begin);
     return_type ret;
     ret.resize(static_cast<typename return_type::size_type>(input_end - input_begin));
-    std::copy(input_begin, input_end, ret.data());
+    ret.assign(input_begin, input_end);
     return ret;
   }
 #  endif
