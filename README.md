@@ -15,7 +15,6 @@ cxx utils code
 | ------------- | ------------------ | --------------------- |
 | Linux         | GCC                | -                     |
 | Linux         | GCC                | With MbedTLS          |
-| Linux         | GCC-11             | -                     |
 | Linux         | Clang              | With libc++           |
 | MinGW64       | GCC                | Static linking        |
 | MinGW64       | GCC                | Dynamic linking       |
