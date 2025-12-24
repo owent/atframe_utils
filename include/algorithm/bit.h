@@ -54,10 +54,6 @@ template <typename T>
 struct is_unsigned_integer : std::integral_constant<bool, std::is_integral<T>::value && std::is_unsigned<T>::value &&
                                                               !std::is_same<T, bool>::value> {};
 
-// Get the number of bits in type T
-template <typename T>
-ATFW_UTIL_FORCEINLINE constexpr int digits_v = std::numeric_limits<T>::digits;
-
 // ============================================================================
 // countl_zero implementation - count leading zeros
 // ============================================================================
@@ -494,7 +490,7 @@ ATFW_UTIL_FORCEINLINE typename std::enable_if<detail::is_unsigned_integer<T>::va
 template <typename T>
 ATFW_UTIL_FORCEINLINE typename std::enable_if<detail::is_unsigned_integer<T>::value, T>::type rotl(T x,
                                                                                                    int s) noexcept {
-  constexpr int N = detail::digits_v<T>;
+  constexpr int N = std::numeric_limits<T>::digits;
   const int r = s % N;
   if (r == 0) {
     return x;
@@ -509,7 +505,7 @@ ATFW_UTIL_FORCEINLINE typename std::enable_if<detail::is_unsigned_integer<T>::va
 template <typename T>
 ATFW_UTIL_FORCEINLINE typename std::enable_if<detail::is_unsigned_integer<T>::value, T>::type rotr(T x,
                                                                                                    int s) noexcept {
-  constexpr int N = detail::digits_v<T>;
+  constexpr int N = std::numeric_limits<T>::digits;
   const int r = s % N;
   if (r == 0) {
     return x;
@@ -539,7 +535,7 @@ using std::has_single_bit;
 template <typename T>
 ATFW_UTIL_FORCEINLINE typename std::enable_if<detail::is_unsigned_integer<T>::value, int>::type bit_width(
     T x) noexcept {
-  return detail::digits_v<T> - countl_zero(x);
+  return std::numeric_limits<T>::digits - countl_zero(x);
 }
 
 // bit_floor: Returns the largest power of 2 not greater than x
