@@ -15,7 +15,7 @@
 ATFRAMEWORK_UTILS_NAMESPACE_BEGIN
 namespace design_pattern {
 
-class UTIL_SYMBOL_VISIBLE noncopyable {
+class ATFW_UTIL_SYMBOL_VISIBLE noncopyable {
  protected:
   noncopyable() {}
   ~noncopyable() {}
@@ -32,8 +32,8 @@ ATFRAMEWORK_UTILS_NAMESPACE_END
  * @brief 侵入式的禁止copy实现，有一些场景下需要使用dllexport或者-fvisibility=hidden
  */
 #define ATFW_UTIL_DESIGN_PATTERN_NOCOPYABLE(CLAZZ) \
- private:                                     \
-  CLAZZ(const CLAZZ &) = delete;              \
+ private:                                          \
+  CLAZZ(const CLAZZ &) = delete;                   \
   CLAZZ &operator=(const CLAZZ &) = delete;
 
 // Legacy macros

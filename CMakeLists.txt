@@ -91,6 +91,7 @@ set(SRC_LIST
     "${CMAKE_CURRENT_LIST_DIR}/src/string/tquerystring.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/src/time/time_utility.cpp")
 set(HEADER_LIST
+    "${CMAKE_CURRENT_LIST_DIR}/include/algorithm/bit.h"
     "${CMAKE_CURRENT_LIST_DIR}/include/algorithm/base64.h"
     "${CMAKE_CURRENT_LIST_DIR}/include/algorithm/crc.h"
     "${CMAKE_CURRENT_LIST_DIR}/include/algorithm/crypto_cipher.h"

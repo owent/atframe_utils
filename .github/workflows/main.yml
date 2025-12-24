@@ -57,6 +57,14 @@ jobs:
           - os: ubuntu-latest
             triplet: x64-linux
             cc: clang-latest
+          - os: ubuntu-latest
+            triplet: x64-linux
+            cc: gcc-latest
+            ci_mode: cxx14
+          - os: ubuntu-latest
+            triplet: x64-linux
+            cc: clang-latest
+            ci_mode: cxx14
           - os: macos-latest
             triplet: x64-osx
             cc: clang-latest
@@ -104,6 +112,8 @@ jobs:
             bash ci/do_ci.sh ssl.boringssl ;
           elif [[ "x$CI_MODE" == "xopenssl-1.1.1" ]]; then
             bash ci/do_ci.sh ssl.openssl-1.1.1 ;
+          elif [[ "x$CI_MODE" == "xcxx14" ]]; then
+            bash ci/do_ci.sh ssl.openssl.cxx14 ;
           else
             bash ci/do_ci.sh ssl.openssl ;
           fi

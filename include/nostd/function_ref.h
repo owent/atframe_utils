@@ -138,7 +138,7 @@ class ATFW_UTIL_SYMBOL_VISIBLE function_ref<R(Args...)> {
   // Constructs a function_ref from any invocable type.
   template <class F, class = enable_if_compatible<const F&>>
   // NOLINTNEXTLINE(runtime/explicit)
-  ATFW_UTIL_NOSTD_INVOKE_RESULT_CONSTEXPR function_ref(const F& f UTIL_ATTRIBUTE_LIFETIME_BOUND)
+  ATFW_UTIL_NOSTD_INVOKE_RESULT_CONSTEXPR function_ref(const F& f ATFW_UTIL_ATTRIBUTE_LIFETIME_BOUND)
       : invoker_(&details::functional_ref_invoke_object<F, R, Args...>) {
     details::functional_ref_assert_non_null(f);
     ptr_.obj = &f;

@@ -85,13 +85,16 @@ elif [[ "$1" == "codeql.configure" ]]; then
 elif [[ "$1" == "codeql.build" ]]; then
   cd build_jobs_ci
   cmake --build . -j --config $CONFIGURATION || cmake --build . --config $CONFIGURATION
-elif [[ "$1" == "ssl.openssl" ]]; then
-  CRYPTO_OPTIONS="-DATFRAMEWORK_CMAKE_TOOLSET_THIRD_PARTY_CRYPTO_USE_OPENSSL=ON"
+elif [[ "$1" == "ssl.openssl" ]] || [[ "$1" == "ssl.openssl.cxx14" ]]; then
+  CRYPTO_OPTIONS=("-DATFRAMEWORK_CMAKE_TOOLSET_THIRD_PARTY_CRYPTO_USE_OPENSSL=ON")
+  if [[ "$1" == "ssl.openssl.cxx14" ]]; then
+    CRYPTO_OPTIONS+=("-DCMAKE_CXX_STANDARD=14" "-DCMAKE_C_STANDARD=11")
+  fi
   if [[ "x${USE_CC:0:5}" == "xclang" ]]; then
-    bash cmake_dev.sh -lus -b RelWithDebInfo -r build_jobs_ci -c $USE_CC -- $CRYPTO_OPTIONS "-DATFRAMEWORK_CMAKE_TOOLSET_THIRD_PARTY_LOW_MEMORY_MODE=ON"
+    bash cmake_dev.sh -lus -b RelWithDebInfo -r build_jobs_ci -c $USE_CC -- ${CRYPTO_OPTIONS[@]} "-DATFRAMEWORK_CMAKE_TOOLSET_THIRD_PARTY_LOW_MEMORY_MODE=ON"
   else
     vcpkg install --triplet=$VCPKG_TARGET_TRIPLET fmt
-    bash cmake_dev.sh -lus -b RelWithDebInfo -r build_jobs_ci -c $USE_CC -- $CRYPTO_OPTIONS -DVCPKG_TARGET_TRIPLET=$VCPKG_TARGET_TRIPLET \
+    bash cmake_dev.sh -lus -b RelWithDebInfo -r build_jobs_ci -c $USE_CC -- ${CRYPTO_OPTIONS[@]} -DVCPKG_TARGET_TRIPLET=$VCPKG_TARGET_TRIPLET \
       -DCMAKE_TOOLCHAIN_FILE=$VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake "-DATFRAMEWORK_CMAKE_TOOLSET_THIRD_PARTY_LOW_MEMORY_MODE=ON"
   fi
   cd build_jobs_ci

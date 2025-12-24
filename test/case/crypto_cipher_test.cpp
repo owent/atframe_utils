@@ -12,7 +12,7 @@
 
 #include "frame/test_macros.h"
 
-#ifdef CRYPTO_CIPHER_ENABLED
+#ifdef ATFW_UTIL_MACRO_CRYPTO_CIPHER_ENABLED
 
 #  include <sstream>
 
@@ -598,11 +598,12 @@ CASE_TEST(crypto_cipher, evp_test) {
             aead_tag_len = info.tag.size();
           }
           CASE_EXPECT_LE(info.tag.size(), aead_tag_len);
+          ci.set_tag_size(static_cast<uint32_t>(aead_tag_len));
+          CASE_EXPECT_EQ(aead_tag_len, ci.get_tag_size());
 
-          enc_res =
-              ci.encrypt_aead(reinterpret_cast<const unsigned char *>(info.plaintext.c_str()), info.plaintext.size(),
-                              reinterpret_cast<unsigned char *>(&buffer[0]), &olen,
-                              reinterpret_cast<const unsigned char *>(info.aad.c_str()), info.aad.size(), aead_tag_len);
+          enc_res = ci.encrypt_aead(reinterpret_cast<const unsigned char *>(info.plaintext.c_str()),
+                                    info.plaintext.size(), reinterpret_cast<unsigned char *>(&buffer[0]), &olen,
+                                    reinterpret_cast<const unsigned char *>(info.aad.c_str()), info.aad.size());
           unsigned char *aead_tag = reinterpret_cast<unsigned char *>(&buffer[0]) + info.plaintext.size();
 
           if (info.is_final_error) {
@@ -697,9 +698,11 @@ CASE_TEST(crypto_cipher, evp_test) {
                  info.ciphertext.size());
           memcpy(&decrypt_buffer[0] + info.ciphertext.size(), reinterpret_cast<const unsigned char *>(info.tag.c_str()),
                  info.tag.size());
-          dec_res = ci.decrypt_aead(
-              &decrypt_buffer[0], decrypt_buffer.size(), reinterpret_cast<unsigned char *>(&buffer[0]), &olen,
-              reinterpret_cast<const unsigned char *>(info.aad.c_str()), info.aad.size(), info.tag.size());
+          ci.set_tag_size(static_cast<uint32_t>(info.tag.size()));
+          CASE_EXPECT_EQ(info.tag.size(), ci.get_tag_size());
+          dec_res =
+              ci.decrypt_aead(&decrypt_buffer[0], decrypt_buffer.size(), reinterpret_cast<unsigned char *>(&buffer[0]),
+                              &olen, reinterpret_cast<const unsigned char *>(info.aad.c_str()), info.aad.size());
 
           if (info.is_final_error) {
             CASE_EXPECT_NE(0, dec_res);

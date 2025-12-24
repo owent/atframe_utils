@@ -19,18 +19,22 @@
 #  include <openssl/err.h>
 #  include <openssl/evp.h>
 
-#  define CRYPTO_CIPHER_ENABLED 1
+#  define ATFW_UTIL_MACRO_CRYPTO_CIPHER_ENABLED 1
 
 #elif defined(ATFRAMEWORK_UTILS_CRYPTO_USE_MBEDTLS)
 
 #  include <mbedtls/cipher.h>
 #  include <mbedtls/md.h>
 
-#  define CRYPTO_CIPHER_ENABLED 1
+#  define ATFW_UTIL_MACRO_CRYPTO_CIPHER_ENABLED 1
 
 #endif
 
-#ifdef CRYPTO_CIPHER_ENABLED
+#ifdef ATFW_UTIL_MACRO_CRYPTO_CIPHER_ENABLED
+
+#  ifndef CRYPTO_CIPHER_ENABLED
+#    define CRYPTO_CIPHER_ENABLED ATFW_UTIL_MACRO_CRYPTO_CIPHER_ENABLED
+#  endif
 
 #  include <string>
 #  include <vector>
@@ -45,6 +49,14 @@ class cipher {
  public:
   struct ATFRAMEWORK_UTILS_API mode_t {
     enum type { EN_CMODE_ENCRYPT = 0x01, EN_CMODE_DECRYPT = 0x02 };
+  };
+
+  enum iv_roll_policy_t : uint8_t {
+    IV_ROLL_NONE = 0,
+    IV_ROLL_AEAD_INC1_BE,
+    IV_ROLL_CTR_INC_BLOCKS_BE,
+    IV_ROLL_CHAIN_CIPHERTEXT,
+    IV_ROLL_SODIUM_STREAM_COUNTER_LE64,
   };
 
 #  if defined(ATFRAMEWORK_UTILS_CRYPTO_USE_OPENSSL) || defined(ATFRAMEWORK_UTILS_CRYPTO_USE_LIBRESSL) || \
@@ -131,6 +143,21 @@ class cipher {
   ATFRAMEWORK_UTILS_API uint32_t get_block_size() const;
 
   /**
+   * @brief               get tag size in crypt library
+   * @return              tag length in bytes
+   */
+  ATFRAMEWORK_UTILS_API uint32_t get_tag_size() const;
+
+  /**
+   * @brief               set tag size in crypt library
+   * @param tag_size      tag length in bytes
+   * @note                only for AEAD cipher, tag size should between [4, 16] and tag_size % 2 == 0 and match the
+   *                      algorithm. For chacha20-poly1305-ietf and xchacha20-poly1305-ietf, tag size must be 16.
+   *                      For GCM mode, tag size can be 4, 6, 8, 10, 12, 14, 16, and 16 is recommended.
+   */
+  ATFRAMEWORK_UTILS_API void set_tag_size(uint32_t tag_size);
+
+  /**
    * @brief               set key
    * @param key           key
    * @param key_bitlen    key length to use, in bits. must equal or greater to get_key_bits()
@@ -191,11 +218,10 @@ class cipher {
    *                      actual number of bytes written.
    * @param ad            Additional data to authenticate.
    * @param ad_len        Length of ad. ad_len must not be greater than 0xFF00
-   * @param tag_len       desired tag length, tag_len must between [4, 16] and tag_len % 2 == 0
    * @return              0 or error code
    */
   ATFRAMEWORK_UTILS_API int encrypt_aead(const unsigned char *input, size_t ilen, unsigned char *output, size_t *olen,
-                                         const unsigned char *ad, size_t ad_len, size_t tag_len);
+                                         const unsigned char *ad, size_t ad_len);
 
   /**
    * @biref               decrypt data
@@ -208,11 +234,10 @@ class cipher {
    *                      actual number of bytes written.
    * @param ad            Additional data to be authenticated.
    * @param ad_len        Length of ad. ad_len must not be greater than 0xFF00
-   * @param tag_len       length of the authentication tag
    * @return              0 or error code
    */
   ATFRAMEWORK_UTILS_API int decrypt_aead(const unsigned char *input, size_t ilen, unsigned char *output, size_t *olen,
-                                         const unsigned char *ad, size_t ad_len, size_t tag_len);
+                                         const unsigned char *ad, size_t ad_len);
 
  public:
   static ATFRAMEWORK_UTILS_API const cipher_kt_t *get_cipher_by_name(const char *name);
@@ -235,7 +260,11 @@ class cipher {
  private:
   const cipher_interface_info_t *interface_;
   int64_t last_errorno_;
+  uint32_t tag_length_;
+  bool iv_is_set_;
+  iv_roll_policy_t iv_roll_policy_;
   const cipher_kt_t *cipher_kt_;
+
   std::vector<unsigned char> iv_;
   struct xxtea_context_t {
     ATFRAMEWORK_UTILS_NAMESPACE_ID::xxtea_key key;
