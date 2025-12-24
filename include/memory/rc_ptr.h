@@ -37,7 +37,7 @@ class ATFRAMEWORK_UTILS_API_HEAD_ONLY strong_rc_ptr;
 template <class T>
 class ATFRAMEWORK_UTILS_API_HEAD_ONLY enable_shared_rc_from_this;
 
-class UTIL_SYMBOL_VISIBLE __rc_ptr_counted_data_base {
+class ATFW_UTIL_SYMBOL_VISIBLE __rc_ptr_counted_data_base {
  public:
   UTIL_CONFIG_CONSTEXPR __rc_ptr_counted_data_base() noexcept : use_count_(1), weak_count_(1) {}
 
@@ -1559,7 +1559,7 @@ struct ATFRAMEWORK_UTILS_API_HEAD_ONLY compat_strong_ptr_type_trait {
 namespace nostd {
 template <class T>
 struct __is_nullability_support<memory::strong_rc_ptr<T>> {
-  UTIL_MACRO_INLINE_VARIABLE static constexpr const bool value = true;
+  ATFW_UTIL_MACRO_INLINE_VARIABLE static constexpr const bool value = true;
 };
 }  // namespace nostd
 

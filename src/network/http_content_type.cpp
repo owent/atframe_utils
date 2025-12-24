@@ -10,7 +10,7 @@ namespace network {
 namespace http_content_type {
 ATFRAMEWORK_UTILS_API const char *get_type(main_type mt) {
   static const char *ret[EN_HCT_MT_MAX] = {nullptr};
-  UTIL_UNLIKELY_IF (nullptr == ret[EN_HCT_MT_DISCRETE_TEXT]) {
+  if ATFW_UTIL_UNLIKELY_CONDITION (nullptr == ret[EN_HCT_MT_DISCRETE_TEXT]) {
     ret[EN_HCT_MT_DISCRETE_TEXT] = "text";
     ret[EN_HCT_MT_DISCRETE_IMAGE] = "image";
     ret[EN_HCT_MT_DISCRETE_AUDIO] = "audio";
@@ -30,7 +30,7 @@ ATFRAMEWORK_UTILS_API const char *get_type(main_type mt) {
 
 ATFRAMEWORK_UTILS_API const char *get_subtype(sub_type st) {
   static const char *ret[EN_HCT_ST_MAX] = {nullptr};
-  UTIL_UNLIKELY_IF (nullptr == ret[EN_HCT_ST_TEXT_PLAIN]) {
+  if ATFW_UTIL_UNLIKELY_CONDITION (nullptr == ret[EN_HCT_ST_TEXT_PLAIN]) {
     ret[EN_HCT_ST_TEXT_PLAIN] = "plain";
 
     ret[EN_HCT_ST_AUDIO_BASIC] = "basic";

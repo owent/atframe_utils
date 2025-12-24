@@ -51,7 +51,7 @@ class log_formatter {
     };
   };
 
-  struct UTIL_SYMBOL_VISIBLE caller_info_t {
+  struct ATFW_UTIL_SYMBOL_VISIBLE caller_info_t {
     level_t::type level_id;
     gsl::string_view level_name;
     gsl::string_view file_path;
@@ -136,8 +136,11 @@ class log_formatter {
 
   /**
    * @brief 设置工程目录，会影响format时的%s参数，如果文件路径以工程目录开头，则会用~替换
+   * @note 此接口非线程安全，请务必仅在初始化任意log sink前调用
    */
   ATFRAMEWORK_UTILS_API static void set_project_directory(const char *dirbuf, size_t dirsz);
+
+  ATFRAMEWORK_UTILS_API static void set_project_directory(gsl::string_view dir);
 
   /**
    * @brief 设置工程目录，会影响format时的%s参数，如果文件路径以工程目录开头，则会用~替换

@@ -213,7 +213,7 @@ class test_manager {
       atfw::util::cli::shell_stream ss(std::cout);
       ss() << atfw::util::cli::shell_font_style::SHELL_FONT_COLOR_RED << "FAILED => " << file << ":" << line
            << std::endl
-           << "Expected: " << lexpr << " ！= " << rexpr << std::endl
+           << "Expected: " << lexpr << " != " << rexpr << std::endl
            << lexpr << ": " << pick_convert_value(l) << std::endl
            << rexpr << ": " << pick_convert_value(r) << std::endl;
 

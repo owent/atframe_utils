@@ -100,7 +100,7 @@ class stacktrace_handle {
 #endif
 };
 
-class UTIL_SYMBOL_VISIBLE stacktrace_symbol {
+class ATFW_UTIL_SYMBOL_VISIBLE stacktrace_symbol {
  private:
   stacktrace_symbol(const stacktrace_symbol &) = delete;
   stacktrace_symbol(stacktrace_symbol &&) = delete;

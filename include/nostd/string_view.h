@@ -50,8 +50,8 @@ template <class Container>
 struct ATFRAMEWORK_UTILS_API_HEAD_ONLY __basic_string_view_from_string;
 
 template <class CharT, class Traits, class Allocator>
-struct ATFRAMEWORK_UTILS_API_HEAD_ONLY __basic_string_view_from_string<::std::basic_string<CharT, Traits, Allocator>>
-    : public ::std::true_type {};
+struct ATFRAMEWORK_UTILS_API_HEAD_ONLY
+__basic_string_view_from_string<::std::basic_string<CharT, Traits, Allocator>> : public ::std::true_type {};
 
 template <class>
 struct ATFRAMEWORK_UTILS_API_HEAD_ONLY __basic_string_view_from_string : public ::std::false_type {};
@@ -89,7 +89,7 @@ class ATFRAMEWORK_UTILS_API_HEAD_ONLY basic_string_view {
 
   template <typename Allocator>
   basic_string_view(  // NOLINT(runtime/explicit)
-      const std::basic_string<CharT, Traits, Allocator>& str UTIL_ATTRIBUTE_LIFETIME_BOUND) noexcept
+      const std::basic_string<CharT, Traits, Allocator>& str ATFW_UTIL_ATTRIBUTE_LIFETIME_BOUND) noexcept
       // This is implemented in terms of `basic_string_view(p, n)` so `str.size()`
       // doesn't need to be reevaluated after `ptr_` is set.
       : basic_string_view(str.data(), str.size()) {}
@@ -143,7 +143,7 @@ class ATFRAMEWORK_UTILS_API_HEAD_ONLY basic_string_view {
 
   template <class Allocator>
   constexpr basic_string_view& operator=(const common_type_t<::std::basic_string<CharT, Traits, Allocator>>& str
-                                         UTIL_ATTRIBUTE_LIFETIME_BOUND) noexcept {
+                                         ATFW_UTIL_ATTRIBUTE_LIFETIME_BOUND) noexcept {
     basic_string_view(str.data(), str.size()).swap(*this);
     static_assert(
         __basic_string_view_lifetime_guard<CharT, Traits, const ::std::basic_string<CharT, Traits, Allocator>&>::value,

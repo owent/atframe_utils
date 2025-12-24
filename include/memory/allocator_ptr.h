@@ -15,7 +15,7 @@ namespace memory {
 
 /// Non-standard RAII type for managing pointers obtained from allocators.
 template <class Alloc>
-struct UTIL_SYMBOL_VISIBLE allocated_ptr {
+struct ATFW_UTIL_SYMBOL_VISIBLE allocated_ptr {
   using pointer = typename ::std::allocator_traits<Alloc>::pointer;
   using value_type = typename ::std::allocator_traits<Alloc>::value_type;
 
@@ -52,7 +52,7 @@ struct UTIL_SYMBOL_VISIBLE allocated_ptr {
 
 /// Allocate space for a single object using a
 template <class Alloc>
-UTIL_SYMBOL_VISIBLE allocated_ptr<Alloc> allocate_guarded(Alloc& a) {
+ATFW_UTIL_SYMBOL_VISIBLE allocated_ptr<Alloc> allocate_guarded(Alloc& a) {
   return {a, ::std::allocator_traits<Alloc>::allocate(a, 1)};
 }
 

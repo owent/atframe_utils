@@ -188,7 +188,7 @@ static void random_get_bytes(unsigned char *buf, size_t nbytes) {
   ATFRAMEWORK_UTILS_NAMESPACE_ID::lock::lock_holder<ATFRAMEWORK_UTILS_NAMESPACE_ID::lock::spin_lock> lock_guard(
       random_generator_lock);
 
-  UTIL_UNLIKELY_IF (!uuid_generator_rand_engine_inited) {
+  if ATFW_UTIL_UNLIKELY_CONDITION (!uuid_generator_rand_engine_inited) {
     struct timeval tv;
     gettimeofday(&tv, 0);
     uuid_generator_rand_engine::result_type seed =

@@ -10,7 +10,7 @@
 ATFRAMEWORK_UTILS_NAMESPACE_BEGIN
 namespace design_pattern {
 
-class UTIL_SYMBOL_VISIBLE nomovable {
+class ATFW_UTIL_SYMBOL_VISIBLE nomovable {
  protected:
   nomovable() {}
   ~nomovable() {}
@@ -27,8 +27,8 @@ ATFRAMEWORK_UTILS_NAMESPACE_END
  * @brief 侵入式的禁止move实现，有一些场景下需要使用dllexport或者-fvisibility=hidden
  */
 #define ATFW_UTIL_DESIGN_PATTERN_NOMOVABLE(CLAZZ) \
- private:                                    \
-  CLAZZ(CLAZZ &&) = delete;                  \
+ private:                                         \
+  CLAZZ(CLAZZ &&) = delete;                       \
   CLAZZ &operator=(CLAZZ &&) = delete;
 
 // Legacy macros

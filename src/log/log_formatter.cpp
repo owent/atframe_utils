@@ -435,6 +435,10 @@ ATFRAMEWORK_UTILS_API ATFW_UTIL_SANITIZER_NO_THREAD void log_formatter::set_proj
   }
 }
 
+ATFRAMEWORK_UTILS_API ATFW_UTIL_SANITIZER_NO_THREAD void log_formatter::set_project_directory(gsl::string_view dir) {
+  set_project_directory(dir.data(), dir.size());
+}
+
 ATFRAMEWORK_UTILS_API log_formatter::level_t::type log_formatter::get_level_by_name(gsl::string_view name) {
   if (name.empty()) {
     return level_t::LOG_LW_DEBUG;

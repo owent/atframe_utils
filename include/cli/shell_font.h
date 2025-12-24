@@ -157,10 +157,10 @@ class ATFRAMEWORK_UTILS_API shell_font {
   static std::string GetStyleCloseCode();
 };
 
-class UTIL_SYMBOL_VISIBLE shell_stream {
+class ATFW_UTIL_SYMBOL_VISIBLE shell_stream {
  public:
   using stream_t = std::ostream;
-  class UTIL_SYMBOL_VISIBLE shell_stream_opr {
+  class ATFW_UTIL_SYMBOL_VISIBLE shell_stream_opr {
    public:
     using self_t = shell_stream_opr;
 

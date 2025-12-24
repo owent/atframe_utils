@@ -26,10 +26,10 @@ class cmd_option_list;
 using callback_param = cmd_option_list &;
 
 namespace binder {
-struct UTIL_SYMBOL_VISIBLE unspecified{};
+struct ATFW_UTIL_SYMBOL_VISIBLE unspecified {};
 
 // 绑定器接口
-class UTIL_SYMBOL_VISIBLE cmd_option_bind_base : public std::enable_shared_from_this<cmd_option_bind_base> {
+class ATFW_UTIL_SYMBOL_VISIBLE cmd_option_bind_base : public std::enable_shared_from_this<cmd_option_bind_base> {
  protected:
   static ATFRAMEWORK_UTILS_API const char *ROOT_NODE_CMD;
   struct help_msg_t {
@@ -67,7 +67,7 @@ class UTIL_SYMBOL_VISIBLE cmd_option_bind_base : public std::enable_shared_from_
 };
 }  // namespace binder
 
-class UTIL_SYMBOL_VISIBLE cmd_option_list {
+class ATFW_UTIL_SYMBOL_VISIBLE cmd_option_list {
  public:
   // 类型定义
   using cmd_array_type =
