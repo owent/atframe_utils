@@ -12,6 +12,8 @@
 
 #include <config/atframe_utils_build_feature.h>
 
+#include <gsl/select-gsl.h>
+
 #if defined(ATFRAMEWORK_UTILS_CRYPTO_USE_OPENSSL) || defined(ATFRAMEWORK_UTILS_CRYPTO_USE_LIBRESSL) || \
     defined(ATFRAMEWORK_UTILS_CRYPTO_USE_BORINGSSL)
 
@@ -164,6 +166,7 @@ class cipher {
    * @return              0 or error code less than 0
    */
   ATFRAMEWORK_UTILS_API int set_key(const unsigned char *key, uint32_t key_bitlen);
+  ATFRAMEWORK_UTILS_API int set_key(gsl::span<const unsigned char> key);
 
   /**
    * @brief               selibsodium_context_t initialization vector
@@ -174,12 +177,15 @@ class cipher {
    * @return              0 or error code less than 0
    */
   ATFRAMEWORK_UTILS_API int set_iv(const unsigned char *iv, size_t iv_len);
+  ATFRAMEWORK_UTILS_API int set_iv(gsl::span<const unsigned char> iv);
 
   /**
    * @brief               clear initialization vector
    * @return              0 or error code less than 0
    */
   ATFRAMEWORK_UTILS_API void clear_iv();
+
+  ATFRAMEWORK_UTILS_API gsl::span<const unsigned char> get_iv() const noexcept;
 
   /**
    * @biref               encrypt data

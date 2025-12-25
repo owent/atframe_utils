@@ -33,6 +33,7 @@
 
 #include "cli/shell_font.h"
 #include "nostd/string_view.h"
+#include "nostd/type_traits.h"
 
 #include "test_case_base.h"
 
@@ -58,9 +59,9 @@ class test_manager {
   using case_ptr_type = test_case_base *;
   using on_start_ptr_type = test_on_start_base *;
   using on_exit_ptr_type = test_on_exit_base *;
-  using test_type = std::vector<std::pair<std::string, case_ptr_type> >;
-  using event_on_start_type = std::vector<std::pair<std::string, on_start_ptr_type> >;
-  using event_on_exit_type = std::vector<std::pair<std::string, on_exit_ptr_type> >;
+  using test_type = std::vector<std::pair<std::string, case_ptr_type>>;
+  using event_on_start_type = std::vector<std::pair<std::string, on_start_ptr_type>>;
+  using event_on_exit_type = std::vector<std::pair<std::string, on_exit_ptr_type>>;
   using test_data_type = std::unordered_map<std::string, test_type>;
 
  public:
@@ -136,10 +137,24 @@ class test_manager {
     static inline value_type pick(TVAL v) { return value_type(v); }
   };
 
+  template <class TVAL, bool>
+  struct try_convert_to_string_view_underlying;
+
+  template <class TVAL>
+  struct try_convert_to_string_view_underlying<TVAL, false> {
+    using type = TVAL;
+  };
+
+  template <class TVAL>
+  struct try_convert_to_string_view_underlying<TVAL, true> {
+    using type = typename std::underlying_type<::atfw::util::nostd::remove_cvref_t<TVAL>>::type;
+  };
+
   template <class TVAL>
   struct try_convert_to_string_view<TVAL, false> {
-    using value_type = TVAL;
-    static inline value_type pick(TVAL v) { return v; }
+    using value_type = typename try_convert_to_string_view_underlying<
+        TVAL, std::is_enum<::atfw::util::nostd::remove_cvref_t<TVAL>>::value>::type;
+    static inline value_type pick(TVAL v) { return static_cast<value_type>(v); }
   };
 
   template <class TL, class TR, bool has_pointer, bool has_integer, bool all_integer>

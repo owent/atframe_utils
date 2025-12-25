@@ -908,6 +908,10 @@ ATFRAMEWORK_UTILS_API int cipher::set_key(const unsigned char *key, uint32_t key
   }
 }
 
+ATFRAMEWORK_UTILS_API int cipher::set_key(gsl::span<const unsigned char> key) {
+  return set_key(key.data(), static_cast<uint32_t>(key.size() * 8));
+}
+
 ATFRAMEWORK_UTILS_API int cipher::set_iv(const unsigned char *iv, size_t iv_len) {
   if (nullptr == interface_ || interface_->method == EN_CIMT_INVALID) {
     return details::setup_errorno(*this, 0, error_code_t::NOT_INITED);
@@ -958,9 +962,15 @@ ATFRAMEWORK_UTILS_API int cipher::set_iv(const unsigned char *iv, size_t iv_len)
   }
 }
 
+ATFRAMEWORK_UTILS_API int cipher::set_iv(gsl::span<const unsigned char> iv) { return set_iv(iv.data(), iv.size()); }
+
 ATFRAMEWORK_UTILS_API void cipher::clear_iv() {
   iv_.clear();
   iv_is_set_ = false;
+}
+
+ATFRAMEWORK_UTILS_API gsl::span<const unsigned char> cipher::get_iv() const noexcept {
+  return {iv_.data(), iv_.size()};
 }
 
 ATFRAMEWORK_UTILS_API int cipher::encrypt(const unsigned char *input, size_t ilen, unsigned char *output,
