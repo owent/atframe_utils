@@ -479,7 +479,6 @@ int cipher::init_with_cipher(const cipher_interface_info_t *interface, int mode)
 
     if (mode & mode_t::EN_CMODE_DECRYPT) {
       cipher_context_.dec = EVP_CIPHER_CTX_new();
-
       if (nullptr == cipher_context_.dec) {
         ret = details::setup_errorno(*this, static_cast<int64_t>(ERR_peek_error()), error_code_t::MALLOC);
         break;

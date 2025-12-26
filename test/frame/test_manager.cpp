@@ -16,11 +16,13 @@
 #include <memory>
 #include <sstream>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 #include "cli/cmd_option.h"
 #include "cli/cmd_option_phoenix.h"
 #include "cli/shell_font.h"
+#include "gsl/select-gsl.h"
 
 #include "test_manager.h"
 
@@ -454,8 +456,50 @@ int run_event_on_start() { return test_manager::me().run_event_on_start(); }
 
 int run_event_on_exit() { return test_manager::me().run_event_on_exit(); }
 
+static void append_guess_case(std::vector<std::string> &run_cases, const std::vector<std::string> &guess_cases,
+                              std::string ignore_exec) {
+  // AI自动填写的case过滤可能会乱填参数，这里简单适配一下几个场景
+  bool guess_case_mode = false;
+  std::unordered_map<std::string, std::vector<std::string>> guess_case_map;
+  for (auto &guess_name : guess_cases) {
+    gsl::string_view name = guess_name;
+    if (name.empty()) {
+      continue;
+    }
+
+    if (name[0] == '-' && name.size() > 1) {
+      name = name.substr(1);
+    }
+
+    if (name == ignore_exec) {
+      continue;
+    }
+
+    if (!guess_case_mode) {
+      guess_case_mode = true;
+      for (auto &g : test_manager::me().get_tests()) {
+        guess_case_map[g.first].push_back(g.first);
+        for (auto &c : g.second) {
+          std::string full_name = g.first + "." + c.first;
+          guess_case_map[c.first].push_back(c.first);
+          guess_case_map[c.first].push_back(full_name);
+          guess_case_map[full_name].push_back(c.first);
+        }
+      }
+    }
+
+    auto iter = guess_case_map.find(std::string{name});
+    if (iter != guess_case_map.end()) {
+      for (auto &n : iter->second) {
+        run_cases.push_back(n);
+      }
+    }
+  }
+}
+
 int run_tests(int argc, char *argv[]) {
   std::vector<std::string> run_cases;
+  std::vector<std::string> guess_cases;
   const char *version = "1.0.0";
   bool is_help = false;
   bool is_show_version = false;
@@ -467,6 +511,7 @@ int run_tests(int argc, char *argv[]) {
       ->set_help_msg("                              show version and exit.");
   cmd_opts->bind_cmd("-r, --run, run", atfw::util::cli::phoenix::push_back(run_cases))
       ->set_help_msg("[case names...]               only run specify cases.");
+  cmd_opts->bind_cmd("@OnDefault", atfw::util::cli::phoenix::push_back(guess_cases));
 
   cmd_opts->start(argc, argv);
   if (is_help) {
@@ -478,6 +523,8 @@ int run_tests(int argc, char *argv[]) {
     std::cout << version << std::endl;
     return 0;
   }
+
+  append_guess_case(run_cases, guess_cases, argv[0]);
 
   test_manager::me().set_cases(run_cases);
   run_event_on_start();

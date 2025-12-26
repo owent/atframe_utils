@@ -78,6 +78,8 @@ class test_manager {
 
   void set_cases(const std::vector<std::string> &case_names);
 
+  const test_data_type &get_tests() const { return tests_; }
+
   static test_manager &me();
 
   static std::string get_expire_time(clock_t begin, clock_t end);
