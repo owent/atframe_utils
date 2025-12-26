@@ -857,7 +857,7 @@ ATFRAMEWORK_UTILS_API int hkdf::expand(digest_type_t type, const unsigned char* 
       ret = error_code_t::kOperation;
       break;
     }
-    if (EVP_PKEY_CTX_hkdf_mode(pctx, EVP_PKEY_HKDEF_MODE_EXPAND_ONLY) <= 0) {
+    if (EVP_PKEY_CTX_hkdf_mode(pctx, EVP_PKEY_HKDF_MODE_EXPAND_ONLY) <= 0) {
       ret = error_code_t::kOperation;
       break;
     }
