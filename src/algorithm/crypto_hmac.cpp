@@ -68,6 +68,24 @@
 
 #  endif  // OpenSSL/LibreSSL/BoringSSL
 
+#  if defined(ATFRAMEWORK_UTILS_CRYPTO_USE_LIBRESSL)
+#    define ATFRAMEWORK_UTILS_CRYPTO_IGNORE_VERSION_WARNINGS
+#  endif
+
+#  if defined(ATFRAMEWORK_UTILS_CRYPTO_IGNORE_VERSION_WARNINGS)
+#    if defined(_MSC_VER)
+#      pragma warning(push)
+#      pragma warning(disable : 4244)
+#    endif
+#    if defined(__GNUC__) && !defined(__clang__) && !defined(__apple_build_version__)
+#      pragma GCC diagnostic push
+#      pragma GCC diagnostic ignored "-Wsign-conversion"
+#    elif defined(__clang__) || defined(__apple_build_version__)
+#      pragma clang diagnostic push
+#      pragma clang diagnostic ignored "-Wsign-conversion"
+#    endif
+#  endif
+
 ATFRAMEWORK_UTILS_NAMESPACE_BEGIN
 namespace crypto {
 
@@ -1090,5 +1108,19 @@ ATFRAMEWORK_UTILS_API std::vector<unsigned char> hkdf::derive_to_binary(digest_t
 
 }  // namespace crypto
 ATFRAMEWORK_UTILS_NAMESPACE_END
+
+#  if defined(ATFRAMEWORK_UTILS_CRYPTO_IGNORE_VERSION_WARNINGS)
+#    if defined(__GNUC__) && !defined(__clang__) && !defined(__apple_build_version__)
+#      if (__GNUC__ * 100 + __GNUC_MINOR__ * 10) >= 460
+#        pragma GCC diagnostic pop
+#      endif
+#    elif defined(__clang__) || defined(__apple_build_version__)
+#      pragma clang diagnostic pop
+#    endif
+
+#    if defined(_MSC_VER)
+#      pragma warning(pop)
+#    endif
+#  endif
 
 #endif  // ATFW_UTIL_MACRO_CRYPTO_HMAC_ENABLED
