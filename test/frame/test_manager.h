@@ -136,27 +136,25 @@ class test_manager {
   template <class TVAL>
   struct try_pick_basic_string_view {
    private:
-    template <class>
-    struct is_supported_string_view_char : ::std::false_type {};
-
-    template <>
-    struct is_supported_string_view_char<char> : ::std::true_type {};
-
-    template <>
-    struct is_supported_string_view_char<wchar_t> : ::std::true_type {};
-
+    template <class T>
+    struct is_supported_string_view_char
+        : ::std::integral_constant<
+              bool,
+              ::std::is_same<char, typename ::std::remove_cv<typename ::std::remove_reference<T>::type>::type>::value ||
+                  ::std::is_same<wchar_t,
+                                 typename ::std::remove_cv<typename ::std::remove_reference<T>::type>::type>::value
 #ifdef __cpp_unicode_characters
-    template <>
-    struct is_supported_string_view_char<char16_t> : ::std::true_type {};
-
-    template <>
-    struct is_supported_string_view_char<char32_t> : ::std::true_type {};
+                  || ::std::is_same<
+                         char16_t, typename ::std::remove_cv<typename ::std::remove_reference<T>::type>::type>::value ||
+                  ::std::is_same<char32_t,
+                                 typename ::std::remove_cv<typename ::std::remove_reference<T>::type>::type>::value
 #endif
-
 #ifdef __cpp_char8_t
-    template <>
-    struct is_supported_string_view_char<char8_t> : ::std::true_type {};
+                  || ::std::is_same<char8_t,
+                                    typename ::std::remove_cv<typename ::std::remove_reference<T>::type>::type>::value
 #endif
+              > {
+    };
 
     template <class, class = void>
     struct try_deduce_char_type {
@@ -180,27 +178,20 @@ class test_manager {
       using type = TChar;
     };
 
-    template <class TChar>
-    struct try_deduce_char_type<TChar *, typename ::std::enable_if<is_supported_string_view_char<TChar>::value>::type> {
-      using type = TChar;
+    template <class T>
+    struct try_deduce_char_type<
+        T, typename ::std::enable_if<::std::is_pointer<T>::value &&
+                                     is_supported_string_view_char<typename ::std::remove_cv<
+                                         typename ::std::remove_pointer<T>::type>::type>::value>::type> {
+      using type = typename ::std::remove_cv<typename ::std::remove_pointer<T>::type>::type;
     };
 
-    template <class TChar>
-    struct try_deduce_char_type<const TChar *,
-                                typename ::std::enable_if<is_supported_string_view_char<TChar>::value>::type> {
-      using type = TChar;
-    };
-
-    template <class TChar, size_t N>
-    struct try_deduce_char_type<TChar[N],
-                                typename ::std::enable_if<is_supported_string_view_char<TChar>::value>::type> {
-      using type = TChar;
-    };
-
-    template <class TChar, size_t N>
-    struct try_deduce_char_type<const TChar[N],
-                                typename ::std::enable_if<is_supported_string_view_char<TChar>::value>::type> {
-      using type = TChar;
+    template <class T>
+    struct try_deduce_char_type<
+        T, typename ::std::enable_if<::std::is_array<T>::value &&
+                                     is_supported_string_view_char<typename ::std::remove_cv<
+                                         typename ::std::remove_extent<T>::type>::type>::value>::type> {
+      using type = typename ::std::remove_cv<typename ::std::remove_extent<T>::type>::type;
     };
 
     using raw_value_type = ::atfw::util::nostd::remove_cvref_t<TVAL>;
