@@ -34,6 +34,7 @@
 #include "cli/shell_font.h"
 #include "nostd/string_view.h"
 #include "nostd/type_traits.h"
+#include "nostd/utility_data_size.h"
 
 #include "test_case_base.h"
 
@@ -133,10 +134,171 @@ class test_manager {
   struct try_convert_to_string_view;
 
   template <class TVAL>
+  struct try_pick_basic_string_view {
+   private:
+    template <class>
+    struct is_supported_string_view_char : ::std::false_type {};
+
+    template <>
+    struct is_supported_string_view_char<char> : ::std::true_type {};
+
+    template <>
+    struct is_supported_string_view_char<wchar_t> : ::std::true_type {};
+
+#ifdef __cpp_unicode_characters
+    template <>
+    struct is_supported_string_view_char<char16_t> : ::std::true_type {};
+
+    template <>
+    struct is_supported_string_view_char<char32_t> : ::std::true_type {};
+#endif
+
+#ifdef __cpp_char8_t
+    template <>
+    struct is_supported_string_view_char<char8_t> : ::std::true_type {};
+#endif
+
+    template <class, class = void>
+    struct try_deduce_char_type {
+      using type = void;
+    };
+
+    template <class T>
+    struct try_deduce_char_type<T, ::atfw::util::nostd::void_t<typename T::value_type>> {
+      using value_type = ::atfw::util::nostd::remove_cv_t<typename T::value_type>;
+      using type =
+          typename ::std::conditional<is_supported_string_view_char<value_type>::value, value_type, void>::type;
+    };
+
+    template <class TChar, class TTraits>
+    struct try_deduce_char_type<::atfw::util::nostd::basic_string_view<TChar, TTraits>> {
+      using type = TChar;
+    };
+
+    template <class TChar, class TTraits, class TAlloc>
+    struct try_deduce_char_type<::std::basic_string<TChar, TTraits, TAlloc>> {
+      using type = TChar;
+    };
+
+    template <class TChar>
+    struct try_deduce_char_type<TChar *, typename ::std::enable_if<is_supported_string_view_char<TChar>::value>::type> {
+      using type = TChar;
+    };
+
+    template <class TChar>
+    struct try_deduce_char_type<const TChar *,
+                                typename ::std::enable_if<is_supported_string_view_char<TChar>::value>::type> {
+      using type = TChar;
+    };
+
+    template <class TChar, size_t N>
+    struct try_deduce_char_type<TChar[N],
+                                typename ::std::enable_if<is_supported_string_view_char<TChar>::value>::type> {
+      using type = TChar;
+    };
+
+    template <class TChar, size_t N>
+    struct try_deduce_char_type<const TChar[N],
+                                typename ::std::enable_if<is_supported_string_view_char<TChar>::value>::type> {
+      using type = TChar;
+    };
+
+    using raw_value_type = ::atfw::util::nostd::remove_cvref_t<TVAL>;
+    using deduced_char_type = typename try_deduce_char_type<raw_value_type>::type;
+
+    template <class TChar>
+    struct make_basic_string_view {
+      using type = ::atfw::util::nostd::basic_string_view<TChar>;
+    };
+
+    template <class TChar, class TInput, class = void>
+    struct can_construct_from_data_size : ::std::false_type {};
+
+    template <class TChar, class TInput>
+    struct can_construct_from_data_size<
+        TChar, TInput,
+        ::atfw::util::nostd::void_t<decltype(::atfw::util::nostd::data(
+                                        ::std::declval<typename ::std::add_lvalue_reference<TInput>::type>())),
+                                    decltype(::atfw::util::nostd::size(
+                                        ::std::declval<typename ::std::add_lvalue_reference<TInput>::type>()))>> {
+      using data_type =
+          decltype(::atfw::util::nostd::data(::std::declval<typename ::std::add_lvalue_reference<TInput>::type>()));
+      using size_type =
+          decltype(::atfw::util::nostd::size(::std::declval<typename ::std::add_lvalue_reference<TInput>::type>()));
+
+      static constexpr const bool value =
+          ::std::is_convertible<data_type, const TChar *>::value && ::std::is_convertible<size_type, size_t>::value;
+    };
+
+    template <class TChar, bool>
+    struct try_use_deduced_char;
+
+    template <class TChar>
+    struct try_use_deduced_char<TChar, true> {
+      using type = void;
+      static constexpr const bool value = false;
+    };
+
+    template <class TChar>
+    struct try_use_deduced_char<TChar, false> {
+      using type = typename make_basic_string_view<TChar>::type;
+      static constexpr const bool value =
+          ::std::is_convertible<TVAL, type>::value || can_construct_from_data_size<TChar, TVAL>::value;
+    };
+
+    using deduced_try = try_use_deduced_char<deduced_char_type, ::std::is_void<deduced_char_type>::value>;
+    static constexpr const bool use_deduced_type = deduced_try::value;
+
+    template <class TChar, class TFallback>
+    struct try_use_fallback_char {
+      using type = typename ::std::conditional<
+          (::std::is_convertible<TVAL, typename make_basic_string_view<TChar>::type>::value ||
+           can_construct_from_data_size<TChar, TVAL>::value),
+          typename make_basic_string_view<TChar>::type, TFallback>::type;
+    };
+
+    using fallback_step0 = void;
+#ifdef __cpp_unicode_characters
+    using fallback_step1 = typename try_use_fallback_char<char32_t, fallback_step0>::type;
+    using fallback_step2 = typename try_use_fallback_char<char16_t, fallback_step1>::type;
+#else
+    using fallback_step2 = fallback_step0;
+#endif
+    using fallback_step3 = typename try_use_fallback_char<wchar_t, fallback_step2>::type;
+    using fallback_step4 = typename try_use_fallback_char<char, fallback_step3>::type;
+#ifdef __cpp_char8_t
+    using fallback_type = typename try_use_fallback_char<char8_t, fallback_step4>::type;
+#else
+    using fallback_type = fallback_step4;
+#endif
+
+   public:
+    using type = typename ::std::conditional<use_deduced_type, typename deduced_try::type, fallback_type>::type;
+    static constexpr const bool value = !::std::is_void<type>::value;
+  };
+
+  template <class TVAL>
   struct try_convert_to_string_view<TVAL, true> {
-    using value_type = typename std::conditional<std::is_same<std::nullptr_t, typename std::decay<TVAL>::type>::value,
-                                                 std::nullptr_t, atfw::util::nostd::string_view>::type;
-    static inline value_type pick(TVAL v) { return value_type(v); }
+    using picked_string_view_type = typename try_pick_basic_string_view<TVAL>::type;
+    static constexpr const bool is_nullptr = std::is_same<std::nullptr_t, typename std::decay<TVAL>::type>::value;
+
+    using value_type = typename std::conditional<is_nullptr, std::nullptr_t, picked_string_view_type>::type;
+
+   private:
+    static inline value_type pick_impl(TVAL v, ::std::true_type) { return value_type(v); }
+
+    static inline value_type pick_impl(TVAL v, ::std::false_type) {
+      return pick_view(v, ::std::integral_constant<bool, ::std::is_convertible<TVAL, value_type>::value>());
+    }
+
+    static inline value_type pick_view(TVAL v, ::std::true_type) { return value_type(v); }
+
+    static inline value_type pick_view(TVAL v, ::std::false_type) {
+      return value_type(::atfw::util::nostd::data(v), ::atfw::util::nostd::size(v));
+    }
+
+   public:
+    static inline value_type pick(TVAL v) { return pick_impl(v, ::std::integral_constant<bool, is_nullptr>()); }
   };
 
   template <class TVAL, bool>
@@ -162,10 +324,8 @@ class test_manager {
   template <class TL, class TR, bool has_pointer, bool has_integer, bool all_integer>
   struct pick_param {
     template <class T>
-    typename try_convert_to_string_view<T, std::is_convertible<T, atfw::util::nostd::string_view>::value>::value_type
-    operator()(T &&t) {
-      return try_convert_to_string_view<T, std::is_convertible<T, atfw::util::nostd::string_view>::value>::pick(
-          std::forward<T>(t));
+    typename try_convert_to_string_view<T, try_pick_basic_string_view<T>::value>::value_type operator()(T &&t) {
+      return try_convert_to_string_view<T, try_pick_basic_string_view<T>::value>::pick(std::forward<T>(t));
     }
   };
 

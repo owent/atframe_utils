@@ -132,6 +132,26 @@ The test executable is `atframe_utils_unit_test`.
 ./atframe_utils_unit_test --version
 ```
 
+### Windows: DLL lookup via PATH
+
+On Windows, running `atframe_utils_unit_test.exe` (or samples/tools) from a build directory may fail if dependent DLLs are not discoverable. The DLLs are often under the build output directory (and sometimes a third-party `bin/` directory). The easiest fix is to **prepend those folders to `PATH`** for the current session.
+
+Typical DLL directories:
+
+- `<BUILD_DIR>\\publish\\bin\\<Config>` (project DLLs)
+- `<REPO_ROOT>\\third_party\\install\\windows-amd64-msvc-19\\bin` (third-party DLLs in this monorepo/toolset layout)
+
+Example (PowerShell):
+
+```powershell
+$buildDir = "<BUILD_DIR>"  # e.g. D:\\workspace\\...\\build_jobs_cmake_tools
+$cfg = "Debug"
+
+$env:PATH = "$buildDir\\publish\\bin\\$cfg;$buildDir\\publish\\bin;${PWD}\\third_party\\install\\windows-amd64-msvc-19\\bin;" + $env:PATH
+Set-Location "$buildDir\\_deps\\atframe_utils\\test\\$cfg"
+./atframe_utils_unit_test.exe -r test_manager
+```
+
 ### Writing Test Cases
 
 Test files are located in `test/case/`. Example:
