@@ -7,11 +7,13 @@
 #include <cassert>
 #include <cstddef>
 #include <cstring>
+#include <cwchar>
 #include <ios>
 #include <iosfwd>
 #include <iterator>
 #include <limits>
 #include <string>
+#include <type_traits>
 #include <utility>
 
 #ifdef __cpp_impl_three_way_comparison
@@ -571,24 +573,48 @@ class ATFRAMEWORK_UTILS_API_HEAD_ONLY basic_string_view {
   static constexpr size_type kMaxSize = (std::numeric_limits<difference_type>::max)();
 
   static constexpr size_type _strlen_internal(const CharT* str) {
-#if defined(_MSC_VER) && _MSC_VER >= 1910 && !defined(__clang__)
-    // MSVC 2017+ can evaluate this at compile-time.
-    const CharT* begin = str;
-    while (*str != '\0') ++str;
-    return str - begin;
-#elif (defined(__GNUC__) && !defined(__clang__))
-    // GCC has __builtin_strlen according to
-    // https://gcc.gnu.org/onlinedocs/gcc-4.7.0/gcc/Other-Builtins.html
-    return __builtin_strlen(str);
-#elif defined(__clang__)
-#  if __has_builtin(__builtin_strlen)
-    return __builtin_strlen(str);
-#  else
-    return str ? strlen(str) : 0;
-#  endif
-#else
-    return str ? strlen(str) : 0;
+    // Keep constexpr support (C++14+) while still allowing fast runtime paths.
+    if (!str) {
+      return 0;
+    }
+
+#if defined(__cpp_lib_is_constant_evaluated) && (__cpp_lib_is_constant_evaluated >= 201811L)
+    // In constant evaluation, library strlen/wcslen is not allowed, so fall back to a constexpr loop.
+    if (!::std::is_constant_evaluated()) {
+      return _strlen_runtime(str);
+    }
 #endif
+
+    return _strlen_constexpr(str);
+  }
+
+  static constexpr size_type _strlen_constexpr(const CharT* str) {
+    const CharT* begin = str;
+    while (*str != CharT()) {
+      ++str;
+    }
+    return static_cast<size_type>(str - begin);
+  }
+
+  // Runtime-optimized length helpers.
+  static ATFW_UTIL_FORCEINLINE size_type _strlen_runtime(const char* s) {
+#if (defined(__GNUC__) || defined(__clang__)) && !defined(_MSC_VER)
+    return static_cast<size_type>(__builtin_strlen(s));
+#else
+    return static_cast<size_type>(::strlen(s));
+#endif
+  }
+
+  static ATFW_UTIL_FORCEINLINE size_type _strlen_runtime(const wchar_t* s) {
+    return static_cast<size_type>(::wcslen(s));
+  }
+
+  template <class TChar = CharT,
+            typename ::std::enable_if<!::std::is_same<TChar, char>::value && !::std::is_same<TChar, wchar_t>::value,
+                                      int>::type = 0>
+  static ATFW_UTIL_FORCEINLINE size_type _strlen_runtime(const TChar* s) {
+    // No standard fast path for char16_t/char32_t/char8_t; use a simple loop.
+    return _strlen_constexpr(s);
   }
 
   static constexpr size_t Min(size_type length_a, size_type length_b) {
