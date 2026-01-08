@@ -597,7 +597,7 @@ class ATFRAMEWORK_UTILS_API_HEAD_ONLY basic_string_view {
   }
 
   // Runtime-optimized length helpers.
-  static ATFW_UTIL_FORCEINLINE size_type _strlen_runtime(const char* s) {
+  ATFW_UTIL_FORCEINLINE static size_type _strlen_runtime(const char* s) {
 #if (defined(__GNUC__) || defined(__clang__)) && !defined(_MSC_VER)
     return static_cast<size_type>(__builtin_strlen(s));
 #else
@@ -605,14 +605,14 @@ class ATFRAMEWORK_UTILS_API_HEAD_ONLY basic_string_view {
 #endif
   }
 
-  static ATFW_UTIL_FORCEINLINE size_type _strlen_runtime(const wchar_t* s) {
+  ATFW_UTIL_FORCEINLINE static size_type _strlen_runtime(const wchar_t* s) {
     return static_cast<size_type>(::wcslen(s));
   }
 
   template <class TChar = CharT,
             typename ::std::enable_if<!::std::is_same<TChar, char>::value && !::std::is_same<TChar, wchar_t>::value,
                                       int>::type = 0>
-  static ATFW_UTIL_FORCEINLINE size_type _strlen_runtime(const TChar* s) {
+  ATFW_UTIL_FORCEINLINE static size_type _strlen_runtime(const TChar* s) {
     // No standard fast path for char16_t/char32_t/char8_t; use a simple loop.
     return _strlen_constexpr(s);
   }
