@@ -74,21 +74,33 @@ using nullable
 #if ATFW_UTIL_HAVE_CPP_ATTRIBUTE(clang::annotate)
     [[clang::annotate("Nullable")]]
 #endif
+#if ATFW_UTIL_HAVE_FEATURE(nullability_on_classes) && !defined(__OBJC__)
+    = T _Nullable;
+#else
     = T;
+#endif
 
 template <class T, class = typename __enable_nonnull<T>::type>
 using nonnull
 #if ATFW_UTIL_HAVE_CPP_ATTRIBUTE(clang::annotate)
     [[clang::annotate("Nonnull")]]
 #endif
+#if ATFW_UTIL_HAVE_FEATURE(nullability_on_classes) && !defined(__OBJC__)
+    = T _Nonnull;
+#else
     = T;
+#endif
 
 template <class T, class = typename __enable_nullability_unknown<T>::type>
 using nullability_unknown
 #if ATFW_UTIL_HAVE_CPP_ATTRIBUTE(clang::annotate)
     [[clang::annotate("Nullability_Unspecified")]]
 #endif
+#if ATFW_UTIL_HAVE_FEATURE(nullability_on_classes) && !defined(__OBJC__)
+    = T _Null_unspecified;
+#else
     = T;
+#endif
 
 }  // namespace nostd
 ATFRAMEWORK_UTILS_NAMESPACE_END
