@@ -8,40 +8,19 @@
 - **License**: MIT
 - **Languages**: C++ (C++14 minimum, C++17/C++20/C++23 features used when available)
 
+## Skills (How-to playbooks)
+
+Operational, copy/paste-friendly guides live in `.github/skills/`:
+
+- Entry point: `.github/skills/README.md`
+
 ## Build System
 
 This project uses **CMake** (minimum version 3.24.0).
 
-### Build Commands
+Build steps and common configuration options are documented in:
 
-```bash
-# Clone and configure
-git clone --single-branch --depth=1 -b main https://github.com/atframework/atframe_utils.git
-mkdir atframe_utils/build && cd atframe_utils/build
-
-# Configure with unit tests enabled
-cmake .. -DPROJECT_ENABLE_SAMPLE=YES -DPROJECT_ENABLE_UNITTEST=YES -DPROJECT_ENABLE_TOOLS=ON
-
-# Build
-cmake --build .                          # Linux/macOS (GCC/Clang)
-cmake --build . --config RelWithDebInfo  # Windows (MSVC)
-
-# Run tests via CTest
-ctest . -V
-```
-
-### Key CMake Options
-
-| Option                    | Default | Description                     |
-| ------------------------- | ------- | ------------------------------- |
-| `BUILD_SHARED_LIBS`       | NO      | Build dynamic library           |
-| `PROJECT_ENABLE_SAMPLE`   | NO      | Build sample applications       |
-| `PROJECT_ENABLE_UNITTEST` | NO      | Build unit tests                |
-| `PROJECT_ENABLE_TOOLS`    | NO      | Build tools                     |
-| `LIBUNWIND_ENABLED`       | NO      | Enable libunwind for stacktrace |
-| `CRYPTO_DISABLED`         | NO      | Disable crypto/DH/ECDH support  |
-| `CRYPTO_USE_OPENSSL`      | NO      | Force OpenSSL for crypto        |
-| `CRYPTO_USE_MBEDTLS`      | NO      | Force MbedTLS for crypto        |
+- `.github/skills/build.md`
 
 ## Directory Structure
 
@@ -96,74 +75,10 @@ CASE_EXPECT_ERROR(message)
 
 // Logging during tests
 CASE_MSG_INFO() << "Info message";
-CASE_MSG_ERROR() << "Error message";
 
-// Test utilities
-CASE_THREAD_SLEEP_MS(milliseconds)
-CASE_THREAD_YIELD()
-```
+### Running and writing tests
 
-### Running Tests
-
-The test executable is `atframe_utils_unit_test`.
-
-```bash
-# Run all tests
-./atframe_utils_unit_test
-
-# List all test cases
-./atframe_utils_unit_test -l
-./atframe_utils_unit_test --list-tests
-
-# Run specific test group(s) or case(s)
-./atframe_utils_unit_test -r <test_group_name>
-./atframe_utils_unit_test -r <test_group_name>.<test_case_name>
-
-# Run with filter pattern (supports wildcards)
-./atframe_utils_unit_test -f "crypto*"
-./atframe_utils_unit_test --filter "sha*"
-
-# Show help
-./atframe_utils_unit_test -h
-./atframe_utils_unit_test --help
-
-# Show version
-./atframe_utils_unit_test -v
-./atframe_utils_unit_test --version
-```
-
-### Windows: DLL lookup via PATH
-
-On Windows, running `atframe_utils_unit_test.exe` (or samples/tools) from a build directory may fail if dependent DLLs are not discoverable. The DLLs are often under the build output directory (and sometimes a third-party `bin/` directory). The easiest fix is to **prepend those folders to `PATH`** for the current session.
-
-Typical DLL directories:
-
-- `<BUILD_DIR>\\publish\\bin\\<Config>` (project DLLs)
-- `<REPO_ROOT>\\third_party\\install\\windows-amd64-msvc-19\\bin` (third-party DLLs in this monorepo/toolset layout)
-
-Example (PowerShell):
-
-```powershell
-$buildDir = "<BUILD_DIR>"  # e.g. D:\\workspace\\...\\build_jobs_cmake_tools
-$cfg = "Debug"
-
-$env:PATH = "$buildDir\\publish\\bin\\$cfg;$buildDir\\publish\\bin;${PWD}\\third_party\\install\\windows-amd64-msvc-19\\bin;" + $env:PATH
-Set-Location "$buildDir\\_deps\\atframe_utils\\test\\$cfg"
-./atframe_utils_unit_test.exe -r test_manager
-```
-
-### Writing Test Cases
-
-Test files are located in `test/case/`. Example:
-
-```cpp
-#include "frame/test_macros.h"
-#include "algorithm/sha.h"
-
-CASE_TEST(sha, sha256_basic) {
-    std::string input = "hello";
-    auto result = atfw::util::hash::sha256(input.data(), input.size());
-
+See `.github/skills/testing.md`.
     CASE_EXPECT_EQ(32, result.size());
     CASE_MSG_INFO() << "SHA256 hash computed successfully";
 }
