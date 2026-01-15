@@ -56,8 +56,11 @@
 
 #endif
 
-#if (defined(_MSC_VER) && _MSC_VER >= 1600) || (defined(__STDC_VERSION__) && __STDC_VERSION__ >= 201112L)
-#  define UTIL_FS_OPEN(e, f, path, mode) ATFW_EXPLICIT_UNUSED_ATTR errno_t e = fopen_s(&f, path, mode)
+#if (defined(_MSC_VER) && _MSC_VER >= 1600)
+#  include <errno.h>
+#  define UTIL_FS_OPEN(e, f, path, mode) \
+    f = _fsopen(path, mode, _SH_DENYNO);  \
+    ATFW_EXPLICIT_UNUSED_ATTR errno_t e = errno;
 #  define UTIL_FS_CLOSE(f) fclose(f)
 #  define UTIL_FS_C11_API
 #else
