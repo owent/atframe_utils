@@ -1,4 +1,4 @@
-// Copyright 2025 atframework
+// Copyright 2026 atframework
 // Created by owent on 2024.12.26
 
 #ifndef UTIL_ALGORITHM_CRYPTO_HMAC_H
