@@ -75,7 +75,7 @@ using nullable
     [[clang::annotate("Nullable")]]
 #endif
 #if ATFW_UTIL_HAVE_FEATURE(nullability_on_classes) && !defined(__OBJC__)
-    = T _Nullable;
+    = T;
 #else
     = T;
 #endif
@@ -86,7 +86,7 @@ using nonnull
     [[clang::annotate("Nonnull")]]
 #endif
 #if ATFW_UTIL_HAVE_FEATURE(nullability_on_classes) && !defined(__OBJC__)
-    = T _Nonnull;
+    = T;
 #else
     = T;
 #endif
@@ -97,7 +97,7 @@ using nullability_unknown
     [[clang::annotate("Nullability_Unspecified")]]
 #endif
 #if ATFW_UTIL_HAVE_FEATURE(nullability_on_classes) && !defined(__OBJC__)
-    = T _Null_unspecified;
+    = T;
 #else
     = T;
 #endif
