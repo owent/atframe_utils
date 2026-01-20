@@ -62,6 +62,7 @@ execute_process(
 set(SRC_LIST
     "${CMAKE_CURRENT_LIST_DIR}/src/algorithm/base64.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/src/algorithm/crc.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/src/algorithm/compression.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/src/algorithm/crypto_cipher.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/src/algorithm/crypto_dh.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/src/algorithm/crypto_hmac.cpp"
@@ -94,6 +95,7 @@ set(SRC_LIST
 set(HEADER_LIST
     "${CMAKE_CURRENT_LIST_DIR}/include/algorithm/bit.h"
     "${CMAKE_CURRENT_LIST_DIR}/include/algorithm/base64.h"
+    "${CMAKE_CURRENT_LIST_DIR}/include/algorithm/compression.h"
     "${CMAKE_CURRENT_LIST_DIR}/include/algorithm/crc.h"
     "${CMAKE_CURRENT_LIST_DIR}/include/algorithm/crypto_cipher.h"
     "${CMAKE_CURRENT_LIST_DIR}/include/algorithm/crypto_dh.h"

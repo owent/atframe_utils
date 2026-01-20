@@ -108,11 +108,9 @@ struct formatter<test_custom_object_for_log_formatter, CharT> : public formatter
   template <class FormatContext>
   auto format(const test_custom_object_for_log_formatter &obj, FormatContext &ctx) const {
     test_exception_for_log_formatter x(false, false);
-    std::cout << ATFRAMEWORK_UTILS_NAMESPACE_ID::log::vformat("{}, {}",
-                                                              LOG_WRAPPER_FWAPI_MAKE_FORMAT_ARGS(obj.x, obj.y))
-              << std::endl;
-    return ATFRAMEWORK_UTILS_NAMESPACE_ID::log::vformat_to(
-        ctx.out(), "({}, {}, {})", ATFRAMEWORK_UTILS_NAMESPACE_ID::string::make_format_args(obj.x, obj.y, x));
+    std::cout << atfw::util::log::vformat("{}, {}", LOG_WRAPPER_FWAPI_MAKE_FORMAT_ARGS(obj.x, obj.y)) << std::endl;
+    return atfw::util::log::vformat_to(ctx.out(), "({}, {}, {})",
+                                       atfw::util::string::make_format_args(obj.x, obj.y, x));
   }
 };
 
@@ -126,32 +124,27 @@ void log_sample_func1(int times) {
     return;
   }
 
-  if (ATFRAMEWORK_UTILS_NAMESPACE_ID::log::is_stacktrace_enabled()) {
+  if (atfw::util::log::is_stacktrace_enabled()) {
     std::cout << "----------------test stacktrace begin--------------" << std::endl;
     char buffer[2048] = {0};
-    ATFRAMEWORK_UTILS_NAMESPACE_ID::log::stacktrace_write(buffer, sizeof(buffer));
+    atfw::util::log::stacktrace_write(buffer, sizeof(buffer));
     std::cout << buffer << std::endl;
     std::cout << "----------------test stacktrace end--------------" << std::endl;
   }
 
-  WLOG_INIT(ATFRAMEWORK_UTILS_NAMESPACE_ID::log::log_wrapper::categorize_t::DEFAULT,
-            ATFRAMEWORK_UTILS_NAMESPACE_ID::log::log_wrapper::level_t::LOG_LW_DEBUG);
-  WLOG_GETCAT(ATFRAMEWORK_UTILS_NAMESPACE_ID::log::log_wrapper::categorize_t::DEFAULT)
-      ->set_stacktrace_level(ATFRAMEWORK_UTILS_NAMESPACE_ID::log::log_wrapper::level_t::LOG_LW_INFO);
+  WLOG_INIT(atfw::util::log::log_wrapper::categorize_t::DEFAULT, atfw::util::log::log_wrapper::level_t::LOG_LW_DEBUG);
+  WLOG_GETCAT(atfw::util::log::log_wrapper::categorize_t::DEFAULT)
+      ->set_stacktrace_level(atfw::util::log::log_wrapper::level_t::LOG_LW_INFO);
 
-  WLOG_GETCAT(ATFRAMEWORK_UTILS_NAMESPACE_ID::log::log_wrapper::categorize_t::DEFAULT)->clear_sinks();
-  auto test_log_wrapper_options =
-      WLOG_GETCAT(ATFRAMEWORK_UTILS_NAMESPACE_ID::log::log_wrapper::categorize_t::DEFAULT)
-          ->get_option(ATFRAMEWORK_UTILS_NAMESPACE_ID::log::log_wrapper::options_t::OPT_AUTO_UPDATE_TIME);
-  WLOG_GETCAT(ATFRAMEWORK_UTILS_NAMESPACE_ID::log::log_wrapper::categorize_t::DEFAULT)
-      ->set_option(ATFRAMEWORK_UTILS_NAMESPACE_ID::log::log_wrapper::options_t::OPT_AUTO_UPDATE_TIME,
-                   !test_log_wrapper_options);
-  assert(WLOG_GETCAT(ATFRAMEWORK_UTILS_NAMESPACE_ID::log::log_wrapper::categorize_t::DEFAULT)
-             ->get_option(ATFRAMEWORK_UTILS_NAMESPACE_ID::log::log_wrapper::options_t::OPT_AUTO_UPDATE_TIME) !=
-         test_log_wrapper_options);
-  WLOG_GETCAT(ATFRAMEWORK_UTILS_NAMESPACE_ID::log::log_wrapper::categorize_t::DEFAULT)
-      ->set_option(ATFRAMEWORK_UTILS_NAMESPACE_ID::log::log_wrapper::options_t::OPT_AUTO_UPDATE_TIME,
-                   test_log_wrapper_options);
+  WLOG_GETCAT(atfw::util::log::log_wrapper::categorize_t::DEFAULT)->clear_sinks();
+  auto test_log_wrapper_options = WLOG_GETCAT(atfw::util::log::log_wrapper::categorize_t::DEFAULT)
+                                      ->get_option(atfw::util::log::log_wrapper::options_t::OPT_AUTO_UPDATE_TIME);
+  WLOG_GETCAT(atfw::util::log::log_wrapper::categorize_t::DEFAULT)
+      ->set_option(atfw::util::log::log_wrapper::options_t::OPT_AUTO_UPDATE_TIME, !test_log_wrapper_options);
+  assert(WLOG_GETCAT(atfw::util::log::log_wrapper::categorize_t::DEFAULT)
+             ->get_option(atfw::util::log::log_wrapper::options_t::OPT_AUTO_UPDATE_TIME) != test_log_wrapper_options);
+  WLOG_GETCAT(atfw::util::log::log_wrapper::categorize_t::DEFAULT)
+      ->set_option(atfw::util::log::log_wrapper::options_t::OPT_AUTO_UPDATE_TIME, test_log_wrapper_options);
 
   std::cout << "----------------setup log_wrapper done--------------" << std::endl;
 
@@ -162,16 +155,16 @@ void log_sample_func1(int times) {
 
   WLOGNOTICE("notice log %d", 0);
 
-  ATFRAMEWORK_UTILS_NAMESPACE_ID::log::log_sink_file_backend filed_backend;
+  atfw::util::log::log_sink_file_backend filed_backend;
   filed_backend.set_max_file_size(256);
   filed_backend.set_rotate_size(3);
   filed_backend.set_file_pattern("%Y-%m-%d/%S/%N.log");
   filed_backend.set_writing_alias_pattern("%Y-%m-%d/%S/current.log");
 
-  WLOG_GETCAT(ATFRAMEWORK_UTILS_NAMESPACE_ID::log::log_wrapper::categorize_t::DEFAULT)->add_sink(filed_backend);
+  WLOG_GETCAT(atfw::util::log::log_wrapper::categorize_t::DEFAULT)->add_sink(filed_backend);
 #if defined(ATFRAMEWORK_UTILS_LOG_SINK_ENABLE_SYSLOG_SUPPORT) && ATFRAMEWORK_UTILS_LOG_SINK_ENABLE_SYSLOG_SUPPORT
-  WLOG_GETCAT(ATFRAMEWORK_UTILS_NAMESPACE_ID::log::log_wrapper::categorize_t::DEFAULT)
-      ->add_sink(ATFRAMEWORK_UTILS_NAMESPACE_ID::log::log_sink_syslog_backend{"atframe_utils-sample"});
+  WLOG_GETCAT(atfw::util::log::log_wrapper::categorize_t::DEFAULT)
+      ->add_sink(atfw::util::log::log_sink_syslog_backend{"atframe_utils-sample"});
 #endif
   std::cout << "----------------setup file system log sink done--------------" << std::endl;
 
@@ -202,7 +195,7 @@ void log_sample_func1(int times) {
   FWLOGINFO("FWLOG* without parameter");
 
   THREAD_SLEEP_MS(1000);
-  ATFRAMEWORK_UTILS_NAMESPACE_ID::time::time_utility::update();
+  atfw::util::time::time_utility::update();
 
   for (int i = 0; i < 16; ++i) {
     WLOGDEBUG("second dir log: %d", i);
@@ -211,16 +204,16 @@ void log_sample_func1(int times) {
   unsigned long long ull_test_in_mingw = 64;
   WLOGINFO("%llu", ull_test_in_mingw);
 
-  WLOG_GETCAT(ATFRAMEWORK_UTILS_NAMESPACE_ID::log::log_wrapper::categorize_t::DEFAULT)
-      ->set_sink(WLOG_GETCAT(ATFRAMEWORK_UTILS_NAMESPACE_ID::log::log_wrapper::categorize_t::DEFAULT)->sink_size() - 1,
-                 ATFRAMEWORK_UTILS_NAMESPACE_ID::log::log_wrapper::level_t::LOG_LW_DEBUG,
-                 ATFRAMEWORK_UTILS_NAMESPACE_ID::log::log_wrapper::level_t::LOG_LW_DEBUG);
+  WLOG_GETCAT(atfw::util::log::log_wrapper::categorize_t::DEFAULT)
+      ->set_sink(WLOG_GETCAT(atfw::util::log::log_wrapper::categorize_t::DEFAULT)->sink_size() - 1,
+                 atfw::util::log::log_wrapper::level_t::LOG_LW_DEBUG,
+                 atfw::util::log::log_wrapper::level_t::LOG_LW_DEBUG);
   WLOGDEBUG("Debug still available %llu", ull_test_in_mingw);
   WLOGINFO("Info not available now %llu", ull_test_in_mingw);
 
-  std::cout << "log are located at " << ATFRAMEWORK_UTILS_NAMESPACE_ID::file_system::get_cwd().c_str() << std::endl;
+  std::cout << "log are located at " << atfw::util::file_system::get_cwd().c_str() << std::endl;
 
-  WLOG_GETCAT(ATFRAMEWORK_UTILS_NAMESPACE_ID::log::log_wrapper::categorize_t::DEFAULT)->pop_sink();
+  WLOG_GETCAT(atfw::util::log::log_wrapper::categorize_t::DEFAULT)->pop_sink();
   WLOGERROR("No log sink now");
 }
 
@@ -267,18 +260,16 @@ static void log_sample_func5(int times) {
 }
 
 #if defined(ATFRAMEWORK_UTILS_STRING_ENABLE_FWAPI) && ATFRAMEWORK_UTILS_STRING_ENABLE_FWAPI
-void log_sample_func6_stdout(const ATFRAMEWORK_UTILS_NAMESPACE_ID::log::log_wrapper::caller_info_t &,
-                             const char *content, size_t content_size) {
+void log_sample_func6_stdout(const atfw::util::log::log_wrapper::caller_info_t &, const char *content,
+                             size_t content_size) {
   std::cout.write(content, content_size);
   std::cout << std::endl;
 }
 
 void log_sample_func6() {
-  WLOG_INIT(ATFRAMEWORK_UTILS_NAMESPACE_ID::log::log_wrapper::categorize_t::DEFAULT,
-            ATFRAMEWORK_UTILS_NAMESPACE_ID::log::log_wrapper::level_t::LOG_LW_DEBUG);
-  WLOG_GETCAT(ATFRAMEWORK_UTILS_NAMESPACE_ID::log::log_wrapper::categorize_t::DEFAULT)->clear_sinks();
-  WLOG_GETCAT(ATFRAMEWORK_UTILS_NAMESPACE_ID::log::log_wrapper::categorize_t::DEFAULT)
-      ->add_sink(log_sample_func6_stdout);
+  WLOG_INIT(atfw::util::log::log_wrapper::categorize_t::DEFAULT, atfw::util::log::log_wrapper::level_t::LOG_LW_DEBUG);
+  WLOG_GETCAT(atfw::util::log::log_wrapper::categorize_t::DEFAULT)->clear_sinks();
+  WLOG_GETCAT(atfw::util::log::log_wrapper::categorize_t::DEFAULT)->add_sink(log_sample_func6_stdout);
   std::cout << "---------------- setup log sink for std::format done--------------" << std::endl;
 #  if defined(ATFRAMEWORK_UTILS_STRING_ENABLE_FWAPI) && ATFRAMEWORK_UTILS_STRING_ENABLE_FWAPI
   // clang 14.0.1 has a BUG which dectects T& of T&& as A& but not const A& when we pass temporary object of A
@@ -287,7 +278,7 @@ void log_sample_func6() {
       test_auto_enum_conversation_for_log_formatter::EN_TAECFLF_NONE;
   FWLOGINFO("{} {}: {} {}", "Hello", std::string("World"), 42, enum_value);
 #  endif
-  WLOG_GETCAT(ATFRAMEWORK_UTILS_NAMESPACE_ID::log::log_wrapper::categorize_t::DEFAULT)->pop_sink();
+  WLOG_GETCAT(atfw::util::log::log_wrapper::categorize_t::DEFAULT)->pop_sink();
   FWLOGERROR("No log sink now");
 }
 
@@ -300,23 +291,23 @@ void log_sample_func7() {
   test_exception_for_log_formatter te1{true, true};
   test_exception_for_log_formatter te2{false, true};
   std::cout << "---------------- catch exception of log format APIs --------------" << std::endl;
-  std::cout << "format: " << ATFRAMEWORK_UTILS_NAMESPACE_ID::log::format("{},{}", 1, te1) << std::endl;
-  std::cout << "format: " << ATFRAMEWORK_UTILS_NAMESPACE_ID::log::format("{},{}", 1, te2) << std::endl;
+  std::cout << "format: " << atfw::util::log::format("{},{}", 1, te1) << std::endl;
+  std::cout << "format: " << atfw::util::log::format("{},{}", 1, te2) << std::endl;
 
   char string_buffer[256] = {0};
   memset(string_buffer, 0, sizeof(string_buffer));
-  ATFRAMEWORK_UTILS_NAMESPACE_ID::log::format_to(string_buffer, "{},{}", 1, te1);
+  atfw::util::log::format_to(string_buffer, "{},{}", 1, te1);
   std::cout << "format_to: " << string_buffer << std::endl;
   memset(string_buffer, 0, sizeof(string_buffer));
-  ATFRAMEWORK_UTILS_NAMESPACE_ID::log::format_to(string_buffer, "{},{}", 1, te2);
+  atfw::util::log::format_to(string_buffer, "{},{}", 1, te2);
   std::cout << "format_to: " << string_buffer << std::endl;
   memset(string_buffer, 0, sizeof(string_buffer));
 
   memset(string_buffer, 0, sizeof(string_buffer));
-  ATFRAMEWORK_UTILS_NAMESPACE_ID::log::format_to_n(string_buffer, 100, "{},{}", 1, te1);
+  atfw::util::log::format_to_n(string_buffer, 100, "{},{}", 1, te1);
   std::cout << "format_to_n: " << string_buffer << std::endl;
   memset(string_buffer, 0, sizeof(string_buffer));
-  ATFRAMEWORK_UTILS_NAMESPACE_ID::log::format_to_n(string_buffer, 100, "{},{}", 1, te2);
+  atfw::util::log::format_to_n(string_buffer, 100, "{},{}", 1, te2);
   std::cout << "format_to_n: " << string_buffer << std::endl;
   memset(string_buffer, 0, sizeof(string_buffer));
 
@@ -325,49 +316,38 @@ void log_sample_func7() {
   int integer_3 = 3;
 #    if defined(ATFRAMEWORK_UTILS_ENABLE_STD_FORMAT) && ATFRAMEWORK_UTILS_ENABLE_STD_FORMAT
   std::cout << "vformat: "
-            << ATFRAMEWORK_UTILS_NAMESPACE_ID::log::vformat(
-                   "{},{},{},{}",
-                   ATFRAMEWORK_UTILS_NAMESPACE_ID::string::make_format_args(integer_1, integer_2, integer_3))
+            << atfw::util::log::vformat("{},{},{},{}",
+                                        atfw::util::string::make_format_args(integer_1, integer_2, integer_3))
             << std::endl;
 #    endif
-  std::cout << "vformat: "
-            << ATFRAMEWORK_UTILS_NAMESPACE_ID::log::vformat(
-                   "{},{}", ATFRAMEWORK_UTILS_NAMESPACE_ID::string::make_format_args(integer_1, te1))
+  std::cout << "vformat: " << atfw::util::log::vformat("{},{}", atfw::util::string::make_format_args(integer_1, te1))
             << std::endl;
-  std::cout << "vformat: "
-            << ATFRAMEWORK_UTILS_NAMESPACE_ID::log::vformat(
-                   "{},{}", ATFRAMEWORK_UTILS_NAMESPACE_ID::string::make_format_args(integer_1, te2))
+  std::cout << "vformat: " << atfw::util::log::vformat("{},{}", atfw::util::string::make_format_args(integer_1, te2))
             << std::endl;
 
 #    if defined(ATFRAMEWORK_UTILS_ENABLE_STD_FORMAT) && ATFRAMEWORK_UTILS_ENABLE_STD_FORMAT
-  ATFRAMEWORK_UTILS_NAMESPACE_ID::log::vformat_to(
-      string_buffer, "{},{},{},{}",
-      ATFRAMEWORK_UTILS_NAMESPACE_ID::string::make_format_args(integer_1, integer_2, integer_3));
+  atfw::util::log::vformat_to(string_buffer, "{},{},{},{}",
+                              atfw::util::string::make_format_args(integer_1, integer_2, integer_3));
   std::cout << "vformat_to: " << string_buffer << std::endl;
   memset(string_buffer, 0, sizeof(string_buffer));
 
-  ATFRAMEWORK_UTILS_NAMESPACE_ID::log::vformat_to(
-      string_buffer, "{},{}", ATFRAMEWORK_UTILS_NAMESPACE_ID::string::make_format_args(integer_1, te1));
+  atfw::util::log::vformat_to(string_buffer, "{},{}", atfw::util::string::make_format_args(integer_1, te1));
   std::cout << "vformat_to: " << string_buffer << std::endl;
   memset(string_buffer, 0, sizeof(string_buffer));
 
-  ATFRAMEWORK_UTILS_NAMESPACE_ID::log::vformat_to(
-      string_buffer, "{},{}", ATFRAMEWORK_UTILS_NAMESPACE_ID::string::make_format_args(integer_1, te2));
+  atfw::util::log::vformat_to(string_buffer, "{},{}", atfw::util::string::make_format_args(integer_1, te2));
   std::cout << "vformat_to: " << string_buffer << std::endl;
 #    else
-  ATFRAMEWORK_UTILS_NAMESPACE_ID::log::vformat_to(
-      string_buffer, "{},{},{}",
-      ATFRAMEWORK_UTILS_NAMESPACE_ID::string::make_format_args(integer_1, integer_2, integer_3));
+  atfw::util::log::vformat_to(string_buffer, "{},{},{}",
+                              atfw::util::string::make_format_args(integer_1, integer_2, integer_3));
   std::cout << "vformat_to: " << string_buffer << std::endl;
   memset(string_buffer, 0, sizeof(string_buffer));
 
-  ATFRAMEWORK_UTILS_NAMESPACE_ID::log::vformat_to(
-      string_buffer, "{},{}", ATFRAMEWORK_UTILS_NAMESPACE_ID::string::make_format_args(integer_1, te1));
+  atfw::util::log::vformat_to(string_buffer, "{},{}", atfw::util::string::make_format_args(integer_1, te1));
   std::cout << "vformat_to: " << string_buffer << std::endl;
   memset(string_buffer, 0, sizeof(string_buffer));
 
-  ATFRAMEWORK_UTILS_NAMESPACE_ID::log::vformat_to(
-      string_buffer, "{},{}", ATFRAMEWORK_UTILS_NAMESPACE_ID::string::make_format_args(integer_1, te2));
+  atfw::util::log::vformat_to(string_buffer, "{},{}", atfw::util::string::make_format_args(integer_1, te2));
   std::cout << "vformat_to: " << string_buffer << std::endl;
 #    endif
 }
@@ -388,7 +368,7 @@ void log_sample() {
 
 //=======================================================================================================
 void random_sample() {
-  ATFRAMEWORK_UTILS_NAMESPACE_ID::random::mt19937 gen1;
+  atfw::util::random::mt19937 gen1;
   gen1.init_seed(123);
 
   std::cout << "Random - mt19937: " << gen1.random() << std::endl;
@@ -400,7 +380,7 @@ void random_sample() {
 
 //=======================================================================================================
 void tquerystring_sample() {
-  ATFRAMEWORK_UTILS_NAMESPACE_ID::tquerystring encode, decode;
+  atfw::util::tquerystring encode, decode;
 
   encode.set("a", "wulala");
   encode.set("page", "ok!");
@@ -408,11 +388,11 @@ void tquerystring_sample() {
   std::string output;
   encode.encode(output);
 
-  ATFRAMEWORK_UTILS_NAMESPACE_ID::types::item_array::ptr_type arr = encode.create_array();
+  atfw::util::types::item_array::ptr_type arr = encode.create_array();
 
   arr->append("blablabla...");
   arr->append("a and b is ab");
-  ATFRAMEWORK_UTILS_NAMESPACE_ID::types::item_object::ptr_type obj = encode.create_object();
+  atfw::util::types::item_object::ptr_type obj = encode.create_object();
   obj->set("so", "");
   arr->append(obj);
 
@@ -432,26 +412,16 @@ void tquerystring_sample() {
 void hash_sample() {
   char str_buff[] = "Hello World!\nI'm OWenT\n";
   std::cout << "Hashed String: " << std::endl << str_buff << std::endl;
-  std::cout << "FNV-1:   " << ATFRAMEWORK_UTILS_NAMESPACE_ID::hash::hash_fnv1<uint32_t>(str_buff, strlen(str_buff))
-            << std::endl;
-  std::cout << "FNV-1A:  " << ATFRAMEWORK_UTILS_NAMESPACE_ID::hash::hash_fnv1a<uint32_t>(str_buff, strlen(str_buff))
-            << std::endl;
-  std::cout << "SDBM:    " << ATFRAMEWORK_UTILS_NAMESPACE_ID::hash::hash_sdbm<uint32_t>(str_buff, strlen(str_buff))
-            << std::endl;
-  std::cout << "RS:      " << ATFRAMEWORK_UTILS_NAMESPACE_ID::hash::hash_rs<uint32_t>(str_buff, strlen(str_buff))
-            << std::endl;
-  std::cout << "JS:      " << ATFRAMEWORK_UTILS_NAMESPACE_ID::hash::hash_js<uint32_t>(str_buff, strlen(str_buff))
-            << std::endl;
-  std::cout << "PJW:     " << ATFRAMEWORK_UTILS_NAMESPACE_ID::hash::hash_pjw<uint32_t>(str_buff, strlen(str_buff))
-            << std::endl;
-  std::cout << "ELF:     " << ATFRAMEWORK_UTILS_NAMESPACE_ID::hash::hash_elf<uint32_t>(str_buff, strlen(str_buff))
-            << std::endl;
-  std::cout << "BKDR:    " << ATFRAMEWORK_UTILS_NAMESPACE_ID::hash::hash_bkdr<uint32_t>(str_buff, strlen(str_buff))
-            << std::endl;
-  std::cout << "DJB:     " << ATFRAMEWORK_UTILS_NAMESPACE_ID::hash::hash_djb<uint32_t>(str_buff, strlen(str_buff))
-            << std::endl;
-  std::cout << "AP:      " << ATFRAMEWORK_UTILS_NAMESPACE_ID::hash::hash_ap<uint32_t>(str_buff, strlen(str_buff))
-            << std::endl;
+  std::cout << "FNV-1:   " << atfw::util::hash::hash_fnv1<uint32_t>(str_buff, strlen(str_buff)) << std::endl;
+  std::cout << "FNV-1A:  " << atfw::util::hash::hash_fnv1a<uint32_t>(str_buff, strlen(str_buff)) << std::endl;
+  std::cout << "SDBM:    " << atfw::util::hash::hash_sdbm<uint32_t>(str_buff, strlen(str_buff)) << std::endl;
+  std::cout << "RS:      " << atfw::util::hash::hash_rs<uint32_t>(str_buff, strlen(str_buff)) << std::endl;
+  std::cout << "JS:      " << atfw::util::hash::hash_js<uint32_t>(str_buff, strlen(str_buff)) << std::endl;
+  std::cout << "PJW:     " << atfw::util::hash::hash_pjw<uint32_t>(str_buff, strlen(str_buff)) << std::endl;
+  std::cout << "ELF:     " << atfw::util::hash::hash_elf<uint32_t>(str_buff, strlen(str_buff)) << std::endl;
+  std::cout << "BKDR:    " << atfw::util::hash::hash_bkdr<uint32_t>(str_buff, strlen(str_buff)) << std::endl;
+  std::cout << "DJB:     " << atfw::util::hash::hash_djb<uint32_t>(str_buff, strlen(str_buff)) << std::endl;
+  std::cout << "AP:      " << atfw::util::hash::hash_ap<uint32_t>(str_buff, strlen(str_buff)) << std::endl;
 }
 //=======================================================================================================
 
@@ -508,7 +478,7 @@ struct GameConf {
 GameConf::GameConf() {}
 
 bool GameConf::init() {
-  ATFRAMEWORK_UTILS_NAMESPACE_ID::config::ini_loader conf_loader;
+  atfw::util::config::ini_loader conf_loader;
 
   conf_loader.load_file((g_exec_dir + "/config.ini").c_str());
 
@@ -566,7 +536,7 @@ bool GameConf::init() {
 
   // 转储时间周期
   {
-    ATFRAMEWORK_UTILS_NAMESPACE_ID::config::duration_value dur;
+    atfw::util::config::duration_value dur;
     conf_loader.dump_to("system.interval_ns", dur, true);
     printf("system.interval_ns: sec %lld, nsec: %lld\n", static_cast<long long>(dur.sec),
            static_cast<long long>(dur.nsec));
@@ -611,7 +581,7 @@ void iniloader_sample1() {
 }
 
 void iniloader_sample2() {
-  ATFRAMEWORK_UTILS_NAMESPACE_ID::config::ini_loader cfg_loader;
+  atfw::util::config::ini_loader cfg_loader;
   cfg_loader.load_file((g_exec_dir + "/test.ini").c_str());
 
   // 转储整数
@@ -668,7 +638,7 @@ void iniloader_sample2() {
 
   // 转储时间周期
   {
-    ATFRAMEWORK_UTILS_NAMESPACE_ID::config::duration_value dur;
+    atfw::util::config::duration_value dur;
     cfg_loader.dump_to("system.interval_ns", dur, true);
     printf("system.interval_ns: sec %lld, nsec: %lld\n", static_cast<long long>(dur.sec),
            static_cast<long long>(dur.nsec));
@@ -703,9 +673,9 @@ void iniloader_sample() {
 //=======================================================================================================
 
 int main(int, char *argv[]) {
-  ATFRAMEWORK_UTILS_NAMESPACE_ID::time::time_utility::update();
+  atfw::util::time::time_utility::update();
 
-  ATFRAMEWORK_UTILS_NAMESPACE_ID::file_system::dirname(argv[0], 0, g_exec_dir);
+  atfw::util::file_system::dirname(argv[0], 0, g_exec_dir);
 
   CALL_SAMPLE(tquerystring_sample);
   CALL_SAMPLE(hash_sample);

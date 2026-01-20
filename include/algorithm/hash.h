@@ -1,10 +1,9 @@
-// Copyright 2025 atframework
+// Copyright 2026 atframework
 // @version 1.0
 // @author OWenT
 // @date 2013.05.07
 //
 // @history
-
 
 #pragma once
 

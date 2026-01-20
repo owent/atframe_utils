@@ -9,6 +9,7 @@
 #include <iostream>
 #include <map>
 #include <string>
+#include <type_traits>
 
 #if defined(__GNUC__) && !defined(__clang__) && !defined(__apple_build_version__)
 #  if (__GNUC__ * 100 + __GNUC_MINOR__ * 10) >= 460
@@ -181,10 +182,17 @@ class ATFW_UTIL_SYMBOL_VISIBLE shell_stream {
     ATFRAMEWORK_UTILS_API shell_stream_opr(stream_t *os);
     ATFRAMEWORK_UTILS_API ~shell_stream_opr();
 
-    template <typename Ty>
+    template <typename Ty, typename std::enable_if<!std::is_enum<Ty>::value, int>::type = 0>
     ATFRAMEWORK_UTILS_API_HEAD_ONLY const shell_stream_opr &operator<<(const Ty &v) const {
       close();
       (*pOs) << v;
+      return (*this);
+    }
+
+    template <typename Ty, typename std::enable_if<std::is_enum<Ty>::value, int>::type = 0>
+    ATFRAMEWORK_UTILS_API_HEAD_ONLY const shell_stream_opr &operator<<(const Ty &v) const {
+      close();
+      (*pOs) << static_cast<typename std::underlying_type<Ty>::type>(v);
       return (*this);
     }
 
