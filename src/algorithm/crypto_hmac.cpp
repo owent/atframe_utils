@@ -44,8 +44,8 @@
 #      define ATFW_CRYPTO_HKDF_USE_NATIVE 0
 #    endif
 
-#    if defined(OPENSSL_VERSION_NUMBER) && OPENSSL_VERSION_NUMBER >= 0x10100000L && \
-        !defined(LIBRESSL_VERSION_NUMBER) && !defined(OPENSSL_IS_BORINGSSL)
+#    if defined(OPENSSL_VERSION_NUMBER) && OPENSSL_VERSION_NUMBER >= 0x10101000L && \
+        !defined(LIBRESSL_VERSION_NUMBER) && !defined(OPENSSL_IS_BORINGSSL) && defined(EVP_PKEY_HKDF_MODE_EXPAND_ONLY)
 #      define ATFW_CRYPTO_HKDF_USE_EVP_PKEY 1
 #    else
 #      define ATFW_CRYPTO_HKDF_USE_EVP_PKEY 0
@@ -56,6 +56,11 @@
 #      define ATFW_CRYPTO_HKDF_USE_EVP_KDF 1
 #    else
 #      define ATFW_CRYPTO_HKDF_USE_EVP_KDF 0
+#    endif
+
+#    if defined(OPENSSL_VERSION_NUMBER) && OPENSSL_VERSION_NUMBER >= 0x10100000L && \
+        !defined(LIBRESSL_VERSION_NUMBER) && !defined(OPENSSL_IS_BORINGSSL)
+#      include <openssl/kdf.h>
 #    endif
 
 // HMAC_CTX management for older OpenSSL
