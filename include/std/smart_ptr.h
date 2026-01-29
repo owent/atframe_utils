@@ -1,16 +1,14 @@
-/**
- *
- * @file smart_ptr.h
- * @brief 导入智能指针库
- * Licensed under the MIT licenses.
- *
- * @version 1.0
- * @author OWenT, owt5008137@live.com
- * @date 2012.08.02
- *     2014.05.17 vc add include <memory>
- * @history
- *
- */
+// Copyright 2026 atframework
+//
+// @file smart_ptr.h
+// @brief 导入智能指针库
+// Licensed under the MIT licenses.
+//
+// @version 1.0
+// @author OWenT, owt5008137@live.com
+// @date 2012.08.02
+//     2014.05.17 vc add include <memory>
+// @history
 
 #ifndef STD_SMARTPTR_H
 #define STD_SMARTPTR_H
@@ -85,3 +83,4 @@ using tr1::weak_ptr;
 #include "intrusive_ptr.h"
 
 #endif
+

@@ -1,17 +1,15 @@
-/**
- * @file xxtea.h
- * @brief XXTEA加密算法
- * Licensed under the MIT licenses.
- *
- * @version 1.0
- * @author OWenT
- * @date 2016.08.09
- *
- * @see https://en.wikipedia.org/wiki/XXTEA
- * @history
- *
- *
- */
+// Copyright 2026 atframework
+//
+// @file xxtea.h
+// @brief XXTEA加密算法
+// Licensed under the MIT licenses.
+//
+// @version 1.0
+// @author OWenT
+// @date 2016.08.09
+//
+// @see https://en.wikipedia.org/wiki/XXTEA
+// @history
 
 #ifndef UTIL_ALGORITHM_XXTEA_H
 #define UTIL_ALGORITHM_XXTEA_H

@@ -1,6 +1,6 @@
-// Copyright 2024 atframework
-// Created by owent on 2024-08-26.
+// Copyright 2026 atframework
 //
+// Created by owent on 2024-08-26.
 
 #pragma once
 
@@ -19,3 +19,4 @@ ATFRAMEWORK_UTILS_API gsl::string_view get_strerrno(int32_t result_from_get_errn
 
 }  // namespace platform
 ATFRAMEWORK_UTILS_NAMESPACE_END
+

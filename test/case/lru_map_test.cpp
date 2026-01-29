@@ -1,4 +1,4 @@
-// Copyright 2021 atframework
+// Copyright 2026 atframework
 
 #include <cstring>
 
@@ -158,3 +158,4 @@ CASE_TEST(lru_map_test, lru_reorder) {
     }
   }
 }
+

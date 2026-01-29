@@ -1,4 +1,4 @@
-// Copyright 2021 atframework
+// Copyright 2026 atframework
 
 #include <distributed_system/wal_client.h>
 #include <distributed_system/wal_publisher.h>
@@ -2469,3 +2469,4 @@ CASE_TEST(wal_publisher, share_wal_object_with_wal_client) {
 }
 
 }  // namespace st
+

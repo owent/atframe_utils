@@ -1,4 +1,5 @@
-// Copyright 2021 atframework
+// Copyright 2026 atframework
+//
 // Licensed under the MIT licenses.
 // Created by owent on 2016-03-31
 
@@ -142,3 +143,4 @@ class log_sink_file_backend {
 ATFRAMEWORK_UTILS_NAMESPACE_END
 
 #endif
+

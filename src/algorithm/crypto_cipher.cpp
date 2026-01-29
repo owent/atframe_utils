@@ -1,4 +1,5 @@
-// Copyright 2021 atframework
+// Copyright 2026 atframework
+//
 // Create by owent
 
 #include "algorithm/crypto_cipher.h"
@@ -1805,3 +1806,4 @@ ATFRAMEWORK_UTILS_API int cipher::cleanup_global_algorithm() {
 ATFRAMEWORK_UTILS_NAMESPACE_END
 
 #endif
+

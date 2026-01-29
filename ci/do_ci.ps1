@@ -1,3 +1,4 @@
+# Copyright 2026 atframework
 $PSDefaultParameterValues['*:Encoding'] = 'UTF-8'
 
 $OutputEncoding = [System.Text.UTF8Encoding]::new()
@@ -170,3 +171,4 @@ elseif ( $RUN_MODE -eq "msvc.2017.test" ) {
 }
 
 Set-Location $WORK_DIR
+

@@ -1,4 +1,5 @@
-// Copyright 2021 atframework
+// Copyright 2026 atframework
+//
 // Create by owent on 2017.07.25
 // @see https://en.wikipedia.org/wiki/XXTEA
 
@@ -294,3 +295,4 @@ ATFRAMEWORK_UTILS_NAMESPACE_END
 #endif
 
 #endif
+

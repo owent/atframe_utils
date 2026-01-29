@@ -1,4 +1,4 @@
-// Copyright 2021 atframework
+// Copyright 2026 atframework
 
 #include <cstdlib>
 #include <cstring>
@@ -27,3 +27,4 @@ CASE_TEST(crc, crc64) {
 
   CASE_EXPECT_EQ(0x1D240DCFEDFF621BULL, atfw::util::crc64(data, 18, 0xFFFFFFFFFFFFFFFFULL) ^ 0xFFFFFFFFFFFFFFFFULL);
 }
+

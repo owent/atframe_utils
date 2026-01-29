@@ -1,4 +1,5 @@
-// Copyright 2021 atframework
+// Copyright 2026 atframework
+//
 // Created by owent on 2012-02-21
 // @history
 //   2017-01-21: using c++11 delete keyword in modern compiler
@@ -40,3 +41,4 @@ ATFRAMEWORK_UTILS_NAMESPACE_END
 #ifndef UTIL_DESIGN_PATTERN_NOCOPYABLE
 #  define UTIL_DESIGN_PATTERN_NOCOPYABLE(CLAZZ) ATFW_UTIL_DESIGN_PATTERN_NOCOPYABLE(CLAZZ)
 #endif
+

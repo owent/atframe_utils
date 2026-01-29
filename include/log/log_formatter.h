@@ -1,4 +1,5 @@
-// Copyright 2024 atframework
+// Copyright 2026 atframework
+//
 // Licensed under the MIT licenses.
 // Created by owent on 2015-06-29
 
@@ -164,3 +165,4 @@ ATFRAMEWORK_UTILS_STRING_FWAPI_FORMAT_AS(typename ATFRAMEWORK_UTILS_NAMESPACE_ID
                                          int);
 
 #endif
+

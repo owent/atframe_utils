@@ -1,4 +1,4 @@
-// Copyright 2021 atframework
+// Copyright 2026 atframework
 
 #include <cstdlib>
 #include <cstring>
@@ -788,3 +788,4 @@ struct test_nostd_type_traits_b {
 }  // namespace test
 
 CASE_TEST(nostd_type_traits, detected_or) {}
+

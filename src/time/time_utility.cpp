@@ -1,4 +1,6 @@
 
+// Copyright 2026 atframework
+
 #include "time/time_utility.h"
 
 ATFRAMEWORK_UTILS_NAMESPACE_BEGIN
@@ -259,3 +261,4 @@ ATFRAMEWORK_UTILS_API time_t time_utility::get_month_start_time(time_t t) {
 }
 }  // namespace time
 ATFRAMEWORK_UTILS_NAMESPACE_END
+

@@ -1,4 +1,5 @@
-// Copyright 2021 atframework
+// Copyright 2026 atframework
+
 #ifndef ATFW_UTIL_CONFIG_COMPILER_PROTOBUF_PREFIX_H
 #define ATFW_UTIL_CONFIG_COMPILER_PROTOBUF_PREFIX_H
 
@@ -92,3 +93,4 @@
 #endif
 
 #endif
+

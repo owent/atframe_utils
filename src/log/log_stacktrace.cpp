@@ -1,4 +1,5 @@
-// Copyright 2021 atframework
+// Copyright 2026 atframework
+//
 // Licensed under the MIT licenses.
 // Created by owent on 2015-06-29
 
@@ -1254,3 +1255,4 @@ ATFRAMEWORK_UTILS_API size_t stacktrace_write(char *buf, size_t bufsz, const sta
 
 }  // namespace log
 ATFRAMEWORK_UTILS_NAMESPACE_END
+

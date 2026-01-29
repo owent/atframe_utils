@@ -1,15 +1,14 @@
-/**
- * @file array.h
- * @brief 导入支持STL的数组类型
- * Licensed under the MIT licenses.
- *
- * @version 1.0
- * @author OWenT, owt5008137@live.com
- * @date 2012.08.02
- *
- * @history
- *
- */
+// Copyright 2026 atframework
+//
+// @file array.h
+// @brief 导入支持STL的数组类型
+// Licensed under the MIT licenses.
+//
+// @version 1.0
+// @author OWenT, owt5008137@live.com
+// @date 2012.08.02
+//
+// @history
 
 #ifndef _STD_ARRAY_H_
 #  define _STD_ARRAT_H_
@@ -65,3 +64,4 @@ using tr1::tuple_size;
 #  endif
 
 #endif
+

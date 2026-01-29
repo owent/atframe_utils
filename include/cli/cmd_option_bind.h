@@ -1,3 +1,5 @@
+// Copyright 2026 atframework
+
 #ifndef UTIL_CLI_CMDOPTIONBIND_H
 #define UTIL_CLI_CMDOPTIONBIND_H
 
@@ -31,3 +33,4 @@ enum cmd_option_char {
 }  // namespace cli
 ATFRAMEWORK_UTILS_NAMESPACE_END
 #endif /* _CMDOPTIONBIND_H_ */
+

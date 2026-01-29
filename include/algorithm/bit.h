@@ -567,3 +567,4 @@ ATFW_UTIL_FORCEINLINE typename std::enable_if<detail::is_unsigned_integer<T>::va
 
 }  // namespace bit
 ATFRAMEWORK_UTILS_NAMESPACE_END
+

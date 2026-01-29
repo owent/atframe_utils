@@ -145,3 +145,4 @@ CASE_TEST(compression, supported_algorithm_list) {
 }
 
 #endif  // ATFW_UTIL_MACRO_COMPRESSION_ENABLED
+

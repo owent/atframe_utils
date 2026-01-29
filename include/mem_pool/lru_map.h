@@ -1,4 +1,5 @@
-// Copyright 2024 atframework
+// Copyright 2026 atframework
+//
 // Licenses under the MIT License
 
 #pragma once
@@ -23,3 +24,4 @@ using lru_map = memory::lru_map<TKEY, TVALUE, THasher, TKeyEQ, TOption, TAlloc>;
 
 }  // namespace mempool
 ATFRAMEWORK_UTILS_NAMESPACE_END
+

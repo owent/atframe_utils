@@ -1,26 +1,25 @@
-/**
- * @file lru_object_pool.h
- * @brief lru 算法的对象池<br />
- * Licensed under the MIT licenses.
- *
- * @version 1.0
- * @author owent
- * @date 2015-12-22
- *
- * @history
- *     2015-12-28: 增加缓存超时功能
- *                 增加LRU管理器自适应限制保护（防止频繁调用主动gc时，有效检查列表和元素列表长度降为0）
- *                 增加LRU管理器自适应限制动态增长功能
- *                 增加UTIL_MEMPOOL_LRUOBJECTPOOL_CHECK_REPUSH宏用于检测上层逻辑可能重复push某一个资源（复杂度会导致复杂度由O(1)=>O(log(n))）
- *
- *     2016-02-24: 增加一些基本接口
- *                 empty定义改为const
- *                 尽早析构空list
- *
- *     2019-09-30: 优化内部实现
- *                 尽快清理无效的检查列表
- *
- */
+// Copyright 2026 atframework
+//
+// @file lru_object_pool.h
+// @brief lru 算法的对象池<br />
+// Licensed under the MIT licenses.
+//
+// @version 1.0
+// @author owent
+// @date 2015-12-22
+//
+// @history
+//     2015-12-28: 增加缓存超时功能
+//                 增加LRU管理器自适应限制保护（防止频繁调用主动gc时，有效检查列表和元素列表长度降为0）
+//                 增加LRU管理器自适应限制动态增长功能
+//                 增加UTIL_MEMPOOL_LRUOBJECTPOOL_CHECK_REPUSH宏用于检测上层逻辑可能重复push某一个资源（复杂度会导致复杂度由O(1)=>O(log(n))）
+//
+//     2016-02-24: 增加一些基本接口
+//                 empty定义改为const
+//                 尽早析构空list
+//
+//     2019-09-30: 优化内部实现
+//                 尽快清理无效的检查列表
 
 #pragma once
 
@@ -480,3 +479,4 @@ class ATFRAMEWORK_UTILS_API_HEAD_ONLY lru_pool : public lru_pool_base {
 };
 }  // namespace memory
 ATFRAMEWORK_UTILS_NAMESPACE_END
+

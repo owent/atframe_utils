@@ -1,4 +1,5 @@
 // Copyright 2026 atframework
+//
 // Created by owent on 2024.12.26
 
 #ifndef UTIL_ALGORITHM_CRYPTO_HMAC_H
@@ -342,3 +343,4 @@ ATFRAMEWORK_UTILS_NAMESPACE_END
 #endif  // ATFW_UTIL_MACRO_CRYPTO_HMAC_ENABLED
 
 #endif  // UTIL_ALGORITHM_CRYPTO_HMAC_H
+

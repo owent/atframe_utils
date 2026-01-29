@@ -1,4 +1,4 @@
-// Copyright 2021 atframework
+// Copyright 2026 atframework
 
 #include <time.h>
 #include <string>
@@ -196,3 +196,4 @@ CASE_TEST(sha, sha512) {
     CASE_EXPECT_EQ(hash, serialize_str);
   }
 }
+

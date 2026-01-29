@@ -1,4 +1,6 @@
 
+// Copyright 2026 atframework
+
 #include <algorithm>
 #include <cstdio>
 #include <functional>
@@ -201,3 +203,4 @@ int cmd_option_sample_main() {
 
   return 0;
 }
+

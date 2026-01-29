@@ -1,4 +1,4 @@
-// Copyright 2024 atframework
+// Copyright 2026 atframework
 
 #pragma once
 
@@ -520,3 +520,4 @@ class test_manager {
 int run_event_on_start();
 int run_event_on_exit();
 int run_tests(int argc, char *argv[]);
+

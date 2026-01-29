@@ -1,4 +1,5 @@
-// Copyright 2021 atframework
+// Copyright 2026 atframework
+//
 // Created by owent
 // Stanards operations for Write Ahead Log subscriber
 
@@ -365,3 +366,4 @@ using wal_subscriber_with_mt_mode =
 
 }  // namespace distributed_system
 ATFRAMEWORK_UTILS_NAMESPACE_END
+

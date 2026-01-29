@@ -1,4 +1,4 @@
-// Copyright 2024 atframework
+// Copyright 2026 atframework
 
 #pragma once
 
@@ -96,3 +96,4 @@ class test_on_exit_base {
  private:
   void register_self();
 };
+

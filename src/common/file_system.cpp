@@ -1,6 +1,6 @@
-// Copyright 2023 atframework
-// Created by owent on 2015/6/2.
+// Copyright 2026 atframework
 //
+// Created by owent on 2015/6/2.
 
 #include "common/file_system.h"
 
@@ -740,3 +740,4 @@ ATFRAMEWORK_UTILS_API int file_system::link(const char *oldpath, const char *new
 #endif
 
 ATFRAMEWORK_UTILS_NAMESPACE_END
+

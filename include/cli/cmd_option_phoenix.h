@@ -1,3 +1,5 @@
+// Copyright 2026 atframework
+
 #ifndef UTIL_CLI_CMDOPTION_PHOENIX_H
 #define UTIL_CLI_CMDOPTION_PHOENIX_H
 
@@ -144,3 +146,4 @@ ATFRAMEWORK_UTILS_API_HEAD_ONLY assign_logic_bool_t<T> assign_logic_bool(T &t) {
 }  // namespace cli
 ATFRAMEWORK_UTILS_NAMESPACE_END
 #endif /* CMDOPTION_H_ */
+

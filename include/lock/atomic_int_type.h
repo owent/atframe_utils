@@ -1,19 +1,19 @@
-/**
- * @file atomic_int_type.h
- * @brief 整数类型的原子操作跨平台适配
- * Licensed under the MIT licenses.
- *
- * @version 1.0
- * @author OWenT
- * @date 2016-06-14
- *
- * @note VC 2012+, GCC 4.4 + 使用C++0x/11实现实现原子操作
- * @note 低版本 VC使用InterlockedExchange等实现原子操作
- * @note 低版本 GCC采用__sync_lock_test_and_set等实现原子操作
- *
- * @history
- *     2016-06-14
- */
+// Copyright 2026 atframework
+//
+// @file atomic_int_type.h
+// @brief 整数类型的原子操作跨平台适配
+// Licensed under the MIT licenses.
+//
+// @version 1.0
+// @author OWenT
+// @date 2016-06-14
+//
+// @note VC 2012+, GCC 4.4 + 使用C++0x/11实现实现原子操作
+// @note 低版本 VC使用InterlockedExchange等实现原子操作
+// @note 低版本 GCC采用__sync_lock_test_and_set等实现原子操作
+//
+// @history
+//     2016-06-14
 
 #ifndef UTIL_LOCK_ATOMIC_INT_TYPE_H
 #define UTIL_LOCK_ATOMIC_INT_TYPE_H
@@ -909,3 +909,4 @@ ATFRAMEWORK_UTILS_NAMESPACE_END
 #endif
 
 #endif /* _UTIL_LOCK_ATOMIC_INT_TYPE_H_ */
+

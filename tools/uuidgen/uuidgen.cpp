@@ -1,4 +1,6 @@
 
+// Copyright 2026 atframework
+
 #include <cli/cmd_option.h>
 #include <cli/cmd_option_phoenix.h>
 
@@ -82,3 +84,4 @@ int main(int argc, char* argv[]) {
   }
   return 0;
 }
+

@@ -1,4 +1,5 @@
-// Copyright 2021 atframework
+// Copyright 2026 atframework
+
 #ifndef UTIL_CONFIG_COMPILER_MIGRATE_PREFIX_H
 #define UTIL_CONFIG_COMPILER_MIGRATE_PREFIX_H
 
@@ -13,3 +14,4 @@
 #endif
 
 #endif
+

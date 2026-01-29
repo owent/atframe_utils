@@ -1,4 +1,5 @@
-// Copyright 2021 atframework
+// Copyright 2026 atframework
+//
 // Licensed under the MIT licenses.
 // Created by owent on 2016-03-31
 
@@ -433,3 +434,4 @@ ATFRAMEWORK_UTILS_API void log_sink_file_backend::reset_log_file() {
 }
 }  // namespace log
 ATFRAMEWORK_UTILS_NAMESPACE_END
+

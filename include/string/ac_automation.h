@@ -1,15 +1,14 @@
-/**
- * @file ac_automation.h
- * @brief AC 自动机算法实现
- * Licensed under the MIT licenses.
- *
- * @version 1.0
- * @author owent
- * @date 2016.04.22
- *
- * @history
- *
- */
+// Copyright 2026 atframework
+//
+// @file ac_automation.h
+// @brief AC 自动机算法实现
+// Licensed under the MIT licenses.
+//
+// @version 1.0
+// @author owent
+// @date 2016.04.22
+//
+// @history
 
 #pragma once
 
@@ -843,3 +842,4 @@ class ATFRAMEWORK_UTILS_API_HEAD_ONLY ac_automation {
 };
 }  // namespace string
 ATFRAMEWORK_UTILS_NAMESPACE_END
+

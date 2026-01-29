@@ -1,18 +1,17 @@
-/**
- * @file random_xor_combine_core.h
- * @brief 伪随机数生成器  - xoshiro算法核心
- * @see http://xoshiro.di.unimi.it
- * @note 2018年的新型的全功能型伪随机数算法，也是lua 5.4内建的伪随机数算法
- *
- * Licensed under the MIT licenses.
- * @version 1.0
- * @author OWenT
- * @date 2018年09月30日
- *
- * @history
- *  2021-01-20: 修正拼写错误
- *
- */
+// Copyright 2026 atframework
+//
+// @file random_xor_combine_core.h
+// @brief 伪随机数生成器  - xoshiro算法核心
+// @see http://xoshiro.di.unimi.it
+// @note 2018年的新型的全功能型伪随机数算法，也是lua 5.4内建的伪随机数算法
+//
+// Licensed under the MIT licenses.
+// @version 1.0
+// @author OWenT
+// @date 2018年09月30日
+//
+// @history
+//  2021-01-20: 修正拼写错误
 
 #ifndef UTIL_RANDOM_XOSHIRO_CORE_H
 #define UTIL_RANDOM_XOSHIRO_CORE_H
@@ -233,3 +232,4 @@ class ATFRAMEWORK_UTILS_API_HEAD_ONLY xoshiro_engine_256 : public xoshiro_engine
 ATFRAMEWORK_UTILS_NAMESPACE_END
 
 #endif /* UTIL_RANDOM_XOSHIRO_CORE_H */
+

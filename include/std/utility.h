@@ -1,15 +1,14 @@
-/**
- * @file utility.h
- * @brief 导入公共高级库
- * Licensed under the MIT licenses.
- *
- * @version 1.0
- * @author OWenT, owt5008137@live.com
- * @date 2012.08.02
- *
- * @history
- *
- */
+// Copyright 2026 atframework
+//
+// @file utility.h
+// @brief 导入公共高级库
+// Licensed under the MIT licenses.
+//
+// @version 1.0
+// @author OWenT, owt5008137@live.com
+// @date 2012.08.02
+//
+// @history
 
 #ifndef STD_UTILITY_H
 #define STD_UTILITY_H
@@ -62,3 +61,4 @@ using tr1::tuple_size;
 #endif
 
 #endif
+

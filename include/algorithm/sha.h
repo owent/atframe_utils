@@ -1,16 +1,14 @@
-/**
- * @file sha.h
- * @brief sha算法适配,如果没有openssl和mbedtls则使用内置的软实现
- * Licensed under the MIT licenses.
- *
- * @version 1.0
- * @author OWenT
- * @date 2019.12.20
- *
- * @history
- *
- *
- */
+// Copyright 2026 atframework
+//
+// @file sha.h
+// @brief sha算法适配,如果没有openssl和mbedtls则使用内置的软实现
+// Licensed under the MIT licenses.
+//
+// @version 1.0
+// @author OWenT
+// @date 2019.12.20
+//
+// @history
 
 #ifndef UTIL_ALGORITHM_HASH_SHA_H
 #define UTIL_ALGORITHM_HASH_SHA_H
@@ -97,3 +95,4 @@ class sha {
 ATFRAMEWORK_UTILS_NAMESPACE_END
 
 #endif
+

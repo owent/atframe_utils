@@ -1,3 +1,5 @@
+// Copyright 2026 atframework
+
 #ifndef TEST_CASEIGNORE_BIND_H
 #define TEST_CASEIGNORE_BIND_H
 
@@ -29,3 +31,4 @@ void bind_ci_cmd_init() {
 }
 
 #endif
+

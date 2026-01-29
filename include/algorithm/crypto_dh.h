@@ -1,4 +1,5 @@
-// Copyright 2021 atframework
+// Copyright 2026 atframework
+//
 // Create by owent on 2017.09.19
 
 #ifndef UTIL_ALGORITHM_CRYPTO_DH_H
@@ -319,3 +320,4 @@ ATFRAMEWORK_UTILS_NAMESPACE_END
 #endif
 
 #endif
+

@@ -1,3 +1,5 @@
+// Copyright 2026 atframework
+
 #ifndef TEST_BINDOBJ_H
 #define TEST_BINDOBJ_H
 
@@ -82,3 +84,4 @@ void bind_obj_init() {
 }
 
 #endif
+

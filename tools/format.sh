@@ -1,4 +1,5 @@
 #!/bin/bash
+# Copyright 2026 atframework
 
 
 # Require python3 -m pip install --user cmake-format 
@@ -13,3 +14,4 @@ find .  -name 'build_jobs_*' -prune -o      \
         -o -name "*.cmake.in" -print        \
         -o -name 'CMakeLists.txt' -print    \
         | xargs cmake-format -i
+

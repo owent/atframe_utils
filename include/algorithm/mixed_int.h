@@ -1,16 +1,14 @@
-/**
- * @file mixed_int.h
- * @brief 混淆整数类型
- * Licensed under the MIT licenses.
- *
- * @version 1.0
- * @author OWenT
- * @date 2014.12.15
- *
- * @history
- *
- *
- */
+// Copyright 2026 atframework
+//
+// @file mixed_int.h
+// @brief 混淆整数类型
+// Licensed under the MIT licenses.
+//
+// @version 1.0
+// @author OWenT
+// @date 2014.12.15
+//
+// @history
 
 #ifndef UTIL_ALGORITHM_MIXEDINT_H
 #define UTIL_ALGORITHM_MIXEDINT_H
@@ -397,3 +395,4 @@ using mixed_uint32_t = ATFRAMEWORK_UTILS_NAMESPACE_ID::mixed_int::mixed_uint32_t
 using mixed_uint64_t = ATFRAMEWORK_UTILS_NAMESPACE_ID::mixed_int::mixed_uint64_t;
 
 #endif /* _UTIL_ALGORITHM_MIXEDINT_H_ */
+

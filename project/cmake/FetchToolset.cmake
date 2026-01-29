@@ -1,3 +1,4 @@
+# Copyright 2026 atframework
 include_guard(GLOBAL)
 
 find_package(Git REQUIRED)
@@ -21,3 +22,4 @@ if(NOT EXISTS "${ATFRAMEWORK_CMAKE_TOOLSET_DIR}/Import.cmake")
       "${PROJECT_SOURCE_DIR}/atframework/cmake-toolset"
       CACHE PATH "PATH to cmake-toolset" FORCE)
 endif()
+

@@ -1,3 +1,5 @@
+// Copyright 2026 atframework
+
 #include <inttypes.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -210,3 +212,4 @@ ATFRAMEWORK_UTILS_API uint64_t crc64(const unsigned char *s, size_t l, uint64_t 
   return init_val;
 }
 ATFRAMEWORK_UTILS_NAMESPACE_END
+

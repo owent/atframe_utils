@@ -1,3 +1,5 @@
+// Copyright 2026 atframework
+
 #ifndef UTIL_CLI_CMDOPTIONVALUE_H
 #define UTIL_CLI_CMDOPTIONVALUE_H
 
@@ -174,3 +176,4 @@ class cmd_option_value {
 ATFRAMEWORK_UTILS_NAMESPACE_END
 
 #endif /* _CMDOPTIONVALUE_H_ */
+

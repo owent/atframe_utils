@@ -570,3 +570,4 @@ CASE_TEST(crypto_hkdf, hkdf_span_api) {
 }
 
 #endif  // ATFW_UTIL_MACRO_CRYPTO_HMAC_ENABLED
+

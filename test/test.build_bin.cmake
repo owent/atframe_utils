@@ -1,3 +1,4 @@
+# Copyright 2026 atframework
 function(atframe_add_test_executable TARGET_NAME)
   set(PROJECT_TEST_INC_DIRS "${PROJECT_TEST_INC_DIR}")
   if(MSVC)
@@ -65,3 +66,4 @@ function(atframe_add_test_executable TARGET_NAME)
   # add_test(NAME test-name COMMAND "$<TARGET_FILE:${TARGET_NAME}>") set_tests_properties(test-name PROPERTIES LABELS
   # "label1;label2")
 endfunction()
+

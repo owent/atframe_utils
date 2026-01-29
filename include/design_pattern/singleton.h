@@ -1,4 +1,5 @@
-// Copyright 2021 atframework
+// Copyright 2026 atframework
+//
 // Created by owent on 2012-02-13
 
 /**
@@ -469,3 +470,4 @@ ATFRAMEWORK_UTILS_NAMESPACE_END
 // NOLINTEND(bugprone-macro-parentheses)
 
 #endif
+

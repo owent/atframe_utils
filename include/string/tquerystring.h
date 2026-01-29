@@ -1,19 +1,19 @@
-/**
- * @file tquerystring.h
- * @brief 支持嵌套结构的Web Querystring类，生成和解析方式类似PHP <br />
- *        依赖智能指针库 <br />
- *        注: 解析参数字符串的时候，除最后*[]=...外的所有符合结构将全部解析为Object类型 <br />
- *            数据和key中不允许出现[和]
- * Licensed under the MIT licenses.
- *
- * @version 1.0
- * @author OWenT
- * @date 2012.08.01
- *
- * @history
- *      2014.05.20 增加类似php的rawurlencode和urlencode函数
- *      2020.08.14 增加优先使用unordered_map
- */
+// Copyright 2026 atframework
+//
+// @file tquerystring.h
+// @brief 支持嵌套结构的Web Querystring类，生成和解析方式类似PHP <br />
+//        依赖智能指针库 <br />
+//        注: 解析参数字符串的时候，除最后*[]=...外的所有符合结构将全部解析为Object类型 <br />
+//            数据和key中不允许出现[和]
+// Licensed under the MIT licenses.
+//
+// @version 1.0
+// @author OWenT
+// @date 2012.08.01
+//
+// @history
+//      2014.05.20 增加类似php的rawurlencode和urlencode函数
+//      2020.08.14 增加优先使用unordered_map
 
 #pragma once
 
@@ -528,3 +528,4 @@ class tquerystring : public types::item_object {
   ATFRAMEWORK_UTILS_API types::item_object::ptr_type create_object();
 };
 ATFRAMEWORK_UTILS_NAMESPACE_END
+

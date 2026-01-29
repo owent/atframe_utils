@@ -1,4 +1,5 @@
-// Copyright 2021 atframework
+// Copyright 2026 atframework
+
 #ifdef UTIL_CONFIG_COMPILER_MIGRATE_PREFIX_H
 
 #  if defined(_MSC_VER)

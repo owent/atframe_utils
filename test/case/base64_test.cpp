@@ -1,4 +1,4 @@
-// Copyright 2021 atframework
+// Copyright 2026 atframework
 
 #include <cstdlib>
 #include <cstring>
@@ -249,3 +249,4 @@ CASE_TEST(base64, decode_url) {
   CASE_EXPECT_EQ(len, 64);
   CASE_EXPECT_EQ(0, memcmp(base64_test_dec, buffer, 64));
 }
+

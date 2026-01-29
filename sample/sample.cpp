@@ -1,4 +1,4 @@
-// Copyright 2024 atframework
+// Copyright 2026 atframework
 
 #include <assert.h>
 #include <cstdio>
@@ -686,3 +686,4 @@ int main(int, char *argv[]) {
 
   return 0;
 }
+

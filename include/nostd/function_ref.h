@@ -1,4 +1,5 @@
-// Copyright 2024 atframework
+// Copyright 2026 atframework
+//
 // Created by owent on 2024-05-20
 
 #pragma once
@@ -177,3 +178,4 @@ class function_ref<R(Args...) const> : public function_ref<R(Args...)> {
 
 }  // namespace nostd
 ATFRAMEWORK_UTILS_NAMESPACE_END
+

@@ -1,4 +1,5 @@
-// Copyright 2021 atframework
+// Copyright 2026 atframework
+//
 // Create by owent
 
 #include "algorithm/crypto_dh.h"
@@ -2568,3 +2569,4 @@ int dh::check_or_setup_dh_pg_gy(BIGNUM *&DH_p, BIGNUM *&DH_g, BIGNUM *&DH_gy) {
 ATFRAMEWORK_UTILS_NAMESPACE_END
 
 #endif
+

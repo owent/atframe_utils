@@ -1,4 +1,4 @@
-// Copyright 2024 atframework
+// Copyright 2026 atframework
 
 #include <distributed_system/wal_object.h>
 #include <memory/allocator_traits.h>
@@ -1598,3 +1598,4 @@ CASE_TEST(wal_object, with_allocator) {
 }
 
 }  // namespace st
+

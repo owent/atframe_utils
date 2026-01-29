@@ -1,3 +1,5 @@
+// Copyright 2026 atframework
+
 #include <std/explicit_declare.h>
 
 #include "algorithm/murmur_hash.h"
@@ -612,3 +614,4 @@ ATFRAMEWORK_UTILS_API void murmur_hash3_x64_128(const void *key, const int len, 
 //-----------------------------------------------------------------------------
 }  // namespace hash
 ATFRAMEWORK_UTILS_NAMESPACE_END
+

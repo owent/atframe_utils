@@ -1,4 +1,4 @@
-// Copyright 2021 atframework
+// Copyright 2026 atframework
 
 #include <typeinfo>
 #include "frame/test_macros.h"
@@ -105,3 +105,4 @@ CASE_TEST(mixed_int_test, bit_operator) {
   CASE_EXPECT_EQ((uint64_t)65535, 0xFF00 | a2);
   CASE_EXPECT_EQ((uint64_t)15, 0xF0 ^ a2);
 }
+

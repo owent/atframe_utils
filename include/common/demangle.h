@@ -1,16 +1,14 @@
-/**
- * @file demangle.h
- * @brief demangle symbol
- * Licensed under the MIT licenses.
- *
- * @version 1.0
- * @author owent
- * @date 2020.08.04
- *
- * @history
- *
- *
- */
+// Copyright 2026 atframework
+//
+// @file demangle.h
+// @brief demangle symbol
+// Licensed under the MIT licenses.
+//
+// @version 1.0
+// @author owent
+// @date 2020.08.04
+//
+// @history
 
 #pragma once
 
@@ -60,3 +58,4 @@ class scoped_demangled_name {
 };
 
 ATFRAMEWORK_UTILS_NAMESPACE_END
+

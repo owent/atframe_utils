@@ -1,3 +1,5 @@
+// Copyright 2026 atframework
+
 #ifndef UTIL_CLI_CMDOPTIONBINDPARAMLIST_H
 #define UTIL_CLI_CMDOPTIONBINDPARAMLIST_H
 
@@ -91,3 +93,4 @@ class ATFRAMEWORK_UTILS_API_HEAD_ONLY cmd_option_bind_param_list {
 }  // namespace cli
 ATFRAMEWORK_UTILS_NAMESPACE_END
 #endif /* _CMDOPTIONBINDPARAMLIST_H_ */
+

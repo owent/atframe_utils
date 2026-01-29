@@ -1,3 +1,5 @@
+// Copyright 2026 atframework
+
 #ifndef CMDOPTIONLIST_H
 #define CMDOPTIONLIST_H
 
@@ -139,3 +141,4 @@ class ATFW_UTIL_SYMBOL_VISIBLE cmd_option_list {
 ATFRAMEWORK_UTILS_NAMESPACE_END
 
 #endif /* _CMDOPTIONLIST_H_ */
+

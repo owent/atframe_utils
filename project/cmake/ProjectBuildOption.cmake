@@ -1,3 +1,4 @@
+# Copyright 2026 atframework
 include_guard(GLOBAL)
 
 # Check mkstemp/_mktemp/_mktemp_s for file system
@@ -330,6 +331,7 @@ int main() {
   char buffer[64] = {0};
   const auto result = std::format_to_n(buffer, sizeof(buffer), \"{} {}: {}\", \"Hello\", \"World!\", 42);
   std::cout << \"Buffer: \" << buffer << \",Untruncated output size = \" << result.size << std::endl;
+  std::cout<< std::format(std::format_string<int>{\"format_string: {}\"}, 42)<< std::endl;
   return 0;
 }"
     ATFRAMEWORK_UTILS_ENABLE_STD_FORMAT)
@@ -460,3 +462,4 @@ option(ATFRAMEWORK_USE_DYNAMIC_LIBRARY "Build and linking with dynamic libraries
 if(ATFRAMEWORK_UTILS_ENABLE_CXX_GSL)
   include("${CMAKE_CURRENT_LIST_DIR}/GSLSupport.cmake")
 endif()
+

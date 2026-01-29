@@ -1,12 +1,11 @@
-/*
- * cmd_option_value.cpp
- *
- *  Created on: 2011-12-29
- *      Author: OWenT
- *
- * 应用程序命令处理
- *
- */
+// Copyright 2026 atframework
+//
+// cmd_option_value.cpp
+//
+//  Created on: 2011-12-29
+//      Author: OWenT
+//
+// 应用程序命令处理
 
 #include "cli/cmd_option_value.h"
 #include <algorithm>
@@ -117,3 +116,4 @@ ATFRAMEWORK_UTILS_API void cmd_option_value::split(char delim, std::vector<cmd_o
 }
 }  // namespace cli
 ATFRAMEWORK_UTILS_NAMESPACE_END
+

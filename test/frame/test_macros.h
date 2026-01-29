@@ -1,4 +1,4 @@
-// Copyright 2021 atframework
+// Copyright 2026 atframework
 
 #ifndef TEST_MACROS_H_
 #define TEST_MACROS_H_
@@ -165,3 +165,4 @@
 #endif
 
 #endif /* TEST_MACROS_H_ */
+

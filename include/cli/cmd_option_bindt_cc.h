@@ -1,3 +1,5 @@
+// Copyright 2026 atframework
+
 #ifndef UTIL_CLI_CMDOPTIONBINDT_CC_H
 #define UTIL_CLI_CMDOPTIONBINDT_CC_H
 
@@ -39,3 +41,4 @@ class ATFRAMEWORK_UTILS_API_HEAD_ONLY cmd_option_bindt_cc_caller {
 }  // namespace cli
 ATFRAMEWORK_UTILS_NAMESPACE_END
 #endif /* cmd_option_bindt_cc_caller */
+

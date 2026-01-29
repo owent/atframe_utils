@@ -1,19 +1,19 @@
-/**
- * @file jiffies_timer.h
- * @brief O(1)复杂度定时器，设计参考linux kernel(4.9.10)的jiffies timer
- * @see https://git.kernel.org/cgit/linux/kernel/git/stable/linux-stable.git/tree/kernel/time/timer.c
- * Licensed under the MIT licenses.
- *
- * @note 可以根据实际需要自定义每个tick的间隔,所有的算法都是以tick为单位的
- *       4.9.10版本的jiffies_timer分为8-9级定时器，每级精度相差2^3倍，所有定时器列表集中存放在一个2^6*[8-9]=512-576个定时器列表
- *       由于本定时器是软实现，并不调用硬件时钟，所以如果tick精度很高的话开销比较大。这种情况请直接使用kernel的timer，因为内核版本会利用硬件时钟
- * @version 1.0
- * @author owent
- * @date 2017-02-16
- * @history
- *      2017-02-17: 第一版实现，暂时不加锁
- *      2025-06-30: 默认使用非线程安全的智能指针，支持自定义 allocator (除回调函数外)
- */
+// Copyright 2026 atframework
+//
+// @file jiffies_timer.h
+// @brief O(1)复杂度定时器，设计参考linux kernel(4.9.10)的jiffies timer
+// @see https://git.kernel.org/cgit/linux/kernel/git/stable/linux-stable.git/tree/kernel/time/timer.c
+// Licensed under the MIT licenses.
+//
+// @note 可以根据实际需要自定义每个tick的间隔,所有的算法都是以tick为单位的
+//       4.9.10版本的jiffies_timer分为8-9级定时器，每级精度相差2^3倍，所有定时器列表集中存放在一个2^6*[8-9]=512-576个定时器列表
+//       由于本定时器是软实现，并不调用硬件时钟，所以如果tick精度很高的话开销比较大。这种情况请直接使用kernel的timer，因为内核版本会利用硬件时钟
+// @version 1.0
+// @author owent
+// @date 2017-02-16
+// @history
+//      2017-02-17: 第一版实现，暂时不加锁
+//      2025-06-30: 默认使用非线程安全的智能指针，支持自定义 allocator (除回调函数外)
 
 #pragma once
 
@@ -617,3 +617,4 @@ class ATFRAMEWORK_UTILS_API_HEAD_ONLY jiffies_timer {
 };
 }  // namespace time
 ATFRAMEWORK_UTILS_NAMESPACE_END
+

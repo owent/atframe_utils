@@ -1,15 +1,14 @@
-/**
- * @file functional.h
- * @brief 导入高级库，hash、引用包装等
- * Licensed under the MIT licenses.
- *
- * @version 1.0
- * @author OWenT, owt5008137@live.com
- * @date 2012.08.02
- *
- * @history
- *
- */
+// Copyright 2026 atframework
+//
+// @file functional.h
+// @brief 导入高级库，hash、引用包装等
+// Licensed under the MIT licenses.
+//
+// @version 1.0
+// @author OWenT, owt5008137@live.com
+// @date 2012.08.02
+//
+// @history
 
 #ifndef STD_FUNCTIONAL_H
 #define STD_FUNCTIONAL_H
@@ -94,3 +93,4 @@ using namespace tr1::placeholders;
 #endif
 
 #endif
+

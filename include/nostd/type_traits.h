@@ -1,4 +1,5 @@
-// Copyright 2021 atframework
+// Copyright 2026 atframework
+//
 // Created by owent on 2021-10-29
 
 #pragma once
@@ -537,3 +538,4 @@ using detected_or_t = typename detected_or<DefaultType, DetectTemplateOp, Templa
 #endif
 
 ATFRAMEWORK_UTILS_NAMESPACE_END
+

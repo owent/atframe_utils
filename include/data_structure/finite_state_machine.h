@@ -1,11 +1,11 @@
-/**
- * @brief 有限状态机
- *
- * @version 1.0
- * @author OWenT
- * @date 2015-01-21
- *
- */
+// Copyright 2026 atframework
+//
+// @brief 有限状态机
+//
+// @version 1.0
+// @author OWenT
+// @date 2015-01-21
+
 #pragma once
 
 #include <config/atframe_utils_build_feature.h>
@@ -220,3 +220,4 @@ class ATFRAMEWORK_UTILS_API_HEAD_ONLY finite_state_machine {
 };
 }  // namespace ds
 ATFRAMEWORK_UTILS_NAMESPACE_END
+

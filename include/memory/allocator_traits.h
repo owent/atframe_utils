@@ -1,4 +1,5 @@
-// Copyright 2024 atframework
+// Copyright 2026 atframework
+//
 // Licenses under the MIT License
 //
 // @note This is a helper class for user to implement a standard allocator and allocator_traits more easily.
@@ -32,7 +33,6 @@
 //   };
 //   }  // namespace std
 //   ```
-//
 
 #pragma once
 
@@ -425,3 +425,4 @@ ATFRAMEWORK_UTILS_NAMESPACE_END
 #elif defined(__clang__) || defined(__apple_build_version__)
 #  pragma clang diagnostic pop
 #endif
+

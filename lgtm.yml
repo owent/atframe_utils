@@ -1,3 +1,4 @@
+# Copyright 2026 atframework
 path_classifiers:
   test:
     - "test/*/*"
@@ -20,3 +21,4 @@ extraction:
     index: # Customizable step used by all languages.
       build_command:
         - if [[ -e build_jobs_dir ]]; then cd build_jobs_dir; fi ; export PATH="$HOME/.local/bin:$PATH"; cmake --build . -j
+

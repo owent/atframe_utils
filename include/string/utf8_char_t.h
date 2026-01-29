@@ -1,4 +1,5 @@
-// Copyright 2021 atframework
+// Copyright 2026 atframework
+//
 // Created by owent on 2017-06-05
 
 #pragma once
@@ -219,3 +220,4 @@ struct hash<ATFRAMEWORK_UTILS_NAMESPACE_ID::string::utf8_char_t> {
   }
 };
 }  // namespace std
+
