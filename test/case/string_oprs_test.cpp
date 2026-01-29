@@ -1,4 +1,4 @@
-// Copyright 2021 atframework
+// Copyright 2026 atframework
 
 #include <map>
 #include <vector>
@@ -149,3 +149,4 @@ CASE_TEST(string_oprs, int2str) {
   CASE_EXPECT_EQ(0, atfw::util::string::int2str(buffer, 0, 123456789U));
   CASE_EXPECT_EQ(0, atfw::util::string::int2str(buffer, 8, 123456789U));
 }
+

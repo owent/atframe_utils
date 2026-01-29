@@ -1,4 +1,4 @@
-// Copyright 2021 atframework
+// Copyright 2026 atframework
 
 #include <distributed_system/wal_client.h>
 
@@ -1116,3 +1116,4 @@ CASE_TEST(wal_client, receive_hole_logs_st) {
   CASE_EXPECT_NE(old_hash_code, new_hash_code);
 }
 }  // namespace st
+

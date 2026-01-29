@@ -1,15 +1,13 @@
-/**
- *
- * @file chrono.h
- * @brief 导入高精度时间库
- * Licensed under the MIT licenses.
- *
- * @version 1.0
- * @author OWenT, owt5008137@live.com
- * @date 2016.03.25
- * @history
- *
- */
+// Copyright 2026 atframework
+//
+// @file chrono.h
+// @brief 导入高精度时间库
+// Licensed under the MIT licenses.
+//
+// @version 1.0
+// @author OWenT, owt5008137@live.com
+// @date 2016.03.25
+// @history
 
 #ifndef STD_CHRONO_H
 #define STD_CHRONO_H
@@ -72,3 +70,4 @@ using boost::chrono::seconds;
 #endif
 
 #endif
+

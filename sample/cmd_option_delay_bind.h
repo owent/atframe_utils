@@ -1,3 +1,5 @@
+// Copyright 2026 atframework
+
 #ifndef TEST_DELAYBIND_H
 #define TEST_DELAYBIND_H
 
@@ -33,3 +35,4 @@ void delay_bind() {
 }
 
 #endif
+

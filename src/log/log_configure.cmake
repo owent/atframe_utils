@@ -1,3 +1,4 @@
+# Copyright 2026 atframework
 # Lua模块
 if(ATFRAMEWORK_UTILS_LOG_ENABLE_LUA_SUPPORT AND ATFRAMEWORK_UTILS_LOG_WRAPPER_CHECK_LUA)
   if(TARGET lua::liblua-dynamic)
@@ -124,3 +125,4 @@ if(ATFRAMEWORK_UTILS_LOG_WRAPPER_ENABLE_STACKTRACE)
     endif()
   endif()
 endif()
+

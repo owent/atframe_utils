@@ -1,3 +1,5 @@
+// Copyright 2026 atframework
+
 #ifndef UTIL_CLI_CMDOPTIONBINDTBASE_H
 #define UTIL_CLI_CMDOPTIONBINDTBASE_H
 
@@ -43,3 +45,4 @@ class ATFRAMEWORK_UTILS_API_HEAD_ONLY cmd_option_bindt : public cmd_option_bind_
 }  // namespace cli
 ATFRAMEWORK_UTILS_NAMESPACE_END
 #endif /* _CMDOPTIONBINDTBASE_H_ */
+

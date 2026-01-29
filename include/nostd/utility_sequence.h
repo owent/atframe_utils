@@ -1,4 +1,5 @@
-// Copyright 2021 atframework
+// Copyright 2026 atframework
+//
 // Created by owent on 2024-05-28
 
 #pragma once
@@ -75,3 +76,4 @@ using index_sequence_for = make_index_sequence<sizeof...(Types)>;
 
 }  // namespace nostd
 ATFRAMEWORK_UTILS_NAMESPACE_END
+

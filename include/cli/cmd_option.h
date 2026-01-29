@@ -1,3 +1,5 @@
+// Copyright 2026 atframework
+
 #ifndef UTIL_CLI_CMDOPTION_H
 #define UTIL_CLI_CMDOPTION_H
 
@@ -656,3 +658,4 @@ ATFRAMEWORK_UTILS_NAMESPACE_END
 #include <config/compiler/template_suffix.h>
 
 #endif /* CMDOPTION_H_ */
+

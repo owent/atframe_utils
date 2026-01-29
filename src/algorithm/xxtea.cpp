@@ -1,3 +1,5 @@
+// Copyright 2026 atframework
+
 #include <inttypes.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -190,3 +192,4 @@ ATFRAMEWORK_UTILS_API void xxtea_decrypt(const xxtea_key *key, const void *input
   }
 }
 ATFRAMEWORK_UTILS_NAMESPACE_END
+

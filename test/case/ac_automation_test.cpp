@@ -1,4 +1,4 @@
-// Copyright 2021 atframework
+// Copyright 2026 atframework
 
 #include <algorithm>
 #include <cstring>
@@ -217,3 +217,4 @@ CASE_TEST(ac_automation, load_and_dump) {
   actree.dump(fos);
   actree.dump_dot(fdot, nullptr, node_options, edge_options);
 }
+

@@ -1,16 +1,14 @@
-/**
- * @file crc.h
- * @brief mapping方法实现的crc16/crc32/crc64算法
- * Licensed under the MIT licenses.
- *
- * @version 1.0
- * @author OWenT
- * @date 2017.11.30
- *
- * @history
- *
- *
- */
+// Copyright 2026 atframework
+//
+// @file crc.h
+// @brief mapping方法实现的crc16/crc32/crc64算法
+// Licensed under the MIT licenses.
+//
+// @version 1.0
+// @author OWenT
+// @date 2017.11.30
+//
+// @history
 
 #ifndef UTIL_ALGORITHM_CRC_H
 #define UTIL_ALGORITHM_CRC_H

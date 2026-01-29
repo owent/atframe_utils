@@ -1,6 +1,6 @@
-// Copyright 2023 atframework
-// Created by owent on 2024-09-06.
+// Copyright 2026 atframework
 //
+// Created by owent on 2024-09-06.
 
 #include <config/atframe_utils_build_feature.h>
 
@@ -39,3 +39,4 @@ ATFRAMEWORK_UTILS_API std::string demangle(const char *name) { return name; }
 #endif
 
 ATFRAMEWORK_UTILS_NAMESPACE_END
+

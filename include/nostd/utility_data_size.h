@@ -1,4 +1,5 @@
-// Copyright 2024 atframework
+// Copyright 2026 atframework
+//
 // Created by owent on 2024-10-11
 
 #pragma once
@@ -51,3 +52,4 @@ ATFRAMEWORK_UTILS_API_HEAD_ONLY constexpr inline const TELEMENT* data(std::initi
 #endif
 }  // namespace nostd
 ATFRAMEWORK_UTILS_NAMESPACE_END
+

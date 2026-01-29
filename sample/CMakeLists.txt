@@ -1,3 +1,4 @@
+# Copyright 2026 atframework
 aux_source_directory(. SRC_LIST_SAMPLE)
 
 set(BIN_NAME "${PROJECT_NAME}_sample")
@@ -29,3 +30,4 @@ endif()
 execute_process(COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_CURRENT_LIST_DIR}/config.ini"
                         ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})
 execute_process(COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_CURRENT_LIST_DIR}/test.ini" ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})
+

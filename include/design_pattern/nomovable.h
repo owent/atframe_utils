@@ -1,4 +1,5 @@
-// Copyright 2021 atframework
+// Copyright 2026 atframework
+//
 // Created by owent on 2019-12-05
 
 #pragma once
@@ -35,3 +36,4 @@ ATFRAMEWORK_UTILS_NAMESPACE_END
 #ifndef UTIL_DESIGN_PATTERN_NOMOVABLE
 #  define UTIL_DESIGN_PATTERN_NOMOVABLE(CLAZZ) ATFW_UTIL_DESIGN_PATTERN_NOMOVABLE(CLAZZ)
 #endif
+

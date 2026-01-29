@@ -1,4 +1,5 @@
 // Copyright 2026 atframework
+//
 // Created by owent on 2024.12.26
 
 #include "algorithm/crypto_hmac.h"
@@ -1129,3 +1130,4 @@ ATFRAMEWORK_UTILS_NAMESPACE_END
 #  endif
 
 #endif  // ATFW_UTIL_MACRO_CRYPTO_HMAC_ENABLED
+

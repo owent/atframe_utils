@@ -1,18 +1,15 @@
-/**
- * Copyright 2024 atframework
- * @file file_system.h
- * @note 文件系统统一接口，主要针对跨平台（Windows,Linux,macOS等）提供尽可能统一且行为一致的接口
- * @note 允许混合使用 "/" 或 "\" 作为路径分隔符，支持Mingw、Cygwin
- * Licensed under the MIT licenses.
- *
- * @version 1.0
- * @author OWenT
- * @date 2014.12.15
- *
- * @history
- *
- *
- */
+// Copyright 2026 atframework
+//
+// @file file_system.h
+// @note 文件系统统一接口，主要针对跨平台（Windows,Linux,macOS等）提供尽可能统一且行为一致的接口
+// @note 允许混合使用 "/" 或 "\" 作为路径分隔符，支持Mingw、Cygwin
+// Licensed under the MIT licenses.
+//
+// @version 1.0
+// @author OWenT
+// @date 2014.12.15
+//
+// @history
 
 #ifndef UTIL_COMMON__FILESYSTEM_H
 #define UTIL_COMMON__FILESYSTEM_H
@@ -260,3 +257,4 @@ class file_system {
 ATFRAMEWORK_UTILS_NAMESPACE_END
 
 #endif  // UTIL_COMMON__FILESYSTEM_H
+

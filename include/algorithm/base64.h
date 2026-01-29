@@ -1,4 +1,5 @@
-// Copyright 2022 atframework
+// Copyright 2026 atframework
+//
 // @file base64.h
 // @brief base64算法
 // Licensed under the MIT licenses.
@@ -138,3 +139,4 @@ ATFRAMEWORK_UTILS_API int base64_decode(std::string &dst, const unsigned char *s
 ATFRAMEWORK_UTILS_API int base64_decode(std::string &dst, const std::string &in,
                                         base64_mode_t::type mode = base64_mode_t::EN_BMT_STANDARD);
 ATFRAMEWORK_UTILS_NAMESPACE_END
+

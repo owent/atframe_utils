@@ -1,4 +1,5 @@
 // Copyright 2026 atframework
+//
 // @version 1.0
 // @author OWenT
 // @date 2013.05.07
@@ -288,3 +289,4 @@ ATFRAMEWORK_UTILS_API_HEAD_ONLY THVal hash_ap(const void *bin, size_t len, THVal
 }
 }  // namespace hash
 ATFRAMEWORK_UTILS_NAMESPACE_END
+

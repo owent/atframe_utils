@@ -1,16 +1,15 @@
-/**
- * @file random_xor_combine_core.h
- * @brief 伪随机数生成器  - 线性回归核心
- *
- *
- * Licensed under the MIT licenses.
- * @version 1.0
- * @author OWenT
- * @date 2013年8月6日
- *
- * @history
- *
- */
+// Copyright 2026 atframework
+//
+// @file random_xor_combine_core.h
+// @brief 伪随机数生成器  - 线性回归核心
+//
+//
+// Licensed under the MIT licenses.
+// @version 1.0
+// @author OWenT
+// @date 2013年8月6日
+//
+// @history
 
 #ifndef UTIL_RANDOM_RANDOMXORCOMBINECORE_H
 #define UTIL_RANDOM_RANDOMXORCOMBINECORE_H
@@ -149,3 +148,4 @@ class ATFRAMEWORK_UTILS_API_HEAD_ONLY xor_combine_engine {
 ATFRAMEWORK_UTILS_NAMESPACE_END
 
 #endif /* _UTIL_RANDOM_RANDOMXORCOMBINECORE_H_ */
+

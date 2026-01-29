@@ -1,3 +1,5 @@
+// Copyright 2026 atframework
+
 #include <common/string_oprs.h>
 #include <sstream>
 
@@ -104,3 +106,4 @@ ATFRAMEWORK_UTILS_API_C(int) util_string_version_compare(const char *l, const ch
 ATFRAMEWORK_UTILS_API std::string util_string_version_normalize(const char *v) {
   return ATFRAMEWORK_UTILS_NAMESPACE_ID::string::version_normalize(v);
 }
+

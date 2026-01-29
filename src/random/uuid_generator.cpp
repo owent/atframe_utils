@@ -1,3 +1,5 @@
+// Copyright 2026 atframework
+
 #include <config/compile_optimize.h>
 #include <config/compiler_features.h>
 
@@ -689,3 +691,4 @@ ATFRAMEWORK_UTILS_API std::string uuid_generator::generate_string_time(bool remo
 ATFRAMEWORK_UTILS_NAMESPACE_END
 
 #endif
+

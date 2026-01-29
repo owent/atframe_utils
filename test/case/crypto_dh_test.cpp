@@ -1,4 +1,4 @@
-// Copyright 2021 atframework
+// Copyright 2026 atframework
 
 #include "algorithm/crypto_dh.h"
 #include <cstring>
@@ -355,3 +355,4 @@ CASE_TEST(crypto_dh, ecdh_alias_and_both_server) {
 }
 
 #endif
+

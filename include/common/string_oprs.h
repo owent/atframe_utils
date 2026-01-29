@@ -1,16 +1,14 @@
-/**
- * @file string_oprs.h
- * @brief 字符串相关操作
- * Licensed under the MIT licenses.
- *
- * @version 1.0
- * @author owent
- * @date 2015.11.24
- *
- * @history
- *
- *
- */
+// Copyright 2026 atframework
+//
+// @file string_oprs.h
+// @brief 字符串相关操作
+// Licensed under the MIT licenses.
+//
+// @version 1.0
+// @author owent
+// @date 2015.11.24
+//
+// @history
 
 #pragma once
 
@@ -529,3 +527,4 @@ ATFRAMEWORK_UTILS_NAMESPACE_END
 ATFRAMEWORK_UTILS_API_C(const char *) util_string_version_tok(const char *v, int64_t &out);
 ATFRAMEWORK_UTILS_API_C(int) util_string_version_compare(const char *l, const char *r);
 ATFRAMEWORK_UTILS_API std::string util_string_version_normalize(const char *v);
+

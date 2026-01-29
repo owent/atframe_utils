@@ -1,4 +1,5 @@
-// Copyright 2024 atframework
+// Copyright 2026 atframework
+//
 // Licenses under the MIT License
 
 #include "memory/rc_ptr.h"
@@ -25,3 +26,4 @@ ATFRAMEWORK_UTILS_API void __rc_ptr_counted_data_base::abort_bad_weak_ptr() noex
 
 }  // namespace memory
 ATFRAMEWORK_UTILS_NAMESPACE_END
+

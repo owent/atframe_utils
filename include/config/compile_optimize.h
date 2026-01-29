@@ -793,3 +793,4 @@
 #    define ATFW_UTIL_ATTRIBUTE_CXX17_INLINE
 #  endif
 #endif
+

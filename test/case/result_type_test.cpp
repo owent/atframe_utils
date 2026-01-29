@@ -1,4 +1,5 @@
-// Copyright 2021 atframework
+// Copyright 2026 atframework
+//
 // Created by owent on 2021-08-10
 
 #include <nostd/type_traits.h>
@@ -1634,3 +1635,4 @@ CASE_TEST(result_type, continue_transform_transform_error) {
     CASE_EXPECT_EQ(0, call_count);
   }
 }
+

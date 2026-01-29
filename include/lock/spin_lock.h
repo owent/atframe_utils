@@ -1,27 +1,27 @@
-/**
- * @file spin_lock.h
- * @brief 自旋锁
- * Licensed under the MIT licenses.
- *
- * @version 1.0
- * @author OWenT
- * @date 2013-3-18
- *
- * @note VC 2012+, GCC 4.4 + 使用C++0x/11实现实现原子操作
- * @note 低版本 VC使用InterlockedExchange等实现原子操作
- * @note 低版本 GCC采用__sync_lock_test_and_set等实现原子操作
- *
- * @history
- *     2013-12-20
- *         1. add support for clang & intel compiler
- *         2. add try unlock function
- *         3. fix atom operator
- *         4. add gcc atomic support
- *    2014-07-08
- *         1. add yield operation
- *    2016-06-15
- *         1. using atomic_int_type
- */
+// Copyright 2026 atframework
+//
+// @file spin_lock.h
+// @brief 自旋锁
+// Licensed under the MIT licenses.
+//
+// @version 1.0
+// @author OWenT
+// @date 2013-3-18
+//
+// @note VC 2012+, GCC 4.4 + 使用C++0x/11实现实现原子操作
+// @note 低版本 VC使用InterlockedExchange等实现原子操作
+// @note 低版本 GCC采用__sync_lock_test_and_set等实现原子操作
+//
+// @history
+//     2013-12-20
+//         1. add support for clang & intel compiler
+//         2. add try unlock function
+//         3. fix atom operator
+//         4. add gcc atomic support
+//    2014-07-08
+//         1. add yield operation
+//    2016-06-15
+//         1. using atomic_int_type
 
 #ifndef UTIL_LOCK_SPINLOCK_H
 #define UTIL_LOCK_SPINLOCK_H
@@ -232,3 +232,4 @@ class ATFRAMEWORK_UTILS_API_HEAD_ONLY spin_lock {
 ATFRAMEWORK_UTILS_NAMESPACE_END
 
 #endif /* SPINLOCK_H_ */
+

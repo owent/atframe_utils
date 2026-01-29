@@ -1,4 +1,5 @@
-// Copyright 2021 atframework
+// Copyright 2026 atframework
+//
 // Created by owent
 // Stanards operations for Write Ahead Log client
 
@@ -653,3 +654,4 @@ class ATFRAMEWORK_UTILS_API_HEAD_ONLY wal_client {
 
 }  // namespace distributed_system
 ATFRAMEWORK_UTILS_NAMESPACE_END
+

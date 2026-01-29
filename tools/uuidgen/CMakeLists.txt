@@ -1,3 +1,4 @@
+# Copyright 2026 atframework
 aux_source_directory(. SRC_LIST_SAMPLE)
 
 set(BIN_NAME "uuidgen")
@@ -28,3 +29,4 @@ add_test(NAME test-uuidgen--bad-params COMMAND ${BIN_NAME} --bad-params)
 
 set_tests_properties(test-uuidgen test-uuidgen-r test-uuidgen-t test-uuidgen-V test-uuidgen-h test-uuidgen--bad-params
                      PROPERTIES LABELS "atframe_utils;atframe_utils.tools")
+

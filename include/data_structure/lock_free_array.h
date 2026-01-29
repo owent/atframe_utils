@@ -1,14 +1,14 @@
-/**
- * @brief 静态无锁队列(数组)
- * @note 固定最大长度
- * @note 使用了 c++11的atomic
- *       不支持的编译器就自求多福吧
- *
- * @version 1.0
- * @author OWenT
- * @date 2015-01-09
- *
- */
+// Copyright 2026 atframework
+//
+// @brief 静态无锁队列(数组)
+// @note 固定最大长度
+// @note 使用了 c++11的atomic
+//       不支持的编译器就自求多福吧
+//
+// @version 1.0
+// @author OWenT
+// @date 2015-01-09
+
 #pragma once
 
 #include <array>
@@ -145,3 +145,4 @@ class ATFRAMEWORK_UTILS_API_HEAD_ONLY lock_free_array {
 };
 }  // namespace ds
 ATFRAMEWORK_UTILS_NAMESPACE_END
+

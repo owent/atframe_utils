@@ -1,4 +1,5 @@
 // Copyright 2026 atframework
+//
 // Created by owent on 2026.01.20
 
 #include "algorithm/compression.h"
@@ -491,3 +492,4 @@ ATFRAMEWORK_UTILS_API int decompress(algorithm_t type, gsl::span<const unsigned 
 ATFRAMEWORK_UTILS_NAMESPACE_END
 
 #endif  // ATFW_UTIL_MACRO_COMPRESSION_ENABLED
+

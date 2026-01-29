@@ -1,3 +1,5 @@
+// Copyright 2026 atframework
+
 #include <cstdlib>
 #include <cstring>
 
@@ -146,3 +148,4 @@ ATFRAMEWORK_UTILS_API int make_content_type(char *dst, size_t dst_sz, easy_type 
 }  // namespace http_content_type
 }  // namespace network
 ATFRAMEWORK_UTILS_NAMESPACE_END
+

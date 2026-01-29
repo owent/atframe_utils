@@ -1,15 +1,14 @@
-/**
- * @file http_content_type.h
- * @brief HTTP Content Type的规范定义和辅助函数的简化实现
- *
- * @see http://www.ietf.org/rfc/rfc2045.txt
- * @see http://www.ietf.org/rfc/rfc2046.txt
- * @see https://www.w3.org/TR/html401/references.html#ref-IANA
- * @version 1.0
- * @author owent
- * @date 2016.11.30
- *
- */
+// Copyright 2026 atframework
+//
+// @file http_content_type.h
+// @brief HTTP Content Type的规范定义和辅助函数的简化实现
+//
+// @see http://www.ietf.org/rfc/rfc2045.txt
+// @see http://www.ietf.org/rfc/rfc2046.txt
+// @see https://www.w3.org/TR/html401/references.html#ref-IANA
+// @version 1.0
+// @author owent
+// @date 2016.11.30
 
 #ifndef UTILS_NETWORK_HTTP_CONTENT_TYPE_H
 #define UTILS_NETWORK_HTTP_CONTENT_TYPE_H
@@ -118,3 +117,4 @@ struct ATFRAMEWORK_UTILS_API http_response_content_type_t {
 }  // namespace network
 ATFRAMEWORK_UTILS_NAMESPACE_END
 #endif
+

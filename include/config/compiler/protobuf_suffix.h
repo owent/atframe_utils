@@ -1,4 +1,5 @@
-// Copyright 2021 atframework
+// Copyright 2026 atframework
+
 #ifdef ATFW_UTIL_CONFIG_COMPILER_PROTOBUF_PREFIX_H
 #  pragma pop_macro("cast")
 #  pragma pop_macro("verify")
@@ -19,3 +20,4 @@
 
 #  undef ATFW_UTIL_CONFIG_COMPILER_PROTOBUF_PREFIX_H
 #endif
+

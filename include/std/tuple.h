@@ -1,15 +1,14 @@
-/**
- * @file tuple.h
- * @brief 导入多元组库
- * Licensed under the MIT licenses.
- *
- * @version 1.0
- * @author OWenT, owt5008137@live.com
- * @date 2012.08.02
- *
- * @history
- *
- */
+// Copyright 2026 atframework
+//
+// @file tuple.h
+// @brief 导入多元组库
+// Licensed under the MIT licenses.
+//
+// @version 1.0
+// @author OWenT, owt5008137@live.com
+// @date 2012.08.02
+//
+// @history
 
 #ifndef STD_TUPLE_H
 #define STD_TUPLE_H
@@ -73,3 +72,4 @@ using tr1::tuple_size;
 #endif
 
 #endif
+

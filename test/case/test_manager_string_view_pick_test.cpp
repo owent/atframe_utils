@@ -230,3 +230,4 @@ CASE_TEST(test_manager, convert_string_view_from_wide_types) {
   CASE_EXPECT_EQ(static_cast<uint32_t>(L'b'), static_cast<uint32_t>(sv_wbuf[1]));
   CASE_EXPECT_EQ(static_cast<uint32_t>(L'c'), static_cast<uint32_t>(sv_wbuf[2]));
 }
+

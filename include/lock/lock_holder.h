@@ -1,16 +1,16 @@
-/**
- * @file lock_holder.h
- * @brief 锁管理器
- * Licensed under the MIT licenses.
- *
- * @version 1.0
- * @author owent
- * @date 2015-06-29
- *
- * @note 实现锁的自管理操作,类似std::lock_guard，增加了针对特定场合使用的try_unlock函数
- *
- * @history
- */
+// Copyright 2026 atframework
+//
+// @file lock_holder.h
+// @brief 锁管理器
+// Licensed under the MIT licenses.
+//
+// @version 1.0
+// @author owent
+// @date 2015-06-29
+//
+// @note 实现锁的自管理操作,类似std::lock_guard，增加了针对特定场合使用的try_unlock函数
+//
+// @history
 
 #pragma once
 
@@ -152,3 +152,4 @@ class ATFRAMEWORK_UTILS_API_HEAD_ONLY write_lock_holder
 };
 }  // namespace lock
 ATFRAMEWORK_UTILS_NAMESPACE_END
+

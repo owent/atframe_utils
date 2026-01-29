@@ -1,16 +1,14 @@
-/**
- * @file murmur_hash.h
- * @brief MurmurHash算法
- * Licensed under the MIT licenses.
- *
- * @version 1.0
- * @author OWenT
- * @date 2016.06.28
- *
- * @history
- *
- *
- */
+// Copyright 2026 atframework
+//
+// @file murmur_hash.h
+// @brief MurmurHash算法
+// Licensed under the MIT licenses.
+//
+// @version 1.0
+// @author OWenT
+// @date 2016.06.28
+//
+// @history
 
 #ifndef UTIL_HASH_MURMUR_HASH_H
 #define UTIL_HASH_MURMUR_HASH_H

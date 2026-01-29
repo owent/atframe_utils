@@ -1,4 +1,5 @@
-// Copyright 2021 atframework
+// Copyright 2026 atframework
+//
 // Licensed under the MIT licenses.
 // Created by owent on 2015-06-29
 
@@ -160,3 +161,4 @@ struct hash<ATFRAMEWORK_UTILS_NAMESPACE_ID::log::stacktrace_handle> {
 };
 
 }  // namespace std
+

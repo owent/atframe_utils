@@ -1,4 +1,5 @@
-// Copyright 2021 atframework
+// Copyright 2026 atframework
+//
 // Created by owent on 2021-08-10
 // This is a simple alternative to std::variant to hold success type or failure type.
 // This is also just like std::Result<OK, ERROR> in rust and an alternative to std::Expected<OK, ERROR> in C++23.
@@ -869,3 +870,4 @@ ATFRAMEWORK_UTILS_NAMESPACE_END
   };                                                                                     \
   }                                                                                      \
   ATFRAMEWORK_UTILS_NAMESPACE_END
+

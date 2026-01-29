@@ -1,3 +1,4 @@
+# Copyright 2026 atframework
 cmake_minimum_required(VERSION 3.24.0)
 
 if(CMAKE_VERSION VERSION_GREATER_EQUAL "3.27.0")
@@ -382,3 +383,4 @@ set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "${CPACK_PACKAGE_DESCRIPTION}")
 set(CPACK_PACKAGE_CONTACT "admin@owent.net")
 set(CPACK_PACKAGE_HOMEPAGE_URL "https://github.com/atframework/")
 include(CPack)
+

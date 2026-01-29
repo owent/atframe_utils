@@ -1,4 +1,5 @@
-// Copyright 2024 atframework
+// Copyright 2026 atframework
+//
 // Licenses under the MIT License
 
 #pragma once
@@ -18,3 +19,4 @@ using lru_pool = memory::lru_pool<TKey, TObj, TAction>;
 
 }  // namespace mempool
 ATFRAMEWORK_UTILS_NAMESPACE_END
+

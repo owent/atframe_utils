@@ -1,3 +1,4 @@
+# Copyright 2026 atframework
 <#
 .SYNOPSIS
     Invokes a command and imports its environment variables.
@@ -33,3 +34,4 @@ function Invoke-Environment {
         } }
 
 }
+

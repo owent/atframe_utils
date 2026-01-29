@@ -1,3 +1,5 @@
+// Copyright 2026 atframework
+
 #ifndef UTIL_CLI_CMDOPTION_STRING_H
 #define UTIL_CLI_CMDOPTION_STRING_H
 
@@ -46,3 +48,4 @@ using cmd_option_ci_string = std::basic_string<char, ci_char_traits<char> >;
 }  // namespace cli
 ATFRAMEWORK_UTILS_NAMESPACE_END
 #endif
+

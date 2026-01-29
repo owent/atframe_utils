@@ -1,4 +1,4 @@
-// Copyright 2021 atframework
+// Copyright 2026 atframework
 
 #include "frame/test_macros.h"
 
@@ -192,3 +192,4 @@ CASE_TEST(lock_test, spin_rw_lock_mt) {
 }
 
 #endif
+

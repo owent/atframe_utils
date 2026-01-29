@@ -1,4 +1,5 @@
 // Copyright 2026 atframework
+//
 // Created by owent on 2026.01.20
 
 #ifndef UTIL_ALGORITHM_COMPRESSION_H
@@ -148,3 +149,4 @@ ATFRAMEWORK_UTILS_NAMESPACE_END
 #endif  // ATFW_UTIL_MACRO_COMPRESSION_ENABLED
 
 #endif  // UTIL_ALGORITHM_COMPRESSION_H
+

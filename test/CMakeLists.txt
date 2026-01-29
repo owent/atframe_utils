@@ -1,3 +1,4 @@
+# Copyright 2026 atframework
 echowithcolor(COLOR GREEN "-- Configure ${CMAKE_CURRENT_LIST_DIR}")
 include("test.macro.cmake")
 
@@ -26,3 +27,4 @@ target_compile_options(atframe_utils_unit_test PRIVATE ${COMPILER_STRICT_EXTRA_C
 
 add_test(NAME "atframe_utils.unit_test" COMMAND "$<TARGET_FILE:atframe_utils_unit_test>")
 set_tests_properties("atframe_utils.unit_test" PROPERTIES LABELS "atframe_utils;atframe_utils.unit_test")
+

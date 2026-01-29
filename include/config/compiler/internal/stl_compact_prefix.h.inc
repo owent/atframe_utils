@@ -1,4 +1,5 @@
-// Copyright 2024 atframework
+// Copyright 2026 atframework
+//
 // Created by owent
 
 #ifndef UTIL_INTERNAL_MACRO_COMPILER_INTERNAL_STL_COMPACT_SUFFIX_H_INC
@@ -8,3 +9,4 @@
 #    include "config/compiler/internal/gcc_compact_prefix.h.inc"
 #  endif
 #endif
+

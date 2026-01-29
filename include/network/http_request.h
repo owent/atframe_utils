@@ -1,12 +1,11 @@
-/**
- * @file http_request.h
- * @brief 对CURL的封装
- *
- * @version 1.0
- * @author owent
- * @date 2016.07.14
- *
- */
+// Copyright 2026 atframework
+//
+// @file http_request.h
+// @brief 对CURL的封装
+//
+// @version 1.0
+// @author owent
+// @date 2016.07.14
 
 #ifndef UTILS_NETWORK_HTTP_REQUEST_H
 #define UTILS_NETWORK_HTTP_REQUEST_H
@@ -516,3 +515,4 @@ ATFRAMEWORK_UTILS_NAMESPACE_END
 #endif
 
 #endif
+

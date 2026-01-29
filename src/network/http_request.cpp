@@ -1,3 +1,5 @@
+// Copyright 2026 atframework
+
 #include <assert.h>
 #include <cstring>
 
@@ -1324,3 +1326,4 @@ ATFRAMEWORK_UTILS_NAMESPACE_END
 #  endif
 
 #endif
+

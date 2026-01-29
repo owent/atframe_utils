@@ -1,3 +1,5 @@
+// Copyright 2026 atframework
+//
 // Licensed under the MIT licenses.
 
 #include <algorithm>
@@ -567,3 +569,4 @@ ATFRAMEWORK_UTILS_API types::item_object::ptr_type tquerystring::create_object()
   return types::item_object::create();
 };
 ATFRAMEWORK_UTILS_NAMESPACE_END
+

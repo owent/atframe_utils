@@ -1,4 +1,4 @@
-// Copyright 2022 atframework
+// Copyright 2026 atframework
 
 #include <assert.h>
 #include <inttypes.h>
@@ -355,3 +355,4 @@ ATFRAMEWORK_UTILS_API int base64_decode(std::string &dst, const std::string &in,
 }
 
 ATFRAMEWORK_UTILS_NAMESPACE_END
+

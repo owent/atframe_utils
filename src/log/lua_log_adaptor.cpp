@@ -1,4 +1,5 @@
-// Copyright 2021 atframework
+// Copyright 2026 atframework
+//
 // Licensed under the MIT licenses.
 // Created by owent on 2015-06-29
 
@@ -80,3 +81,4 @@ ATFRAMEWORK_UTILS_API int lua_log_adaptor_openLib(lua_State *L) {
 #  endif
 
 #endif
+

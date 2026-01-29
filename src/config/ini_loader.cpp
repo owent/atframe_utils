@@ -1,4 +1,5 @@
-// Copyright 2021 atframework
+// Copyright 2026 atframework
+//
 // Created by owent
 
 #include "config/ini_loader.h"
@@ -921,3 +922,4 @@ ATFRAMEWORK_UTILS_API void ini_loader::dump_to(ATFRAMEWORK_UTILS_NAMESPACE_ID::n
 }
 }  // namespace config
 ATFRAMEWORK_UTILS_NAMESPACE_END
+

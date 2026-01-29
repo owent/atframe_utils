@@ -1,17 +1,16 @@
-/**
- * @file random_mt_core.h
- * @brief 伪随机数生成器  - 梅森旋转算法
- *
- * Licensed under the MIT licenses.
- * @note 提供mt19937、mt19937-64和mt11213b标准算法
- *
- * @version 1.0
- * @author OWenT
- * @date 2013年8月5日
- *
- * @history
- *
- */
+// Copyright 2026 atframework
+//
+// @file random_mt_core.h
+// @brief 伪随机数生成器  - 梅森旋转算法
+//
+// Licensed under the MIT licenses.
+// @note 提供mt19937、mt19937-64和mt11213b标准算法
+//
+// @version 1.0
+// @author OWenT
+// @date 2013年8月5日
+//
+// @history
 
 #ifndef UTIL_RANDOM_RANDOMMTCORE_H
 #define UTIL_RANDOM_RANDOMMTCORE_H
@@ -196,3 +195,4 @@ class ATFRAMEWORK_UTILS_API_HEAD_ONLY mersenne_twister {
 ATFRAMEWORK_UTILS_NAMESPACE_END
 
 #endif /* RANDOMMTCORE_H_ */
+

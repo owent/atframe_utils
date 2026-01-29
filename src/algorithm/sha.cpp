@@ -1,3 +1,5 @@
+// Copyright 2026 atframework
+
 #include <algorithm>
 
 #include <common/string_oprs.h>
@@ -1326,3 +1328,4 @@ ATFRAMEWORK_UTILS_API std::string sha::hash_to_base64(type t, const void *in, si
 }
 }  // namespace hash
 ATFRAMEWORK_UTILS_NAMESPACE_END
+

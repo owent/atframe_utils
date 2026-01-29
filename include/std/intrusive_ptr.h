@@ -1,16 +1,14 @@
-/**
- *
- * @file intrusive_ptr.h
- * @brief 侵入式智能指针
- * @note 这不是std标准中的一部分，但是这是对smart_ptr.h的补充
- * Licensed under the MIT licenses.
- *
- * @version 1.0
- * @author OWenT, owt5008137@live.com
- * @date 2017.05.18
- * @history
- *
- */
+// Copyright 2026 atframework
+//
+// @file intrusive_ptr.h
+// @brief 侵入式智能指针
+// @note 这不是std标准中的一部分，但是这是对smart_ptr.h的补充
+// Licensed under the MIT licenses.
+//
+// @version 1.0
+// @author OWenT, owt5008137@live.com
+// @date 2017.05.18
+// @history
 
 #ifndef STD_INTRUSIVE_PTR_H
 #define STD_INTRUSIVE_PTR_H
@@ -415,3 +413,4 @@ std::basic_ostream<E, T> &operator<<(std::basic_ostream<E, T> &os, intrusive_ptr
   }
 
 #endif
+

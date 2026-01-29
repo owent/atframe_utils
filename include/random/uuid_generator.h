@@ -1,19 +1,18 @@
-/**
- * @file uuid_generator.h
- * @brief uuid 生成器
- *
- *
- * Licensed under the MIT licenses.
- * @note Windows 下需要链接Rpcrt4.dll或Rpcrt4.lib
- * @note Linux 下需要安装libuuid-devel包并链接libuuid.a 或 libuuid.so
- *
- * @version 1.0
- * @author OWenT
- * @date 2013年9月29日
- *
- * @history
- *
- */
+// Copyright 2026 atframework
+//
+// @file uuid_generator.h
+// @brief uuid 生成器
+//
+//
+// Licensed under the MIT licenses.
+// @note Windows 下需要链接Rpcrt4.dll或Rpcrt4.lib
+// @note Linux 下需要安装libuuid-devel包并链接libuuid.a 或 libuuid.so
+//
+// @version 1.0
+// @author OWenT
+// @date 2013年9月29日
+//
+// @history
 
 #ifndef UTIL_UUID_GENERATOR_H
 #define UTIL_UUID_GENERATOR_H
@@ -137,3 +136,4 @@ ATFRAMEWORK_UTILS_NAMESPACE_END
 #endif
 
 #endif /* UTIL_UUID_GENERATOR_H */
+

@@ -1,4 +1,5 @@
-// Copyright 2021 atframework
+// Copyright 2026 atframework
+//
 // Licensed under the MIT licenses.
 // Created by owent on 2021-09-28
 
@@ -120,3 +121,4 @@ ATFRAMEWORK_UTILS_API void log_sink_syslog_backend::operator()(const log_formatt
 ATFRAMEWORK_UTILS_NAMESPACE_END
 
 #endif
+

@@ -1,4 +1,4 @@
-// Copyright 2021 atframework
+// Copyright 2026 atframework
 
 #include <config/compiler_features.h>
 
@@ -673,3 +673,4 @@ CASE_TEST(random_test, uuid_generator_time_bechmark) {
   }
   CASE_MSG_INFO() << "allocate " << 1000000 << " finished" << std::endl;
 }
+

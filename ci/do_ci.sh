@@ -1,4 +1,5 @@
 #!/bin/bash
+# Copyright 2026 atframework
 
 SCRIPT_DIR="$(cd "$(dirname $0)" && pwd)"
 cd "$SCRIPT_DIR/.."
@@ -180,3 +181,4 @@ elif [[ "$1" == "msys2.mingw.test" ]]; then
   echo "PATH=$PATH"
   ctest . -VV -C $CONFIGURATION -L atframe_utils
 fi
+

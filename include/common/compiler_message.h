@@ -1,16 +1,14 @@
-/**
- * @file compiler_message.h
- * @brief 编译器适配
- * Licensed under the MIT licenses.
- *
- * @version 1.0
- * @author owent
- * @date 2014.12.15
- *
- * @history
- *
- *
- */
+// Copyright 2026 atframework
+//
+// @file compiler_message.h
+// @brief 编译器适配
+// Licensed under the MIT licenses.
+//
+// @version 1.0
+// @author owent
+// @date 2014.12.15
+//
+// @history
 
 #ifndef UTIL_COMMON_COMPILER_MESSAGE_H
 #define UTIL_COMMON_COMPILER_MESSAGE_H
@@ -79,3 +77,4 @@
 #define COMPILER_UNUSED(x) ((void)(x)) /* to avoid warnings */
 
 #endif /* _UTIL_COMMON_COMPILER_MESSAGE_H_ */
+

@@ -1,12 +1,11 @@
-/*
- * cmd_option_list.cpp
- *
- *  Created on: 2011-12-29
- *      Author: OWenT
- *
- * 应用程序命令处理
- *
- */
+// Copyright 2026 atframework
+//
+// cmd_option_list.cpp
+//
+//  Created on: 2011-12-29
+//      Author: OWenT
+//
+// 应用程序命令处理
 
 #include "cli/cmd_option_list.h"
 #include "cli/cmd_option.h"
@@ -137,3 +136,4 @@ ATFRAMEWORK_UTILS_API void cmd_option_list::set_ext_param(void *param) { ext_par
 ATFRAMEWORK_UTILS_API void *cmd_option_list::get_ext_param() const { return ext_param_; }
 }  // namespace cli
 ATFRAMEWORK_UTILS_NAMESPACE_END
+

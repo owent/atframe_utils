@@ -1,4 +1,5 @@
 // Copyright 2026 atframework
+//
 // Licensed under the MIT licenses.
 // Created by owent on 2025-03-04
 // https://en.cppreference.com/w/cpp/feature_test
@@ -48,3 +49,4 @@ int main() {
 
   return 0;
 }
+

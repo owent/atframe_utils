@@ -1,4 +1,5 @@
-// Copyright 2024 atframework
+// Copyright 2026 atframework
+//
 // Created by owent on 2024-05-20
 
 #pragma once
@@ -226,3 +227,4 @@ ATFRAMEWORK_UTILS_NAMESPACE_END
 #else
 #  define ATFW_UTIL_MACRO_NULLABILITY_COMPATIBLE
 #endif
+

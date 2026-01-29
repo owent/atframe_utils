@@ -1,15 +1,14 @@
-/**
- * @file random_generator.h
- * @brief 伪随机数生成器
- *
- * Licensed under the MIT licenses.
- * @version 1.0
- * @author OWenT
- * @date 2018年09月30日
- *
- * @history
- *
- */
+// Copyright 2026 atframework
+//
+// @file random_generator.h
+// @brief 伪随机数生成器
+//
+// Licensed under the MIT licenses.
+// @version 1.0
+// @author OWenT
+// @date 2018年09月30日
+//
+// @history
 
 #ifndef UTIL_RANDOM_GENERATOR_H
 #define UTIL_RANDOM_GENERATOR_H
@@ -191,3 +190,4 @@ using xoshiro256_plus = random_manager_wrapper<core::xoshiro_engine_256<true> >;
 ATFRAMEWORK_UTILS_NAMESPACE_END
 
 #endif /* _UTIL_RANDOM_GENERATOR_H_ */
+

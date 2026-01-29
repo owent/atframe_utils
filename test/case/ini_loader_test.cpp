@@ -1,4 +1,4 @@
-// Copyright 2021 atframework
+// Copyright 2026 atframework
 
 #include <stdint.h>
 
@@ -163,3 +163,4 @@ CASE_TEST(ini_loader, map) {
     CASE_EXPECT_EQ("map.string=value", iter->second->as_cpp_string());
   }
 }
+

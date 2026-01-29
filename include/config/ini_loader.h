@@ -1,26 +1,26 @@
-/**
- * @file config/ini_loader.h
- * @brief ini解析器
- * Licensed under the MIT licenses.
- *
- * @note 与标准ini有略微不同，请注意
- * 1. 支持Section
- * 2. Secion支持父子关系,即 [ A : B : C ] 语法
- * 3. 支持多重父子关系,如 C.B.A = d
- * 4. 支持字符串转义，其中以'包裹的不进行转义，以"包裹的可进行转义,如 C.B.A = "Hello \r\n World!\0"
- * 5. 配置的Key名称不能包含引号('和")、点(.)、冒号(:)和方括号([])
- * 6. 配置的Key名称区分大小写
- * 7. #符号也将是做行注释，与 ; 等价
- *
- * @version 1.0.1.0
- * @author owentou, owt5008137@live.com
- * @date 2013年11月16日
- *
- * @history
- *   2014-07-14: 修正空值问题, 优化API
- *   2015-02-02: 修正字符串未配置会导致崩溃的BUG
- *   2016-04-14: Section部分也支持使用.来分割层级
- */
+// Copyright 2026 atframework
+//
+// @file config/ini_loader.h
+// @brief ini解析器
+// Licensed under the MIT licenses.
+//
+// @note 与标准ini有略微不同，请注意
+// 1. 支持Section
+// 2. Secion支持父子关系,即 [ A : B : C ] 语法
+// 3. 支持多重父子关系,如 C.B.A = d
+// 4. 支持字符串转义，其中以'包裹的不进行转义，以"包裹的可进行转义,如 C.B.A = "Hello \r\n World!\0"
+// 5. 配置的Key名称不能包含引号('和")、点(.)、冒号(:)和方括号([])
+// 6. 配置的Key名称区分大小写
+// 7. #符号也将是做行注释，与 ; 等价
+//
+// @version 1.0.1.0
+// @author owentou, owt5008137@live.com
+// @date 2013年11月16日
+//
+// @history
+//   2014-07-14: 修正空值问题, 优化API
+//   2015-02-02: 修正字符串未配置会导致崩溃的BUG
+//   2016-04-14: Section部分也支持使用.来分割层级
 
 #ifndef UTIL_CONFIG_INI_INILOADER_H
 #define UTIL_CONFIG_INI_INILOADER_H
@@ -485,3 +485,4 @@ class ini_loader {
 ATFRAMEWORK_UTILS_NAMESPACE_END
 
 #endif
+

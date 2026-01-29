@@ -1,23 +1,23 @@
-/**
- * @file seq_alloc.h
- * @brief 进程内序号分配器
- * @note 使用原子操作保证进程内多线程环境下不冲突
- * @note 拥有比spin_lock更精确的内存屏障策略
- * @note 相比std::atomic<T>而言，仅提供适合用于序号分配的简单的原子操作。但比其更能支持一些老版本编译器
- * @note 如果可以使用boost::atomic<T>，请直接使用boost::atomic<T>
- * Licensed under the MIT licenses.
- *
- * @version 1.0
- * @author OWenT
- * @date 2015-12-14
- *
- * @note VC 2012+, GCC 4.4 + 使用C++0x/11实现实现原子操作
- * @note 低版本 VC使用InterlockedExchange等实现原子操作
- * @note 低版本 GCC采用__sync_lock_test_and_set等实现原子操作
- *
- * @history
- *     2015-12-14   created
- */
+// Copyright 2026 atframework
+//
+// @file seq_alloc.h
+// @brief 进程内序号分配器
+// @note 使用原子操作保证进程内多线程环境下不冲突
+// @note 拥有比spin_lock更精确的内存屏障策略
+// @note 相比std::atomic<T>而言，仅提供适合用于序号分配的简单的原子操作。但比其更能支持一些老版本编译器
+// @note 如果可以使用boost::atomic<T>，请直接使用boost::atomic<T>
+// Licensed under the MIT licenses.
+//
+// @version 1.0
+// @author OWenT
+// @date 2015-12-14
+//
+// @note VC 2012+, GCC 4.4 + 使用C++0x/11实现实现原子操作
+// @note 低版本 VC使用InterlockedExchange等实现原子操作
+// @note 低版本 GCC采用__sync_lock_test_and_set等实现原子操作
+//
+// @history
+//     2015-12-14   created
 
 #ifndef UTIL_LOCK_SEQ_ALLOC_H
 #define UTIL_LOCK_SEQ_ALLOC_H
@@ -87,3 +87,4 @@ using seq_alloc_i64 = seq_alloc<int64_t>;
 ATFRAMEWORK_UTILS_NAMESPACE_END
 
 #endif /* _UTIL_LOCK_SEQ_ALLOC_H_ */
+

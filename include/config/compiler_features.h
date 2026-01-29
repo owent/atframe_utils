@@ -1,4 +1,6 @@
 
+// Copyright 2026 atframework
+//
 // This is a generated file. Do not edit!
 
 #ifndef UTIL_CONFIG_COMPILER_DETECTION_H
@@ -1323,3 +1325,4 @@ struct UTIL_CONFIGStaticAssert<true> {};
 #endif
 
 #endif
+

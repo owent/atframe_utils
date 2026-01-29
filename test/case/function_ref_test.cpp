@@ -1,4 +1,5 @@
-// Copyright 2021 atframework
+// Copyright 2026 atframework
+//
 // Created by owent on 2021-08-10
 
 #include <nostd/type_traits.h>
@@ -169,3 +170,4 @@ CASE_TEST(function_ref_test, ReferenceToIncompleteType) {
   ref(obj);
 }
 }  // namespace
+

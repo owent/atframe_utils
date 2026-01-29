@@ -1,4 +1,4 @@
-// Copyright 2021 atframework
+// Copyright 2026 atframework
 
 #include <cstring>
 
@@ -243,3 +243,4 @@ CASE_TEST(lru_object_pool_test, adjust_bound) {
     CASE_EXPECT_EQ(lru.size(), mgr->item_count().get());
   }
 }
+

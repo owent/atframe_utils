@@ -1,3 +1,4 @@
+REM Copyright 2026 atframework
 mkdir build_jobs_msvc
 cd build_jobs_msvc
 

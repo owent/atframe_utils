@@ -1,4 +1,4 @@
-// Copyright 2021 atframework
+// Copyright 2026 atframework
 
 #include <std/thread.h>
 
@@ -614,3 +614,4 @@ int run_tests(int argc, char *argv[]) {
   run_event_on_exit();
   return ret;
 }
+

@@ -1,7 +1,9 @@
-// Copyright 2024 atframework
+// Copyright 2026 atframework
+//
 // Created by owent
-
+//
 // ============= Patch for some Compilers's mistake =============
+
 #if (__GNUC__ * 100 + __GNUC_MINOR__ * 10) >= 460
 #  pragma GCC diagnostic push
 #endif
@@ -18,3 +20,4 @@
 #    pragma GCC diagnostic ignored "-Wtsan"
 #  endif
 #endif
+

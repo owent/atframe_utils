@@ -379,3 +379,4 @@ CASE_TEST(algorithm_bit, edge_cases_count_consistency) {
   CASE_EXPECT_EQ(1, atfw::util::bit::countr_zero(alternating));
   CASE_EXPECT_EQ(0, atfw::util::bit::countr_one(alternating));
 }
+

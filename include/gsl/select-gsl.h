@@ -1,4 +1,5 @@
-// Copyright 2021 atframework
+// Copyright 2026 atframework
+//
 // @author OWenT, admin@owent.net
 // @see https://github.com/gsl-lite/gsl-lite#features
 
@@ -309,3 +310,4 @@ ATFRAMEWORK_UTILS_ENABLE_GSL_NAMESPACE_END
 #endif
 
 #endif  // GSL_SELECT_GSL_H
+

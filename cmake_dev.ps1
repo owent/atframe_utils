@@ -1,3 +1,4 @@
+# Copyright 2026 atframework
 <#
 .SYNOPSIS
     .
@@ -374,3 +375,4 @@ New-Item -Path "$BuildDirectory" -ItemType "directory" -Force
 Set-Location $BuildDirectory
 
 & cmake .. $CMakeGeneratorArgs
+

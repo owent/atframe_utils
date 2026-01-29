@@ -1,4 +1,5 @@
-// Copyright 2024 atframework
+// Copyright 2026 atframework
+//
 // Licenses under the MIT License
 
 #include "memory/lru_object_pool.h"
@@ -234,3 +235,4 @@ ATFRAMEWORK_UTILS_API bool lru_pool_manager::check_tick(time_t tp) {
 
 }  // namespace memory
 ATFRAMEWORK_UTILS_NAMESPACE_END
+

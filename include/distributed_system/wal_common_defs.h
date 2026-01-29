@@ -1,4 +1,5 @@
-// Copyright 2021 atframework
+// Copyright 2026 atframework
+//
 // Created by owent on 2021-08-12
 // Common definitions for Write Ahead Log
 
@@ -246,3 +247,4 @@ using wal_log_operator_with_mt_mode =
 
 }  // namespace distributed_system
 ATFRAMEWORK_UTILS_NAMESPACE_END
+

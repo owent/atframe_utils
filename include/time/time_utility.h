@@ -1,13 +1,13 @@
-/**
- * @file time_utility.h
- * @brief 时间相关得通用代码
- * Licensed under the MIT licenses.
- *
- * @version 1.0
- * @author owent
- * @date 2015-06-29
- * @history
- */
+// Copyright 2026 atframework
+//
+// @file time_utility.h
+// @brief 时间相关得通用代码
+// Licensed under the MIT licenses.
+//
+// @version 1.0
+// @author owent
+// @date 2015-06-29
+// @history
 
 #pragma once
 
@@ -331,3 +331,4 @@ class time_utility {
 };
 }  // namespace time
 ATFRAMEWORK_UTILS_NAMESPACE_END
+

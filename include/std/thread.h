@@ -1,16 +1,15 @@
-/**
- * @file thread.h
- * @brief 导入多线程特性支持兼容层
- * Licensed under the MIT licenses.
- *
- * @version 1.0
- * @author OWenT, owt5008137@live.com
- * @date 2014.03.13
- *
- * @history
- *   2015-06-06: 适配Android和IOS
- *
- */
+// Copyright 2026 atframework
+//
+// @file thread.h
+// @brief 导入多线程特性支持兼容层
+// Licensed under the MIT licenses.
+//
+// @version 1.0
+// @author OWenT, owt5008137@live.com
+// @date 2014.03.13
+//
+// @history
+//   2015-06-06: 适配Android和IOS
 
 #ifndef STD_THREAD_H
 #define STD_THREAD_H
@@ -136,3 +135,4 @@
 #endif
 
 #endif
+

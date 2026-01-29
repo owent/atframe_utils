@@ -1,4 +1,5 @@
-// Copyright 2024 atframework
+// Copyright 2026 atframework
+//
 // Licenses under the MIT License
 // @note 本文件的单元测试case来自 boost::smart_ptr ,但是做了部分修改。
 //       抹除了线程安全检测和部分与stl行为不一致的部分采用STL行为。
@@ -5026,3 +5027,4 @@ CASE_TEST(rc_ptr, allocate_strong_rc_esft_test) {
 #elif defined(__clang__) || defined(__apple_build_version__)
 #  pragma clang diagnostic pop
 #endif
+

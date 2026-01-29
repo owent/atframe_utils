@@ -1,15 +1,14 @@
-/**
- * @file explicit_declare.h
- * @brief 导入继承关系约束<br />
- * Licensed under the MIT licenses.
- *
- * @version 1.0
- * @author OWenT, owt5008137@live.com
- * @date 2013-12-25
- *
- * @history
- *
- */
+// Copyright 2026 atframework
+//
+// @file explicit_declare.h
+// @brief 导入继承关系约束<br />
+// Licensed under the MIT licenses.
+//
+// @version 1.0
+// @author OWenT, owt5008137@live.com
+// @date 2013-12-25
+//
+// @history
 
 #pragma once
 
@@ -259,3 +258,4 @@
 #ifndef EXPLICIT_UNREACHABLE
 #  define EXPLICIT_UNREACHABLE() ATFW_EXPLICIT_UNREACHABLE()
 #endif
+
