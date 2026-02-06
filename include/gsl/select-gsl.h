@@ -118,8 +118,8 @@ ATFW_EXPLICIT_NODISCARD_ATTR ATFRAMEWORK_UTILS_API_HEAD_ONLY constexpr inline ty
 #  if gsl_HAVE(INITIALIZER_LIST)
 
 template <class T>
-ATFW_EXPLICIT_NODISCARD_ATTR ATFRAMEWORK_UTILS_API_HEAD_ONLY constexpr inline const T at(std::initializer_list<T> cont,
-                                                                                         size_t pos) {
+ATFW_EXPLICIT_NODISCARD_ATTR
+    ATFRAMEWORK_UTILS_API_HEAD_ONLY constexpr inline const T at(std::initializer_list<T> cont, size_t pos) {
   return *(cont.begin() + pos);
 }
 #  endif
@@ -294,14 +294,14 @@ ATFW_EXPLICIT_NODISCARD_ATTR ATFRAMEWORK_UTILS_API_HEAD_ONLY inline constexpr T 
 
 #if (defined(ATFRAMEWORK_UTILS_GSL_TEST_STL_STRING_VIEW) && ATFRAMEWORK_UTILS_GSL_TEST_STL_STRING_VIEW) && \
     (defined(ATFRAMEWORK_UTILS_ENABLE_GSL_STRING_VIEW_FROM_STD) && ATFRAMEWORK_UTILS_ENABLE_GSL_STRING_VIEW_FROM_STD)
-#  include <string_view>
+#  include <string_view>  // IWYU pragma: keep
 ATFRAMEWORK_UTILS_ENABLE_GSL_NAMESPACE_BEGIN
 using std::basic_string_view;
 using std::string_view;
 using std::wstring_view;
 ATFRAMEWORK_UTILS_ENABLE_GSL_NAMESPACE_END
 #else
-#  include <nostd/string_view.h>
+#  include <nostd/string_view.h>  // IWYU pragma: keep
 ATFRAMEWORK_UTILS_ENABLE_GSL_NAMESPACE_BEGIN
 using ATFRAMEWORK_UTILS_NAMESPACE_ID::nostd::basic_string_view;
 using ATFRAMEWORK_UTILS_NAMESPACE_ID::nostd::string_view;
@@ -310,4 +310,3 @@ ATFRAMEWORK_UTILS_ENABLE_GSL_NAMESPACE_END
 #endif
 
 #endif  // GSL_SELECT_GSL_H
-
