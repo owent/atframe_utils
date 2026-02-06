@@ -115,6 +115,14 @@ See `.github/skills/testing.md`.
 - `string_oprs.h` - String operations
 - `demangle.h` - C++ symbol demangling
 
+## Code Formatting
+
+This project uses **clang-format** for code formatting. The `.clang-format` file is located at the project root.
+
+- Style: Based on Google style
+- Column limit: 120
+- Run formatting: `clang-format -i <file>`
+
 ## Coding Conventions
 
 1. **Namespace**: All code is in `atfw::util` namespace
