@@ -134,6 +134,12 @@ This project uses **clang-format** for code formatting. The `.clang-format` file
    - Constants: `UPPER_SNAKE_CASE`
    - Member variables: `snake_case_` (trailing underscore)
 5. **Error handling**: Use return codes or `nostd::result` types
+6. **Anonymous namespace + static**: In `.cpp` files, file-local functions should be placed inside an anonymous namespace **and** keep the `static` keyword. Do **not** remove `static` when moving a function into an anonymous namespace.
+   ```cpp
+   namespace {
+   static void my_helper() { /* ... */ }
+   }  // namespace
+   ```
 
 ## Compiler Support
 

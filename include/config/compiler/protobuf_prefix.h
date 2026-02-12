@@ -70,14 +70,18 @@
 
 #include "template_prefix.h"
 
+#pragma push_macro("GetObject")
+#ifdef GetObject
+#  undef GetObject
+#endif
+#pragma push_macro("max")
 #ifdef max
 #  undef max
 #endif
-
+#pragma push_macro("min")
 #ifdef min
 #  undef min
 #endif
-
 // Unreal Engine will define these macros
 #pragma push_macro("check")
 #ifdef check
@@ -93,4 +97,3 @@
 #endif
 
 #endif
-
