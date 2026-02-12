@@ -4,6 +4,10 @@
 #  pragma pop_macro("cast")
 #  pragma pop_macro("verify")
 #  pragma pop_macro("check")
+#  pragma pop_macro("min")
+#  pragma pop_macro("max")
+#  pragma pop_macro("GetObject")
+
 #  include "template_suffix.h"
 
 #  if defined(__GNUC__) && !defined(__clang__) && !defined(__apple_build_version__)
@@ -20,4 +24,3 @@
 
 #  undef ATFW_UTIL_CONFIG_COMPILER_PROTOBUF_PREFIX_H
 #endif
-
