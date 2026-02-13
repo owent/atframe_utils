@@ -15,7 +15,7 @@
 
 #pragma once
 
-#include <assert.h>
+#include <cassert>
 #include <cstddef>
 #include <ostream>
 
@@ -413,4 +413,3 @@ std::basic_ostream<E, T> &operator<<(std::basic_ostream<E, T> &os, intrusive_ptr
   }
 
 #endif
-
