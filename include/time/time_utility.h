@@ -17,12 +17,9 @@
 
 #include <config/atframe_utils_build_feature.h>
 
-#include <stdint.h>
-#include <cstddef>
-#include <cstring>
+#include <chrono>
+#include <cstdint>
 #include <ctime>
-
-#include "std/chrono.h"
 
 #if (defined(__STDC_VERSION__) && __STDC_VERSION__ >= 201112L) || defined(__STDC_LIB_EXT1__)
 #  define UTIL_STRFUNC_LOCALTIME_S(time_t_ptr, tm_ptr) localtime_s(time_t_ptr, tm_ptr)
@@ -331,4 +328,3 @@ class time_utility {
 };
 }  // namespace time
 ATFRAMEWORK_UTILS_NAMESPACE_END
-

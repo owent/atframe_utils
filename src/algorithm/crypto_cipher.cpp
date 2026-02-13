@@ -8,8 +8,6 @@
 #include <common/string_oprs.h>
 #include <config/compiler_features.h>
 
-#include <std/static_assert.h>
-
 #include <lock/atomic_int_type.h>
 
 #include <cstring>
@@ -1806,4 +1804,3 @@ ATFRAMEWORK_UTILS_API int cipher::cleanup_global_algorithm() {
 ATFRAMEWORK_UTILS_NAMESPACE_END
 
 #endif
-

@@ -7,8 +7,6 @@
 #include <common/file_system.h>
 #include <common/string_oprs.h>
 
-#include <std/static_assert.h>
-
 #include <common/compiler_message.h>
 #include <config/compiler_features.h>
 #include <std/explicit_declare.h>
@@ -701,8 +699,9 @@ static constexpr const int supported_dh_curves_openssl[] = {
     -1,  // end
 };
 
-STD_STATIC_ASSERT(sizeof(supported_dh_curves) / sizeof(supported_dh_curves[0]) ==
-                  sizeof(supported_dh_curves_openssl) / sizeof(supported_dh_curves_openssl[0]));
+static_assert(sizeof(supported_dh_curves) / sizeof(supported_dh_curves[0]) ==
+                  sizeof(supported_dh_curves_openssl) / sizeof(supported_dh_curves_openssl[0]),
+              "size of supported_dh_curves and supported_dh_curves_openssl should be the same");
 
 static inline void reset(EVP_PKEY *&pkey) {
   if (nullptr == pkey) {
@@ -2569,4 +2568,3 @@ int dh::check_or_setup_dh_pg_gy(BIGNUM *&DH_p, BIGNUM *&DH_g, BIGNUM *&DH_gy) {
 ATFRAMEWORK_UTILS_NAMESPACE_END
 
 #endif
-
