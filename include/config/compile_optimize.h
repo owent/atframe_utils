@@ -313,7 +313,7 @@
 #      define ATFW_UTIL_NOINLINE_NOCLONE __attribute__((noinline))
 #    endif
 #  elif defined(__GNUC__) && __GNUC__ > 3
-#    if __cplusplus >= 201103L && (__G NUC__ * 100 + __GNUC_MINOR__) >= 408
+#    if __cplusplus >= 201103L && (__GNUC__ * 100 + __GNUC_MINOR__) >= 408
 #      define ATFW_UTIL_NOINLINE_NOCLONE [[gnu::noinline, gnu::noclone]]
 #    else
 #      define ATFW_UTIL_NOINLINE_NOCLONE __attribute__((noinline, noclone))
@@ -793,4 +793,3 @@
 #    define ATFW_UTIL_ATTRIBUTE_CXX17_INLINE
 #  endif
 #endif
-
