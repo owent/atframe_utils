@@ -44,7 +44,7 @@ class ATFRAMEWORK_UTILS_API_HEAD_ONLY spin_rw_lock {
 
   void read_lock() {
     unsigned char try_times = 0;
-    while (!try_read_lock()) __UTIL_LOCK_SPIN_LOCK_WAIT(try_times++); /* busy-wait */
+    while (!try_read_lock()) detail::spin_wait(try_times++); /* busy-wait */
   }
 
   void read_unlock() { try_read_unlock(); }
@@ -99,13 +99,13 @@ class ATFRAMEWORK_UTILS_API_HEAD_ONLY spin_rw_lock {
           return;
         }
 
-        __UTIL_LOCK_SPIN_LOCK_WAIT(try_times++); /* busy-wait */
+        detail::spin_wait(try_times++); /* busy-wait */
         continue;
       }
 
       // failed if already locked
       if (src_status & WRITE_LOCK_FLAG) {
-        __UTIL_LOCK_SPIN_LOCK_WAIT(try_times++); /* busy-wait */
+        detail::spin_wait(try_times++); /* busy-wait */
         continue;
       }
 
