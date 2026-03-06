@@ -147,33 +147,33 @@ CASE_TEST(lock_test, spin_rw_lock_mt) {
   CASE_EXPECT_TRUE(lock.try_read_lock());
   CASE_EXPECT_TRUE(lock.try_read_lock());
   lock.read_lock();
-  CASE_MSG_INFO() << "Wait another thread to write_lock" << std::endl;
+  CASE_MSG_INFO() << "Wait another thread to write_lock" << '\n';
 
   std::thread *write_lock_thd[32];
   for (int i = 0; i < 32; ++i) {
     write_lock_thd[i] = new std::thread([&lock, &write_lock_count]() {
-      CASE_MSG_INFO() << "Thread: " << std::this_thread::get_id() << " before write_lock" << std::endl;
+      CASE_MSG_INFO() << "Thread: " << std::this_thread::get_id() << " before write_lock" << '\n';
       lock.write_lock();
       ++write_lock_count;
-      CASE_MSG_INFO() << "Thread: " << std::this_thread::get_id() << " after write_lock" << std::endl;
+      CASE_MSG_INFO() << "Thread: " << std::this_thread::get_id() << " after write_lock" << '\n';
 
-      __UTIL_LOCK_SPIN_LOCK_THREAD_YIELD();
-      __UTIL_LOCK_SPIN_LOCK_THREAD_SLEEP();
+      atfw::util::lock::detail::thread_yield();
+      atfw::util::lock::detail::thread_sleep();
       CASE_EXPECT_EQ(1, write_lock_count.load());
 
-      CASE_MSG_INFO() << "Thread: " << std::this_thread::get_id() << " before write_unlock" << std::endl;
+      CASE_MSG_INFO() << "Thread: " << std::this_thread::get_id() << " before write_unlock" << '\n';
       --write_lock_count;
       lock.write_unlock();
-      CASE_MSG_INFO() << "Thread: " << std::this_thread::get_id() << " after write_unlock" << std::endl;
+      CASE_MSG_INFO() << "Thread: " << std::this_thread::get_id() << " after write_unlock" << '\n';
     });
   }
 
   while (!lock.is_write_locked()) {
-    __UTIL_LOCK_SPIN_LOCK_THREAD_YIELD();
+    atfw::util::lock::detail::thread_yield();
   }
 
   CASE_EXPECT_FALSE(lock.try_read_lock());
-  CASE_MSG_INFO() << "Start to unlock read lock" << std::endl;
+  CASE_MSG_INFO() << "Start to unlock read lock" << '\n';
   lock.read_unlock();
   lock.read_unlock();
   lock.read_unlock();
@@ -192,4 +192,3 @@ CASE_TEST(lock_test, spin_rw_lock_mt) {
 }
 
 #endif
-
