@@ -14,6 +14,7 @@
 #include <config/atframe_utils_build_feature.h>
 
 #include <gsl/select-gsl.h>
+#include <nostd/string_view.h>
 
 #if defined(ATFRAMEWORK_UTILS_CRYPTO_USE_OPENSSL) || defined(ATFRAMEWORK_UTILS_CRYPTO_USE_LIBRESSL) || \
     defined(ATFRAMEWORK_UTILS_CRYPTO_USE_BORINGSSL)
@@ -106,7 +107,8 @@ class cipher {
   ATFRAMEWORK_UTILS_API cipher();
   ATFRAMEWORK_UTILS_API ~cipher();
 
-  ATFRAMEWORK_UTILS_API int init(const char *name, int mode = mode_t::EN_CMODE_ENCRYPT | mode_t::EN_CMODE_DECRYPT);
+  ATFRAMEWORK_UTILS_API int init(nostd::string_view name,
+                                 int mode = mode_t::EN_CMODE_ENCRYPT | mode_t::EN_CMODE_DECRYPT);
   ATFRAMEWORK_UTILS_API int close();
 
   /**
@@ -295,4 +297,3 @@ ATFRAMEWORK_UTILS_NAMESPACE_END
 #endif
 
 #endif
-

@@ -357,8 +357,8 @@ static constexpr const cipher_interface_info_t supported_ciphers[] = {
     {nullptr, EN_CIMT_INVALID, nullptr, nullptr, false},  // end
 };
 
-static const cipher_interface_info_t *get_cipher_interface_by_name(const char *name) {
-  if (nullptr == name) {
+static const cipher_interface_info_t *get_cipher_interface_by_name(nostd::string_view name) {
+  if (name.empty()) {
     return nullptr;
   }
 
@@ -369,7 +369,7 @@ static const cipher_interface_info_t *get_cipher_interface_by_name(const char *n
       continue;
     }
 #  endif
-    if (0 == UTIL_STRFUNC_STRCASE_CMP(name, details::supported_ciphers[i].name)) {
+    if (0 == UTIL_STRFUNC_STRNCASE_CMP(name.data(), details::supported_ciphers[i].name, name.size())) {
       return &details::supported_ciphers[i];
     }
   }
@@ -387,12 +387,12 @@ ATFRAMEWORK_UTILS_API cipher::cipher()
       cipher_kt_(nullptr) {}
 ATFRAMEWORK_UTILS_API cipher::~cipher() { close(); }
 
-ATFRAMEWORK_UTILS_API int cipher::init(const char *name, int mode) {
+ATFRAMEWORK_UTILS_API int cipher::init(nostd::string_view name, int mode) {
   if (nullptr != interface_ && interface_->method != EN_CIMT_INVALID) {
     return details::setup_errorno(*this, -1, error_code_t::ALREADY_INITED);
   }
 
-  if (nullptr == name) {
+  if (name.empty()) {
     return details::setup_errorno(*this, -1, error_code_t::INVALID_PARAM);
   }
 

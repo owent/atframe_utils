@@ -12,6 +12,8 @@
 
 #include <config/atframe_utils_build_feature.h>
 
+#include <nostd/string_view.h>
+
 #if defined(ATFRAMEWORK_UTILS_CRYPTO_USE_OPENSSL) || defined(ATFRAMEWORK_UTILS_CRYPTO_USE_LIBRESSL) || \
     defined(ATFRAMEWORK_UTILS_CRYPTO_USE_BORINGSSL)
 
@@ -168,7 +170,7 @@ class dh {
      * @note using RFC 4492 for ECDH algorithm
      * @return 0 or error code
      */
-    ATFRAMEWORK_UTILS_API int init(const char *name);
+    ATFRAMEWORK_UTILS_API int init(nostd::string_view name);
 
     /**
      * @brief initialize a shared context for client mode
@@ -320,4 +322,3 @@ ATFRAMEWORK_UTILS_NAMESPACE_END
 #endif
 
 #endif
-

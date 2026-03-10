@@ -948,20 +948,20 @@ ATFRAMEWORK_UTILS_API dh::shared_context::ptr_t dh::shared_context::create() {
   return std::make_shared<dh::shared_context>(h);
 }
 
-ATFRAMEWORK_UTILS_API int dh::shared_context::init(const char *name) {
-  if (nullptr == name) {
+ATFRAMEWORK_UTILS_API int dh::shared_context::init(nostd::string_view name) {
+  if (name.empty()) {
     return error_code_t::INVALID_PARAM;
   }
 
   int ecp_idx = 1;
   method_t::type method = method_t::EN_CDT_DH;
-  if (0 == UTIL_STRFUNC_STRNCASE_CMP("ecdh:", name, 5)) {
+  if (name.size() > 5 && 0 == UTIL_STRFUNC_STRNCASE_CMP("ecdh:", name.data(), 5)) {
     method = method_t::EN_CDT_ECDH;
 
     while (nullptr != details::supported_dh_curves[ecp_idx][0]) {
       bool found = false;
       for (const auto &check_name : details::supported_dh_curves[ecp_idx]) {
-        if (nullptr != check_name && 0 == UTIL_STRFUNC_STRCASE_CMP(name + 5, check_name)) {
+        if (nullptr != check_name && 0 == UTIL_STRFUNC_STRNCASE_CMP(name.data() + 5, check_name, name.size() - 5)) {
           found = true;
           break;
         }
@@ -998,7 +998,7 @@ ATFRAMEWORK_UTILS_API int dh::shared_context::init(const char *name) {
     case method_t::EN_CDT_DH: {
       // do nothing in client mode
       FILE *pem = nullptr;
-      UTIL_FS_OPEN(pem_file_e, pem, name, "r");
+      UTIL_FS_OPEN(pem_file_e, pem, std::string{name}.c_str(), "r");
       COMPILER_UNUSED(pem_file_e);
       if (nullptr == pem) {
         ret = error_code_t::READ_DHPARAM_FILE;
