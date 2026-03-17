@@ -115,7 +115,7 @@ class ATFRAMEWORK_UTILS_API_HEAD_ONLY jiffies_timer {
   static inline UTIL_CONFIG_CONSTEXPR size_t LVL_OFFS(size_t n) { return n * LVL_SIZE; }
 
   static inline UTIL_CONFIG_CONSTEXPR time_t LVL_START(size_t n) {
-    return static_cast<time_t>((LVL_SIZE) << ((n - 1) * LVL_CLK_SHIFT));
+    return static_cast<time_t>(static_cast<time_t>(LVL_SIZE) << ((n - 1) * LVL_CLK_SHIFT));
   }
 
  private:
