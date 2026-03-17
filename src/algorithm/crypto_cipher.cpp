@@ -369,7 +369,8 @@ static const cipher_interface_info_t *get_cipher_interface_by_name(nostd::string
       continue;
     }
 #  endif
-    if (0 == UTIL_STRFUNC_STRNCASE_CMP(name.data(), details::supported_ciphers[i].name, name.size())) {
+    if (name.size() == strlen(details::supported_ciphers[i].name) &&
+        0 == UTIL_STRFUNC_STRNCASE_CMP(name.data(), details::supported_ciphers[i].name, name.size())) {
       return &details::supported_ciphers[i];
     }
   }

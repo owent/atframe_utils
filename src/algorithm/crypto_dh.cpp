@@ -961,7 +961,8 @@ ATFRAMEWORK_UTILS_API int dh::shared_context::init(nostd::string_view name) {
     while (nullptr != details::supported_dh_curves[ecp_idx][0]) {
       bool found = false;
       for (const auto &check_name : details::supported_dh_curves[ecp_idx]) {
-        if (nullptr != check_name && 0 == UTIL_STRFUNC_STRNCASE_CMP(name.data() + 5, check_name, name.size() - 5)) {
+        if (nullptr != check_name && strlen(check_name) + 5 == name.size() &&
+            0 == UTIL_STRFUNC_STRNCASE_CMP(name.data() + 5, check_name, name.size() - 5)) {
           found = true;
           break;
         }
