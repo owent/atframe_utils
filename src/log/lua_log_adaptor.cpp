@@ -19,7 +19,7 @@ static int lua_log_adaptor_fn_lua_log(lua_State *L) {
   // log 分类
   uint32_t cat = static_cast<uint32_t>(luaL_checkinteger(L, 1));
 
-  ATFRAMEWORK_UTILS_NAMESPACE_ID::log::log_wrapper::level_t::type level = WLOG_LEVELID(luaL_checkinteger(L, 2));
+  ATFRAMEWORK_UTILS_NAMESPACE_ID::log::log_wrapper::log_level level = WLOG_LEVELID(luaL_checkinteger(L, 2));
 
   ATFRAMEWORK_UTILS_NAMESPACE_ID::log::log_wrapper *logger = WDTLOGGETCAT(cat);
   if (nullptr != logger && logger->check_level(level)) {
@@ -44,28 +44,25 @@ extern "C" {
 ATFRAMEWORK_UTILS_API int lua_log_adaptor_openLib(lua_State *L) {
   lua_newtable(L);
 
-  lua_pushinteger(L,
-                  static_cast<lua_Integer>(ATFRAMEWORK_UTILS_NAMESPACE_ID::log::log_wrapper::level_t::LOG_LW_DISABLED));
+  lua_pushinteger(L, static_cast<lua_Integer>(ATFRAMEWORK_UTILS_NAMESPACE_ID::log::log_level::kDisabled));
   lua_setfield(L, -2, "DISABLED");
 
-  lua_pushinteger(L, static_cast<lua_Integer>(ATFRAMEWORK_UTILS_NAMESPACE_ID::log::log_wrapper::level_t::LOG_LW_FATAL));
+  lua_pushinteger(L, static_cast<lua_Integer>(ATFRAMEWORK_UTILS_NAMESPACE_ID::log::log_level::kFatal));
   lua_setfield(L, -2, "FATAL");
 
-  lua_pushinteger(L, static_cast<lua_Integer>(ATFRAMEWORK_UTILS_NAMESPACE_ID::log::log_wrapper::level_t::LOG_LW_ERROR));
+  lua_pushinteger(L, static_cast<lua_Integer>(ATFRAMEWORK_UTILS_NAMESPACE_ID::log::log_level::kError));
   lua_setfield(L, -2, "ERROR");
 
-  lua_pushinteger(L,
-                  static_cast<lua_Integer>(ATFRAMEWORK_UTILS_NAMESPACE_ID::log::log_wrapper::level_t::LOG_LW_WARNING));
+  lua_pushinteger(L, static_cast<lua_Integer>(ATFRAMEWORK_UTILS_NAMESPACE_ID::log::log_level::kWarning));
   lua_setfield(L, -2, "WARNING");
 
-  lua_pushinteger(L, static_cast<lua_Integer>(ATFRAMEWORK_UTILS_NAMESPACE_ID::log::log_wrapper::level_t::LOG_LW_INFO));
+  lua_pushinteger(L, static_cast<lua_Integer>(ATFRAMEWORK_UTILS_NAMESPACE_ID::log::log_level::kInfo));
   lua_setfield(L, -2, "INFO");
 
-  lua_pushinteger(L,
-                  static_cast<lua_Integer>(ATFRAMEWORK_UTILS_NAMESPACE_ID::log::log_wrapper::level_t::LOG_LW_NOTICE));
+  lua_pushinteger(L, static_cast<lua_Integer>(ATFRAMEWORK_UTILS_NAMESPACE_ID::log::log_level::kNotice));
   lua_setfield(L, -2, "NOTICE");
 
-  lua_pushinteger(L, static_cast<lua_Integer>(ATFRAMEWORK_UTILS_NAMESPACE_ID::log::log_wrapper::level_t::LOG_LW_DEBUG));
+  lua_pushinteger(L, static_cast<lua_Integer>(ATFRAMEWORK_UTILS_NAMESPACE_ID::log::log_level::kDebug));
   lua_setfield(L, -2, "DEBUG");
 
   lua_setglobal(L, "lua_log_level_t");
@@ -81,4 +78,3 @@ ATFRAMEWORK_UTILS_API int lua_log_adaptor_openLib(lua_State *L) {
 #  endif
 
 #endif
-

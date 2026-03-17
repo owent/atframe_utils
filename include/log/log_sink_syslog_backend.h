@@ -35,8 +35,7 @@ class log_sink_syslog_backend {
   ATFRAMEWORK_UTILS_API ~log_sink_syslog_backend();
 
  public:
-  ATFRAMEWORK_UTILS_API void operator()(const log_formatter::caller_info_t &caller, const char *content,
-                                        size_t content_size);
+  ATFRAMEWORK_UTILS_API void operator()(const log_formatter::caller_info_t &caller, nostd::string_view content);
 
  private:
   std::shared_ptr<log_sink_syslog_backend_handle> handle_;
@@ -50,4 +49,3 @@ ATFRAMEWORK_UTILS_NAMESPACE_END
 #endif
 
 #endif
-

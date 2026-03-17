@@ -82,35 +82,35 @@ ATFRAMEWORK_UTILS_API log_sink_syslog_backend::log_sink_syslog_backend(const cha
 ATFRAMEWORK_UTILS_API log_sink_syslog_backend::~log_sink_syslog_backend() {}
 
 ATFRAMEWORK_UTILS_API void log_sink_syslog_backend::operator()(const log_formatter::caller_info_t &caller,
-                                                               const char *content, size_t /*content_size*/) {
+                                                               nostd::string_view content) {
   if (!handle_) {
     handle_ =
         log_sink_syslog_backend_handle::mutable_instance(ident_.empty() ? nullptr : ident_.c_str(), option_, facility_);
   }
 
   switch (caller.level_id) {
-    // case log_formatter::level_t::LOG_LW_DISABLED:
+    // case log_level::kDisabled:
     //   break;
-    case log_formatter::level_t::LOG_LW_FATAL:
-      syslog(facility_ | LOG_ALERT, "%s", content);
+    case log_level::kFatal:
+      syslog(facility_ | LOG_ALERT, "%s", content.data());
       break;
-    case log_formatter::level_t::LOG_LW_ERROR:
-      syslog(facility_ | LOG_ERR, "%s", content);
+    case log_level::kError:
+      syslog(facility_ | LOG_ERR, "%s", content.data());
       break;
-    case log_formatter::level_t::LOG_LW_WARNING:
-      syslog(facility_ | LOG_WARNING, "%s", content);
+    case log_level::kWarning:
+      syslog(facility_ | LOG_WARNING, "%s", content.data());
       break;
-    case log_formatter::level_t::LOG_LW_INFO:
-      syslog(facility_ | LOG_INFO, "%s", content);
+    case log_level::kInfo:
+      syslog(facility_ | LOG_INFO, "%s", content.data());
       break;
-    case log_formatter::level_t::LOG_LW_NOTICE:
-      syslog(facility_ | LOG_NOTICE, "%s", content);
+    case log_level::kNotice:
+      syslog(facility_ | LOG_NOTICE, "%s", content.data());
       break;
-    case log_formatter::level_t::LOG_LW_DEBUG:
-      syslog(facility_ | LOG_DEBUG, "%s", content);
+    case log_level::kDebug:
+      syslog(facility_ | LOG_DEBUG, "%s", content.data());
       break;
-    case log_formatter::level_t::LOG_LW_TRACE:
-      syslog(facility_ | LOG_DEBUG, "%s", content);
+    case log_level::kTrace:
+      syslog(facility_ | LOG_DEBUG, "%s", content.data());
       break;
     default:
       break;
@@ -121,4 +121,3 @@ ATFRAMEWORK_UTILS_API void log_sink_syslog_backend::operator()(const log_formatt
 ATFRAMEWORK_UTILS_NAMESPACE_END
 
 #endif
-

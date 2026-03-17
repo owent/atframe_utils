@@ -22,6 +22,7 @@
 #include "lock/spin_rw_lock.h"
 
 #include "log/log_formatter.h"
+#include "nostd/string_view.h"
 
 ATFRAMEWORK_UTILS_NAMESPACE_BEGIN
 namespace log {
@@ -53,13 +54,13 @@ class log_wrapper {
   };
 
  public:
-  using level_t = log_formatter::level_t;
+  using level_t = log_level;
   using caller_info_t = log_formatter::caller_info_t;
-  using log_handler_t = std::function<void(const caller_info_t &caller, const char *content, size_t content_size)>;
+  using log_handler_t = std::function<void(const caller_info_t &caller, nostd::string_view content)>;
 
   struct log_router_t {
-    level_t::type level_min;
-    level_t::type level_max;
+    log_level level_min;
+    log_level level_max;
     log_handler_t handle;
   };
 
@@ -78,7 +79,7 @@ class log_wrapper {
 
  public:
   // 初始化
-  ATFRAMEWORK_UTILS_API int32_t init(level_t::type level = level_t::LOG_LW_DEBUG);
+  ATFRAMEWORK_UTILS_API int32_t init(log_level level = level_t::kDebug);
 
   static ATFRAMEWORK_UTILS_API void update();
 
@@ -118,7 +119,8 @@ class log_wrapper {
 
         // Do not use result.size here, it's the total (not truncated) output size and may not be the real written size.
         if (result.out > reinterpret_cast<CharT *>(writer.buffer + writer.writen_size)) {
-          writer.writen_size += static_cast<size_t>(result.out - reinterpret_cast<CharT *>(writer.buffer + writer.writen_size));
+          writer.writen_size +=
+              static_cast<size_t>(result.out - reinterpret_cast<CharT *>(writer.buffer + writer.writen_size));
         }
         if (writer.writen_size < writer.total_size) {
           *(writer.buffer + writer.writen_size) = 0;
@@ -187,9 +189,9 @@ class log_wrapper {
 #endif
 
   // 一般日志级别检查
-  UTIL_FORCEINLINE bool check_level(level_t::type level) const { return level >= log_level_; }
+  UTIL_FORCEINLINE bool check_level(log_level level) const { return level >= log_level_; }
 
-  UTIL_FORCEINLINE static bool check_level(const log_wrapper *logger, level_t::type level) {
+  UTIL_FORCEINLINE static bool check_level(const log_wrapper *logger, log_level level) {
     if (nullptr == logger) {
       return false;
     }
@@ -204,8 +206,8 @@ class log_wrapper {
    * @param level_min 最低日志级别
    * @param level_min 最高日志级别
    */
-  ATFRAMEWORK_UTILS_API void add_sink(log_handler_t h, level_t::type level_min = level_t::LOG_LW_DEBUG,
-                                      level_t::type level_max = level_t::LOG_LW_FATAL);
+  ATFRAMEWORK_UTILS_API void add_sink(log_handler_t &&h, log_level level_min = level_t::kDebug,
+                                      log_level level_max = level_t::kFatal);
 
   /**
    * @brief 移除最后一个后端接口
@@ -219,17 +221,17 @@ class log_wrapper {
    * @param level_min 最高日志级别
    * @return 如果没找到则返回false，成功返回true
    */
-  ATFRAMEWORK_UTILS_API bool set_sink(size_t idx, level_t::type level_min = level_t::LOG_LW_DEBUG,
-                                      level_t::type level_max = level_t::LOG_LW_FATAL);
+  ATFRAMEWORK_UTILS_API bool set_sink(size_t idx, log_level level_min = level_t::kDebug,
+                                      log_level level_max = level_t::kFatal);
 
   /**
    * @brief 移除所有后端, std::function无法比较，所以只能全清
    */
   ATFRAMEWORK_UTILS_API void clear_sinks();
 
-  UTIL_FORCEINLINE void set_level(level_t::type l) { log_level_ = l; }
+  UTIL_FORCEINLINE void set_level(log_level l) { log_level_ = l; }
 
-  UTIL_FORCEINLINE level_t::type get_level() const { return log_level_; }
+  UTIL_FORCEINLINE log_level get_level() const { return log_level_; }
 
   UTIL_FORCEINLINE const std::string &get_prefix_format() const { return prefix_format_; }
 
@@ -251,11 +253,9 @@ class log_wrapper {
     options_.set(t, v);
   }
 
-  ATFRAMEWORK_UTILS_API void set_stacktrace_level(level_t::type level_min = level_t::LOG_LW_DISABLED,
-                                                  level_t::type level_max = level_t::LOG_LW_DISABLED);
-  UTIL_FORCEINLINE const std::pair<level_t::type, level_t::type> &get_stacktrace_level() const {
-    return stacktrace_level_;
-  }
+  ATFRAMEWORK_UTILS_API void set_stacktrace_level(log_level level_min = level_t::kDisabled,
+                                                  log_level level_max = level_t::kDisabled);
+  UTIL_FORCEINLINE const std::pair<log_level, log_level> &get_stacktrace_level() const { return stacktrace_level_; }
 
   /**
    * @brief 实际写出到落地接口
@@ -273,8 +273,8 @@ class log_wrapper {
   ATFRAMEWORK_UTILS_API void append_log(log_operation_t &, const char *str, size_t strsz);
 
  private:
-  level_t::type log_level_;
-  std::pair<level_t::type, level_t::type> stacktrace_level_;
+  log_level log_level_;
+  std::pair<log_level, log_level> stacktrace_level_;
   std::string prefix_format_;
   std::bitset<options_t::OPT_MAX> options_;
   std::list<log_router_t> log_sinks_;
@@ -283,7 +283,7 @@ class log_wrapper {
 }  // namespace log
 ATFRAMEWORK_UTILS_NAMESPACE_END
 
-#define WLOG_LEVELID(lv) static_cast<ATFRAMEWORK_UTILS_NAMESPACE_ID::log::log_wrapper::level_t::type>(lv)
+#define WLOG_LEVELID(lv) static_cast<ATFRAMEWORK_UTILS_NAMESPACE_ID::log::log_wrapper::log_level>(lv)
 
 #define WDTLOGGETCAT(cat) ATFRAMEWORK_UTILS_NAMESPACE_ID::log::log_wrapper::mutable_log_cat(cat)
 
@@ -307,20 +307,15 @@ ATFRAMEWORK_UTILS_NAMESPACE_END
     if (ATFRAMEWORK_UTILS_NAMESPACE_ID::log::log_wrapper::check_level(WDTLOGGETCAT(cat), lv)) \
       WDTLOGGETCAT(cat)->log(WDTLOGFILENF(lv, lv_name), __VA_ARGS__);
 
-#  define WCLOGTRACE(cat, ...) \
-    WCLOGDEFLV(ATFRAMEWORK_UTILS_NAMESPACE_ID::log::log_wrapper::level_t::LOG_LW_TRACE, {}, cat, __VA_ARGS__)
-#  define WCLOGDEBUG(cat, ...) \
-    WCLOGDEFLV(ATFRAMEWORK_UTILS_NAMESPACE_ID::log::log_wrapper::level_t::LOG_LW_DEBUG, {}, cat, __VA_ARGS__)
+#  define WCLOGTRACE(cat, ...) WCLOGDEFLV(ATFRAMEWORK_UTILS_NAMESPACE_ID::log::log_level::kTrace, {}, cat, __VA_ARGS__)
+#  define WCLOGDEBUG(cat, ...) WCLOGDEFLV(ATFRAMEWORK_UTILS_NAMESPACE_ID::log::log_level::kDebug, {}, cat, __VA_ARGS__)
 #  define WCLOGNOTICE(cat, ...) \
-    WCLOGDEFLV(ATFRAMEWORK_UTILS_NAMESPACE_ID::log::log_wrapper::level_t::LOG_LW_NOTICE, {}, cat, __VA_ARGS__)
-#  define WCLOGINFO(cat, ...) \
-    WCLOGDEFLV(ATFRAMEWORK_UTILS_NAMESPACE_ID::log::log_wrapper::level_t::LOG_LW_INFO, {}, cat, __VA_ARGS__)
+    WCLOGDEFLV(ATFRAMEWORK_UTILS_NAMESPACE_ID::log::log_level::kNotice, {}, cat, __VA_ARGS__)
+#  define WCLOGINFO(cat, ...) WCLOGDEFLV(ATFRAMEWORK_UTILS_NAMESPACE_ID::log::log_level::kInfo, {}, cat, __VA_ARGS__)
 #  define WCLOGWARNING(cat, ...) \
-    WCLOGDEFLV(ATFRAMEWORK_UTILS_NAMESPACE_ID::log::log_wrapper::level_t::LOG_LW_WARNING, {}, cat, __VA_ARGS__)
-#  define WCLOGERROR(cat, ...) \
-    WCLOGDEFLV(ATFRAMEWORK_UTILS_NAMESPACE_ID::log::log_wrapper::level_t::LOG_LW_ERROR, {}, cat, __VA_ARGS__)
-#  define WCLOGFATAL(cat, ...) \
-    WCLOGDEFLV(ATFRAMEWORK_UTILS_NAMESPACE_ID::log::log_wrapper::level_t::LOG_LW_FATAL, {}, cat, __VA_ARGS__)
+    WCLOGDEFLV(ATFRAMEWORK_UTILS_NAMESPACE_ID::log::log_level::kWarning, {}, cat, __VA_ARGS__)
+#  define WCLOGERROR(cat, ...) WCLOGDEFLV(ATFRAMEWORK_UTILS_NAMESPACE_ID::log::log_level::kError, {}, cat, __VA_ARGS__)
+#  define WCLOGFATAL(cat, ...) WCLOGDEFLV(ATFRAMEWORK_UTILS_NAMESPACE_ID::log::log_level::kFatal, {}, cat, __VA_ARGS__)
 
 /** 对指定log_wrapper的日志输出工具 - snprintf **/
 
@@ -328,19 +323,19 @@ ATFRAMEWORK_UTILS_NAMESPACE_END
     if ((__inst).check_level(lv)) (__inst).log(WDTLOGFILENF(lv, lv_name), __VA_ARGS__);
 
 #  define WINSTLOGTRACE(__inst, ...) \
-    WINSTLOGDEFLV(ATFRAMEWORK_UTILS_NAMESPACE_ID::log::log_wrapper::level_t::LOG_LW_TRACE, {}, __inst, __VA_ARGS__)
+    WINSTLOGDEFLV(ATFRAMEWORK_UTILS_NAMESPACE_ID::log::log_level::kTrace, {}, __inst, __VA_ARGS__)
 #  define WINSTLOGDEBUG(__inst, ...) \
-    WINSTLOGDEFLV(ATFRAMEWORK_UTILS_NAMESPACE_ID::log::log_wrapper::level_t::LOG_LW_DEBUG, {}, __inst, __VA_ARGS__)
+    WINSTLOGDEFLV(ATFRAMEWORK_UTILS_NAMESPACE_ID::log::log_level::kDebug, {}, __inst, __VA_ARGS__)
 #  define WINSTLOGNOTICE(__inst, ...) \
-    WINSTLOGDEFLV(ATFRAMEWORK_UTILS_NAMESPACE_ID::log::log_wrapper::level_t::LOG_LW_NOTICE, {}, __inst, __VA_ARGS__)
+    WINSTLOGDEFLV(ATFRAMEWORK_UTILS_NAMESPACE_ID::log::log_level::kNotice, {}, __inst, __VA_ARGS__)
 #  define WINSTLOGINFO(__inst, ...) \
-    WINSTLOGDEFLV(ATFRAMEWORK_UTILS_NAMESPACE_ID::log::log_wrapper::level_t::LOG_LW_INFO, {}, __inst, __VA_ARGS__)
+    WINSTLOGDEFLV(ATFRAMEWORK_UTILS_NAMESPACE_ID::log::log_level::kInfo, {}, __inst, __VA_ARGS__)
 #  define WINSTLOGWARNING(__inst, ...) \
-    WINSTLOGDEFLV(ATFRAMEWORK_UTILS_NAMESPACE_ID::log::log_wrapper::level_t::LOG_LW_WARNING, {}, __inst, __VA_ARGS__)
+    WINSTLOGDEFLV(ATFRAMEWORK_UTILS_NAMESPACE_ID::log::log_level::kWarning, {}, __inst, __VA_ARGS__)
 #  define WINSTLOGERROR(__inst, ...) \
-    WINSTLOGDEFLV(ATFRAMEWORK_UTILS_NAMESPACE_ID::log::log_wrapper::level_t::LOG_LW_ERROR, {}, __inst, __VA_ARGS__)
+    WINSTLOGDEFLV(ATFRAMEWORK_UTILS_NAMESPACE_ID::log::log_level::kError, {}, __inst, __VA_ARGS__)
 #  define WINSTLOGFATAL(__inst, ...) \
-    WINSTLOGDEFLV(ATFRAMEWORK_UTILS_NAMESPACE_ID::log::log_wrapper::level_t::LOG_LW_FATAL, {}, __inst, __VA_ARGS__)
+    WINSTLOGDEFLV(ATFRAMEWORK_UTILS_NAMESPACE_ID::log::log_level::kFatal, {}, __inst, __VA_ARGS__)
 
 #  if defined(ATFRAMEWORK_UTILS_STRING_ENABLE_FWAPI) && ATFRAMEWORK_UTILS_STRING_ENABLE_FWAPI
 /** 全局日志输出工具 - std::format **/
@@ -349,38 +344,38 @@ ATFRAMEWORK_UTILS_NAMESPACE_END
         WDTLOGGETCAT(cat)->format_log(WDTLOGFILENF(lv, lv_name), __VA_ARGS__);
 
 #    define FWCLOGTRACE(cat, ...) \
-      FWCLOGDEFLV(ATFRAMEWORK_UTILS_NAMESPACE_ID::log::log_wrapper::level_t::LOG_LW_TRACE, {}, cat, __VA_ARGS__)
+      FWCLOGDEFLV(ATFRAMEWORK_UTILS_NAMESPACE_ID::log::log_level::kTrace, {}, cat, __VA_ARGS__)
 #    define FWCLOGDEBUG(cat, ...) \
-      FWCLOGDEFLV(ATFRAMEWORK_UTILS_NAMESPACE_ID::log::log_wrapper::level_t::LOG_LW_DEBUG, {}, cat, __VA_ARGS__)
+      FWCLOGDEFLV(ATFRAMEWORK_UTILS_NAMESPACE_ID::log::log_level::kDebug, {}, cat, __VA_ARGS__)
 #    define FWCLOGNOTICE(cat, ...) \
-      FWCLOGDEFLV(ATFRAMEWORK_UTILS_NAMESPACE_ID::log::log_wrapper::level_t::LOG_LW_NOTICE, {}, cat, __VA_ARGS__)
+      FWCLOGDEFLV(ATFRAMEWORK_UTILS_NAMESPACE_ID::log::log_level::kNotice, {}, cat, __VA_ARGS__)
 #    define FWCLOGINFO(cat, ...) \
-      FWCLOGDEFLV(ATFRAMEWORK_UTILS_NAMESPACE_ID::log::log_wrapper::level_t::LOG_LW_INFO, {}, cat, __VA_ARGS__)
+      FWCLOGDEFLV(ATFRAMEWORK_UTILS_NAMESPACE_ID::log::log_level::kInfo, {}, cat, __VA_ARGS__)
 #    define FWCLOGWARNING(cat, ...) \
-      FWCLOGDEFLV(ATFRAMEWORK_UTILS_NAMESPACE_ID::log::log_wrapper::level_t::LOG_LW_WARNING, {}, cat, __VA_ARGS__)
+      FWCLOGDEFLV(ATFRAMEWORK_UTILS_NAMESPACE_ID::log::log_level::kWarning, {}, cat, __VA_ARGS__)
 #    define FWCLOGERROR(cat, ...) \
-      FWCLOGDEFLV(ATFRAMEWORK_UTILS_NAMESPACE_ID::log::log_wrapper::level_t::LOG_LW_ERROR, {}, cat, __VA_ARGS__)
+      FWCLOGDEFLV(ATFRAMEWORK_UTILS_NAMESPACE_ID::log::log_level::kError, {}, cat, __VA_ARGS__)
 #    define FWCLOGFATAL(cat, ...) \
-      FWCLOGDEFLV(ATFRAMEWORK_UTILS_NAMESPACE_ID::log::log_wrapper::level_t::LOG_LW_FATAL, {}, cat, __VA_ARGS__)
+      FWCLOGDEFLV(ATFRAMEWORK_UTILS_NAMESPACE_ID::log::log_level::kFatal, {}, cat, __VA_ARGS__)
 
 /** 对指定log_wrapper的日志输出工具 - std::format **/
 #    define FWINSTLOGDEFLV(lv, lv_name, __inst, ...) \
       if ((__inst).check_level(lv)) (__inst).format_log(WDTLOGFILENF(lv, lv_name), __VA_ARGS__);
 
 #    define FWINSTLOGTRACE(__inst, ...) \
-      FWINSTLOGDEFLV(ATFRAMEWORK_UTILS_NAMESPACE_ID::log::log_wrapper::level_t::LOG_LW_TRACE, {}, __inst, __VA_ARGS__)
+      FWINSTLOGDEFLV(ATFRAMEWORK_UTILS_NAMESPACE_ID::log::log_level::kTrace, {}, __inst, __VA_ARGS__)
 #    define FWINSTLOGDEBUG(__inst, ...) \
-      FWINSTLOGDEFLV(ATFRAMEWORK_UTILS_NAMESPACE_ID::log::log_wrapper::level_t::LOG_LW_DEBUG, {}, __inst, __VA_ARGS__)
+      FWINSTLOGDEFLV(ATFRAMEWORK_UTILS_NAMESPACE_ID::log::log_level::kDebug, {}, __inst, __VA_ARGS__)
 #    define FWINSTLOGNOTICE(__inst, ...) \
-      FWINSTLOGDEFLV(ATFRAMEWORK_UTILS_NAMESPACE_ID::log::log_wrapper::level_t::LOG_LW_NOTICE, {}, __inst, __VA_ARGS__)
+      FWINSTLOGDEFLV(ATFRAMEWORK_UTILS_NAMESPACE_ID::log::log_level::kNotice, {}, __inst, __VA_ARGS__)
 #    define FWINSTLOGINFO(__inst, ...) \
-      FWINSTLOGDEFLV(ATFRAMEWORK_UTILS_NAMESPACE_ID::log::log_wrapper::level_t::LOG_LW_INFO, {}, __inst, __VA_ARGS__)
+      FWINSTLOGDEFLV(ATFRAMEWORK_UTILS_NAMESPACE_ID::log::log_level::kInfo, {}, __inst, __VA_ARGS__)
 #    define FWINSTLOGWARNING(__inst, ...) \
-      FWINSTLOGDEFLV(ATFRAMEWORK_UTILS_NAMESPACE_ID::log::log_wrapper::level_t::LOG_LW_WARNING, {}, __inst, __VA_ARGS__)
+      FWINSTLOGDEFLV(ATFRAMEWORK_UTILS_NAMESPACE_ID::log::log_level::kWarning, {}, __inst, __VA_ARGS__)
 #    define FWINSTLOGERROR(__inst, ...) \
-      FWINSTLOGDEFLV(ATFRAMEWORK_UTILS_NAMESPACE_ID::log::log_wrapper::level_t::LOG_LW_ERROR, {}, __inst, __VA_ARGS__)
+      FWINSTLOGDEFLV(ATFRAMEWORK_UTILS_NAMESPACE_ID::log::log_level::kError, {}, __inst, __VA_ARGS__)
 #    define FWINSTLOGFATAL(__inst, ...) \
-      FWINSTLOGDEFLV(ATFRAMEWORK_UTILS_NAMESPACE_ID::log::log_wrapper::level_t::LOG_LW_FATAL, {}, __inst, __VA_ARGS__)
+      FWINSTLOGDEFLV(ATFRAMEWORK_UTILS_NAMESPACE_ID::log::log_level::kFatal, {}, __inst, __VA_ARGS__)
 
 #  endif
 
@@ -391,39 +386,25 @@ ATFRAMEWORK_UTILS_NAMESPACE_END
     if (ATFRAMEWORK_UTILS_NAMESPACE_ID::log::log_wrapper::check_level(WDTLOGGETCAT(cat), lv)) \
       WDTLOGGETCAT(cat)->log(WDTLOGFILENF(lv, lv_name), ##args);
 
-#  define WCLOGTRACE(...) \
-    WCLOGDEFLV(ATFRAMEWORK_UTILS_NAMESPACE_ID::log::log_wrapper::level_t::LOG_LW_TRACE, {}, __VA_ARGS__)
-#  define WCLOGDEBUG(...) \
-    WCLOGDEFLV(ATFRAMEWORK_UTILS_NAMESPACE_ID::log::log_wrapper::level_t::LOG_LW_DEBUG, {}, __VA_ARGS__)
-#  define WCLOGNOTICE(...) \
-    WCLOGDEFLV(ATFRAMEWORK_UTILS_NAMESPACE_ID::log::log_wrapper::level_t::LOG_LW_NOTICE, {}, __VA_ARGS__)
-#  define WCLOGINFO(...) \
-    WCLOGDEFLV(ATFRAMEWORK_UTILS_NAMESPACE_ID::log::log_wrapper::level_t::LOG_LW_INFO, {}, __VA_ARGS__)
-#  define WCLOGWARNING(...) \
-    WCLOGDEFLV(ATFRAMEWORK_UTILS_NAMESPACE_ID::log::log_wrapper::level_t::LOG_LW_WARNING, {}, __VA_ARGS__)
-#  define WCLOGERROR(...) \
-    WCLOGDEFLV(ATFRAMEWORK_UTILS_NAMESPACE_ID::log::log_wrapper::level_t::LOG_LW_ERROR, {}, __VA_ARGS__)
-#  define WCLOGFATAL(...) \
-    WCLOGDEFLV(ATFRAMEWORK_UTILS_NAMESPACE_ID::log::log_wrapper::level_t::LOG_LW_FATAL, {}, __VA_ARGS__)
+#  define WCLOGTRACE(...) WCLOGDEFLV(ATFRAMEWORK_UTILS_NAMESPACE_ID::log::log_level::kTrace, {}, __VA_ARGS__)
+#  define WCLOGDEBUG(...) WCLOGDEFLV(ATFRAMEWORK_UTILS_NAMESPACE_ID::log::log_level::kDebug, {}, __VA_ARGS__)
+#  define WCLOGNOTICE(...) WCLOGDEFLV(ATFRAMEWORK_UTILS_NAMESPACE_ID::log::log_level::kNotice, {}, __VA_ARGS__)
+#  define WCLOGINFO(...) WCLOGDEFLV(ATFRAMEWORK_UTILS_NAMESPACE_ID::log::log_level::kInfo, {}, __VA_ARGS__)
+#  define WCLOGWARNING(...) WCLOGDEFLV(ATFRAMEWORK_UTILS_NAMESPACE_ID::log::log_level::kWarning, {}, __VA_ARGS__)
+#  define WCLOGERROR(...) WCLOGDEFLV(ATFRAMEWORK_UTILS_NAMESPACE_ID::log::log_level::kError, {}, __VA_ARGS__)
+#  define WCLOGFATAL(...) WCLOGDEFLV(ATFRAMEWORK_UTILS_NAMESPACE_ID::log::log_level::kFatal, {}, __VA_ARGS__)
 
 /** 对指定log_wrapper的日志输出工具 - snprintf **/
 #  define WINSTLOGDEFLV(lv, lv_name, __inst, args...) \
     if ((__inst).check_level(lv)) (__inst).log(WDTLOGFILENF(lv, lv_name), ##args);
 
-#  define WINSTLOGTRACE(...) \
-    WINSTLOGDEFLV(ATFRAMEWORK_UTILS_NAMESPACE_ID::log::log_wrapper::level_t::LOG_LW_TRACE, {}, __VA_ARGS__)
-#  define WINSTLOGDEBUG(...) \
-    WINSTLOGDEFLV(ATFRAMEWORK_UTILS_NAMESPACE_ID::log::log_wrapper::level_t::LOG_LW_DEBUG, {}, __VA_ARGS__)
-#  define WINSTLOGNOTICE(...) \
-    WINSTLOGDEFLV(ATFRAMEWORK_UTILS_NAMESPACE_ID::log::log_wrapper::level_t::LOG_LW_NOTICE, {}, __VA_ARGS__)
-#  define WINSTLOGINFO(...) \
-    WINSTLOGDEFLV(ATFRAMEWORK_UTILS_NAMESPACE_ID::log::log_wrapper::level_t::LOG_LW_INFO, {}, __VA_ARGS__)
-#  define WINSTLOGWARNING(...) \
-    WINSTLOGDEFLV(ATFRAMEWORK_UTILS_NAMESPACE_ID::log::log_wrapper::level_t::LOG_LW_WARNING, {}, __VA_ARGS__)
-#  define WINSTLOGERROR(...) \
-    WINSTLOGDEFLV(ATFRAMEWORK_UTILS_NAMESPACE_ID::log::log_wrapper::level_t::LOG_LW_ERROR, {}, __VA_ARGS__)
-#  define WINSTLOGFATAL(...) \
-    WINSTLOGDEFLV(ATFRAMEWORK_UTILS_NAMESPACE_ID::log::log_wrapper::level_t::LOG_LW_FATAL, {}, __VA_ARGS__)
+#  define WINSTLOGTRACE(...) WINSTLOGDEFLV(ATFRAMEWORK_UTILS_NAMESPACE_ID::log::log_level::kTrace, {}, __VA_ARGS__)
+#  define WINSTLOGDEBUG(...) WINSTLOGDEFLV(ATFRAMEWORK_UTILS_NAMESPACE_ID::log::log_level::kDebug, {}, __VA_ARGS__)
+#  define WINSTLOGNOTICE(...) WINSTLOGDEFLV(ATFRAMEWORK_UTILS_NAMESPACE_ID::log::log_level::kNotice, {}, __VA_ARGS__)
+#  define WINSTLOGINFO(...) WINSTLOGDEFLV(ATFRAMEWORK_UTILS_NAMESPACE_ID::log::log_level::kInfo, {}, __VA_ARGS__)
+#  define WINSTLOGWARNING(...) WINSTLOGDEFLV(ATFRAMEWORK_UTILS_NAMESPACE_ID::log::log_level::kWarning, {}, __VA_ARGS__)
+#  define WINSTLOGERROR(...) WINSTLOGDEFLV(ATFRAMEWORK_UTILS_NAMESPACE_ID::log::log_level::kError, {}, __VA_ARGS__)
+#  define WINSTLOGFATAL(...) WINSTLOGDEFLV(ATFRAMEWORK_UTILS_NAMESPACE_ID::log::log_level::kFatal, {}, __VA_ARGS__)
 
 #  if defined(ATFRAMEWORK_UTILS_STRING_ENABLE_FWAPI) && ATFRAMEWORK_UTILS_STRING_ENABLE_FWAPI
 /** 全局日志输出工具 - std::format **/
@@ -431,39 +412,27 @@ ATFRAMEWORK_UTILS_NAMESPACE_END
       if (ATFRAMEWORK_UTILS_NAMESPACE_ID::log::log_wrapper::check_level(WDTLOGGETCAT(cat), lv)) \
         WDTLOGGETCAT(cat)->format_log(WDTLOGFILENF(lv, lv_name), FMT, ##args);
 
-#    define FWCLOGTRACE(...) \
-      FWCLOGDEFLV(ATFRAMEWORK_UTILS_NAMESPACE_ID::log::log_wrapper::level_t::LOG_LW_TRACE, {}, __VA_ARGS__)
-#    define FWCLOGDEBUG(...) \
-      FWCLOGDEFLV(ATFRAMEWORK_UTILS_NAMESPACE_ID::log::log_wrapper::level_t::LOG_LW_DEBUG, {}, __VA_ARGS__)
-#    define FWCLOGNOTICE(...) \
-      FWCLOGDEFLV(ATFRAMEWORK_UTILS_NAMESPACE_ID::log::log_wrapper::level_t::LOG_LW_NOTICE, {}, __VA_ARGS__)
-#    define FWCLOGINFO(...) \
-      FWCLOGDEFLV(ATFRAMEWORK_UTILS_NAMESPACE_ID::log::log_wrapper::level_t::LOG_LW_INFO, {}, __VA_ARGS__)
-#    define FWCLOGWARNING(...) \
-      FWCLOGDEFLV(ATFRAMEWORK_UTILS_NAMESPACE_ID::log::log_wrapper::level_t::LOG_LW_WARNING, {}, __VA_ARGS__)
-#    define FWCLOGERROR(...) \
-      FWCLOGDEFLV(ATFRAMEWORK_UTILS_NAMESPACE_ID::log::log_wrapper::level_t::LOG_LW_ERROR, {}, __VA_ARGS__)
-#    define FWCLOGFATAL(...) \
-      FWCLOGDEFLV(ATFRAMEWORK_UTILS_NAMESPACE_ID::log::log_wrapper::level_t::LOG_LW_FATAL, {}, __VA_ARGS__)
+#    define FWCLOGTRACE(...) FWCLOGDEFLV(ATFRAMEWORK_UTILS_NAMESPACE_ID::log::log_level::kTrace, {}, __VA_ARGS__)
+#    define FWCLOGDEBUG(...) FWCLOGDEFLV(ATFRAMEWORK_UTILS_NAMESPACE_ID::log::log_level::kDebug, {}, __VA_ARGS__)
+#    define FWCLOGNOTICE(...) FWCLOGDEFLV(ATFRAMEWORK_UTILS_NAMESPACE_ID::log::log_level::kNotice, {}, __VA_ARGS__)
+#    define FWCLOGINFO(...) FWCLOGDEFLV(ATFRAMEWORK_UTILS_NAMESPACE_ID::log::log_level::kInfo, {}, __VA_ARGS__)
+#    define FWCLOGWARNING(...) FWCLOGDEFLV(ATFRAMEWORK_UTILS_NAMESPACE_ID::log::log_level::kWarning, {}, __VA_ARGS__)
+#    define FWCLOGERROR(...) FWCLOGDEFLV(ATFRAMEWORK_UTILS_NAMESPACE_ID::log::log_level::kError, {}, __VA_ARGS__)
+#    define FWCLOGFATAL(...) FWCLOGDEFLV(ATFRAMEWORK_UTILS_NAMESPACE_ID::log::log_level::kFatal, {}, __VA_ARGS__)
 
 /** 对指定log_wrapper的日志输出工具 - std::format **/
 #    define FWINSTLOGDEFLV(lv, lv_name, __inst, FMT, args...) \
       if ((__inst).check_level(lv)) (__inst).format_log(WDTLOGFILENF(lv, lv_name), FMT, ##args);
 
-#    define FWINSTLOGTRACE(...) \
-      FWINSTLOGDEFLV(ATFRAMEWORK_UTILS_NAMESPACE_ID::log::log_wrapper::level_t::LOG_LW_TRACE, {}, __VA_ARGS__)
-#    define FWINSTLOGDEBUG(...) \
-      FWINSTLOGDEFLV(ATFRAMEWORK_UTILS_NAMESPACE_ID::log::log_wrapper::level_t::LOG_LW_DEBUG, {}, __VA_ARGS__)
+#    define FWINSTLOGTRACE(...) FWINSTLOGDEFLV(ATFRAMEWORK_UTILS_NAMESPACE_ID::log::log_level::kTrace, {}, __VA_ARGS__)
+#    define FWINSTLOGDEBUG(...) FWINSTLOGDEFLV(ATFRAMEWORK_UTILS_NAMESPACE_ID::log::log_level::kDebug, {}, __VA_ARGS__)
 #    define FWINSTLOGNOTICE(...) \
-      FWINSTLOGDEFLV(ATFRAMEWORK_UTILS_NAMESPACE_ID::log::log_wrapper::level_t::LOG_LW_NOTICE, {}, __VA_ARGS__)
-#    define FWINSTLOGINFO(...) \
-      FWINSTLOGDEFLV(ATFRAMEWORK_UTILS_NAMESPACE_ID::log::log_wrapper::level_t::LOG_LW_INFO, {}, __VA_ARGS__)
+      FWINSTLOGDEFLV(ATFRAMEWORK_UTILS_NAMESPACE_ID::log::log_level::kNotice, {}, __VA_ARGS__)
+#    define FWINSTLOGINFO(...) FWINSTLOGDEFLV(ATFRAMEWORK_UTILS_NAMESPACE_ID::log::log_level::kInfo, {}, __VA_ARGS__)
 #    define FWINSTLOGWARNING(...) \
-      FWINSTLOGDEFLV(ATFRAMEWORK_UTILS_NAMESPACE_ID::log::log_wrapper::level_t::LOG_LW_WARNING, {}, __VA_ARGS__)
-#    define FWINSTLOGERROR(...) \
-      FWINSTLOGDEFLV(ATFRAMEWORK_UTILS_NAMESPACE_ID::log::log_wrapper::level_t::LOG_LW_ERROR, {}, __VA_ARGS__)
-#    define FWINSTLOGFATAL(...) \
-      FWINSTLOGDEFLV(ATFRAMEWORK_UTILS_NAMESPACE_ID::log::log_wrapper::level_t::LOG_LW_FATAL, {}, __VA_ARGS__)
+      FWINSTLOGDEFLV(ATFRAMEWORK_UTILS_NAMESPACE_ID::log::log_level::kWarning, {}, __VA_ARGS__)
+#    define FWINSTLOGERROR(...) FWINSTLOGDEFLV(ATFRAMEWORK_UTILS_NAMESPACE_ID::log::log_level::kError, {}, __VA_ARGS__)
+#    define FWINSTLOGFATAL(...) FWINSTLOGDEFLV(ATFRAMEWORK_UTILS_NAMESPACE_ID::log::log_level::kFatal, {}, __VA_ARGS__)
 
 #  endif
 #endif
@@ -569,4 +538,3 @@ ATFRAMEWORK_UTILS_STRING_FWAPI_FORMAT_AS(typename ATFRAMEWORK_UTILS_NAMESPACE_ID
 #endif
 
 #include "config/compiler/template_suffix.h"
-

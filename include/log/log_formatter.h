@@ -17,6 +17,7 @@
 #include <cstring>
 #include <ctime>
 #include <string>
+#include "config/compile_optimize.h"
 
 #if defined(ATFRAMEWORK_UTILS_ENABLE_SOURCE_LOCATION) && ATFRAMEWORK_UTILS_ENABLE_SOURCE_LOCATION
 #  include <source_location>
@@ -26,6 +27,18 @@
 
 ATFRAMEWORK_UTILS_NAMESPACE_BEGIN
 namespace log {
+
+enum class log_level : int32_t {
+  kTrace = 0,
+  kDebug = 100,
+  kNotice = 200,
+  kInfo = 300,
+  kWarning = 400,
+  kError = 500,
+  kFatal = 600,
+  kDisabled = 999,
+};
+
 /**
  * @brief 日志格式化数据
  */
@@ -39,38 +52,24 @@ class log_formatter {
     };
   };
 
-  struct ATFRAMEWORK_UTILS_API level_t {
-    enum type {
-      LOG_LW_TRACE = 0,
-      LOG_LW_DEBUG,
-      LOG_LW_NOTICE,
-      LOG_LW_INFO,
-      LOG_LW_WARNING,
-      LOG_LW_ERROR,     // 错误
-      LOG_LW_FATAL,     // 强制输出
-      LOG_LW_DISABLED,  // 关闭日志
-    };
-  };
-
   struct ATFW_UTIL_SYMBOL_VISIBLE caller_info_t {
-    level_t::type level_id;
-    gsl::string_view level_name;
-    gsl::string_view file_path;
+    log_level level_id;
+    nostd::string_view level_name;
+    nostd::string_view file_path;
     uint32_t line_number;
-    gsl::string_view func_name;
+    nostd::string_view func_name;
     uint32_t rotate_index;
 
-    inline caller_info_t() noexcept
-        : level_id(level_t::LOG_LW_DISABLED), level_name{}, file_path{}, line_number(0), func_name{}, rotate_index(0) {}
+    inline caller_info_t() noexcept : level_id(log_level::kDisabled), line_number(0), rotate_index(0) {}
 
     inline ~caller_info_t() {}
 
-    inline caller_info_t(level_t::type lid, gsl::string_view lname, gsl::string_view fpath, uint32_t lnum,
-                         gsl::string_view fnname) noexcept
+    inline caller_info_t(log_level lid, nostd::string_view lname, nostd::string_view fpath, uint32_t lnum,
+                         nostd::string_view fnname) noexcept
         : level_id(lid), level_name(lname), file_path(fpath), line_number(lnum), func_name(fnname), rotate_index(0) {}
 
-    inline caller_info_t(level_t::type lid, gsl::string_view lname, gsl::string_view fpath, uint32_t lnum,
-                         gsl::string_view fnname, uint32_t ridx) noexcept
+    inline caller_info_t(log_level lid, nostd::string_view lname, nostd::string_view fpath, uint32_t lnum,
+                         nostd::string_view fnname, uint32_t ridx) noexcept
         : level_id(lid),
           level_name(lname),
           file_path(fpath),
@@ -79,14 +78,15 @@ class log_formatter {
           rotate_index(ridx) {}
 
 #if defined(ATFRAMEWORK_UTILS_ENABLE_SOURCE_LOCATION) && ATFRAMEWORK_UTILS_ENABLE_SOURCE_LOCATION
-    inline caller_info_t(level_t::type lid, gsl::string_view lname, const std::source_location &sloc) noexcept
+    inline caller_info_t(log_level lid, nostd::string_view lname, const std::source_location &sloc) noexcept
         : level_id(lid),
           level_name(lname),
           file_path(sloc.file_name()),
           line_number(static_cast<uint32_t>(sloc.line())),
-          func_name(sloc.function_name()) {}
+          func_name(sloc.function_name()),
+          rotate_index(0) {}
 
-    inline caller_info_t(level_t::type lid, gsl::string_view lname, const std::source_location &sloc,
+    inline caller_info_t(log_level lid, nostd::string_view lname, const std::source_location &sloc,
                          uint32_t ridx) noexcept
         : level_id(lid),
           level_name(lname),
@@ -141,19 +141,19 @@ class log_formatter {
    */
   ATFRAMEWORK_UTILS_API static void set_project_directory(const char *dirbuf, size_t dirsz);
 
-  ATFRAMEWORK_UTILS_API static void set_project_directory(gsl::string_view dir);
+  ATFRAMEWORK_UTILS_API static void set_project_directory(nostd::string_view dir);
 
   /**
    * @brief 设置工程目录，会影响format时的%s参数，如果文件路径以工程目录开头，则会用~替换
    * @param name 日志等级的名称（disable/disabled, fatal, error, warn/warning, info, notice, debug）
    * @return 读取到的等级id,默认会返回debug
    */
-  ATFRAMEWORK_UTILS_API static level_t::type get_level_by_name(gsl::string_view name);
+  ATFRAMEWORK_UTILS_API static log_level get_level_by_name(nostd::string_view name);
 
  private:
   ATFRAMEWORK_UTILS_API static struct tm *get_iso_tm();
   static std::string project_dir_;
-};
+};  // namespace log
 }  // namespace log
 ATFRAMEWORK_UTILS_NAMESPACE_END
 
@@ -161,8 +161,6 @@ ATFRAMEWORK_UTILS_NAMESPACE_END
 
 ATFRAMEWORK_UTILS_STRING_FWAPI_FORMAT_AS(typename ATFRAMEWORK_UTILS_NAMESPACE_ID::log::log_formatter::flag_t::type,
                                          int);
-ATFRAMEWORK_UTILS_STRING_FWAPI_FORMAT_AS(typename ATFRAMEWORK_UTILS_NAMESPACE_ID::log::log_formatter::level_t::type,
-                                         int);
+ATFRAMEWORK_UTILS_STRING_FWAPI_FORMAT_AS(typename ATFRAMEWORK_UTILS_NAMESPACE_ID::log::log_level, int);
 
 #endif
-

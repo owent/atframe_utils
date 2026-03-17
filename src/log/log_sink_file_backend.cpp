@@ -31,7 +31,7 @@ ATFRAMEWORK_UTILS_API log_sink_file_backend::log_sink_file_backend()
       inited_(false) {
   log_file_.opened_file_point_ = 0;
   log_file_.last_flush_timepoint_ = 0;
-  log_file_.auto_flush = log_formatter::level_t::LOG_LW_DISABLED;
+  log_file_.auto_flush = log_level::kDisabled;
   log_file_.rotation_index = 0;
   log_file_.written_size = 0;
 
@@ -46,7 +46,7 @@ ATFRAMEWORK_UTILS_API log_sink_file_backend::log_sink_file_backend(const std::st
       inited_(false) {
   log_file_.opened_file_point_ = 0;
   log_file_.last_flush_timepoint_ = 0;
-  log_file_.auto_flush = log_formatter::level_t::LOG_LW_DISABLED;
+  log_file_.auto_flush = log_level::kDisabled;
   log_file_.rotation_index = 0;
   log_file_.written_size = 0;
 
@@ -141,7 +141,7 @@ ATFRAMEWORK_UTILS_API ATFW_UTIL_SANITIZER_NO_THREAD void log_sink_file_backend::
 }
 
 ATFRAMEWORK_UTILS_API void log_sink_file_backend::operator()(const log_formatter::caller_info_t &caller,
-                                                             const char *content, size_t content_size) {
+                                                             nostd::string_view content) {
   if (!inited_) {
     init();
   }
@@ -153,10 +153,10 @@ ATFRAMEWORK_UTILS_API void log_sink_file_backend::operator()(const log_formatter
     return;
   }
 
-  fwrite(content, 1, content_size, f.get());
+  fwrite(content.data(), 1, content.size(), f.get());
   fputc('\n', f.get());
 
-  after_write_log(caller, *f, content_size);
+  after_write_log(caller, *f, content.size());
 }
 
 ATFRAMEWORK_UTILS_API ATFW_UTIL_SANITIZER_NO_THREAD void log_sink_file_backend::after_write_log(
@@ -164,7 +164,7 @@ ATFRAMEWORK_UTILS_API ATFW_UTIL_SANITIZER_NO_THREAD void log_sink_file_backend::
   time_t now = ATFRAMEWORK_UTILS_NAMESPACE_ID::time::time_utility::get_sys_now();
 
   // 日志级别高于指定级别，需要刷入
-  if (static_cast<uint32_t>(caller.level_id) >= log_file_.auto_flush) {
+  if (caller.level_id >= log_file_.auto_flush) {
     log_file_.last_flush_timepoint_ = now;
     fflush(&f);
   }
@@ -193,9 +193,9 @@ ATFRAMEWORK_UTILS_API log_sink_file_backend &log_sink_file_backend::set_flush_in
   return *this;
 }
 
-ATFRAMEWORK_UTILS_API uint32_t log_sink_file_backend::get_auto_flush() const { return log_file_.auto_flush; }
+ATFRAMEWORK_UTILS_API log_level log_sink_file_backend::get_auto_flush() const { return log_file_.auto_flush; }
 
-ATFRAMEWORK_UTILS_API log_sink_file_backend &log_sink_file_backend::set_auto_flush(uint32_t flush_level) {
+ATFRAMEWORK_UTILS_API log_sink_file_backend &log_sink_file_backend::set_auto_flush(log_level flush_level) {
   log_file_.auto_flush = flush_level;
   return *this;
 }
@@ -434,4 +434,3 @@ ATFRAMEWORK_UTILS_API void log_sink_file_backend::reset_log_file() {
 }
 }  // namespace log
 ATFRAMEWORK_UTILS_NAMESPACE_END
-

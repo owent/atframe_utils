@@ -53,8 +53,7 @@ class log_sink_file_backend {
    */
   ATFRAMEWORK_UTILS_API const std::string &get_writing_alias_pattern(const std::string &file_name_pattern);
 
-  ATFRAMEWORK_UTILS_API void operator()(const log_formatter::caller_info_t &caller, const char *content,
-                                        size_t content_size);
+  ATFRAMEWORK_UTILS_API void operator()(const log_formatter::caller_info_t &caller, nostd::string_view content);
 
   ATFRAMEWORK_UTILS_API time_t get_check_interval() const;
 
@@ -81,14 +80,14 @@ class log_sink_file_backend {
    * @brief 获取强制刷入文件系统的日志级别
    * @return 强制刷入文件系统的日志级别
    */
-  ATFRAMEWORK_UTILS_API uint32_t get_auto_flush() const;
+  ATFRAMEWORK_UTILS_API log_level get_auto_flush() const;
 
   /**
    * @brief 设置强制刷入文件系统的日志级别
-   * @note 如果设置成LOG_LW_WARNING，那么LOG_LW_ERROR和LOG_LW_WARNING的log都会触发强制刷入
+   * @note 如果设置成 kWarning，那么 kError 和 kWarning 的log都会触发强制刷入
    * @param flush_level 强制刷入文件系统的日志级别，严重性高于这个级别的日志都会触发强制刷入文件系统
    */
-  ATFRAMEWORK_UTILS_API log_sink_file_backend &set_auto_flush(uint32_t flush_level);
+  ATFRAMEWORK_UTILS_API log_sink_file_backend &set_auto_flush(log_level flush_level);
 
   ATFRAMEWORK_UTILS_API size_t get_max_file_size() const;
 
@@ -129,7 +128,7 @@ class log_sink_file_backend {
   lock::spin_lock init_lock_;
 
   struct file_impl_t {
-    uint32_t auto_flush;  // 当日记级别高于或等于这个时，将会强制执行一次flush
+    log_level auto_flush;  // 当日记级别高于或等于这个时，将会强制执行一次flush
     uint32_t rotation_index;
     size_t written_size;
     std::shared_ptr<std::FILE> opened_file;
@@ -143,4 +142,3 @@ class log_sink_file_backend {
 ATFRAMEWORK_UTILS_NAMESPACE_END
 
 #endif
-

@@ -6,8 +6,10 @@
 #include <cstdio>
 #include <cstring>
 #include <string>
+#include <type_traits>
 
 #include "common/string_oprs.h"
+#include "nostd/type_traits.h"
 #include "std/thread.h"
 
 #include "time/time_utility.h"
@@ -16,27 +18,34 @@
 
 ATFRAMEWORK_UTILS_NAMESPACE_BEGIN
 namespace log {
-namespace detail {
-ATFW_UTIL_SANITIZER_NO_THREAD static const char *log_formatter_get_level_name(int l) {
-  static const char *all_level_name[log_formatter::level_t::LOG_LW_DISABLED + 1] = {nullptr};
-
-  if (l > log_formatter::level_t::LOG_LW_DISABLED || l < 0) {
-    return "Unknown";
+namespace {
+ATFW_UTIL_SANITIZER_NO_THREAD static nostd::string_view log_formatter_get_level_name(log_level l) {
+  if (l <= log_level::kTrace) {
+    return "TRACE";
+  }
+  if (l <= log_level::kDebug) {
+    return "DEBUG";
+  }
+  if (l <= log_level::kNotice) {
+    return "NOTICE";
+  }
+  if (l <= log_level::kInfo) {
+    return "INFO";
+  }
+  if (l <= log_level::kWarning) {
+    return "WARN";
+  }
+  if (l <= log_level::kError) {
+    return "ERROR";
   }
 
-  if (nullptr == all_level_name[log_formatter::level_t::LOG_LW_TRACE]) {
-    all_level_name[log_formatter::level_t::LOG_LW_TRACE] = "TRACE";
-    all_level_name[log_formatter::level_t::LOG_LW_DEBUG] = "DEBUG";
-    all_level_name[log_formatter::level_t::LOG_LW_NOTICE] = "NOTICE";
-    all_level_name[log_formatter::level_t::LOG_LW_INFO] = "INFO";
-    all_level_name[log_formatter::level_t::LOG_LW_WARNING] = "WARN";
-    all_level_name[log_formatter::level_t::LOG_LW_ERROR] = "ERROR";
-    all_level_name[log_formatter::level_t::LOG_LW_FATAL] = "FATAL";
-    all_level_name[log_formatter::level_t::LOG_LW_DISABLED] = "DISABLED";
+  if (l >= log_level::kDisabled) {
+    return "DISABLED";
   }
-  return all_level_name[l];
+
+  return "FATAL";
 }
-}  // namespace detail
+}  // namespace
 
 std::string log_formatter::project_dir_;
 
@@ -67,9 +76,9 @@ ATFRAMEWORK_UTILS_API size_t log_formatter::format(char *buff, size_t bufz, cons
   }
 
   // Level id to level name
-  gsl::string_view level_name = caller.level_name;
+  nostd::string_view level_name = caller.level_name;
   if (level_name.empty()) {
-    level_name = detail::log_formatter_get_level_name(caller.level_id);
+    level_name = log_formatter_get_level_name(caller.level_id);
   }
 
   bool need_parse = false, running = true;
@@ -313,7 +322,7 @@ ATFRAMEWORK_UTILS_API size_t log_formatter::format(char *buff, size_t bufz, cons
       }
       case 's': {
         if (!caller.file_path.empty()) {
-          gsl::string_view file_path = caller.file_path;
+          nostd::string_view file_path = caller.file_path;
           size_t strip_position = 0;
           if (!project_dir_.empty()) {
             for (size_t j = 0; j < project_dir_.size() && j < file_path.size(); ++j) {
@@ -341,7 +350,7 @@ ATFRAMEWORK_UTILS_API size_t log_formatter::format(char *buff, size_t bufz, cons
       }
       case 'k': {
         if (!caller.file_path.empty()) {
-          gsl::string_view file_name = caller.file_path;
+          nostd::string_view file_name = caller.file_path;
           for (size_t j = 0; j < caller.file_path.size(); ++j) {
             if ('/' == caller.file_path[j] || '\\' == caller.file_path[j]) {
               file_name = caller.file_path.substr(j + 1);
@@ -436,66 +445,66 @@ ATFRAMEWORK_UTILS_API ATFW_UTIL_SANITIZER_NO_THREAD void log_formatter::set_proj
   }
 }
 
-ATFRAMEWORK_UTILS_API ATFW_UTIL_SANITIZER_NO_THREAD void log_formatter::set_project_directory(gsl::string_view dir) {
+ATFRAMEWORK_UTILS_API ATFW_UTIL_SANITIZER_NO_THREAD void log_formatter::set_project_directory(nostd::string_view dir) {
   set_project_directory(dir.data(), dir.size());
 }
 
-ATFRAMEWORK_UTILS_API log_formatter::level_t::type log_formatter::get_level_by_name(gsl::string_view name) {
+ATFRAMEWORK_UTILS_API log_level log_formatter::get_level_by_name(nostd::string_view name) {
   if (name.empty()) {
-    return level_t::LOG_LW_DEBUG;
+    return log_level::kDebug;
   }
 
   // number, directly convert it
   if (name[0] == '\\' || (name[0] >= '0' && name[0] <= '9')) {
-    int l = ATFRAMEWORK_UTILS_NAMESPACE_ID::string::to_int<int>(name);
-    if (l >= 0 && l <= level_t::LOG_LW_FATAL) {
-      return static_cast<level_t::type>(l);
+    nostd::underlying_type_t<log_level> l =
+        ATFRAMEWORK_UTILS_NAMESPACE_ID::string::to_int<nostd::underlying_type_t<log_level>>(name);
+    if (l >= 0 && l <= static_cast<nostd::underlying_type_t<log_level>>(log_level::kFatal)) {
+      return static_cast<log_level>(l);
     }
 
-    return level_t::LOG_LW_DEBUG;
+    return log_level::kDebug;
   }
 
   // name and convert into level
 
   if (0 == UTIL_STRFUNC_STRNCASE_CMP("disable", name.data(), name.size())) {
-    return level_t::LOG_LW_DISABLED;
+    return log_level::kDisabled;
   }
 
   if (0 == UTIL_STRFUNC_STRNCASE_CMP("fatal", name.data(), name.size())) {
-    return level_t::LOG_LW_FATAL;
+    return log_level::kFatal;
   }
 
   if (0 == UTIL_STRFUNC_STRNCASE_CMP("error", name.data(), name.size())) {
-    return level_t::LOG_LW_ERROR;
+    return log_level::kError;
   }
 
   if (0 == UTIL_STRFUNC_STRNCASE_CMP("warn", name.data(), name.size())) {
-    return level_t::LOG_LW_WARNING;
+    return log_level::kWarning;
   }
 
   if (0 == UTIL_STRFUNC_STRNCASE_CMP("warning", name.data(), name.size())) {
-    return level_t::LOG_LW_WARNING;
+    return log_level::kWarning;
   }
 
   if (0 == UTIL_STRFUNC_STRNCASE_CMP("info", name.data(), name.size())) {
-    return level_t::LOG_LW_INFO;
+    return log_level::kInfo;
   }
 
   if (0 == UTIL_STRFUNC_STRNCASE_CMP("notice", name.data(), name.size())) {
-    return level_t::LOG_LW_NOTICE;
+    return log_level::kNotice;
   }
 
   if (0 == UTIL_STRFUNC_STRNCASE_CMP("debug", name.data(), name.size())) {
-    return level_t::LOG_LW_DEBUG;
+    return log_level::kDebug;
   }
 
   if (0 == UTIL_STRFUNC_STRNCASE_CMP("trace", name.data(), name.size())) {
-    return level_t::LOG_LW_TRACE;
+    return log_level::kTrace;
   }
 
-  return level_t::LOG_LW_DEBUG;
+  return log_level::kDebug;
 }
 
 }  // namespace log
 ATFRAMEWORK_UTILS_NAMESPACE_END
-

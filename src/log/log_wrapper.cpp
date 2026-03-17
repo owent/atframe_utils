@@ -3,7 +3,7 @@
 // Licensed under the MIT licenses.
 // Created by owent on 2015-06-29
 
-#include <stdarg.h>
+#include <cstdarg>
 #include <cstdio>
 #include <cstring>
 #include <iterator>
@@ -13,7 +13,6 @@
 #include "common/string_oprs.h"
 #include "config/atframe_utils_build_feature.h"
 #include "lock/lock_holder.h"
-#include "lock/spin_lock.h"
 
 #include "time/time_utility.h"
 
@@ -85,22 +84,25 @@ ATFRAMEWORK_UTILS_NAMESPACE_END
 ATFRAMEWORK_UTILS_NAMESPACE_BEGIN
 namespace log {
 namespace {
+// NOLINTNEXTLINE(cppcoreguidelines-avoid-non-const-global-variables)
 static bool log_wrapper_global_destroyed_ = false;
-}
+}  // namespace
 
 ATFRAMEWORK_UTILS_API log_wrapper::log_wrapper()
-    : log_level_(level_t::LOG_LW_DISABLED), stacktrace_level_(level_t::LOG_LW_DISABLED, level_t::LOG_LW_DISABLED) {
+    : log_level_(level_t::kDisabled),
+      stacktrace_level_(level_t::kDisabled, level_t::kDisabled),
+      prefix_format_("[%F %T.%f][%L](%k:%n): ") {
   // 默认设为全局logger，如果是用户logger，则create_user_logger里重新设为false
   options_.set(options_t::OPT_IS_GLOBAL, true);
 
   update();
-  prefix_format_ = "[%F %T.%f][%L](%k:%n): ";
 }
 
 ATFRAMEWORK_UTILS_API log_wrapper::log_wrapper(construct_helper_t &)
-    : log_level_(level_t::LOG_LW_DISABLED), stacktrace_level_(level_t::LOG_LW_DISABLED, level_t::LOG_LW_DISABLED) {
+    : log_level_(level_t::kDisabled),
+      stacktrace_level_(level_t::kDisabled, level_t::kDisabled),
+      prefix_format_("[%F %T.%f][%L](%k:%n): ") {
   // 这个接口由create_user_logger调用，不设置OPT_IS_GLOBAL
-  prefix_format_ = "[%F %T.%f][%L](%k:%n): ";
 }
 
 ATFRAMEWORK_UTILS_API log_wrapper::~log_wrapper() {
@@ -109,10 +111,10 @@ ATFRAMEWORK_UTILS_API log_wrapper::~log_wrapper() {
   }
 
   // 重置level，只要内存没释放，就还可以内存访问，但是不能写出日志
-  log_level_ = level_t::LOG_LW_DISABLED;
+  log_level_ = level_t::kDisabled;
 }
 
-ATFRAMEWORK_UTILS_API int32_t log_wrapper::init(level_t::type level) {
+ATFRAMEWORK_UTILS_API int32_t log_wrapper::init(log_level level) {
   log_level_ = level;
 
   return 0;
@@ -125,10 +127,10 @@ ATFRAMEWORK_UTILS_API size_t log_wrapper::sink_size() const {
   return log_sinks_.size();
 }
 
-ATFRAMEWORK_UTILS_API void log_wrapper::add_sink(log_handler_t h, level_t::type level_min, level_t::type level_max) {
+ATFRAMEWORK_UTILS_API void log_wrapper::add_sink(log_handler_t &&h, log_level level_min, log_level level_max) {
   if (h) {
     log_router_t router;
-    router.handle = h;
+    router.handle = std::move(h);
     router.level_min = level_min;
     router.level_max = level_max;
 
@@ -149,7 +151,7 @@ ATFRAMEWORK_UTILS_API void log_wrapper::pop_sink() {
   log_sinks_.pop_front();
 }
 
-ATFRAMEWORK_UTILS_API bool log_wrapper::set_sink(size_t idx, level_t::type level_min, level_t::type level_max) {
+ATFRAMEWORK_UTILS_API bool log_wrapper::set_sink(size_t idx, log_level level_min, log_level level_max) {
   ATFRAMEWORK_UTILS_NAMESPACE_ID::lock::write_lock_holder<ATFRAMEWORK_UTILS_NAMESPACE_ID::lock::spin_rw_lock> holder(
       log_sinks_lock_);
 
@@ -173,7 +175,7 @@ ATFRAMEWORK_UTILS_API void log_wrapper::clear_sinks() {
   log_sinks_.clear();
 }
 
-ATFRAMEWORK_UTILS_API void log_wrapper::set_stacktrace_level(level_t::type level_min, level_t::type level_max) {
+ATFRAMEWORK_UTILS_API void log_wrapper::set_stacktrace_level(log_level level_min, log_level level_max) {
   stacktrace_level_.first = level_min;
   stacktrace_level_.second = level_max;
 
@@ -192,7 +194,7 @@ ATFRAMEWORK_UTILS_API void log_wrapper::log(const caller_info_t &caller,
                                             const char *fmt, ...
 #endif
 ) {
-  log_operation_t writer;
+  log_operation_t writer{};
   writer.buffer = nullptr;
   writer.total_size = 0;
   writer.writen_size = 0;
@@ -200,6 +202,7 @@ ATFRAMEWORK_UTILS_API void log_wrapper::log(const caller_info_t &caller,
   start_log(caller, writer);
 
   if (!log_sinks_.empty() && nullptr != writer.buffer) {
+    // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-pointer-arithmetic, cppcoreguidelines-init-variables)
     va_list va_args;
     va_start(va_args, fmt);
     int prt_res = UTIL_STRFUNC_VSNPRINTF(writer.buffer + writer.writen_size, writer.total_size - writer.writen_size - 1,
@@ -226,7 +229,7 @@ ATFRAMEWORK_UTILS_API void log_wrapper::write_log(const caller_info_t &caller, c
 
   for (std::list<log_router_t>::iterator iter = log_sinks_.begin(); iter != log_sinks_.end(); ++iter) {
     if (caller.level_id >= iter->level_min && caller.level_id <= iter->level_max) {
-      iter->handle(caller, content, content_size);
+      iter->handle(caller, nostd::string_view{content, content_size});
     }
   }
 }
@@ -281,7 +284,7 @@ ATFRAMEWORK_UTILS_API void log_wrapper::finish_log(const caller_info_t &caller, 
       caller.level_id <= stacktrace_level_.second) {
     append_log(writer, "\r\nCall stacks:\r\n", 0);
     if (writer.writen_size + 1 < writer.total_size) {
-      stacktrace_options options;
+      stacktrace_options options{};
       options.skip_start_frames = 1;
       options.skip_end_frames = 0;
       options.max_frames = 0;
@@ -303,12 +306,13 @@ ATFRAMEWORK_UTILS_API void log_wrapper::finish_log(const caller_info_t &caller, 
   write_log(caller, writer.buffer, writer.writen_size);
 }
 
+// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
 ATFRAMEWORK_UTILS_API void log_wrapper::append_log(log_operation_t &writer, const char *str, size_t strsz) {
-  if (!writer.buffer || writer.writen_size + 1 >= writer.total_size) {
+  if (writer.buffer == nullptr || writer.writen_size + 1 >= writer.total_size) {
     return;
   }
 
-  if (!str) {
+  if (str == nullptr) {
     return;
   }
 
@@ -329,4 +333,3 @@ ATFRAMEWORK_UTILS_API void log_wrapper::append_log(log_operation_t &writer, cons
 
 }  // namespace log
 ATFRAMEWORK_UTILS_NAMESPACE_END
-
