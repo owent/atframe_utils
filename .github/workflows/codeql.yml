@@ -1,0 +1,61 @@
+# Copyright 2026 atframework
+name: "main"
+
+on: # @see https://help.github.com/en/articles/events-that-trigger-workflows#webhook-events
+  push:
+    branches: # Array of patterns that match refs/heads
+      - main
+  pull_request:
+    branches: [main]
+
+jobs:
+  codeql:
+    name: CodeQL
+    # This job runs on Linux
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - cc: gcc
+            triplet: x64-linux
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+      - name: Generate cache key
+        shell: bash
+        run: git submodule > '.github/.cache-key'
+      - name: Cache packages
+        uses: actions/cache@v5
+        with:
+          path: |
+            third_party/install
+          key: ${{ runner.os }}-codeql-${ hashFiles('.github/.cache-key') }) }}
+      - name: Build
+        shell: bash
+        env:
+          USE_CC: ${{ matrix.cc }}
+          USE_SSL: ${{ matrix.ssl }}
+          VCPKG_TARGET_TRIPLET: ${{ matrix.triplet }}
+        run: |
+          bash ci/do_ci.sh codeql.configure
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          config-file: ./.github/codeql/codeql-config.yml
+      - name: Build
+        shell: bash
+        env:
+          USE_CC: ${{ matrix.cc }}
+          USE_SSL: ${{ matrix.ssl }}
+          VCPKG_TARGET_TRIPLET: ${{ matrix.triplet }}
+        run: |
+          bash ci/do_ci.sh codeql.build
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
+        with:
+          category: "/language:cpp"

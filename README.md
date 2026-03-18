@@ -2,12 +2,18 @@
 
 cxx utils code
 
-[![ci-badge]][ci-link] [![codecov badge]][codecov status]
+[![ci-badge]][ci-link]
+[![codeql-badge]][codeql-link]
+[![codecov badge]][codecov status]
+![license-badge]
 
 [ci-badge]: https://github.com/atframework/atframe_utils/actions/workflows/main.yml/badge.svg "Github action build status"
 [ci-link]:  https://github.com/atframework/atframe_utils/actions/workflows/main.yml "Github action build status"
-[codecov badge]: https://codecov.io/gh/owent/atframe_utils/branch/main/graph/badge.svg?token=S6MBY4242I
+[codeql-badge]: https://github.com/atframework/atframe_utils/actions/workflows/codeql.yml/badge.svg "CodeQL"
+[codeql-link]:  https://github.com/atframework/atframe_utils/actions/workflows/codeql.yml "CodeQL"
+[codecov badge]: https://codecov.io/gh/owent/atframe_utils/branch/main/graph/badge.svg
 [codecov status]: https://codecov.io/gh/owent/atframe_utils
+[license-badge]: https://img.shields.io/github/license/atframework/atframe_utils
 
 ## CI Job Matrix
 
