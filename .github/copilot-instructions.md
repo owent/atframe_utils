@@ -10,9 +10,9 @@
 
 ## Skills (How-to playbooks)
 
-Operational, copy/paste-friendly guides live in `.github/skills/`:
+Operational, copy/paste-friendly guides live in `.agents/skills/`:
 
-- Entry point: `.github/skills/README.md`
+- Entry point: `.agents/skills/README.md`
 
 ## Build System
 
@@ -20,7 +20,7 @@ This project uses **CMake** (minimum version 3.24.0).
 
 Build steps and common configuration options are documented in:
 
-- `.github/skills/build.md`
+- `.agents/skills/build/SKILL.md`
 
 ## Directory Structure
 
@@ -78,7 +78,7 @@ CASE_MSG_INFO() << "Info message";
 
 ### Running and writing tests
 
-See `.github/skills/testing.md`.
+See `.agents/skills/testing/SKILL.md`.
     CASE_EXPECT_EQ(32, result.size());
     CASE_MSG_INFO() << "SHA256 hash computed successfully";
 }

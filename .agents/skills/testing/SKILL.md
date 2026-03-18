@@ -1,3 +1,8 @@
+---
+name: testing
+description: Run and write unit tests for atframe_utils using the private test framework, including Windows DLL/PATH setup.
+---
+
 # Unit testing (atframe_utils)
 
 This repo uses a **private unit testing framework** (not GoogleTest). The framework is located in `test/frame/`.

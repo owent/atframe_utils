@@ -1,3 +1,8 @@
+---
+name: build
+description: Configure and build atframe_utils with CMake, including key options for samples, tests, tools, and crypto backends.
+---
+
 # Build (atframe_utils)
 
 This repo uses **CMake (>= 3.24)**.
