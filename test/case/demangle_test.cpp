@@ -1,11 +1,14 @@
 // Copyright 2026 atframework
 
 #include <string>
-#include <typeinfo>
 
 #include "common/demangle.h"
+#include "config/atframe_utils_build_feature.h"
 
 #include "frame/test_macros.h"
+
+#if defined(ATFRAMEWORK_UTILS_ENABLE_RTTI) && ATFRAMEWORK_UTILS_ENABLE_RTTI
+#  include <typeinfo>
 
 namespace {
 struct demangle_test_struct {};
@@ -39,6 +42,7 @@ CASE_TEST(demangle, demangle_std_string) {
   CASE_EXPECT_FALSE(result.empty());
   CASE_MSG_INFO() << "demangle(std::string): " << result << std::endl;
 }
+#endif
 
 CASE_TEST(demangle, demangle_alloc_nullptr) {
   // demangle_alloc handles nullptr gracefully
@@ -51,6 +55,7 @@ CASE_TEST(demangle, demangle_empty_string) {
   // Should not crash
 }
 
+#if defined(ATFRAMEWORK_UTILS_ENABLE_RTTI) && ATFRAMEWORK_UTILS_ENABLE_RTTI
 CASE_TEST(demangle, demangle_alloc_free) {
   const char *name = typeid(int).name();
   const char *demangled = atfw::util::demangle_alloc(name);
@@ -60,12 +65,14 @@ CASE_TEST(demangle, demangle_alloc_free) {
     atfw::util::demangle_free(demangled);
   }
 }
+#endif
 
 CASE_TEST(demangle, demangle_free_nullptr) {
   // Should not crash
   atfw::util::demangle_free(nullptr);
 }
 
+#if defined(ATFRAMEWORK_UTILS_ENABLE_RTTI) && ATFRAMEWORK_UTILS_ENABLE_RTTI
 CASE_TEST(demangle, scoped_demangled_name_basic) {
   const char *name = typeid(double).name();
   atfw::util::scoped_demangled_name scoped(name);
@@ -103,14 +110,17 @@ CASE_TEST(demangle, scoped_demangled_name_move_assign) {
   // scoped2 now holds scoped1's old pointer (swap semantics)
   CASE_EXPECT_TRUE(nullptr != scoped2.get());
 }
+#endif
 
 CASE_TEST(demangle, scoped_demangled_name_nullptr) {
   atfw::util::scoped_demangled_name scoped(nullptr);
   // Should not crash, get() may return nullptr
 }
 
+#if defined(ATFRAMEWORK_UTILS_ENABLE_RTTI) && ATFRAMEWORK_UTILS_ENABLE_RTTI
 CASE_TEST(demangle, demangle_template_type) {
   std::string result = atfw::util::demangle(typeid(std::vector<int>).name());
   CASE_EXPECT_FALSE(result.empty());
   CASE_MSG_INFO() << "demangle(vector<int>): " << result << std::endl;
 }
+#endif

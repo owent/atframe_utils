@@ -256,7 +256,7 @@ CASE_TEST(tquerystring, decode_bracket_params) {
   auto data = qs["data"];
   CASE_EXPECT_TRUE(nullptr != data);
   if (data) {
-    auto data_obj = std::dynamic_pointer_cast<atfw::util::types::item_object>(data);
+    auto data_obj = std::static_pointer_cast<atfw::util::types::item_object>(data);
     if (data_obj) {
       CASE_EXPECT_EQ("1", data_obj->get_string("a"));
       CASE_EXPECT_EQ("2", data_obj->get_string("b"));
@@ -287,7 +287,7 @@ CASE_TEST(tquerystring, decode_array_indexed) {
   auto item = qs["arr"];
   CASE_EXPECT_TRUE(nullptr != item);
   if (item) {
-    auto arr_obj = std::dynamic_pointer_cast<atfw::util::types::item_object>(item);
+    auto arr_obj = std::static_pointer_cast<atfw::util::types::item_object>(item);
     if (arr_obj) {
       CASE_EXPECT_EQ("first", arr_obj->get_string("0"));
       CASE_EXPECT_EQ("second", arr_obj->get_string("1"));
@@ -303,7 +303,7 @@ CASE_TEST(tquerystring, decode_nested_object) {
   auto user = qs["user"];
   CASE_EXPECT_TRUE(nullptr != user);
   if (user) {
-    auto user_obj = std::dynamic_pointer_cast<atfw::util::types::item_object>(user);
+    auto user_obj = std::static_pointer_cast<atfw::util::types::item_object>(user);
     CASE_EXPECT_TRUE(nullptr != user_obj);
     if (user_obj) {
       CASE_EXPECT_EQ("test", user_obj->get_string("name"));
@@ -320,7 +320,7 @@ CASE_TEST(tquerystring, decode_url_encoded_bracket_values) {
   auto data = qs["data"];
   CASE_EXPECT_TRUE(nullptr != data);
   if (data) {
-    auto data_obj = std::dynamic_pointer_cast<atfw::util::types::item_object>(data);
+    auto data_obj = std::static_pointer_cast<atfw::util::types::item_object>(data);
     if (data_obj) {
       CASE_EXPECT_EQ("hello world", data_obj->get_string("key"));
       CASE_EXPECT_EQ("bar", data_obj->get_string("foo"));
@@ -343,7 +343,7 @@ CASE_TEST(tquerystring, set_spliter) {
   auto d = qs["d"];
   CASE_EXPECT_TRUE(nullptr != d);
   if (d) {
-    auto d_obj = std::dynamic_pointer_cast<atfw::util::types::item_object>(d);
+    auto d_obj = std::static_pointer_cast<atfw::util::types::item_object>(d);
     if (d_obj) {
       CASE_EXPECT_EQ("1", d_obj->get_string("a"));
       CASE_EXPECT_EQ("2", d_obj->get_string("b"));
@@ -359,7 +359,7 @@ CASE_TEST(tquerystring, create_with_spliter) {
   auto p = (*qs)["p"];
   CASE_EXPECT_TRUE(nullptr != p);
   if (p) {
-    auto p_obj = std::dynamic_pointer_cast<atfw::util::types::item_object>(p);
+    auto p_obj = std::static_pointer_cast<atfw::util::types::item_object>(p);
     if (p_obj) {
       CASE_EXPECT_EQ("10", p_obj->get_string("x"));
       CASE_EXPECT_EQ("20", p_obj->get_string("y"));
@@ -403,7 +403,7 @@ CASE_TEST(tquerystring, decode_deep_nested) {
   auto a = qs["a"];
   CASE_EXPECT_TRUE(nullptr != a);
   if (a) {
-    auto a_obj = std::dynamic_pointer_cast<atfw::util::types::item_object>(a);
+    auto a_obj = std::static_pointer_cast<atfw::util::types::item_object>(a);
     if (a_obj) {
       auto b = a_obj->get("b");
       CASE_EXPECT_TRUE(nullptr != b);
