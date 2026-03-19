@@ -164,3 +164,155 @@ CASE_TEST(ini_loader, map) {
   }
 }
 
+CASE_TEST(ini_loader, ini_value_basic) {
+  atfw::util::config::ini_value val;
+  CASE_EXPECT_TRUE(val.empty());
+  CASE_EXPECT_FALSE(val.has_data());
+  CASE_EXPECT_EQ(static_cast<size_t>(0), val.size());
+
+  val.add("hello");
+  CASE_EXPECT_FALSE(val.empty());
+  CASE_EXPECT_TRUE(val.has_data());
+  CASE_EXPECT_EQ(static_cast<size_t>(1), val.size());
+  CASE_EXPECT_EQ("hello", val.as_cpp_string());
+
+  val.add("world");
+  CASE_EXPECT_EQ(static_cast<size_t>(2), val.size());
+  CASE_EXPECT_EQ("world", val.as_cpp_string(1));
+
+  val.clear();
+  CASE_EXPECT_TRUE(val.empty());
+}
+
+CASE_TEST(ini_loader, ini_value_children) {
+  atfw::util::config::ini_value val;
+  val["child1"].add("value1");
+  val["child2"].add("value2");
+
+  CASE_EXPECT_FALSE(val.empty());
+  CASE_EXPECT_EQ("value1", val["child1"].as_cpp_string());
+  CASE_EXPECT_EQ("value2", val["child2"].as_cpp_string());
+}
+
+CASE_TEST(ini_loader, ini_value_get_child_by_path) {
+  atfw::util::config::ini_value val;
+  val["a"]["b"]["c"].add("deep");
+
+  auto child = val.get_child_by_path("a.b.c");
+  CASE_EXPECT_TRUE(nullptr != child);
+  if (child) {
+    CASE_EXPECT_EQ("deep", child->as_cpp_string());
+  }
+
+  // Non-existent path
+  auto missing = val.get_child_by_path("x.y.z");
+  CASE_EXPECT_TRUE(nullptr == missing);
+}
+
+CASE_TEST(ini_loader, ini_value_as_integer_types) {
+  atfw::util::config::ini_value val;
+  val.add("42");
+
+  CASE_EXPECT_EQ(42, val.as_int());
+  CASE_EXPECT_EQ(42, val.as_int32());
+  CASE_EXPECT_EQ(42, val.as_int64());
+  CASE_EXPECT_EQ(42, val.as_short());
+  CASE_EXPECT_EQ(42, val.as_long());
+  CASE_EXPECT_EQ(42, val.as_longlong());
+  CASE_EXPECT_EQ(42U, val.as_uint32());
+  CASE_EXPECT_EQ(42U, val.as_uint64());
+  CASE_EXPECT_EQ(static_cast<char>(42), val.as_char());
+  CASE_EXPECT_EQ(static_cast<unsigned char>(42), val.as_uchar());
+}
+
+CASE_TEST(ini_loader, ini_value_as_float_types) {
+  atfw::util::config::ini_value val;
+  val.add("3.14");
+
+  CASE_EXPECT_LE(std::abs(3.14f - val.as_float()), 0.01f);
+  CASE_EXPECT_LE(std::abs(3.14 - val.as_double()), 0.01);
+}
+
+CASE_TEST(ini_loader, ini_value_out_of_range_index) {
+  atfw::util::config::ini_value val;
+  val.add("hello");
+
+  // Index out of range should return empty/default
+  CASE_EXPECT_TRUE(val.as_cpp_string(99).empty());
+  atfw::util::config::duration_value dur = val.as_duration(99);
+  CASE_EXPECT_EQ(0, dur.sec);
+  CASE_EXPECT_EQ(0, dur.nsec);
+}
+
+CASE_TEST(ini_loader, ini_value_copy) {
+  atfw::util::config::ini_value val;
+  val.add("data");
+  val["child"].add("child_data");
+
+  atfw::util::config::ini_value copy(val);
+  CASE_EXPECT_EQ("data", copy.as_cpp_string());
+  CASE_EXPECT_EQ("child_data", copy["child"].as_cpp_string());
+
+  atfw::util::config::ini_value assigned;
+  assigned = val;
+  CASE_EXPECT_EQ("data", assigned.as_cpp_string());
+}
+
+CASE_TEST(ini_loader, ini_value_duration_direct) {
+  // Test as_duration with various unit strings without loading from file
+  atfw::util::config::ini_value val;
+
+  val.add("500ms");
+  atfw::util::config::duration_value dur = val.as_duration(0);
+  CASE_EXPECT_EQ(0, dur.sec);
+  CASE_EXPECT_EQ(500000000, dur.nsec);
+
+  val.clear();
+  val.add("2500us");
+  dur = val.as_duration(0);
+  CASE_EXPECT_EQ(0, dur.sec);
+  CASE_EXPECT_EQ(2500000, dur.nsec);
+
+  val.clear();
+  val.add("5 seconds");
+  dur = val.as_duration(0);
+  CASE_EXPECT_EQ(5, dur.sec);
+
+  val.clear();
+  val.add("2 minutes");
+  dur = val.as_duration(0);
+  CASE_EXPECT_EQ(120, dur.sec);
+
+  val.clear();
+  val.add("1 hour");
+  dur = val.as_duration(0);
+  CASE_EXPECT_EQ(3600, dur.sec);
+
+  val.clear();
+  val.add("1 day");
+  dur = val.as_duration(0);
+  CASE_EXPECT_EQ(86400, dur.sec);
+
+  val.clear();
+  val.add("1 week");
+  dur = val.as_duration(0);
+  CASE_EXPECT_EQ(604800, dur.sec);
+
+  val.clear();
+  val.add("1000000000 nanoseconds");
+  dur = val.as_duration(0);
+  CASE_EXPECT_EQ(1, dur.sec);
+  CASE_EXPECT_EQ(0, dur.nsec);
+
+  val.clear();
+  val.add("2000 milliseconds");
+  dur = val.as_duration(0);
+  CASE_EXPECT_EQ(2, dur.sec);
+  CASE_EXPECT_EQ(0, dur.nsec);
+
+  val.clear();
+  val.add("1000000 microseconds");
+  dur = val.as_duration(0);
+  CASE_EXPECT_EQ(1, dur.sec);
+  CASE_EXPECT_EQ(0, dur.nsec);
+}

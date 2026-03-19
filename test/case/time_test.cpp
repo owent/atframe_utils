@@ -869,3 +869,87 @@ CASE_TEST(time_test, reinsert_lower_wheel) {
   CASE_EXPECT_EQ(wheel_idx2, 133);
 }
 
+CASE_TEST(time_test, is_leap_year) {
+  // Common years
+  CASE_EXPECT_FALSE(atfw::util::time::time_utility::is_leap_year(2023));
+  CASE_EXPECT_FALSE(atfw::util::time::time_utility::is_leap_year(2025));
+  // Leap years divisible by 4
+  CASE_EXPECT_TRUE(atfw::util::time::time_utility::is_leap_year(2024));
+  CASE_EXPECT_TRUE(atfw::util::time::time_utility::is_leap_year(2028));
+  // Century years not divisible by 400
+  CASE_EXPECT_FALSE(atfw::util::time::time_utility::is_leap_year(1900));
+  CASE_EXPECT_FALSE(atfw::util::time::time_utility::is_leap_year(2100));
+  // Century years divisible by 400
+  CASE_EXPECT_TRUE(atfw::util::time::time_utility::is_leap_year(2000));
+  CASE_EXPECT_TRUE(atfw::util::time::time_utility::is_leap_year(2400));
+}
+
+CASE_TEST(time_test, is_greater_day) {
+  atfw::util::time::time_utility::update();
+
+  // Two timestamps on the same day
+  time_t now = atfw::util::time::time_utility::get_now();
+  CASE_EXPECT_FALSE(atfw::util::time::time_utility::is_greater_day(now, now));
+
+  // tomorrow > today
+  CASE_EXPECT_TRUE(atfw::util::time::time_utility::is_greater_day(now, now + 86400));
+  // yesterday < today
+  CASE_EXPECT_FALSE(atfw::util::time::time_utility::is_greater_day(now, now - 86400));
+}
+
+CASE_TEST(time_test, get_any_day_offset) {
+  atfw::util::time::time_utility::update();
+
+  time_t now = atfw::util::time::time_utility::get_now();
+  // Get today at hour 5 (5*3600 = 18000)
+  time_t today_at_5 = atfw::util::time::time_utility::get_any_day_offset(now, 5 * 3600);
+  time_t today_start = atfw::util::time::time_utility::get_day_start_time(now);
+  CASE_EXPECT_EQ(today_start + 5 * 3600, today_at_5);
+}
+
+CASE_TEST(time_test, get_local_tm) {
+  atfw::util::time::time_utility::update();
+
+  time_t now = atfw::util::time::time_utility::get_now();
+  auto tm_val = atfw::util::time::time_utility::get_local_tm(now);
+  CASE_EXPECT_GE(tm_val.tm_year + 1900, 2020);
+  CASE_EXPECT_GE(tm_val.tm_mon, 0);
+  CASE_EXPECT_LE(tm_val.tm_mon, 11);
+  CASE_EXPECT_GE(tm_val.tm_mday, 1);
+  CASE_EXPECT_LE(tm_val.tm_mday, 31);
+}
+
+CASE_TEST(time_test, get_gmt_tm) {
+  atfw::util::time::time_utility::update();
+
+  time_t now = atfw::util::time::time_utility::get_now();
+  auto tm_val = atfw::util::time::time_utility::get_gmt_tm(now);
+  CASE_EXPECT_GE(tm_val.tm_year + 1900, 2020);
+  CASE_EXPECT_GE(tm_val.tm_hour, 0);
+  CASE_EXPECT_LE(tm_val.tm_hour, 23);
+}
+
+CASE_TEST(time_test, get_now_usec) {
+  atfw::util::time::time_utility::update();
+
+  int32_t usec = atfw::util::time::time_utility::get_now_usec();
+  CASE_EXPECT_GE(usec, 0);
+  CASE_EXPECT_LT(usec, 1000000);
+}
+
+CASE_TEST(time_test, get_now_nanos) {
+  atfw::util::time::time_utility::update();
+
+  int32_t nanos = atfw::util::time::time_utility::get_now_nanos();
+  CASE_EXPECT_GE(nanos, 0);
+}
+
+CASE_TEST(time_test, is_same_week_point) {
+  atfw::util::time::time_utility::update();
+
+  time_t now = atfw::util::time::time_utility::get_now();
+  // Same timestamp should be same week point
+  CASE_EXPECT_TRUE(atfw::util::time::time_utility::is_same_week_point(now, now, 0, 0));
+  // 8 days apart should not be same week
+  CASE_EXPECT_FALSE(atfw::util::time::time_utility::is_same_week_point(now, now + 8 * 86400, 0, 0));
+}

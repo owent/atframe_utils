@@ -120,3 +120,83 @@ CASE_TEST(file_system, open_tmp_file) {
   }
 }
 
+CASE_TEST(file_system, split_path) {
+  std::vector<std::string> out;
+
+  // Basic split
+  CASE_EXPECT_TRUE(atfw::util::file_system::split_path(out, "/usr/local/bin", false));
+  CASE_EXPECT_GE(out.size(), static_cast<size_t>(3));
+
+  out.clear();
+  CASE_EXPECT_TRUE(atfw::util::file_system::split_path(out, "a/b/c", false));
+  CASE_EXPECT_EQ(static_cast<size_t>(3), out.size());
+  CASE_EXPECT_EQ("a", out[0]);
+  CASE_EXPECT_EQ("b", out[1]);
+  CASE_EXPECT_EQ("c", out[2]);
+
+  // Compact mode (resolve ..)
+  out.clear();
+  CASE_EXPECT_TRUE(atfw::util::file_system::split_path(out, "a/b/../c", true));
+  CASE_EXPECT_EQ(static_cast<size_t>(2), out.size());
+  CASE_EXPECT_EQ("a", out[0]);
+  CASE_EXPECT_EQ("c", out[1]);
+}
+
+CASE_TEST(file_system, get_abs_path) {
+  std::string abs = atfw::util::file_system::get_abs_path(".");
+  CASE_EXPECT_FALSE(abs.empty());
+  CASE_EXPECT_TRUE(atfw::util::file_system::is_abs_path(abs.c_str()));
+}
+
+CASE_TEST(file_system, is_abs_path) {
+#ifdef _WIN32
+  CASE_EXPECT_TRUE(atfw::util::file_system::is_abs_path("C:\\Windows"));
+  CASE_EXPECT_TRUE(atfw::util::file_system::is_abs_path("D:/path"));
+  CASE_EXPECT_FALSE(atfw::util::file_system::is_abs_path("relative/path"));
+#else
+  CASE_EXPECT_TRUE(atfw::util::file_system::is_abs_path("/usr/local"));
+  CASE_EXPECT_FALSE(atfw::util::file_system::is_abs_path("relative/path"));
+#endif
+}
+
+CASE_TEST(file_system, rename_file) {
+  // Create a temp file, rename it, verify
+  std::string tmp_name = "rename_test_";
+  atfw::util::file_system::generate_tmp_file_name(tmp_name);
+  if (tmp_name.empty()) {
+    return;
+  }
+
+  // Create file
+  FILE* f = nullptr;
+  UTIL_FS_OPEN(open_res, f, tmp_name.c_str(), "w");
+  UNUSED(open_res);
+  if (nullptr == f) {
+    return;
+  }
+  fputs("test", f);
+  UTIL_FS_CLOSE(f);
+
+  std::string new_name = tmp_name + ".renamed";
+  CASE_EXPECT_TRUE(atfw::util::file_system::rename(tmp_name.c_str(), new_name.c_str()));
+  CASE_EXPECT_FALSE(atfw::util::file_system::is_exist(tmp_name.c_str()));
+  CASE_EXPECT_TRUE(atfw::util::file_system::is_exist(new_name.c_str()));
+
+  // Cleanup
+  atfw::util::file_system::remove(new_name.c_str());
+}
+
+CASE_TEST(file_system, generate_tmp_file_name_with_prefix) {
+  std::string fname = "testprefix_";
+  atfw::util::file_system::generate_tmp_file_name(fname);
+  CASE_EXPECT_FALSE(fname.empty());
+}
+
+CASE_TEST(file_system, is_exist_nonexistent) {
+  CASE_EXPECT_FALSE(atfw::util::file_system::is_exist("/nonexistent/path/to/file.txt"));
+}
+
+CASE_TEST(file_system, file_size_nonexistent) {
+  size_t sz = 0;
+  CASE_EXPECT_FALSE(atfw::util::file_system::file_size("/nonexistent/path/to/file.txt", sz));
+}
