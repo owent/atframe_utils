@@ -81,7 +81,7 @@ elif [[ "$1" == "coverage" ]]; then
   ctest . -VV -C $CONFIGURATION -L atframe_utils
   lcov --directory $PWD --capture --output-file coverage-full.info
   lcov --remove coverage-full.info \
-    '*/sample/*' '*/test/*' '*/tools/*' '*/third_party/*' \
+    '*/sample/*' '*/test/*' '*/tools/*' '*/third_party/*' '*/CMakeFiles/*' \
     --output-file coverage.info
 elif [[ "$1" == "codeql.configure" ]]; then
   CRYPTO_OPTIONS="-DATFRAMEWORK_CMAKE_TOOLSET_THIRD_PARTY_CRYPTO_USE_OPENSSL=ON"

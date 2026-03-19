@@ -674,3 +674,72 @@ CASE_TEST(random_test, uuid_generator_time_bechmark) {
   CASE_MSG_INFO() << "allocate " << 1000000 << " finished" << std::endl;
 }
 
+CASE_TEST(random_test, uuid_to_string_and_binary_roundtrip) {
+  // Generate a UUID and convert to string
+  atfw::util::random::uuid id = atfw::util::random::uuid_generator::generate_random();
+  std::string str_full = atfw::util::random::uuid_generator::uuid_to_string(id, false);
+  std::string str_mini = atfw::util::random::uuid_generator::uuid_to_string(id, true);
+
+  CASE_EXPECT_EQ(36, static_cast<int>(str_full.size()));
+  CASE_EXPECT_EQ(32, static_cast<int>(str_mini.size()));
+
+  // Convert to binary - should be 16 bytes
+  std::string binary = atfw::util::random::uuid_generator::uuid_to_binary(id);
+  CASE_EXPECT_EQ(static_cast<int>(sizeof(atfw::util::random::uuid)), static_cast<int>(binary.size()));
+
+  // Convert binary back to uuid - test that it doesn't crash
+  atfw::util::random::uuid restored = atfw::util::random::uuid_generator::binary_to_uuid(binary);
+  std::string restored_str = atfw::util::random::uuid_generator::uuid_to_string(restored, false);
+  CASE_EXPECT_EQ(36, static_cast<int>(restored_str.size()));
+}
+
+CASE_TEST(random_test, uuid_binary_to_uuid_short_input) {
+  // Short binary input
+  std::string short_bin = "short";
+  atfw::util::random::uuid id = atfw::util::random::uuid_generator::binary_to_uuid(short_bin);
+  // Should not crash, fields may be zeroed
+  (void)id;
+}
+
+CASE_TEST(random_test, uuid_binary_to_uuid_empty) {
+  std::string empty_bin;
+  atfw::util::random::uuid id = atfw::util::random::uuid_generator::binary_to_uuid(empty_bin);
+  (void)id;
+}
+
+CASE_TEST(random_test, uuid_generate_struct) {
+  // Test generate() which returns a uuid struct
+  atfw::util::random::uuid id = atfw::util::random::uuid_generator::generate();
+  std::string str = atfw::util::random::uuid_generator::uuid_to_string(id);
+  CASE_EXPECT_EQ(36, static_cast<int>(str.size()));
+}
+
+CASE_TEST(random_test, uuid_time_struct) {
+  atfw::util::random::uuid id = atfw::util::random::uuid_generator::generate_time();
+  std::string str = atfw::util::random::uuid_generator::uuid_to_string(id, false);
+  CASE_EXPECT_EQ(36, static_cast<int>(str.size()));
+
+  // Verify version nibble for time-based UUID (version 1)
+  // The version is in the high nibble of time_hi_and_version
+  uint16_t version = (id.time_hi_and_version >> 12) & 0x0F;
+  CASE_EXPECT_EQ(1, static_cast<int>(version));
+}
+
+CASE_TEST(random_test, uuid_random_struct) {
+  atfw::util::random::uuid id = atfw::util::random::uuid_generator::generate_random();
+  std::string str = atfw::util::random::uuid_generator::uuid_to_string(id, false);
+  CASE_EXPECT_EQ(36, static_cast<int>(str.size()));
+
+  // Verify version nibble for random UUID (version 4)
+  uint16_t version = (id.time_hi_and_version >> 12) & 0x0F;
+  CASE_EXPECT_EQ(4, static_cast<int>(version));
+}
+
+CASE_TEST(random_test, uuid_to_string_zero) {
+  atfw::util::random::uuid zero_id;
+  memset(&zero_id, 0, sizeof(zero_id));
+  std::string str = atfw::util::random::uuid_generator::uuid_to_string(zero_id, false);
+  CASE_EXPECT_EQ(36, static_cast<int>(str.size()));
+  // Should be all zeros with dashes
+  CASE_EXPECT_EQ("00000000-0000-0000-0000-000000000000", str);
+}
