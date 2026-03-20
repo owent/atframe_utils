@@ -1243,9 +1243,16 @@ ATFRAMEWORK_UTILS_API size_t stacktrace_write(char *buf, size_t bufsz, const sta
       break;
     }
 
-    ret += static_cast<size_t>(res.size);
-    buf += res.size;
-    bufsz -= static_cast<size_t>(res.size);
+    // res.size is the total (not truncated) output size, cap to bufsz
+    size_t actual_written = static_cast<size_t>(res.size);
+    if (actual_written >= bufsz) {
+      ret += bufsz;
+      break;
+    }
+
+    ret += actual_written;
+    buf += actual_written;
+    bufsz -= actual_written;
 
     ++frame_id;
   }
