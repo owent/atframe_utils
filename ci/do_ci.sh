@@ -80,7 +80,7 @@ elif [[ "$1" == "coverage" ]]; then
   cmake --build . -j --config $CONFIGURATION || cmake --build . --config $CONFIGURATION
   ctest . -VV -C $CONFIGURATION -L atframe_utils
   lcov --directory $PWD --capture --output-file coverage-full.info
-  lcov --remove coverage-full.info \
+  lcov --ignore-errors unused --remove coverage-full.info \
     '*/sample/*' '*/test/*' '*/tools/*' '*/third_party/*' '*/CMakeFiles/*' \
     --output-file coverage.info
 elif [[ "$1" == "codeql.configure" ]]; then
