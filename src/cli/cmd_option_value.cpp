@@ -8,25 +8,20 @@
 // 应用程序命令处理
 
 #include "cli/cmd_option_value.h"
+
+#include "common/string_oprs.h"
+
 #include <algorithm>
 
 ATFRAMEWORK_UTILS_NAMESPACE_BEGIN
 namespace cli {
 
-namespace detail {
-static char tolower(char c) {
-  if (c >= 'A' && c <= 'Z') {
-    return static_cast<char>(c - 'A' + 'a');
-  }
-
-  return c;
-}
-}  // namespace detail
-
 ATFRAMEWORK_UTILS_API cmd_option_value::cmd_option_value(const char *str_data) : data_(str_data) {}
+
 ATFRAMEWORK_UTILS_API cmd_option_value::cmd_option_value(const char *begin, const char *end) {
   data_.assign(begin, end);
 }
+
 ATFRAMEWORK_UTILS_API cmd_option_value::cmd_option_value(const std::string &str_data) { data_ = str_data; }
 
 ATFRAMEWORK_UTILS_API const std::string &cmd_option_value::to_cpp_string() const { return data_; }
@@ -78,7 +73,7 @@ ATFRAMEWORK_UTILS_API uint64_t cmd_option_value::to_uint64() const { return to<u
 
 ATFRAMEWORK_UTILS_API bool cmd_option_value::to_logic_bool() const {
   std::string lowercase_content = data_;
-  std::transform(lowercase_content.begin(), lowercase_content.end(), lowercase_content.begin(), detail::tolower);
+  std::transform(lowercase_content.begin(), lowercase_content.end(), lowercase_content.begin(), string::tolower<char>);
 
   if (lowercase_content.empty()) {
     return false;
@@ -106,14 +101,13 @@ ATFRAMEWORK_UTILS_API void cmd_option_value::split(char delim, std::vector<cmd_o
   while (end_pos != std::string::npos && begin_pos < data_.size()) {
     end_pos = data_.find(delim, begin_pos);
     if (end_pos == std::string::npos && begin_pos < data_.size()) {
-      out.push_back(cmd_option_value(&data_[begin_pos]));
+      out.emplace_back(&data_[begin_pos]);
       begin_pos = end_pos;
     } else {
-      out.push_back(cmd_option_value(&data_[begin_pos], &data_[end_pos]));
+      out.emplace_back(&data_[begin_pos], &data_[end_pos]);
       begin_pos = end_pos + 1;
     }
   }
 }
 }  // namespace cli
 ATFRAMEWORK_UTILS_NAMESPACE_END
-

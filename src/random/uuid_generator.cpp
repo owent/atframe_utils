@@ -8,6 +8,8 @@
 #include <random/random_generator.h>
 #include <random/uuid_generator.h>
 
+#include <algorithm/bit.h>
+
 #if (defined(ATFRAMEWORK_UTILS_ENABLE_LIBUUID) && ATFRAMEWORK_UTILS_ENABLE_LIBUUID) ||         \
     (defined(ATFRAMEWORK_UTILS_ENABLE_UUID_WINRPC) && ATFRAMEWORK_UTILS_ENABLE_UUID_WINRPC) || \
     (defined(ATFRAMEWORK_UTILS_ENABLE_UUID_INTERNAL_IMPLEMENT) && ATFRAMEWORK_UTILS_ENABLE_UUID_INTERNAL_IMPLEMENT)
@@ -515,7 +517,12 @@ ATFRAMEWORK_UTILS_API std::string uuid_generator::uuid_to_string(const uuid &id,
 
 #  if defined(ATFRAMEWORK_UTILS_ENABLE_LIBUUID) && ATFRAMEWORK_UTILS_ENABLE_LIBUUID
   uuid_t linux_uid;
-  memcpy(linux_uid, &id, sizeof(uuid));
+  // Convert from host byte order struct fields to RFC 4122 wire format (big-endian)
+  bit::write_be_uint32(linux_uid, id.time_low);
+  bit::write_be_uint16(linux_uid + 4, id.time_mid);
+  bit::write_be_uint16(linux_uid + 6, id.time_hi_and_version);
+  bit::write_be_uint16(linux_uid + 8, id.clock_seq);
+  memcpy(linux_uid + 10, id.node, sizeof(id.node));
   uuid_unparse(linux_uid, str_buff);
   if (remove_minus) {
     size_t len = 0;
@@ -578,16 +585,10 @@ ATFRAMEWORK_UTILS_API std::string uuid_generator::uuid_to_string(const uuid &id,
 ATFRAMEWORK_UTILS_API std::string uuid_generator::uuid_to_binary(const uuid &id) {
   std::string ret;
   ret.resize(sizeof(uuid));
-  ret[0] = static_cast<char>((id.time_low >> 24) & 0xFF);
-  ret[1] = static_cast<char>((id.time_low >> 16) & 0xFF);
-  ret[2] = static_cast<char>((id.time_low >> 8) & 0xFF);
-  ret[3] = static_cast<char>(id.time_low & 0xFF);
-  ret[4] = static_cast<char>((id.time_mid >> 8) & 0xFF);
-  ret[5] = static_cast<char>(id.time_mid & 0xFF);
-  ret[6] = static_cast<char>((id.time_hi_and_version >> 8) & 0xFF);
-  ret[7] = static_cast<char>(id.time_hi_and_version & 0xFF);
-  ret[8] = static_cast<char>((id.clock_seq >> 8) & 0xFF);
-  ret[9] = static_cast<char>(id.clock_seq & 0xFF);
+  bit::write_be_uint32(reinterpret_cast<unsigned char *>(&ret[0]), id.time_low);
+  bit::write_be_uint16(reinterpret_cast<unsigned char *>(&ret[4]), id.time_mid);
+  bit::write_be_uint16(reinterpret_cast<unsigned char *>(&ret[6]), id.time_hi_and_version);
+  bit::write_be_uint16(reinterpret_cast<unsigned char *>(&ret[8]), id.clock_seq);
   memcpy(&ret[10], id.node, sizeof(id.node));
 
   return ret;
@@ -600,12 +601,10 @@ ATFRAMEWORK_UTILS_API uuid uuid_generator::binary_to_uuid(const std::string &id_
     return ret;
   }
 
-  ret.time_low = (static_cast<uint32_t>(id_bin[0]) << 24) | static_cast<uint32_t>(id_bin[1] << 16) |
-                 static_cast<uint32_t>(id_bin[2] << 8) | static_cast<uint32_t>(id_bin[3]);
-  ret.time_mid = static_cast<uint16_t>((static_cast<uint16_t>(id_bin[4]) << 8) | static_cast<uint16_t>(id_bin[5]));
-  ret.time_hi_and_version =
-      static_cast<uint16_t>((static_cast<uint16_t>(id_bin[6]) << 8) | static_cast<uint16_t>(id_bin[7]));
-  ret.clock_seq = static_cast<uint16_t>((static_cast<uint16_t>(id_bin[8]) << 8) | static_cast<uint16_t>(id_bin[9]));
+  ret.time_low = bit::read_be_uint32(reinterpret_cast<const unsigned char *>(&id_bin[0]));
+  ret.time_mid = bit::read_be_uint16(reinterpret_cast<const unsigned char *>(&id_bin[4]));
+  ret.time_hi_and_version = bit::read_be_uint16(reinterpret_cast<const unsigned char *>(&id_bin[6]));
+  ret.clock_seq = bit::read_be_uint16(reinterpret_cast<const unsigned char *>(&id_bin[8]));
   memcpy(ret.node, &id_bin[10], sizeof(ret.node));
   return ret;
 }
@@ -616,7 +615,12 @@ ATFRAMEWORK_UTILS_API uuid uuid_generator::generate() {
 #  if defined(ATFRAMEWORK_UTILS_ENABLE_LIBUUID) && ATFRAMEWORK_UTILS_ENABLE_LIBUUID
   uuid_t linux_uid;
   uuid_generate(linux_uid);
-  memcpy(&ret, linux_uid, sizeof(ret));
+  // Parse from RFC 4122 wire format (big-endian) into host byte order struct fields
+  ret.time_low = bit::read_be_uint32(linux_uid);
+  ret.time_mid = bit::read_be_uint16(linux_uid + 4);
+  ret.time_hi_and_version = bit::read_be_uint16(linux_uid + 6);
+  ret.clock_seq = bit::read_be_uint16(linux_uid + 8);
+  memcpy(ret.node, linux_uid + 10, sizeof(ret.node));
 #  elif defined(ATFRAMEWORK_UTILS_ENABLE_UUID_WINRPC) && ATFRAMEWORK_UTILS_ENABLE_UUID_WINRPC
   UUID res;
   UuidCreate(&res);
@@ -642,7 +646,12 @@ ATFRAMEWORK_UTILS_API uuid uuid_generator::generate_random() {
 #  if defined(ATFRAMEWORK_UTILS_ENABLE_LIBUUID) && ATFRAMEWORK_UTILS_ENABLE_LIBUUID
   uuid_t linux_uid;
   uuid_generate_random(linux_uid);
-  memcpy(&ret, linux_uid, sizeof(ret));
+  // Parse from RFC 4122 wire format (big-endian) into host byte order struct fields
+  ret.time_low = bit::read_be_uint32(linux_uid);
+  ret.time_mid = bit::read_be_uint16(linux_uid + 4);
+  ret.time_hi_and_version = bit::read_be_uint16(linux_uid + 6);
+  ret.clock_seq = bit::read_be_uint16(linux_uid + 8);
+  memcpy(ret.node, linux_uid + 10, sizeof(ret.node));
 #  elif defined(ATFRAMEWORK_UTILS_ENABLE_UUID_WINRPC) && ATFRAMEWORK_UTILS_ENABLE_UUID_WINRPC
   UUID res;
   UuidCreate(&res);
@@ -668,7 +677,12 @@ ATFRAMEWORK_UTILS_API uuid uuid_generator::generate_time() {
 #  if defined(ATFRAMEWORK_UTILS_ENABLE_LIBUUID) && ATFRAMEWORK_UTILS_ENABLE_LIBUUID
   uuid_t linux_uid;
   uuid_generate_time(linux_uid);
-  memcpy(&ret, linux_uid, sizeof(ret));
+  // Parse from RFC 4122 wire format (big-endian) into host byte order struct fields
+  ret.time_low = bit::read_be_uint32(linux_uid);
+  ret.time_mid = bit::read_be_uint16(linux_uid + 4);
+  ret.time_hi_and_version = bit::read_be_uint16(linux_uid + 6);
+  ret.clock_seq = bit::read_be_uint16(linux_uid + 8);
+  memcpy(ret.node, linux_uid + 10, sizeof(ret.node));
 #  elif defined(ATFRAMEWORK_UTILS_ENABLE_UUID_WINRPC) && ATFRAMEWORK_UTILS_ENABLE_UUID_WINRPC
   UUID res;
   UuidCreateSequential(&res);
@@ -691,4 +705,3 @@ ATFRAMEWORK_UTILS_API std::string uuid_generator::generate_string_time(bool remo
 ATFRAMEWORK_UTILS_NAMESPACE_END
 
 #endif
-

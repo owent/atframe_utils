@@ -687,10 +687,10 @@ CASE_TEST(random_test, uuid_to_string_and_binary_roundtrip) {
   std::string binary = atfw::util::random::uuid_generator::uuid_to_binary(id);
   CASE_EXPECT_EQ(static_cast<int>(sizeof(atfw::util::random::uuid)), static_cast<int>(binary.size()));
 
-  // Convert binary back to uuid - test that it doesn't crash
+  // Convert binary back to uuid - roundtrip should produce identical string
   atfw::util::random::uuid restored = atfw::util::random::uuid_generator::binary_to_uuid(binary);
   std::string restored_str = atfw::util::random::uuid_generator::uuid_to_string(restored, false);
-  CASE_EXPECT_EQ(36, static_cast<int>(restored_str.size()));
+  CASE_EXPECT_EQ(str_full, restored_str);
 }
 
 CASE_TEST(random_test, uuid_binary_to_uuid_short_input) {
@@ -723,6 +723,11 @@ CASE_TEST(random_test, uuid_time_struct) {
   // The version is in the high nibble of time_hi_and_version
   uint16_t version = (id.time_hi_and_version >> 12) & 0x0F;
   CASE_EXPECT_EQ(1, static_cast<int>(version));
+
+  // Also verify via string position 14
+  if (str.size() >= 15) {
+    CASE_EXPECT_EQ('1', str[14]);
+  }
 }
 
 CASE_TEST(random_test, uuid_random_struct) {
@@ -733,6 +738,11 @@ CASE_TEST(random_test, uuid_random_struct) {
   // Verify version nibble for random UUID (version 4)
   uint16_t version = (id.time_hi_and_version >> 12) & 0x0F;
   CASE_EXPECT_EQ(4, static_cast<int>(version));
+
+  // Also verify via string position 14
+  if (str.size() >= 15) {
+    CASE_EXPECT_EQ('4', str[14]);
+  }
 }
 
 CASE_TEST(random_test, uuid_to_string_zero) {

@@ -6,6 +6,7 @@
 
 #include <climits>
 #include <cstdint>
+#include <cstring>
 #include <limits>
 #include <type_traits>
 
@@ -26,6 +27,42 @@
 #  endif
 #  if defined(__cpp_lib_int_pow2) && __cpp_lib_int_pow2 >= 202002L
 #    define ATFW_UTIL_MACRO_HAVE_STD_INT_POW2 1
+#  endif
+#  if defined(__cpp_lib_endian) && __cpp_lib_endian >= 201907L
+#    if !(defined(ATFW_UTIL_MACRO_HAVE_STD_BITOPS) && ATFW_UTIL_MACRO_HAVE_STD_BITOPS)
+#      include <bit>
+#    endif
+#    define ATFW_UTIL_MACRO_HAVE_STD_ENDIAN 1
+#  endif
+#endif
+
+#if !defined(ATFW_UTIL_MACRO_HAVE_STD_ENDIAN)
+#  if defined(__has_include)
+#    if __has_include(<bit>)
+#      include <bit>
+#      if defined(__cpp_lib_endian) && __cpp_lib_endian >= 201907L
+#        define ATFW_UTIL_MACRO_HAVE_STD_ENDIAN 1
+#      endif
+#    endif
+#  endif
+#endif
+
+#if !defined(ATFW_UTIL_MACRO_HAVE_IF_CONSTEXPR)
+#  if defined(__cpp_if_constexpr) && __cpp_if_constexpr >= 201606L
+#    define ATFW_UTIL_MACRO_HAVE_IF_CONSTEXPR 1
+#  endif
+#endif
+
+// Compile-time endian detection via platform macros
+#if !defined(ATFW_UTIL_ENDIAN_COMPILETIME_LITTLE) && !defined(ATFW_UTIL_ENDIAN_COMPILETIME_BIG)
+#  if defined(ATFW_UTIL_MACRO_HAVE_STD_ENDIAN) && ATFW_UTIL_MACRO_HAVE_STD_ENDIAN
+// Will use std::endian at compile time
+#  elif defined(_WIN32) || defined(__LITTLE_ENDIAN__) || \
+      (defined(__BYTE_ORDER__) && defined(__ORDER_LITTLE_ENDIAN__) && (__BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__))
+#    define ATFW_UTIL_ENDIAN_COMPILETIME_LITTLE 1
+#  elif defined(__BIG_ENDIAN__) || \
+      (defined(__BYTE_ORDER__) && defined(__ORDER_BIG_ENDIAN__) && (__BYTE_ORDER__ == __ORDER_BIG_ENDIAN__))
+#    define ATFW_UTIL_ENDIAN_COMPILETIME_BIG 1
 #  endif
 #endif
 
@@ -565,6 +602,332 @@ ATFW_UTIL_FORCEINLINE typename std::enable_if<detail::is_unsigned_integer<T>::va
 
 #endif  // ATFW_UTIL_MACRO_HAVE_STD_INT_POW2
 
+// ============================================================================
+// Endian detection and byte-order conversion utilities
+// ============================================================================
+
+#if defined(ATFW_UTIL_MACRO_HAVE_STD_ENDIAN) && ATFW_UTIL_MACRO_HAVE_STD_ENDIAN && \
+    defined(ATFW_UTIL_MACRO_HAVE_IF_CONSTEXPR) && ATFW_UTIL_MACRO_HAVE_IF_CONSTEXPR
+#  define ATFW_UTIL_ENDIAN_CAN_USE_IF_CONSTEXPR 1
+#else
+#  define ATFW_UTIL_ENDIAN_CAN_USE_IF_CONSTEXPR 0
+#endif
+
+namespace detail {
+
+#if !ATFW_UTIL_ENDIAN_CAN_USE_IF_CONSTEXPR
+#  if defined(ATFW_UTIL_ENDIAN_COMPILETIME_LITTLE) && ATFW_UTIL_ENDIAN_COMPILETIME_LITTLE
+ATFW_UTIL_FORCEINLINE constexpr bool is_little_endian_detect() noexcept { return true; }
+#  elif defined(ATFW_UTIL_ENDIAN_COMPILETIME_BIG) && ATFW_UTIL_ENDIAN_COMPILETIME_BIG
+ATFW_UTIL_FORCEINLINE constexpr bool is_little_endian_detect() noexcept { return false; }
+#  else
+// Unknown endianness at compile time, runtime detection required (not constexpr)
+ATFW_UTIL_FORCEINLINE constexpr bool is_little_endian_detect() noexcept {
+  const uint16_t x = 1;
+  return *reinterpret_cast<const uint8_t *>(&x) == 1;
+}
+#  endif
+#endif
+
+}  // namespace detail
+
+// is_little_endian: Returns true if the native byte order is little-endian
+#if ATFW_UTIL_ENDIAN_CAN_USE_IF_CONSTEXPR
+ATFW_UTIL_FORCEINLINE constexpr bool is_little_endian() noexcept { return std::endian::native == std::endian::little; }
+#elif defined(ATFW_UTIL_ENDIAN_COMPILETIME_LITTLE) || defined(ATFW_UTIL_ENDIAN_COMPILETIME_BIG)
+ATFW_UTIL_FORCEINLINE constexpr bool is_little_endian() noexcept { return detail::is_little_endian_detect(); }
+#else
+ATFW_UTIL_FORCEINLINE bool is_little_endian() noexcept { return detail::is_little_endian_detect(); }
+#endif
+
+#if defined(ATFW_UTIL_MACRO_HAVE_STD_ENDIAN) && ATFW_UTIL_MACRO_HAVE_STD_ENDIAN
+using std::endian;
+#elif defined(ATFW_UTIL_ENDIAN_COMPILETIME_LITTLE) && ATFW_UTIL_ENDIAN_COMPILETIME_LITTLE
+enum class endian { little = 0, big = 1, native = 0 };
+#elif defined(ATFW_UTIL_ENDIAN_COMPILETIME_BIG) && ATFW_UTIL_ENDIAN_COMPILETIME_BIG
+enum class endian { little = 0, big = 1, native = 1 };
+#else
+// Mixed or unknown endianness — native differs from both little and big
+enum class endian { little = 0, big = 1, native = 2 };
+#endif
+
+// --- Read big-endian ---
+
+ATFW_UTIL_FORCEINLINE uint16_t read_be_uint16(const unsigned char *buf) noexcept {
+#if ATFW_UTIL_ENDIAN_CAN_USE_IF_CONSTEXPR
+  if constexpr (std::endian::native == std::endian::big) {
+    uint16_t value;  // NOLINT(cppcoreguidelines-init-variables)
+    std::memcpy(&value, buf, sizeof(value));
+    return value;
+  } else {
+    return static_cast<uint16_t>((static_cast<uint16_t>(buf[0]) << 8) | static_cast<uint16_t>(buf[1]));
+  }
+#else
+  if (!detail::is_little_endian_detect()) {
+    uint16_t value;
+    std::memcpy(&value, buf, sizeof(value));
+    return value;
+  }
+  return static_cast<uint16_t>((static_cast<uint16_t>(buf[0]) << 8) | static_cast<uint16_t>(buf[1]));
+#endif
+}
+
+ATFW_UTIL_FORCEINLINE uint32_t read_be_uint32(const unsigned char *buf) noexcept {
+#if ATFW_UTIL_ENDIAN_CAN_USE_IF_CONSTEXPR
+  if constexpr (std::endian::native == std::endian::big) {
+    uint32_t value;  // NOLINT(cppcoreguidelines-init-variables)
+    std::memcpy(&value, buf, sizeof(value));
+    return value;
+  } else {
+    return (static_cast<uint32_t>(buf[0]) << 24) | (static_cast<uint32_t>(buf[1]) << 16) |
+           (static_cast<uint32_t>(buf[2]) << 8) | static_cast<uint32_t>(buf[3]);
+  }
+#else
+  if (!detail::is_little_endian_detect()) {
+    uint32_t value;
+    std::memcpy(&value, buf, sizeof(value));
+    return value;
+  }
+  return (static_cast<uint32_t>(buf[0]) << 24) | (static_cast<uint32_t>(buf[1]) << 16) |
+         (static_cast<uint32_t>(buf[2]) << 8) | static_cast<uint32_t>(buf[3]);
+#endif
+}
+
+ATFW_UTIL_FORCEINLINE uint64_t read_be_uint64(const unsigned char *buf) noexcept {
+#if ATFW_UTIL_ENDIAN_CAN_USE_IF_CONSTEXPR
+  if constexpr (std::endian::native == std::endian::big) {
+    uint64_t value;  // NOLINT(cppcoreguidelines-init-variables)
+    std::memcpy(&value, buf, sizeof(value));
+    return value;
+  } else {
+    return (static_cast<uint64_t>(buf[0]) << 56) | (static_cast<uint64_t>(buf[1]) << 48) |
+           (static_cast<uint64_t>(buf[2]) << 40) | (static_cast<uint64_t>(buf[3]) << 32) |
+           (static_cast<uint64_t>(buf[4]) << 24) | (static_cast<uint64_t>(buf[5]) << 16) |
+           (static_cast<uint64_t>(buf[6]) << 8) | static_cast<uint64_t>(buf[7]);
+  }
+#else
+  if (!detail::is_little_endian_detect()) {
+    uint64_t value;
+    std::memcpy(&value, buf, sizeof(value));
+    return value;
+  }
+  return (static_cast<uint64_t>(buf[0]) << 56) | (static_cast<uint64_t>(buf[1]) << 48) |
+         (static_cast<uint64_t>(buf[2]) << 40) | (static_cast<uint64_t>(buf[3]) << 32) |
+         (static_cast<uint64_t>(buf[4]) << 24) | (static_cast<uint64_t>(buf[5]) << 16) |
+         (static_cast<uint64_t>(buf[6]) << 8) | static_cast<uint64_t>(buf[7]);
+#endif
+}
+
+// --- Write big-endian ---
+
+ATFW_UTIL_FORCEINLINE void write_be_uint16(unsigned char *buf, uint16_t value) noexcept {
+#if ATFW_UTIL_ENDIAN_CAN_USE_IF_CONSTEXPR
+  if constexpr (std::endian::native == std::endian::big) {
+    std::memcpy(buf, &value, sizeof(value));
+  } else {
+    buf[0] = static_cast<unsigned char>((value >> 8) & 0xFF);
+    buf[1] = static_cast<unsigned char>(value & 0xFF);
+  }
+#else
+  if (!detail::is_little_endian_detect()) {
+    std::memcpy(buf, &value, sizeof(value));
+    return;
+  }
+  buf[0] = static_cast<unsigned char>((value >> 8) & 0xFF);
+  buf[1] = static_cast<unsigned char>(value & 0xFF);
+#endif
+}
+
+ATFW_UTIL_FORCEINLINE void write_be_uint32(unsigned char *buf, uint32_t value) noexcept {
+#if ATFW_UTIL_ENDIAN_CAN_USE_IF_CONSTEXPR
+  if constexpr (std::endian::native == std::endian::big) {
+    std::memcpy(buf, &value, sizeof(value));
+  } else {
+    buf[0] = static_cast<unsigned char>((value >> 24) & 0xFF);
+    buf[1] = static_cast<unsigned char>((value >> 16) & 0xFF);
+    buf[2] = static_cast<unsigned char>((value >> 8) & 0xFF);
+    buf[3] = static_cast<unsigned char>(value & 0xFF);
+  }
+#else
+  if (!detail::is_little_endian_detect()) {
+    std::memcpy(buf, &value, sizeof(value));
+    return;
+  }
+  buf[0] = static_cast<unsigned char>((value >> 24) & 0xFF);
+  buf[1] = static_cast<unsigned char>((value >> 16) & 0xFF);
+  buf[2] = static_cast<unsigned char>((value >> 8) & 0xFF);
+  buf[3] = static_cast<unsigned char>(value & 0xFF);
+#endif
+}
+
+ATFW_UTIL_FORCEINLINE void write_be_uint64(unsigned char *buf, uint64_t value) noexcept {
+#if ATFW_UTIL_ENDIAN_CAN_USE_IF_CONSTEXPR
+  if constexpr (std::endian::native == std::endian::big) {
+    std::memcpy(buf, &value, sizeof(value));
+  } else {
+    buf[0] = static_cast<unsigned char>((value >> 56) & 0xFF);
+    buf[1] = static_cast<unsigned char>((value >> 48) & 0xFF);
+    buf[2] = static_cast<unsigned char>((value >> 40) & 0xFF);
+    buf[3] = static_cast<unsigned char>((value >> 32) & 0xFF);
+    buf[4] = static_cast<unsigned char>((value >> 24) & 0xFF);
+    buf[5] = static_cast<unsigned char>((value >> 16) & 0xFF);
+    buf[6] = static_cast<unsigned char>((value >> 8) & 0xFF);
+    buf[7] = static_cast<unsigned char>(value & 0xFF);
+  }
+#else
+  if (!detail::is_little_endian_detect()) {
+    std::memcpy(buf, &value, sizeof(value));
+    return;
+  }
+  buf[0] = static_cast<unsigned char>((value >> 56) & 0xFF);
+  buf[1] = static_cast<unsigned char>((value >> 48) & 0xFF);
+  buf[2] = static_cast<unsigned char>((value >> 40) & 0xFF);
+  buf[3] = static_cast<unsigned char>((value >> 32) & 0xFF);
+  buf[4] = static_cast<unsigned char>((value >> 24) & 0xFF);
+  buf[5] = static_cast<unsigned char>((value >> 16) & 0xFF);
+  buf[6] = static_cast<unsigned char>((value >> 8) & 0xFF);
+  buf[7] = static_cast<unsigned char>(value & 0xFF);
+#endif
+}
+
+// --- Read little-endian ---
+
+ATFW_UTIL_FORCEINLINE uint16_t read_le_uint16(const unsigned char *buf) noexcept {
+#if ATFW_UTIL_ENDIAN_CAN_USE_IF_CONSTEXPR
+  if constexpr (std::endian::native == std::endian::little) {
+    uint16_t value;  // NOLINT(cppcoreguidelines-init-variables)
+    std::memcpy(&value, buf, sizeof(value));
+    return value;
+  } else {
+    return static_cast<uint16_t>(static_cast<uint16_t>(buf[0]) | (static_cast<uint16_t>(buf[1]) << 8));
+  }
+#else
+  if (detail::is_little_endian_detect()) {
+    uint16_t value;
+    std::memcpy(&value, buf, sizeof(value));
+    return value;
+  }
+  return static_cast<uint16_t>(static_cast<uint16_t>(buf[0]) | (static_cast<uint16_t>(buf[1]) << 8));
+#endif
+}
+
+ATFW_UTIL_FORCEINLINE uint32_t read_le_uint32(const unsigned char *buf) noexcept {
+#if ATFW_UTIL_ENDIAN_CAN_USE_IF_CONSTEXPR
+  if constexpr (std::endian::native == std::endian::little) {
+    uint32_t value;  // NOLINT(cppcoreguidelines-init-variables)
+    std::memcpy(&value, buf, sizeof(value));
+    return value;
+  } else {
+    return static_cast<uint32_t>(buf[0]) | (static_cast<uint32_t>(buf[1]) << 8) |
+           (static_cast<uint32_t>(buf[2]) << 16) | (static_cast<uint32_t>(buf[3]) << 24);
+  }
+#else
+  if (detail::is_little_endian_detect()) {
+    uint32_t value;
+    std::memcpy(&value, buf, sizeof(value));
+    return value;
+  }
+  return static_cast<uint32_t>(buf[0]) | (static_cast<uint32_t>(buf[1]) << 8) | (static_cast<uint32_t>(buf[2]) << 16) |
+         (static_cast<uint32_t>(buf[3]) << 24);
+#endif
+}
+
+ATFW_UTIL_FORCEINLINE uint64_t read_le_uint64(const unsigned char *buf) noexcept {
+#if ATFW_UTIL_ENDIAN_CAN_USE_IF_CONSTEXPR
+  if constexpr (std::endian::native == std::endian::little) {
+    uint64_t value;  // NOLINT(cppcoreguidelines-init-variables)
+    std::memcpy(&value, buf, sizeof(value));
+    return value;
+  } else {
+    return static_cast<uint64_t>(buf[0]) | (static_cast<uint64_t>(buf[1]) << 8) |
+           (static_cast<uint64_t>(buf[2]) << 16) | (static_cast<uint64_t>(buf[3]) << 24) |
+           (static_cast<uint64_t>(buf[4]) << 32) | (static_cast<uint64_t>(buf[5]) << 40) |
+           (static_cast<uint64_t>(buf[6]) << 48) | (static_cast<uint64_t>(buf[7]) << 56);
+  }
+#else
+  if (detail::is_little_endian_detect()) {
+    uint64_t value;
+    std::memcpy(&value, buf, sizeof(value));
+    return value;
+  }
+  return static_cast<uint64_t>(buf[0]) | (static_cast<uint64_t>(buf[1]) << 8) | (static_cast<uint64_t>(buf[2]) << 16) |
+         (static_cast<uint64_t>(buf[3]) << 24) | (static_cast<uint64_t>(buf[4]) << 32) |
+         (static_cast<uint64_t>(buf[5]) << 40) | (static_cast<uint64_t>(buf[6]) << 48) |
+         (static_cast<uint64_t>(buf[7]) << 56);
+#endif
+}
+
+// --- Write little-endian ---
+
+ATFW_UTIL_FORCEINLINE void write_le_uint16(unsigned char *buf, uint16_t value) noexcept {
+#if ATFW_UTIL_ENDIAN_CAN_USE_IF_CONSTEXPR
+  if constexpr (std::endian::native == std::endian::little) {
+    std::memcpy(buf, &value, sizeof(value));
+  } else {
+    buf[0] = static_cast<unsigned char>(value & 0xFF);
+    buf[1] = static_cast<unsigned char>((value >> 8) & 0xFF);
+  }
+#else
+  if (detail::is_little_endian_detect()) {
+    std::memcpy(buf, &value, sizeof(value));
+    return;
+  }
+  buf[0] = static_cast<unsigned char>(value & 0xFF);
+  buf[1] = static_cast<unsigned char>((value >> 8) & 0xFF);
+#endif
+}
+
+ATFW_UTIL_FORCEINLINE void write_le_uint32(unsigned char *buf, uint32_t value) noexcept {
+#if ATFW_UTIL_ENDIAN_CAN_USE_IF_CONSTEXPR
+  if constexpr (std::endian::native == std::endian::little) {
+    std::memcpy(buf, &value, sizeof(value));
+  } else {
+    buf[0] = static_cast<unsigned char>(value & 0xFF);
+    buf[1] = static_cast<unsigned char>((value >> 8) & 0xFF);
+    buf[2] = static_cast<unsigned char>((value >> 16) & 0xFF);
+    buf[3] = static_cast<unsigned char>((value >> 24) & 0xFF);
+  }
+#else
+  if (detail::is_little_endian_detect()) {
+    std::memcpy(buf, &value, sizeof(value));
+    return;
+  }
+  buf[0] = static_cast<unsigned char>(value & 0xFF);
+  buf[1] = static_cast<unsigned char>((value >> 8) & 0xFF);
+  buf[2] = static_cast<unsigned char>((value >> 16) & 0xFF);
+  buf[3] = static_cast<unsigned char>((value >> 24) & 0xFF);
+#endif
+}
+
+ATFW_UTIL_FORCEINLINE void write_le_uint64(unsigned char *buf, uint64_t value) noexcept {
+#if ATFW_UTIL_ENDIAN_CAN_USE_IF_CONSTEXPR
+  if constexpr (std::endian::native == std::endian::little) {
+    std::memcpy(buf, &value, sizeof(value));
+  } else {
+    buf[0] = static_cast<unsigned char>(value & 0xFF);
+    buf[1] = static_cast<unsigned char>((value >> 8) & 0xFF);
+    buf[2] = static_cast<unsigned char>((value >> 16) & 0xFF);
+    buf[3] = static_cast<unsigned char>((value >> 24) & 0xFF);
+    buf[4] = static_cast<unsigned char>((value >> 32) & 0xFF);
+    buf[5] = static_cast<unsigned char>((value >> 40) & 0xFF);
+    buf[6] = static_cast<unsigned char>((value >> 48) & 0xFF);
+    buf[7] = static_cast<unsigned char>((value >> 56) & 0xFF);
+  }
+#else
+  if (detail::is_little_endian_detect()) {
+    std::memcpy(buf, &value, sizeof(value));
+    return;
+  }
+  buf[0] = static_cast<unsigned char>(value & 0xFF);
+  buf[1] = static_cast<unsigned char>((value >> 8) & 0xFF);
+  buf[2] = static_cast<unsigned char>((value >> 16) & 0xFF);
+  buf[3] = static_cast<unsigned char>((value >> 24) & 0xFF);
+  buf[4] = static_cast<unsigned char>((value >> 32) & 0xFF);
+  buf[5] = static_cast<unsigned char>((value >> 40) & 0xFF);
+  buf[6] = static_cast<unsigned char>((value >> 48) & 0xFF);
+  buf[7] = static_cast<unsigned char>((value >> 56) & 0xFF);
+#endif
+}
+
 }  // namespace bit
 ATFRAMEWORK_UTILS_NAMESPACE_END
-
