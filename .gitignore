@@ -34,6 +34,7 @@
 __pycache__
 .pyc
 
+/.cmake-toolset
 /build
 /build_*
 
