@@ -82,15 +82,15 @@ CASE_TEST(crypto_dh, dh) {
       dir += "resource";
       dir += atfw::util::file_system::DIRECTORY_SEPARATOR;
       dir += "test-dhparam.pem";
-      CASE_EXPECT_EQ(0, svr_shctx->init(dir.c_str()));
-      CASE_EXPECT_EQ(0, svr_dh.init(svr_shctx));
+      CASE_EXPECT_EQ(atfw::util::crypto::dh::error_code_t::kOk, svr_shctx->init(dir.c_str()));
+      CASE_EXPECT_EQ(atfw::util::crypto::dh::error_code_t::kOk, svr_dh.init(svr_shctx));
     }
 
     // client - init: read and setup client shared context
     {
       atfw::util::crypto::dh::shared_context::ptr_t cli_shctx = atfw::util::crypto::dh::shared_context::create();
-      CASE_EXPECT_EQ(0, cli_shctx->init(atfw::util::crypto::dh::method_t::EN_CDT_DH));
-      CASE_EXPECT_EQ(0, cli_dh.init(cli_shctx));
+      CASE_EXPECT_EQ(atfw::util::crypto::dh::error_code_t::kOk, cli_shctx->init(atfw::util::crypto::dh::method_t::kDh));
+      CASE_EXPECT_EQ(atfw::util::crypto::dh::error_code_t::kOk, cli_dh.init(cli_shctx));
     }
 
     std::vector<unsigned char> switch_params;
@@ -99,22 +99,24 @@ CASE_TEST(crypto_dh, dh) {
     std::vector<unsigned char> svr_secret;
 
     // step 1 - server: make private key and public key
-    CASE_EXPECT_EQ(0, svr_dh.make_params(switch_params));
+    CASE_EXPECT_EQ(atfw::util::crypto::dh::error_code_t::kOk, svr_dh.make_params(switch_params));
 
     // step 2 - client: read dhparam and public key of server
-    CASE_EXPECT_EQ(0, cli_dh.read_params(switch_params.data(), switch_params.size()));
+    CASE_EXPECT_EQ(atfw::util::crypto::dh::error_code_t::kOk,
+                   cli_dh.read_params(switch_params.data(), switch_params.size()));
 
     // step 3 - client: make public key
-    CASE_EXPECT_EQ(0, cli_dh.make_public(switch_public));
+    CASE_EXPECT_EQ(atfw::util::crypto::dh::error_code_t::kOk, cli_dh.make_public(switch_public));
 
     // step 4 - client: calculate secret
-    CASE_EXPECT_EQ(0, cli_dh.calc_secret(cli_secret));
+    CASE_EXPECT_EQ(atfw::util::crypto::dh::error_code_t::kOk, cli_dh.calc_secret(cli_secret));
 
     // step 5 - server: read public key of client
-    CASE_EXPECT_EQ(0, svr_dh.read_public(switch_public.data(), switch_public.size()));
+    CASE_EXPECT_EQ(atfw::util::crypto::dh::error_code_t::kOk,
+                   svr_dh.read_public(switch_public.data(), switch_public.size()));
 
     // step 6 - server: calculate secret
-    CASE_EXPECT_EQ(0, svr_dh.calc_secret(svr_secret));
+    CASE_EXPECT_EQ(atfw::util::crypto::dh::error_code_t::kOk, svr_dh.calc_secret(svr_secret));
 
     // DH process done
     CASE_EXPECT_EQ(cli_secret.size(), svr_secret.size());
@@ -162,15 +164,16 @@ CASE_TEST(crypto_dh, ecdh) {
       // server - init: read and setup server dh params
       {
         atfw::util::crypto::dh::shared_context::ptr_t svr_shctx = atfw::util::crypto::dh::shared_context::create();
-        CASE_EXPECT_EQ(0, svr_shctx->init(all_curves[curve_idx].c_str()));
-        CASE_EXPECT_EQ(0, svr_dh.init(svr_shctx));
+        CASE_EXPECT_EQ(atfw::util::crypto::dh::error_code_t::kOk, svr_shctx->init(all_curves[curve_idx].c_str()));
+        CASE_EXPECT_EQ(atfw::util::crypto::dh::error_code_t::kOk, svr_dh.init(svr_shctx));
       }
 
       // client - init: read and setup client shared context
       {
         atfw::util::crypto::dh::shared_context::ptr_t cli_shctx = atfw::util::crypto::dh::shared_context::create();
-        CASE_EXPECT_EQ(0, cli_shctx->init(atfw::util::crypto::dh::method_t::EN_CDT_ECDH));
-        CASE_EXPECT_EQ(0, cli_dh.init(cli_shctx));
+        CASE_EXPECT_EQ(atfw::util::crypto::dh::error_code_t::kOk,
+                       cli_shctx->init(atfw::util::crypto::dh::method_t::kEcdh));
+        CASE_EXPECT_EQ(atfw::util::crypto::dh::error_code_t::kOk, cli_dh.init(cli_shctx));
       }
 
       std::vector<unsigned char> switch_params;
@@ -179,22 +182,24 @@ CASE_TEST(crypto_dh, ecdh) {
       std::vector<unsigned char> svr_secret;
 
       // step 1 - server: make private key and public key
-      CASE_EXPECT_EQ(0, svr_dh.make_params(switch_params));
+      CASE_EXPECT_EQ(atfw::util::crypto::dh::error_code_t::kOk, svr_dh.make_params(switch_params));
 
       // step 2 - client: read dhparam and public key of server
-      CASE_EXPECT_EQ(0, cli_dh.read_params(switch_params.data(), switch_params.size()));
+      CASE_EXPECT_EQ(atfw::util::crypto::dh::error_code_t::kOk,
+                     cli_dh.read_params(switch_params.data(), switch_params.size()));
 
       // step 3 - client: make public key
-      CASE_EXPECT_EQ(0, cli_dh.make_public(switch_public));
+      CASE_EXPECT_EQ(atfw::util::crypto::dh::error_code_t::kOk, cli_dh.make_public(switch_public));
 
       // step 4 - client: calculate secret
-      CASE_EXPECT_EQ(0, cli_dh.calc_secret(cli_secret));
+      CASE_EXPECT_EQ(atfw::util::crypto::dh::error_code_t::kOk, cli_dh.calc_secret(cli_secret));
 
       // step 5 - server: read public key of client
-      CASE_EXPECT_EQ(0, svr_dh.read_public(switch_public.data(), switch_public.size()));
+      CASE_EXPECT_EQ(atfw::util::crypto::dh::error_code_t::kOk,
+                     svr_dh.read_public(switch_public.data(), switch_public.size()));
 
       // step 6 - server: calculate secret
-      CASE_EXPECT_EQ(0, svr_dh.calc_secret(svr_secret));
+      CASE_EXPECT_EQ(atfw::util::crypto::dh::error_code_t::kOk, svr_dh.calc_secret(svr_secret));
 
       // DH process done
       CASE_EXPECT_EQ(cli_secret.size(), svr_secret.size());
@@ -273,19 +278,20 @@ CASE_TEST(crypto_dh, ecdh_alias_and_both_server) {
       // server - init: read and setup server dh params
       {
         atfw::util::crypto::dh::shared_context::ptr_t svr_shctx = atfw::util::crypto::dh::shared_context::create();
-        CASE_EXPECT_EQ(0, svr_shctx->init(all_curves[curve_idx].c_str()));
+        CASE_EXPECT_EQ(atfw::util::crypto::dh::error_code_t::kOk, svr_shctx->init(all_curves[curve_idx].c_str()));
         auto svr_dh1_init_result = svr_dh1.init(svr_shctx);
-        if (svr_dh1_init_result != 0 && all_curves[curve_idx] == "ecdh:X25519") {
+        if (svr_dh1_init_result != atfw::util::crypto::dh::error_code_t::kOk &&
+            all_curves[curve_idx] == "ecdh:X25519") {
           break;
         }
-        CASE_EXPECT_EQ(0, svr_dh1_init_result);
+        CASE_EXPECT_EQ(atfw::util::crypto::dh::error_code_t::kOk, svr_dh1_init_result);
       }
 
       // client - init: read and setup client shared context
       {
         atfw::util::crypto::dh::shared_context::ptr_t svr_shctx = atfw::util::crypto::dh::shared_context::create();
-        CASE_EXPECT_EQ(0, svr_shctx->init(all_curves[curve_idx].c_str()));
-        CASE_EXPECT_EQ(0, svr_dh2.init(svr_shctx));
+        CASE_EXPECT_EQ(atfw::util::crypto::dh::error_code_t::kOk, svr_shctx->init(all_curves[curve_idx].c_str()));
+        CASE_EXPECT_EQ(atfw::util::crypto::dh::error_code_t::kOk, svr_dh2.init(svr_shctx));
       }
 
       std::vector<unsigned char> switch_params;
@@ -295,20 +301,22 @@ CASE_TEST(crypto_dh, ecdh_alias_and_both_server) {
       std::vector<unsigned char> svr2_secret;
 
       // step 1 - server: make private key and public key
-      CASE_EXPECT_EQ(0, svr_dh1.make_params(switch_params));
-      CASE_EXPECT_EQ(0, svr_dh2.make_params(switch_params));
+      CASE_EXPECT_EQ(atfw::util::crypto::dh::error_code_t::kOk, svr_dh1.make_params(switch_params));
+      CASE_EXPECT_EQ(atfw::util::crypto::dh::error_code_t::kOk, svr_dh2.make_params(switch_params));
 
       // step 2 - server: make and export public key
-      CASE_EXPECT_EQ(0, svr_dh1.make_public(switch_public_svr1));
-      CASE_EXPECT_EQ(0, svr_dh2.make_public(switch_public_svr2));
+      CASE_EXPECT_EQ(atfw::util::crypto::dh::error_code_t::kOk, svr_dh1.make_public(switch_public_svr1));
+      CASE_EXPECT_EQ(atfw::util::crypto::dh::error_code_t::kOk, svr_dh2.make_public(switch_public_svr2));
 
       // step 3 - server: read remote public
-      CASE_EXPECT_EQ(0, svr_dh1.read_public(switch_public_svr2.data(), switch_public_svr2.size()));
-      CASE_EXPECT_EQ(0, svr_dh2.read_public(switch_public_svr1.data(), switch_public_svr1.size()));
+      CASE_EXPECT_EQ(atfw::util::crypto::dh::error_code_t::kOk,
+                     svr_dh1.read_public(switch_public_svr2.data(), switch_public_svr2.size()));
+      CASE_EXPECT_EQ(atfw::util::crypto::dh::error_code_t::kOk,
+                     svr_dh2.read_public(switch_public_svr1.data(), switch_public_svr1.size()));
 
       // step 4 - client: calculate secret
-      CASE_EXPECT_EQ(0, svr_dh2.calc_secret(svr2_secret));
-      CASE_EXPECT_EQ(0, svr_dh1.calc_secret(svr1_secret));
+      CASE_EXPECT_EQ(atfw::util::crypto::dh::error_code_t::kOk, svr_dh2.calc_secret(svr2_secret));
+      CASE_EXPECT_EQ(atfw::util::crypto::dh::error_code_t::kOk, svr_dh1.calc_secret(svr1_secret));
 
       // DH process done
       CASE_EXPECT_EQ(svr2_secret.size(), svr1_secret.size());
@@ -355,4 +363,3 @@ CASE_TEST(crypto_dh, ecdh_alias_and_both_server) {
 }
 
 #endif
-

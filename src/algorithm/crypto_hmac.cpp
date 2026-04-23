@@ -25,6 +25,11 @@
 #  if defined(ATFRAMEWORK_UTILS_CRYPTO_USE_OPENSSL) || defined(ATFRAMEWORK_UTILS_CRYPTO_USE_LIBRESSL) || \
       defined(ATFRAMEWORK_UTILS_CRYPTO_USE_BORINGSSL)
 
+#    include <openssl/crypto.h>
+#    include <openssl/err.h>
+#    include <openssl/evp.h>
+#    include <openssl/hmac.h>
+
 // Check for OpenSSL 3.0+ which has EVP_MAC API
 #    if defined(OPENSSL_VERSION_NUMBER) && OPENSSL_VERSION_NUMBER >= 0x30000000L && \
         !defined(LIBRESSL_VERSION_NUMBER) && !defined(OPENSSL_IS_BORINGSSL)
@@ -259,6 +264,10 @@ static void free_hmac_context(void* ctx) {
 
 #  elif defined(ATFRAMEWORK_UTILS_CRYPTO_USE_MBEDTLS)
 
+#    include <mbedtls/hkdf.h>
+#    include <mbedtls/md.h>
+#    include <mbedtls/platform.h>
+
 static const mbedtls_md_info_t* get_md_info_by_type(digest_type_t type) noexcept {
   switch (type) {
     case digest_type_t::kSha1:
@@ -401,7 +410,7 @@ ATFRAMEWORK_UTILS_API hmac& hmac::operator=(hmac&& other) noexcept {
   return *this;
 }
 
-ATFRAMEWORK_UTILS_API int hmac::init(digest_type_t type, const unsigned char* key, size_t key_len) {
+ATFRAMEWORK_UTILS_API hmac_error_code_t hmac::init(digest_type_t type, const unsigned char* key, size_t key_len) {
   if (context_ != nullptr) {
     return hmac_error_code_t::kAlreadyInitialized;
   }
@@ -439,11 +448,11 @@ ATFRAMEWORK_UTILS_API int hmac::init(digest_type_t type, const unsigned char* ke
   return hmac_error_code_t::kOk;
 }
 
-ATFRAMEWORK_UTILS_API int hmac::init(digest_type_t type, gsl::span<const unsigned char> key) {
+ATFRAMEWORK_UTILS_API hmac_error_code_t hmac::init(digest_type_t type, gsl::span<const unsigned char> key) {
   return init(type, key.data(), key.size());
 }
 
-ATFRAMEWORK_UTILS_API int hmac::close() {
+ATFRAMEWORK_UTILS_API hmac_error_code_t hmac::close() {
   if (context_ != nullptr) {
     details::free_hmac_context(context_);
     context_ = nullptr;
@@ -453,7 +462,7 @@ ATFRAMEWORK_UTILS_API int hmac::close() {
   return hmac_error_code_t::kOk;
 }
 
-ATFRAMEWORK_UTILS_API int hmac::update(const unsigned char* input, size_t input_len) {
+ATFRAMEWORK_UTILS_API hmac_error_code_t hmac::update(const unsigned char* input, size_t input_len) {
   if (context_ == nullptr) {
     return hmac_error_code_t::kNotInitialized;
   }
@@ -499,11 +508,11 @@ ATFRAMEWORK_UTILS_API int hmac::update(const unsigned char* input, size_t input_
   return hmac_error_code_t::kOk;
 }
 
-ATFRAMEWORK_UTILS_API int hmac::update(gsl::span<const unsigned char> input) {
+ATFRAMEWORK_UTILS_API hmac_error_code_t hmac::update(gsl::span<const unsigned char> input) {
   return update(input.data(), input.size());
 }
 
-ATFRAMEWORK_UTILS_API int hmac::final(unsigned char* output, size_t* output_len) {
+ATFRAMEWORK_UTILS_API hmac_error_code_t hmac::final(unsigned char* output, size_t* output_len) {
   if (context_ == nullptr) {
     return hmac_error_code_t::kNotInitialized;
   }
@@ -581,9 +590,9 @@ ATFRAMEWORK_UTILS_API int64_t hmac::get_last_errno() const noexcept { return las
 
 ATFRAMEWORK_UTILS_API void hmac::set_last_errno(int64_t e) noexcept { last_errno_ = e; }
 
-ATFRAMEWORK_UTILS_API int hmac::compute(digest_type_t type, const unsigned char* key, size_t key_len,
-                                        const unsigned char* input, size_t input_len, unsigned char* output,
-                                        size_t* output_len) {
+ATFRAMEWORK_UTILS_API hmac_error_code_t hmac::compute(digest_type_t type, const unsigned char* key, size_t key_len,
+                                                      const unsigned char* input, size_t input_len,
+                                                      unsigned char* output, size_t* output_len) {
   if (output == nullptr || output_len == nullptr) {
     return hmac_error_code_t::kInvalidParam;
   }
@@ -624,7 +633,7 @@ ATFRAMEWORK_UTILS_API int hmac::compute(digest_type_t type, const unsigned char*
   params[0] = OSSL_PARAM_construct_utf8_string(OSSL_MAC_PARAM_DIGEST, const_cast<char*>(digest_name), 0);
   params[1] = OSSL_PARAM_construct_end();
 
-  int ret = hmac_error_code_t::kOk;
+  hmac_error_code_t ret = hmac_error_code_t::kOk;
   if (EVP_MAC_init(ctx, key, key_len, params) != 1) {
     ret = hmac_error_code_t::kOperation;
   } else if (EVP_MAC_update(ctx, input, input_len) != 1) {
@@ -668,9 +677,9 @@ ATFRAMEWORK_UTILS_API int hmac::compute(digest_type_t type, const unsigned char*
 #  endif
 }
 
-ATFRAMEWORK_UTILS_API int hmac::compute(digest_type_t type, gsl::span<const unsigned char> key,
-                                        gsl::span<const unsigned char> input, unsigned char* output,
-                                        size_t* output_len) {
+ATFRAMEWORK_UTILS_API hmac_error_code_t hmac::compute(digest_type_t type, gsl::span<const unsigned char> key,
+                                                      gsl::span<const unsigned char> input, unsigned char* output,
+                                                      size_t* output_len) {
   return compute(type, key.data(), key.size(), input.data(), input.size(), output, output_len);
 }
 
@@ -718,8 +727,9 @@ ATFRAMEWORK_UTILS_API std::string hmac::compute_to_hex(digest_type_t type, gsl::
 // HKDF class implementation
 // ============================================================================
 
-ATFRAMEWORK_UTILS_API int hkdf::extract(digest_type_t type, const unsigned char* salt, size_t salt_len,
-                                        const unsigned char* ikm, size_t ikm_len, unsigned char* prk, size_t* prk_len) {
+ATFRAMEWORK_UTILS_API hkdf::error_code_t hkdf::extract(digest_type_t type, const unsigned char* salt, size_t salt_len,
+                                                       const unsigned char* ikm, size_t ikm_len, unsigned char* prk,
+                                                       size_t* prk_len) {
   if (ikm == nullptr && ikm_len > 0) {
     return error_code_t::kInvalidParam;
   }
@@ -734,7 +744,7 @@ ATFRAMEWORK_UTILS_API int hkdf::extract(digest_type_t type, const unsigned char*
 
   if (*prk_len < hash_len) {
     *prk_len = hash_len;
-    return hmac_error_code_t::kOutputBufferTooSmall;
+    return error_code_t::kInvalidParam;
   }
 
 #  if defined(ATFRAMEWORK_UTILS_CRYPTO_USE_OPENSSL) || defined(ATFRAMEWORK_UTILS_CRYPTO_USE_LIBRESSL) || \
@@ -761,8 +771,8 @@ ATFRAMEWORK_UTILS_API int hkdf::extract(digest_type_t type, const unsigned char*
     salt_len = zero_salt.size();
   }
 
-  int ret = hmac::compute(type, salt, salt_len, ikm, ikm_len, prk, prk_len);
-  if (ret != hmac_error_code_t::kOk) {
+  hmac_error_code_t hret = hmac::compute(type, salt, salt_len, ikm, ikm_len, prk, prk_len);
+  if (hret != hmac_error_code_t::kOk) {
     return error_code_t::kOperation;
   }
 
@@ -784,13 +794,15 @@ ATFRAMEWORK_UTILS_API int hkdf::extract(digest_type_t type, const unsigned char*
 #  endif
 }
 
-ATFRAMEWORK_UTILS_API int hkdf::extract(digest_type_t type, gsl::span<const unsigned char> salt,
-                                        gsl::span<const unsigned char> ikm, unsigned char* prk, size_t* prk_len) {
+ATFRAMEWORK_UTILS_API hkdf::error_code_t hkdf::extract(digest_type_t type, gsl::span<const unsigned char> salt,
+                                                       gsl::span<const unsigned char> ikm, unsigned char* prk,
+                                                       size_t* prk_len) {
   return extract(type, salt.data(), salt.size(), ikm.data(), ikm.size(), prk, prk_len);
 }
 
-ATFRAMEWORK_UTILS_API int hkdf::expand(digest_type_t type, const unsigned char* prk, size_t prk_len,
-                                       const unsigned char* info, size_t info_len, unsigned char* okm, size_t okm_len) {
+ATFRAMEWORK_UTILS_API hkdf::error_code_t hkdf::expand(digest_type_t type, const unsigned char* prk, size_t prk_len,
+                                                      const unsigned char* info, size_t info_len, unsigned char* okm,
+                                                      size_t okm_len) {
   if (prk == nullptr && prk_len > 0) {
     return error_code_t::kInvalidParam;
   }
@@ -840,7 +852,7 @@ ATFRAMEWORK_UTILS_API int hkdf::expand(digest_type_t type, const unsigned char* 
   }
   params[idx] = OSSL_PARAM_construct_end();
 
-  int ret = error_code_t::kOk;
+  hkdf::error_code_t ret = error_code_t::kOk;
   if (EVP_KDF_derive(kctx, okm, okm_len, params) != 1) {
     ret = error_code_t::kOperation;
   }
@@ -855,7 +867,7 @@ ATFRAMEWORK_UTILS_API int hkdf::expand(digest_type_t type, const unsigned char* 
     return error_code_t::kOperation;
   }
 
-  int ret = error_code_t::kOk;
+  hkdf::error_code_t ret = error_code_t::kOk;
   const EVP_MD* md = details::get_evp_md_by_type(type);
 
   do {
@@ -926,8 +938,8 @@ ATFRAMEWORK_UTILS_API int hkdf::expand(digest_type_t type, const unsigned char* 
     // Compute T(i) = HMAC(PRK, T(i-1) | info | i)
     std::vector<unsigned char> t_curr(hash_len);
     size_t t_len = hash_len;
-    int ret = hmac::compute(type, prk, prk_len, t_input.data(), t_input.size(), t_curr.data(), &t_len);
-    if (ret != hmac_error_code_t::kOk) {
+    hmac_error_code_t hret = hmac::compute(type, prk, prk_len, t_input.data(), t_input.size(), t_curr.data(), &t_len);
+    if (hret != hmac_error_code_t::kOk) {
       return error_code_t::kOperation;
     }
 
@@ -956,14 +968,16 @@ ATFRAMEWORK_UTILS_API int hkdf::expand(digest_type_t type, const unsigned char* 
 #  endif
 }
 
-ATFRAMEWORK_UTILS_API int hkdf::expand(digest_type_t type, gsl::span<const unsigned char> prk,
-                                       gsl::span<const unsigned char> info, unsigned char* okm, size_t okm_len) {
+ATFRAMEWORK_UTILS_API hkdf::error_code_t hkdf::expand(digest_type_t type, gsl::span<const unsigned char> prk,
+                                                      gsl::span<const unsigned char> info, unsigned char* okm,
+                                                      size_t okm_len) {
   return expand(type, prk.data(), prk.size(), info.data(), info.size(), okm, okm_len);
 }
 
-ATFRAMEWORK_UTILS_API int hkdf::derive(digest_type_t type, const unsigned char* salt, size_t salt_len,
-                                       const unsigned char* ikm, size_t ikm_len, const unsigned char* info,
-                                       size_t info_len, unsigned char* okm, size_t okm_len) {
+ATFRAMEWORK_UTILS_API hkdf::error_code_t hkdf::derive(digest_type_t type, const unsigned char* salt, size_t salt_len,
+                                                      const unsigned char* ikm, size_t ikm_len,
+                                                      const unsigned char* info, size_t info_len, unsigned char* okm,
+                                                      size_t okm_len) {
   size_t hash_len = get_digest_output_length(type);
   if (hash_len == 0) {
     return error_code_t::kDigestNotSupport;
@@ -998,7 +1012,7 @@ ATFRAMEWORK_UTILS_API int hkdf::derive(digest_type_t type, const unsigned char* 
   }
   params[idx] = OSSL_PARAM_construct_end();
 
-  int ret = error_code_t::kOk;
+  hkdf::error_code_t ret = error_code_t::kOk;
   if (EVP_KDF_derive(kctx, okm, okm_len, params) != 1) {
     ret = error_code_t::kOperation;
   }
@@ -1013,7 +1027,7 @@ ATFRAMEWORK_UTILS_API int hkdf::derive(digest_type_t type, const unsigned char* 
     return error_code_t::kOperation;
   }
 
-  int ret = error_code_t::kOk;
+  hkdf::error_code_t ret = error_code_t::kOk;
   const EVP_MD* md = details::get_evp_md_by_type(type);
 
   do {
@@ -1067,7 +1081,7 @@ ATFRAMEWORK_UTILS_API int hkdf::derive(digest_type_t type, const unsigned char* 
   // Manual implementation: extract then expand
   std::vector<unsigned char> prk(hash_len);
   size_t prk_len = hash_len;
-  int ret = extract(type, salt, salt_len, ikm, ikm_len, prk.data(), &prk_len);
+  hkdf::error_code_t ret = extract(type, salt, salt_len, ikm, ikm_len, prk.data(), &prk_len);
   if (ret != error_code_t::kOk) {
     return ret;
   }
@@ -1089,9 +1103,10 @@ ATFRAMEWORK_UTILS_API int hkdf::derive(digest_type_t type, const unsigned char* 
 #  endif
 }
 
-ATFRAMEWORK_UTILS_API int hkdf::derive(digest_type_t type, gsl::span<const unsigned char> salt,
-                                       gsl::span<const unsigned char> ikm, gsl::span<const unsigned char> info,
-                                       unsigned char* okm, size_t okm_len) {
+ATFRAMEWORK_UTILS_API hkdf::error_code_t hkdf::derive(digest_type_t type, gsl::span<const unsigned char> salt,
+                                                      gsl::span<const unsigned char> ikm,
+                                                      gsl::span<const unsigned char> info, unsigned char* okm,
+                                                      size_t okm_len) {
   return derive(type, salt.data(), salt.size(), ikm.data(), ikm.size(), info.data(), info.size(), okm, okm_len);
 }
 
@@ -1105,7 +1120,7 @@ ATFRAMEWORK_UTILS_API std::vector<unsigned char> hkdf::derive_to_binary(digest_t
   }
 
   std::vector<unsigned char> result(okm_len);
-  int ret = derive(type, salt, ikm, info, result.data(), okm_len);
+  hkdf::error_code_t ret = derive(type, salt, ikm, info, result.data(), okm_len);
   if (ret != error_code_t::kOk) {
     return std::vector<unsigned char>();
   }
@@ -1130,4 +1145,3 @@ ATFRAMEWORK_UTILS_NAMESPACE_END
 #  endif
 
 #endif  // ATFW_UTIL_MACRO_CRYPTO_HMAC_ENABLED
-

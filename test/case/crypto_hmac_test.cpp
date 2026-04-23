@@ -110,9 +110,9 @@ CASE_TEST(crypto_hmac, hmac_sha256_rfc4231_test1) {
   std::vector<unsigned char> output(32);
   size_t output_len = output.size();
 
-  int ret = atfw::util::crypto::hmac::compute(atfw::util::crypto::digest_type_t::kSha256, key.data(), key.size(),
-                                              reinterpret_cast<const unsigned char*>(data), data_len, output.data(),
-                                              &output_len);
+  auto ret = atfw::util::crypto::hmac::compute(atfw::util::crypto::digest_type_t::kSha256, key.data(), key.size(),
+                                               reinterpret_cast<const unsigned char*>(data), data_len, output.data(),
+                                               &output_len);
 
   CASE_EXPECT_EQ(atfw::util::crypto::hmac_error_code_t::kOk, ret);
   CASE_EXPECT_EQ(32u, output_len);
@@ -190,7 +190,7 @@ CASE_TEST(crypto_hmac, hmac_sha256_streaming) {
   atfw::util::crypto::hmac h;
   CASE_EXPECT_FALSE(h.is_valid());
 
-  int ret = h.init(atfw::util::crypto::digest_type_t::kSha256, key.data(), key.size());
+  auto ret = h.init(atfw::util::crypto::digest_type_t::kSha256, key.data(), key.size());
   CASE_EXPECT_EQ(atfw::util::crypto::hmac_error_code_t::kOk, ret);
   CASE_EXPECT_TRUE(h.is_valid());
   CASE_EXPECT_EQ(32u, h.get_output_length());
@@ -221,7 +221,7 @@ CASE_TEST(crypto_hmac, hmac_sha256_streaming_multiple_updates) {
   const char* data2 = "There";
 
   atfw::util::crypto::hmac h;
-  int ret = h.init(atfw::util::crypto::digest_type_t::kSha256, key.data(), key.size());
+  auto ret = h.init(atfw::util::crypto::digest_type_t::kSha256, key.data(), key.size());
   CASE_EXPECT_EQ(atfw::util::crypto::hmac_error_code_t::kOk, ret);
 
   ret = h.update(reinterpret_cast<const unsigned char*>(data1), strlen(data1));
@@ -287,7 +287,7 @@ CASE_TEST(crypto_hmac, hmac_move_semantics) {
   std::vector<unsigned char> key(20, 0x0b);
 
   atfw::util::crypto::hmac h1;
-  int ret = h1.init(atfw::util::crypto::digest_type_t::kSha256, key.data(), key.size());
+  auto ret = h1.init(atfw::util::crypto::digest_type_t::kSha256, key.data(), key.size());
   CASE_EXPECT_EQ(atfw::util::crypto::hmac_error_code_t::kOk, ret);
   CASE_EXPECT_TRUE(h1.is_valid());
 
@@ -309,7 +309,7 @@ CASE_TEST(crypto_hmac, hmac_error_cases) {
   atfw::util::crypto::hmac h;
 
   // Update before init
-  int ret = h.update(nullptr, 0);
+  auto ret = h.update(nullptr, 0);
   CASE_EXPECT_EQ(atfw::util::crypto::hmac_error_code_t::kNotInitialized, ret);
 
   // Final before init
@@ -378,8 +378,8 @@ CASE_TEST(crypto_hkdf, hkdf_sha256_rfc5869_test1) {
   // Test extract
   std::vector<unsigned char> prk(32);
   size_t prk_len = prk.size();
-  int ret = atfw::util::crypto::hkdf::extract(atfw::util::crypto::digest_type_t::kSha256, salt.data(), salt.size(),
-                                              ikm.data(), ikm.size(), prk.data(), &prk_len);
+  auto ret = atfw::util::crypto::hkdf::extract(atfw::util::crypto::digest_type_t::kSha256, salt.data(), salt.size(),
+                                               ikm.data(), ikm.size(), prk.data(), &prk_len);
   CASE_EXPECT_EQ(atfw::util::crypto::hkdf::error_code_t::kOk, ret);
   CASE_EXPECT_EQ(32u, prk_len);
 
@@ -435,8 +435,8 @@ CASE_TEST(crypto_hkdf, hkdf_sha256_rfc5869_test2) {
       "e7e8e9eaebecedeeeff0f1f2f3f4f5f6f7f8f9fafbfcfdfeff");
 
   std::vector<unsigned char> okm(82);
-  int ret = atfw::util::crypto::hkdf::derive(atfw::util::crypto::digest_type_t::kSha256, salt.data(), salt.size(),
-                                             ikm.data(), ikm.size(), info.data(), info.size(), okm.data(), okm.size());
+  auto ret = atfw::util::crypto::hkdf::derive(atfw::util::crypto::digest_type_t::kSha256, salt.data(), salt.size(),
+                                              ikm.data(), ikm.size(), info.data(), info.size(), okm.data(), okm.size());
   CASE_EXPECT_EQ(atfw::util::crypto::hkdf::error_code_t::kOk, ret);
 
   std::string expected_okm =
@@ -462,8 +462,8 @@ CASE_TEST(crypto_hkdf, hkdf_sha256_rfc5869_test3) {
   std::vector<unsigned char> ikm(22, 0x0b);
 
   std::vector<unsigned char> okm(42);
-  int ret = atfw::util::crypto::hkdf::derive(atfw::util::crypto::digest_type_t::kSha256, nullptr, 0, ikm.data(),
-                                             ikm.size(), nullptr, 0, okm.data(), okm.size());
+  auto ret = atfw::util::crypto::hkdf::derive(atfw::util::crypto::digest_type_t::kSha256, nullptr, 0, ikm.data(),
+                                              ikm.size(), nullptr, 0, okm.data(), okm.size());
   CASE_EXPECT_EQ(atfw::util::crypto::hkdf::error_code_t::kOk, ret);
 
   std::string expected_okm = "8da4e775a563c18f715f802a063c5a31b8a11f5c5ee1879ec3454e5f3c738d2d9d201395faa4b61a96c8";
@@ -489,8 +489,8 @@ CASE_TEST(crypto_hkdf, hkdf_sha1_rfc5869_test4) {
   std::vector<unsigned char> info = hex_to_bytes("f0f1f2f3f4f5f6f7f8f9");
 
   std::vector<unsigned char> okm(42);
-  int ret = atfw::util::crypto::hkdf::derive(atfw::util::crypto::digest_type_t::kSha1, salt.data(), salt.size(),
-                                             ikm.data(), ikm.size(), info.data(), info.size(), okm.data(), okm.size());
+  auto ret = atfw::util::crypto::hkdf::derive(atfw::util::crypto::digest_type_t::kSha1, salt.data(), salt.size(),
+                                              ikm.data(), ikm.size(), info.data(), info.size(), okm.data(), okm.size());
   CASE_EXPECT_EQ(atfw::util::crypto::hkdf::error_code_t::kOk, ret);
 
   std::string expected_okm = "085a01ea1b10f36933068b56efa5ad81a4f14b822f5b091568a9cdd4f155fda2c22e422478d305f3f896";
@@ -523,8 +523,8 @@ CASE_TEST(crypto_hkdf, hkdf_error_cases) {
   std::vector<unsigned char> okm(42);
 
   // Invalid digest type
-  int ret = atfw::util::crypto::hkdf::derive(atfw::util::crypto::digest_type_t::kNone, nullptr, 0, ikm.data(),
-                                             ikm.size(), nullptr, 0, okm.data(), okm.size());
+  auto ret = atfw::util::crypto::hkdf::derive(atfw::util::crypto::digest_type_t::kNone, nullptr, 0, ikm.data(),
+                                              ikm.size(), nullptr, 0, okm.data(), okm.size());
   CASE_EXPECT_EQ(atfw::util::crypto::hkdf::error_code_t::kDigestNotSupport, ret);
 
   // Output length too large (> 255 * hash_len)
@@ -546,8 +546,8 @@ CASE_TEST(crypto_hkdf, hkdf_span_api) {
   // Extract with span
   std::vector<unsigned char> prk(32);
   size_t prk_len = prk.size();
-  int ret = atfw::util::crypto::hkdf::extract(atfw::util::crypto::digest_type_t::kSha256, gsl::make_span(salt),
-                                              gsl::make_span(ikm), prk.data(), &prk_len);
+  auto ret = atfw::util::crypto::hkdf::extract(atfw::util::crypto::digest_type_t::kSha256, gsl::make_span(salt),
+                                               gsl::make_span(ikm), prk.data(), &prk_len);
   CASE_EXPECT_EQ(atfw::util::crypto::hkdf::error_code_t::kOk, ret);
 
   // Expand with span
@@ -570,4 +570,3 @@ CASE_TEST(crypto_hkdf, hkdf_span_api) {
 }
 
 #endif  // ATFW_UTIL_MACRO_CRYPTO_HMAC_ENABLED
-

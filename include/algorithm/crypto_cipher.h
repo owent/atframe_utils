@@ -51,9 +51,29 @@ struct cipher_interface_info_t;
 
 class cipher {
  public:
-  struct ATFRAMEWORK_UTILS_API mode_t {
-    enum type { EN_CMODE_ENCRYPT = 0x01, EN_CMODE_DECRYPT = 0x02 };
+  enum class mode_t : int32_t {
+    kEncrypt = 0x01,
+    kDecrypt = 0x02,
   };
+
+  // Allow `mode_t::kEncrypt | mode_t::kDecrypt` and similar bitmask usage; result is `int32_t`
+  // because callers (e.g., `init(int32_t mode)`) take a plain int32_t mask.
+  friend constexpr int32_t operator|(mode_t lhs, mode_t rhs) noexcept {
+    return static_cast<int32_t>(lhs) | static_cast<int32_t>(rhs);
+  }
+  friend constexpr int32_t operator|(int32_t lhs, mode_t rhs) noexcept { return lhs | static_cast<int32_t>(rhs); }
+  friend constexpr int32_t operator|(mode_t lhs, int32_t rhs) noexcept { return static_cast<int32_t>(lhs) | rhs; }
+
+  friend constexpr int32_t operator&(mode_t lhs, mode_t rhs) noexcept {
+    return static_cast<int32_t>(lhs) & static_cast<int32_t>(rhs);
+  }
+  friend constexpr int32_t operator&(int32_t lhs, mode_t rhs) noexcept { return lhs & static_cast<int32_t>(rhs); }
+  friend constexpr int32_t operator&(mode_t lhs, int32_t rhs) noexcept { return static_cast<int32_t>(lhs) & rhs; }
+
+  friend constexpr bool operator==(int32_t lhs, mode_t rhs) noexcept { return lhs == static_cast<int32_t>(rhs); }
+  friend constexpr bool operator==(mode_t lhs, int32_t rhs) noexcept { return static_cast<int32_t>(lhs) == rhs; }
+  friend constexpr bool operator!=(int32_t lhs, mode_t rhs) noexcept { return lhs != static_cast<int32_t>(rhs); }
+  friend constexpr bool operator!=(mode_t lhs, int32_t rhs) noexcept { return static_cast<int32_t>(lhs) != rhs; }
 
   enum iv_roll_policy_t : uint8_t {
     IV_ROLL_NONE = 0,
@@ -85,30 +105,41 @@ class cipher {
   };
 #  endif
 
-  struct ATFRAMEWORK_UTILS_API error_code_t {
-    enum type {
-      OK = 0,
-      INVALID_PARAM = -1,
-      NOT_INITED = -2,
-      ALREADY_INITED = -3,
-      MALLOC = -4,
-      CIPHER_DISABLED = -11,
-      CIPHER_NOT_SUPPORT = -12,
-      CIPHER_OPERATION = -13,
-      CIPHER_OPERATION_SET_IV = -14,
-      LIBSODIUM_OPERATION = -15,
-      LIBSODIUM_OPERATION_TAG_LEN = -16,
-      MUST_CALL_AEAD_API = -21,
-      MUST_NOT_CALL_AEAD_API = -22,
-    };
+  enum class error_code_t : int32_t {
+    kOk = 0,
+    kInvalidParam = -1,
+    kNotInited = -2,
+    kAlreadyInited = -3,
+    kMalloc = -4,
+    kCipherDisabled = -11,
+    kCipherNotSupport = -12,
+    kCipherOperation = -13,
+    kCipherOperationSetIv = -14,
+    kLibsodiumOperation = -15,
+    kLibsodiumOperationTagLen = -16,
+    kMustCallAeadApi = -21,
+    kMustNotCallAeadApi = -22,
   };
+
+  // Comparison operators with int32_t (legacy callers compare against 0).
+  friend constexpr bool operator==(error_code_t lhs, int32_t rhs) noexcept { return static_cast<int32_t>(lhs) == rhs; }
+  friend constexpr bool operator==(int32_t lhs, error_code_t rhs) noexcept { return lhs == static_cast<int32_t>(rhs); }
+  friend constexpr bool operator!=(error_code_t lhs, int32_t rhs) noexcept { return static_cast<int32_t>(lhs) != rhs; }
+  friend constexpr bool operator!=(int32_t lhs, error_code_t rhs) noexcept { return lhs != static_cast<int32_t>(rhs); }
+  friend constexpr bool operator<(error_code_t lhs, int32_t rhs) noexcept { return static_cast<int32_t>(lhs) < rhs; }
+  friend constexpr bool operator<(int32_t lhs, error_code_t rhs) noexcept { return lhs < static_cast<int32_t>(rhs); }
+  friend constexpr bool operator<=(error_code_t lhs, int32_t rhs) noexcept { return static_cast<int32_t>(lhs) <= rhs; }
+  friend constexpr bool operator<=(int32_t lhs, error_code_t rhs) noexcept { return lhs <= static_cast<int32_t>(rhs); }
+  friend constexpr bool operator>(error_code_t lhs, int32_t rhs) noexcept { return static_cast<int32_t>(lhs) > rhs; }
+  friend constexpr bool operator>(int32_t lhs, error_code_t rhs) noexcept { return lhs > static_cast<int32_t>(rhs); }
+  friend constexpr bool operator>=(error_code_t lhs, int32_t rhs) noexcept { return static_cast<int32_t>(lhs) >= rhs; }
+  friend constexpr bool operator>=(int32_t lhs, error_code_t rhs) noexcept { return lhs >= static_cast<int32_t>(rhs); }
 
  public:
   ATFRAMEWORK_UTILS_API cipher();
   ATFRAMEWORK_UTILS_API ~cipher();
 
-  ATFRAMEWORK_UTILS_API int init(nostd::string_view name,
-                                 int mode = mode_t::EN_CMODE_ENCRYPT | mode_t::EN_CMODE_DECRYPT);
+  ATFRAMEWORK_UTILS_API int init(nostd::string_view name, int32_t mode = mode_t::kEncrypt | mode_t::kDecrypt);
   ATFRAMEWORK_UTILS_API int close();
 
   /**
@@ -263,7 +294,7 @@ class cipher {
   static ATFRAMEWORK_UTILS_API int cleanup_global_algorithm();
 
  private:
-  int init_with_cipher(const cipher_interface_info_t *, int mode);
+  int init_with_cipher(const cipher_interface_info_t *, int32_t mode);
   int close_with_cipher();
 
  private:

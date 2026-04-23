@@ -15,20 +15,7 @@
 #include <gsl/select-gsl.h>
 
 #if defined(ATFRAMEWORK_UTILS_CRYPTO_USE_OPENSSL) || defined(ATFRAMEWORK_UTILS_CRYPTO_USE_LIBRESSL) || \
-    defined(ATFRAMEWORK_UTILS_CRYPTO_USE_BORINGSSL)
-
-#  include <openssl/crypto.h>
-#  include <openssl/err.h>
-#  include <openssl/evp.h>
-#  include <openssl/hmac.h>
-#  include <openssl/kdf.h>
-
-#  define ATFW_UTIL_MACRO_CRYPTO_HMAC_ENABLED 1
-
-#elif defined(ATFRAMEWORK_UTILS_CRYPTO_USE_MBEDTLS)
-
-#  include <mbedtls/hkdf.h>
-#  include <mbedtls/md.h>
+    defined(ATFRAMEWORK_UTILS_CRYPTO_USE_BORINGSSL) || defined(ATFRAMEWORK_UTILS_CRYPTO_USE_MBEDTLS)
 
 #  define ATFW_UTIL_MACRO_CRYPTO_HMAC_ENABLED 1
 
@@ -60,18 +47,16 @@ enum class digest_type_t : uint8_t {
 /**
  * @brief HMAC error codes
  */
-struct ATFRAMEWORK_UTILS_API hmac_error_code_t {
-  enum type {
-    kOk = 0,
-    kInvalidParam = -1,
-    kNotInitialized = -2,
-    kAlreadyInitialized = -3,
-    kDigestNotSupport = -4,
-    kMalloc = -5,
-    kOperation = -6,
-    kOutputBufferTooSmall = -7,
-    kDisabled = -8,
-  };
+enum class hmac_error_code_t : int32_t {
+  kOk = 0,
+  kInvalidParam = -1,
+  kNotInitialized = -2,
+  kAlreadyInitialized = -3,
+  kDigestNotSupport = -4,
+  kMalloc = -5,
+  kOperation = -6,
+  kOutputBufferTooSmall = -7,
+  kDisabled = -8,
 };
 
 /**
@@ -117,31 +102,31 @@ class hmac {
    * @param key_len Key length in bytes
    * @return 0 on success, or error code
    */
-  ATFRAMEWORK_UTILS_API int init(digest_type_t type, const unsigned char* key, size_t key_len);
-  ATFRAMEWORK_UTILS_API int init(digest_type_t type, gsl::span<const unsigned char> key);
+  ATFRAMEWORK_UTILS_API hmac_error_code_t init(digest_type_t type, const unsigned char* key, size_t key_len);
+  ATFRAMEWORK_UTILS_API hmac_error_code_t init(digest_type_t type, gsl::span<const unsigned char> key);
 
   /**
    * @brief Close/reset the HMAC context
-   * @return 0 on success, or error code
+   * @return kOk on success, or error code
    */
-  ATFRAMEWORK_UTILS_API int close();
+  ATFRAMEWORK_UTILS_API hmac_error_code_t close();
 
   /**
    * @brief Update HMAC with additional data
    * @param input Input data
    * @param input_len Input data length in bytes
-   * @return 0 on success, or error code
+   * @return kOk on success, or error code
    */
-  ATFRAMEWORK_UTILS_API int update(const unsigned char* input, size_t input_len);
-  ATFRAMEWORK_UTILS_API int update(gsl::span<const unsigned char> input);
+  ATFRAMEWORK_UTILS_API hmac_error_code_t update(const unsigned char* input, size_t input_len);
+  ATFRAMEWORK_UTILS_API hmac_error_code_t update(gsl::span<const unsigned char> input);
 
   /**
    * @brief Finalize HMAC computation and get the result
    * @param output Output buffer for HMAC result
    * @param output_len On input: size of output buffer. On output: actual HMAC length
-   * @return 0 on success, or error code
+   * @return kOk on success, or error code
    */
-  ATFRAMEWORK_UTILS_API int final(unsigned char* output, size_t* output_len);
+  ATFRAMEWORK_UTILS_API hmac_error_code_t final(unsigned char* output, size_t* output_len);
 
   /**
    * @brief Get the output length of the HMAC
@@ -178,13 +163,13 @@ class hmac {
    * @param output_len On input: buffer size. On output: actual HMAC length
    * @return 0 on success, or error code
    */
-  static ATFRAMEWORK_UTILS_API int compute(digest_type_t type, const unsigned char* key, size_t key_len,
-                                           const unsigned char* input, size_t input_len, unsigned char* output,
-                                           size_t* output_len);
+  static ATFRAMEWORK_UTILS_API hmac_error_code_t compute(digest_type_t type, const unsigned char* key, size_t key_len,
+                                                         const unsigned char* input, size_t input_len,
+                                                         unsigned char* output, size_t* output_len);
 
-  static ATFRAMEWORK_UTILS_API int compute(digest_type_t type, gsl::span<const unsigned char> key,
-                                           gsl::span<const unsigned char> input, unsigned char* output,
-                                           size_t* output_len);
+  static ATFRAMEWORK_UTILS_API hmac_error_code_t compute(digest_type_t type, gsl::span<const unsigned char> key,
+                                                         gsl::span<const unsigned char> input, unsigned char* output,
+                                                         size_t* output_len);
 
   /**
    * @brief One-shot HMAC computation returning result as vector
@@ -241,16 +226,28 @@ class hkdf {
   /**
    * @brief HKDF error codes
    */
-  struct ATFRAMEWORK_UTILS_API error_code_t {
-    enum type {
-      kOk = 0,
-      kInvalidParam = -1,
-      kDigestNotSupport = -2,
-      kOperation = -3,
-      kOutputLengthTooLarge = -4,
-      kDisabled = -5,
-    };
+  enum class error_code_t : int32_t {
+    kOk = 0,
+    kInvalidParam = -1,
+    kDigestNotSupport = -2,
+    kOperation = -3,
+    kOutputLengthTooLarge = -4,
+    kDisabled = -5,
   };
+
+  // Comparison operators with int (legacy callers compare against 0).
+  friend constexpr bool operator==(error_code_t lhs, int rhs) noexcept { return static_cast<int>(lhs) == rhs; }
+  friend constexpr bool operator==(int lhs, error_code_t rhs) noexcept { return lhs == static_cast<int>(rhs); }
+  friend constexpr bool operator!=(error_code_t lhs, int rhs) noexcept { return static_cast<int>(lhs) != rhs; }
+  friend constexpr bool operator!=(int lhs, error_code_t rhs) noexcept { return lhs != static_cast<int>(rhs); }
+  friend constexpr bool operator<(error_code_t lhs, int rhs) noexcept { return static_cast<int>(lhs) < rhs; }
+  friend constexpr bool operator<(int lhs, error_code_t rhs) noexcept { return lhs < static_cast<int>(rhs); }
+  friend constexpr bool operator<=(error_code_t lhs, int rhs) noexcept { return static_cast<int>(lhs) <= rhs; }
+  friend constexpr bool operator<=(int lhs, error_code_t rhs) noexcept { return lhs <= static_cast<int>(rhs); }
+  friend constexpr bool operator>(error_code_t lhs, int rhs) noexcept { return static_cast<int>(lhs) > rhs; }
+  friend constexpr bool operator>(int lhs, error_code_t rhs) noexcept { return lhs > static_cast<int>(rhs); }
+  friend constexpr bool operator>=(error_code_t lhs, int rhs) noexcept { return static_cast<int>(lhs) >= rhs; }
+  friend constexpr bool operator>=(int lhs, error_code_t rhs) noexcept { return lhs >= static_cast<int>(rhs); }
 
   /**
    * @brief Perform HKDF-Extract step
@@ -266,12 +263,13 @@ class hkdf {
    * @param prk_len On input: buffer size. On output: actual PRK length
    * @return 0 on success, or error code
    */
-  static ATFRAMEWORK_UTILS_API int extract(digest_type_t type, const unsigned char* salt, size_t salt_len,
-                                           const unsigned char* ikm, size_t ikm_len, unsigned char* prk,
-                                           size_t* prk_len);
+  static ATFRAMEWORK_UTILS_API error_code_t extract(digest_type_t type, const unsigned char* salt, size_t salt_len,
+                                                    const unsigned char* ikm, size_t ikm_len, unsigned char* prk,
+                                                    size_t* prk_len);
 
-  static ATFRAMEWORK_UTILS_API int extract(digest_type_t type, gsl::span<const unsigned char> salt,
-                                           gsl::span<const unsigned char> ikm, unsigned char* prk, size_t* prk_len);
+  static ATFRAMEWORK_UTILS_API error_code_t extract(digest_type_t type, gsl::span<const unsigned char> salt,
+                                                    gsl::span<const unsigned char> ikm, unsigned char* prk,
+                                                    size_t* prk_len);
 
   /**
    * @brief Perform HKDF-Expand step
@@ -287,12 +285,13 @@ class hkdf {
    * @param okm_len Desired output length in bytes
    * @return 0 on success, or error code
    */
-  static ATFRAMEWORK_UTILS_API int expand(digest_type_t type, const unsigned char* prk, size_t prk_len,
-                                          const unsigned char* info, size_t info_len, unsigned char* okm,
-                                          size_t okm_len);
+  static ATFRAMEWORK_UTILS_API error_code_t expand(digest_type_t type, const unsigned char* prk, size_t prk_len,
+                                                   const unsigned char* info, size_t info_len, unsigned char* okm,
+                                                   size_t okm_len);
 
-  static ATFRAMEWORK_UTILS_API int expand(digest_type_t type, gsl::span<const unsigned char> prk,
-                                          gsl::span<const unsigned char> info, unsigned char* okm, size_t okm_len);
+  static ATFRAMEWORK_UTILS_API error_code_t expand(digest_type_t type, gsl::span<const unsigned char> prk,
+                                                   gsl::span<const unsigned char> info, unsigned char* okm,
+                                                   size_t okm_len);
 
   /**
    * @brief Perform full HKDF (Extract + Expand)
@@ -308,13 +307,14 @@ class hkdf {
    * @param okm_len Desired output length in bytes
    * @return 0 on success, or error code
    */
-  static ATFRAMEWORK_UTILS_API int derive(digest_type_t type, const unsigned char* salt, size_t salt_len,
-                                          const unsigned char* ikm, size_t ikm_len, const unsigned char* info,
-                                          size_t info_len, unsigned char* okm, size_t okm_len);
+  static ATFRAMEWORK_UTILS_API error_code_t derive(digest_type_t type, const unsigned char* salt, size_t salt_len,
+                                                   const unsigned char* ikm, size_t ikm_len, const unsigned char* info,
+                                                   size_t info_len, unsigned char* okm, size_t okm_len);
 
-  static ATFRAMEWORK_UTILS_API int derive(digest_type_t type, gsl::span<const unsigned char> salt,
-                                          gsl::span<const unsigned char> ikm, gsl::span<const unsigned char> info,
-                                          unsigned char* okm, size_t okm_len);
+  static ATFRAMEWORK_UTILS_API error_code_t derive(digest_type_t type, gsl::span<const unsigned char> salt,
+                                                   gsl::span<const unsigned char> ikm,
+                                                   gsl::span<const unsigned char> info, unsigned char* okm,
+                                                   size_t okm_len);
 
   /**
    * @brief Perform full HKDF and return result as vector
@@ -343,4 +343,3 @@ ATFRAMEWORK_UTILS_NAMESPACE_END
 #endif  // ATFW_UTIL_MACRO_CRYPTO_HMAC_ENABLED
 
 #endif  // UTIL_ALGORITHM_CRYPTO_HMAC_H
-

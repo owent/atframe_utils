@@ -133,9 +133,9 @@ namespace details {
       defined(ATFRAMEWORK_UTILS_CRYPTO_USE_BORINGSSL)
 ATFRAMEWORK_UTILS_NAMESPACE_ID::lock::atomic_int_type<size_t> g_global_init_counter_(0);
 #  endif
-static inline cipher::error_code_t::type setup_errorno(cipher &ci, int64_t err, cipher::error_code_t::type ret) {
+static inline int setup_errorno(cipher &ci, int64_t err, cipher::error_code_t ret) {
   ci.set_last_errno(err);
-  return ret;
+  return static_cast<int>(ret);
 }
 
 static inline void iv_shift_append(std::vector<unsigned char> &iv, const unsigned char *ciphertext, size_t clen) {
@@ -388,21 +388,21 @@ ATFRAMEWORK_UTILS_API cipher::cipher()
       cipher_kt_(nullptr) {}
 ATFRAMEWORK_UTILS_API cipher::~cipher() { close(); }
 
-ATFRAMEWORK_UTILS_API int cipher::init(nostd::string_view name, int mode) {
+ATFRAMEWORK_UTILS_API int cipher::init(nostd::string_view name, int32_t mode) {
   if (nullptr != interface_ && interface_->method != EN_CIMT_INVALID) {
-    return details::setup_errorno(*this, -1, error_code_t::ALREADY_INITED);
+    return details::setup_errorno(*this, -1, error_code_t::kAlreadyInited);
   }
 
   if (name.empty()) {
-    return details::setup_errorno(*this, -1, error_code_t::INVALID_PARAM);
+    return details::setup_errorno(*this, -1, error_code_t::kInvalidParam);
   }
 
   const cipher_interface_info_t *interface = details::get_cipher_interface_by_name(name);
   if (nullptr == interface) {
-    return details::setup_errorno(*this, -1, error_code_t::CIPHER_NOT_SUPPORT);
+    return details::setup_errorno(*this, -1, error_code_t::kCipherNotSupport);
   }
 
-  int ret = error_code_t::OK;
+  int ret = static_cast<int>(error_code_t::kOk);
   // reset per-init state
   last_errorno_ = 0;
   tag_length_ = 0;
@@ -427,11 +427,11 @@ ATFRAMEWORK_UTILS_API int cipher::init(nostd::string_view name, int mode) {
       memset(libsodium_context_.key, 0, sizeof(libsodium_context_.key));
       break;
     default:
-      ret = details::setup_errorno(*this, -1, error_code_t::CIPHER_NOT_SUPPORT);
+      ret = details::setup_errorno(*this, -1, error_code_t::kCipherNotSupport);
       break;
   }
 
-  if (error_code_t::OK == ret) {
+  if (static_cast<int>(error_code_t::kOk) == ret) {
     interface_ = interface;
     if (0 != (interface_->flags & static_cast<uint32_t>(cipher_interface_flags_t::EN_CIFT_AEAD))) {
       tag_length_ = 16;
@@ -444,48 +444,48 @@ ATFRAMEWORK_UTILS_API int cipher::init(nostd::string_view name, int mode) {
   return ret;
 }
 
-int cipher::init_with_cipher(const cipher_interface_info_t *interface, int mode) {
+int cipher::init_with_cipher(const cipher_interface_info_t *interface, int32_t mode) {
   if (nullptr == interface) {
-    return details::setup_errorno(*this, -1, error_code_t::INVALID_PARAM);
+    return details::setup_errorno(*this, -1, error_code_t::kInvalidParam);
   }
 
   if (interface->method != EN_CIMT_CIPHER) {
-    return details::setup_errorno(*this, -1, error_code_t::INVALID_PARAM);
+    return details::setup_errorno(*this, -1, error_code_t::kInvalidParam);
   }
 
   cipher_kt_ = get_cipher_by_name(interface->name);
   if (nullptr == cipher_kt_) {
-    return details::setup_errorno(*this, -1, error_code_t::CIPHER_NOT_SUPPORT);
+    return details::setup_errorno(*this, -1, error_code_t::kCipherNotSupport);
   }
 
-  int ret = error_code_t::OK;
+  int ret = static_cast<int>(error_code_t::kOk);
 #  if defined(ATFRAMEWORK_UTILS_CRYPTO_USE_OPENSSL) || defined(ATFRAMEWORK_UTILS_CRYPTO_USE_LIBRESSL) || \
       defined(ATFRAMEWORK_UTILS_CRYPTO_USE_BORINGSSL)
   do {
-    if (mode & mode_t::EN_CMODE_ENCRYPT) {
+    if (mode & mode_t::kEncrypt) {
       cipher_context_.enc = EVP_CIPHER_CTX_new();
 
       if (nullptr == cipher_context_.enc) {
-        ret = details::setup_errorno(*this, static_cast<int64_t>(ERR_peek_error()), error_code_t::MALLOC);
+        ret = details::setup_errorno(*this, static_cast<int64_t>(ERR_peek_error()), error_code_t::kMalloc);
         break;
       }
       if (!(EVP_CipherInit_ex(cipher_context_.enc, cipher_kt_, nullptr, nullptr, nullptr, 1))) {
-        ret = details::setup_errorno(*this, static_cast<int64_t>(ERR_peek_error()), error_code_t::CIPHER_OPERATION);
+        ret = details::setup_errorno(*this, static_cast<int64_t>(ERR_peek_error()), error_code_t::kCipherOperation);
         break;
       }
     } else {
       cipher_context_.enc = nullptr;
     }
 
-    if (mode & mode_t::EN_CMODE_DECRYPT) {
+    if (mode & mode_t::kDecrypt) {
       cipher_context_.dec = EVP_CIPHER_CTX_new();
       if (nullptr == cipher_context_.dec) {
-        ret = details::setup_errorno(*this, static_cast<int64_t>(ERR_peek_error()), error_code_t::MALLOC);
+        ret = details::setup_errorno(*this, static_cast<int64_t>(ERR_peek_error()), error_code_t::kMalloc);
         break;
       }
 
       if (!(EVP_CipherInit_ex(cipher_context_.dec, cipher_kt_, nullptr, nullptr, nullptr, 0))) {
-        ret = details::setup_errorno(*this, static_cast<int64_t>(ERR_peek_error()), error_code_t::CIPHER_OPERATION);
+        ret = details::setup_errorno(*this, static_cast<int64_t>(ERR_peek_error()), error_code_t::kCipherOperation);
         break;
       }
     } else {
@@ -494,13 +494,13 @@ int cipher::init_with_cipher(const cipher_interface_info_t *interface, int mode)
 
   } while (false);
 
-  if (error_code_t::OK != ret) {
-    if ((mode & mode_t::EN_CMODE_ENCRYPT) && nullptr != cipher_context_.enc) {
+  if (static_cast<int>(error_code_t::kOk) != ret) {
+    if ((mode & mode_t::kEncrypt) && nullptr != cipher_context_.enc) {
       EVP_CIPHER_CTX_free(cipher_context_.enc);
       cipher_context_.enc = nullptr;
     }
 
-    if ((mode & mode_t::EN_CMODE_DECRYPT) && nullptr != cipher_context_.dec) {
+    if ((mode & mode_t::kDecrypt) && nullptr != cipher_context_.dec) {
       EVP_CIPHER_CTX_free(cipher_context_.dec);
       cipher_context_.dec = nullptr;
     }
@@ -508,11 +508,11 @@ int cipher::init_with_cipher(const cipher_interface_info_t *interface, int mode)
 
 #  elif defined(ATFRAMEWORK_UTILS_CRYPTO_USE_MBEDTLS)
   do {
-    if (mode & mode_t::EN_CMODE_ENCRYPT) {
+    if (mode & mode_t::kEncrypt) {
       cipher_context_.enc = (cipher_evp_t *)malloc(sizeof(cipher_evp_t));
 
       if (nullptr == cipher_context_.enc) {
-        ret = details::setup_errorno(*this, -1, error_code_t::MALLOC);
+        ret = details::setup_errorno(*this, -1, error_code_t::kMalloc);
         break;
       }
 
@@ -520,18 +520,18 @@ int cipher::init_with_cipher(const cipher_interface_info_t *interface, int mode)
       mbedtls_cipher_init(cipher_context_.enc);
       int res;
       if ((res = mbedtls_cipher_setup(cipher_context_.enc, cipher_kt_)) != 0) {
-        ret = details::setup_errorno(*this, res, error_code_t::CIPHER_OPERATION);
+        ret = details::setup_errorno(*this, res, error_code_t::kCipherOperation);
         break;
       }
     } else {
       cipher_context_.enc = nullptr;
     }
 
-    if (mode & mode_t::EN_CMODE_DECRYPT) {
+    if (mode & mode_t::kDecrypt) {
       cipher_context_.dec = (cipher_evp_t *)malloc(sizeof(cipher_evp_t));
 
       if (nullptr == cipher_context_.dec) {
-        ret = details::setup_errorno(*this, -1, error_code_t::MALLOC);
+        ret = details::setup_errorno(*this, -1, error_code_t::kMalloc);
         break;
       }
 
@@ -539,7 +539,7 @@ int cipher::init_with_cipher(const cipher_interface_info_t *interface, int mode)
       mbedtls_cipher_init(cipher_context_.dec);
       int res;
       if ((res = mbedtls_cipher_setup(cipher_context_.dec, cipher_kt_)) != 0) {
-        ret = details::setup_errorno(*this, res, error_code_t::CIPHER_OPERATION);
+        ret = details::setup_errorno(*this, res, error_code_t::kCipherOperation);
         break;
       }
     } else {
@@ -548,35 +548,35 @@ int cipher::init_with_cipher(const cipher_interface_info_t *interface, int mode)
 
   } while (false);
 
-  if (error_code_t::OK != ret) {
-    if ((mode & mode_t::EN_CMODE_ENCRYPT) && nullptr != cipher_context_.enc) {
+  if (static_cast<int>(error_code_t::kOk) != ret) {
+    if ((mode & mode_t::kEncrypt) && nullptr != cipher_context_.enc) {
       mbedtls_cipher_free(cipher_context_.enc);
       free(cipher_context_.enc);
       cipher_context_.enc = nullptr;
     }
 
-    if ((mode & mode_t::EN_CMODE_DECRYPT) && nullptr != cipher_context_.dec) {
+    if ((mode & mode_t::kDecrypt) && nullptr != cipher_context_.dec) {
       mbedtls_cipher_free(cipher_context_.dec);
       free(cipher_context_.dec);
       cipher_context_.dec = nullptr;
     }
   }
 #  else
-  return details::setup_errorno(*this, -1, error_code_t::CIPHER_NOT_SUPPORT);
+  return details::setup_errorno(*this, -1, error_code_t::kCipherNotSupport);
 #  endif
   return ret;
 }
 
 ATFRAMEWORK_UTILS_API int cipher::close() {
   if (nullptr == interface_ || interface_->method == EN_CIMT_INVALID) {
-    return details::setup_errorno(*this, 0, error_code_t::NOT_INITED);
+    return details::setup_errorno(*this, 0, error_code_t::kNotInited);
   }
 
-  int ret = error_code_t::OK;
+  int ret = static_cast<int>(error_code_t::kOk);
   switch (interface_->method) {
     case EN_CIMT_XXTEA:
       // just do nothing when using xxtea
-      ret = details::setup_errorno(*this, 0, error_code_t::OK);
+      ret = details::setup_errorno(*this, 0, error_code_t::kOk);
       break;
 
     case EN_CIMT_CIPHER:
@@ -592,10 +592,10 @@ ATFRAMEWORK_UTILS_API int cipher::close() {
     case EN_CIMT_LIBSODIUM_CHACHA20_POLY1305_IETF:
     case EN_CIMT_LIBSODIUM_XCHACHA20_POLY1305_IETF:
       // just do nothing when using xxtea
-      ret = details::setup_errorno(*this, 0, error_code_t::OK);
+      ret = details::setup_errorno(*this, 0, error_code_t::kOk);
       break;
     default:
-      ret = details::setup_errorno(*this, 0, error_code_t::CIPHER_NOT_SUPPORT);
+      ret = details::setup_errorno(*this, 0, error_code_t::kCipherNotSupport);
       break;
   }
 
@@ -612,11 +612,11 @@ ATFRAMEWORK_UTILS_API int64_t cipher::get_last_errno() const { return last_error
 
 int cipher::close_with_cipher() {
   if (nullptr == interface_) {
-    return details::setup_errorno(*this, 0, error_code_t::NOT_INITED);
+    return details::setup_errorno(*this, 0, error_code_t::kNotInited);
   }
 
   if (interface_->method != EN_CIMT_CIPHER) {
-    return details::setup_errorno(*this, 0, error_code_t::INVALID_PARAM);
+    return details::setup_errorno(*this, 0, error_code_t::kInvalidParam);
   }
 
   // cipher cleanup
@@ -646,7 +646,7 @@ int cipher::close_with_cipher() {
   }
 #  endif
 
-  return details::setup_errorno(*this, 0, error_code_t::OK);
+  return details::setup_errorno(*this, 0, error_code_t::kOk);
 }
 
 ATFRAMEWORK_UTILS_API bool cipher::is_aead() const {
@@ -836,12 +836,12 @@ ATFRAMEWORK_UTILS_API void cipher::set_tag_size(uint32_t tag_size) { tag_length_
 
 ATFRAMEWORK_UTILS_API int cipher::set_key(const unsigned char *key, uint32_t key_bitlen) {
   if (nullptr == interface_) {
-    return details::setup_errorno(*this, 0, error_code_t::NOT_INITED);
+    return details::setup_errorno(*this, 0, error_code_t::kNotInited);
   }
 
   switch (interface_->method) {
     case EN_CIMT_INVALID:
-      return details::setup_errorno(*this, -1, error_code_t::NOT_INITED);
+      return details::setup_errorno(*this, -1, error_code_t::kNotInited);
     case EN_CIMT_XXTEA: {
       unsigned char secret[4 * sizeof(uint32_t)] = {0};
       if (key_bitlen >= sizeof(secret) * 8) {
@@ -850,14 +850,14 @@ ATFRAMEWORK_UTILS_API int cipher::set_key(const unsigned char *key, uint32_t key
         memcpy(secret, key, key_bitlen / 8);
       }
       ATFRAMEWORK_UTILS_NAMESPACE_ID::xxtea_setup(&xxtea_context_.key, secret);
-      return details::setup_errorno(*this, 0, error_code_t::OK);
+      return details::setup_errorno(*this, 0, error_code_t::kOk);
     }
     case EN_CIMT_CIPHER: {
       int res = 0;
 #  if defined(ATFRAMEWORK_UTILS_CRYPTO_USE_OPENSSL) || defined(ATFRAMEWORK_UTILS_CRYPTO_USE_LIBRESSL) || \
       defined(ATFRAMEWORK_UTILS_CRYPTO_USE_BORINGSSL)
       if (get_key_bits() > key_bitlen) {
-        return details::setup_errorno(*this, -1, error_code_t::INVALID_PARAM);
+        return details::setup_errorno(*this, -1, error_code_t::kInvalidParam);
       }
 
       if (nullptr != cipher_context_.enc) {
@@ -882,9 +882,9 @@ ATFRAMEWORK_UTILS_API int cipher::set_key(const unsigned char *key, uint32_t key
       }
 #  endif
       if (res != 0) {
-        return details::setup_errorno(*this, res, error_code_t::CIPHER_OPERATION);
+        return details::setup_errorno(*this, res, error_code_t::kCipherOperation);
       }
-      return details::setup_errorno(*this, res, error_code_t::OK);
+      return details::setup_errorno(*this, res, error_code_t::kOk);
     }
 
     case EN_CIMT_LIBSODIUM_CHACHA20:
@@ -900,10 +900,10 @@ ATFRAMEWORK_UTILS_API int cipher::set_key(const unsigned char *key, uint32_t key
       } else {
         memcpy(libsodium_context_.key, key, key_bitlen / 8);
       }
-      return details::setup_errorno(*this, 0, error_code_t::OK);
+      return details::setup_errorno(*this, 0, error_code_t::kOk);
     }
     default:
-      return details::setup_errorno(*this, -1, error_code_t::NOT_INITED);
+      return details::setup_errorno(*this, -1, error_code_t::kNotInited);
   }
 }
 
@@ -913,30 +913,30 @@ ATFRAMEWORK_UTILS_API int cipher::set_key(gsl::span<const unsigned char> key) {
 
 ATFRAMEWORK_UTILS_API int cipher::set_iv(const unsigned char *iv, size_t iv_len) {
   if (nullptr == interface_ || interface_->method == EN_CIMT_INVALID) {
-    return details::setup_errorno(*this, 0, error_code_t::NOT_INITED);
+    return details::setup_errorno(*this, 0, error_code_t::kNotInited);
   }
 
   switch (interface_->method) {
     case EN_CIMT_INVALID:
     case EN_CIMT_XXTEA:
-      return error_code_t::OK;
+      return static_cast<int>(error_code_t::kOk);
 
     case EN_CIMT_CIPHER: {
 #  if defined(ATFRAMEWORK_UTILS_CRYPTO_USE_MBEDTLS)
       if (iv_len > MBEDTLS_MAX_IV_LENGTH) {
-        return details::setup_errorno(*this, -1, error_code_t::INVALID_PARAM);
+        return details::setup_errorno(*this, -1, error_code_t::kInvalidParam);
       }
 #  endif
       int res = 0;
       if (0 == (interface_->flags & EN_CIFT_VARIABLE_IV_LEN)) {
         if (get_iv_size() != iv_len) {
-          return details::setup_errorno(*this, -1, error_code_t::INVALID_PARAM);
+          return details::setup_errorno(*this, -1, error_code_t::kInvalidParam);
         }
       }
 
       iv_.assign(iv, iv + iv_len);
       iv_is_set_ = true;
-      return details::setup_errorno(*this, res, error_code_t::OK);
+      return details::setup_errorno(*this, res, error_code_t::kOk);
     }
 
     case EN_CIMT_LIBSODIUM_CHACHA20:
@@ -948,16 +948,16 @@ ATFRAMEWORK_UTILS_API int cipher::set_iv(const unsigned char *iv, size_t iv_len)
     case EN_CIMT_LIBSODIUM_CHACHA20_POLY1305_IETF:
     case EN_CIMT_LIBSODIUM_XCHACHA20_POLY1305_IETF: {
       if (get_iv_size() != iv_len) {
-        return details::setup_errorno(*this, -1, error_code_t::INVALID_PARAM);
+        return details::setup_errorno(*this, -1, error_code_t::kInvalidParam);
       }
 
       iv_.assign(iv, iv + iv_len);
       iv_is_set_ = true;
-      return details::setup_errorno(*this, 0, error_code_t::OK);
+      return details::setup_errorno(*this, 0, error_code_t::kOk);
     }
 
     default:
-      return error_code_t::OK;
+      return static_cast<int>(error_code_t::kOk);
   }
 }
 
@@ -975,16 +975,16 @@ ATFRAMEWORK_UTILS_API gsl::span<const unsigned char> cipher::get_iv() const noex
 ATFRAMEWORK_UTILS_API int cipher::encrypt(const unsigned char *input, size_t ilen, unsigned char *output,
                                           size_t *olen) {
   if (nullptr == interface_ || interface_->method == EN_CIMT_INVALID) {
-    return details::setup_errorno(*this, 0, error_code_t::NOT_INITED);
+    return details::setup_errorno(*this, 0, error_code_t::kNotInited);
   }
 
   if (is_aead()) {
-    return error_code_t::MUST_CALL_AEAD_API;
+    return static_cast<int>(error_code_t::kMustCallAeadApi);
   }
 
   if (input == nullptr || ilen <= 0 || output == nullptr || nullptr == olen || *olen <= 0 ||
       *olen < ilen + get_block_size()) {
-    return details::setup_errorno(*this, -1, error_code_t::INVALID_PARAM);
+    return details::setup_errorno(*this, -1, error_code_t::kInvalidParam);
   }
 
   if (interface_->method >= EN_CIMT_CIPHER && 0 == (interface_->flags & EN_CIFT_VARIABLE_IV_LEN) &&
@@ -996,15 +996,15 @@ ATFRAMEWORK_UTILS_API int cipher::encrypt(const unsigned char *input, size_t ile
 
   switch (interface_->method) {
     case EN_CIMT_INVALID:
-      return details::setup_errorno(*this, -1, error_code_t::NOT_INITED);
+      return details::setup_errorno(*this, -1, error_code_t::kNotInited);
     case EN_CIMT_XXTEA: {
       ATFRAMEWORK_UTILS_NAMESPACE_ID::xxtea_encrypt(&xxtea_context_.key, reinterpret_cast<const void *>(input), ilen,
                                                     reinterpret_cast<void *>(output), olen);
-      return details::setup_errorno(*this, 0, error_code_t::OK);
+      return details::setup_errorno(*this, 0, error_code_t::kOk);
     }
     case EN_CIMT_CIPHER: {
       if (nullptr == cipher_context_.enc) {
-        return details::setup_errorno(*this, 0, error_code_t::CIPHER_DISABLED);
+        return details::setup_errorno(*this, 0, error_code_t::kCipherDisabled);
       }
 
 #  if defined(ATFRAMEWORK_UTILS_CRYPTO_USE_OPENSSL) || defined(ATFRAMEWORK_UTILS_CRYPTO_USE_LIBRESSL) || \
@@ -1015,7 +1015,7 @@ ATFRAMEWORK_UTILS_API int cipher::encrypt(const unsigned char *input, size_t ile
       if (!iv_.empty()) {
         if (!EVP_CipherInit_ex(cipher_context_.enc, nullptr, nullptr, nullptr, &iv_[0], -1)) {
           return details::setup_errorno(*this, static_cast<int64_t>(ERR_peek_error()),
-                                        error_code_t::CIPHER_OPERATION_SET_IV);
+                                        error_code_t::kCipherOperationSetIv);
         }
       }
 
@@ -1024,14 +1024,14 @@ ATFRAMEWORK_UTILS_API int cipher::encrypt(const unsigned char *input, size_t ile
       }
 
       if (!(EVP_CipherUpdate(cipher_context_.enc, output, &outl, input, static_cast<int>(ilen)))) {
-        return details::setup_errorno(*this, static_cast<int64_t>(ERR_peek_error()), error_code_t::CIPHER_OPERATION);
+        return details::setup_errorno(*this, static_cast<int64_t>(ERR_peek_error()), error_code_t::kCipherOperation);
       }
 
       if (0 != (interface_->flags & EN_CIFT_NO_FINISH)) {
         finish_olen = 0;
       } else {
         if (!(EVP_CipherFinal_ex(cipher_context_.enc, output + outl, &finish_olen))) {
-          return details::setup_errorno(*this, static_cast<int64_t>(ERR_peek_error()), error_code_t::CIPHER_OPERATION);
+          return details::setup_errorno(*this, static_cast<int64_t>(ERR_peek_error()), error_code_t::kCipherOperation);
         }
       }
 
@@ -1039,7 +1039,7 @@ ATFRAMEWORK_UTILS_API int cipher::encrypt(const unsigned char *input, size_t ile
       if (iv_is_set_) {
         details::roll_iv_after_success(iv_roll_policy_, iv_, true, input, ilen, output, *olen, get_block_size());
       }
-      return error_code_t::OK;
+      return static_cast<int>(error_code_t::kOk);
 
 #  elif defined(ATFRAMEWORK_UTILS_CRYPTO_USE_MBEDTLS)
       if (0 != (interface_->flags & EN_CIFT_ENCRYPT_NO_PADDING) &&
@@ -1051,19 +1051,19 @@ ATFRAMEWORK_UTILS_API int cipher::encrypt(const unsigned char *input, size_t ile
 #    endif
       ) {
         if ((last_errorno_ = mbedtls_cipher_set_padding_mode(cipher_context_.enc, MBEDTLS_PADDING_NONE)) != 0) {
-          return error_code_t::CIPHER_OPERATION;
+          return static_cast<int>(error_code_t::kCipherOperation);
         }
       }
 
       unsigned char empty_iv[MBEDTLS_MAX_IV_LENGTH] = {0};
       if ((last_errorno_ = mbedtls_cipher_crypt(cipher_context_.enc, iv_.empty() ? empty_iv : &iv_[0], iv_.size(),
                                                 input, ilen, output, olen)) != 0) {
-        return error_code_t::CIPHER_OPERATION;
+        return static_cast<int>(error_code_t::kCipherOperation);
       }
       if (iv_is_set_) {
         details::roll_iv_after_success(iv_roll_policy_, iv_, true, input, ilen, output, *olen, get_block_size());
       }
-      return error_code_t::OK;
+      return static_cast<int>(error_code_t::kOk);
 #  endif
     }
 
@@ -1073,79 +1073,79 @@ ATFRAMEWORK_UTILS_API int cipher::encrypt(const unsigned char *input, size_t ile
       if ((last_errorno_ = crypto_stream_chacha20_xor_ic(output, input, ilen, &iv_[LIBSODIUM_COUNTER_SIZE],
                                                          static_cast<uint64_t>(libsodium_get_counter(&iv_[0])),
                                                          libsodium_context_.key)) != 0) {
-        return error_code_t::LIBSODIUM_OPERATION;
+        return static_cast<int>(error_code_t::kLibsodiumOperation);
       }
       *olen = ilen;
       if (iv_is_set_) {
         details::roll_iv_after_success(iv_roll_policy_, iv_, true, input, ilen, output, ilen, get_block_size());
       }
-      return error_code_t::OK;
+      return static_cast<int>(error_code_t::kOk);
     case EN_CIMT_LIBSODIUM_CHACHA20_IETF:
       if ((last_errorno_ = crypto_stream_chacha20_ietf_xor_ic(output, input, ilen, &iv_[LIBSODIUM_COUNTER_SIZE],
                                                               static_cast<uint32_t>(libsodium_get_counter(&iv_[0])),
                                                               libsodium_context_.key)) != 0) {
-        return error_code_t::LIBSODIUM_OPERATION;
+        return static_cast<int>(error_code_t::kLibsodiumOperation);
       }
       *olen = ilen;
       if (iv_is_set_) {
         details::roll_iv_after_success(iv_roll_policy_, iv_, true, input, ilen, output, ilen, get_block_size());
       }
-      return error_code_t::OK;
+      return static_cast<int>(error_code_t::kOk);
 
 #    ifdef crypto_stream_xchacha20_KEYBYTES
       if ((last_errorno_ = crypto_stream_xchacha20_xor_ic(output, input, ilen, &iv_[LIBSODIUM_COUNTER_SIZE],
                                                           static_cast<uint64_t>(libsodium_get_counter(&iv_[0])),
                                                           libsodium_context_.key)) != 0) {
-        return error_code_t::LIBSODIUM_OPERATION;
+        return static_cast<int>(error_code_t::kLibsodiumOperation);
       }
       *olen = ilen;
       if (iv_is_set_) {
         details::roll_iv_after_success(iv_roll_policy_, iv_, true, input, ilen, output, ilen, get_block_size());
       }
-      return error_code_t::OK;
+      return static_cast<int>(error_code_t::kOk);
 #    endif
 
     case EN_CIMT_LIBSODIUM_SALSA20:
       if ((last_errorno_ = crypto_stream_salsa20_xor_ic(output, input, ilen, &iv_[LIBSODIUM_COUNTER_SIZE],
                                                         static_cast<uint64_t>(libsodium_get_counter(&iv_[0])),
                                                         libsodium_context_.key)) != 0) {
-        return error_code_t::LIBSODIUM_OPERATION;
+        return static_cast<int>(error_code_t::kLibsodiumOperation);
       }
       *olen = ilen;
       if (iv_is_set_) {
         details::roll_iv_after_success(iv_roll_policy_, iv_, true, input, ilen, output, ilen, get_block_size());
       }
-      return error_code_t::OK;
+      return static_cast<int>(error_code_t::kOk);
     case EN_CIMT_LIBSODIUM_XSALSA20:
       if ((last_errorno_ = crypto_stream_xsalsa20_xor_ic(output, input, ilen, &iv_[LIBSODIUM_COUNTER_SIZE],
                                                          static_cast<uint64_t>(libsodium_get_counter(&iv_[0])),
                                                          libsodium_context_.key)) != 0) {
-        return error_code_t::LIBSODIUM_OPERATION;
+        return static_cast<int>(error_code_t::kLibsodiumOperation);
       }
       *olen = ilen;
       if (iv_is_set_) {
         details::roll_iv_after_success(iv_roll_policy_, iv_, true, input, ilen, output, ilen, get_block_size());
       }
-      return error_code_t::OK;
+      return static_cast<int>(error_code_t::kOk);
 #  endif
     default:
-      return details::setup_errorno(*this, -1, error_code_t::NOT_INITED);
+      return details::setup_errorno(*this, -1, error_code_t::kNotInited);
   }
 }
 
 ATFRAMEWORK_UTILS_API int cipher::decrypt(const unsigned char *input, size_t ilen, unsigned char *output,
                                           size_t *olen) {
   if (nullptr == interface_ || interface_->method == EN_CIMT_INVALID) {
-    return details::setup_errorno(*this, 0, error_code_t::NOT_INITED);
+    return details::setup_errorno(*this, 0, error_code_t::kNotInited);
   }
 
   if (is_aead()) {
-    return error_code_t::MUST_CALL_AEAD_API;
+    return static_cast<int>(error_code_t::kMustCallAeadApi);
   }
 
   if (input == nullptr || ilen <= 0 || output == nullptr || nullptr == olen || *olen <= 0 ||
       *olen < ilen + get_block_size()) {
-    return details::setup_errorno(*this, -1, error_code_t::INVALID_PARAM);
+    return details::setup_errorno(*this, -1, error_code_t::kInvalidParam);
   }
 
   if (interface_->method >= EN_CIMT_CIPHER && 0 == (interface_->flags & EN_CIFT_VARIABLE_IV_LEN) &&
@@ -1157,15 +1157,15 @@ ATFRAMEWORK_UTILS_API int cipher::decrypt(const unsigned char *input, size_t ile
 
   switch (interface_->method) {
     case EN_CIMT_INVALID:
-      return details::setup_errorno(*this, -1, error_code_t::NOT_INITED);
+      return details::setup_errorno(*this, -1, error_code_t::kNotInited);
     case EN_CIMT_XXTEA: {
       ATFRAMEWORK_UTILS_NAMESPACE_ID::xxtea_decrypt(&xxtea_context_.key, reinterpret_cast<const void *>(input), ilen,
                                                     reinterpret_cast<void *>(output), olen);
-      return details::setup_errorno(*this, 0, error_code_t::OK);
+      return details::setup_errorno(*this, 0, error_code_t::kOk);
     }
     case EN_CIMT_CIPHER: {
       if (nullptr == cipher_context_.dec) {
-        return details::setup_errorno(*this, 0, error_code_t::CIPHER_DISABLED);
+        return details::setup_errorno(*this, 0, error_code_t::kCipherDisabled);
       }
 
 #  if defined(ATFRAMEWORK_UTILS_CRYPTO_USE_OPENSSL) || defined(ATFRAMEWORK_UTILS_CRYPTO_USE_LIBRESSL) || \
@@ -1176,7 +1176,7 @@ ATFRAMEWORK_UTILS_API int cipher::decrypt(const unsigned char *input, size_t ile
       if (!iv_.empty()) {
         if (!EVP_CipherInit_ex(cipher_context_.dec, nullptr, nullptr, nullptr, &iv_[0], -1)) {
           return details::setup_errorno(*this, static_cast<int64_t>(ERR_peek_error()),
-                                        error_code_t::CIPHER_OPERATION_SET_IV);
+                                        error_code_t::kCipherOperationSetIv);
         }
       }
 
@@ -1185,14 +1185,14 @@ ATFRAMEWORK_UTILS_API int cipher::decrypt(const unsigned char *input, size_t ile
       }
 
       if (!(EVP_CipherUpdate(cipher_context_.dec, output, &outl, input, static_cast<int>(ilen)))) {
-        return details::setup_errorno(*this, static_cast<int64_t>(ERR_peek_error()), error_code_t::CIPHER_OPERATION);
+        return details::setup_errorno(*this, static_cast<int64_t>(ERR_peek_error()), error_code_t::kCipherOperation);
       }
 
       if (0 != (interface_->flags & EN_CIFT_NO_FINISH)) {
         finish_olen = 0;
       } else {
         if (!(EVP_CipherFinal_ex(cipher_context_.dec, output + outl, &finish_olen))) {
-          return details::setup_errorno(*this, static_cast<int64_t>(ERR_peek_error()), error_code_t::CIPHER_OPERATION);
+          return details::setup_errorno(*this, static_cast<int64_t>(ERR_peek_error()), error_code_t::kCipherOperation);
         }
       }
 
@@ -1201,7 +1201,7 @@ ATFRAMEWORK_UTILS_API int cipher::decrypt(const unsigned char *input, size_t ile
         details::roll_iv_after_success(iv_roll_policy_, iv_, false, input, ilen, output, *olen, get_block_size());
       }
 
-      return error_code_t::OK;
+      return static_cast<int>(error_code_t::kOk);
 #  elif defined(ATFRAMEWORK_UTILS_CRYPTO_USE_MBEDTLS)
       if (0 != (interface_->flags & EN_CIFT_DECRYPT_NO_PADDING) &&
           MBEDTLS_MODE_CBC ==
@@ -1212,19 +1212,19 @@ ATFRAMEWORK_UTILS_API int cipher::decrypt(const unsigned char *input, size_t ile
 #    endif
       ) {
         if ((last_errorno_ = mbedtls_cipher_set_padding_mode(cipher_context_.dec, MBEDTLS_PADDING_NONE)) != 0) {
-          return error_code_t::CIPHER_OPERATION;
+          return static_cast<int>(error_code_t::kCipherOperation);
         }
       }
 
       unsigned char empty_iv[MBEDTLS_MAX_IV_LENGTH] = {0};
       if ((last_errorno_ = mbedtls_cipher_crypt(cipher_context_.dec, iv_.empty() ? empty_iv : &iv_[0], iv_.size(),
                                                 input, ilen, output, olen)) != 0) {
-        return error_code_t::CIPHER_OPERATION;
+        return static_cast<int>(error_code_t::kCipherOperation);
       }
       if (iv_is_set_) {
         details::roll_iv_after_success(iv_roll_policy_, iv_, false, input, ilen, output, *olen, get_block_size());
       }
-      return error_code_t::OK;
+      return static_cast<int>(error_code_t::kOk);
 #  endif
     }
 
@@ -1234,80 +1234,80 @@ ATFRAMEWORK_UTILS_API int cipher::decrypt(const unsigned char *input, size_t ile
       if ((last_errorno_ = crypto_stream_chacha20_xor_ic(output, input, ilen, &iv_[LIBSODIUM_COUNTER_SIZE],
                                                          static_cast<uint64_t>(libsodium_get_counter(&iv_[0])),
                                                          libsodium_context_.key)) != 0) {
-        return error_code_t::LIBSODIUM_OPERATION;
+        return static_cast<int>(error_code_t::kLibsodiumOperation);
       }
       *olen = ilen;
       if (iv_is_set_) {
         details::roll_iv_after_success(iv_roll_policy_, iv_, false, input, ilen, output, ilen, get_block_size());
       }
-      return error_code_t::OK;
+      return static_cast<int>(error_code_t::kOk);
     case EN_CIMT_LIBSODIUM_CHACHA20_IETF:
       if ((last_errorno_ = crypto_stream_chacha20_ietf_xor_ic(output, input, ilen, &iv_[LIBSODIUM_COUNTER_SIZE],
                                                               static_cast<uint32_t>(libsodium_get_counter(&iv_[0])),
                                                               libsodium_context_.key)) != 0) {
-        return error_code_t::LIBSODIUM_OPERATION;
+        return static_cast<int>(error_code_t::kLibsodiumOperation);
       }
       *olen = ilen;
       if (iv_is_set_) {
         details::roll_iv_after_success(iv_roll_policy_, iv_, false, input, ilen, output, ilen, get_block_size());
       }
-      return error_code_t::OK;
+      return static_cast<int>(error_code_t::kOk);
 
 #    ifdef crypto_stream_xchacha20_KEYBYTES
       if ((last_errorno_ = crypto_stream_xchacha20_xor_ic(output, input, ilen, &iv_[LIBSODIUM_COUNTER_SIZE],
                                                           static_cast<uint64_t>(libsodium_get_counter(&iv_[0])),
                                                           libsodium_context_.key)) != 0) {
-        return error_code_t::LIBSODIUM_OPERATION;
+        return static_cast<int>(error_code_t::kLibsodiumOperation);
       }
       *olen = ilen;
       if (iv_is_set_) {
         details::roll_iv_after_success(iv_roll_policy_, iv_, false, input, ilen, output, ilen, get_block_size());
       }
-      return error_code_t::OK;
+      return static_cast<int>(error_code_t::kOk);
 #    endif
 
     case EN_CIMT_LIBSODIUM_SALSA20:
       if ((last_errorno_ = crypto_stream_salsa20_xor_ic(output, input, ilen, &iv_[LIBSODIUM_COUNTER_SIZE],
                                                         static_cast<uint64_t>(libsodium_get_counter(&iv_[0])),
                                                         libsodium_context_.key)) != 0) {
-        return error_code_t::LIBSODIUM_OPERATION;
+        return static_cast<int>(error_code_t::kLibsodiumOperation);
       }
       *olen = ilen;
       if (iv_is_set_) {
         details::roll_iv_after_success(iv_roll_policy_, iv_, false, input, ilen, output, ilen, get_block_size());
       }
-      return error_code_t::OK;
+      return static_cast<int>(error_code_t::kOk);
     case EN_CIMT_LIBSODIUM_XSALSA20:
       if ((last_errorno_ = crypto_stream_xsalsa20_xor_ic(output, input, ilen, &iv_[LIBSODIUM_COUNTER_SIZE],
                                                          static_cast<uint64_t>(libsodium_get_counter(&iv_[0])),
                                                          libsodium_context_.key)) != 0) {
-        return error_code_t::LIBSODIUM_OPERATION;
+        return static_cast<int>(error_code_t::kLibsodiumOperation);
       }
       *olen = ilen;
       if (iv_is_set_) {
         details::roll_iv_after_success(iv_roll_policy_, iv_, false, input, ilen, output, ilen, get_block_size());
       }
-      return error_code_t::OK;
+      return static_cast<int>(error_code_t::kOk);
 #  endif
 
     default:
-      return details::setup_errorno(*this, -1, error_code_t::NOT_INITED);
+      return details::setup_errorno(*this, -1, error_code_t::kNotInited);
   }
 }
 
 ATFRAMEWORK_UTILS_API int cipher::encrypt_aead(const unsigned char *input, size_t ilen, unsigned char *output,
                                                size_t *olen, const unsigned char *ad, size_t ad_len) {
   if (nullptr == interface_ || interface_->method == EN_CIMT_INVALID) {
-    return details::setup_errorno(*this, 0, error_code_t::NOT_INITED);
+    return details::setup_errorno(*this, 0, error_code_t::kNotInited);
   }
 
   if (!is_aead()) {
-    return error_code_t::MUST_NOT_CALL_AEAD_API;
+    return static_cast<int>(error_code_t::kMustNotCallAeadApi);
   }
 
   if (input == nullptr || ilen <= 0 || output == nullptr || nullptr == olen || *olen <= 0 ||
       *olen < ilen + get_block_size() + tag_length_) {
-    return details::setup_errorno(*this, -1, error_code_t::INVALID_PARAM);
+    return details::setup_errorno(*this, -1, error_code_t::kInvalidParam);
   }
 
   if (interface_->method >= EN_CIMT_CIPHER && 0 == (interface_->flags & EN_CIFT_VARIABLE_IV_LEN) &&
@@ -1320,7 +1320,7 @@ ATFRAMEWORK_UTILS_API int cipher::encrypt_aead(const unsigned char *input, size_
   switch (interface_->method) {
     case EN_CIMT_CIPHER: {
       if (nullptr == cipher_context_.enc) {
-        return details::setup_errorno(*this, 0, error_code_t::CIPHER_DISABLED);
+        return details::setup_errorno(*this, 0, error_code_t::kCipherDisabled);
       }
 
 #  if defined(ATFRAMEWORK_UTILS_CRYPTO_USE_OPENSSL) || defined(ATFRAMEWORK_UTILS_CRYPTO_USE_LIBRESSL) || \
@@ -1331,27 +1331,27 @@ ATFRAMEWORK_UTILS_API int cipher::encrypt_aead(const unsigned char *input, size_
         if (0 != (interface_->flags & EN_CIFT_VARIABLE_IV_LEN)) {
           if (!EVP_CIPHER_CTX_ctrl(cipher_context_.enc, EVP_CTRL_AEAD_SET_IVLEN, static_cast<int>(iv_.size()), 0)) {
             return details::setup_errorno(*this, static_cast<int64_t>(ERR_peek_error()),
-                                          error_code_t::CIPHER_OPERATION_SET_IV);
+                                          error_code_t::kCipherOperationSetIv);
           }
         }
 
         if (!EVP_CipherInit_ex(cipher_context_.enc, nullptr, nullptr, nullptr, &iv_[0], -1)) {
           return details::setup_errorno(*this, static_cast<int64_t>(ERR_peek_error()),
-                                        error_code_t::CIPHER_OPERATION_SET_IV);
+                                        error_code_t::kCipherOperationSetIv);
         }
       }
 
       if (0 != (interface_->flags & EN_CIFT_AEAD_SET_LENGTH_BEFORE)) {
         int tmplen;
         if (!EVP_CipherUpdate(cipher_context_.enc, nullptr, &tmplen, nullptr, static_cast<int>(ilen))) {
-          return details::setup_errorno(*this, static_cast<int64_t>(ERR_peek_error()), error_code_t::CIPHER_OPERATION);
+          return details::setup_errorno(*this, static_cast<int64_t>(ERR_peek_error()), error_code_t::kCipherOperation);
         }
       }
 
       int chunklen = 0;
       if (nullptr != ad && ad_len > 0) {
         if (!EVP_CipherUpdate(cipher_context_.enc, nullptr, &chunklen, ad, static_cast<int>(ad_len))) {
-          return details::setup_errorno(*this, static_cast<int64_t>(ERR_peek_error()), error_code_t::CIPHER_OPERATION);
+          return details::setup_errorno(*this, static_cast<int64_t>(ERR_peek_error()), error_code_t::kCipherOperation);
         }
       }
 
@@ -1360,14 +1360,14 @@ ATFRAMEWORK_UTILS_API int cipher::encrypt_aead(const unsigned char *input, size_
       }
 
       if (!(EVP_CipherUpdate(cipher_context_.enc, output, &outl, input, static_cast<int>(ilen)))) {
-        return details::setup_errorno(*this, static_cast<int64_t>(ERR_peek_error()), error_code_t::CIPHER_OPERATION);
+        return details::setup_errorno(*this, static_cast<int64_t>(ERR_peek_error()), error_code_t::kCipherOperation);
       }
 
       if (0 != (interface_->flags & EN_CIFT_NO_FINISH)) {
         finish_olen = 0;
       } else {
         if (!(EVP_CipherFinal_ex(cipher_context_.enc, output + outl, &finish_olen))) {
-          return details::setup_errorno(*this, static_cast<int64_t>(ERR_peek_error()), error_code_t::CIPHER_OPERATION);
+          return details::setup_errorno(*this, static_cast<int64_t>(ERR_peek_error()), error_code_t::kCipherOperation);
         }
       }
 
@@ -1376,7 +1376,7 @@ ATFRAMEWORK_UTILS_API int cipher::encrypt_aead(const unsigned char *input, size_
       if (tag_length_ > 0) {
         if (!EVP_CIPHER_CTX_ctrl(cipher_context_.enc, EVP_CTRL_AEAD_GET_TAG, static_cast<int>(tag_length_),
                                  output + *olen)) {
-          return details::setup_errorno(*this, static_cast<int64_t>(ERR_peek_error()), error_code_t::CIPHER_OPERATION);
+          return details::setup_errorno(*this, static_cast<int64_t>(ERR_peek_error()), error_code_t::kCipherOperation);
         }
 
         *olen += tag_length_;
@@ -1385,14 +1385,14 @@ ATFRAMEWORK_UTILS_API int cipher::encrypt_aead(const unsigned char *input, size_
         details::roll_iv_after_success(iv_roll_policy_, iv_, true, input, ilen, output, *olen, get_block_size());
       }
 
-      return error_code_t::OK;
+      return static_cast<int>(error_code_t::kOk);
 
 #  elif defined(ATFRAMEWORK_UTILS_CRYPTO_USE_MBEDTLS)
       // if (0 != (interface_->flags & EN_CIFT_ENCRYPT_NO_PADDING) && MBEDTLS_MODE_CBC ==
       // cipher_context_.enc->cipher_info->mode)
       // {
       //     if ((last_errorno_ = mbedtls_cipher_set_padding_mode(cipher_context_.enc, MBEDTLS_PADDING_NONE)) != 0) {
-      //         return error_code_t::CIPHER_OPERATION;
+      //         return static_cast<int>(error_code_t::kCipherOperation);
       //     }
       // }
 
@@ -1407,7 +1407,7 @@ ATFRAMEWORK_UTILS_API int cipher::encrypt_aead(const unsigned char *input, size_
                                            ad_len, input, ilen, output, olen, output + ilen, tag_len)
 #    endif
                ) != 0) {  // NOLINT: whitespace/parens
-        return error_code_t::CIPHER_OPERATION;
+        return static_cast<int>(error_code_t::kCipherOperation);
       }
 #    if MBEDTLS_VERSION_MAJOR < 3
       *olen += tag_len;
@@ -1415,7 +1415,7 @@ ATFRAMEWORK_UTILS_API int cipher::encrypt_aead(const unsigned char *input, size_
       if (iv_is_set_) {
         details::roll_iv_after_success(iv_roll_policy_, iv_, true, input, ilen, output, *olen, get_block_size());
       }
-      return error_code_t::OK;
+      return static_cast<int>(error_code_t::kOk);
 #  endif
     }
 
@@ -1424,81 +1424,81 @@ ATFRAMEWORK_UTILS_API int cipher::encrypt_aead(const unsigned char *input, size_
     case EN_CIMT_LIBSODIUM_CHACHA20_POLY1305: {
       const size_t tag_len = static_cast<size_t>(tag_length_);
       if (crypto_aead_chacha20poly1305_ABYTES > tag_len) {
-        return error_code_t::LIBSODIUM_OPERATION_TAG_LEN;
+        return static_cast<int>(error_code_t::kLibsodiumOperationTagLen);
       }
 
       unsigned long long maclen = tag_len;  // NOLINT: runtime/int
       if ((last_errorno_ = crypto_aead_chacha20poly1305_encrypt_detached(
                output, output + ilen, &maclen, input, ilen, ad, ad_len, nullptr, &iv_[0], libsodium_context_.key)) !=
           0) {
-        return error_code_t::LIBSODIUM_OPERATION;
+        return static_cast<int>(error_code_t::kLibsodiumOperation);
       }
       *olen = ilen + tag_len;
       if (iv_is_set_) {
         details::roll_iv_after_success(iv_roll_policy_, iv_, true, input, ilen, output, *olen, get_block_size());
       }
-      return error_code_t::OK;
+      return static_cast<int>(error_code_t::kOk);
     }
     case EN_CIMT_LIBSODIUM_CHACHA20_POLY1305_IETF: {
       const size_t tag_len = static_cast<size_t>(tag_length_);
       if (crypto_aead_chacha20poly1305_IETF_ABYTES > tag_len) {
-        return error_code_t::LIBSODIUM_OPERATION_TAG_LEN;
+        return static_cast<int>(error_code_t::kLibsodiumOperationTagLen);
       }
 
       unsigned long long maclen = tag_len;  // NOLINT: runtime/int
       if ((last_errorno_ = crypto_aead_chacha20poly1305_ietf_encrypt_detached(
                output, output + ilen, &maclen, input, ilen, ad, ad_len, nullptr, &iv_[0], libsodium_context_.key)) !=
           0) {
-        return error_code_t::LIBSODIUM_OPERATION;
+        return static_cast<int>(error_code_t::kLibsodiumOperation);
       }
       *olen = ilen + tag_len;
       if (iv_is_set_) {
         details::roll_iv_after_success(iv_roll_policy_, iv_, true, input, ilen, output, *olen, get_block_size());
       }
-      return error_code_t::OK;
+      return static_cast<int>(error_code_t::kOk);
     }
 
 #    ifdef crypto_aead_xchacha20poly1305_ietf_KEYBYTES
     case EN_CIMT_LIBSODIUM_XCHACHA20_POLY1305_IETF: {
       const size_t tag_len = static_cast<size_t>(tag_length_);
       if (crypto_aead_xchacha20poly1305_ietf_ABYTES > tag_len) {
-        return error_code_t::LIBSODIUM_OPERATION_TAG_LEN;
+        return static_cast<int>(error_code_t::kLibsodiumOperationTagLen);
       }
 
       unsigned long long maclen = tag_len;  // NOLINT: runtime/int
       if ((last_errorno_ = crypto_aead_xchacha20poly1305_ietf_encrypt_detached(
                output, output + ilen, &maclen, input, ilen, ad, ad_len, nullptr, &iv_[0], libsodium_context_.key)) !=
           0) {
-        return error_code_t::LIBSODIUM_OPERATION;
+        return static_cast<int>(error_code_t::kLibsodiumOperation);
       }
       *olen = ilen + tag_len;
       if (iv_is_set_) {
         details::roll_iv_after_success(iv_roll_policy_, iv_, true, input, ilen, output, *olen, get_block_size());
       }
-      return error_code_t::OK;
+      return static_cast<int>(error_code_t::kOk);
     }
 #    endif
 
 #  endif
 
     default:
-      return details::setup_errorno(*this, -1, error_code_t::NOT_INITED);
+      return details::setup_errorno(*this, -1, error_code_t::kNotInited);
   }
 }
 
 ATFRAMEWORK_UTILS_API int cipher::decrypt_aead(const unsigned char *input, size_t ilen, unsigned char *output,
                                                size_t *olen, const unsigned char *ad, size_t ad_len) {
   if (nullptr == interface_ || interface_->method == EN_CIMT_INVALID) {
-    return details::setup_errorno(*this, 0, error_code_t::NOT_INITED);
+    return details::setup_errorno(*this, 0, error_code_t::kNotInited);
   }
 
   if (!is_aead()) {
-    return error_code_t::MUST_NOT_CALL_AEAD_API;
+    return static_cast<int>(error_code_t::kMustNotCallAeadApi);
   }
 
   if (input == nullptr || ilen <= 0 || ilen <= tag_length_ || output == nullptr || nullptr == olen || *olen <= 0 ||
       *olen < ilen - tag_length_ + get_block_size()) {
-    return details::setup_errorno(*this, -1, error_code_t::INVALID_PARAM);
+    return details::setup_errorno(*this, -1, error_code_t::kInvalidParam);
   }
 
   if (interface_->method >= EN_CIMT_CIPHER && 0 == (interface_->flags & EN_CIFT_VARIABLE_IV_LEN) &&
@@ -1510,10 +1510,10 @@ ATFRAMEWORK_UTILS_API int cipher::decrypt_aead(const unsigned char *input, size_
 
   switch (interface_->method) {
     case EN_CIMT_INVALID:
-      return details::setup_errorno(*this, -1, error_code_t::NOT_INITED);
+      return details::setup_errorno(*this, -1, error_code_t::kNotInited);
     case EN_CIMT_CIPHER: {
       if (nullptr == cipher_context_.dec) {
-        return details::setup_errorno(*this, 0, error_code_t::CIPHER_DISABLED);
+        return details::setup_errorno(*this, 0, error_code_t::kCipherDisabled);
       }
 
 #  if defined(ATFRAMEWORK_UTILS_CRYPTO_USE_OPENSSL) || defined(ATFRAMEWORK_UTILS_CRYPTO_USE_LIBRESSL) || \
@@ -1524,34 +1524,34 @@ ATFRAMEWORK_UTILS_API int cipher::decrypt_aead(const unsigned char *input, size_
         if (0 != (interface_->flags & EN_CIFT_VARIABLE_IV_LEN)) {
           if (!EVP_CIPHER_CTX_ctrl(cipher_context_.dec, EVP_CTRL_AEAD_SET_IVLEN, static_cast<int>(iv_.size()), 0)) {
             return details::setup_errorno(*this, static_cast<int64_t>(ERR_peek_error()),
-                                          error_code_t::CIPHER_OPERATION_SET_IV);
+                                          error_code_t::kCipherOperationSetIv);
           }
         }
 
         if (!EVP_CipherInit_ex(cipher_context_.dec, nullptr, nullptr, nullptr, &iv_[0], -1)) {
           return details::setup_errorno(*this, static_cast<int64_t>(ERR_peek_error()),
-                                        error_code_t::CIPHER_OPERATION_SET_IV);
+                                        error_code_t::kCipherOperationSetIv);
         }
       }
 
       if (tag_length_ > 0) {
         if (!(EVP_CIPHER_CTX_ctrl(cipher_context_.dec, EVP_CTRL_AEAD_SET_TAG, static_cast<int>(tag_length_),
                                   const_cast<unsigned char *>(input) + ilen - tag_length_))) {
-          return details::setup_errorno(*this, static_cast<int64_t>(ERR_peek_error()), error_code_t::CIPHER_OPERATION);
+          return details::setup_errorno(*this, static_cast<int64_t>(ERR_peek_error()), error_code_t::kCipherOperation);
         }
       }
 
       if (0 != (interface_->flags & EN_CIFT_AEAD_SET_LENGTH_BEFORE)) {
         int tmplen;
         if (!EVP_CipherUpdate(cipher_context_.dec, nullptr, &tmplen, nullptr, static_cast<int>(ilen - tag_length_))) {
-          return details::setup_errorno(*this, static_cast<int64_t>(ERR_peek_error()), error_code_t::CIPHER_OPERATION);
+          return details::setup_errorno(*this, static_cast<int64_t>(ERR_peek_error()), error_code_t::kCipherOperation);
         }
       }
 
       int chunklen = 0;
       if (nullptr != ad && ad_len > 0) {
         if (!EVP_CipherUpdate(cipher_context_.dec, nullptr, &chunklen, ad, static_cast<int>(ad_len))) {
-          return details::setup_errorno(*this, static_cast<int64_t>(ERR_peek_error()), error_code_t::CIPHER_OPERATION);
+          return details::setup_errorno(*this, static_cast<int64_t>(ERR_peek_error()), error_code_t::kCipherOperation);
         }
       }
 
@@ -1560,14 +1560,14 @@ ATFRAMEWORK_UTILS_API int cipher::decrypt_aead(const unsigned char *input, size_
       }
 
       if (!(EVP_CipherUpdate(cipher_context_.dec, output, &outl, input, static_cast<int>(ilen - tag_length_)))) {
-        return details::setup_errorno(*this, static_cast<int64_t>(ERR_peek_error()), error_code_t::CIPHER_OPERATION);
+        return details::setup_errorno(*this, static_cast<int64_t>(ERR_peek_error()), error_code_t::kCipherOperation);
       }
 
       if (0 != (interface_->flags & EN_CIFT_NO_FINISH)) {
         finish_olen = 0;
       } else {
         if (!(EVP_CipherFinal_ex(cipher_context_.dec, output + outl, &finish_olen))) {
-          return details::setup_errorno(*this, static_cast<int64_t>(ERR_peek_error()), error_code_t::CIPHER_OPERATION);
+          return details::setup_errorno(*this, static_cast<int64_t>(ERR_peek_error()), error_code_t::kCipherOperation);
         }
       }
 
@@ -1576,13 +1576,13 @@ ATFRAMEWORK_UTILS_API int cipher::decrypt_aead(const unsigned char *input, size_
         details::roll_iv_after_success(iv_roll_policy_, iv_, false, input, ilen, output, *olen, get_block_size());
       }
 
-      return error_code_t::OK;
+      return static_cast<int>(error_code_t::kOk);
 #  elif defined(ATFRAMEWORK_UTILS_CRYPTO_USE_MBEDTLS)
       // if (0 != (interface_->flags & EN_CIFT_DECRYPT_NO_PADDING) && MBEDTLS_MODE_CBC ==
       // cipher_context_.dec->cipher_info->mode)
       // {
       //     if ((last_errorno_ = mbedtls_cipher_set_padding_mode(cipher_context_.dec, MBEDTLS_PADDING_NONE)) != 0) {
-      //         return error_code_t::CIPHER_OPERATION;
+      //         return static_cast<int>(error_code_t::kCipherOperation);
       //     }
       // }
 
@@ -1597,13 +1597,13 @@ ATFRAMEWORK_UTILS_API int cipher::decrypt_aead(const unsigned char *input, size_
                                            ad_len, input, ilen, output, olen, input + ilen - tag_len, tag_len)
 #    endif
                ) != 0) {  // NOLINT: whitespace/parens
-        return error_code_t::CIPHER_OPERATION;
+        return static_cast<int>(error_code_t::kCipherOperation);
       }
       if (iv_is_set_) {
         details::roll_iv_after_success(iv_roll_policy_, iv_, false, input, ilen, output, *olen, get_block_size());
       }
 
-      return error_code_t::OK;
+      return static_cast<int>(error_code_t::kOk);
 #  endif
     }
 
@@ -1612,61 +1612,61 @@ ATFRAMEWORK_UTILS_API int cipher::decrypt_aead(const unsigned char *input, size_
     case EN_CIMT_LIBSODIUM_CHACHA20_POLY1305: {
       const size_t tag_len = static_cast<size_t>(tag_length_);
       if (crypto_aead_chacha20poly1305_ABYTES > tag_len) {
-        return error_code_t::LIBSODIUM_OPERATION_TAG_LEN;
+        return static_cast<int>(error_code_t::kLibsodiumOperationTagLen);
       }
 
       if ((last_errorno_ = crypto_aead_chacha20poly1305_decrypt_detached(output, nullptr, input, ilen - tag_len,
                                                                          input + ilen - tag_len, ad, ad_len, &iv_[0],
                                                                          libsodium_context_.key)) != 0) {
-        return error_code_t::LIBSODIUM_OPERATION;
+        return static_cast<int>(error_code_t::kLibsodiumOperation);
       }
       *olen = ilen - tag_len;
       if (iv_is_set_) {
         details::roll_iv_after_success(iv_roll_policy_, iv_, false, input, ilen, output, *olen, get_block_size());
       }
-      return error_code_t::OK;
+      return static_cast<int>(error_code_t::kOk);
     }
     case EN_CIMT_LIBSODIUM_CHACHA20_POLY1305_IETF: {
       const size_t tag_len = static_cast<size_t>(tag_length_);
       if (crypto_aead_chacha20poly1305_IETF_ABYTES > tag_len) {
-        return error_code_t::LIBSODIUM_OPERATION_TAG_LEN;
+        return static_cast<int>(error_code_t::kLibsodiumOperationTagLen);
       }
 
       if ((last_errorno_ = crypto_aead_chacha20poly1305_ietf_decrypt_detached(output, nullptr, input, ilen - tag_len,
                                                                               input + ilen - tag_len, ad, ad_len,
                                                                               &iv_[0], libsodium_context_.key)) != 0) {
-        return error_code_t::LIBSODIUM_OPERATION;
+        return static_cast<int>(error_code_t::kLibsodiumOperation);
       }
       *olen = ilen - tag_len;
       if (iv_is_set_) {
         details::roll_iv_after_success(iv_roll_policy_, iv_, false, input, ilen, output, *olen, get_block_size());
       }
-      return error_code_t::OK;
+      return static_cast<int>(error_code_t::kOk);
     }
 
 #    ifdef crypto_aead_xchacha20poly1305_ietf_KEYBYTES
     case EN_CIMT_LIBSODIUM_XCHACHA20_POLY1305_IETF: {
       const size_t tag_len = static_cast<size_t>(tag_length_);
       if (crypto_aead_xchacha20poly1305_ietf_ABYTES > tag_len) {
-        return error_code_t::LIBSODIUM_OPERATION_TAG_LEN;
+        return static_cast<int>(error_code_t::kLibsodiumOperationTagLen);
       }
 
       if ((last_errorno_ = crypto_aead_xchacha20poly1305_ietf_decrypt_detached(output, nullptr, input, ilen - tag_len,
                                                                                input + ilen - tag_len, ad, ad_len,
                                                                                &iv_[0], libsodium_context_.key)) != 0) {
-        return error_code_t::LIBSODIUM_OPERATION;
+        return static_cast<int>(error_code_t::kLibsodiumOperation);
       }
       *olen = ilen - tag_len;
       if (iv_is_set_) {
         details::roll_iv_after_success(iv_roll_policy_, iv_, false, input, ilen, output, *olen, get_block_size());
       }
-      return error_code_t::OK;
+      return static_cast<int>(error_code_t::kOk);
     }
 #    endif
 
 #  endif
     default:
-      return details::setup_errorno(*this, -1, error_code_t::NOT_INITED);
+      return details::setup_errorno(*this, -1, error_code_t::kNotInited);
   }
 }
 

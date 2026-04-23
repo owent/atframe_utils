@@ -128,8 +128,8 @@ CASE_TEST(crypto_cipher, aes_cfb) {
     int v = i & 1;
 
     atfw::util::crypto::cipher ci;
-    int mode = (0 == v) ? (atfw::util::crypto::cipher::mode_t::EN_CMODE_DECRYPT)
-                        : (atfw::util::crypto::cipher::mode_t::EN_CMODE_ENCRYPT);
+    int32_t mode = (0 == v) ? static_cast<int32_t>(atfw::util::crypto::cipher::mode_t::kDecrypt)
+                            : static_cast<int32_t>(atfw::util::crypto::cipher::mode_t::kEncrypt);
     if (0 == u) {
       CASE_EXPECT_EQ(0, ci.init("AES-128-CFB", mode));
     } else if (1 == u) {
@@ -145,7 +145,7 @@ CASE_TEST(crypto_cipher, aes_cfb) {
 
     unsigned char buf_in[64], buf_out[128];
     size_t olen = sizeof(buf_out);
-    if (atfw::util::crypto::cipher::mode_t::EN_CMODE_DECRYPT == mode) {
+    if (atfw::util::crypto::cipher::mode_t::kDecrypt == mode) {
       memcpy(buf_in, aes_test_cfb128_ct[u], 64);
       CASE_EXPECT_EQ(0, ci.decrypt(buf_in, 64, buf_out, &olen));
 
@@ -185,7 +185,7 @@ CASE_TEST(crypto_cipher, aes_cfb_nopadding_encrypt) {
 
   {
     atfw::util::crypto::cipher ci;
-    CASE_EXPECT_EQ(0, ci.init("AES-256-CFB", atfw::util::crypto::cipher::mode_t::EN_CMODE_ENCRYPT));
+    CASE_EXPECT_EQ(0, ci.init("AES-256-CFB", static_cast<int32_t>(atfw::util::crypto::cipher::mode_t::kEncrypt)));
 
     // CASE_EXPECT_EQ(16, ci.get_iv_size());
     // CASE_EXPECT_EQ(0, ci.set_iv(aes_test_cfb128_iv, 16));
@@ -210,7 +210,7 @@ CASE_TEST(crypto_cipher, aes_cfb_nopadding_encrypt) {
 
   {
     atfw::util::crypto::cipher ci;
-    CASE_EXPECT_EQ(0, ci.init("AES-256-CFB", atfw::util::crypto::cipher::mode_t::EN_CMODE_DECRYPT));
+    CASE_EXPECT_EQ(0, ci.init("AES-256-CFB", static_cast<int32_t>(atfw::util::crypto::cipher::mode_t::kDecrypt)));
 
     // CASE_EXPECT_EQ(16, ci.get_iv_size());
     // CASE_EXPECT_EQ(0, ci.set_iv(aes_test_cfb128_iv, 16));
@@ -544,12 +544,11 @@ CASE_TEST(crypto_cipher, evp_test) {
   evp_test_info info;
 
   while (evp_test_parse_info(fin, info)) {
-    int mode =
-        atfw::util::crypto::cipher::mode_t::EN_CMODE_ENCRYPT | atfw::util::crypto::cipher::mode_t::EN_CMODE_DECRYPT;
+    int32_t mode = atfw::util::crypto::cipher::mode_t::kEncrypt | atfw::util::crypto::cipher::mode_t::kDecrypt;
     if (info.operation == EN_ETOT_ENCRYPT) {
-      mode = atfw::util::crypto::cipher::mode_t::EN_CMODE_ENCRYPT;
+      mode = static_cast<int32_t>(atfw::util::crypto::cipher::mode_t::kEncrypt);
     } else if (info.operation == EN_ETOT_DECRYPT) {
-      mode = atfw::util::crypto::cipher::mode_t::EN_CMODE_DECRYPT;
+      mode = static_cast<int32_t>(atfw::util::crypto::cipher::mode_t::kDecrypt);
     }
 
 #  if defined(ATFRAMEWORK_UTILS_CRYPTO_USE_MBEDTLS)
@@ -576,7 +575,7 @@ CASE_TEST(crypto_cipher, evp_test) {
     buffer.resize((info.plaintext.size() > info.ciphertext.size() ? info.plaintext.size() : info.ciphertext.size()) +
                   ci.get_block_size() + 16);
 
-    if (mode & atfw::util::crypto::cipher::mode_t::EN_CMODE_ENCRYPT) {
+    if (mode & atfw::util::crypto::cipher::mode_t::kEncrypt) {
       std::chrono::system_clock::time_point begin = std::chrono::system_clock::now();
       int enc_res = 0;
       const char *failed_step = "memory check";
@@ -672,7 +671,7 @@ CASE_TEST(crypto_cipher, evp_test) {
       }
     }
 
-    if (mode & atfw::util::crypto::cipher::mode_t::EN_CMODE_DECRYPT) {
+    if (mode & atfw::util::crypto::cipher::mode_t::kDecrypt) {
       std::chrono::system_clock::time_point begin = std::chrono::system_clock::now();
       int dec_res = 0;
       const char *failed_step = "memory check";
@@ -763,4 +762,3 @@ CASE_TEST(crypto_cipher, evp_test) {
 }
 
 #endif
-
