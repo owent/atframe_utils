@@ -1316,7 +1316,7 @@ ATFRAMEWORK_UTILS_API dh::error_code_t dh::shared_context::random(void *output, 
     ret = error_code_t::kOperation;
   }
 
-#  elif defined(LIBATFRAME_ATGATEWAY_ENABLE_MBEDTLS)
+#  elif defined(ATFRAMEWORK_UTILS_CRYPTO_USE_MBEDTLS)
   if (0 != mbedtls_ctr_drbg_random(&random_engine_->ctr_drbg, reinterpret_cast<unsigned char *>(output), output_sz)) {
     ret = error_code_t::kOperation;
   }
