@@ -79,6 +79,12 @@
 
 #  endif  // OpenSSL/LibreSSL/BoringSSL
 
+#  if defined(ATFRAMEWORK_UTILS_CRYPTO_USE_MBEDTLS)
+#    include <mbedtls/hkdf.h>
+#    include <mbedtls/md.h>
+#    include <mbedtls/platform.h>
+#  endif
+
 #  if defined(ATFRAMEWORK_UTILS_CRYPTO_USE_LIBRESSL) || defined(ATFRAMEWORK_UTILS_CRYPTO_USE_BORINGSSL)
 #    define ATFRAMEWORK_UTILS_CRYPTO_IGNORE_VERSION_WARNINGS 1
 #  endif
@@ -263,10 +269,6 @@ static void free_hmac_context(void* ctx) {
 #    endif  // ATFW_CRYPTO_HMAC_USE_EVP_MAC
 
 #  elif defined(ATFRAMEWORK_UTILS_CRYPTO_USE_MBEDTLS)
-
-#    include <mbedtls/hkdf.h>
-#    include <mbedtls/md.h>
-#    include <mbedtls/platform.h>
 
 static const mbedtls_md_info_t* get_md_info_by_type(digest_type_t type) noexcept {
   switch (type) {
