@@ -1,6 +1,6 @@
+# atframe_utils Claude Notes
+
+This file is a compatibility bridge. Keep shared guidance in `AGENTS.md`; keep repeatable workflows in `.agents/skills/`.
+
 @AGENTS.md
-
-## Detailed How-to Guides
-
-- Build: @.agents/skills/build/SKILL.md
-- Testing: @.agents/skills/testing/SKILL.md
+@.agents/skills/README.md

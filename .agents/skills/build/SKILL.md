@@ -1,6 +1,6 @@
 ---
 name: build
-description: Configure and build atframe_utils with CMake, including key options for samples, tests, tools, and crypto backends.
+description: "Use when: configuring or building atframe_utils with CMake, enabling samples/tests/tools, or selecting crypto/unwind backends."
 ---
 
 # Build (atframe_utils)

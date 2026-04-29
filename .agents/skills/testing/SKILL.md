@@ -1,6 +1,6 @@
 ---
 name: testing
-description: Run and write unit tests for atframe_utils using the private test framework, including Windows DLL/PATH setup.
+description: "Use when: running or writing atframe_utils unit tests with the private test framework, filtering cases, or fixing Windows DLL/PATH test startup issues."
 ---
 
 # Unit testing (atframe_utils)
