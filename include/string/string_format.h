@@ -440,6 +440,17 @@ struct fmtapi_char_type_from_output_iterator<std::back_insert_iterator<Container
   using value_type = typename Container::value_type;
 };
 
+#if defined(ATFRAMEWORK_UTILS_ENABLE_STD_FORMAT) && ATFRAMEWORK_UTILS_ENABLE_STD_FORMAT
+template <>
+struct fmtapi_char_type_from_output_iterator<std::format_context::iterator> {
+  using value_type = char;
+};
+template <>
+struct fmtapi_char_type_from_output_iterator<std::wformat_context::iterator> {
+  using value_type = wchar_t;
+};
+#endif
+
 template <class OutputIteratorType>
 struct fmtapi_char_type_from_output_iterator {
   using value_type = typename std::iterator_traits<OutputIteratorType>::value_type;
@@ -834,4 +845,3 @@ formatter<ATFRAMEWORK_UTILS_NAMESPACE_ID::nostd::basic_string_view<CharT, Traits
 ATFRAMEWORK_UTILS_STRING_FWAPI_NAMESPACE_END
 
 #endif
-
