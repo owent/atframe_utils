@@ -488,7 +488,11 @@ static size_t EC_POINT_point2buf(const EC_GROUP *group, const EC_POINT *point, p
   len = EC_POINT_point2oct(group, point, form, nullptr, 0, nullptr);
   if (len == 0) return 0;
   if ((buf = (unsigned char *)OPENSSL_malloc(len)) == nullptr) {
+#      ifdef ECerr
     ECerr(281 /*EC_F_EC_POINT_POINT2BUF*/, ERR_R_MALLOC_FAILURE);
+#      elif defined(ERR_LIB_EC)
+    ERR_put_error(ERR_LIB_EC, 281 /*EC_F_EC_POINT_POINT2BUF*/, ERR_R_MALLOC_FAILURE, __FILE__, __LINE__);
+#      endif
     return 0;
   }
   len = EC_POINT_point2oct(group, point, form, buf, len, ctx);
