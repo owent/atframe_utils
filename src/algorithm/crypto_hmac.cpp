@@ -2,6 +2,10 @@
 //
 // Created by owent on 2024.12.26
 
+// Crypto backend headers/functions are selected through feature macros, so include-cleaner and concise-preprocessor
+// checks produce noisy false positives in this compatibility-heavy file.
+// NOLINTBEGIN(misc-include-cleaner,readability-use-concise-preprocessor-directives)
+
 #include "algorithm/crypto_hmac.h"
 
 #ifdef ATFW_UTIL_MACRO_CRYPTO_HMAC_ENABLED
@@ -9,6 +13,7 @@
 #  include <common/string_oprs.h>
 
 #  include <cstring>
+#  include <string>
 
 /**
  * @note OpenSSL version compatibility notes:
@@ -108,6 +113,19 @@ namespace crypto {
 
 namespace details {
 
+namespace {
+
+static inline char* get_writable_string_data(std::string& value) noexcept {
+  if (value.empty()) {
+    return nullptr;
+  }
+#  if (defined(_MSVC_LANG) && _MSVC_LANG >= 201703L) || __cplusplus >= 201703L
+  return value.data();
+#  else
+  return &value[0];  // NOLINT(cppcoreguidelines-pro-bounds-constant-array-index,modernize-use-data)
+#  endif
+}
+
 #  if defined(ATFRAMEWORK_UTILS_CRYPTO_USE_OPENSSL) || defined(ATFRAMEWORK_UTILS_CRYPTO_USE_LIBRESSL) || \
       defined(ATFRAMEWORK_UTILS_CRYPTO_USE_BORINGSSL)
 
@@ -132,7 +150,7 @@ static const EVP_MD* get_evp_md_by_type(digest_type_t type) noexcept {
 
 #    if ATFW_CRYPTO_HMAC_USE_EVP_MAC
 
-struct hmac_evp_mac_context {
+struct ATFW_UTIL_SYMBOL_LOCAL hmac_evp_mac_context {
   EVP_MAC* mac;
   EVP_MAC_CTX* ctx;
   size_t output_length;
@@ -202,7 +220,7 @@ static void free_hmac_context(void* ctx) {
 
 #    else  // !ATFW_CRYPTO_HMAC_USE_EVP_MAC
 
-struct hmac_legacy_context {
+struct ATFW_UTIL_SYMBOL_LOCAL hmac_legacy_context {
 #      if ATFW_CRYPTO_HMAC_CTX_NEW
   HMAC_CTX* ctx;
 #      else
@@ -289,7 +307,7 @@ static const mbedtls_md_info_t* get_md_info_by_type(digest_type_t type) noexcept
   }
 }
 
-struct hmac_mbedtls_context {
+struct ATFW_UTIL_SYMBOL_LOCAL hmac_mbedtls_context {
   mbedtls_md_context_t ctx;
   bool initialized;
   size_t output_length;
@@ -340,6 +358,7 @@ static void free_hmac_context(void* ctx) {
 
 #  endif  // ATFRAMEWORK_UTILS_CRYPTO_USE_MBEDTLS
 
+}  // namespace
 }  // namespace details
 
 // ============================================================================
@@ -690,12 +709,12 @@ ATFRAMEWORK_UTILS_API std::vector<unsigned char> hmac::compute_to_binary(digest_
                                                                          size_t input_len) {
   size_t output_len = get_digest_output_length(type);
   if (output_len == 0) {
-    return std::vector<unsigned char>();
+    return {};
   }
 
   std::vector<unsigned char> result(output_len);
   if (compute(type, key, key_len, input, input_len, result.data(), &output_len) != hmac_error_code_t::kOk) {
-    return std::vector<unsigned char>();
+    return {};
   }
   result.resize(output_len);
   return result;
@@ -711,12 +730,13 @@ ATFRAMEWORK_UTILS_API std::string hmac::compute_to_hex(digest_type_t type, const
                                                        const unsigned char* input, size_t input_len, bool uppercase) {
   std::vector<unsigned char> binary = compute_to_binary(type, key, key_len, input, input_len);
   if (binary.empty()) {
-    return std::string();
+    return {};
   }
 
   std::string result;
   result.resize(binary.size() * 2);
-  ATFRAMEWORK_UTILS_NAMESPACE_ID::string::dumphex(binary.data(), binary.size(), &result[0], uppercase);
+  ATFRAMEWORK_UTILS_NAMESPACE_ID::string::dumphex(binary.data(), binary.size(),
+                                                  details::get_writable_string_data(result), uppercase);
   return result;
 }
 
@@ -1118,13 +1138,13 @@ ATFRAMEWORK_UTILS_API std::vector<unsigned char> hkdf::derive_to_binary(digest_t
                                                                         gsl::span<const unsigned char> info,
                                                                         size_t okm_len) {
   if (okm_len == 0) {
-    return std::vector<unsigned char>();
+    return {};
   }
 
   std::vector<unsigned char> result(okm_len);
   hkdf::error_code_t ret = derive(type, salt, ikm, info, result.data(), okm_len);
   if (ret != error_code_t::kOk) {
-    return std::vector<unsigned char>();
+    return {};
   }
   return result;
 }
@@ -1147,3 +1167,5 @@ ATFRAMEWORK_UTILS_NAMESPACE_END
 #  endif
 
 #endif  // ATFW_UTIL_MACRO_CRYPTO_HMAC_ENABLED
+
+// NOLINTEND(misc-include-cleaner,readability-use-concise-preprocessor-directives)

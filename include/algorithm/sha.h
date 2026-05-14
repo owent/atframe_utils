@@ -58,12 +58,12 @@ class sha {
   ATFRAMEWORK_UTILS_API sha();
   ATFRAMEWORK_UTILS_API ~sha();
 
-  ATFRAMEWORK_UTILS_API sha(sha&&);
-  ATFRAMEWORK_UTILS_API sha& operator=(sha&&);
+  ATFRAMEWORK_UTILS_API sha(sha&&) noexcept;
+  ATFRAMEWORK_UTILS_API sha& operator=(sha&&) noexcept;
 
   ATFRAMEWORK_UTILS_API bool init(type);
   ATFRAMEWORK_UTILS_API void close();
-  ATFRAMEWORK_UTILS_API void swap(sha& other);
+  ATFRAMEWORK_UTILS_API void swap(sha& other) noexcept;
 
   ATFRAMEWORK_UTILS_API bool update(const unsigned char* in, size_t inlen);
   ATFRAMEWORK_UTILS_API bool final();
@@ -95,4 +95,3 @@ class sha {
 ATFRAMEWORK_UTILS_NAMESPACE_END
 
 #endif
-

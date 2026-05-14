@@ -2,11 +2,14 @@
 //
 // Created by owent on 2026.01.20
 
+// Compression backend headers are selected by project feature macros, which makes include-cleaner and concise
+// preprocessor checks noisy in this compatibility file.
+// NOLINTBEGIN(misc-include-cleaner,modernize-use-designated-initializers,readability-use-concise-preprocessor-directives)
+
 #include "algorithm/compression.h"
 
 #ifdef ATFW_UTIL_MACRO_COMPRESSION_ENABLED
 
-#  include <algorithm>
 #  include <cstring>
 #  include <limits>
 
@@ -32,8 +35,23 @@ namespace compression {
 
 namespace {
 
+template <class T>
+static constexpr T _numeric_limits_max() noexcept {
+  return (std::numeric_limits<T>::max)();  // NOLINT(readability-redundant-parentheses)
+}
+
+static bool _resize_output(std::vector<unsigned char>& output, size_t size) noexcept {
+  try {
+    output.resize(size);
+    return true;
+  } catch (...) {
+    output.clear();
+    return false;
+  }
+}
+
 static bool _size_to_int(size_t input, int& output) noexcept {
-  if (input > static_cast<size_t>((std::numeric_limits<int>::max)())) {
+  if (input > static_cast<size_t>(_numeric_limits_max<int>())) {
     return false;
   }
   output = static_cast<int>(input);
@@ -42,7 +60,7 @@ static bool _size_to_int(size_t input, int& output) noexcept {
 
 #  if defined(ATFW_UTIL_MACRO_COMPRESSION_ZLIB)
 static bool _size_to_ulongf(size_t input, uLongf& output) noexcept {
-  if (input > static_cast<size_t>((std::numeric_limits<uLongf>::max)())) {
+  if (input > static_cast<size_t>(_numeric_limits_max<uLongf>())) {
     return false;
   }
   output = static_cast<uLongf>(input);
@@ -161,14 +179,18 @@ static int _compress_internal(algorithm_t type, gsl::span<const unsigned char> i
       if (bound == 0) {
         return error_code_t::kOperation;
       }
-      output.resize(bound);
+      if (!_resize_output(output, bound)) {
+        return error_code_t::kOperation;
+      }
       int zstd_level = use_raw_level ? raw_level : _map_level_zstd(level);
       size_t ret = ZSTD_compress(output.data(), output.size(), input.data(), input.size(), zstd_level);
       if (ZSTD_isError(ret)) {
         output.clear();
         return error_code_t::kOperation;
       }
-      output.resize(ret);
+      if (!_resize_output(output, ret)) {
+        return error_code_t::kOperation;
+      }
       return error_code_t::kOk;
 #  else
       return error_code_t::kNotSupport;
@@ -186,7 +208,9 @@ static int _compress_internal(algorithm_t type, gsl::span<const unsigned char> i
       if (bound <= 0) {
         return error_code_t::kOperation;
       }
-      output.resize(static_cast<size_t>(bound));
+      if (!_resize_output(output, static_cast<size_t>(bound))) {
+        return error_code_t::kOperation;
+      }
 
       int result_size = 0;
       if (use_raw_level) {
@@ -222,7 +246,9 @@ static int _compress_internal(algorithm_t type, gsl::span<const unsigned char> i
         output.clear();
         return error_code_t::kOperation;
       }
-      output.resize(static_cast<size_t>(result_size));
+      if (!_resize_output(output, static_cast<size_t>(result_size))) {
+        return error_code_t::kOperation;
+      }
       return error_code_t::kOk;
 #  else
       return error_code_t::kNotSupport;
@@ -235,7 +261,9 @@ static int _compress_internal(algorithm_t type, gsl::span<const unsigned char> i
         return error_code_t::kNotSupport;
       }
       size_t max_len = snappy_max_compressed_length(input.size());
-      output.resize(max_len);
+      if (!_resize_output(output, max_len)) {
+        return error_code_t::kOperation;
+      }
       size_t output_len = max_len;
       snappy_status status = snappy_compress(reinterpret_cast<const char*>(input.data()), input.size(),
                                              reinterpret_cast<char*>(output.data()), &output_len);
@@ -243,7 +271,9 @@ static int _compress_internal(algorithm_t type, gsl::span<const unsigned char> i
         output.clear();
         return error_code_t::kOperation;
       }
-      output.resize(output_len);
+      if (!_resize_output(output, output_len)) {
+        return error_code_t::kOperation;
+      }
       return error_code_t::kOk;
 #  else
       return error_code_t::kNotSupport;
@@ -253,7 +283,7 @@ static int _compress_internal(algorithm_t type, gsl::span<const unsigned char> i
     case algorithm_t::kZlib: {
 #  if defined(ATFW_UTIL_MACRO_COMPRESSION_ZLIB)
       uLong input_size = 0;
-      if (input.size() > static_cast<size_t>((std::numeric_limits<uLong>::max)())) {
+      if (input.size() > static_cast<size_t>(_numeric_limits_max<uLong>())) {
         return error_code_t::kInvalidParam;
       }
       input_size = static_cast<uLong>(input.size());
@@ -261,7 +291,9 @@ static int _compress_internal(algorithm_t type, gsl::span<const unsigned char> i
       if (!_size_to_ulongf(static_cast<size_t>(compressBound(input_size)), dest_len)) {
         return error_code_t::kInvalidParam;
       }
-      output.resize(static_cast<size_t>(dest_len));
+      if (!_resize_output(output, static_cast<size_t>(dest_len))) {
+        return error_code_t::kOperation;
+      }
       int zlib_level = use_raw_level ? raw_level : _map_level_zlib(level);
       int zret = compress2(reinterpret_cast<Bytef*>(output.data()), &dest_len,
                            reinterpret_cast<const Bytef*>(input.data()), input_size, zlib_level);
@@ -269,7 +301,9 @@ static int _compress_internal(algorithm_t type, gsl::span<const unsigned char> i
         output.clear();
         return error_code_t::kOperation;
       }
-      output.resize(static_cast<size_t>(dest_len));
+      if (!_resize_output(output, static_cast<size_t>(dest_len))) {
+        return error_code_t::kOperation;
+      }
       return error_code_t::kOk;
 #  else
       return error_code_t::kNotSupport;
@@ -318,18 +352,23 @@ ATFRAMEWORK_UTILS_API bool is_algorithm_supported(algorithm_t type) noexcept {
 
 ATFRAMEWORK_UTILS_API std::vector<algorithm_t> get_supported_algorithms() noexcept {
   std::vector<algorithm_t> result;
+  try {
+    result.reserve(4);
 #  if defined(ATFW_UTIL_MACRO_COMPRESSION_ZSTD)
-  result.push_back(algorithm_t::kZstd);
+    result.push_back(algorithm_t::kZstd);
 #  endif
 #  if defined(ATFW_UTIL_MACRO_COMPRESSION_LZ4)
-  result.push_back(algorithm_t::kLz4);
+    result.push_back(algorithm_t::kLz4);
 #  endif
 #  if defined(ATFW_UTIL_MACRO_COMPRESSION_SNAPPY)
-  result.push_back(algorithm_t::kSnappy);
+    result.push_back(algorithm_t::kSnappy);
 #  endif
 #  if defined(ATFW_UTIL_MACRO_COMPRESSION_ZLIB)
-  result.push_back(algorithm_t::kZlib);
+    result.push_back(algorithm_t::kZlib);
 #  endif
+  } catch (...) {
+    result.clear();
+  }
   return result;
 }
 
@@ -394,13 +433,17 @@ ATFRAMEWORK_UTILS_API int decompress(algorithm_t type, gsl::span<const unsigned 
         }
         expect_size = static_cast<size_t>(frame_size);
       }
-      output.resize(expect_size);
+      if (!_resize_output(output, expect_size)) {
+        return error_code_t::kOperation;
+      }
       size_t ret = ZSTD_decompress(output.data(), output.size(), input.data(), input.size());
       if (ZSTD_isError(ret)) {
         output.clear();
         return error_code_t::kOperation;
       }
-      output.resize(ret);
+      if (!_resize_output(output, ret)) {
+        return error_code_t::kOperation;
+      }
       return error_code_t::kOk;
 #  else
       return error_code_t::kNotSupport;
@@ -419,7 +462,9 @@ ATFRAMEWORK_UTILS_API int decompress(algorithm_t type, gsl::span<const unsigned 
         return error_code_t::kInvalidParam;
       }
 
-      output.resize(original_size);
+      if (!_resize_output(output, original_size)) {
+        return error_code_t::kOperation;
+      }
       int ret = LZ4_decompress_safe(reinterpret_cast<const char*>(input.data()), reinterpret_cast<char*>(output.data()),
                                     input_size, output_size);
       if (ret < 0) {
@@ -445,14 +490,18 @@ ATFRAMEWORK_UTILS_API int decompress(algorithm_t type, gsl::span<const unsigned 
           return error_code_t::kInvalidParam;
         }
       }
-      output.resize(expect_size);
+      if (!_resize_output(output, expect_size)) {
+        return error_code_t::kOperation;
+      }
       snappy_status status = snappy_uncompress(reinterpret_cast<const char*>(input.data()), input.size(),
                                                reinterpret_cast<char*>(output.data()), &expect_size);
       if (status != SNAPPY_OK) {
         output.clear();
         return error_code_t::kOperation;
       }
-      output.resize(expect_size);
+      if (!_resize_output(output, expect_size)) {
+        return error_code_t::kOperation;
+      }
       return error_code_t::kOk;
 #  else
       return error_code_t::kNotSupport;
@@ -468,14 +517,18 @@ ATFRAMEWORK_UTILS_API int decompress(algorithm_t type, gsl::span<const unsigned 
       if (!_size_to_ulongf(original_size, dest_len)) {
         return error_code_t::kInvalidParam;
       }
-      output.resize(original_size);
+      if (!_resize_output(output, original_size)) {
+        return error_code_t::kOperation;
+      }
       int zret = uncompress(reinterpret_cast<Bytef*>(output.data()), &dest_len,
                             reinterpret_cast<const Bytef*>(input.data()), static_cast<uLong>(input.size()));
       if (zret != Z_OK) {
         output.clear();
         return error_code_t::kOperation;
       }
-      output.resize(static_cast<size_t>(dest_len));
+      if (!_resize_output(output, static_cast<size_t>(dest_len))) {
+        return error_code_t::kOperation;
+      }
       return error_code_t::kOk;
 #  else
       return error_code_t::kNotSupport;
@@ -493,3 +546,4 @@ ATFRAMEWORK_UTILS_NAMESPACE_END
 
 #endif  // ATFW_UTIL_MACRO_COMPRESSION_ENABLED
 
+// NOLINTEND(misc-include-cleaner,modernize-use-designated-initializers,readability-use-concise-preprocessor-directives)

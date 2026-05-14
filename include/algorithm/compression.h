@@ -36,7 +36,6 @@
 
 #  include <cstddef>
 #  include <cstdint>
-#  include <string>
 #  include <vector>
 
 ATFRAMEWORK_UTILS_NAMESPACE_BEGIN
@@ -149,4 +148,3 @@ ATFRAMEWORK_UTILS_NAMESPACE_END
 #endif  // ATFW_UTIL_MACRO_COMPRESSION_ENABLED
 
 #endif  // UTIL_ALGORITHM_COMPRESSION_H
-

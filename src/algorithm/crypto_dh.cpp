@@ -1,6 +1,9 @@
 // Copyright 2026 atframework
 //
 // Create by owent
+// Conditional crypto backend headers and project namespace/API macros make include-cleaner and concise-preprocessor
+// checks noisy in this compatibility-heavy file.
+// NOLINTBEGIN(misc-include-cleaner,readability-use-concise-preprocessor-directives)
 
 #include "algorithm/crypto_dh.h"
 
@@ -40,22 +43,13 @@
 #include <design_pattern/nomovable.h>
 #include <design_pattern/noncopyable.h>
 
-#include <assert.h>
+#include <cassert>
 #include <cstring>
-#include <iostream>
-
-#if defined(UTIL_CONFIG_COMPILER_CXX_STATIC_ASSERT) && UTIL_CONFIG_COMPILER_CXX_STATIC_ASSERT
-#  include <type_traits>
-#endif
 
 #ifdef CRYPTO_DH_ENABLED
 
 // define max key cache length, the same as MBEDTLS_SSL_MAX_CONTENT_LEN
 #  define CRYPTO_DH_MAX_KEY_LEN 1024
-
-#  ifndef UNUSED
-#    define UNUSED(x) ((void)x)
-#  endif
 
 #  if defined(ATFRAMEWORK_UTILS_CRYPTO_USE_OPENSSL) || defined(ATFRAMEWORK_UTILS_CRYPTO_USE_LIBRESSL) || \
       defined(ATFRAMEWORK_UTILS_CRYPTO_USE_BORINGSSL)
@@ -73,7 +67,9 @@
 
 // copy from ssl_locl.h
 #    ifndef s2n
-#      define s2n(s, c) ((c[0] = (unsigned char)(((s) >> 8) & 0xff), c[1] = (unsigned char)(((s)) & 0xff)), c += 2)
+#      define s2n(s, c)                                                                                             \
+        (((c)[0] = static_cast<unsigned char>(((s) >> 8) & 0xff), (c)[1] = static_cast<unsigned char>((s) & 0xff)), \
+         (c) += 2)
 #    endif
 
 // copy from ssl_locl.h
@@ -81,8 +77,12 @@
 #      define NAMED_CURVE_TYPE 3
 #    endif
 
+namespace {
 // copy from t1_lib.c of openssl 1.1.0
 struct tls_curve_info {
+  constexpr tls_curve_info(int curve_nid, int security_bits, unsigned int curve_flags) noexcept
+      : nid(curve_nid), secbits(security_bits), flags(curve_flags) {}
+
   int nid;            /* Curve NID */
   int secbits;        /* Bits of security (from SP800-57) */
   unsigned int flags; /* Flags: currently just field type */
@@ -350,22 +350,25 @@ static constexpr const tls_curve_info nid_list[] = {
         224, TLS_CURVE_CUSTOM}, /* X448 (30) */
 };
 
-#    define OSSL_NELEM(x) (sizeof(x) / sizeof(x[0]))
+#    define OSSL_NELEM(x) (sizeof(x) / sizeof((x)[0]))
 
 static int tls1_ec_group_id2nid(int group_id, unsigned int *pflags) {
-  const tls_curve_info *cinfo;
+  const tls_curve_info *cinfo = nullptr;
   /* ECC curves from RFC 4492 and RFC 7027 */
-  if ((group_id < 1) || ((unsigned int)group_id > OSSL_NELEM(nid_list))) return 0;
+  if ((group_id < 1) || (static_cast<size_t>(group_id) > OSSL_NELEM(nid_list))) {
+    return 0;
+  }
   cinfo = nid_list + group_id - 1;
-  if (pflags) *pflags = cinfo->flags;
+  if (pflags != nullptr) {
+    *pflags = cinfo->flags;
+  }
   return cinfo->nid;
 }
 
 static int tls1_nid2group_id(int nid) {
-  int i;
-  for (i = 0; i < static_cast<int>(OSSL_NELEM(nid_list)); i++) {
+  for (size_t i = 0; i < OSSL_NELEM(nid_list); ++i) {
     if (nid_list[i].nid == nid) {
-      return i + 1;
+      return static_cast<int>(i + 1);
     }
   }
   return 0;
@@ -598,6 +601,8 @@ static size_t crypto_dh_EVP_PKEY_set1_tls_encodedpoint(EVP_PKEY *pkey, const uns
   return static_cast<size_t>(EVP_PKEY_set1_tls_encodedpoint(pkey, pt, ptlen));
 #    endif
 }
+
+}  // namespace
 #  elif defined(ATFRAMEWORK_UTILS_CRYPTO_USE_MBEDTLS)
 
 #    include "mbedtls/ssl.h"
@@ -663,6 +668,7 @@ struct dh::shared_context::random_engine_t {
 #  endif
 
 namespace details {
+namespace {
 static inline dh::error_code_t setup_errorno(dh &ci, int err, dh::error_code_t ret) {
   ci.set_last_errno(err);
   return ret;
@@ -691,14 +697,14 @@ static constexpr const char *supported_dh_curves[][2] = {
 #    if !defined(ATFRAMEWORK_UTILS_CRYPTO_USE_BORINGSSL)
 // Just like PACKET_peek_net_2() but with raw pointer
 static inline void openssl_peek_net_2(const unsigned char *data, unsigned int &length) {
-  length = ((unsigned int)(*data)) << 8;
+  length = static_cast<unsigned int>(*data) << 8;
   length |= *(data + 1);
 }
 
 // Just like WPACKET_put_bytes__() but with raw pointer and without WPACKET_allocate_bytes
 static inline void openssl_set_net_2(unsigned char *data, unsigned int length) {
-  *data = (unsigned char)((length >> 8) & 0xff);
-  *(data + 1) = (unsigned char)(length & 0xff);
+  *data = static_cast<unsigned char>((length >> 8) & 0xff);
+  *(data + 1) = static_cast<unsigned char>(length & 0xff);
 }
 
 static inline BIGNUM *openssl_get_dh_point(const unsigned char *&input, size_t &left_size) {
@@ -706,7 +712,7 @@ static inline BIGNUM *openssl_get_dh_point(const unsigned char *&input, size_t &
     return nullptr;
   }
 
-  unsigned int point_size;
+  unsigned int point_size = 0;
   openssl_peek_net_2(input, point_size);
   if (left_size < point_size + 2) {
     return nullptr;
@@ -898,7 +904,7 @@ class openssl_raii {
 
   inline void reset() { ATFRAMEWORK_UTILS_NAMESPACE_ID::crypto::details::reset(data_); }
 
-  inline operator bool() const { return !!data_; }
+  inline operator bool() const { return data_ != nullptr; }
 
   inline const TPTR *operator->() const noexcept { return data_; }
   inline TPTR *operator->() noexcept { return data_; }
@@ -970,6 +976,7 @@ static EVP_PKEY_CTX *initialize_pkey_ctx_by_pkey(EVP_PKEY *params_key, bool init
   return ret;
 }
 #  endif
+}  // namespace
 }  // namespace details
 
 // =============== shared context ===============
@@ -1071,12 +1078,12 @@ ATFRAMEWORK_UTILS_API dh::error_code_t dh::shared_context::init(nostd::string_vi
 #    if defined(ATFRAMEWORK_UTILS_CRYPTO_USE_OPENSSL) || defined(ATFRAMEWORK_UTILS_CRYPTO_USE_LIBRESSL)
       do {
         dh_param_->param_buffer.resize(pem_sz);
-        if (pem_sz > 0 && 0 == fread(&dh_param_->param_buffer[0], sizeof(unsigned char), pem_sz, pem)) {
+        if (pem_sz > 0 && 0 == fread(dh_param_->param_buffer.data(), sizeof(unsigned char), pem_sz, pem)) {
           ret = error_code_t::kReadDhparamFile;
           break;
         }
         details::reset(dh_param_->param);
-        dh_param_->param = BIO_new_mem_buf(&dh_param_->param_buffer[0], static_cast<int>(pem_sz));
+        dh_param_->param = BIO_new_mem_buf(dh_param_->param_buffer.data(), static_cast<int>(pem_sz));
 
         details::openssl_raii<EVP_PKEY> params_key{EVP_PKEY_new()};
         if (nullptr == params_key.get()) {
@@ -1539,7 +1546,7 @@ ATFRAMEWORK_UTILS_API dh::error_code_t dh::init(shared_context::ptr_t shared_con
     return ret;
   }
 
-  shared_context_ = shared_context_ptr;
+  shared_context_ = std::move(shared_context_ptr);
   return details::setup_errorno(*this, 0, error_code_t::kOk);
 }
 
@@ -1680,7 +1687,7 @@ ATFRAMEWORK_UTILS_API dh::error_code_t dh::make_params(std::vector<unsigned char
         }
 
         param.resize(olen, 0);
-        unsigned char *p = &param[0];
+        unsigned char *p = param.data();
         for (int i = 0; i < 4 && r[i] != nullptr; i++) {
           details::openssl_put_dh_point(r[i], p, olen);
         }
@@ -1779,14 +1786,15 @@ ATFRAMEWORK_UTILS_API dh::error_code_t dh::make_params(std::vector<unsigned char
       //     }
       // }
       param.resize(encode_len + 4, 0);
-      memcpy(&param[4], point_data, encode_len);
+      unsigned char *param_data = param.data();
+      memcpy(param_data + 4, point_data, encode_len);
       OPENSSL_free(point_data);
 
       // Write data
-      param[0] = NAMED_CURVE_TYPE;
-      param[1] = static_cast<unsigned char>(group_id >> 8);
-      param[2] = static_cast<unsigned char>(group_id & 0xFF);
-      param[3] = static_cast<unsigned char>(encode_len);
+      param_data[0] = NAMED_CURVE_TYPE;
+      param_data[1] = static_cast<unsigned char>(group_id >> 8);
+      param_data[2] = static_cast<unsigned char>(group_id & 0xFF);
+      param_data[3] = static_cast<unsigned char>(encode_len);
 
 #  elif defined(ATFRAMEWORK_UTILS_CRYPTO_USE_MBEDTLS)
       unsigned char buf[CRYPTO_DH_MAX_KEY_LEN];
@@ -1977,7 +1985,7 @@ ATFRAMEWORK_UTILS_API dh::error_code_t dh::make_public(std::vector<unsigned char
       // @see https://www.openssl.org/docs/manmaster/crypto/BN_bn2bin.html
       size_t dhparam_bnsz = static_cast<size_t>(BN_num_bytes(self_pubkey));
       param.resize(dhparam_bnsz, 0);
-      BN_bn2bin(self_pubkey, &param[0]);
+      BN_bn2bin(self_pubkey, param.data());
 #      ifdef CRYPTO_USE_OPENSSL_WITH_OSSL_APIS
       details::reset(self_pubkey);
 #      endif
@@ -2015,9 +2023,10 @@ ATFRAMEWORK_UTILS_API dh::error_code_t dh::make_public(std::vector<unsigned char
       }
 
       param.resize(encode_len + 1, 0);
-      memcpy(&param[1], point_data, encode_len);
+      unsigned char *param_data = param.data();
+      memcpy(param_data + 1, point_data, encode_len);
       OPENSSL_free(point_data);
-      param[0] = static_cast<unsigned char>(encode_len);
+      param_data[0] = static_cast<unsigned char>(encode_len);
 
 #  elif defined(ATFRAMEWORK_UTILS_CRYPTO_USE_MBEDTLS)
       unsigned char buf[CRYPTO_DH_MAX_KEY_LEN];
@@ -2242,16 +2251,12 @@ ATFRAMEWORK_UTILS_API dh::error_code_t dh::calc_secret(std::vector<unsigned char
         break;
       }
 
-#      if !defined(ATFRAMEWORK_UTILS_CRYPTO_USE_BORINGSSL)
       if (dh_context_->openssl_dh_peer_key_ != EVP_PKEY_CTX_get0_peerkey(dh_context_->openssl_pkey_ctx_)) {
-#      endif
         if (EVP_PKEY_derive_set_peer(dh_context_->openssl_pkey_ctx_, dh_context_->openssl_dh_peer_key_) <= 0) {
           ret = details::setup_errorno(*this, static_cast<int>(ERR_peek_error()), error_code_t::kInitDhGenerateSecret);
           break;
         }
-#      if !defined(ATFRAMEWORK_UTILS_CRYPTO_USE_BORINGSSL)
       }
-#      endif
 
       // puts("pkey: params");
       // EVP_PKEY_print_params_fp(stdout, dh_context_->openssl_dh_pkey_, 2, nullptr);
@@ -2273,18 +2278,18 @@ ATFRAMEWORK_UTILS_API dh::error_code_t dh::calc_secret(std::vector<unsigned char
       }
 
       output.resize(static_cast<size_t>((secret_len + 7) / 8) * 8, 0);
-      if ((EVP_PKEY_derive(dh_context_->openssl_pkey_ctx_, &output[0], &secret_len)) <= 0) {
+      if ((EVP_PKEY_derive(dh_context_->openssl_pkey_ctx_, output.data(), &secret_len)) <= 0) {
         ret = details::setup_errorno(*this, static_cast<int>(ERR_peek_error()), error_code_t::kInitDhGenerateSecret);
         break;
       }
-      output.resize(static_cast<size_t>(secret_len));
+      output.resize(secret_len);
 
 #    elif defined(ATFRAMEWORK_UTILS_CRYPTO_USE_MBEDTLS)
       size_t psz = MBEDTLS_PREMASTER_SIZE;
       // generate next_secret
       output.resize(psz, 0);
       int res;
-      res = mbedtls_dhm_calc_secret(&dh_context_->mbedtls_dh_ctx_, &output[0], psz, &psz, mbedtls_ctr_drbg_random,
+      res = mbedtls_dhm_calc_secret(&dh_context_->mbedtls_dh_ctx_, output.data(), psz, &psz, mbedtls_ctr_drbg_random,
                                     &shared_context_->get_random_engine().ctr_drbg);
       if (0 != res) {
         ret = details::setup_errorno(*this, res, error_code_t::kInitDhGenerateSecret);
@@ -2348,11 +2353,11 @@ ATFRAMEWORK_UTILS_API dh::error_code_t dh::calc_secret(std::vector<unsigned char
       }
 
       output.resize(static_cast<size_t>((secret_len + 7) / 8) * 8, 0);
-      if ((EVP_PKEY_derive(dh_context_->openssl_pkey_ctx_, &output[0], &secret_len)) <= 0) {
+      if ((EVP_PKEY_derive(dh_context_->openssl_pkey_ctx_, output.data(), &secret_len)) <= 0) {
         ret = details::setup_errorno(*this, static_cast<int>(ERR_peek_error()), error_code_t::kInitDhGenerateSecret);
         break;
       }
-      output.resize(static_cast<size_t>(secret_len));
+      output.resize(secret_len);
 
 #  elif defined(ATFRAMEWORK_UTILS_CRYPTO_USE_MBEDTLS)
       unsigned char buf[CRYPTO_DH_MAX_KEY_LEN];
@@ -2611,5 +2616,6 @@ dh::error_code_t dh::check_or_setup_dh_pg_gy(BIGNUM *&DH_p, BIGNUM *&DH_g, BIGNU
 
 }  // namespace crypto
 ATFRAMEWORK_UTILS_NAMESPACE_END
-
 #endif
+
+// NOLINTEND(misc-include-cleaner,readability-use-concise-preprocessor-directives)

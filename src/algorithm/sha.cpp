@@ -1,8 +1,16 @@
 // Copyright 2026 atframework
 
+// Crypto backend headers/functions are selected through feature macros, so include-cleaner reports noisy false
+// positives for this compatibility file.
+// NOLINTBEGIN(misc-include-cleaner)
+
 #include <algorithm>
+#include <cstdlib>
+#include <cstring>
+#include <string>
 
 #include <common/string_oprs.h>
+#include <config/compile_optimize.h>
 
 #include <algorithm/sha.h>
 
@@ -16,34 +24,47 @@
 ATFRAMEWORK_UTILS_NAMESPACE_BEGIN
 namespace hash {
 
-namespace detail {
+namespace {
+static inline char *get_writable_string_data(std::string &value) noexcept {
+  if (value.empty()) {
+    return nullptr;
+  }
+#if (defined(_MSVC_LANG) && _MSVC_LANG >= 201703L) || __cplusplus >= 201703L
+  return value.data();
+#else
+  return &value[0];  // NOLINT(cppcoreguidelines-pro-bounds-constant-array-index,modernize-use-data)
+#endif
+}
+
 #if defined(UTIL_HASH_IMPLEMENT_SHA_USING_OPENSSL) && UTIL_HASH_IMPLEMENT_SHA_USING_OPENSSL
-struct sha_inner_data {
+struct ATFW_UTIL_SYMBOL_LOCAL sha_internal_data {
   unsigned char output[EVP_MAX_MD_SIZE];
   EVP_MD_CTX *ctx;
 };
 
-static inline sha_inner_data *into_inner_type(void *in) { return reinterpret_cast<sha_inner_data *>(in); }
+static inline sha_internal_data *into_internal_type(void *in) { return reinterpret_cast<sha_internal_data *>(in); }
 
-static inline void free_inner_type(void *in, ATFRAMEWORK_UTILS_NAMESPACE_ID::hash::sha::type) {
+static inline void free_internal_type(void *in, ATFRAMEWORK_UTILS_NAMESPACE_ID::hash::sha::type) {
   if (in == nullptr) {
     return;
   }
 
-  if (into_inner_type(in)->ctx != nullptr) {
+  if (into_internal_type(in)->ctx != nullptr) {
 #  if OPENSSL_VERSION_NUMBER < 0x10100000L
-    EVP_MD_CTX_destroy(into_inner_type(in)->ctx);
+    EVP_MD_CTX_destroy(into_internal_type(in)->ctx);
 #  else
-    EVP_MD_CTX_free(into_inner_type(in)->ctx);
+    EVP_MD_CTX_free(into_internal_type(in)->ctx);
 #  endif
-    into_inner_type(in)->ctx = nullptr;
+    into_internal_type(in)->ctx = nullptr;
   }
 
-  free(into_inner_type(in));
+  // NOLINTNEXTLINE(cppcoreguidelines-no-malloc)
+  free(into_internal_type(in));
 }
 
-static inline sha_inner_data *malloc_inner_type(ATFRAMEWORK_UTILS_NAMESPACE_ID::hash::sha::type t) {
-  sha_inner_data *ret = reinterpret_cast<sha_inner_data *>(malloc(sizeof(sha_inner_data)));
+static inline sha_internal_data *malloc_internal_type(ATFRAMEWORK_UTILS_NAMESPACE_ID::hash::sha::type t) {
+  // NOLINTNEXTLINE(cppcoreguidelines-no-malloc)
+  sha_internal_data *ret = reinterpret_cast<sha_internal_data *>(malloc(sizeof(sha_internal_data)));
   if (ret == nullptr) {
     return nullptr;
   }
@@ -53,7 +74,7 @@ static inline sha_inner_data *malloc_inner_type(ATFRAMEWORK_UTILS_NAMESPACE_ID::
   ret->ctx = EVP_MD_CTX_new();
 #  endif
   if (ret->ctx == nullptr) {
-    free_inner_type(ret, t);
+    free_internal_type(ret, t);
     return nullptr;
   }
 
@@ -79,12 +100,12 @@ static inline sha_inner_data *malloc_inner_type(ATFRAMEWORK_UTILS_NAMESPACE_ID::
   }
 
   if (md == nullptr) {
-    free_inner_type(ret, t);
+    free_internal_type(ret, t);
     return nullptr;
   }
 
   if (1 != EVP_DigestInit_ex(ret->ctx, md, nullptr)) {
-    free_inner_type(ret, t);
+    free_internal_type(ret, t);
     return nullptr;
   }
 
@@ -96,11 +117,11 @@ static inline unsigned char *get_output_buffer(void *in) {
     return nullptr;
   }
 
-  return into_inner_type(in)->output;
+  return into_internal_type(in)->output;
 }
 
 #elif defined(UTIL_HASH_IMPLEMENT_SHA_USING_MBEDTLS) && UTIL_HASH_IMPLEMENT_SHA_USING_MBEDTLS
-struct sha_inner_data {
+struct ATFW_UTIL_SYMBOL_LOCAL sha_internal_data {
   unsigned char output[64];
   union {
     mbedtls_sha1_context sha1_context;
@@ -111,14 +132,14 @@ struct sha_inner_data {
   };
 };
 
-static inline sha_inner_data *into_inner_type(void *in) { return reinterpret_cast<sha_inner_data *>(in); }
+static inline sha_internal_data *into_internal_type(void *in) { return reinterpret_cast<sha_internal_data *>(in); }
 
-static inline void free_inner_type(void *in, ATFRAMEWORK_UTILS_NAMESPACE_ID::hash::sha::type t) {
+static inline void free_internal_type(void *in, ATFRAMEWORK_UTILS_NAMESPACE_ID::hash::sha::type t) {
   if (in == nullptr) {
     return;
   }
 
-  sha_inner_data *obj = into_inner_type(in);
+  sha_internal_data *obj = into_internal_type(in);
 
   switch (t) {
     case ATFRAMEWORK_UTILS_NAMESPACE_ID::hash::sha::EN_ALGORITHM_SHA1:
@@ -134,17 +155,17 @@ static inline void free_inner_type(void *in, ATFRAMEWORK_UTILS_NAMESPACE_ID::has
       mbedtls_sha512_free(&obj->sha384_context);
       break;
     case ATFRAMEWORK_UTILS_NAMESPACE_ID::hash::sha::EN_ALGORITHM_SHA512:
-      mbedtls_sha512_free(&obj->sha384_context);
+      mbedtls_sha512_free(&obj->sha512_context);
       break;
     default:
       break;
   }
 
-  free(into_inner_type(in));
+  free(into_internal_type(in));
 }
 
-static inline sha_inner_data *malloc_inner_type(ATFRAMEWORK_UTILS_NAMESPACE_ID::hash::sha::type t) {
-  sha_inner_data *ret = reinterpret_cast<sha_inner_data *>(malloc(sizeof(sha_inner_data)));
+static inline sha_internal_data *malloc_internal_type(ATFRAMEWORK_UTILS_NAMESPACE_ID::hash::sha::type t) {
+  sha_internal_data *ret = reinterpret_cast<sha_internal_data *>(malloc(sizeof(sha_internal_data)));
   if (ret == nullptr) {
     return nullptr;
   }
@@ -186,9 +207,9 @@ static inline sha_inner_data *malloc_inner_type(ATFRAMEWORK_UTILS_NAMESPACE_ID::
     case ATFRAMEWORK_UTILS_NAMESPACE_ID::hash::sha::EN_ALGORITHM_SHA512:
       mbedtls_sha512_init(&ret->sha512_context);
 #  if MBEDTLS_VERSION_MAJOR >= 3
-      is_success = 0 == mbedtls_sha512_starts(&ret->sha384_context, 0);
+      is_success = 0 == mbedtls_sha512_starts(&ret->sha512_context, 0);
 #  else
-      is_success = 0 == mbedtls_sha512_starts_ret(&ret->sha384_context, 0);
+      is_success = 0 == mbedtls_sha512_starts_ret(&ret->sha512_context, 0);
 #  endif
       break;
     default:
@@ -196,7 +217,7 @@ static inline sha_inner_data *malloc_inner_type(ATFRAMEWORK_UTILS_NAMESPACE_ID::
   }
 
   if (false == is_success) {
-    free_inner_type(ret, t);
+    free_internal_type(ret, t);
     ret = nullptr;
   }
 
@@ -208,7 +229,7 @@ static inline unsigned char *get_output_buffer(void *in) {
     return nullptr;
   }
 
-  return into_inner_type(in)->output;
+  return into_internal_type(in)->output;
 }
 #else
 #  ifndef UL64
@@ -287,7 +308,7 @@ struct sha512_context_t {
                                  0: Use SHA-512, or 1: Use SHA-384. */
 };
 
-struct sha_inner_data {
+struct sha_internal_data {
   unsigned char output[64];
   union {
     sha1_context_t sha1_context;
@@ -298,20 +319,20 @@ struct sha_inner_data {
   };
 };
 
-static inline sha_inner_data *into_inner_type(void *in) { return reinterpret_cast<sha_inner_data *>(in); }
+static inline sha_internal_data *into_internal_type(void *in) { return reinterpret_cast<sha_internal_data *>(in); }
 
-static inline void free_inner_type(void *in, ATFRAMEWORK_UTILS_NAMESPACE_ID::hash::sha::type) {
+static inline void free_internal_type(void *in, ATFRAMEWORK_UTILS_NAMESPACE_ID::hash::sha::type) {
   if (in == nullptr) {
     return;
   }
 
-  free(into_inner_type(in));
+  free(into_internal_type(in));
 }
 
 /*
  * SHA-1 context setup
  */
-static void inner_sha1_start(sha1_context_t &ctx) {
+static void internal_sha1_start(sha1_context_t &ctx) {
   ctx.total[0] = 0;
   ctx.total[1] = 0;
 
@@ -322,7 +343,7 @@ static void inner_sha1_start(sha1_context_t &ctx) {
   ctx.state[4] = 0xC3D2E1F0;
 }
 
-static void inner_sha256_start(sha256_context_t &ctx, bool is224) {
+static void internal_sha256_start(sha256_context_t &ctx, bool is224) {
   ctx.total[0] = 0;
   ctx.total[1] = 0;
 
@@ -354,7 +375,7 @@ static void inner_sha256_start(sha256_context_t &ctx, bool is224) {
 /*
  * SHA-512 context setup
  */
-static void inner_sha512_starts_ret(sha512_context_t &ctx, bool is384) {
+static void internal_sha512_starts_ret(sha512_context_t &ctx, bool is384) {
   ctx.total[0] = 0;
   ctx.total[1] = 0;
 
@@ -383,8 +404,8 @@ static void inner_sha512_starts_ret(sha512_context_t &ctx, bool is384) {
   }
 }
 
-static sha_inner_data *malloc_inner_type(ATFRAMEWORK_UTILS_NAMESPACE_ID::hash::sha::type t) {
-  sha_inner_data *ret = reinterpret_cast<sha_inner_data *>(malloc(sizeof(sha_inner_data)));
+static sha_internal_data *malloc_internal_type(ATFRAMEWORK_UTILS_NAMESPACE_ID::hash::sha::type t) {
+  sha_internal_data *ret = reinterpret_cast<sha_internal_data *>(malloc(sizeof(sha_internal_data)));
   if (ret == nullptr) {
     return nullptr;
   }
@@ -392,23 +413,23 @@ static sha_inner_data *malloc_inner_type(ATFRAMEWORK_UTILS_NAMESPACE_ID::hash::s
   switch (t) {
     case ATFRAMEWORK_UTILS_NAMESPACE_ID::hash::sha::EN_ALGORITHM_SHA1:
       memset(&ret->sha1_context, 0, sizeof(ret->sha1_context));
-      inner_sha1_start(ret->sha1_context);
+      internal_sha1_start(ret->sha1_context);
       break;
     case ATFRAMEWORK_UTILS_NAMESPACE_ID::hash::sha::EN_ALGORITHM_SHA224:
       memset(&ret->sha224_context, 0, sizeof(ret->sha224_context));
-      inner_sha256_start(ret->sha224_context, true);
+      internal_sha256_start(ret->sha224_context, true);
       break;
     case ATFRAMEWORK_UTILS_NAMESPACE_ID::hash::sha::EN_ALGORITHM_SHA256:
       memset(&ret->sha256_context, 0, sizeof(ret->sha256_context));
-      inner_sha256_start(ret->sha256_context, false);
+      internal_sha256_start(ret->sha256_context, false);
       break;
     case ATFRAMEWORK_UTILS_NAMESPACE_ID::hash::sha::EN_ALGORITHM_SHA384:
       memset(&ret->sha384_context, 0, sizeof(ret->sha384_context));
-      inner_sha512_starts_ret(ret->sha384_context, true);
+      internal_sha512_starts_ret(ret->sha384_context, true);
       break;
     case ATFRAMEWORK_UTILS_NAMESPACE_ID::hash::sha::EN_ALGORITHM_SHA512:
       memset(&ret->sha512_context, 0, sizeof(ret->sha512_context));
-      inner_sha512_starts_ret(ret->sha384_context, false);
+      internal_sha512_starts_ret(ret->sha512_context, false);
       break;
     default:
       break;
@@ -422,10 +443,10 @@ static inline unsigned char *get_output_buffer(void *in) {
     return nullptr;
   }
 
-  return into_inner_type(in)->output;
+  return into_internal_type(in)->output;
 }
 
-static void inner_internal_sha1_process(sha1_context_t &ctx, const unsigned char data[64]) {
+static void internal_sha1_process(sha1_context_t &ctx, const unsigned char data[64]) {
   uint32_t temp, W[16], A, B, C, D, E;
 
   GET_UINT32_BE(W[0], data, 0);
@@ -585,7 +606,7 @@ static void inner_internal_sha1_process(sha1_context_t &ctx, const unsigned char
 /*
  * SHA-1 process buffer
  */
-static void inner_sha1_update(sha1_context_t &ctx, const unsigned char *input, size_t ilen) {
+static void internal_sha1_update(sha1_context_t &ctx, const unsigned char *input, size_t ilen) {
   size_t fill;
   uint32_t left;
 
@@ -604,7 +625,7 @@ static void inner_sha1_update(sha1_context_t &ctx, const unsigned char *input, s
   if (left && ilen >= fill) {
     memcpy((void *)(ctx.buffer + left), input, fill);
 
-    inner_internal_sha1_process(ctx, ctx.buffer);
+    internal_sha1_process(ctx, ctx.buffer);
 
     input += fill;
     ilen -= fill;
@@ -612,7 +633,7 @@ static void inner_sha1_update(sha1_context_t &ctx, const unsigned char *input, s
   }
 
   while (ilen >= 64) {
-    inner_internal_sha1_process(ctx, input);
+    internal_sha1_process(ctx, input);
 
     input += 64;
     ilen -= 64;
@@ -626,7 +647,7 @@ static void inner_sha1_update(sha1_context_t &ctx, const unsigned char *input, s
 /*
  * SHA-1 final digest
  */
-static void inner_sha1_finish(sha1_context_t &ctx, unsigned char output[20]) {
+static void internal_sha1_finish(sha1_context_t &ctx, unsigned char output[20]) {
   uint32_t used;
   uint32_t high, low;
 
@@ -644,7 +665,7 @@ static void inner_sha1_finish(sha1_context_t &ctx, unsigned char output[20]) {
     /* We'll need an extra block */
     memset(ctx.buffer + used, 0, 64 - used);
 
-    inner_internal_sha1_process(ctx, ctx.buffer);
+    internal_sha1_process(ctx, ctx.buffer);
 
     memset(ctx.buffer, 0, 56);
   }
@@ -658,7 +679,7 @@ static void inner_sha1_finish(sha1_context_t &ctx, unsigned char output[20]) {
   PUT_UINT32_BE(high, ctx.buffer, 56);
   PUT_UINT32_BE(low, ctx.buffer, 60);
 
-  inner_internal_sha1_process(ctx, ctx.buffer);
+  internal_sha1_process(ctx, ctx.buffer);
 
   /*
    * Output final state
@@ -670,7 +691,7 @@ static void inner_sha1_finish(sha1_context_t &ctx, unsigned char output[20]) {
   PUT_UINT32_BE(ctx.state[4], output, 16);
 }
 
-static void inner_internal_sha256_process(sha256_context_t &ctx, const unsigned char data[64]) {
+static void internal_sha256_process(sha256_context_t &ctx, const unsigned char data[64]) {
   uint32_t temp1, temp2, W[64];
   uint32_t A[8];
   unsigned int i;
@@ -752,7 +773,7 @@ static void inner_internal_sha256_process(sha256_context_t &ctx, const unsigned 
 /*
  * SHA-256 process buffer
  */
-static void inner_sha256_update(sha256_context_t &ctx, const unsigned char *input, size_t ilen) {
+static void internal_sha256_update(sha256_context_t &ctx, const unsigned char *input, size_t ilen) {
   size_t fill;
   uint32_t left;
 
@@ -769,7 +790,7 @@ static void inner_sha256_update(sha256_context_t &ctx, const unsigned char *inpu
   if (left && ilen >= fill) {
     memcpy((void *)(ctx.buffer + left), input, fill);
 
-    inner_internal_sha256_process(ctx, ctx.buffer);
+    internal_sha256_process(ctx, ctx.buffer);
 
     input += fill;
     ilen -= fill;
@@ -777,7 +798,7 @@ static void inner_sha256_update(sha256_context_t &ctx, const unsigned char *inpu
   }
 
   while (ilen >= 64) {
-    inner_internal_sha256_process(ctx, input);
+    internal_sha256_process(ctx, input);
 
     input += 64;
     ilen -= 64;
@@ -789,7 +810,7 @@ static void inner_sha256_update(sha256_context_t &ctx, const unsigned char *inpu
 /*
  * SHA-256 final digest
  */
-static void inner_sha256_finish(sha256_context_t &ctx, unsigned char output[32]) {
+static void internal_sha256_finish(sha256_context_t &ctx, unsigned char output[32]) {
   uint32_t used;
   uint32_t high, low;
 
@@ -807,7 +828,7 @@ static void inner_sha256_finish(sha256_context_t &ctx, unsigned char output[32])
     /* We'll need an extra block */
     memset(ctx.buffer + used, 0, 64 - used);
 
-    inner_internal_sha256_process(ctx, ctx.buffer);
+    internal_sha256_process(ctx, ctx.buffer);
 
     memset(ctx.buffer, 0, 56);
   }
@@ -821,7 +842,7 @@ static void inner_sha256_finish(sha256_context_t &ctx, unsigned char output[32])
   PUT_UINT32_BE(high, ctx.buffer, 56);
   PUT_UINT32_BE(low, ctx.buffer, 60);
 
-  inner_internal_sha256_process(ctx, ctx.buffer);
+  internal_sha256_process(ctx, ctx.buffer);
 
   /*
    * Output final state
@@ -837,7 +858,7 @@ static void inner_sha256_finish(sha256_context_t &ctx, unsigned char output[32])
   if (ctx.is224 == 0) PUT_UINT32_BE(ctx.state[7], output, 28);
 }
 
-static void inner_internal_sha512_process(sha512_context_t &ctx, const unsigned char data[128]) {
+static void internal_sha512_process(sha512_context_t &ctx, const unsigned char data[128]) {
   int i;
   uint64_t temp1, temp2, W[80];
   uint64_t A, B, C, D, E, F, G, H;
@@ -946,7 +967,7 @@ static void inner_internal_sha512_process(sha512_context_t &ctx, const unsigned 
 /*
  * SHA-512 process buffer
  */
-static void inner_sha512_update(sha512_context_t &ctx, const unsigned char *input, size_t ilen) {
+static void internal_sha512_update(sha512_context_t &ctx, const unsigned char *input, size_t ilen) {
   size_t fill;
   unsigned int left;
 
@@ -964,7 +985,7 @@ static void inner_sha512_update(sha512_context_t &ctx, const unsigned char *inpu
   if (left && ilen >= fill) {
     memcpy((void *)(ctx.buffer + left), input, fill);
 
-    inner_internal_sha512_process(ctx, ctx.buffer);
+    internal_sha512_process(ctx, ctx.buffer);
 
     input += fill;
     ilen -= fill;
@@ -972,7 +993,7 @@ static void inner_sha512_update(sha512_context_t &ctx, const unsigned char *inpu
   }
 
   while (ilen >= 128) {
-    inner_internal_sha512_process(ctx, input);
+    internal_sha512_process(ctx, input);
 
     input += 128;
     ilen -= 128;
@@ -986,7 +1007,7 @@ static void inner_sha512_update(sha512_context_t &ctx, const unsigned char *inpu
 /*
  * SHA-512 final digest
  */
-static void inner_sha512_finish(sha512_context_t &ctx, unsigned char output[64]) {
+static void internal_sha512_finish(sha512_context_t &ctx, unsigned char output[64]) {
   unsigned used;
   uint64_t high, low;
 
@@ -1004,7 +1025,7 @@ static void inner_sha512_finish(sha512_context_t &ctx, unsigned char output[64])
     /* We'll need an extra block */
     memset(ctx.buffer + used, 0, 128 - used);
 
-    inner_internal_sha512_process(ctx, ctx.buffer);
+    internal_sha512_process(ctx, ctx.buffer);
 
     memset(ctx.buffer, 0, 112);
   }
@@ -1018,7 +1039,7 @@ static void inner_sha512_finish(sha512_context_t &ctx, unsigned char output[64])
   PUT_UINT64_BE(high, ctx.buffer, 112);
   PUT_UINT64_BE(low, ctx.buffer, 120);
 
-  inner_internal_sha512_process(ctx, ctx.buffer);
+  internal_sha512_process(ctx, ctx.buffer);
 
   /*
    * Output final state
@@ -1036,23 +1057,23 @@ static void inner_sha512_finish(sha512_context_t &ctx, unsigned char output[64])
   }
 }
 #endif
-}  // namespace detail
+}  // namespace
 
 ATFRAMEWORK_UTILS_API sha::sha() : hash_type_(EN_ALGORITHM_UNINITED), private_raw_data_(nullptr) {}
 ATFRAMEWORK_UTILS_API sha::~sha() { close(); }
 
-ATFRAMEWORK_UTILS_API sha::sha(sha &&other) : hash_type_(EN_ALGORITHM_UNINITED), private_raw_data_(nullptr) {
+ATFRAMEWORK_UTILS_API sha::sha(sha &&other) noexcept : hash_type_(EN_ALGORITHM_UNINITED), private_raw_data_(nullptr) {
   swap(other);
 }
 
-ATFRAMEWORK_UTILS_API sha &sha::operator=(sha &&other) {
+ATFRAMEWORK_UTILS_API sha &sha::operator=(sha &&other) noexcept {
   swap(other);
   return *this;
 }
 
 ATFRAMEWORK_UTILS_API bool sha::init(type t) {
   close();
-  private_raw_data_ = detail::malloc_inner_type(t);
+  private_raw_data_ = malloc_internal_type(t);
   if (private_raw_data_ == nullptr) {
     return false;
   }
@@ -1066,57 +1087,56 @@ ATFRAMEWORK_UTILS_API void sha::close() {
     return;
   }
 
-  detail::free_inner_type(private_raw_data_, hash_type_);
+  free_internal_type(private_raw_data_, hash_type_);
 
   hash_type_ = EN_ALGORITHM_UNINITED;
   private_raw_data_ = nullptr;
-  return;
 }
 
-ATFRAMEWORK_UTILS_API void sha::swap(sha &other) {
+ATFRAMEWORK_UTILS_API void sha::swap(sha &other) noexcept {
   using std::swap;
   swap(hash_type_, other.hash_type_);
   swap(private_raw_data_, other.private_raw_data_);
 }
 
 ATFRAMEWORK_UTILS_API bool sha::update(const unsigned char *in, size_t inlen) {
-  detail::sha_inner_data *inner_obj = detail::into_inner_type(private_raw_data_);
-  if (inner_obj == nullptr) {
+  sha_internal_data *internal_obj = into_internal_type(private_raw_data_);
+  if (internal_obj == nullptr) {
     return false;
   }
 #if defined(UTIL_HASH_IMPLEMENT_SHA_USING_OPENSSL) && UTIL_HASH_IMPLEMENT_SHA_USING_OPENSSL
-  return 1 == EVP_DigestUpdate(inner_obj->ctx, reinterpret_cast<const void *>(in), inlen);
+  return 1 == EVP_DigestUpdate(internal_obj->ctx, reinterpret_cast<const void *>(in), inlen);
 #elif defined(UTIL_HASH_IMPLEMENT_SHA_USING_MBEDTLS) && UTIL_HASH_IMPLEMENT_SHA_USING_MBEDTLS
   switch (hash_type_) {
     case ATFRAMEWORK_UTILS_NAMESPACE_ID::hash::sha::EN_ALGORITHM_SHA1:
 #  if MBEDTLS_VERSION_MAJOR >= 3
-      return 0 == mbedtls_sha1_update(&inner_obj->sha1_context, in, inlen);
+      return 0 == mbedtls_sha1_update(&internal_obj->sha1_context, in, inlen);
 #  else
-      return 0 == mbedtls_sha1_update_ret(&inner_obj->sha1_context, in, inlen);
+      return 0 == mbedtls_sha1_update_ret(&internal_obj->sha1_context, in, inlen);
 #  endif
     case ATFRAMEWORK_UTILS_NAMESPACE_ID::hash::sha::EN_ALGORITHM_SHA224:
 #  if MBEDTLS_VERSION_MAJOR >= 3
-      return 0 == mbedtls_sha256_update(&inner_obj->sha224_context, in, inlen);
+      return 0 == mbedtls_sha256_update(&internal_obj->sha224_context, in, inlen);
 #  else
-      return 0 == mbedtls_sha256_update_ret(&inner_obj->sha224_context, in, inlen);
+      return 0 == mbedtls_sha256_update_ret(&internal_obj->sha224_context, in, inlen);
 #  endif
     case ATFRAMEWORK_UTILS_NAMESPACE_ID::hash::sha::EN_ALGORITHM_SHA256:
 #  if MBEDTLS_VERSION_MAJOR >= 3
-      return 0 == mbedtls_sha256_update(&inner_obj->sha256_context, in, inlen);
+      return 0 == mbedtls_sha256_update(&internal_obj->sha256_context, in, inlen);
 #  else
-      return 0 == mbedtls_sha256_update_ret(&inner_obj->sha256_context, in, inlen);
+      return 0 == mbedtls_sha256_update_ret(&internal_obj->sha256_context, in, inlen);
 #  endif
     case ATFRAMEWORK_UTILS_NAMESPACE_ID::hash::sha::EN_ALGORITHM_SHA384:
 #  if MBEDTLS_VERSION_MAJOR >= 3
-      return 0 == mbedtls_sha512_update(&inner_obj->sha384_context, in, inlen);
+      return 0 == mbedtls_sha512_update(&internal_obj->sha384_context, in, inlen);
 #  else
-      return 0 == mbedtls_sha512_update_ret(&inner_obj->sha384_context, in, inlen);
+      return 0 == mbedtls_sha512_update_ret(&internal_obj->sha384_context, in, inlen);
 #  endif
     case ATFRAMEWORK_UTILS_NAMESPACE_ID::hash::sha::EN_ALGORITHM_SHA512:
 #  if MBEDTLS_VERSION_MAJOR >= 3
-      return 0 == mbedtls_sha512_update(&inner_obj->sha512_context, in, inlen);
+      return 0 == mbedtls_sha512_update(&internal_obj->sha512_context, in, inlen);
 #  else
-      return 0 == mbedtls_sha512_update_ret(&inner_obj->sha512_context, in, inlen);
+      return 0 == mbedtls_sha512_update_ret(&internal_obj->sha512_context, in, inlen);
 #  endif
     default:
       break;
@@ -1125,19 +1145,19 @@ ATFRAMEWORK_UTILS_API bool sha::update(const unsigned char *in, size_t inlen) {
 #else
   switch (hash_type_) {
     case ATFRAMEWORK_UTILS_NAMESPACE_ID::hash::sha::EN_ALGORITHM_SHA1:
-      detail::inner_sha1_update(inner_obj->sha1_context, in, inlen);
+      internal_sha1_update(internal_obj->sha1_context, in, inlen);
       return true;
     case ATFRAMEWORK_UTILS_NAMESPACE_ID::hash::sha::EN_ALGORITHM_SHA224:
-      detail::inner_sha256_update(inner_obj->sha224_context, in, inlen);
+      internal_sha256_update(internal_obj->sha224_context, in, inlen);
       return true;
     case ATFRAMEWORK_UTILS_NAMESPACE_ID::hash::sha::EN_ALGORITHM_SHA256:
-      detail::inner_sha256_update(inner_obj->sha256_context, in, inlen);
+      internal_sha256_update(internal_obj->sha256_context, in, inlen);
       return true;
     case ATFRAMEWORK_UTILS_NAMESPACE_ID::hash::sha::EN_ALGORITHM_SHA384:
-      detail::inner_sha512_update(inner_obj->sha384_context, in, inlen);
+      internal_sha512_update(internal_obj->sha384_context, in, inlen);
       return true;
     case ATFRAMEWORK_UTILS_NAMESPACE_ID::hash::sha::EN_ALGORITHM_SHA512:
-      detail::inner_sha512_update(inner_obj->sha512_context, in, inlen);
+      internal_sha512_update(internal_obj->sha512_context, in, inlen);
       return true;
     default:
       break;
@@ -1147,44 +1167,44 @@ ATFRAMEWORK_UTILS_API bool sha::update(const unsigned char *in, size_t inlen) {
 }
 
 ATFRAMEWORK_UTILS_API bool sha::final() {
-  detail::sha_inner_data *inner_obj = detail::into_inner_type(private_raw_data_);
-  if (inner_obj == nullptr) {
+  sha_internal_data *internal_obj = into_internal_type(private_raw_data_);
+  if (internal_obj == nullptr) {
     return false;
   }
 #if defined(UTIL_HASH_IMPLEMENT_SHA_USING_OPENSSL) && UTIL_HASH_IMPLEMENT_SHA_USING_OPENSSL
   unsigned int md_len = 0;
-  return 1 == EVP_DigestFinal_ex(inner_obj->ctx, inner_obj->output, &md_len);
+  return 1 == EVP_DigestFinal_ex(internal_obj->ctx, internal_obj->output, &md_len);
 #elif defined(UTIL_HASH_IMPLEMENT_SHA_USING_MBEDTLS) && UTIL_HASH_IMPLEMENT_SHA_USING_MBEDTLS
   switch (hash_type_) {
     case ATFRAMEWORK_UTILS_NAMESPACE_ID::hash::sha::EN_ALGORITHM_SHA1:
 #  if MBEDTLS_VERSION_MAJOR >= 3
-      return 0 == mbedtls_sha1_finish(&inner_obj->sha1_context, inner_obj->output);
+      return 0 == mbedtls_sha1_finish(&internal_obj->sha1_context, internal_obj->output);
 #  else
-      return 0 == mbedtls_sha1_finish_ret(&inner_obj->sha1_context, inner_obj->output);
+      return 0 == mbedtls_sha1_finish_ret(&internal_obj->sha1_context, internal_obj->output);
 #  endif
     case ATFRAMEWORK_UTILS_NAMESPACE_ID::hash::sha::EN_ALGORITHM_SHA224:
 #  if MBEDTLS_VERSION_MAJOR >= 3
-      return 0 == mbedtls_sha256_finish(&inner_obj->sha224_context, inner_obj->output);
+      return 0 == mbedtls_sha256_finish(&internal_obj->sha224_context, internal_obj->output);
 #  else
-      return 0 == mbedtls_sha256_finish_ret(&inner_obj->sha224_context, inner_obj->output);
+      return 0 == mbedtls_sha256_finish_ret(&internal_obj->sha224_context, internal_obj->output);
 #  endif
     case ATFRAMEWORK_UTILS_NAMESPACE_ID::hash::sha::EN_ALGORITHM_SHA256:
 #  if MBEDTLS_VERSION_MAJOR >= 3
-      return 0 == mbedtls_sha256_finish(&inner_obj->sha256_context, inner_obj->output);
+      return 0 == mbedtls_sha256_finish(&internal_obj->sha256_context, internal_obj->output);
 #  else
-      return 0 == mbedtls_sha256_finish_ret(&inner_obj->sha256_context, inner_obj->output);
+      return 0 == mbedtls_sha256_finish_ret(&internal_obj->sha256_context, internal_obj->output);
 #  endif
     case ATFRAMEWORK_UTILS_NAMESPACE_ID::hash::sha::EN_ALGORITHM_SHA384:
 #  if MBEDTLS_VERSION_MAJOR >= 3
-      return 0 == mbedtls_sha512_finish(&inner_obj->sha384_context, inner_obj->output);
+      return 0 == mbedtls_sha512_finish(&internal_obj->sha384_context, internal_obj->output);
 #  else
-      return 0 == mbedtls_sha512_finish_ret(&inner_obj->sha384_context, inner_obj->output);
+      return 0 == mbedtls_sha512_finish_ret(&internal_obj->sha384_context, internal_obj->output);
 #  endif
     case ATFRAMEWORK_UTILS_NAMESPACE_ID::hash::sha::EN_ALGORITHM_SHA512:
 #  if MBEDTLS_VERSION_MAJOR >= 3
-      return 0 == mbedtls_sha512_finish(&inner_obj->sha512_context, inner_obj->output);
+      return 0 == mbedtls_sha512_finish(&internal_obj->sha512_context, internal_obj->output);
 #  else
-      return 0 == mbedtls_sha512_finish_ret(&inner_obj->sha512_context, inner_obj->output);
+      return 0 == mbedtls_sha512_finish_ret(&internal_obj->sha512_context, internal_obj->output);
 #  endif
     default:
       break;
@@ -1193,19 +1213,19 @@ ATFRAMEWORK_UTILS_API bool sha::final() {
 #else
   switch (hash_type_) {
     case ATFRAMEWORK_UTILS_NAMESPACE_ID::hash::sha::EN_ALGORITHM_SHA1:
-      detail::inner_sha1_finish(inner_obj->sha1_context, inner_obj->output);
+      internal_sha1_finish(internal_obj->sha1_context, internal_obj->output);
       return true;
     case ATFRAMEWORK_UTILS_NAMESPACE_ID::hash::sha::EN_ALGORITHM_SHA224:
-      detail::inner_sha256_finish(inner_obj->sha224_context, inner_obj->output);
+      internal_sha256_finish(internal_obj->sha224_context, internal_obj->output);
       return true;
     case ATFRAMEWORK_UTILS_NAMESPACE_ID::hash::sha::EN_ALGORITHM_SHA256:
-      detail::inner_sha256_finish(inner_obj->sha256_context, inner_obj->output);
+      internal_sha256_finish(internal_obj->sha256_context, internal_obj->output);
       return true;
     case ATFRAMEWORK_UTILS_NAMESPACE_ID::hash::sha::EN_ALGORITHM_SHA384:
-      detail::inner_sha512_finish(inner_obj->sha384_context, inner_obj->output);
+      internal_sha512_finish(internal_obj->sha384_context, internal_obj->output);
       return true;
     case ATFRAMEWORK_UTILS_NAMESPACE_ID::hash::sha::EN_ALGORITHM_SHA512:
-      detail::inner_sha512_finish(inner_obj->sha512_context, inner_obj->output);
+      internal_sha512_finish(internal_obj->sha512_context, internal_obj->output);
       return true;
     default:
       break;
@@ -1267,14 +1287,13 @@ ATFRAMEWORK_UTILS_API size_t sha::get_output_length(type bt) {
 #endif
 }
 
-ATFRAMEWORK_UTILS_API const unsigned char *sha::get_output() const {
-  return detail::get_output_buffer(private_raw_data_);
-}
+ATFRAMEWORK_UTILS_API const unsigned char *sha::get_output() const { return get_output_buffer(private_raw_data_); }
 
 ATFRAMEWORK_UTILS_API std::string sha::get_output_hex(bool is_uppercase) const {
   std::string ret;
   ret.resize(get_output_length() << 1, 0);
-  ATFRAMEWORK_UTILS_NAMESPACE_ID::string::dumphex(get_output(), get_output_length(), &ret[0], is_uppercase);
+  ATFRAMEWORK_UTILS_NAMESPACE_ID::string::dumphex(get_output(), get_output_length(), get_writable_string_data(ret),
+                                                  is_uppercase);
 
   return ret;
 }
@@ -1304,7 +1323,7 @@ ATFRAMEWORK_UTILS_API std::string sha::hash_to_hex(type t, const void *in, size_
   sha obj;
 
   if (false == obj.init(t)) {
-    return std::string();
+    return {};
   }
 
   obj.update(reinterpret_cast<const unsigned char *>(in), inlen);
@@ -1318,7 +1337,7 @@ ATFRAMEWORK_UTILS_API std::string sha::hash_to_base64(type t, const void *in, si
   sha obj;
 
   if (false == obj.init(t)) {
-    return std::string();
+    return {};
   }
 
   obj.update(reinterpret_cast<const unsigned char *>(in), inlen);
@@ -1329,3 +1348,4 @@ ATFRAMEWORK_UTILS_API std::string sha::hash_to_base64(type t, const void *in, si
 }  // namespace hash
 ATFRAMEWORK_UTILS_NAMESPACE_END
 
+// NOLINTEND(misc-include-cleaner)

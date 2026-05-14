@@ -1,20 +1,22 @@
 // Copyright 2026 atframework
 
-#include <assert.h>
-#include <inttypes.h>
-#include <stdint.h>
-#include <stdlib.h>
-#include <string.h>
-#include <limits>
+// Project namespace/API macros are provided by the public header and are intentionally used through it here.
+// NOLINTBEGIN(misc-include-cleaner)
+
+#include <cassert>
+#include <cstddef>
+#include <cstdlib>
+#include <cstring>
+#include <string>
 
 #include "algorithm/base64.h"
 
-#define BASE64_SIZE_T_MAX ((size_t)-1)   /* SIZE_T_MAX is not standard */
-#define BASE64_INVALID_CHARACTER -0x002C /**< Invalid character in input. */
+#define BASE64_SIZE_T_MAX ((size_t)-1)     /* SIZE_T_MAX is not standard */
+#define BASE64_INVALID_CHARACTER (-0x002C) /**< Invalid character in input. */
 
 ATFRAMEWORK_UTILS_NAMESPACE_BEGIN
 
-namespace detail {
+namespace {
 using base_enc_map_t = const unsigned char[64];
 using base_dec_map_t = const unsigned char[128];
 static base_enc_map_t base64_enc_map_basic = {
@@ -56,15 +58,26 @@ static constexpr const unsigned char base64_dec_map_url[128] = {
     23,  24,  25,  127, 127, 127, 127, 63,  127, 26,  27,  28,  29,  30,  31,  32,  33,  34,  35,  36,  37,  38,
     39,  40,  41,  42,  43,  44,  45,  46,  47,  48,  49,  50,  51,  127, 127, 127, 127, 127};
 
+static inline char *get_writable_string_data(std::string &value) noexcept {
+  if (value.empty()) {
+    return nullptr;
+  }
+#if (defined(_MSVC_LANG) && _MSVC_LANG >= 201703L) || __cplusplus >= 201703L
+  return value.data();
+#else
+  return &value[0];  // NOLINT(cppcoreguidelines-pro-bounds-constant-array-index,modernize-use-data)
+#endif
+}
+
 static int base64_encode_inner(unsigned char *dst, size_t dlen, size_t *olen, const unsigned char *src, size_t slen,
                                base_enc_map_t &base64_enc_map, unsigned char padding_char) {
-  size_t i, n, nopadding;
-  int C1, C2, C3;
-  unsigned char *p;
+  size_t i = 0, n = 0, nopadding = 0;
+  int C1 = 0, C2 = 0, C3 = 0;
+  unsigned char *p = nullptr;
 
   if (slen == 0) {
     *olen = 0;
-    return (0);
+    return 0;
   }
 
   n = (slen + 2) / 3;
@@ -123,7 +136,7 @@ static int base64_encode_inner(unsigned char *dst, size_t dlen, size_t *olen, co
   *olen = static_cast<size_t>(p - dst);
   *p = 0;
 
-  return (0);
+  return 0;
 }
 
 static inline int base64_encode_inner(std::string &dst, const unsigned char *src, size_t slen,
@@ -136,8 +149,8 @@ static inline int base64_encode_inner(std::string &dst, const unsigned char *src
     return 0;
   }
 
-  int ret = base64_encode_inner(reinterpret_cast<unsigned char *>(&dst[0]), dst.size(), &olen, src, slen,
-                                base64_enc_map, padding_char);
+  int ret = base64_encode_inner(reinterpret_cast<unsigned char *>(get_writable_string_data(dst)), dst.size(), &olen,
+                                src, slen, base64_enc_map, padding_char);
   assert(0 != ret || dst.size() == olen + 1);
   // pop back last zero
   if (!dst.empty() && *dst.rbegin() == 0) {
@@ -154,10 +167,10 @@ static inline int base64_encode_inner(std::string &dst, const std::string &in, b
 
 static int base64_decode_inner(unsigned char *dst, size_t dlen, size_t *olen, const unsigned char *src, size_t slen,
                                base_dec_map_t &base64_dec_map, unsigned char padding_char) {
-  size_t i, n;
-  size_t j, x;
-  size_t valid_slen, line_len;
-  unsigned char *p;
+  size_t i = 0, n = 0;
+  size_t j = 0, x = 0;
+  size_t valid_slen = 0, line_len = 0;
+  unsigned char *p = nullptr;
 
   /* First pass: check for validity and get output length */
   for (i = n = j = valid_slen = line_len = 0; i < slen; i++) {
@@ -169,7 +182,9 @@ static int base64_decode_inner(unsigned char *dst, size_t dlen, size_t *olen, co
     }
 
     /* Spaces at end of buffer are OK */
-    if (i == slen) break;
+    if (i == slen) {
+      break;
+    }
 
     if (src[i] == '\r' || src[i] == '\n') {
       line_len = 0;
@@ -177,29 +192,36 @@ static int base64_decode_inner(unsigned char *dst, size_t dlen, size_t *olen, co
     }
 
     /* Space inside a line is an error */
-    if (x != 0 && line_len != 0) return -2;
+    if (x != 0 && line_len != 0) {
+      return -2;
+    }
 
     ++valid_slen;
     ++line_len;
     if (src[i] == padding_char) {
       if (++j > 2) {
         return -2;
-      } else if ((valid_slen & 3) == 1 || (valid_slen & 3) == 2) {
+      }
+      if ((valid_slen & 3) == 1 || (valid_slen & 3) == 2) {
         // First and second char of every group can not be padding char
         return -2;
       }
     } else {
-      if (src[i] > 127 || base64_dec_map[src[i]] == 127) return -2;
+      if (src[i] > 127 || base64_dec_map[src[i]] == 127) {
+        return -2;
+      }
     }
 
-    if (base64_dec_map[src[i]] < 64 && j != 0) return -2;
+    if (base64_dec_map[src[i]] < 64 && j != 0) {
+      return -2;
+    }
 
     n++;
   }
 
   if (n == 0) {
     *olen = 0;
-    return (0);
+    return 0;
   }
 
   // no padding, add j to padding length
@@ -212,7 +234,7 @@ static int base64_decode_inner(unsigned char *dst, size_t dlen, size_t *olen, co
    * risk of integer overflow in n:
    *     n = ( ( n * 6 ) + 7 ) >> 3;
    */
-  n = (6 * (n >> 3)) + ((6 * (n & 0x7) + 7) >> 3);
+  n = (6 * (n >> 3)) + (((6 * (n & 0x7)) + 7) >> 3);
   n -= j;
 
   if (dst == nullptr || dlen < n) {
@@ -221,30 +243,34 @@ static int base64_decode_inner(unsigned char *dst, size_t dlen, size_t *olen, co
   }
 
   for (n = x = 0, p = dst; i > 0; i--, src++) {
-    if (*src == '\r' || *src == '\n' || *src == ' ' || *src == '\t') continue;
-    if (*src == padding_char) continue;
+    if (*src == '\r' || *src == '\n' || *src == ' ' || *src == '\t') {
+      continue;
+    }
+    if (*src == padding_char) {
+      continue;
+    }
 
     x = (x << 6) | (base64_dec_map[*src] & 0x3F);
 
     if (++n == 4) {
       n = 0;
-      *p++ = (unsigned char)(x >> 16);
-      *p++ = (unsigned char)(x >> 8);
-      *p++ = (unsigned char)(x);
+      *p++ = static_cast<unsigned char>(x >> 16);
+      *p++ = static_cast<unsigned char>(x >> 8);
+      *p++ = static_cast<unsigned char>(x);
     }
   }
 
   // no padding, the tail code
   if (n == 2) {
-    *p++ = (unsigned char)(x >> 4);
+    *p++ = static_cast<unsigned char>(x >> 4);
   } else if (n == 3) {
-    *p++ = (unsigned char)(x >> 10);
-    *p++ = (unsigned char)(x >> 2);
+    *p++ = static_cast<unsigned char>(x >> 10);
+    *p++ = static_cast<unsigned char>(x >> 2);
   }
 
   *olen = static_cast<size_t>(p - dst);
 
-  return (0);
+  return 0;
 }
 
 static inline int base64_decode_inner(std::string &dst, const unsigned char *src, size_t slen,
@@ -260,8 +286,8 @@ static inline int base64_decode_inner(std::string &dst, const unsigned char *src
   }
 
   dst.resize(olen);
-  int ret = base64_decode_inner(reinterpret_cast<unsigned char *>(&dst[0]), dst.size(), &olen, src, slen,
-                                base64_dec_map, padding_char);
+  int ret = base64_decode_inner(reinterpret_cast<unsigned char *>(get_writable_string_data(dst)), dst.size(), &olen,
+                                src, slen, base64_dec_map, padding_char);
   assert(0 != ret || olen == dst.size());
   return ret;
 }
@@ -320,39 +346,36 @@ static inline unsigned char base64_get_padding_char(base64_mode_t::type mode) {
       return '=';
   }
 }
-}  // namespace detail
+}  // namespace
 
 ATFRAMEWORK_UTILS_API int base64_encode(unsigned char *dst, size_t dlen, size_t *olen, const unsigned char *src,
                                         size_t slen, base64_mode_t::type mode) {
-  return detail::base64_encode_inner(dst, dlen, olen, src, slen, detail::base64_get_enc_map(mode),
-                                     detail::base64_get_padding_char(mode));
+  return base64_encode_inner(dst, dlen, olen, src, slen, base64_get_enc_map(mode), base64_get_padding_char(mode));
 }
 
 ATFRAMEWORK_UTILS_API int base64_encode(std::string &dst, const unsigned char *src, size_t slen,
                                         base64_mode_t::type mode) {
-  return detail::base64_encode_inner(dst, src, slen, detail::base64_get_enc_map(mode),
-                                     detail::base64_get_padding_char(mode));
+  return base64_encode_inner(dst, src, slen, base64_get_enc_map(mode), base64_get_padding_char(mode));
 }
 
 ATFRAMEWORK_UTILS_API int base64_encode(std::string &dst, const std::string &in, base64_mode_t::type mode) {
-  return detail::base64_encode_inner(dst, in, detail::base64_get_enc_map(mode), detail::base64_get_padding_char(mode));
+  return base64_encode_inner(dst, in, base64_get_enc_map(mode), base64_get_padding_char(mode));
 }
 
 ATFRAMEWORK_UTILS_API int base64_decode(unsigned char *dst, size_t dlen, size_t *olen, const unsigned char *src,
                                         size_t slen, base64_mode_t::type mode) {
-  return detail::base64_decode_inner(dst, dlen, olen, src, slen, detail::base64_get_dec_map(mode),
-                                     detail::base64_get_padding_char(mode));
+  return base64_decode_inner(dst, dlen, olen, src, slen, base64_get_dec_map(mode), base64_get_padding_char(mode));
 }
 
 ATFRAMEWORK_UTILS_API int base64_decode(std::string &dst, const unsigned char *src, size_t slen,
                                         base64_mode_t::type mode) {
-  return detail::base64_decode_inner(dst, src, slen, detail::base64_get_dec_map(mode),
-                                     detail::base64_get_padding_char(mode));
+  return base64_decode_inner(dst, src, slen, base64_get_dec_map(mode), base64_get_padding_char(mode));
 }
 
 ATFRAMEWORK_UTILS_API int base64_decode(std::string &dst, const std::string &in, base64_mode_t::type mode) {
-  return detail::base64_decode_inner(dst, in, detail::base64_get_dec_map(mode), detail::base64_get_padding_char(mode));
+  return base64_decode_inner(dst, in, base64_get_dec_map(mode), base64_get_padding_char(mode));
 }
 
 ATFRAMEWORK_UTILS_NAMESPACE_END
 
+// NOLINTEND(misc-include-cleaner)

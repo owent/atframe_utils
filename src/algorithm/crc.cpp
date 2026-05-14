@@ -1,15 +1,17 @@
 // Copyright 2026 atframework
 
-#include <inttypes.h>
-#include <stdint.h>
-#include <stdlib.h>
-#include <string.h>
-#include <limits>
+// Namespace/API macros are provided by the public header and intentionally used through it here.
+// NOLINTBEGIN(misc-include-cleaner)
+
+#include <cstddef>
+#include <cstdint>
+#include <cstdlib>
+#include <cstring>
 
 #include "algorithm/crc.h"
 
 ATFRAMEWORK_UTILS_NAMESPACE_BEGIN
-namespace detail {
+namespace {
 
 /* CRC16 implementation according to CCITT standards.
  *
@@ -172,44 +174,46 @@ static constexpr const uint64_t crc64_tab[256] = {
     UINT64_C(0x29b7d047efec8728),
 };
 
-}  // namespace detail
+}  // namespace
 
 ATFRAMEWORK_UTILS_API uint16_t crc16(const unsigned char *s, size_t l, uint16_t init_val) {
-  if (!s) {
+  if (s == nullptr) {
     return init_val;
   }
-  size_t j;
+  size_t j = 0;
   for (j = 0; j < l; ++j) {
     unsigned char byte = s[j];
-    init_val = static_cast<uint16_t>(init_val << 8) ^ detail::crc16_tab[((init_val >> 8) ^ (uint16_t)byte) & 0x00FF];
+    init_val =
+        static_cast<uint16_t>(init_val << 8) ^ crc16_tab[((init_val >> 8) ^ static_cast<uint16_t>(byte)) & 0x00FF];
   }
   return init_val;
 }
 
 ATFRAMEWORK_UTILS_API uint32_t crc32(const unsigned char *s, size_t l, uint32_t init_val) {
-  if (!s) {
+  if (s == nullptr) {
     return init_val;
   }
-  size_t j;
+  size_t j = 0;
   for (j = 0; j < l; ++j) {
     unsigned char byte = s[j];
-    init_val = detail::crc32_tab[static_cast<unsigned char>(init_val) ^ (uint32_t)byte] ^ (init_val >> 8);
+    init_val = crc32_tab[static_cast<unsigned char>(init_val) ^ static_cast<uint32_t>(byte)] ^ (init_val >> 8);
   }
 
   return init_val;
 }
 
 ATFRAMEWORK_UTILS_API uint64_t crc64(const unsigned char *s, size_t l, uint64_t init_val) {
-  if (!s) {
+  if (s == nullptr) {
     return init_val;
   }
-  size_t j;
+  size_t j = 0;
   for (j = 0; j < l; ++j) {
     unsigned char byte = s[j];
-    init_val = detail::crc64_tab[static_cast<unsigned char>(init_val) ^ (uint64_t)byte] ^ (init_val >> 8);
+    init_val = crc64_tab[static_cast<unsigned char>(init_val) ^ static_cast<uint64_t>(byte)] ^ (init_val >> 8);
   }
 
   return init_val;
 }
 ATFRAMEWORK_UTILS_NAMESPACE_END
 
+// NOLINTEND(misc-include-cleaner)

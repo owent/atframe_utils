@@ -2,7 +2,13 @@
 //
 // Create by owent
 
+// Crypto backend headers/functions are selected through feature macros, so include-cleaner and concise-preprocessor
+// checks produce noisy false positives in this compatibility-heavy file.
+// NOLINTBEGIN(misc-include-cleaner,readability-use-concise-preprocessor-directives)
+
 #include "algorithm/crypto_cipher.h"
+
+#include <config/atframe_utils_build_feature.h>
 
 #include <common/compiler_message.h>
 #include <common/string_oprs.h>
@@ -10,7 +16,11 @@
 
 #include <lock/atomic_int_type.h>
 
+#include <cstdint>
 #include <cstring>
+#include <string>
+#include <utility>
+#include <vector>
 
 #ifdef ATFW_UTIL_MACRO_CRYPTO_CIPHER_ENABLED
 
@@ -18,19 +28,22 @@
 #    include <sodium.h>
 
 #    define LIBSODIUM_BLOCK_SIZE 64
+namespace {
 using libsodium_counter_t = uint64_t;
 #    define LIBSODIUM_COUNTER_SIZE sizeof(libsodium_counter_t)
 
 static inline libsodium_counter_t libsodium_get_block(const unsigned char *p) {
-  return static_cast<libsodium_counter_t>(((uint32_t)(p)[0]) | (((uint32_t)(p)[1]) << 8) | (((uint32_t)p[2]) << 16) |
-                                          (((uint32_t)(p)[3]) << 24));
+  return static_cast<libsodium_counter_t>(static_cast<uint32_t>(p[0]) | (static_cast<uint32_t>(p[1]) << 8) |
+                                          (static_cast<uint32_t>(p[2]) << 16) | (static_cast<uint32_t>(p[3]) << 24));
 }
 
 static inline libsodium_counter_t libsodium_get_counter(const unsigned char *iv) {
-  uint32_t low = static_cast<uint32_t>(libsodium_get_block(iv));
-  uint32_t high = static_cast<uint32_t>(libsodium_get_block(iv + 4));
-  return static_cast<libsodium_counter_t>((((libsodium_counter_t)(high)) << 32) | low);
+  const uint32_t low = static_cast<uint32_t>(libsodium_get_block(iv));
+  const uint32_t high = static_cast<uint32_t>(libsodium_get_block(iv + 4));
+  return static_cast<libsodium_counter_t>((static_cast<libsodium_counter_t>(high) << 32) | low);
 }
+
+}  // namespace
 
 #  endif
 
@@ -50,7 +63,7 @@ static inline libsodium_counter_t libsodium_get_counter(const unsigned char *iv)
 #  if defined(ATFRAMEWORK_UTILS_CRYPTO_USE_OPENSSL) || defined(ATFRAMEWORK_UTILS_CRYPTO_USE_LIBRESSL) || \
       defined(ATFRAMEWORK_UTILS_CRYPTO_USE_BORINGSSL)
 
-#    if defined(LIBRESSL_VERSION_NUMBER)
+#    ifdef LIBRESSL_VERSION_NUMBER
 
 #      if LIBRESSL_VERSION_NUMBER > 0x2040000fL
 #        define CRYPTO_USE_CHACHA20_WITH_CIPHER
@@ -94,44 +107,88 @@ static inline libsodium_counter_t libsodium_get_counter(const unsigned char *iv)
 
 ATFRAMEWORK_UTILS_NAMESPACE_BEGIN
 namespace crypto {
-enum cipher_interface_method_t {
-  EN_CIMT_INVALID = 0,  // inner
-  EN_CIMT_XXTEA = 1,    // inner
-  EN_CIMT_INNER,        // inner bound
-  EN_CIMT_CIPHER,       // using openssl/libressl/boringssl/mbedtls
-  EN_CIMT_LIBSODIUM,    // using libsodium
-  EN_CIMT_LIBSODIUM_CHACHA20,
-  EN_CIMT_LIBSODIUM_CHACHA20_IETF,
-  EN_CIMT_LIBSODIUM_XCHACHA20,  // imported in libsodium 1.0.12 or upper
-  EN_CIMT_LIBSODIUM_SALSA20,
-  EN_CIMT_LIBSODIUM_XSALSA20,  // imported in libsodium 1.0.12 or upper
-  EN_CIMT_LIBSODIUM_CHACHA20_POLY1305,
-  EN_CIMT_LIBSODIUM_CHACHA20_POLY1305_IETF,
-  EN_CIMT_LIBSODIUM_XCHACHA20_POLY1305_IETF,  // imported in libsodium 1.0.12 or upper
+namespace {
+enum class cipher_interface_method_t : int32_t {
+  kInvalid = 0,     // inner
+  kXxtea = 1,       // inner
+  kInnerBound = 2,  // inner bound
+  kCipher = 3,      // using openssl/libressl/boringssl/mbedtls
+  kLibsodium = 4,   // using libsodium
+  kLibsodiumChacha20 = 5,
+  kLibsodiumChacha20Ietf = 6,
+  kLibsodiumXchacha20 = 7,  // imported in libsodium 1.0.12 or upper
+  kLibsodiumSalsa20 = 8,
+  kLibsodiumXsalsa20 = 9,  // imported in libsodium 1.0.12 or upper
+  kLibsodiumChacha20Poly1305 = 10,
+  kLibsodiumChacha20Poly1305Ietf = 11,
+  kLibsodiumXchacha20Poly1305Ietf = 12,  // imported in libsodium 1.0.12 or upper
 };
 
-enum cipher_interface_flags_t {
-  EN_CIFT_NONE = 0,                         // using inner algorithm
-  EN_CIFT_NO_FINISH = 0x0001,               // should not call finish after update
-  EN_CIFT_AEAD = 0x0010,                    // is aead cipher
-  EN_CIFT_VARIABLE_IV_LEN = 0x0020,         // can be variable iv length
-  EN_CIFT_AEAD_SET_LENGTH_BEFORE = 0x0040,  // call update to set length before update
-  EN_CIFT_DECRYPT_NO_PADDING = 0x0100,      // set no padding when decrypt
-  EN_CIFT_ENCRYPT_NO_PADDING = 0x0200,      // set no padding when encrypt
+enum class cipher_interface_flags_t : int32_t {
+  kNone = 0x0000,                 // using inner algorithm
+  kNoFinish = 0x0001,             // should not call finish after update
+  kAead = 0x0010,                 // is aead cipher
+  kVariableIvLen = 0x0020,        // can be variable iv length
+  kAeadSetLengthBefore = 0x0040,  // call update to set length before update
+  kDecryptNoPadding = 0x0100,     // set no padding when decrypt
+  kEncryptNoPadding = 0x0200,     // set no padding when encrypt
 };
+
+constexpr cipher_interface_method_t EN_CIMT_INVALID = cipher_interface_method_t::kInvalid;
+constexpr cipher_interface_method_t EN_CIMT_XXTEA = cipher_interface_method_t::kXxtea;
+constexpr cipher_interface_method_t EN_CIMT_INNER = cipher_interface_method_t::kInnerBound;
+constexpr cipher_interface_method_t EN_CIMT_CIPHER = cipher_interface_method_t::kCipher;
+constexpr cipher_interface_method_t EN_CIMT_LIBSODIUM = cipher_interface_method_t::kLibsodium;
+constexpr cipher_interface_method_t EN_CIMT_LIBSODIUM_CHACHA20 = cipher_interface_method_t::kLibsodiumChacha20;
+constexpr cipher_interface_method_t EN_CIMT_LIBSODIUM_CHACHA20_IETF = cipher_interface_method_t::kLibsodiumChacha20Ietf;
+constexpr cipher_interface_method_t EN_CIMT_LIBSODIUM_XCHACHA20 = cipher_interface_method_t::kLibsodiumXchacha20;
+constexpr cipher_interface_method_t EN_CIMT_LIBSODIUM_SALSA20 = cipher_interface_method_t::kLibsodiumSalsa20;
+constexpr cipher_interface_method_t EN_CIMT_LIBSODIUM_XSALSA20 = cipher_interface_method_t::kLibsodiumXsalsa20;
+constexpr cipher_interface_method_t EN_CIMT_LIBSODIUM_CHACHA20_POLY1305 =
+    cipher_interface_method_t::kLibsodiumChacha20Poly1305;
+constexpr cipher_interface_method_t EN_CIMT_LIBSODIUM_CHACHA20_POLY1305_IETF =
+    cipher_interface_method_t::kLibsodiumChacha20Poly1305Ietf;
+constexpr cipher_interface_method_t EN_CIMT_LIBSODIUM_XCHACHA20_POLY1305_IETF =
+    cipher_interface_method_t::kLibsodiumXchacha20Poly1305Ietf;
+
+constexpr uint32_t EN_CIFT_NONE = static_cast<uint32_t>(cipher_interface_flags_t::kNone);
+constexpr uint32_t EN_CIFT_NO_FINISH = static_cast<uint32_t>(cipher_interface_flags_t::kNoFinish);
+constexpr uint32_t EN_CIFT_AEAD = static_cast<uint32_t>(cipher_interface_flags_t::kAead);
+constexpr uint32_t EN_CIFT_VARIABLE_IV_LEN = static_cast<uint32_t>(cipher_interface_flags_t::kVariableIvLen);
+constexpr uint32_t EN_CIFT_AEAD_SET_LENGTH_BEFORE =
+    static_cast<uint32_t>(cipher_interface_flags_t::kAeadSetLengthBefore);
+constexpr uint32_t EN_CIFT_DECRYPT_NO_PADDING = static_cast<uint32_t>(cipher_interface_flags_t::kDecryptNoPadding);
+constexpr uint32_t EN_CIFT_ENCRYPT_NO_PADDING = static_cast<uint32_t>(cipher_interface_flags_t::kEncryptNoPadding);
+
+static constexpr uint32_t to_underlying(cipher_interface_flags_t value) noexcept {
+  return static_cast<uint32_t>(value);
+}
+}  // namespace
 
 struct cipher_interface_info_t {
+  constexpr cipher_interface_info_t(const char *in_name, cipher_interface_method_t in_method,
+                                    const char *in_openssl_name, const char *in_mbedtls_name,
+                                    uint32_t in_flags) noexcept
+      : name(in_name),
+        openssl_name(in_openssl_name),
+        mbedtls_name(in_mbedtls_name),
+        method(in_method),
+        flags(in_flags) {}
+
   const char *name;
-  cipher_interface_method_t method;
   const char *openssl_name;
   const char *mbedtls_name;
+  cipher_interface_method_t method;
   uint32_t flags;
 };
 
 namespace {
 #  if defined(ATFRAMEWORK_UTILS_CRYPTO_USE_OPENSSL) || defined(ATFRAMEWORK_UTILS_CRYPTO_USE_LIBRESSL) || \
       defined(ATFRAMEWORK_UTILS_CRYPTO_USE_BORINGSSL)
-ATFRAMEWORK_UTILS_NAMESPACE_ID::lock::atomic_int_type<size_t> g_global_init_counter_(0);
+static inline ATFRAMEWORK_UTILS_NAMESPACE_ID::lock::atomic_int_type<size_t> &get_global_init_counter() {
+  static ATFRAMEWORK_UTILS_NAMESPACE_ID::lock::atomic_int_type<size_t> counter(0);
+  return counter;
+}
 #  endif
 static inline int setup_errorno(cipher &ci, int64_t err, cipher::error_code_t ret) {
   ci.set_last_errno(err);
@@ -145,13 +202,13 @@ static inline void iv_shift_append(std::vector<unsigned char> &iv, const unsigne
 
   const size_t iv_len = iv.size();
   if (clen >= iv_len) {
-    memcpy(&iv[0], ciphertext + (clen - iv_len), iv_len);
+    memcpy(iv.data(), ciphertext + (clen - iv_len), iv_len);
     return;
   }
 
   // new_iv = last(iv_old || ciphertext)
-  memmove(&iv[0], &iv[0] + clen, iv_len - clen);
-  memcpy(&iv[iv_len - clen], ciphertext, clen);
+  memmove(iv.data(), iv.data() + clen, iv_len - clen);
+  memcpy(iv.data() + (iv_len - clen), ciphertext, clen);
 }
 
 static inline void increment_iv_be(std::vector<unsigned char> &iv, uint64_t add) {
@@ -159,19 +216,20 @@ static inline void increment_iv_be(std::vector<unsigned char> &iv, uint64_t add)
     return;
   }
 
+  unsigned char *iv_data = iv.data();
   size_t i = iv.size();
   while (i > 0 && add > 0) {
     --i;
-    uint64_t sum = static_cast<uint64_t>(iv[i]) + (add & 0xFFu);
-    iv[i] = static_cast<unsigned char>(sum & 0xFFu);
+    uint64_t sum = static_cast<uint64_t>(iv_data[i]) + (add & 0xFFu);
+    iv_data[i] = static_cast<unsigned char>(sum & 0xFFu);
     add = (add >> 8) + (sum >> 8);
   }
 
   // propagate remaining carry if any
   while (i > 0 && add > 0) {
     --i;
-    uint64_t sum = static_cast<uint64_t>(iv[i]) + (add & 0xFFu);
-    iv[i] = static_cast<unsigned char>(sum & 0xFFu);
+    uint64_t sum = static_cast<uint64_t>(iv_data[i]) + (add & 0xFFu);
+    iv_data[i] = static_cast<unsigned char>(sum & 0xFFu);
     add = (add >> 8) + (sum >> 8);
   }
 }
@@ -181,7 +239,7 @@ static inline cipher::iv_roll_policy_t compute_iv_roll_policy(const cipher_inter
     return cipher::IV_ROLL_NONE;
   }
 
-  if (0 != (interface->flags & static_cast<uint32_t>(cipher_interface_flags_t::EN_CIFT_AEAD))) {
+  if (0 != (interface->flags & to_underlying(cipher_interface_flags_t::kAead))) {
     return cipher::IV_ROLL_AEAD_INC1_BE;
   }
 
@@ -251,13 +309,14 @@ static inline void roll_iv_after_success(cipher::iv_roll_policy_t policy, std::v
         return;
       }
 
+      unsigned char *iv_data = iv.data();
       uint64_t counter = 0;
       for (size_t i = 0; i < 8; ++i) {
-        counter |= (static_cast<uint64_t>(iv[i]) << (8 * i));
+        counter |= (static_cast<uint64_t>(iv_data[i]) << (8 * i));
       }
       counter += blocks;
       for (size_t i = 0; i < 8; ++i) {
-        iv[i] = static_cast<unsigned char>((counter >> (8 * i)) & 0xFFu);
+        iv_data[i] = static_cast<unsigned char>((counter >> (8 * i)) & 0xFFu);
       }
       return;
     }
@@ -354,7 +413,7 @@ static constexpr const cipher_interface_info_t __g_supported_ciphers[] = {
 
 #  endif
 
-    {nullptr, EN_CIMT_INVALID, nullptr, nullptr, false},  // end
+    {nullptr, EN_CIMT_INVALID, nullptr, nullptr, EN_CIFT_NONE},  // end
 };
 
 static const cipher_interface_info_t *get_cipher_interface_by_name(nostd::string_view name) {
@@ -434,7 +493,7 @@ ATFRAMEWORK_UTILS_API int cipher::init(nostd::string_view name, int32_t mode) {
 
   if (static_cast<int>(error_code_t::kOk) == ret) {
     interface_ = interface;
-    if (0 != (interface_->flags & static_cast<uint32_t>(cipher_interface_flags_t::EN_CIFT_AEAD))) {
+    if (0 != (interface_->flags & to_underlying(cipher_interface_flags_t::kAead))) {
       tag_length_ = 16;
     }
     iv_roll_policy_ = compute_iv_roll_policy(interface_);
@@ -865,13 +924,13 @@ ATFRAMEWORK_UTILS_API int cipher::set_key(const unsigned char *key, uint32_t key
 
       if (nullptr != cipher_context_.enc) {
         if (!EVP_CipherInit_ex(cipher_context_.enc, nullptr, nullptr, key, nullptr, -1)) {
-          res = (int)ERR_peek_error();
+          res = static_cast<int>(ERR_peek_error());
         }
       }
 
       if (nullptr != cipher_context_.dec) {
         if (!EVP_CipherInit_ex(cipher_context_.dec, nullptr, nullptr, key, nullptr, -1)) {
-          res = (int)ERR_peek_error();
+          res = static_cast<int>(ERR_peek_error());
         }
       }
 
@@ -1016,7 +1075,7 @@ ATFRAMEWORK_UTILS_API int cipher::encrypt(const unsigned char *input, size_t ile
 
       // OpenSSL接入采用新的EVP接口
       if (!iv_.empty()) {
-        if (!EVP_CipherInit_ex(cipher_context_.enc, nullptr, nullptr, nullptr, &iv_[0], -1)) {
+        if (!EVP_CipherInit_ex(cipher_context_.enc, nullptr, nullptr, nullptr, iv_.data(), -1)) {
           return setup_errorno(*this, static_cast<int64_t>(ERR_peek_error()), error_code_t::kCipherOperationSetIv);
         }
       }
@@ -1059,7 +1118,7 @@ ATFRAMEWORK_UTILS_API int cipher::encrypt(const unsigned char *input, size_t ile
       }
 
       unsigned char empty_iv[MBEDTLS_MAX_IV_LENGTH] = {0};
-      last_errorno_ = mbedtls_cipher_crypt(cipher_context_.enc, iv_.empty() ? empty_iv : &iv_[0], iv_.size(), input,
+      last_errorno_ = mbedtls_cipher_crypt(cipher_context_.enc, iv_.empty() ? empty_iv : iv_.data(), iv_.size(), input,
                                            ilen, output, olen);
       if (last_errorno_ != 0) {
         return static_cast<int>(error_code_t::kCipherOperation);
@@ -1074,9 +1133,9 @@ ATFRAMEWORK_UTILS_API int cipher::encrypt(const unsigned char *input, size_t ile
 #  if defined(ATFRAMEWORK_UTILS_CRYPTO_USE_LIBSODIUM) && ATFRAMEWORK_UTILS_CRYPTO_USE_LIBSODIUM
     // CHACHA20系算法使用 libsodium 接入
     case EN_CIMT_LIBSODIUM_CHACHA20:
-      last_errorno_ =
-          crypto_stream_chacha20_xor_ic(output, input, ilen, &iv_[LIBSODIUM_COUNTER_SIZE],
-                                        static_cast<uint64_t>(libsodium_get_counter(&iv_[0])), libsodium_context_.key);
+      last_errorno_ = crypto_stream_chacha20_xor_ic(output, input, ilen, iv_.data() + LIBSODIUM_COUNTER_SIZE,
+                                                    static_cast<uint64_t>(libsodium_get_counter(iv_.data())),
+                                                    libsodium_context_.key);
       if (last_errorno_ != 0) {
         return static_cast<int>(error_code_t::kLibsodiumOperation);
       }
@@ -1086,8 +1145,8 @@ ATFRAMEWORK_UTILS_API int cipher::encrypt(const unsigned char *input, size_t ile
       }
       return static_cast<int>(error_code_t::kOk);
     case EN_CIMT_LIBSODIUM_CHACHA20_IETF:
-      last_errorno_ = crypto_stream_chacha20_ietf_xor_ic(output, input, ilen, &iv_[LIBSODIUM_COUNTER_SIZE],
-                                                         static_cast<uint32_t>(libsodium_get_counter(&iv_[0])),
+      last_errorno_ = crypto_stream_chacha20_ietf_xor_ic(output, input, ilen, iv_.data() + LIBSODIUM_COUNTER_SIZE,
+                                                         static_cast<uint32_t>(libsodium_get_counter(iv_.data())),
                                                          libsodium_context_.key);
       if (last_errorno_ != 0) {
         return static_cast<int>(error_code_t::kLibsodiumOperation);
@@ -1099,9 +1158,10 @@ ATFRAMEWORK_UTILS_API int cipher::encrypt(const unsigned char *input, size_t ile
       return static_cast<int>(error_code_t::kOk);
 
 #    ifdef crypto_stream_xchacha20_KEYBYTES
-      last_errorno_ =
-          crypto_stream_xchacha20_xor_ic(output, input, ilen, &iv_[LIBSODIUM_COUNTER_SIZE],
-                                         static_cast<uint64_t>(libsodium_get_counter(&iv_[0])), libsodium_context_.key);
+    case EN_CIMT_LIBSODIUM_XCHACHA20:
+      last_errorno_ = crypto_stream_xchacha20_xor_ic(output, input, ilen, iv_.data() + LIBSODIUM_COUNTER_SIZE,
+                                                     static_cast<uint64_t>(libsodium_get_counter(iv_.data())),
+                                                     libsodium_context_.key);
       if (last_errorno_ != 0) {
         return static_cast<int>(error_code_t::kLibsodiumOperation);
       }
@@ -1113,9 +1173,9 @@ ATFRAMEWORK_UTILS_API int cipher::encrypt(const unsigned char *input, size_t ile
 #    endif
 
     case EN_CIMT_LIBSODIUM_SALSA20:
-      last_errorno_ =
-          crypto_stream_salsa20_xor_ic(output, input, ilen, &iv_[LIBSODIUM_COUNTER_SIZE],
-                                       static_cast<uint64_t>(libsodium_get_counter(&iv_[0])), libsodium_context_.key);
+      last_errorno_ = crypto_stream_salsa20_xor_ic(output, input, ilen, iv_.data() + LIBSODIUM_COUNTER_SIZE,
+                                                   static_cast<uint64_t>(libsodium_get_counter(iv_.data())),
+                                                   libsodium_context_.key);
       if (last_errorno_ != 0) {
         return static_cast<int>(error_code_t::kLibsodiumOperation);
       }
@@ -1125,9 +1185,9 @@ ATFRAMEWORK_UTILS_API int cipher::encrypt(const unsigned char *input, size_t ile
       }
       return static_cast<int>(error_code_t::kOk);
     case EN_CIMT_LIBSODIUM_XSALSA20:
-      last_errorno_ =
-          crypto_stream_xsalsa20_xor_ic(output, input, ilen, &iv_[LIBSODIUM_COUNTER_SIZE],
-                                        static_cast<uint64_t>(libsodium_get_counter(&iv_[0])), libsodium_context_.key);
+      last_errorno_ = crypto_stream_xsalsa20_xor_ic(output, input, ilen, iv_.data() + LIBSODIUM_COUNTER_SIZE,
+                                                    static_cast<uint64_t>(libsodium_get_counter(iv_.data())),
+                                                    libsodium_context_.key);
       if (last_errorno_ != 0) {
         return static_cast<int>(error_code_t::kLibsodiumOperation);
       }
@@ -1180,10 +1240,11 @@ ATFRAMEWORK_UTILS_API int cipher::decrypt(const unsigned char *input, size_t ile
 #  if defined(ATFRAMEWORK_UTILS_CRYPTO_USE_OPENSSL) || defined(ATFRAMEWORK_UTILS_CRYPTO_USE_LIBRESSL) || \
       defined(ATFRAMEWORK_UTILS_CRYPTO_USE_BORINGSSL)
       // OpenSSL接入采用新的EVP接口
-      int outl, finish_olen;
+      int outl = 0;
+      int finish_olen = 0;
 
       if (!iv_.empty()) {
-        if (!EVP_CipherInit_ex(cipher_context_.dec, nullptr, nullptr, nullptr, &iv_[0], -1)) {
+        if (!EVP_CipherInit_ex(cipher_context_.dec, nullptr, nullptr, nullptr, iv_.data(), -1)) {
           return setup_errorno(*this, static_cast<int64_t>(ERR_peek_error()), error_code_t::kCipherOperationSetIv);
         }
       }
@@ -1226,7 +1287,7 @@ ATFRAMEWORK_UTILS_API int cipher::decrypt(const unsigned char *input, size_t ile
       }
 
       unsigned char empty_iv[MBEDTLS_MAX_IV_LENGTH] = {0};
-      last_errorno_ = mbedtls_cipher_crypt(cipher_context_.dec, iv_.empty() ? empty_iv : &iv_[0], iv_.size(), input,
+      last_errorno_ = mbedtls_cipher_crypt(cipher_context_.dec, iv_.empty() ? empty_iv : iv_.data(), iv_.size(), input,
                                            ilen, output, olen);
       if (last_errorno_ != 0) {
         return static_cast<int>(error_code_t::kCipherOperation);
@@ -1241,9 +1302,9 @@ ATFRAMEWORK_UTILS_API int cipher::decrypt(const unsigned char *input, size_t ile
 #  if defined(ATFRAMEWORK_UTILS_CRYPTO_USE_LIBSODIUM) && ATFRAMEWORK_UTILS_CRYPTO_USE_LIBSODIUM
     // CHACHA20系算法使用 libsodium 接入
     case EN_CIMT_LIBSODIUM_CHACHA20:
-      last_errorno_ =
-          crypto_stream_chacha20_xor_ic(output, input, ilen, &iv_[LIBSODIUM_COUNTER_SIZE],
-                                        static_cast<uint64_t>(libsodium_get_counter(&iv_[0])), libsodium_context_.key);
+      last_errorno_ = crypto_stream_chacha20_xor_ic(output, input, ilen, iv_.data() + LIBSODIUM_COUNTER_SIZE,
+                                                    static_cast<uint64_t>(libsodium_get_counter(iv_.data())),
+                                                    libsodium_context_.key);
       if (last_errorno_ != 0) {
         return static_cast<int>(error_code_t::kLibsodiumOperation);
       }
@@ -1253,8 +1314,8 @@ ATFRAMEWORK_UTILS_API int cipher::decrypt(const unsigned char *input, size_t ile
       }
       return static_cast<int>(error_code_t::kOk);
     case EN_CIMT_LIBSODIUM_CHACHA20_IETF:
-      last_errorno_ = crypto_stream_chacha20_ietf_xor_ic(output, input, ilen, &iv_[LIBSODIUM_COUNTER_SIZE],
-                                                         static_cast<uint32_t>(libsodium_get_counter(&iv_[0])),
+      last_errorno_ = crypto_stream_chacha20_ietf_xor_ic(output, input, ilen, iv_.data() + LIBSODIUM_COUNTER_SIZE,
+                                                         static_cast<uint32_t>(libsodium_get_counter(iv_.data())),
                                                          libsodium_context_.key);
       if (last_errorno_ != 0) {
         return static_cast<int>(error_code_t::kLibsodiumOperation);
@@ -1266,9 +1327,10 @@ ATFRAMEWORK_UTILS_API int cipher::decrypt(const unsigned char *input, size_t ile
       return static_cast<int>(error_code_t::kOk);
 
 #    ifdef crypto_stream_xchacha20_KEYBYTES
-      last_errorno_ =
-          crypto_stream_xchacha20_xor_ic(output, input, ilen, &iv_[LIBSODIUM_COUNTER_SIZE],
-                                         static_cast<uint64_t>(libsodium_get_counter(&iv_[0])), libsodium_context_.key);
+    case EN_CIMT_LIBSODIUM_XCHACHA20:
+      last_errorno_ = crypto_stream_xchacha20_xor_ic(output, input, ilen, iv_.data() + LIBSODIUM_COUNTER_SIZE,
+                                                     static_cast<uint64_t>(libsodium_get_counter(iv_.data())),
+                                                     libsodium_context_.key);
       if (last_errorno_ != 0) {
         return static_cast<int>(error_code_t::kLibsodiumOperation);
       }
@@ -1280,9 +1342,9 @@ ATFRAMEWORK_UTILS_API int cipher::decrypt(const unsigned char *input, size_t ile
 #    endif
 
     case EN_CIMT_LIBSODIUM_SALSA20:
-      last_errorno_ =
-          crypto_stream_salsa20_xor_ic(output, input, ilen, &iv_[LIBSODIUM_COUNTER_SIZE],
-                                       static_cast<uint64_t>(libsodium_get_counter(&iv_[0])), libsodium_context_.key);
+      last_errorno_ = crypto_stream_salsa20_xor_ic(output, input, ilen, iv_.data() + LIBSODIUM_COUNTER_SIZE,
+                                                   static_cast<uint64_t>(libsodium_get_counter(iv_.data())),
+                                                   libsodium_context_.key);
       if (last_errorno_ != 0) {
         return static_cast<int>(error_code_t::kLibsodiumOperation);
       }
@@ -1292,9 +1354,9 @@ ATFRAMEWORK_UTILS_API int cipher::decrypt(const unsigned char *input, size_t ile
       }
       return static_cast<int>(error_code_t::kOk);
     case EN_CIMT_LIBSODIUM_XSALSA20:
-      last_errorno_ =
-          crypto_stream_xsalsa20_xor_ic(output, input, ilen, &iv_[LIBSODIUM_COUNTER_SIZE],
-                                        static_cast<uint64_t>(libsodium_get_counter(&iv_[0])), libsodium_context_.key);
+      last_errorno_ = crypto_stream_xsalsa20_xor_ic(output, input, ilen, iv_.data() + LIBSODIUM_COUNTER_SIZE,
+                                                    static_cast<uint64_t>(libsodium_get_counter(iv_.data())),
+                                                    libsodium_context_.key);
       if (last_errorno_ != 0) {
         return static_cast<int>(error_code_t::kLibsodiumOperation);
       }
@@ -1340,22 +1402,24 @@ ATFRAMEWORK_UTILS_API int cipher::encrypt_aead(const unsigned char *input, size_
 
 #  if defined(ATFRAMEWORK_UTILS_CRYPTO_USE_OPENSSL) || defined(ATFRAMEWORK_UTILS_CRYPTO_USE_LIBRESSL) || \
       defined(ATFRAMEWORK_UTILS_CRYPTO_USE_BORINGSSL)
-      int outl, finish_olen;
+      int outl = 0;
+      int finish_olen = 0;
 
       if (!iv_.empty()) {
         if (0 != (interface_->flags & EN_CIFT_VARIABLE_IV_LEN)) {
-          if (!EVP_CIPHER_CTX_ctrl(cipher_context_.enc, EVP_CTRL_AEAD_SET_IVLEN, static_cast<int>(iv_.size()), 0)) {
+          if (!EVP_CIPHER_CTX_ctrl(cipher_context_.enc, EVP_CTRL_AEAD_SET_IVLEN, static_cast<int>(iv_.size()),
+                                   nullptr)) {
             return setup_errorno(*this, static_cast<int64_t>(ERR_peek_error()), error_code_t::kCipherOperationSetIv);
           }
         }
 
-        if (!EVP_CipherInit_ex(cipher_context_.enc, nullptr, nullptr, nullptr, &iv_[0], -1)) {
+        if (!EVP_CipherInit_ex(cipher_context_.enc, nullptr, nullptr, nullptr, iv_.data(), -1)) {
           return setup_errorno(*this, static_cast<int64_t>(ERR_peek_error()), error_code_t::kCipherOperationSetIv);
         }
       }
 
       if (0 != (interface_->flags & EN_CIFT_AEAD_SET_LENGTH_BEFORE)) {
-        int tmplen;
+        int tmplen = 0;
         if (!EVP_CipherUpdate(cipher_context_.enc, nullptr, &tmplen, nullptr, static_cast<int>(ilen))) {
           return setup_errorno(*this, static_cast<int64_t>(ERR_peek_error()), error_code_t::kCipherOperation);
         }
@@ -1413,10 +1477,10 @@ ATFRAMEWORK_UTILS_API int cipher::encrypt_aead(const unsigned char *input, size_
       const size_t tag_len = static_cast<size_t>(tag_length_);
       last_errorno_ =
 #    if MBEDTLS_VERSION_MAJOR >= 3
-          mbedtls_cipher_auth_encrypt_ext(cipher_context_.enc, iv_.empty() ? empty_iv : &iv_[0], iv_.size(), ad, ad_len,
-                                          input, ilen, output, *olen, olen, tag_len)
+          mbedtls_cipher_auth_encrypt_ext(cipher_context_.enc, iv_.empty() ? empty_iv : iv_.data(), iv_.size(), ad,
+                                          ad_len, input, ilen, output, *olen, olen, tag_len)
 #    else
-          mbedtls_cipher_auth_encrypt(cipher_context_.enc, iv_.empty() ? empty_iv : &iv_[0], iv_.size(), ad, ad_len,
+          mbedtls_cipher_auth_encrypt(cipher_context_.enc, iv_.empty() ? empty_iv : iv_.data(), iv_.size(), ad, ad_len,
                                       input, ilen, output, olen, output + ilen, tag_len)
 #    endif
           ;
@@ -1442,8 +1506,8 @@ ATFRAMEWORK_UTILS_API int cipher::encrypt_aead(const unsigned char *input, size_
       }
 
       unsigned long long maclen = tag_len;  // NOLINT: runtime/int
-      last_errorno_ = crypto_aead_chacha20poly1305_encrypt_detached(output, output + ilen, &maclen, input, ilen, ad,
-                                                                    ad_len, nullptr, &iv_[0], libsodium_context_.key);
+      last_errorno_ = crypto_aead_chacha20poly1305_encrypt_detached(
+          output, output + ilen, &maclen, input, ilen, ad, ad_len, nullptr, iv_.data(), libsodium_context_.key);
       if (last_errorno_ != 0) {
         return static_cast<int>(error_code_t::kLibsodiumOperation);
       }
@@ -1461,7 +1525,7 @@ ATFRAMEWORK_UTILS_API int cipher::encrypt_aead(const unsigned char *input, size_
 
       unsigned long long maclen = tag_len;  // NOLINT: runtime/int
       last_errorno_ = crypto_aead_chacha20poly1305_ietf_encrypt_detached(
-          output, output + ilen, &maclen, input, ilen, ad, ad_len, nullptr, &iv_[0], libsodium_context_.key);
+          output, output + ilen, &maclen, input, ilen, ad, ad_len, nullptr, iv_.data(), libsodium_context_.key);
       if (last_errorno_ != 0) {
         return static_cast<int>(error_code_t::kLibsodiumOperation);
       }
@@ -1481,7 +1545,7 @@ ATFRAMEWORK_UTILS_API int cipher::encrypt_aead(const unsigned char *input, size_
 
       unsigned long long maclen = tag_len;  // NOLINT: runtime/int
       last_errorno_ = crypto_aead_xchacha20poly1305_ietf_encrypt_detached(
-          output, output + ilen, &maclen, input, ilen, ad, ad_len, nullptr, &iv_[0], libsodium_context_.key);
+          output, output + ilen, &maclen, input, ilen, ad, ad_len, nullptr, iv_.data(), libsodium_context_.key);
       if (last_errorno_ != 0) {
         return static_cast<int>(error_code_t::kLibsodiumOperation);
       }
@@ -1532,16 +1596,18 @@ ATFRAMEWORK_UTILS_API int cipher::decrypt_aead(const unsigned char *input, size_
 
 #  if defined(ATFRAMEWORK_UTILS_CRYPTO_USE_OPENSSL) || defined(ATFRAMEWORK_UTILS_CRYPTO_USE_LIBRESSL) || \
       defined(ATFRAMEWORK_UTILS_CRYPTO_USE_BORINGSSL)
-      int outl, finish_olen;
+      int outl = 0;
+      int finish_olen = 0;
 
       if (!iv_.empty()) {
         if (0 != (interface_->flags & EN_CIFT_VARIABLE_IV_LEN)) {
-          if (!EVP_CIPHER_CTX_ctrl(cipher_context_.dec, EVP_CTRL_AEAD_SET_IVLEN, static_cast<int>(iv_.size()), 0)) {
+          if (!EVP_CIPHER_CTX_ctrl(cipher_context_.dec, EVP_CTRL_AEAD_SET_IVLEN, static_cast<int>(iv_.size()),
+                                   nullptr)) {
             return setup_errorno(*this, static_cast<int64_t>(ERR_peek_error()), error_code_t::kCipherOperationSetIv);
           }
         }
 
-        if (!EVP_CipherInit_ex(cipher_context_.dec, nullptr, nullptr, nullptr, &iv_[0], -1)) {
+        if (!EVP_CipherInit_ex(cipher_context_.dec, nullptr, nullptr, nullptr, iv_.data(), -1)) {
           return setup_errorno(*this, static_cast<int64_t>(ERR_peek_error()), error_code_t::kCipherOperationSetIv);
         }
       }
@@ -1554,7 +1620,7 @@ ATFRAMEWORK_UTILS_API int cipher::decrypt_aead(const unsigned char *input, size_
       }
 
       if (0 != (interface_->flags & EN_CIFT_AEAD_SET_LENGTH_BEFORE)) {
-        int tmplen;
+        int tmplen = 0;
         if (!EVP_CipherUpdate(cipher_context_.dec, nullptr, &tmplen, nullptr, static_cast<int>(ilen - tag_length_))) {
           return setup_errorno(*this, static_cast<int64_t>(ERR_peek_error()), error_code_t::kCipherOperation);
         }
@@ -1602,10 +1668,10 @@ ATFRAMEWORK_UTILS_API int cipher::decrypt_aead(const unsigned char *input, size_
       const size_t tag_len = static_cast<size_t>(tag_length_);
       last_errorno_ =
 #    if MBEDTLS_VERSION_MAJOR >= 3
-          mbedtls_cipher_auth_decrypt_ext(cipher_context_.dec, iv_.empty() ? empty_iv : &iv_[0], iv_.size(), ad, ad_len,
-                                          input, ilen, output, *olen, olen, tag_len)
+          mbedtls_cipher_auth_decrypt_ext(cipher_context_.dec, iv_.empty() ? empty_iv : iv_.data(), iv_.size(), ad,
+                                          ad_len, input, ilen, output, *olen, olen, tag_len)
 #    else
-          mbedtls_cipher_auth_decrypt(cipher_context_.dec, iv_.empty() ? empty_iv : &iv_[0], iv_.size(), ad, ad_len,
+          mbedtls_cipher_auth_decrypt(cipher_context_.dec, iv_.empty() ? empty_iv : iv_.data(), iv_.size(), ad, ad_len,
                                       input, ilen, output, olen, input + ilen - tag_len, tag_len)
 #    endif
           ;
@@ -1628,8 +1694,9 @@ ATFRAMEWORK_UTILS_API int cipher::decrypt_aead(const unsigned char *input, size_
         return static_cast<int>(error_code_t::kLibsodiumOperationTagLen);
       }
 
-      last_errorno_ = crypto_aead_chacha20poly1305_decrypt_detached(
-          output, nullptr, input, ilen - tag_len, input + ilen - tag_len, ad, ad_len, &iv_[0], libsodium_context_.key);
+      last_errorno_ =
+          crypto_aead_chacha20poly1305_decrypt_detached(output, nullptr, input, ilen - tag_len, input + ilen - tag_len,
+                                                        ad, ad_len, iv_.data(), libsodium_context_.key);
       if (last_errorno_ != 0) {
         return static_cast<int>(error_code_t::kLibsodiumOperation);
       }
@@ -1645,8 +1712,9 @@ ATFRAMEWORK_UTILS_API int cipher::decrypt_aead(const unsigned char *input, size_
         return static_cast<int>(error_code_t::kLibsodiumOperationTagLen);
       }
 
-      last_errorno_ = crypto_aead_chacha20poly1305_ietf_decrypt_detached(
-          output, nullptr, input, ilen - tag_len, input + ilen - tag_len, ad, ad_len, &iv_[0], libsodium_context_.key);
+      last_errorno_ = crypto_aead_chacha20poly1305_ietf_decrypt_detached(output, nullptr, input, ilen - tag_len,
+                                                                         input + ilen - tag_len, ad, ad_len, iv_.data(),
+                                                                         libsodium_context_.key);
       if (last_errorno_ != 0) {
         return static_cast<int>(error_code_t::kLibsodiumOperation);
       }
@@ -1664,8 +1732,9 @@ ATFRAMEWORK_UTILS_API int cipher::decrypt_aead(const unsigned char *input, size_
         return static_cast<int>(error_code_t::kLibsodiumOperationTagLen);
       }
 
-      last_errorno_ = crypto_aead_xchacha20poly1305_ietf_decrypt_detached(
-          output, nullptr, input, ilen - tag_len, input + ilen - tag_len, ad, ad_len, &iv_[0], libsodium_context_.key);
+      last_errorno_ = crypto_aead_xchacha20poly1305_ietf_decrypt_detached(output, nullptr, input, ilen - tag_len,
+                                                                          input + ilen - tag_len, ad, ad_len,
+                                                                          iv_.data(), libsodium_context_.key);
       if (last_errorno_ != 0) {
         return static_cast<int>(error_code_t::kLibsodiumOperation);
       }
@@ -1694,9 +1763,8 @@ ATFRAMEWORK_UTILS_API const cipher::cipher_kt_t *cipher::get_cipher_by_name(cons
       defined(ATFRAMEWORK_UTILS_CRYPTO_USE_BORINGSSL)
   if (nullptr == interface->openssl_name) {
     return EVP_get_cipherbyname(interface->name);
-  } else {
-    return EVP_get_cipherbyname(interface->openssl_name);
   }
+  return EVP_get_cipherbyname(interface->openssl_name);
 #  elif defined(ATFRAMEWORK_UTILS_CRYPTO_USE_MBEDTLS)
   if (nullptr == interface->mbedtls_name) {
     return nullptr;
@@ -1714,13 +1782,13 @@ ATFRAMEWORK_UTILS_API std::pair<const char *, const char *> cipher::ciphertok(co
   }
 
   const char *b = in;
-  const char *e;
   // skip \r\n\t and space
   while (0 != *b && (*b == ' ' || *b == '\t' || *b == '\r' || *b == '\n' || *b == ';' || *b == ',' || *b == ':')) {
     ++b;
   }
 
-  for (e = b; 0 != *e; ++e) {
+  const char *e = b;
+  for (; 0 != *e; ++e) {
     if (*e == ' ' || *e == '\t' || *e == '\r' || *e == '\n' || *e == ';' || *e == ',' || *e == ':') {
       break;
     }
@@ -1740,19 +1808,19 @@ ATFRAMEWORK_UTILS_API const std::vector<std::string> &cipher::get_all_cipher_nam
   if (ret.empty()) {
     for (size_t i = 0; nullptr != __g_supported_ciphers[i].name; ++i) {
       if (__g_supported_ciphers[i].method < EN_CIMT_INNER) {
-        ret.push_back(__g_supported_ciphers[i].name);
+        ret.emplace_back(__g_supported_ciphers[i].name);
         continue;
       }
 
       if (__g_supported_ciphers[i].method == EN_CIMT_CIPHER) {
         if (nullptr != get_cipher_by_name(__g_supported_ciphers[i].name)) {
-          ret.push_back(__g_supported_ciphers[i].name);
+          ret.emplace_back(__g_supported_ciphers[i].name);
         }
         continue;
       }
 
       if (__g_supported_ciphers[i].method > EN_CIMT_LIBSODIUM) {
-        ret.push_back(__g_supported_ciphers[i].name);
+        ret.emplace_back(__g_supported_ciphers[i].name);
       }
     }
   }
@@ -1763,7 +1831,8 @@ ATFRAMEWORK_UTILS_API const std::vector<std::string> &cipher::get_all_cipher_nam
 ATFRAMEWORK_UTILS_API int cipher::init_global_algorithm() {
 #  if defined(ATFRAMEWORK_UTILS_CRYPTO_USE_OPENSSL) || defined(ATFRAMEWORK_UTILS_CRYPTO_USE_LIBRESSL) || \
       defined(ATFRAMEWORK_UTILS_CRYPTO_USE_BORINGSSL)
-  size_t counter = g_global_init_counter_++;
+  auto &global_init_counter = get_global_init_counter();
+  size_t counter = global_init_counter++;
   if (0 == counter) {
 // No explicit initialisation or de-initialisation is necessary from openssl 1.1.0.
 #    if (defined(OPENSSL_API_COMPAT) && OPENSSL_API_COMPAT < 0x10100000L) || \
@@ -1793,13 +1862,14 @@ ATFRAMEWORK_UTILS_API int cipher::init_global_algorithm() {
 ATFRAMEWORK_UTILS_API int cipher::cleanup_global_algorithm() {
 #  if defined(ATFRAMEWORK_UTILS_CRYPTO_USE_OPENSSL) || defined(ATFRAMEWORK_UTILS_CRYPTO_USE_LIBRESSL) || \
       defined(ATFRAMEWORK_UTILS_CRYPTO_USE_BORINGSSL)
-  size_t counter = g_global_init_counter_.load();
+  auto &global_init_counter = get_global_init_counter();
+  size_t counter = global_init_counter.load();
   while (true) {
     if (0 == counter) {
       return 0;
     }
 
-    if (g_global_init_counter_.compare_exchange_strong(counter, counter - 1)) {
+    if (global_init_counter.compare_exchange_strong(counter, counter - 1)) {
       break;
     }
   }
@@ -1818,3 +1888,5 @@ ATFRAMEWORK_UTILS_API int cipher::cleanup_global_algorithm() {
 ATFRAMEWORK_UTILS_NAMESPACE_END
 
 #endif
+
+// NOLINTEND(misc-include-cleaner,readability-use-concise-preprocessor-directives)

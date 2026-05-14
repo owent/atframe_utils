@@ -1,5 +1,6 @@
 // Copyright 2026 atframework
 
+#include <cstdint>
 #include <cstring>
 #include <string>
 #include <vector>
@@ -232,6 +233,68 @@ CASE_TEST(murmur_hash, hash3_x64_128_empty) {
   uint64_t out[2] = {0};
   atfw::util::hash::murmur_hash3_x64_128("", 0, 0, out);
   // Should not crash
+}
+
+CASE_TEST(murmur_hash, known_reference_vectors) {
+  // These known-answer values are compatible with Austin Appleby's SMHasher reference implementation.
+  // The MurmurHash3_x86_32 vector is also published by scikit-learn:
+  // murmurhash3_32(b"Hello World!", seed=42) == 3565178 == 0x0036667a.
+  static constexpr char kPayload[] = "Hello World!";
+  static constexpr int kPayloadLength = static_cast<int>(sizeof(kPayload) - 1U);
+  static constexpr uint32_t kSeed32 = 42U;
+  static constexpr uint64_t kSeed64 = 42U;
+
+  CASE_EXPECT_EQ(UINT32_C(0x3d9fc202), atfw::util::hash::murmur_hash2(kPayload, kPayloadLength, kSeed32));
+  CASE_EXPECT_EQ(UINT64_C(0x22e9f6747266b120), atfw::util::hash::murmur_hash2_64a(kPayload, kPayloadLength, kSeed64));
+  CASE_EXPECT_EQ(UINT64_C(0x57236b9bcf30d7cc), atfw::util::hash::murmur_hash2_64b(kPayload, kPayloadLength, kSeed64));
+  CASE_EXPECT_EQ(UINT32_C(0x0036667a), atfw::util::hash::murmur_hash3_x86_32(kPayload, kPayloadLength, kSeed32));
+
+  uint32_t x86_128[4] = {0};
+  atfw::util::hash::murmur_hash3_x86_128(kPayload, kPayloadLength, kSeed32, x86_128);
+  CASE_EXPECT_EQ(UINT32_C(0x7f188edf), x86_128[0]);
+  CASE_EXPECT_EQ(UINT32_C(0x42a77b58), x86_128[1]);
+  CASE_EXPECT_EQ(UINT32_C(0xb6161cc7), x86_128[2]);
+  CASE_EXPECT_EQ(UINT32_C(0x9359780e), x86_128[3]);
+
+  uint64_t x64_128[2] = {0};
+  atfw::util::hash::murmur_hash3_x64_128(kPayload, kPayloadLength, kSeed32, x64_128);
+  CASE_EXPECT_EQ(UINT64_C(0xa7bc102ca798f8dc), x64_128[0]);
+  CASE_EXPECT_EQ(UINT64_C(0x3c957070a5f9fa3e), x64_128[1]);
+}
+
+CASE_TEST(murmur_hash, unaligned_input_matches_aligned) {
+  static constexpr char kPayload[] = "0123456789abcdef0123456789abcdef";
+  static constexpr int kPayloadLength = static_cast<int>(sizeof(kPayload) - 1U);
+
+  alignas(8) unsigned char aligned_storage[sizeof(kPayload)] = {0};
+  std::memcpy(aligned_storage, kPayload, static_cast<size_t>(kPayloadLength));
+
+  std::vector<unsigned char> unaligned_storage(static_cast<size_t>(kPayloadLength) + 1U, 0);
+  std::memcpy(unaligned_storage.data() + 1U, kPayload, static_cast<size_t>(kPayloadLength));
+
+  const void *aligned_key = aligned_storage;
+  const void *unaligned_key = unaligned_storage.data() + 1U;
+
+  CASE_EXPECT_EQ(atfw::util::hash::murmur_hash2(aligned_key, kPayloadLength, 0),
+                 atfw::util::hash::murmur_hash2(unaligned_key, kPayloadLength, 0));
+  CASE_EXPECT_EQ(atfw::util::hash::murmur_hash2_64a(aligned_key, kPayloadLength, 0),
+                 atfw::util::hash::murmur_hash2_64a(unaligned_key, kPayloadLength, 0));
+  CASE_EXPECT_EQ(atfw::util::hash::murmur_hash2_64b(aligned_key, kPayloadLength, 0),
+                 atfw::util::hash::murmur_hash2_64b(unaligned_key, kPayloadLength, 0));
+  CASE_EXPECT_EQ(atfw::util::hash::murmur_hash3_x86_32(aligned_key, kPayloadLength, 0),
+                 atfw::util::hash::murmur_hash3_x86_32(unaligned_key, kPayloadLength, 0));
+
+  uint32_t aligned_x86_128[4] = {0};
+  uint32_t unaligned_x86_128[4] = {0};
+  atfw::util::hash::murmur_hash3_x86_128(aligned_key, kPayloadLength, 0, aligned_x86_128);
+  atfw::util::hash::murmur_hash3_x86_128(unaligned_key, kPayloadLength, 0, unaligned_x86_128);
+  CASE_EXPECT_EQ(0, std::memcmp(aligned_x86_128, unaligned_x86_128, sizeof(aligned_x86_128)));
+
+  uint64_t aligned_x64_128[2] = {0};
+  uint64_t unaligned_x64_128[2] = {0};
+  atfw::util::hash::murmur_hash3_x64_128(aligned_key, kPayloadLength, 0, aligned_x64_128);
+  atfw::util::hash::murmur_hash3_x64_128(unaligned_key, kPayloadLength, 0, unaligned_x64_128);
+  CASE_EXPECT_EQ(0, std::memcmp(aligned_x64_128, unaligned_x64_128, sizeof(aligned_x64_128)));
 }
 
 CASE_TEST(murmur_hash, hash2_distribution) {
