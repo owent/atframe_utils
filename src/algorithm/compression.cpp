@@ -41,13 +41,17 @@ static constexpr T _numeric_limits_max() noexcept {
 }
 
 static bool _resize_output(std::vector<unsigned char>& output, size_t size) noexcept {
+#  if defined(ATFRAMEWORK_UTILS_ENABLE_EXCEPTION) && ATFRAMEWORK_UTILS_ENABLE_EXCEPTION
   try {
+#  endif
     output.resize(size);
     return true;
+#  if defined(ATFRAMEWORK_UTILS_ENABLE_EXCEPTION) && ATFRAMEWORK_UTILS_ENABLE_EXCEPTION
   } catch (...) {
     output.clear();
     return false;
   }
+#  endif
 }
 
 static bool _size_to_int(size_t input, int& output) noexcept {
@@ -352,7 +356,9 @@ ATFRAMEWORK_UTILS_API bool is_algorithm_supported(algorithm_t type) noexcept {
 
 ATFRAMEWORK_UTILS_API std::vector<algorithm_t> get_supported_algorithms() noexcept {
   std::vector<algorithm_t> result;
+#  if defined(ATFRAMEWORK_UTILS_ENABLE_EXCEPTION) && ATFRAMEWORK_UTILS_ENABLE_EXCEPTION
   try {
+#  endif
     result.reserve(4);
 #  if defined(ATFW_UTIL_MACRO_COMPRESSION_ZSTD)
     result.push_back(algorithm_t::kZstd);
@@ -366,9 +372,11 @@ ATFRAMEWORK_UTILS_API std::vector<algorithm_t> get_supported_algorithms() noexce
 #  if defined(ATFW_UTIL_MACRO_COMPRESSION_ZLIB)
     result.push_back(algorithm_t::kZlib);
 #  endif
+#  if defined(ATFRAMEWORK_UTILS_ENABLE_EXCEPTION) && ATFRAMEWORK_UTILS_ENABLE_EXCEPTION
   } catch (...) {
     result.clear();
   }
+#  endif
   return result;
 }
 
