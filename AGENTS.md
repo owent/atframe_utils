@@ -1,7 +1,8 @@
 # atframe_utils Agent Guide
 
-This is the canonical, cross-agent guide for this subproject. Keep it short: put repeatable workflows in
-`.agents/skills/*/SKILL.md`, and keep `.github/copilot-instructions.md` / `CLAUDE.md` as lightweight bridges.
+This is the canonical, self-contained cross-agent guide for this repository. Keep it short: put repeatable workflows in
+`.agents/skills/*/SKILL.md`, keep `CLAUDE.md` as a lightweight bridge, and avoid redundant tool-specific prompt copies.
+This repository manages its own AI agent prompts and skills; it must not depend on a parent or sibling repository guide.
 
 **atframe_utils** is a C++ utility library for algorithms, crypto, logging, memory, networking, and common runtime
 helpers.
@@ -20,6 +21,9 @@ helpers.
 ## Always-On Rules
 
 - Respect the user's dirty workspace: inspect current file contents before editing and avoid unrelated reformatting.
+- When creating AI scratch files or asking scripts to emit temporary data/logs, use a subdirectory inside an ignored
+   build tree (prefer `build/_agent_tmp/` or an existing `build*/_agent_tmp/`) so `.gitignore` covers it; never write
+   temporary artifacts to the repository root.
 - Read the matching `.agents/skills/*/SKILL.md` before build or test work; skills contain commands and edge cases.
 - After C++ edits, run `clang-format -i <file>` and verify with `clang-format --dry-run --Werror <file>` when practical.
 
@@ -51,6 +55,8 @@ Read the matching `.agents/skills/*/SKILL.md` before specialized work:
 ## Agent File Compatibility
 
 - `AGENTS.md` is canonical for tools that support hierarchical agent instructions.
-- `.github/copilot-instructions.md` exists only to point VS Code Copilot at this guide and `.agents/skills/`.
+- `.agents/skills/` is the portable project skill location; keep each `SKILL.md` focused and self-contained.
+- Do not maintain `.github/copilot-instructions.md` copies when `AGENTS.md` and `.agents/skills/` cover the same rules.
 - `CLAUDE.md` exists only to point Claude-compatible tools at this guide and `.agents/skills/`.
+- Do not make this repository depend on root, sibling, or vendored-submodule prompt files.
 - Keep skill folder names and frontmatter `name` values identical; descriptions are the discovery surface.
