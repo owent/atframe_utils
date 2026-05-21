@@ -6,7 +6,24 @@
 
 #include <algorithm>
 #include <cstdlib>
+#include <memory>
+#include <unordered_map>
 #include <unordered_set>
+
+#ifdef ATFRAMEWORK_UTILS_SHELL_FONT_USING_WIN32_CONSOLE
+
+/**
+ * Window 控制台相关
+ * @see https://msdn.microsoft.com/zh-cn/windows/apps/ms686047%28v=vs.100%29.aspx
+ * @see https://github.com/owent-utils/python/blob/master/print_color.py
+ */
+
+#  ifndef WIN32_LEAN_AND_MEAN
+#    define WIN32_LEAN_AND_MEAN
+#  endif
+
+#  include <Windows.h>
+#endif
 
 #include "common/string_oprs.h"
 
@@ -15,15 +32,7 @@
 ATFRAMEWORK_UTILS_NAMESPACE_BEGIN
 namespace cli {
 
-namespace detail {
-static char tolower(char c) {
-  if (c >= 'A' && c <= 'Z') {
-    return static_cast<char>(c - 'A' + 'a');
-  }
-
-  return c;
-}
-
+namespace {
 static std::string getenv(const char *name) {
   std::string ret;
 #if (defined(_MSC_VER) && _MSC_VER >= 1600) || (defined(__STDC_VERSION__) && __STDC_VERSION__ >= 201112L)
@@ -36,7 +45,7 @@ static std::string getenv(const char *name) {
   }
 
   ret.resize(len, 0);
-  if (0 != getenv_s(&len, &ret[0], ret.size(), name)) {
+  if (0 != getenv_s(&len, ret.data(), ret.size(), name)) {
     ret.clear();
     return ret;
   }
@@ -59,7 +68,7 @@ static std::string getenv(const char *name) {
 #endif
 }
 
-}  // namespace detail
+}  // namespace
 
 ATFRAMEWORK_UTILS_API shell_font::shell_font(int iFlag) : m_iFlag(iFlag) {}
 
@@ -94,8 +103,11 @@ ATFRAMEWORK_UTILS_API std::string shell_font::GetStyleCode(int iFlag) {
   if (iFlag & 0xff) {
     std::string base = "30";
     int iStart = 0;
-    for (; iStart < 8 && !(iFlag & (1 << iStart)); ++iStart);
-    if (iStart < 8) base[1] = static_cast<char>(base[1] + iStart);
+    for (; iStart < 8 && !(iFlag & (1 << iStart)); ++iStart) {
+    }
+    if (iStart < 8) {
+      base[1] = static_cast<char>(base[1] + iStart);
+    }
     ret += std::string((!bFirst) ? ";" : "") + base;
     bFirst = false;
   }
@@ -105,8 +117,11 @@ ATFRAMEWORK_UTILS_API std::string shell_font::GetStyleCode(int iFlag) {
   if (iFlag & 0xff) {
     std::string base = "40";
     int iStart = 0;
-    for (; iStart < 8 && !(iFlag & (1 << iStart)); ++iStart);
-    if (iStart < 8) base[1] = static_cast<char>(base[1] + iStart);
+    for (; iStart < 8 && !(iFlag & (1 << iStart)); ++iStart) {
+    }
+    if (iStart < 8) {
+      base[1] = static_cast<char>(base[1] + iStart);
+    }
     ret += std::string((!bFirst) ? ";" : "") + base;
     // bFirst = false; no need to set because not used later
   }
@@ -120,6 +135,7 @@ ATFRAMEWORK_UTILS_API std::string shell_font::GetStyleCode() { return GetStyleCo
 
 ATFRAMEWORK_UTILS_API std::string shell_font::GetStyleCloseCode() { return SHELL_FONT_SET_OPT_END; }
 
+namespace {
 static int _check_term_color_status() {
   std::unordered_set<std::string> color_term;
   color_term.insert("eterm");
@@ -157,17 +173,17 @@ static int _check_term_color_status() {
   color_term_prefix.insert("rxvt");
 
   do {
-    std::string term_name = detail::getenv("TERM");
+    std::string term_name = getenv("TERM");
     if (term_name.empty()) {
       break;
     }
 
-    std::transform(term_name.begin(), term_name.end(), term_name.begin(), detail::tolower);
+    std::transform(term_name.begin(), term_name.end(), term_name.begin(), string::tolower<char>);
 
     if (color_term.end() != color_term.find(term_name)) {
       return 1;
     }
-    for (auto &prefix : color_term_prefix) {
+    for (const auto &prefix : color_term_prefix) {
       if (0 == UTIL_STRFUNC_STRNCMP(term_name.c_str(), prefix.c_str(), prefix.size())) {
         return 1;
       }
@@ -184,23 +200,23 @@ static int _check_term_color_status() {
   } while (false);
 
   {
-    std::string tf_build = detail::getenv("TF_BUILD");
-    std::string agent_name = detail::getenv("AGENT_NAME");
+    std::string tf_build = getenv("TF_BUILD");
+    std::string agent_name = getenv("AGENT_NAME");
     if (!tf_build.empty() && !agent_name.empty()) {
       return 1;
     }
   }
 
-  if (!detail::getenv("COLORTERM").empty()) {
+  if (!getenv("COLORTERM").empty()) {
     return 1;
   }
 
   do {
-    std::string term_program = detail::getenv("TERM_PROGRAM");
+    std::string term_program = getenv("TERM_PROGRAM");
     if (term_program.empty()) {
       break;
     }
-    std::transform(term_program.begin(), term_program.end(), term_program.begin(), detail::tolower);
+    std::transform(term_program.begin(), term_program.end(), term_program.begin(), string::tolower<char>);
     if (term_program.find("apple_terminal") != std::string::npos ||
         term_program.find("iterm.app") != std::string::npos) {
       return 1;
@@ -209,19 +225,19 @@ static int _check_term_color_status() {
 
   // Detect CI
   do {
-    std::string ci = detail::getenv("CI");
+    std::string ci = getenv("CI");
     if (ci.empty()) {
       break;
     }
     const char *known_ci_names[] = {"travis",         "circleci",  "appveyor", "gitlab_ci",
                                     "github_actions", "buildkite", "drone"};
-    for (auto known_ci_name : known_ci_names) {
+    for (const auto *known_ci_name : known_ci_names) {
       if (0 == UTIL_STRFUNC_STRCASE_CMP(ci.c_str(), known_ci_name)) {
         return 1;
       }
     }
 
-    std::string ci_name = detail::getenv("CI_NAME");
+    std::string ci_name = getenv("CI_NAME");
     if (ci_name.empty()) {
       break;
     }
@@ -232,6 +248,7 @@ static int _check_term_color_status() {
 
   return -1;
 }
+}  // namespace
 
 ATFRAMEWORK_UTILS_API std::string shell_font::GenerateString(const std::string &strInput, int iFlag) {
   static int status_ = 0;
@@ -240,7 +257,9 @@ ATFRAMEWORK_UTILS_API std::string shell_font::GenerateString(const std::string &
     status_ = _check_term_color_status();
   }
 
-  if (status_ < 0 || iFlag == 0) return strInput;
+  if (status_ < 0 || iFlag == 0) {
+    return strInput;
+  }
   return GetStyleCode(iFlag) + strInput + GetStyleCloseCode();
 }
 
@@ -248,10 +267,11 @@ ATFRAMEWORK_UTILS_API std::string shell_font::GenerateString(const std::string &
   return GenerateString(strInput, m_iFlag);
 }
 
-#ifdef SHELL_FONT_USING_WIN32_CONSOLE
+#ifdef ATFRAMEWORK_UTILS_SHELL_FONT_USING_WIN32_CONSOLE
 
-static std::map<int, WORD> &_get_flag_mapping() {
-  static std::map<int, WORD> ret;
+namespace {
+static std::unordered_map<int, WORD> &_get_flag_mapping() {
+  static std::unordered_map<int, WORD> ret;
   if (ret.empty()) {
     ret[shell_font_style::SHELL_FONT_SPEC_NULL] = 0;
     ret[shell_font_style::SHELL_FONT_SPEC_BOLD] = COMMON_LVB_LEADING_BYTE;
@@ -283,16 +303,21 @@ static std::map<int, WORD> &_get_flag_mapping() {
 }
 
 static WORD _get_default_color() { return FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE; }
+}  // namespace
+
+struct shell_stream::shell_stream_opr::_os_handle_wrapper {
+  HANDLE handle = NULL;
+};
 
 #endif
 
 ATFRAMEWORK_UTILS_API shell_stream::shell_stream_opr::shell_stream_opr(stream_t *os)
-    : pOs(os), flag(shell_font_style::SHELL_FONT_SPEC_NULL) {
-#ifdef SHELL_FONT_USING_WIN32_CONSOLE
+    : pOs(os), hOsHandle(std::make_shared<_os_handle_wrapper>()), flag(shell_font_style::SHELL_FONT_SPEC_NULL) {
+#ifdef ATFRAMEWORK_UTILS_SHELL_FONT_USING_WIN32_CONSOLE
   if (os == &std::cout) {
-    hOsHandle = GetStdHandle(STD_OUTPUT_HANDLE);
+    hOsHandle->handle = GetStdHandle(STD_OUTPUT_HANDLE);
   } else if (os == &std::cerr) {
-    hOsHandle = GetStdHandle(STD_ERROR_HANDLE);
+    hOsHandle->handle = GetStdHandle(STD_ERROR_HANDLE);
   } else {
     hOsHandle = nullptr;
   }
@@ -307,15 +332,18 @@ ATFRAMEWORK_UTILS_API shell_stream::shell_stream_opr::~shell_stream_opr() {
   reset();
 }
 
-ATFRAMEWORK_UTILS_API shell_stream::shell_stream_opr::shell_stream_opr(const shell_stream_opr &other) {
-  (*this) = other;
-}
+ATFRAMEWORK_UTILS_API shell_stream::shell_stream_opr::shell_stream_opr(const shell_stream_opr &other)
+    : pOs(other.pOs), hOsHandle(other.hOsHandle), flag(shell_font_style::SHELL_FONT_SPEC_NULL) {}
 
 ATFRAMEWORK_UTILS_API shell_stream::shell_stream_opr &shell_stream::shell_stream_opr::operator=(
     const shell_stream::shell_stream_opr &other) {
+  if (this == &other) {
+    return *this;
+  }
+
   pOs = other.pOs;
 
-#ifdef SHELL_FONT_USING_WIN32_CONSOLE
+#ifdef ATFRAMEWORK_UTILS_SHELL_FONT_USING_WIN32_CONSOLE
   hOsHandle = other.hOsHandle;
 #endif
   flag = shell_font_style::SHELL_FONT_SPEC_NULL;
@@ -374,15 +402,15 @@ ATFRAMEWORK_UTILS_API void shell_stream::shell_stream_opr::close() const {
     return;
   }
 
-#ifdef SHELL_FONT_USING_WIN32_CONSOLE
+#ifdef ATFRAMEWORK_UTILS_SHELL_FONT_USING_WIN32_CONSOLE
   if (nullptr != hOsHandle) {
-    std::map<int, WORD> &color_map = _get_flag_mapping();
+    std::unordered_map<int, WORD> &color_map = _get_flag_mapping();
     WORD style = 0;
     int left_flag = flag;
 
     while (left_flag) {
       int f = left_flag & (left_flag ^ (left_flag - 1));
-      std::map<int, WORD>::iterator iter = color_map.find(f);
+      std::unordered_map<int, WORD>::iterator iter = color_map.find(f);
       if (iter != color_map.end()) {
         style |= iter->second;
       }
@@ -390,7 +418,7 @@ ATFRAMEWORK_UTILS_API void shell_stream::shell_stream_opr::close() const {
       left_flag = left_flag & (left_flag - 1);
     }
 
-    SetConsoleTextAttribute(hOsHandle, style);
+    SetConsoleTextAttribute(hOsHandle->handle, style);
   }
 #else
   (*pOs) << shell_font::GetStyleCode(flag);
@@ -406,9 +434,9 @@ ATFRAMEWORK_UTILS_API void shell_stream::shell_stream_opr::reset() const {
 
   close();
 
-#ifdef SHELL_FONT_USING_WIN32_CONSOLE
-  if (nullptr != hOsHandle) {
-    SetConsoleTextAttribute(hOsHandle, _get_default_color());
+#ifdef ATFRAMEWORK_UTILS_SHELL_FONT_USING_WIN32_CONSOLE
+  if (hOsHandle && nullptr != hOsHandle->handle) {
+    SetConsoleTextAttribute(hOsHandle->handle, _get_default_color());
   }
 #else
 

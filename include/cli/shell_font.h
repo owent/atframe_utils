@@ -8,7 +8,7 @@
 #include <config/compiler_features.h>
 
 #include <iostream>
-#include <map>
+#include <memory>
 #include <string>
 #include <type_traits>
 
@@ -32,15 +32,7 @@
  * @see https://github.com/owent-utils/python/blob/master/print_color.py
  */
 #ifdef _MSC_VER
-
-#  ifndef WIN32_LEAN_AND_MEAN
-#    define WIN32_LEAN_AND_MEAN
-#  endif
-
-#  include <Windows.h>
-
-#  define SHELL_FONT_USING_WIN32_CONSOLE
-
+#  define ATFRAMEWORK_UTILS_SHELL_FONT_USING_WIN32_CONSOLE
 #endif
 
 ATFRAMEWORK_UTILS_NAMESPACE_BEGIN
@@ -168,8 +160,9 @@ class ATFW_UTIL_SYMBOL_VISIBLE shell_stream {
 
    private:
     stream_t *pOs;
-#ifdef SHELL_FONT_USING_WIN32_CONSOLE
-    HANDLE hOsHandle;
+#ifdef ATFRAMEWORK_UTILS_SHELL_FONT_USING_WIN32_CONSOLE
+    struct _os_handle_wrapper;
+    std::shared_ptr<_os_handle_wrapper> hOsHandle;
 #endif
     mutable int flag;
 
@@ -232,4 +225,3 @@ ATFRAMEWORK_UTILS_NAMESPACE_END
 #elif defined(__clang__) || defined(__apple_build_version__)
 #  pragma clang diagnostic pop
 #endif
-
