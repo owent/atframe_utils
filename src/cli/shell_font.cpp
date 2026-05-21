@@ -312,7 +312,11 @@ struct shell_stream::shell_stream_opr::_os_handle_wrapper {
 #endif
 
 ATFRAMEWORK_UTILS_API shell_stream::shell_stream_opr::shell_stream_opr(stream_t *os)
-    : pOs(os), hOsHandle(std::make_shared<_os_handle_wrapper>()), flag(shell_font_style::SHELL_FONT_SPEC_NULL) {
+    : pOs(os),
+#ifdef ATFRAMEWORK_UTILS_SHELL_FONT_USING_WIN32_CONSOLE
+      hOsHandle(std::make_shared<_os_handle_wrapper>()),
+#endif
+      flag(shell_font_style::SHELL_FONT_SPEC_NULL) {
 #ifdef ATFRAMEWORK_UTILS_SHELL_FONT_USING_WIN32_CONSOLE
   if (os == &std::cout) {
     hOsHandle->handle = GetStdHandle(STD_OUTPUT_HANDLE);
@@ -333,7 +337,12 @@ ATFRAMEWORK_UTILS_API shell_stream::shell_stream_opr::~shell_stream_opr() {
 }
 
 ATFRAMEWORK_UTILS_API shell_stream::shell_stream_opr::shell_stream_opr(const shell_stream_opr &other)
-    : pOs(other.pOs), hOsHandle(other.hOsHandle), flag(shell_font_style::SHELL_FONT_SPEC_NULL) {}
+    : pOs(other.pOs),
+#ifdef ATFRAMEWORK_UTILS_SHELL_FONT_USING_WIN32_CONSOLE
+      hOsHandle(other.hOsHandle),
+#endif
+      flag(shell_font_style::SHELL_FONT_SPEC_NULL) {
+}
 
 ATFRAMEWORK_UTILS_API shell_stream::shell_stream_opr &shell_stream::shell_stream_opr::operator=(
     const shell_stream::shell_stream_opr &other) {
