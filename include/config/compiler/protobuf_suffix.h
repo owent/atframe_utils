@@ -4,9 +4,13 @@
 #  pragma pop_macro("cast")
 #  pragma pop_macro("verify")
 #  pragma pop_macro("check")
-#  pragma pop_macro("min")
-#  pragma pop_macro("max")
-#  pragma pop_macro("GetObject")
+#  if defined(_WIN32) || defined(_WIN64)
+#    pragma pop_macro("min")
+#    pragma pop_macro("max")
+#    pragma pop_macro("CreateFile")
+#    pragma pop_macro("DeleteFile")
+#    pragma pop_macro("GetObject")
+#  endif
 
 #  include "template_suffix.h"
 

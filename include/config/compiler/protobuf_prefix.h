@@ -70,17 +70,27 @@
 
 #include "template_prefix.h"
 
-#pragma push_macro("GetObject")
-#ifdef GetObject
-#  undef GetObject
-#endif
-#pragma push_macro("max")
-#ifdef max
-#  undef max
-#endif
-#pragma push_macro("min")
-#ifdef min
-#  undef min
+#if defined(_WIN32) || defined(_WIN64)
+#  pragma push_macro("GetObject")
+#  ifdef GetObject
+#    undef GetObject
+#  endif
+#  pragma push_macro("DeleteFile")
+#  ifdef DeleteFile
+#    undef DeleteFile
+#  endif
+#  pragma push_macro("CreateFile")
+#  ifdef CreateFile
+#    undef CreateFile
+#  endif
+#  pragma push_macro("max")
+#  ifdef max
+#    undef max
+#  endif
+#  pragma push_macro("min")
+#  ifdef min
+#    undef min
+#  endif
 #endif
 // Unreal Engine will define these macros
 #pragma push_macro("check")
