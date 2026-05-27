@@ -1524,48 +1524,41 @@ struct test_wal_object_test_allocator_storage {
   inline test_wal_object_test_allocator_storage() {}
 };
 
-template <class T>
-struct test_wal_object_test_allocator : public ::std::allocator<T> {
-  template <class U>
-  struct rebind {
-    using other = test_wal_object_test_allocator<U>;
-  };
+template <class T, class BackendAllocator = ::std::allocator<T>>
+struct test_wal_object_test_allocator
+    : public ::atfw::util::memory::allocator_adapter<test_wal_object_test_allocator, T, BackendAllocator> {
+  using base_type = ::atfw::util::memory::allocator_adapter<test_wal_object_test_allocator, T, BackendAllocator>;
+  using pointer = typename base_type::pointer;
+  using size_type = typename base_type::size_type;
 
-  WAL_TEST_ALLOCATOR_CONSTEXPR T* allocate(::std::size_t n) {
+  WAL_TEST_ALLOCATOR_CONSTEXPR pointer allocate(size_type n) {
     storage->allocate_counter += n;
-    return ::std::allocator<T>::allocate(n);
+    return base_type::allocate(n);
   }
 
 #if !((defined(__cplusplus) && __cplusplus >= 202002L) || (defined(_MSVC_LANG) && _MSVC_LANG >= 202002L))
-  T* allocate(::std::size_t n, const void* hint) {
+  pointer allocate(size_type n, typename base_type::const_void_pointer hint) {
     storage->allocate_counter += n;
-    return std::allocator<T>::allocate(n, hint);
+    return base_type::allocate(n, hint);
   }
 #endif
 
-  void deallocate(T* p, ::std::size_t n) {
+  void deallocate(pointer p, size_type n) {
     storage->deallocate_counter += n;
-    std::allocator<T>::deallocate(p, n);
+    base_type::deallocate(p, n);
   }
 
   std::shared_ptr<test_wal_object_test_allocator_storage> storage;
 
   inline test_wal_object_test_allocator() noexcept
-      : storage(std::make_shared<test_wal_object_test_allocator_storage>()) {}
+      : base_type(), storage(std::make_shared<test_wal_object_test_allocator_storage>()) {}
 
-  template <class U>
-  inline test_wal_object_test_allocator(const test_wal_object_test_allocator<U>& other) noexcept
-      : storage(other.storage) {}  // NOLINT: runtime/explicit
+  template <class U, class UBackendAllocator>
+  inline test_wal_object_test_allocator(const test_wal_object_test_allocator<U, UBackendAllocator>& other) noexcept
+      : base_type(static_cast<const typename test_wal_object_test_allocator<U, UBackendAllocator>::base_type&>(other)),
+        storage(other.storage) {}  // NOLINT: runtime/explicit
 };
 
-}  // namespace st
-namespace std {
-template <class T>
-struct allocator_traits<st::test_wal_object_test_allocator<T>>
-    : public ::atfw::util::memory::allocator_traits<st::test_wal_object_test_allocator<T>> {};
-}  // namespace std
-
-namespace st {
 CASE_TEST(wal_object, with_allocator) {
   test_wal_object_log_storage_type storage;
   test_wal_object_context ctx;
@@ -1598,4 +1591,3 @@ CASE_TEST(wal_object, with_allocator) {
 }
 
 }  // namespace st
-
