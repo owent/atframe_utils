@@ -48,6 +48,14 @@
       ((defined(__cplusplus) && __cplusplus >= 201704L) || (defined(_MSVC_LANG) && _MSVC_LANG >= 201704L))
 #    pragma warning(disable : 4996)
 #  endif
+
+// FIXME: MSVC 14.51+ (_MSC_VER >= 1950) emits false-positive C5285 when instantiating
+// std::allocator_traits<UserAlloc> with a user-defined allocator. Using the primary template
+// is well-formed; only explicit specialization is forbidden by N5014. Remove this guard once
+// MSVC fixes the over-diagnostic (add an upper bound like `_MSC_VER < 19XX` when known).
+#  if _MSC_VER >= 1950
+#    pragma warning(disable : 5285)
+#  endif
 #elif defined(__GNUC__) && !defined(__clang__) && !defined(__apple_build_version__)
 #  pragma GCC diagnostic push
 #  pragma GCC diagnostic ignored "-Wdeprecated"
@@ -73,7 +81,7 @@ class __util_memory_allocator_adapter_is_always_equal {
 template <class LeftBackendAllocator, class RightBackendAllocator>
 class __util_memory_allocator_adapter_backend_equal {
   template <class LeftAllocator, class RightAllocator>
-  static auto _S_check(int)
+  static auto _S_check(int)  // NOLINT: readability/casting
       -> decltype(::std::declval<const LeftAllocator&>() == ::std::declval<const RightAllocator&>(),
                   ::std::true_type());
 
@@ -135,8 +143,8 @@ class ATFW_UTIL_SYMBOL_VISIBLE allocator_adapter {
       ::std::is_nothrow_default_constructible<backend_allocator_type>::value)
       : backend_allocator_() {}
 
-  inline explicit ATFRAMEWORK_UTILS_MEMORY_ALLOCATOR_CONSTEXPR
-  allocator_adapter(const backend_allocator_type& backend) noexcept(
+  inline explicit ATFRAMEWORK_UTILS_MEMORY_ALLOCATOR_CONSTEXPR allocator_adapter(
+      const backend_allocator_type& backend) noexcept(  // NOLINT: runtime/explicit
       ::std::is_nothrow_copy_constructible<backend_allocator_type>::value)
       : backend_allocator_(backend) {}
 

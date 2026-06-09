@@ -1559,6 +1559,17 @@ struct test_wal_object_test_allocator
         storage(other.storage) {}  // NOLINT: runtime/explicit
 };
 
+// FIXME: MSVC 19.50+ (_MSC_VER >= 1950) emits false-positive C5285 when instantiating
+// std::allocator_traits<UserAlloc> with a user-defined allocator. The STL marks
+// allocator_traits with [[msvc::no_specializations]] (microsoft/STL#5536), but the
+// compiler over-diagnoses: using the primary template is well-formed, only explicit
+// specialization is forbidden by N5014. Remove this guard once MSVC fixes the
+// false positive (add an upper bound like `_MSC_VER < 19XX` when known).
+#if defined(_MSC_VER) && _MSC_VER >= 1950
+#  pragma warning(push)
+#  pragma warning(disable : 5285)
+#endif
+
 CASE_TEST(wal_object, with_allocator) {
   test_wal_object_log_storage_type storage;
   test_wal_object_context ctx;
@@ -1589,5 +1600,9 @@ CASE_TEST(wal_object, with_allocator) {
   }
   CASE_EXPECT_EQ(alloc.storage->deallocate_counter, 1);
 }
+
+#if defined(_MSC_VER) && _MSC_VER >= 1950
+#  pragma warning(pop)
+#endif
 
 }  // namespace st
