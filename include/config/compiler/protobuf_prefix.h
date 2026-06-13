@@ -16,7 +16,9 @@
 #    endif
 #  endif
 
+#  pragma warning(disable : 4073)
 #  pragma warning(disable : 4100)
+#  pragma warning(disable : 4125)
 #  pragma warning(disable : 4244)
 #  pragma warning(disable : 4251)
 #  pragma warning(disable : 4267)
