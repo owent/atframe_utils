@@ -24,8 +24,8 @@ cxx utils code
 | Linux         | Clang              | With libc++           |
 | MinGW64       | GCC                | Static linking        |
 | MinGW64       | GCC                | Dynamic linking       |
-| Windows       | Visual Studio 2022 | Static linking        |
-| Windows       | Visual Studio 2022 | Dynamic linking       |
+| Windows       | Visual Studio 2026 | Static linking        |
+| Windows       | Visual Studio 2026 | Dynamic linking       |
 | macOS         | AppleClang         | With libc++           |
 
 ## Usage
