@@ -21,9 +21,11 @@ helpers.
 ## Always-On Rules
 
 - Respect the user's dirty workspace: inspect current file contents before editing and avoid unrelated reformatting.
-- When creating AI scratch files or asking scripts to emit temporary data/logs, use a subdirectory inside an ignored
-   build tree (prefer `build/_agent_tmp/` or an existing `build*/_agent_tmp/`) so `.gitignore` covers it; never write
-   temporary artifacts to the repository root.
+- Resolve `<BUILD_DIR>` before creating build trees or temporary files: read the nearest `.vscode/settings.json` for
+  `cmake.buildDirectory`; if absent, infer from clangd `--compile-commands-dir=...` or an existing configured build
+  tree; if no user setting is readable, use `build`.
+- Put all CMake build trees, AI scratch files, script output/logs, and temporary data under `<BUILD_DIR>/...`; for agent
+  scratch use `<BUILD_DIR>/_agent_tmp/...`. Never create ad-hoc temp files in the repository root.
 - Read the matching `.agents/skills/*/SKILL.md` before build or test work; skills contain commands and edge cases.
 - After C++ edits, run `clang-format -i <file>` and verify with `clang-format --dry-run --Werror <file>` when practical.
 
@@ -31,9 +33,13 @@ helpers.
 
 1. **Namespace**: public code is under `atfw::util`.
 2. **Include guards**: use `#pragma once`.
-3. **Naming**: classes/functions use `snake_case`; constants use `UPPER_SNAKE_CASE`; member variables use trailing `_`.
-4. **Error handling**: use return codes or `nostd::result` types as existing code does.
-5. **Anonymous namespace + static**: in `.cpp` files, file-local functions should be inside an anonymous namespace **and**
+3. **Header code**: any function, method, friend, or operator body written in a header must use
+   `ATFW_UTIL_FORCEINLINE`; avoid plain `inline` for project code unless matching generated or third-party code.
+4. **Exported ABI**: interfaces declared with `ATFRAMEWORK_UTILS_API` or other `*_API` export macros must be implemented
+   in `.cpp` files, not headers, so ABI stays stable across compilers and build options.
+5. **Naming**: classes/functions use `snake_case`; constants use `UPPER_SNAKE_CASE`; member variables use trailing `_`.
+6. **Error handling**: use return codes or `nostd::result` types as existing code does.
+7. **Anonymous namespace + static**: in `.cpp` files, file-local functions should be inside an anonymous namespace **and**
    keep the `static` keyword.
 
    ```cpp
