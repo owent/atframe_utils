@@ -1509,22 +1509,22 @@ struct ATFRAMEWORK_UTILS_API_HEAD_ONLY compat_strong_ptr_function_trait<compat_s
   static inline std::shared_ptr<Y> make_shared(ArgsT&&... args) {
     // Some versions os STL will cause warning by mistake, which may trigger -Werror/-WX to fail the build.
     // Use include guard to ignore them.
-    // NOLINT: build/include
-#include "config/compiler/internal/stl_compact_prefix.h.inc"  // IWYU pragma: keep NOLINT(build/include,readability-duplicate-include)
+    // NOLINTNEXTLINE(build/include,readability-duplicate-include)
+#include "config/compiler/internal/stl_compact_prefix.h.inc"  // IWYU pragma: keep
     return std::make_shared<Y>(std::forward<ArgsT>(args)...);
-    // NOLINT: build/include
-#include "config/compiler/internal/stl_compact_suffix.h.inc"  // IWYU pragma: keep NOLINT(build/include,readability-duplicate-include)
+    // NOLINTNEXTLINE(build/include,readability-duplicate-include)
+#include "config/compiler/internal/stl_compact_suffix.h.inc"  // IWYU pragma: keep
   }
 
   template <class Y, class Alloc, class... TArgs>
   static inline std::shared_ptr<Y> allocate_shared(const Alloc& alloc, TArgs&&... args) {
     // Some versions os STL will cause warning by mistake, which may trigger -Werror/-WX to fail the build.
     // Use include guard to ignore them.
-    // NOLINT: build/include
-#include "config/compiler/internal/stl_compact_prefix.h.inc"  // IWYU pragma: keep NOLINT(build/include,readability-duplicate-include)
+    // NOLINTNEXTLINE(build/include,readability-duplicate-include)
+#include "config/compiler/internal/stl_compact_prefix.h.inc"  // IWYU pragma: keep
     return std::allocate_shared<Y>(alloc, std::forward<TArgs>(args)...);
-    // NOLINT: build/include
-#include "config/compiler/internal/stl_compact_suffix.h.inc"  // IWYU pragma: keep NOLINT(build/include,readability-duplicate-include)
+    // NOLINTNEXTLINE(build/include,readability-duplicate-include)
+#include "config/compiler/internal/stl_compact_suffix.h.inc"  // IWYU pragma: keep
   }
 
   template <class Y, class F>
@@ -1565,4 +1565,3 @@ struct __is_nullability_support<memory::strong_rc_ptr<T>> {
 }  // namespace nostd
 
 ATFRAMEWORK_UTILS_NAMESPACE_END
-
