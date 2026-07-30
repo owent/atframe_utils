@@ -55,7 +55,9 @@
 
 namespace {
 
-using cpu_time_reader = uint64_t (*)() noexcept;
+// noexcept did not become part of the function type until C++17. Keep the stored function pointer compatible with the
+// library's C++14 baseline; every reader implementation remains noexcept.
+using cpu_time_reader = uint64_t (*)();
 
 struct cpu_time_clock_state {
   cpu_time_clock_state(cpu_time_reader reader, uint64_t numerator, uint64_t denominator) noexcept
