@@ -54,18 +54,29 @@
 #include <type_traits>
 
 namespace {
+using cpu_time_duration = ATFRAMEWORK_UTILS_NAMESPACE_ID::platform::cpu_time_counter::duration_type;
+using cpu_time_duration_per_nanosecond = std::ratio_divide<std::chrono::nanoseconds::period, cpu_time_duration::period>;
+static_assert(cpu_time_duration_per_nanosecond::den == 1,
+              "The preferred CPU time duration must exactly represent nanoseconds");
+constexpr uint64_t CPU_TIME_DURATION_UNITS_PER_NANOSECOND =
+    static_cast<uint64_t>(cpu_time_duration_per_nanosecond::num);
+constexpr uint64_t CPU_TIME_MAXIMUM_UNAMBIGUOUS_OFFSET = (std::numeric_limits<uint64_t>::max)() / 2;
 
 // noexcept did not become part of the function type until C++17. Keep the stored function pointer compatible with the
 // library's C++14 baseline; every reader implementation remains noexcept.
 using cpu_time_reader = uint64_t (*)();
 
 struct cpu_time_clock_state {
-  cpu_time_clock_state(cpu_time_reader reader, uint64_t numerator, uint64_t denominator) noexcept
-      : read(reader), nanoseconds_numerator(numerator), nanoseconds_denominator(denominator) {}
+  cpu_time_clock_state(cpu_time_reader reader, uint64_t numerator, uint64_t multiplier, uint64_t denominator) noexcept
+      : read(reader),
+        duration_numerator(numerator),
+        duration_multiplier(multiplier),
+        duration_denominator(denominator) {}
 
   cpu_time_reader read;
-  uint64_t nanoseconds_numerator;
-  uint64_t nanoseconds_denominator;
+  uint64_t duration_numerator;
+  uint64_t duration_multiplier;
+  uint64_t duration_denominator;
 };
 
 static uint64_t greatest_common_divisor(uint64_t left, uint64_t right) noexcept {
@@ -80,16 +91,22 @@ static uint64_t greatest_common_divisor(uint64_t left, uint64_t right) noexcept 
 static cpu_time_clock_state make_cpu_time_clock_state(cpu_time_reader read, uint64_t nanoseconds_numerator,
                                                       uint64_t nanoseconds_denominator) noexcept {
   if (nanoseconds_numerator == 0 || nanoseconds_denominator == 0) {
-    return cpu_time_clock_state{read, 1, 1};
+    return cpu_time_clock_state{read, 1, 1, 1};
   }
 
-  const uint64_t divisor = greatest_common_divisor(nanoseconds_numerator, nanoseconds_denominator);
-  return cpu_time_clock_state{read, nanoseconds_numerator / divisor, nanoseconds_denominator / divisor};
+  uint64_t duration_multiplier = CPU_TIME_DURATION_UNITS_PER_NANOSECOND;
+  uint64_t divisor = greatest_common_divisor(nanoseconds_numerator, nanoseconds_denominator);
+  nanoseconds_numerator /= divisor;
+  nanoseconds_denominator /= divisor;
+  divisor = greatest_common_divisor(duration_multiplier, nanoseconds_denominator);
+  duration_multiplier /= divisor;
+  nanoseconds_denominator /= divisor;
+  return cpu_time_clock_state{read, nanoseconds_numerator, duration_multiplier, nanoseconds_denominator};
 }
 
 static uint64_t read_steady_clock() noexcept {
   const auto now = std::chrono::steady_clock::now().time_since_epoch();
-  return static_cast<uint64_t>(std::chrono::duration_cast<std::chrono::nanoseconds>(now).count());
+  return static_cast<uint64_t>(std::chrono::duration_cast<cpu_time_duration>(now).count());
 }
 
 #if defined(_WIN32)
@@ -230,7 +247,7 @@ static cpu_time_clock_state initialize_cpu_time_clock_state() noexcept {
   return make_cpu_time_clock_state(&read_monotonic_clock, 1, 1);
 #endif
 
-  return make_cpu_time_clock_state(&read_steady_clock, 1, 1);
+  return cpu_time_clock_state{&read_steady_clock, 1, 1, 1};
 }
 
 static const cpu_time_clock_state &get_cpu_time_clock_state() noexcept {
@@ -240,26 +257,32 @@ static const cpu_time_clock_state &get_cpu_time_clock_state() noexcept {
   return state;
 }
 
-static std::chrono::nanoseconds convert_cpu_time_counter_to_nanoseconds(const cpu_time_clock_state &clock_state,
-                                                                        uint64_t counter_delta) noexcept {
-  using nanoseconds_rep = std::chrono::nanoseconds::rep;
-  const uint64_t maximum_nanoseconds = static_cast<uint64_t>(std::chrono::nanoseconds::max().count());
+static cpu_time_duration convert_to_duration(const cpu_time_clock_state &clock_state, uint64_t counter_delta) noexcept {
+  using duration_rep = cpu_time_duration::rep;
+  const uint64_t maximum_duration_count = static_cast<uint64_t>(cpu_time_duration::max().count());
 
-  const uint64_t whole_units = counter_delta / clock_state.nanoseconds_denominator;
-  const uint64_t remainder = counter_delta % clock_state.nanoseconds_denominator;
-  if (whole_units > maximum_nanoseconds / clock_state.nanoseconds_numerator) {
-    return std::chrono::nanoseconds::max();
+  const uint64_t whole_units = counter_delta / clock_state.duration_denominator;
+  const uint64_t remainder = counter_delta % clock_state.duration_denominator;
+  if (whole_units > maximum_duration_count / clock_state.duration_numerator) {
+    return cpu_time_duration::max();
   }
 
-  const uint64_t whole_nanoseconds = whole_units * clock_state.nanoseconds_numerator;
-  const uint64_t fractional_nanoseconds = static_cast<uint64_t>(
-      static_cast<long double>(remainder) * static_cast<long double>(clock_state.nanoseconds_numerator) /
-      static_cast<long double>(clock_state.nanoseconds_denominator));
-  if (fractional_nanoseconds > maximum_nanoseconds - whole_nanoseconds) {
-    return std::chrono::nanoseconds::max();
+  uint64_t whole_duration_count = whole_units * clock_state.duration_numerator;
+  if (whole_duration_count > maximum_duration_count / clock_state.duration_multiplier) {
+    return cpu_time_duration::max();
+  }
+  whole_duration_count *= clock_state.duration_multiplier;
+
+  const long double fractional_duration_count = static_cast<long double>(remainder) *
+                                                static_cast<long double>(clock_state.duration_numerator) *
+                                                static_cast<long double>(clock_state.duration_multiplier) /
+                                                static_cast<long double>(clock_state.duration_denominator);
+  if (fractional_duration_count > static_cast<long double>(maximum_duration_count - whole_duration_count)) {
+    return cpu_time_duration::max();
   }
 
-  return std::chrono::nanoseconds{static_cast<nanoseconds_rep>(whole_nanoseconds + fractional_nanoseconds)};
+  return cpu_time_duration{
+      static_cast<duration_rep>(whole_duration_count + static_cast<uint64_t>(fractional_duration_count))};
 }
 
 template <class TMessage>
@@ -302,17 +325,46 @@ static gsl::string_view handle_strerror_r_result(TResult result, gsl::span<char>
 ATFRAMEWORK_UTILS_NAMESPACE_BEGIN
 namespace platform {
 
-ATFRAMEWORK_UTILS_API cpu_time_counter get_cpu_time_counter() noexcept {
+ATFRAMEWORK_UTILS_API cpu_time_counter cpu_time_counter::now() noexcept {
   const cpu_time_clock_state &clock_state = get_cpu_time_clock_state();
   return cpu_time_counter{clock_state.read()};
 }
 
-ATFRAMEWORK_UTILS_API std::chrono::nanoseconds cpu_time_counter_to_nanoseconds(cpu_time_counter begin,
-                                                                               cpu_time_counter end) noexcept {
-  if (end.value_ <= begin.value_) {
-    return std::chrono::nanoseconds{0};
+ATFRAMEWORK_UTILS_API cpu_time_counter::offset_type cpu_time_counter::offset_type::from_duration(
+    cpu_time_counter::duration_type duration) noexcept {
+  if (duration <= duration_type::zero()) {
+    return from_raw_value(0);
   }
-  return convert_cpu_time_counter_to_nanoseconds(get_cpu_time_clock_state(), end.value_ - begin.value_);
+
+  const cpu_time_clock_state &clock_state = get_cpu_time_clock_state();
+  value_type lower = 0;
+  value_type upper = CPU_TIME_MAXIMUM_UNAMBIGUOUS_OFFSET;
+  if (convert_to_duration(clock_state, upper) <= duration) {
+    return from_raw_value(upper);
+  }
+
+  while (lower < upper) {
+    const value_type middle = lower + ((upper - lower + 1) / 2);
+    if (convert_to_duration(clock_state, middle) <= duration) {
+      lower = middle;
+    } else {
+      upper = middle - 1;
+    }
+  }
+
+  return from_raw_value(lower);
+}
+
+ATFRAMEWORK_UTILS_API cpu_time_counter::duration_type cpu_time_counter::offset_type::to_duration() const noexcept {
+  if (value_ > CPU_TIME_MAXIMUM_UNAMBIGUOUS_OFFSET) {
+    return duration_type::zero();
+  }
+  return convert_to_duration(get_cpu_time_clock_state(), value_);
+}
+
+ATFRAMEWORK_UTILS_API cpu_time_counter::duration_type cpu_time_counter::to_duration(cpu_time_counter begin,
+                                                                                    cpu_time_counter end) noexcept {
+  return (end - begin).to_duration();
 }
 
 ATFRAMEWORK_UTILS_API int32_t get_errno() noexcept { return errno; }
