@@ -55,9 +55,9 @@ struct ATFRAMEWORK_UTILS_API_HEAD_ONLY cpu_time_counter {
 
   value_type value_;
 
-  friend cpu_time_counter get_cpu_time_counter() noexcept;
-  friend std::chrono::nanoseconds cpu_time_counter_to_nanoseconds(cpu_time_counter begin,
-                                                                  cpu_time_counter end) noexcept;
+  friend ATFRAMEWORK_UTILS_API cpu_time_counter get_cpu_time_counter() noexcept;
+  friend ATFRAMEWORK_UTILS_API std::chrono::nanoseconds cpu_time_counter_to_nanoseconds(cpu_time_counter begin,
+                                                                                        cpu_time_counter end) noexcept;
 };
 
 /**
