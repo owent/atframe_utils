@@ -41,6 +41,11 @@ struct ATFRAMEWORK_UTILS_API_HEAD_ONLY cpu_time_counter {
     using value_type = cpu_time_counter::value_type;
     using duration_type = cpu_time_counter::duration_type;
 
+    ATFW_UTIL_FORCEINLINE offset_type(const offset_type &) noexcept = default;
+    ATFW_UTIL_FORCEINLINE offset_type(offset_type &&) noexcept = default;
+    ATFW_UTIL_FORCEINLINE offset_type &operator=(const offset_type &) noexcept = default;
+    ATFW_UTIL_FORCEINLINE offset_type &operator=(offset_type &&) noexcept = default;
+
     /**
      * @brief Explicitly create an offset from a native counter tick count.
      */
@@ -109,6 +114,11 @@ struct ATFRAMEWORK_UTILS_API_HEAD_ONLY cpu_time_counter {
 
     value_type value_;
   };
+
+  ATFW_UTIL_FORCEINLINE cpu_time_counter(const cpu_time_counter &) noexcept = default;
+  ATFW_UTIL_FORCEINLINE cpu_time_counter(cpu_time_counter &&) noexcept = default;
+  ATFW_UTIL_FORCEINLINE cpu_time_counter &operator=(const cpu_time_counter &) noexcept = default;
+  ATFW_UTIL_FORCEINLINE cpu_time_counter &operator=(cpu_time_counter &&) noexcept = default;
 
   /**
    * @brief Get an opaque, high-performance monotonic CPU time counter.

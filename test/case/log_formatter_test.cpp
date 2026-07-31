@@ -171,9 +171,9 @@ CASE_TEST(log_formatter, format_microseconds_f) {
   atfw::util::log::log_formatter::caller_info_t caller(atfw::util::log::log_level::kInfo, "INFO", __FILE__, __LINE__,
                                                        __FUNCTION__);
 
-  // %f = microseconds (5 digits)
+  // %f = microseconds (6 digits)
   size_t len = atfw::util::log::log_formatter::format(buffer, sizeof(buffer), "%f", 2, caller);
-  CASE_EXPECT_EQ(5, static_cast<int>(len));
+  CASE_EXPECT_EQ(6, static_cast<int>(len));
   for (size_t i = 0; i < len; ++i) {
     CASE_EXPECT_TRUE(buffer[i] >= '0' && buffer[i] <= '9');
   }

@@ -3,10 +3,11 @@
 // Licensed under the MIT licenses.
 // Created by owent on 2015-06-29
 
+#include <chrono>
+#include <cstdint>
 #include <cstdio>
 #include <cstring>
 #include <string>
-#include <type_traits>
 
 #include "common/string_oprs.h"
 #include "nostd/type_traits.h"
@@ -45,6 +46,35 @@ ATFW_UTIL_SANITIZER_NO_THREAD static nostd::string_view log_formatter_get_level_
 
   return "FATAL";
 }
+
+inline static std::pair<struct tm, time::time_utility::raw_time_t> &log_formatter_get_timepoint() {
+  static THREAD_TLS time_t tm_update_tp = 0;
+  static THREAD_TLS std::pair<struct tm, time::time_utility::raw_time_t> tm_obj{};
+
+  tm_obj.second = time::time_utility::sys_now_realtime();
+  time_t tm_realtime_tp = std::chrono::system_clock::to_time_t(tm_obj.second);
+
+  if (tm_update_tp != tm_realtime_tp) {
+    tm_update_tp = tm_realtime_tp;
+    UTIL_STRFUNC_LOCALTIME_S(&tm_realtime_tp, &tm_obj.first);  // lgtm [cpp/potentially-dangerous-function]
+  }
+
+  return tm_obj;
+}
+
+inline static void log_formatter_write_six_digits(char *output, uint32_t value) noexcept {
+  const uint32_t first_pair = value / 10000;
+  value %= 10000;
+  const uint32_t second_pair = value / 100;
+  const uint32_t third_pair = value % 100;
+
+  output[0] = static_cast<char>((first_pair / 10) + '0');
+  output[1] = static_cast<char>((first_pair % 10) + '0');
+  output[2] = static_cast<char>((second_pair / 10) + '0');
+  output[3] = static_cast<char>((second_pair % 10) + '0');
+  output[4] = static_cast<char>((third_pair / 10) + '0');
+  output[5] = static_cast<char>((third_pair % 10) + '0');
+}
 }  // namespace
 
 std::string log_formatter::project_dir_;
@@ -53,17 +83,9 @@ ATFRAMEWORK_UTILS_API bool log_formatter::check_flag(int32_t flags, int32_t chec
   return (flags & checked) == checked;
 }
 
-ATFRAMEWORK_UTILS_API struct tm *log_formatter::get_iso_tm() {
-  static THREAD_TLS time_t tm_tp = 0;
-  static THREAD_TLS struct tm tm_obj;
-  if (tm_tp != ATFRAMEWORK_UTILS_NAMESPACE_ID::time::time_utility::get_sys_now()) {
-    tm_tp = ATFRAMEWORK_UTILS_NAMESPACE_ID::time::time_utility::get_sys_now();
-    UTIL_STRFUNC_LOCALTIME_S(&tm_tp, &tm_obj);  // lgtm [cpp/potentially-dangerous-function]
-  }
+ATFRAMEWORK_UTILS_API struct tm *log_formatter::get_iso_tm() { return &log_formatter_get_timepoint().first; }
 
-  return &tm_obj;
-}
-
+// NOLINTNEXTLINE(readability-function-cognitive-complexity)
 ATFRAMEWORK_UTILS_API size_t log_formatter::format(char *buff, size_t bufz, const char *fmt, size_t fmtz,
                                                    const caller_info_t &caller) {
   if (nullptr == buff || 0 == bufz) {
@@ -83,22 +105,20 @@ ATFRAMEWORK_UTILS_API size_t log_formatter::format(char *buff, size_t bufz, cons
 
   bool need_parse = false, running = true;
   size_t ret = 0;
-  struct tm tm_obj_cache;
-  struct tm *tm_obj_ptr = nullptr;
+  struct std::pair<struct tm, time::time_utility::raw_time_t> *tm_obj_ptr = nullptr;
 
 // 时间加缓存，以防使用过程中时间变化
-#define LOG_FMT_FN_TM_MEM(VAR, EXPRESS) \
-                                        \
-  int VAR;                              \
-                                        \
-  if (nullptr == tm_obj_ptr) {          \
-    tm_obj_cache = *get_iso_tm();       \
-    tm_obj_ptr = &tm_obj_cache;         \
-    VAR = tm_obj_ptr->EXPRESS;          \
-                                        \
-  } else {                              \
-    VAR = tm_obj_ptr->EXPRESS;          \
-  }
+// NOLINTBEGIN(bugprone-macro-parentheses)
+#define LOG_FMT_FN_TM_MEM(VAR, EXPRESS)          \
+                                                 \
+  int VAR;                                       \
+                                                 \
+  if (nullptr == tm_obj_ptr) {                   \
+    tm_obj_ptr = &log_formatter_get_timepoint(); \
+  }                                              \
+                                                 \
+  VAR = tm_obj_ptr->first.EXPRESS;
+  // NOLINTEND(bugprone-macro-parentheses)
 
   for (size_t i = 0; i < fmtz && ret < bufz && running; ++i) {
     if (!need_parse) {
@@ -121,10 +141,10 @@ ATFRAMEWORK_UTILS_API size_t log_formatter::format(char *buff, size_t bufz, cons
           running = false;
         } else {
           LOG_FMT_FN_TM_MEM(year, tm_year + 1900);
-          buff[ret++] = static_cast<char>(year / 1000 + '0');
-          buff[ret++] = static_cast<char>((year / 100) % 10 + '0');
-          buff[ret++] = static_cast<char>((year / 10) % 10 + '0');
-          buff[ret++] = static_cast<char>(year % 10 + '0');
+          buff[ret++] = static_cast<char>((year / 1000) + '0');
+          buff[ret++] = static_cast<char>(((year / 100) % 10) + '0');
+          buff[ret++] = static_cast<char>(((year / 10) % 10) + '0');
+          buff[ret++] = static_cast<char>((year % 10) + '0');
         }
         break;
       }
@@ -133,8 +153,8 @@ ATFRAMEWORK_UTILS_API size_t log_formatter::format(char *buff, size_t bufz, cons
           running = false;
         } else {
           LOG_FMT_FN_TM_MEM(year, tm_year + 1900);
-          buff[ret++] = static_cast<char>((year / 10) % 10 + '0');
-          buff[ret++] = static_cast<char>(year % 10 + '0');
+          buff[ret++] = static_cast<char>(((year / 10) % 10) + '0');
+          buff[ret++] = static_cast<char>((year % 10) + '0');
         }
         break;
       }
@@ -143,8 +163,8 @@ ATFRAMEWORK_UTILS_API size_t log_formatter::format(char *buff, size_t bufz, cons
           running = false;
         } else {
           LOG_FMT_FN_TM_MEM(mon, tm_mon + 1);
-          buff[ret++] = static_cast<char>(mon / 10 + '0');
-          buff[ret++] = static_cast<char>(mon % 10 + '0');
+          buff[ret++] = static_cast<char>((mon / 10) + '0');
+          buff[ret++] = static_cast<char>((mon % 10) + '0');
         }
         break;
       }
@@ -153,9 +173,9 @@ ATFRAMEWORK_UTILS_API size_t log_formatter::format(char *buff, size_t bufz, cons
           running = false;
         } else {
           LOG_FMT_FN_TM_MEM(yday, tm_yday);
-          buff[ret++] = static_cast<char>(yday / 100 + '0');
-          buff[ret++] = static_cast<char>((yday / 10) % 10 + '0');
-          buff[ret++] = static_cast<char>(yday % 10 + '0');
+          buff[ret++] = static_cast<char>((yday / 100) + '0');
+          buff[ret++] = static_cast<char>(((yday / 10) % 10) + '0');
+          buff[ret++] = static_cast<char>((yday % 10) + '0');
         }
         break;
       }
@@ -164,8 +184,8 @@ ATFRAMEWORK_UTILS_API size_t log_formatter::format(char *buff, size_t bufz, cons
           running = false;
         } else {
           LOG_FMT_FN_TM_MEM(mday, tm_mday);
-          buff[ret++] = static_cast<char>(mday / 10 + '0');
-          buff[ret++] = static_cast<char>(mday % 10 + '0');
+          buff[ret++] = static_cast<char>((mday / 10) + '0');
+          buff[ret++] = static_cast<char>((mday % 10) + '0');
         }
         break;
       }
@@ -179,8 +199,8 @@ ATFRAMEWORK_UTILS_API size_t log_formatter::format(char *buff, size_t bufz, cons
           running = false;
         } else {
           LOG_FMT_FN_TM_MEM(hour, tm_hour);
-          buff[ret++] = static_cast<char>(hour / 10 + '0');
-          buff[ret++] = static_cast<char>(hour % 10 + '0');
+          buff[ret++] = static_cast<char>((hour / 10) + '0');
+          buff[ret++] = static_cast<char>((hour % 10) + '0');
         }
         break;
       }
@@ -188,9 +208,10 @@ ATFRAMEWORK_UTILS_API size_t log_formatter::format(char *buff, size_t bufz, cons
         if (bufz - ret < 2) {
           running = false;
         } else {
+          // NOLINTNEXTLINE(readability-math-missing-parentheses)
           LOG_FMT_FN_TM_MEM(hour, tm_hour % 12 + 1);
-          buff[ret++] = static_cast<char>(hour / 10 + '0');
-          buff[ret++] = static_cast<char>(hour % 10 + '0');
+          buff[ret++] = static_cast<char>((hour / 10) + '0');
+          buff[ret++] = static_cast<char>((hour % 10) + '0');
         }
         break;
       }
@@ -199,8 +220,8 @@ ATFRAMEWORK_UTILS_API size_t log_formatter::format(char *buff, size_t bufz, cons
           running = false;
         } else {
           LOG_FMT_FN_TM_MEM(minite, tm_min);
-          buff[ret++] = static_cast<char>(minite / 10 + '0');
-          buff[ret++] = static_cast<char>(minite % 10 + '0');
+          buff[ret++] = static_cast<char>((minite / 10) + '0');
+          buff[ret++] = static_cast<char>((minite % 10) + '0');
         }
         break;
       }
@@ -209,8 +230,8 @@ ATFRAMEWORK_UTILS_API size_t log_formatter::format(char *buff, size_t bufz, cons
           running = false;
         } else {
           LOG_FMT_FN_TM_MEM(sec, tm_sec);
-          buff[ret++] = static_cast<char>(sec / 10 + '0');
-          buff[ret++] = static_cast<char>(sec % 10 + '0');
+          buff[ret++] = static_cast<char>((sec / 10) + '0');
+          buff[ret++] = static_cast<char>((sec % 10) + '0');
         }
         break;
       }
@@ -221,16 +242,16 @@ ATFRAMEWORK_UTILS_API size_t log_formatter::format(char *buff, size_t bufz, cons
           LOG_FMT_FN_TM_MEM(year, tm_year + 1900);
           LOG_FMT_FN_TM_MEM(mon, tm_mon + 1);
           LOG_FMT_FN_TM_MEM(mday, tm_mday);
-          buff[ret++] = static_cast<char>(year / 1000 + '0');
-          buff[ret++] = static_cast<char>((year / 100) % 10 + '0');
-          buff[ret++] = static_cast<char>((year / 10) % 10 + '0');
-          buff[ret++] = static_cast<char>(year % 10 + '0');
+          buff[ret++] = static_cast<char>((year / 1000) + '0');
+          buff[ret++] = static_cast<char>(((year / 100) % 10) + '0');
+          buff[ret++] = static_cast<char>(((year / 10) % 10) + '0');
+          buff[ret++] = static_cast<char>((year % 10) + '0');
           buff[ret++] = '-';
-          buff[ret++] = static_cast<char>(mon / 10 + '0');
-          buff[ret++] = static_cast<char>(mon % 10 + '0');
+          buff[ret++] = static_cast<char>((mon / 10) + '0');
+          buff[ret++] = static_cast<char>((mon % 10) + '0');
           buff[ret++] = '-';
-          buff[ret++] = static_cast<char>(mday / 10 + '0');
-          buff[ret++] = static_cast<char>(mday % 10 + '0');
+          buff[ret++] = static_cast<char>((mday / 10) + '0');
+          buff[ret++] = static_cast<char>((mday % 10) + '0');
         }
         break;
       }
@@ -241,14 +262,14 @@ ATFRAMEWORK_UTILS_API size_t log_formatter::format(char *buff, size_t bufz, cons
           LOG_FMT_FN_TM_MEM(hour, tm_hour);
           LOG_FMT_FN_TM_MEM(minite, tm_min);
           LOG_FMT_FN_TM_MEM(sec, tm_sec);
-          buff[ret++] = static_cast<char>(hour / 10 + '0');
-          buff[ret++] = static_cast<char>(hour % 10 + '0');
+          buff[ret++] = static_cast<char>((hour / 10) + '0');
+          buff[ret++] = static_cast<char>((hour % 10) + '0');
           buff[ret++] = ':';
-          buff[ret++] = static_cast<char>(minite / 10 + '0');
-          buff[ret++] = static_cast<char>(minite % 10 + '0');
+          buff[ret++] = static_cast<char>((minite / 10) + '0');
+          buff[ret++] = static_cast<char>((minite % 10) + '0');
           buff[ret++] = ':';
-          buff[ret++] = static_cast<char>(sec / 10 + '0');
-          buff[ret++] = static_cast<char>(sec % 10 + '0');
+          buff[ret++] = static_cast<char>((sec / 10) + '0');
+          buff[ret++] = static_cast<char>((sec % 10) + '0');
         }
         break;
       }
@@ -258,11 +279,11 @@ ATFRAMEWORK_UTILS_API size_t log_formatter::format(char *buff, size_t bufz, cons
         } else {
           LOG_FMT_FN_TM_MEM(hour, tm_hour);
           LOG_FMT_FN_TM_MEM(minite, tm_min);
-          buff[ret++] = static_cast<char>(hour / 10 + '0');
-          buff[ret++] = static_cast<char>(hour % 10 + '0');
+          buff[ret++] = static_cast<char>((hour / 10) + '0');
+          buff[ret++] = static_cast<char>((hour % 10) + '0');
           buff[ret++] = ':';
-          buff[ret++] = static_cast<char>(minite / 10 + '0');
-          buff[ret++] = static_cast<char>(minite % 10 + '0');
+          buff[ret++] = static_cast<char>((minite / 10) + '0');
+          buff[ret++] = static_cast<char>((minite % 10) + '0');
         }
         break;
       }
@@ -271,21 +292,27 @@ ATFRAMEWORK_UTILS_API size_t log_formatter::format(char *buff, size_t bufz, cons
         if (bufz - ret < 1) {
           running = false;
         } else {
-          time_t ms = ATFRAMEWORK_UTILS_NAMESPACE_ID::time::time_utility::get_now_usec() / 10;
-          if (bufz - ret >= 1) {
-            buff[ret++] = static_cast<char>(ms / 10000 + '0');
+          if (nullptr == tm_obj_ptr) {
+            tm_obj_ptr = &log_formatter_get_timepoint();
           }
-          if (bufz - ret >= 1) {
-            buff[ret++] = static_cast<char>((ms / 1000) % 10 + '0');
+
+          auto realtime_now_usec =
+              std::chrono::duration_cast<std::chrono::microseconds>(tm_obj_ptr->second.time_since_epoch()).count() %
+              1000000;
+          if (realtime_now_usec < 0) {
+            realtime_now_usec += 1000000;
           }
-          if (bufz - ret >= 1) {
-            buff[ret++] = static_cast<char>((ms / 100) % 10 + '0');
-          }
-          if (bufz - ret >= 1) {
-            buff[ret++] = static_cast<char>((ms / 10) % 10 + '0');
-          }
-          if (bufz - ret >= 1) {
-            buff[ret++] = static_cast<char>(ms % 10 + '0');
+
+          constexpr size_t MICROSECOND_TEXT_SIZE = 6;
+          if (bufz - ret >= MICROSECOND_TEXT_SIZE) {
+            log_formatter_write_six_digits(&buff[ret], static_cast<uint32_t>(realtime_now_usec));
+            ret += MICROSECOND_TEXT_SIZE;
+          } else {
+            char microsecond_text[MICROSECOND_TEXT_SIZE];
+            log_formatter_write_six_digits(microsecond_text, static_cast<uint32_t>(realtime_now_usec));
+            const size_t write_size = bufz - ret;
+            memcpy(&buff[ret], microsecond_text, write_size);
+            ret += write_size;
           }
         }
 
@@ -415,7 +442,7 @@ ATFRAMEWORK_UTILS_API size_t log_formatter::format(char *buff, size_t bufz, cons
 }
 
 ATFRAMEWORK_UTILS_API bool log_formatter::check_rotation_var(const char *fmt, size_t fmtz) {
-  for (size_t i = 0; fmt && i < fmtz - 1; ++i) {
+  for (size_t i = 0; fmt != nullptr && i < fmtz - 1; ++i) {
     if ('%' == fmt[i] && 'N' == fmt[i + 1]) {
       return true;
     }
@@ -425,7 +452,7 @@ ATFRAMEWORK_UTILS_API bool log_formatter::check_rotation_var(const char *fmt, si
 }
 
 ATFRAMEWORK_UTILS_API bool log_formatter::has_format(const char *fmt, size_t fmtz) {
-  for (size_t i = 0; fmt && i < fmtz - 1; ++i) {
+  for (size_t i = 0; fmt != nullptr && i < fmtz - 1; ++i) {
     if ('%' == fmt[i]) {
       return true;
     }
