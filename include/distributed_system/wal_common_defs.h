@@ -44,7 +44,8 @@ enum class wal_result_code : int32_t {
   kSubscriberNotFound = -201,
 
   kHashCodeMismatch = -106,
-  kInitlization = -105,
+  kInitlization = -105,  // deprecated, spell mistake and use kInitialization instead
+  kInitialization = -105,
   kCallbackError = -104,
   kInvalidParam = -103,
   kBadLogKey = -102,
