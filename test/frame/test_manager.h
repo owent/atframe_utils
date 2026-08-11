@@ -31,12 +31,15 @@
 #  include <compare>
 #endif
 
+#include <config/atframe_utils_build_feature.h>
+
 #include "cli/shell_font.h"
 #include "nostd/string_view.h"
 #include "nostd/type_traits.h"
 #include "nostd/utility_data_size.h"
 
 #include "test_case_base.h"
+#include "test_event_listener.h"
 
 #if (defined(__cplusplus) && __cplusplus >= 201103L) || (defined(_MSC_VER) && _MSC_VER >= 1600)
 
@@ -55,14 +58,19 @@
 /**
  *
  */
+ATFRAMEWORK_UTILS_NAMESPACE_BEGIN
+namespace testing {
+
 class test_manager {
  public:
   using case_ptr_type = test_case_base *;
   using on_start_ptr_type = test_on_start_base *;
   using on_exit_ptr_type = test_on_exit_base *;
+  using event_listener_ptr_type = test_event_listener *;
   using test_type = std::vector<std::pair<std::string, case_ptr_type>>;
   using event_on_start_type = std::vector<std::pair<std::string, on_start_ptr_type>>;
   using event_on_exit_type = std::vector<std::pair<std::string, on_exit_ptr_type>>;
+  using event_listener_type = std::vector<event_listener_ptr_type>;
   using test_data_type = std::unordered_map<std::string, test_type>;
 
  public:
@@ -72,6 +80,16 @@ class test_manager {
   void append_test_case(const std::string &test_name, const std::string &case_name, case_ptr_type);
   void append_event_on_start(const std::string &event_name, on_start_ptr_type);
   void append_event_on_exit(const std::string &event_name, on_exit_ptr_type);
+  void append_event_listener(event_listener_ptr_type);
+
+  const event_listener_type &get_event_listeners() const { return evt_listeners_; }
+
+  void notify_test_program_start();
+  void notify_test_program_end(int result);
+  void notify_test_suite_start(const test_event_suite_info &info);
+  void notify_test_suite_end(const test_event_suite_info &info);
+  void notify_test_case_start(const test_event_case_info &info);
+  void notify_test_case_end(const test_event_case_info &info);
 
   int run_event_on_start();
   int run_event_on_exit();
@@ -85,7 +103,7 @@ class test_manager {
 
   static std::string get_expire_time(clock_t begin, clock_t end);
 
-#ifdef UTILS_TEST_MACRO_TEST_ENABLE_BOOST_TEST
+#ifdef ATFW_UTILS_TEST_MACRO_TEST_ENABLE_BOOST_TEST
   static boost::unit_test::test_suite *&test_suit();
 #endif
 
@@ -511,6 +529,7 @@ class test_manager {
   test_data_type tests_;
   event_on_start_type evt_on_starts_;
   event_on_exit_type evt_on_exits_;
+  event_listener_type evt_listeners_;
   int success_;
   int failed_;
   std::unordered_set<std::string> run_cases_;
@@ -521,3 +540,5 @@ int run_event_on_start();
 int run_event_on_exit();
 int run_tests(int argc, char *argv[]);
 
+}  // namespace testing
+ATFRAMEWORK_UTILS_NAMESPACE_END

@@ -5,9 +5,9 @@
 
 #pragma once
 
-#include <cstdio>
-#include <iostream>
-#include <sstream>
+#include <cstdio>    // IWYU pragma: keep
+#include <iostream>  // IWYU pragma: keep
+#include <sstream>   // IWYU pragma: keep
 
 #ifdef _MSC_VER
 #  ifndef WIN32_LEAN_AND_MEAN
@@ -17,8 +17,10 @@
 #  include <Windows.h>
 #endif
 
-#ifdef UTILS_TEST_MACRO_TEST_ENABLE_GTEST
+#ifdef ATFW_UTILS_TEST_MACRO_TEST_ENABLE_GTEST
 #  include "gtest/gtest.h"
+
+#  include "test_event_listener.h"  // IWYU pragma: keep
 
 #  define CASE_TEST(test_name, case_name) TEST(test_name, case_name)
 
@@ -33,54 +35,55 @@
 #  define CASE_EXPECT_GE(l, r) EXPECT_GE(l, r)
 
 #else
-#  include "test_manager.h"
+#  include "test_event_listener.h"  // IWYU pragma: keep
+#  include "test_manager.h"         // IWYU pragma: keep
 
-#  define test_case_func_name(test_name, case_name) test_func_test_##test_name##_case_##case_name##_
-#  define test_case_obj_name(test_name, case_name) test_obj_test_##test_name##_case_##case_name##_
+#  define test_case_func_name(test_name, case_name) atfw_test_func_test_##test_name##_case_##case_name##_
+#  define test_case_obj_name(test_name, case_name) atfw_test_obj_test_##test_name##_case_##case_name##_
 
 // NOLINTNEXTLINE(misc-use-anonymous-namespace)
-#  define CASE_TEST(test_name, case_name)                                                                      \
-    static void test_case_func_name(test_name, case_name)();                                                   \
-    static test_case_base test_case_obj_name(test_name, case_name)(#test_name, #case_name,                     \
-                                                                   test_case_func_name(test_name, case_name)); \
+#  define CASE_TEST(test_name, case_name)                                                  \
+    static void test_case_func_name(test_name, case_name)();                               \
+    static ::atfw::util::testing::test_case_base test_case_obj_name(test_name, case_name)( \
+        #test_name, #case_name, test_case_func_name(test_name, case_name));                \
     void test_case_func_name(test_name, case_name)()
 
-#  define test_event_on_start_func_name(event_name) test_func_event_on_start_##event_name##_
-#  define test_event_on_start_obj_name(event_name) test_obj_event_on_start_##event_name##_
-#  define test_event_on_exit_func_name(event_name) test_func_event_on_exit_##event_name##_
-#  define test_event_on_exit_obj_name(event_name) test_obj_event_on_exit_##event_name##_
+#  define test_event_on_start_func_name(event_name) atfw_test_func_event_on_start_##event_name##_
+#  define test_event_on_start_obj_name(event_name) atfw_test_obj_event_on_start_##event_name##_
+#  define test_event_on_exit_func_name(event_name) atfw_test_func_event_on_exit_##event_name##_
+#  define test_event_on_exit_obj_name(event_name) atfw_test_obj_event_on_exit_##event_name##_
 
 #  ifdef _MSC_VER
 // NOLINTNEXTLINE(misc-use-anonymous-namespace)
-#    define CASE_TEST_EVENT_ON_START(event_name, ...)                           \
-      static void test_event_on_start_func_name(event_name)();                  \
-      static test_on_start_base test_event_on_start_obj_name(event_name)(       \
-          #event_name, test_event_on_start_func_name(event_name), __VA_ARGS__); \
+#    define CASE_TEST_EVENT_ON_START(event_name, ...)                                            \
+      static void test_event_on_start_func_name(event_name)();                                   \
+      static ::atfw::util::testing::test_on_start_base test_event_on_start_obj_name(event_name)( \
+          #event_name, test_event_on_start_func_name(event_name), __VA_ARGS__);                  \
       void test_event_on_start_func_name(event_name)()
 
 // NOLINTNEXTLINE(misc-use-anonymous-namespace)
-#    define CASE_TEST_EVENT_ON_EXIT(event_name, ...)                           \
-      static void test_event_on_exit_func_name(event_name)();                  \
-      static test_on_exit_base test_event_on_exit_obj_name(event_name)(        \
-          #event_name, test_event_on_exit_func_name(event_name), __VA_ARGS__); \
+#    define CASE_TEST_EVENT_ON_EXIT(event_name, ...)                                           \
+      static void test_event_on_exit_func_name(event_name)();                                  \
+      static ::atfw::util::testing::test_on_exit_base test_event_on_exit_obj_name(event_name)( \
+          #event_name, test_event_on_exit_func_name(event_name), __VA_ARGS__);                 \
       void test_event_on_exit_func_name(event_name)()
 #  else
 // NOLINTNEXTLINE(misc-use-anonymous-namespace)
-#    define CASE_TEST_EVENT_ON_START(event_name, args...)                  \
-      static void test_event_on_start_func_name(event_name)();             \
-      static test_on_start_base test_event_on_start_obj_name(event_name)(  \
-          #event_name, test_event_on_start_func_name(event_name), ##args); \
+#    define CASE_TEST_EVENT_ON_START(event_name, args...)                                        \
+      static void test_event_on_start_func_name(event_name)();                                   \
+      static ::atfw::util::testing::test_on_start_base test_event_on_start_obj_name(event_name)( \
+          #event_name, test_event_on_start_func_name(event_name), ##args);                       \
       void test_event_on_start_func_name(event_name)()
 
 // NOLINTNEXTLINE(misc-use-anonymous-namespace)
-#    define CASE_TEST_EVENT_ON_EXIT(event_name, args...)                  \
-      static void test_event_on_exit_func_name(event_name)();             \
-      static test_on_exit_base test_event_on_exit_obj_name(event_name)(   \
-          #event_name, test_event_on_exit_func_name(event_name), ##args); \
+#    define CASE_TEST_EVENT_ON_EXIT(event_name, args...)                                       \
+      static void test_event_on_exit_func_name(event_name)();                                  \
+      static ::atfw::util::testing::test_on_exit_base test_event_on_exit_obj_name(event_name)( \
+          #event_name, test_event_on_exit_func_name(event_name), ##args);                      \
       void test_event_on_exit_func_name(event_name)()
 #  endif
 
-#  ifdef UTILS_TEST_MACRO_TEST_ENABLE_BOOST_TEST
+#  ifdef ATFW_UTILS_TEST_MACRO_TEST_ENABLE_BOOST_TEST
 #    define CASE_EXPECT_ERROR(msg) BOOST_ERROR(msg)
 #    define CASE_EXPECT_TRUE(c) BOOST_CHECK(c)
 #    define CASE_EXPECT_FALSE(c) BOOST_CHECK(!(c))
@@ -92,33 +95,39 @@
 #    define CASE_EXPECT_GE(l, r) BOOST_CHECK_GE(l, r)
 
 #  else
-#    define CASE_EXPECT_ERROR(msg) test_manager::me().expect_false(true, msg, __FILE__, __LINE__)
-#    define CASE_EXPECT_TRUE(c) test_manager::me().expect_true((c), #c, __FILE__, __LINE__)
-#    define CASE_EXPECT_FALSE(c) test_manager::me().expect_false((c), #c, __FILE__, __LINE__)
-#    define CASE_EXPECT_EQ(l, r) test_manager::me().expect_eq((l), (r), #l, #r, __FILE__, __LINE__)
-#    define CASE_EXPECT_NE(l, r) test_manager::me().expect_ne((l), (r), #l, #r, __FILE__, __LINE__)
-#    define CASE_EXPECT_LT(l, r) test_manager::me().expect_lt((l), (r), #l, #r, __FILE__, __LINE__)
-#    define CASE_EXPECT_LE(l, r) test_manager::me().expect_le((l), (r), #l, #r, __FILE__, __LINE__)
-#    define CASE_EXPECT_GT(l, r) test_manager::me().expect_gt((l), (r), #l, #r, __FILE__, __LINE__)
-#    define CASE_EXPECT_GE(l, r) test_manager::me().expect_ge((l), (r), #l, #r, __FILE__, __LINE__)
+#    define CASE_EXPECT_ERROR(msg) ::atfw::util::testing::test_manager::me().expect_false(true, msg, __FILE__, __LINE__)
+#    define CASE_EXPECT_TRUE(c) ::atfw::util::testing::test_manager::me().expect_true((c), #c, __FILE__, __LINE__)
+#    define CASE_EXPECT_FALSE(c) ::atfw::util::testing::test_manager::me().expect_false((c), #c, __FILE__, __LINE__)
+#    define CASE_EXPECT_EQ(l, r) \
+      ::atfw::util::testing::test_manager::me().expect_eq((l), (r), #l, #r, __FILE__, __LINE__)
+#    define CASE_EXPECT_NE(l, r) \
+      ::atfw::util::testing::test_manager::me().expect_ne((l), (r), #l, #r, __FILE__, __LINE__)
+#    define CASE_EXPECT_LT(l, r) \
+      ::atfw::util::testing::test_manager::me().expect_lt((l), (r), #l, #r, __FILE__, __LINE__)
+#    define CASE_EXPECT_LE(l, r) \
+      ::atfw::util::testing::test_manager::me().expect_le((l), (r), #l, #r, __FILE__, __LINE__)
+#    define CASE_EXPECT_GT(l, r) \
+      ::atfw::util::testing::test_manager::me().expect_gt((l), (r), #l, #r, __FILE__, __LINE__)
+#    define CASE_EXPECT_GE(l, r) \
+      ::atfw::util::testing::test_manager::me().expect_ge((l), (r), #l, #r, __FILE__, __LINE__)
 
 #  endif
 
 #endif
 
 // 前景色: BLACK,RED,GREEN,YELLOW,BLUE,MAGENTA,CYAN,WHITE
-#define CASE_MSG_FCOLOR(x) atfw::util::cli::shell_font_style::SHELL_FONT_COLOR_##x
+#define CASE_MSG_FCOLOR(x) ::atfw::util::cli::shell_font_style::SHELL_FONT_COLOR_##x
 // 背景色: BLACK,RED,GREEN,YELLOW,BLUE,MAGENTA,CYAN,WHITE
-#define CASE_MSG_BCOLOR(x) atfw::util::cli::shell_font_style::SHELL_FONT_BACKGROUND_COLOR_##x
+#define CASE_MSG_BCOLOR(x) ::atfw::util::cli::shell_font_style::SHELL_FONT_BACKGROUND_COLOR_##x
 // 字体格式: BOLD,UNDERLINE,FLASH,DARK
-#define CASE_MSG_STYLE(x) atfw::util::cli::shell_font_style::SHELL_FONT_SPEC_##x
+#define CASE_MSG_STYLE(x) ::atfw::util::cli::shell_font_style::SHELL_FONT_SPEC_##x
 
-#define CASE_MSG_INFO() atfw::util::cli::shell_stream(std::cout)() << "[ RUNNING  ] "
-#define CASE_MSG_ERROR() atfw::util::cli::shell_stream(std::cerr)() << "[ RUNNING  ] "
+#define CASE_MSG_INFO() ::atfw::util::cli::shell_stream(std::cout)() << "[ RUNNING  ] "
+#define CASE_MSG_ERROR() ::atfw::util::cli::shell_stream(std::cerr)() << "[ RUNNING  ] "
 
 // 测试中休眠
 #if (defined(__cplusplus) && __cplusplus >= 201103L) || (defined(_MSC_VER) && _MSC_VER >= 1800)
-#  include <thread>
+#  include <thread>  // IWYU pragma: keep
 #  define CASE_THREAD_SLEEP_MS(x) std::this_thread::sleep_for(std::chrono::milliseconds(x))
 #  define CASE_THREAD_YIELD() std::this_thread::yield()
 
@@ -131,7 +140,7 @@
 #  define CASE_THREAD_YIELD() YieldProcessor()
 
 #else
-#  include <unistd.h>
+#  include <unistd.h>  // IWYU pragma: keep
 
 #  define CASE_THREAD_SLEEP_MS(x)               \
     ((x > 1000) ? sleep(x / 1000) : usleep(0)); \

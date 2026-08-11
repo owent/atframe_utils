@@ -16,10 +16,10 @@
 #include <utility>
 
 // clang-format off
-#include "config/compiler/template_prefix.h"
+#include "config/compiler/template_prefix.h"  // IWYU pragma: keep
 // clang-format on
 
-#include "cli/shell_font.h"
+#include "cli/shell_font.h"  // IWYU pragma: keep
 
 #include "lock/spin_rw_lock.h"
 
@@ -559,5 +559,5 @@ ATFRAMEWORK_UTILS_STRING_FWAPI_FORMAT_AS(typename ::ATFRAMEWORK_UTILS_NAMESPACE_
 #endif
 
 // clang-format off
-#include "config/compiler/template_suffix.h"
+#include "config/compiler/template_suffix.h" // IWYU pragma: keep
 // clang-format on

@@ -1,4 +1,4 @@
-// Copyright 2026 atframework
+﻿// Copyright 2026 atframework
 
 #include <array>
 #include <initializer_list>
@@ -14,7 +14,7 @@ namespace {
 
 template <class T>
 struct tm_picked_sv {
-  using type = typename test_manager::try_pick_basic_string_view<T>::type;
+  using type = typename ::atfw::util::testing::test_manager::try_pick_basic_string_view<T>::type;
 };
 
 struct tm_custom_char_buffer {
@@ -47,9 +47,9 @@ CASE_TEST(test_manager, pick_basic_string_view_from_string_like) {
     buf.push_back('b');
     buf.push_back('c');
 
-    using conv_t =
-        test_manager::try_convert_to_string_view<std::vector<char> &,
-                                                 test_manager::try_pick_basic_string_view<std::vector<char> &>::value>;
+    using conv_t = ::atfw::util::testing::test_manager::try_convert_to_string_view<
+        std::vector<char> &,
+        ::atfw::util::testing::test_manager::try_pick_basic_string_view<std::vector<char> &>::value>;
     using picked = typename conv_t::value_type;
     static_assert(std::is_same<picked, ::atfw::util::nostd::basic_string_view<char>>::value,
                   "vector<char> should map to basic_string_view<char>");
@@ -64,8 +64,9 @@ CASE_TEST(test_manager, pick_basic_string_view_from_string_like) {
   {
     // From data()/size() array
     std::array<char, 4> arr{{'x', 'y', 'z', 0}};
-    using conv_t = test_manager::try_convert_to_string_view<
-        std::array<char, 4> &, test_manager::try_pick_basic_string_view<std::array<char, 4> &>::value>;
+    using conv_t = ::atfw::util::testing::test_manager::try_convert_to_string_view<
+        std::array<char, 4> &,
+        ::atfw::util::testing::test_manager::try_pick_basic_string_view<std::array<char, 4> &>::value>;
     auto sv = conv_t::pick(arr);
     CASE_EXPECT_EQ(static_cast<size_t>(4), sv.size());
     CASE_EXPECT_EQ('x', sv[0]);
@@ -80,9 +81,8 @@ CASE_TEST(test_manager, pick_basic_string_view_from_string_like) {
                   "std::u16string should map to basic_string_view<char16_t>");
 
     std::u16string s = u"hi";
-    using conv_t =
-        test_manager::try_convert_to_string_view<std::u16string &,
-                                                 test_manager::try_pick_basic_string_view<std::u16string &>::value>;
+    using conv_t = ::atfw::util::testing::test_manager::try_convert_to_string_view<
+        std::u16string &, ::atfw::util::testing::test_manager::try_pick_basic_string_view<std::u16string &>::value>;
     auto sv = conv_t::pick(s);
     CASE_EXPECT_EQ(static_cast<size_t>(2), sv.size());
     CASE_EXPECT_EQ(static_cast<uint32_t>('h'), static_cast<uint32_t>(sv[0]));
@@ -103,9 +103,8 @@ CASE_TEST(test_manager, pick_basic_string_view_from_string_like) {
                   "std::u8string should map to basic_string_view<char8_t>");
 
     std::u8string s = u8"ok";
-    using conv_t =
-        test_manager::try_convert_to_string_view<std::u8string &,
-                                                 test_manager::try_pick_basic_string_view<std::u8string &>::value>;
+    using conv_t = ::atfw::util::testing::test_manager::try_convert_to_string_view<
+        std::u8string &, ::atfw::util::testing::test_manager::try_pick_basic_string_view<std::u8string &>::value>;
     auto sv = conv_t::pick(s);
     CASE_EXPECT_EQ(static_cast<size_t>(2), sv.size());
   }
@@ -146,8 +145,9 @@ CASE_TEST(test_manager, convert_string_view_from_initializer_list_and_custom_dat
   // initializer_list is not directly convertible to string_view, but should be constructible via data()/size().
   std::initializer_list<char> il = {'a', 'b', 'c'};
 
-  using conv_il_t = test_manager::try_convert_to_string_view<
-      std::initializer_list<char> &, test_manager::try_pick_basic_string_view<std::initializer_list<char> &>::value>;
+  using conv_il_t = ::atfw::util::testing::test_manager::try_convert_to_string_view<
+      std::initializer_list<char> &,
+      ::atfw::util::testing::test_manager::try_pick_basic_string_view<std::initializer_list<char> &>::value>;
   using picked_il = typename conv_il_t::value_type;
   static_assert(std::is_same<picked_il, ::atfw::util::nostd::basic_string_view<char>>::value,
                 "initializer_list<char> should map to basic_string_view<char>");
@@ -165,8 +165,9 @@ CASE_TEST(test_manager, convert_string_view_from_initializer_list_and_custom_dat
 
   // Custom type: only provides value_type + data()/size().
   tm_custom_char_buffer custom{{'x', 'y', 'z'}};
-  using conv_custom_t = test_manager::try_convert_to_string_view<
-      tm_custom_char_buffer &, test_manager::try_pick_basic_string_view<tm_custom_char_buffer &>::value>;
+  using conv_custom_t = ::atfw::util::testing::test_manager::try_convert_to_string_view<
+      tm_custom_char_buffer &,
+      ::atfw::util::testing::test_manager::try_pick_basic_string_view<tm_custom_char_buffer &>::value>;
   using picked_custom = typename conv_custom_t::value_type;
   static_assert(std::is_same<picked_custom, ::atfw::util::nostd::basic_string_view<char>>::value,
                 "custom buffer should map to basic_string_view<char>");
@@ -188,12 +189,10 @@ CASE_TEST(test_manager, convert_string_view_from_wide_types) {
   // The test framework prints operands on failure, but the logger streams to std::ostream (char),
   // so wchar_t/std::wstring are not safely streamable here.
   {
-    using conv_wcstr_t =
-        test_manager::try_convert_to_string_view<const wchar_t *,
-                                                 test_manager::try_pick_basic_string_view<const wchar_t *>::value>;
-    using conv_wstr_t =
-        test_manager::try_convert_to_string_view<std::wstring &,
-                                                 test_manager::try_pick_basic_string_view<std::wstring &>::value>;
+    using conv_wcstr_t = ::atfw::util::testing::test_manager::try_convert_to_string_view<
+        const wchar_t *, ::atfw::util::testing::test_manager::try_pick_basic_string_view<const wchar_t *>::value>;
+    using conv_wstr_t = ::atfw::util::testing::test_manager::try_convert_to_string_view<
+        std::wstring &, ::atfw::util::testing::test_manager::try_pick_basic_string_view<std::wstring &>::value>;
 
     auto sv_wcstr = conv_wcstr_t::pick(wcstr);
     auto sv_wstr = conv_wstr_t::pick(wstr);
@@ -217,9 +216,9 @@ CASE_TEST(test_manager, convert_string_view_from_wide_types) {
   wbuf.push_back(L'b');
   wbuf.push_back(L'c');
 
-  using conv_wbuf_t =
-      test_manager::try_convert_to_string_view<std::vector<wchar_t> &,
-                                               test_manager::try_pick_basic_string_view<std::vector<wchar_t> &>::value>;
+  using conv_wbuf_t = ::atfw::util::testing::test_manager::try_convert_to_string_view<
+      std::vector<wchar_t> &,
+      ::atfw::util::testing::test_manager::try_pick_basic_string_view<std::vector<wchar_t> &>::value>;
   using picked_wbuf = typename conv_wbuf_t::value_type;
   static_assert(std::is_same<picked_wbuf, ::atfw::util::nostd::basic_string_view<wchar_t>>::value,
                 "vector<wchar_t> should map to basic_string_view<wchar_t>");
@@ -230,4 +229,3 @@ CASE_TEST(test_manager, convert_string_view_from_wide_types) {
   CASE_EXPECT_EQ(static_cast<uint32_t>(L'b'), static_cast<uint32_t>(sv_wbuf[1]));
   CASE_EXPECT_EQ(static_cast<uint32_t>(L'c'), static_cast<uint32_t>(sv_wbuf[2]));
 }
-

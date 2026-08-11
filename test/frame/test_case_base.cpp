@@ -1,8 +1,11 @@
 // Copyright 2026 atframework
 
-#include "test_manager.h"
+#include "test_manager.h"  // NOLINT(build/include_subdir)
 
-#include "test_case_base.h"
+#include "test_case_base.h"  // NOLINT(build/include_subdir)
+
+ATFRAMEWORK_UTILS_NAMESPACE_BEGIN
+namespace testing {
 
 test_case_base::test_case_base(const std::string& test_name, const std::string& case_name, test_func func) {
   success_ = 0;
@@ -21,7 +24,7 @@ int test_case_base::run() {
 
   test_manager::set_counter_ptr(&success_, &failed_);
 
-#ifndef UTILS_TEST_MACRO_TEST_ENABLE_BOOST_TEST
+#ifndef ATFW_UTILS_TEST_MACRO_TEST_ENABLE_BOOST_TEST
   if (nullptr != func_) {
     (*func_)();
   }
@@ -53,3 +56,6 @@ int test_on_exit_base::run() {
   }
   return 0;
 }
+
+}  // namespace testing
+ATFRAMEWORK_UTILS_NAMESPACE_END

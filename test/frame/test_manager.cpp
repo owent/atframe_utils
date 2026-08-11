@@ -1,5 +1,7 @@
 // Copyright 2026 atframework
 
+#include "test_manager.h"  // NOLINT(build/include_subdir)
+
 #include <std/thread.h>
 
 #include <config/atframe_utils_build_feature.h>
@@ -17,6 +19,7 @@
 #include <sstream>
 #include <string>
 #include <unordered_map>
+#include <utility>
 #include <vector>
 
 #include "cli/cmd_option.h"
@@ -24,7 +27,8 @@
 #include "cli/shell_font.h"
 #include "gsl/select-gsl.h"
 
-#include "test_manager.h"
+ATFRAMEWORK_UTILS_NAMESPACE_BEGIN
+namespace testing {
 
 namespace detail {
 #if !(defined(ATFRAMEWORK_UTILS_THREAD_TLS_USE_PTHREAD) && ATFRAMEWORK_UTILS_THREAD_TLS_USE_PTHREAD) && \
@@ -118,7 +122,12 @@ test_manager::test_manager() {
   failed_ = 0;
 }
 
-test_manager::~test_manager() {}
+test_manager::~test_manager() {
+  for (event_listener_type::iterator iter = evt_listeners_.begin(); iter != evt_listeners_.end(); ++iter) {
+    delete (*iter);
+  }
+  evt_listeners_.clear();
+}
 
 void test_manager::append_test_case(const std::string &test_name, const std::string &case_name, case_ptr_type ptr) {
   tests_[test_name].push_back(std::make_pair(case_name, ptr));
@@ -132,7 +141,49 @@ void test_manager::append_event_on_exit(const std::string &event_name, on_exit_p
   evt_on_exits_.push_back(std::make_pair(event_name, ptr));
 }
 
-#ifdef UTILS_TEST_MACRO_TEST_ENABLE_BOOST_TEST
+void test_manager::append_event_listener(event_listener_ptr_type ptr) {
+  if (nullptr != ptr) {
+    evt_listeners_.push_back(ptr);
+  }
+}
+
+void test_manager::notify_test_program_start() {
+  for (event_listener_type::iterator iter = evt_listeners_.begin(); iter != evt_listeners_.end(); ++iter) {
+    (*iter)->on_test_program_start();
+  }
+}
+
+void test_manager::notify_test_program_end(int result) {
+  for (event_listener_type::iterator iter = evt_listeners_.begin(); iter != evt_listeners_.end(); ++iter) {
+    (*iter)->on_test_program_end(result);
+  }
+}
+
+void test_manager::notify_test_suite_start(const test_event_suite_info &info) {
+  for (event_listener_type::iterator iter = evt_listeners_.begin(); iter != evt_listeners_.end(); ++iter) {
+    (*iter)->on_test_suite_start(info);
+  }
+}
+
+void test_manager::notify_test_suite_end(const test_event_suite_info &info) {
+  for (event_listener_type::iterator iter = evt_listeners_.begin(); iter != evt_listeners_.end(); ++iter) {
+    (*iter)->on_test_suite_end(info);
+  }
+}
+
+void test_manager::notify_test_case_start(const test_event_case_info &info) {
+  for (event_listener_type::iterator iter = evt_listeners_.begin(); iter != evt_listeners_.end(); ++iter) {
+    (*iter)->on_test_case_start(info);
+  }
+}
+
+void test_manager::notify_test_case_end(const test_event_case_info &info) {
+  for (event_listener_type::iterator iter = evt_listeners_.begin(); iter != evt_listeners_.end(); ++iter) {
+    (*iter)->on_test_case_end(info);
+  }
+}
+
+#ifdef ATFW_UTILS_TEST_MACRO_TEST_ENABLE_BOOST_TEST
 
 boost::unit_test::test_suite *&test_manager::test_suit() {
   static boost::unit_test::test_suite *ret = nullptr;
@@ -278,6 +329,8 @@ int test_manager::run() {
   success_ = 0;
   failed_ = 0;
 
+  notify_test_program_start();
+
   clock_t all_begin_time = clock();
   atfw::util::cli::shell_stream ss(std::cout);
   ss() << atfw::util::cli::shell_font_style::SHELL_FONT_COLOR_GREEN
@@ -304,6 +357,11 @@ int test_manager::run() {
 
     size_t run_group_count = 0;
 
+    test_event_suite_info suite_info;
+    suite_info.name_ = iter->first;
+    suite_info.total_case_count_ = iter->second.size();
+    notify_test_suite_start(suite_info);
+
     ss() << std::endl
          << atfw::util::cli::shell_font_style::SHELL_FONT_COLOR_GREEN
          << atfw::util::cli::shell_font_style::SHELL_FONT_SPEC_BOLD << "[----------] "
@@ -329,6 +387,11 @@ int test_manager::run() {
         continue;
       }
 
+      test_event_case_info case_info;
+      case_info.suite_name_ = iter->first;
+      case_info.case_name_ = iter2->first;
+      notify_test_case_start(case_info);
+
       ss() << atfw::util::cli::shell_font_style::SHELL_FONT_COLOR_GREEN << "[ RUN      ] "
            << atfw::util::cli::shell_font_style::SHELL_FONT_SPEC_NULL << iter->first << "." << iter2->first
            << std::endl;
@@ -336,6 +399,17 @@ int test_manager::run() {
       clock_t case_begin_time = clock();
       iter2->second->run();
       clock_t case_end_time = clock();
+
+      case_info.success_count_ = iter2->second->success_;
+      case_info.failed_count_ = iter2->second->failed_;
+      case_info.passed_ = (0 == iter2->second->failed_);
+
+      if (case_info.passed_) {
+        ++suite_info.success_count_;
+      } else {
+        ++suite_info.failed_count_;
+      }
+      notify_test_case_end(case_info);
 
       if (0 == iter2->second->failed_) {
         ++success_;
@@ -351,6 +425,9 @@ int test_manager::run() {
 
       ++run_group_count;
     }
+
+    suite_info.run_case_count_ = run_group_count;
+    notify_test_suite_end(suite_info);
 
     clock_t test_end_time = clock();
     ss() << atfw::util::cli::shell_font_style::SHELL_FONT_COLOR_GREEN
@@ -384,7 +461,10 @@ int test_manager::run() {
     }
   }
 
-  return (0 == failed_) ? 0 : -failed_;
+  int run_result = (0 == failed_) ? 0 : -failed_;
+  notify_test_program_end(run_result);
+
+  return run_result;
 }
 
 #endif
@@ -615,3 +695,5 @@ int run_tests(int argc, char *argv[]) {
   return ret;
 }
 
+}  // namespace testing
+ATFRAMEWORK_UTILS_NAMESPACE_END

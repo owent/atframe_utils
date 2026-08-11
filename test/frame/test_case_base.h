@@ -3,29 +3,19 @@
 #pragma once
 
 #include <string>
-#include <unordered_map>
-#include <unordered_set>
+#include <unordered_map>  // IWYU pragma: keep
+#include <unordered_set>  // IWYU pragma: keep
 #include <utility>
 
-#ifdef UTILS_TEST_MACRO_TEST_ENABLE_BOOST_TEST
+#ifdef ATFW_UTILS_TEST_MACRO_TEST_ENABLE_BOOST_TEST
 #  include <boost/test/unit_test.hpp>
 #endif
 
-#if (defined(__cplusplus) && __cplusplus >= 201103L) || (defined(_MSC_VER) && _MSC_VER >= 1600)
-
-#  define UTIL_UNIT_TEST_MACRO_AUTO_MAP(...) std::unordered_map<__VA_ARGS__>
-#  define UTIL_UNIT_TEST_MACRO_AUTO_SET(...) std::unordered_set<__VA_ARGS__>
-#  define UTIL_UNIT_TEST_MACRO_AUTO_UNORDERED 1
-#else
-
-#  include <map>
-#  include <set>
-#  define UTIL_UNIT_TEST_MACRO_AUTO_MAP(...) std::map<__VA_ARGS__>
-#  define UTIL_UNIT_TEST_MACRO_AUTO_SET(...) std::set<__VA_ARGS__>
-
-#endif
-
+#include <config/atframe_utils_build_feature.h>
 #include <config/compiler_features.h>
+
+ATFRAMEWORK_UTILS_NAMESPACE_BEGIN
+namespace testing {
 
 class test_case_base {
  public:
@@ -97,3 +87,5 @@ class test_on_exit_base {
   void register_self();
 };
 
+}  // namespace testing
+ATFRAMEWORK_UTILS_NAMESPACE_END
