@@ -2,6 +2,7 @@
 
 #include <assert.h>
 #include <cstring>
+#include <memory>
 
 #include <std/explicit_declare.h>
 
@@ -849,23 +850,9 @@ ATFRAMEWORK_UTILS_API http_request::curl_share_context::curl_share_context(CURLS
     : curl_share_(share), enable_lock_(false) {}
 
 ATFRAMEWORK_UTILS_API http_request::curl_share_context::~curl_share_context() {
-  std::unordered_map<int32_t, std::shared_ptr<std::mutex>> data_locks;
-
-  if (enable_lock_) {
-    std::lock_guard<std::recursive_mutex> guard{global_lock_};
-    data_locks.swap(data_locks_);
-  }
-
   if (nullptr != curl_share_) {
     curl_share_setopt(curl_share_, CURLSHOPT_USERDATA, nullptr);
     curl_share_cleanup(curl_share_);
-  }
-
-  // Unlock all locks
-  for (auto &lock : data_locks) {
-    if (lock.second) {
-      lock.second->unlock();
-    }
   }
 }
 
@@ -1326,4 +1313,3 @@ ATFRAMEWORK_UTILS_NAMESPACE_END
 #  endif
 
 #endif
-

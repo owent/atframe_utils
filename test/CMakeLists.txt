@@ -16,10 +16,6 @@ file(
 source_group_by_dir(PROJECT_TEST_SRC_LIST)
 
 # ============ test - coroutine test frame ============
-if(NOT (WIN32 AND BUILD_SHARED_LIBS))
-  set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/test")
-endif()
-
 atframe_add_test_executable(atframe_utils_unit_test ${PROJECT_TEST_SRC_LIST})
 
 target_link_libraries(atframe_utils_unit_test ${PROJECT_NAME})
@@ -27,4 +23,4 @@ target_compile_options(atframe_utils_unit_test PRIVATE ${COMPILER_STRICT_EXTRA_C
 
 add_test(NAME "atframe_utils.unit_test" COMMAND "$<TARGET_FILE:atframe_utils_unit_test>")
 set_tests_properties("atframe_utils.unit_test" PROPERTIES LABELS "atframe_utils;atframe_utils.unit_test")
-
+atframe_test_setup_run_environment("atframe_utils.unit_test" "${PROJECT_TEST_RUNTIME_OUTPUT_DIRECTORY}")

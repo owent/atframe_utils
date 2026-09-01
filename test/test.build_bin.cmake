@@ -47,6 +47,9 @@ function(atframe_add_test_executable TARGET_NAME)
   endif()
 
   add_executable(${TARGET_NAME} ${ARGN})
+  if(PROJECT_TEST_RUNTIME_OUTPUT_DIRECTORY)
+    atframe_target_set_runtime_output_directory(${TARGET_NAME} "${PROJECT_TEST_RUNTIME_OUTPUT_DIRECTORY}")
+  endif()
   set_property(TARGET ${TARGET_NAME} PROPERTY FOLDER "atframework/test")
   # add_target_properties(${TARGET_NAME} LINK_FLAGS /NODEFAULTLIB:library)
   set_target_properties(
@@ -66,4 +69,3 @@ function(atframe_add_test_executable TARGET_NAME)
   # add_test(NAME test-name COMMAND "$<TARGET_FILE:${TARGET_NAME}>") set_tests_properties(test-name PROPERTIES LABELS
   # "label1;label2")
 endfunction()
-

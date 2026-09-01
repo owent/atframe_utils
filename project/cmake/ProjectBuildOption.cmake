@@ -454,13 +454,90 @@ set(BOOST_ROOT
     CACHE STRING "Boost root directory")
 option(PROJECT_TEST_ENABLE_BOOST_UNIT_TEST "Enable boost unit test." OFF)
 
-option(PROJECT_ENABLE_UNITTEST "Enable unit test" OFF)
+if(CMAKE_SOURCE_DIR STREQUAL PROJECT_SOURCE_DIR)
+  if(DEFINED BUILD_TESTING)
+    option(PROJECT_ENABLE_UNITTEST "Enable unit test" ${BUILD_TESTING})
+  else()
+    if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+      option(PROJECT_ENABLE_UNITTEST "Enable unit test" ON)
+    else()
+      option(PROJECT_ENABLE_UNITTEST "Enable unit test" OFF)
+    endif()
+  endif()
+else()
+  if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+    option(PROJECT_ENABLE_UNITTEST "Enable unit test" ON)
+  else()
+    option(PROJECT_ENABLE_UNITTEST "Enable unit test" OFF)
+  endif()
+endif()
+
 option(PROJECT_ENABLE_SAMPLE "Enable sample" OFF)
 if(CMAKE_CROSSCOMPILING)
   option(PROJECT_ENABLE_TOOLS "Enable sample" OFF)
 else()
   option(PROJECT_ENABLE_TOOLS "Enable sample" ON)
 endif()
+
+set(PROJECT_SAMPLE_RUNTIME_OUTPUT_DIRECTORY
+    "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}"
+    CACHE STRING "Default output directory for samples.")
+
+set(PROJECT_TEST_RUNTIME_OUTPUT_DIRECTORY
+    "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}"
+    CACHE STRING "Default output directory for tests.")
+
+# Set the runtime output directory of a target for every configuration. The per-config variants must be set explicitly:
+# directory-scope CMAKE_RUNTIME_OUTPUT_DIRECTORY_<CONFIG> variables (set by parent projects) initialize
+# RUNTIME_OUTPUT_DIRECTORY_<CONFIG> at target creation and would otherwise shadow the base property.
+function(atframe_target_set_runtime_output_directory TARGET_NAME OUTPUT_DIR)
+  set(ATFRAME_TARGET_OUTPUT_CONFIG_TYPES Debug Release RelWithDebInfo MinSizeRel)
+  if(CMAKE_CONFIGURATION_TYPES)
+    set(ATFRAME_TARGET_OUTPUT_CONFIG_TYPES ${CMAKE_CONFIGURATION_TYPES})
+  endif()
+  set_target_properties(${TARGET_NAME} PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${OUTPUT_DIR}")
+  foreach(ATFRAME_TARGET_OUTPUT_CONFIG IN LISTS ATFRAME_TARGET_OUTPUT_CONFIG_TYPES)
+    string(TOUPPER "${ATFRAME_TARGET_OUTPUT_CONFIG}" ATFRAME_TARGET_OUTPUT_CONFIG_UPPER)
+    set_target_properties(${TARGET_NAME} PROPERTIES "RUNTIME_OUTPUT_DIRECTORY_${ATFRAME_TARGET_OUTPUT_CONFIG_UPPER}"
+                                                    "${OUTPUT_DIR}")
+  endforeach()
+  if(MSVC)
+    set_target_properties(${TARGET_NAME} PROPERTIES PDB_OUTPUT_DIRECTORY "${OUTPUT_DIR}")
+    foreach(ATFRAME_TARGET_OUTPUT_CONFIG IN LISTS ATFRAME_TARGET_OUTPUT_CONFIG_TYPES)
+      string(TOUPPER "${ATFRAME_TARGET_OUTPUT_CONFIG}" ATFRAME_TARGET_OUTPUT_CONFIG_UPPER)
+      set_target_properties(${TARGET_NAME} PROPERTIES "PDB_OUTPUT_DIRECTORY_${ATFRAME_TARGET_OUTPUT_CONFIG_UPPER}"
+                                                      "${OUTPUT_DIR}")
+    endforeach()
+  endif()
+  unset(ATFRAME_TARGET_OUTPUT_CONFIG)
+  unset(ATFRAME_TARGET_OUTPUT_CONFIG_UPPER)
+  unset(ATFRAME_TARGET_OUTPUT_CONFIG_TYPES)
+endfunction()
+
+# Tests and samples registered with CTest run outside the runtime output directory, so on Windows the loader can no
+# longer resolve shared libraries next to the executable. Prepend the runtime library directories to PATH instead of
+# copying DLLs. Unix builds resolve shared libraries through the build-tree RPATH and need no injection.
+function(atframe_test_setup_run_environment TEST_NAME RUNTIME_OUTPUT_DIR)
+  if(NOT WIN32)
+    return()
+  endif()
+  set(ATFRAME_TEST_RUN_PATH_MODIFICATIONS)
+  if(RUNTIME_OUTPUT_DIR)
+    list(APPEND ATFRAME_TEST_RUN_PATH_MODIFICATIONS "PATH=path_list_prepend:${RUNTIME_OUTPUT_DIR}")
+  endif()
+  if(CMAKE_RUNTIME_OUTPUT_DIRECTORY AND NOT CMAKE_RUNTIME_OUTPUT_DIRECTORY STREQUAL "${RUNTIME_OUTPUT_DIR}")
+    list(APPEND ATFRAME_TEST_RUN_PATH_MODIFICATIONS "PATH=path_list_prepend:${CMAKE_RUNTIME_OUTPUT_DIRECTORY}")
+  endif()
+  if(PROJECT_THIRD_PARTY_INSTALL_DIR)
+    list(APPEND ATFRAME_TEST_RUN_PATH_MODIFICATIONS "PATH=path_list_prepend:${PROJECT_THIRD_PARTY_INSTALL_DIR}/bin")
+  endif()
+  if(ATFRAME_TEST_RUN_PATH_MODIFICATIONS)
+    set_property(
+      TEST ${TEST_NAME}
+      APPEND
+      PROPERTY ENVIRONMENT_MODIFICATION "${ATFRAME_TEST_RUN_PATH_MODIFICATIONS}")
+  endif()
+endfunction()
 
 option(ATFRAMEWORK_USE_DYNAMIC_LIBRARY "Build and linking with dynamic libraries." OFF)
 
