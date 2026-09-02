@@ -521,22 +521,35 @@ function(atframe_test_setup_run_environment TEST_NAME RUNTIME_OUTPUT_DIR)
   if(NOT WIN32)
     return()
   endif()
-  set(ATFRAME_TEST_RUN_PATH_MODIFICATIONS)
+  set(ATFRAME_TEST_RUN_LIBRARY_DIRS)
   if(RUNTIME_OUTPUT_DIR)
-    list(APPEND ATFRAME_TEST_RUN_PATH_MODIFICATIONS "PATH=path_list_prepend:${RUNTIME_OUTPUT_DIR}")
+    list(APPEND ATFRAME_TEST_RUN_LIBRARY_DIRS "${RUNTIME_OUTPUT_DIR}")
   endif()
-  if(CMAKE_RUNTIME_OUTPUT_DIRECTORY AND NOT CMAKE_RUNTIME_OUTPUT_DIRECTORY STREQUAL "${RUNTIME_OUTPUT_DIR}")
-    list(APPEND ATFRAME_TEST_RUN_PATH_MODIFICATIONS "PATH=path_list_prepend:${CMAKE_RUNTIME_OUTPUT_DIRECTORY}")
+  if(CMAKE_RUNTIME_OUTPUT_DIRECTORY)
+    list(APPEND ATFRAME_TEST_RUN_LIBRARY_DIRS "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}")
+    # Multi-configuration generators (e.g. Visual Studio) place shared libraries in a per-configuration subdirectory of
+    # CMAKE_RUNTIME_OUTPUT_DIRECTORY, while atframe_target_set_runtime_output_directory flattens the test/sample
+    # executable into the base directory. $<CONFIG> resolves to the configuration CTest actually runs, so only that
+    # subdirectory is added and other configurations' DLLs never leak onto PATH.
+    if(CMAKE_CONFIGURATION_TYPES)
+      list(APPEND ATFRAME_TEST_RUN_LIBRARY_DIRS "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/$<CONFIG>")
+    endif()
   endif()
   if(PROJECT_THIRD_PARTY_INSTALL_DIR)
-    list(APPEND ATFRAME_TEST_RUN_PATH_MODIFICATIONS "PATH=path_list_prepend:${PROJECT_THIRD_PARTY_INSTALL_DIR}/bin")
+    list(APPEND ATFRAME_TEST_RUN_LIBRARY_DIRS "${PROJECT_THIRD_PARTY_INSTALL_DIR}/bin")
   endif()
-  if(ATFRAME_TEST_RUN_PATH_MODIFICATIONS)
-    set_property(
-      TEST ${TEST_NAME}
-      APPEND
-      PROPERTY ENVIRONMENT_MODIFICATION "${ATFRAME_TEST_RUN_PATH_MODIFICATIONS}")
+  if(NOT ATFRAME_TEST_RUN_LIBRARY_DIRS)
+    return()
   endif()
+  list(REMOVE_DUPLICATES ATFRAME_TEST_RUN_LIBRARY_DIRS)
+  set(ATFRAME_TEST_RUN_PATH_MODIFICATIONS)
+  foreach(ATFRAME_TEST_RUN_LIBRARY_DIR IN LISTS ATFRAME_TEST_RUN_LIBRARY_DIRS)
+    list(APPEND ATFRAME_TEST_RUN_PATH_MODIFICATIONS "PATH=path_list_prepend:${ATFRAME_TEST_RUN_LIBRARY_DIR}")
+  endforeach()
+  set_property(
+    TEST ${TEST_NAME}
+    APPEND
+    PROPERTY ENVIRONMENT_MODIFICATION "${ATFRAME_TEST_RUN_PATH_MODIFICATIONS}")
 endfunction()
 
 option(ATFRAMEWORK_USE_DYNAMIC_LIBRARY "Build and linking with dynamic libraries." OFF)
