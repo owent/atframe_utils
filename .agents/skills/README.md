@@ -12,6 +12,7 @@ commands, caveats, and examples here.
 | `build/` | Configure/build atframe_utils and edit or review CMake generation rules |
 | `testing/` | Design, review, and run private-framework unit tests |
 | `ai-agent-maintenance/` | Audit and optimize AI agent prompts, bridge files, and skills |
+| `shell-tooling/` | Modern CLI tool inventory, shell selection, and PowerShell authoring rules |
 
 ## When to read what
 
@@ -20,6 +21,7 @@ commands, caveats, and examples here.
 - If you want to **build or edit/review CMake generation rules**: start with `build/SKILL.md`.
 - If you want to **run or write unit tests**: start with `testing/SKILL.md`.
 - If you are updating AI agent prompts or skills: see `ai-agent-maintenance/SKILL.md`.
+- If you are running terminal commands or writing/debugging PowerShell: see `shell-tooling/SKILL.md`.
 
 ## Maintenance rules
 

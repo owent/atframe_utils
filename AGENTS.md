@@ -48,6 +48,19 @@ helpers.
 - Read the matching `.agents/skills/*/SKILL.md` before C++ edit/review, build, or test work.
 - After C++ edits, run `clang-format -i <file>` and verify with `clang-format --dry-run --Werror <file>` when practical.
 
+## Terminal and Tooling
+
+- On Windows use PowerShell 7+ (`pwsh.exe`); never use the legacy Windows PowerShell 5.1 (`powershell.exe`). Launch
+  independent processes with `pwsh.exe -NoLogo -NoProfile`, and do not nest `cmd.exe`, Git Bash, WSL, or other shells
+  unless the task explicitly requires it.
+- Probe before use (`Get-Command <name>`): prefer an installed modern CLI tool (`rg`, `fd`, `sd`, `bat`, `jq`, ...)
+  and fall back to PowerShell cmdlets or the traditional tool when it is absent.
+- Write PowerShell defensively: single quotes unless expansion is needed, `${name}` for ambiguous boundaries,
+  here-strings instead of heredocs, `& { ... } | ...` to pipe statement blocks, and full cmdlet names instead of
+  ambiguous Unix aliases (`cat`, `find`, `where`).
+- Read the `shell-tooling` skill for the full modern-tool inventory, install channels, agent practices, and
+  PowerShell authoring rules before shell-heavy work or command-failure debugging.
+
 ## C++ Conventions
 
 1. **Namespace**: public code is under `atfw::util`.
@@ -79,6 +92,7 @@ Read the matching `.agents/skills/*/SKILL.md` before specialized work:
 | `build` | Configuring or building with CMake |
 | `testing` | Running or writing private test-framework cases |
 | `ai-agent-maintenance` | Auditing or optimizing AI agent prompts, bridge files, and skills |
+| `shell-tooling` | Running terminal commands, choosing modern CLI tools, or writing/debugging PowerShell |
 
 ## Agent File Compatibility
 
