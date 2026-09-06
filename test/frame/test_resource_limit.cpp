@@ -544,20 +544,22 @@ static bool apply_os_cpu_limit_cgroup_v1(int64_t permyriad, unsigned int cpu_cou
     return false;
   }
 
-  std::string leaf_dir = root + self_path + cgroup_leaf_name();
+  // When the process is already inside its leaf group, self_path ends with the leaf name; appending it
+  // again would produce a non-existent ".../leaf/leaf" path.
+  bool already_in_leaf = cgroup_path_ends_with(self_path, cgroup_leaf_name());
+  std::string leaf_dir = root + self_path + (already_in_leaf ? "" : cgroup_leaf_name());
   if (permyriad <= 0 || permyriad >= kTestResourceLimitPermyriadFull) {
     // Restore the unlimited quota; only meaningful when the process is already inside its leaf.
-    if (!cgroup_path_ends_with(self_path, cgroup_leaf_name())) {
+    if (!already_in_leaf) {
       return false;
     }
     return write_system_file(leaf_dir + "/cpu.cfs_quota_us", "-1");
   }
 
-  std::string base = root + self_path;
   // cfs_period_us is inherited from the parent; read it for an accurate quota.
   uint64_t period = 100000;
   {
-    FILE *fp = fopen((base + "/cpu.cfs_period_us").c_str(), "r");
+    FILE *fp = fopen((leaf_dir + "/cpu.cfs_period_us").c_str(), "r");
     if (nullptr != fp) {
       unsigned long long parsed = 0;
       if (1 == fscanf(fp, "%llu", &parsed) && parsed > 0) {
@@ -572,6 +574,11 @@ static bool apply_os_cpu_limit_cgroup_v1(int64_t permyriad, unsigned int cpu_cou
     quota = 1;
   }
   std::string quota_text = atfw::util::string::format("{}", quota);
+
+  if (already_in_leaf) {
+    // Repeated application inside the leaf: just refresh the quota.
+    return write_system_file(leaf_dir + "/cpu.cfs_quota_us", quota_text);
+  }
 
   std::string pid_text = atfw::util::string::format("{}", static_cast<int>(getpid()));
   if (0 != ::mkdir(leaf_dir.c_str(), 0755) && EEXIST != errno) {
@@ -604,6 +611,14 @@ static bool apply_os_memory_limit_cgroup_v1(uint64_t limit_bytes) {
   }
   if (root.empty()) {
     return false;
+  }
+
+  // When the process is already inside its leaf group, self_path ends with the leaf name; appending it
+  // again would build a nested group that does not constrain this process.
+  if (cgroup_path_ends_with(self_path, cgroup_leaf_name())) {
+    // Repeated application inside the leaf (e.g. raising the cap): just refresh the limit.
+    return write_system_file(root + self_path + "/memory.limit_in_bytes",
+                             atfw::util::string::format("{}", limit_bytes));
   }
 
   std::string pid_text = atfw::util::string::format("{}", static_cast<int>(getpid()));
@@ -782,8 +797,9 @@ static void resource_limit_kill_process(const char *message, size_t length) {
   write_stderr_raw(message, length);
   write_stderr_raw("\n", 1);
 #if defined(_WIN32)
+  // ExitProcess is declared by windows.h (already included); the C runtime _exit needs an extra header.
   TerminateProcess(GetCurrentProcess(), kResourceLimitExitCode);
-  _exit(static_cast<int>(kResourceLimitExitCode));  // never reached, keeps control flow obvious
+  ExitProcess(static_cast<UINT>(kResourceLimitExitCode));  // never reached, keeps control flow obvious
 #else
   _exit(static_cast<int>(kResourceLimitExitCode));
 #endif
