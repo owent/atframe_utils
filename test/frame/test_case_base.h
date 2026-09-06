@@ -11,14 +11,15 @@
 #  include <boost/test/unit_test.hpp>
 #endif
 
+#include "test_framework_export.h"  // NOLINT(build/include_subdir)
+
 #include <config/atframe_utils_build_feature.h>
 #include <config/compiler_features.h>
 
 ATFRAMEWORK_UTILS_NAMESPACE_BEGIN
 namespace testing {
 
-class test_case_base {
- public:
+class ATFRAMEWORK_TEST_API test_case_base {
   using test_func = void (*)();
 
  public:
@@ -33,12 +34,11 @@ class test_case_base {
   test_func func_;
 };
 
-class test_on_start_base {
+class ATFRAMEWORK_TEST_API test_on_start_base {
  public:
   using after_set_t = std::unordered_set<std::string>;
   using on_start_func = void (*)();
 
- public:
   template <typename... T>
   test_on_start_base(const std::string& n, on_start_func func, T&&... deps) : name(n), func_(func) {
     after.reserve(sizeof...(T));
@@ -60,7 +60,7 @@ class test_on_start_base {
   void register_self();
 };
 
-class test_on_exit_base {
+class ATFRAMEWORK_TEST_API test_on_exit_base {
  public:
   using before_set_t = std::unordered_set<std::string>;
   using on_exit_func = void (*)();

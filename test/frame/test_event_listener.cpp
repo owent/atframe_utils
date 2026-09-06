@@ -7,7 +7,7 @@
 #elif defined(ATFW_UTILS_TEST_MACRO_TEST_ENABLE_BOOST_TEST)
 #  include <boost/test/framework.hpp>
 #  include <boost/test/results_collector.hpp>
-#  include <boost/test/test_observer.hpp>
+#  include <boost/test/tree/observer.hpp>
 #  include <boost/test/tree/test_unit.hpp>
 
 #  include <memory>
@@ -129,7 +129,7 @@ class test_event_listener_boost_adapter : public ::boost::unit_test::test_observ
 
   ~test_event_listener_boost_adapter() override { delete listener_; }
 
-  void test_start(::boost::unit_test::counter_t) override {
+  void test_start(::boost::unit_test::counter_t, ::boost::unit_test::test_unit_id) override {
     if (nullptr != listener_) {
       listener_->on_test_program_start();
     }
@@ -151,21 +151,23 @@ class test_event_listener_boost_adapter : public ::boost::unit_test::test_observ
     }
 
     namespace but = ::boost::unit_test;
+    const std::string &unit_name = tu.p_name.get();
     if (but::TUT_SUITE == tu.p_type) {
       if (tu.p_id == but::framework::master_test_suite().p_id) {
         return;
       }
 
       test_event_suite_info info;
-      info.name_ = gsl::string_view(tu.p_name.begin(), static_cast<size_t>(tu.p_name.length()));
+      info.name_ = gsl::string_view(unit_name.data(), unit_name.size());
       listener_->on_test_suite_start(info);
     } else if (but::TUT_CASE == tu.p_type) {
       test_event_case_info info;
       if (tu.p_parent_id != but::INV_TEST_UNIT_ID) {
         const but::test_unit &parent = but::framework::get<but::test_unit>(tu.p_parent_id);
-        info.suite_name_ = gsl::string_view(parent.p_name.begin(), static_cast<size_t>(parent.p_name.length()));
+        const std::string &parent_name = parent.p_name.get();
+        info.suite_name_ = gsl::string_view(parent_name.data(), parent_name.size());
       }
-      info.case_name_ = gsl::string_view(tu.p_name.begin(), static_cast<size_t>(tu.p_name.length()));
+      info.case_name_ = gsl::string_view(unit_name.data(), unit_name.size());
       listener_->on_test_case_start(info);
     }
   }
@@ -176,6 +178,7 @@ class test_event_listener_boost_adapter : public ::boost::unit_test::test_observ
     }
 
     namespace but = ::boost::unit_test;
+    const std::string &unit_name = tu.p_name.get();
     if (but::TUT_SUITE == tu.p_type) {
       if (tu.p_id == but::framework::master_test_suite().p_id) {
         return;
@@ -183,22 +186,23 @@ class test_event_listener_boost_adapter : public ::boost::unit_test::test_observ
 
       const but::test_results &res = but::results_collector.results(tu.p_id);
       test_event_suite_info info;
-      info.name_ = gsl::string_view(tu.p_name.begin(), static_cast<size_t>(tu.p_name.length()));
-      info.run_case_count_ = static_cast<size_t>(res.p_test_cases_passed.value + res.p_test_cases_failed.value +
-                                                 res.p_test_cases_aborted.value);
-      info.success_count_ = static_cast<int>(res.p_test_cases_passed.value);
-      info.failed_count_ = static_cast<int>(res.p_test_cases_failed.value + res.p_test_cases_aborted.value);
+      info.name_ = gsl::string_view(unit_name.data(), unit_name.size());
+      info.run_case_count_ = static_cast<size_t>(res.p_test_cases_passed.get() + res.p_test_cases_failed.get() +
+                                                 res.p_test_cases_aborted.get());
+      info.success_count_ = static_cast<int>(res.p_test_cases_passed.get());
+      info.failed_count_ = static_cast<int>(res.p_test_cases_failed.get() + res.p_test_cases_aborted.get());
       listener_->on_test_suite_end(info);
     } else if (but::TUT_CASE == tu.p_type) {
       const but::test_results &res = but::results_collector.results(tu.p_id);
       test_event_case_info info;
       if (tu.p_parent_id != but::INV_TEST_UNIT_ID) {
         const but::test_unit &parent = but::framework::get<but::test_unit>(tu.p_parent_id);
-        info.suite_name_ = gsl::string_view(parent.p_name.begin(), static_cast<size_t>(parent.p_name.length()));
+        const std::string &parent_name = parent.p_name.get();
+        info.suite_name_ = gsl::string_view(parent_name.data(), parent_name.size());
       }
-      info.case_name_ = gsl::string_view(tu.p_name.begin(), static_cast<size_t>(tu.p_name.length()));
-      info.success_count_ = static_cast<int>(res.p_assertions_passed.value);
-      info.failed_count_ = static_cast<int>(res.p_assertions_failed.value);
+      info.case_name_ = gsl::string_view(unit_name.data(), unit_name.size());
+      info.success_count_ = static_cast<int>(res.p_assertions_passed.get());
+      info.failed_count_ = static_cast<int>(res.p_assertions_failed.get());
       info.passed_ = res.passed();
       listener_->on_test_case_end(info);
     }

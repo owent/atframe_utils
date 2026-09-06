@@ -1,6 +1,7 @@
 // Copyright 2026 atframework
 
-#include "frame/test_macros.h"
+#include "frame/test_macros.h"   // IWYU pragma: keep
+#include "frame/test_manager.h"  // IWYU pragma: keep
 
 #if defined(ATFW_UTILS_TEST_MACRO_TEST_ENABLE_BOOST_TEST)
 

@@ -9,6 +9,10 @@
 #include <iostream>  // IWYU pragma: keep
 #include <sstream>   // IWYU pragma: keep
 
+// Resource limit configuration is available with every test runtime (private runner, GoogleTest and
+// Boost.Test integrations).
+#include "test_resource_limit.h"  // IWYU pragma: keep
+
 #ifdef _MSC_VER
 #  ifndef WIN32_LEAN_AND_MEAN
 #    define WIN32_LEAN_AND_MEAN
@@ -20,6 +24,7 @@
 #ifdef ATFW_UTILS_TEST_MACRO_TEST_ENABLE_GTEST
 #  include "gtest/gtest.h"
 
+#  include "cli/shell_font.h"       // IWYU pragma: keep
 #  include "test_event_listener.h"  // IWYU pragma: keep
 
 #  define CASE_TEST(test_name, case_name) TEST(test_name, case_name)

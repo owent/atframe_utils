@@ -5,6 +5,8 @@
 #include <config/atframe_utils_build_feature.h>
 #include <gsl/select-gsl.h>
 
+#include "test_framework_export.h"  // NOLINT(build/include_subdir)
+
 #include <cstddef>
 
 ATFRAMEWORK_UTILS_NAMESPACE_BEGIN
@@ -26,7 +28,7 @@ struct test_event_case_info {
   bool passed_ = false;
 };
 
-class test_event_listener {
+class ATFRAMEWORK_TEST_API test_event_listener {
  public:
   test_event_listener();
   virtual ~test_event_listener();
@@ -41,7 +43,7 @@ class test_event_listener {
   virtual void on_test_case_end(const test_event_case_info &info);
 };
 
-void append_test_event_listener(test_event_listener *listener);
+ATFRAMEWORK_TEST_API void append_test_event_listener(test_event_listener *listener);
 
 }  // namespace testing
 ATFRAMEWORK_UTILS_NAMESPACE_END

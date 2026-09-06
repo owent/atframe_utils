@@ -634,9 +634,9 @@
 // Dataflow Sanitizer (or DFSAN) is a generalised dynamic data flow analysis.
 #ifndef ATFW_UTIL_HAVE_DATAFLOW_SANITIZER
 #  if defined(DATAFLOW_SANITIZER)
-// GCC provides no method for detecting the presence of the standalone
-// DataFlowSanitizer (-fsanitize=dataflow), so GCC users of -fsanitize=dataflow
-// should also use -DDATAFLOW_SANITIZER.
+// DataFlowSanitizer is only implemented by Clang, where
+// __has_feature(dataflow_sanitizer) below detects it. Other toolchains provide
+// no detection method, so their users should also use -DDATAFLOW_SANITIZER.
 #    define ATFW_UTIL_HAVE_DATAFLOW_SANITIZER 1
 #  elif ATFW_UTIL_HAVE_FEATURE(dataflow_sanitizer)
 #    define ATFW_UTIL_HAVE_DATAFLOW_SANITIZER 1
@@ -661,15 +661,19 @@
 // LeakSanitizer is available does not mean it is active.
 #ifndef ATFW_UTIL_HAVE_LEAK_SANITIZER
 #  if defined(LEAK_SANITIZER)
-// GCC provides no method for detecting the presence of the standalone
-// LeakSanitizer (-fsanitize=leak), so GCC users of -fsanitize=leak should also
-// use -DLEAK_SANITIZER.
+// GCC before 14 provides no method for detecting the presence of the
+// standalone LeakSanitizer (-fsanitize=leak), so users of older GCC with
+// -fsanitize=leak should also use -DLEAK_SANITIZER. GCC 14+ and Clang are
+// detected via __has_feature(leak_sanitizer) below.
 #    define ATFW_UTIL_HAVE_LEAK_SANITIZER 1
-// Clang standalone LeakSanitizer (-fsanitize=leak)
+// Clang or GCC 14+ standalone LeakSanitizer (-fsanitize=leak)
 #  elif ATFW_UTIL_HAVE_FEATURE(leak_sanitizer)
 #    define ATFW_UTIL_HAVE_LEAK_SANITIZER 1
-#  elif defined(ATFW_UTIL_HAVE_ADDRESS_SANITIZER)
-// GCC or Clang using the LeakSanitizer integrated into AddressSanitizer.
+#  elif ATFW_UTIL_HAVE_ADDRESS_SANITIZER && !defined(_WIN32)
+// GCC or Clang using the LeakSanitizer integrated into AddressSanitizer, which
+// enables it by default on supported platforms (Linux, Android, macOS, ...).
+// LeakSanitizer is unavailable on Windows; the MSVC AddressSanitizer does not
+// bundle it.
 #    define ATFW_UTIL_HAVE_LEAK_SANITIZER 1
 #  else
 #    define ATFW_UTIL_HAVE_LEAK_SANITIZER 0
@@ -679,6 +683,29 @@
 // Legacy macros
 #ifndef UTIL_HAVE_LEAK_SANITIZER
 #  define UTIL_HAVE_LEAK_SANITIZER ATFW_UTIL_HAVE_LEAK_SANITIZER
+#endif
+
+// ATFW_UTIL_HAVE_UNDEFINED_SANITIZER
+//
+// UndefinedBehaviorSanitizer (or UBSan) is a fast undefined behavior detector.
+#ifndef ATFW_UTIL_HAVE_UNDEFINED_SANITIZER
+#  if defined(UNDEFINED_BEHAVIOR_SANITIZER)
+// GCC before 14 provides no method for detecting the presence of the
+// UndefinedBehaviorSanitizer (-fsanitize=undefined), so users of older GCC
+// with -fsanitize=undefined should also use -DUNDEFINED_BEHAVIOR_SANITIZER.
+// GCC 14+ and Clang are detected via __has_feature(undefined_behavior_sanitizer)
+// below.
+#    define ATFW_UTIL_HAVE_UNDEFINED_SANITIZER 1
+#  elif ATFW_UTIL_HAVE_FEATURE(undefined_behavior_sanitizer)
+#    define ATFW_UTIL_HAVE_UNDEFINED_SANITIZER 1
+#  else
+#    define ATFW_UTIL_HAVE_UNDEFINED_SANITIZER 0
+#  endif
+#endif
+
+// Legacy macros
+#ifndef UTIL_HAVE_UNDEFINED_SANITIZER
+#  define UTIL_HAVE_UNDEFINED_SANITIZER ATFW_UTIL_HAVE_UNDEFINED_SANITIZER
 #endif
 
 #ifndef ATFW_UTIL_SANITIZER_NO_UNDEFINED

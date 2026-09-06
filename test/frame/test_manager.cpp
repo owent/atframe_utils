@@ -27,6 +27,8 @@
 #include "cli/shell_font.h"
 #include "gsl/select-gsl.h"
 
+#include "test_resource_limit.h"  // NOLINT(build/include_subdir)
+
 ATFRAMEWORK_UTILS_NAMESPACE_BEGIN
 namespace testing {
 
@@ -197,8 +199,8 @@ int test_manager::run() {
     test_suit() = BOOST_TEST_SUITE(iter->first.c_str());
 
     for (test_type::iterator iter2 = iter->second.begin(); iter2 != iter->second.end(); ++iter2) {
-      test_suit()->add(make_test_case(callback0<>(iter2->second->func_), iter2->first.c_str()));
-      iter2->second->run();
+      test_suit()->add(
+          make_test_case(boost::function<void()>(iter2->second->func_), iter2->first.c_str(), __FILE__, __LINE__));
     }
 
     framework::master_test_suite().add(test_suit());
@@ -208,122 +210,6 @@ int test_manager::run() {
 }
 
 #else
-
-static void topological_sort(std::unordered_map<std::string, detail::topological_sort_object_t> &in,
-                             std::vector<detail::topological_sort_object_t *> &out) {
-  using index_by_name_t = std::unordered_map<std::string, detail::topological_sort_object_t>;
-  out.reserve(in.size());
-
-  for (index_by_name_t::iterator iter = in.begin(); iter != in.end(); ++iter) {
-    if (0 == iter->second.dependency_count) {
-      out.push_back(&iter->second);
-    }
-  }
-
-  for (size_t i = 0; i < out.size(); ++i) {
-    for (std::list<detail::topological_sort_object_t *>::iterator iter = out[i]->depend_by.begin();
-         iter != out[i]->depend_by.end(); ++iter) {
-      if ((*iter)->dependency_count > 0) {
-        --(*iter)->dependency_count;
-
-        if (0 == (*iter)->dependency_count) {
-          out.push_back(*iter);
-        }
-      }
-    }
-  }
-}
-
-int test_manager::run_event_on_start() {
-  // generate topological_sort_object_t
-  using index_by_name_t = std::unordered_map<std::string, detail::topological_sort_object_t>;
-  index_by_name_t index_by_name;
-  for (size_t i = 0; i < evt_on_starts_.size(); ++i) {
-    detail::topological_sort_object_t &obj = index_by_name[evt_on_starts_[i].first];
-    obj.name = evt_on_starts_[i].first;
-    obj.object = reinterpret_cast<void *>(evt_on_starts_[i].second);
-    obj.dependency_count = 0;
-  }
-
-  for (size_t i = 0; i < evt_on_starts_.size(); ++i) {
-    detail::topological_sort_object_t &obj = index_by_name[evt_on_starts_[i].first];
-
-    for (test_on_start_base::after_set_t::iterator iter = evt_on_starts_[i].second->after.begin();
-         iter != evt_on_starts_[i].second->after.end(); ++iter) {
-      index_by_name_t::iterator dep_iter = index_by_name.find(*iter);
-      if (dep_iter == index_by_name.end()) {
-        atfw::util::cli::shell_stream ss(std::cerr);
-        ss() << atfw::util::cli::shell_font_style::SHELL_FONT_COLOR_GREEN
-             << atfw::util::cli::shell_font_style::SHELL_FONT_SPEC_BOLD << "[ WARNING  ] "
-             << atfw::util::cli::shell_font_style::SHELL_FONT_SPEC_NULL << "On Start Event " << evt_on_starts_[i].first
-             << " is configured run after " << (*iter) << ", but " << (*iter) << "not found." << std::endl;
-        continue;
-      }
-
-      ++obj.dependency_count;
-      dep_iter->second.depend_by.push_back(&obj);
-    }
-  }
-
-  std::vector<detail::topological_sort_object_t *> run_order;
-  topological_sort(index_by_name, run_order);
-
-  for (size_t i = 0; i < run_order.size(); ++i) {
-    atfw::util::cli::shell_stream ss(std::cout);
-    ss() << atfw::util::cli::shell_font_style::SHELL_FONT_COLOR_GREEN
-         << atfw::util::cli::shell_font_style::SHELL_FONT_SPEC_BOLD << "[ On Start ] "
-         << atfw::util::cli::shell_font_style::SHELL_FONT_SPEC_NULL << "Running " << run_order[i]->name << std::endl;
-    reinterpret_cast<on_start_ptr_type>(run_order[i]->object)->run();
-  }
-
-  return 0;
-}
-
-int test_manager::run_event_on_exit() {
-  using index_by_name_t = std::unordered_map<std::string, detail::topological_sort_object_t>;
-  // generate topological_sort_object_t
-  index_by_name_t index_by_name;
-  for (size_t i = 0; i < evt_on_exits_.size(); ++i) {
-    detail::topological_sort_object_t &obj = index_by_name[evt_on_exits_[i].first];
-    obj.name = evt_on_exits_[i].first;
-    obj.object = reinterpret_cast<void *>(evt_on_exits_[i].second);
-    obj.dependency_count = 0;
-  }
-
-  for (size_t i = 0; i < evt_on_exits_.size(); ++i) {
-    detail::topological_sort_object_t &obj = index_by_name[evt_on_exits_[i].first];
-
-    for (test_on_exit_base::before_set_t::iterator iter = evt_on_exits_[i].second->before.begin();
-         iter != evt_on_exits_[i].second->before.end(); ++iter) {
-      index_by_name_t::iterator dep_iter = index_by_name.find(*iter);
-      if (dep_iter == index_by_name.end()) {
-        atfw::util::cli::shell_stream ss(std::cerr);
-        ss() << atfw::util::cli::shell_font_style::SHELL_FONT_COLOR_GREEN
-             << atfw::util::cli::shell_font_style::SHELL_FONT_SPEC_BOLD << "[ WARNING  ] "
-             << atfw::util::cli::shell_font_style::SHELL_FONT_SPEC_NULL << "On Exit Event " << evt_on_exits_[i].first
-             << " is configured run before " << (*iter) << ", but " << (*iter) << "not found." << std::endl;
-        continue;
-      }
-
-      ++obj.dependency_count;
-      dep_iter->second.depend_by.push_back(&obj);
-    }
-  }
-
-  std::vector<detail::topological_sort_object_t *> run_order;
-  topological_sort(index_by_name, run_order);
-
-  for (size_t i = 0; i < run_order.size(); ++i) {
-    size_t idx = run_order.size() - 1 - i;
-    atfw::util::cli::shell_stream ss(std::cout);
-    ss() << atfw::util::cli::shell_font_style::SHELL_FONT_COLOR_GREEN
-         << atfw::util::cli::shell_font_style::SHELL_FONT_SPEC_BOLD << "[ On Exit  ] "
-         << atfw::util::cli::shell_font_style::SHELL_FONT_SPEC_NULL << "Running " << run_order[idx]->name << std::endl;
-    reinterpret_cast<on_exit_ptr_type>(run_order[idx]->object)->run();
-  }
-
-  return 0;
-}
 
 int test_manager::run() {
   success_ = 0;
@@ -469,6 +355,122 @@ int test_manager::run() {
 
 #endif
 
+static void topological_sort(std::unordered_map<std::string, detail::topological_sort_object_t> &in,
+                             std::vector<detail::topological_sort_object_t *> &out) {
+  using index_by_name_t = std::unordered_map<std::string, detail::topological_sort_object_t>;
+  out.reserve(in.size());
+
+  for (index_by_name_t::iterator iter = in.begin(); iter != in.end(); ++iter) {
+    if (0 == iter->second.dependency_count) {
+      out.push_back(&iter->second);
+    }
+  }
+
+  for (size_t i = 0; i < out.size(); ++i) {
+    for (std::list<detail::topological_sort_object_t *>::iterator iter = out[i]->depend_by.begin();
+         iter != out[i]->depend_by.end(); ++iter) {
+      if ((*iter)->dependency_count > 0) {
+        --(*iter)->dependency_count;
+
+        if (0 == (*iter)->dependency_count) {
+          out.push_back(*iter);
+        }
+      }
+    }
+  }
+}
+
+int test_manager::run_event_on_start() {
+  // generate topological_sort_object_t
+  using index_by_name_t = std::unordered_map<std::string, detail::topological_sort_object_t>;
+  index_by_name_t index_by_name;
+  for (size_t i = 0; i < evt_on_starts_.size(); ++i) {
+    detail::topological_sort_object_t &obj = index_by_name[evt_on_starts_[i].first];
+    obj.name = evt_on_starts_[i].first;
+    obj.object = reinterpret_cast<void *>(evt_on_starts_[i].second);
+    obj.dependency_count = 0;
+  }
+
+  for (size_t i = 0; i < evt_on_starts_.size(); ++i) {
+    detail::topological_sort_object_t &obj = index_by_name[evt_on_starts_[i].first];
+
+    for (test_on_start_base::after_set_t::iterator iter = evt_on_starts_[i].second->after.begin();
+         iter != evt_on_starts_[i].second->after.end(); ++iter) {
+      index_by_name_t::iterator dep_iter = index_by_name.find(*iter);
+      if (dep_iter == index_by_name.end()) {
+        atfw::util::cli::shell_stream ss(std::cerr);
+        ss() << atfw::util::cli::shell_font_style::SHELL_FONT_COLOR_GREEN
+             << atfw::util::cli::shell_font_style::SHELL_FONT_SPEC_BOLD << "[ WARNING  ] "
+             << atfw::util::cli::shell_font_style::SHELL_FONT_SPEC_NULL << "On Start Event " << evt_on_starts_[i].first
+             << " is configured run after " << (*iter) << ", but " << (*iter) << "not found." << std::endl;
+        continue;
+      }
+
+      ++obj.dependency_count;
+      dep_iter->second.depend_by.push_back(&obj);
+    }
+  }
+
+  std::vector<detail::topological_sort_object_t *> run_order;
+  topological_sort(index_by_name, run_order);
+
+  for (size_t i = 0; i < run_order.size(); ++i) {
+    atfw::util::cli::shell_stream ss(std::cout);
+    ss() << atfw::util::cli::shell_font_style::SHELL_FONT_COLOR_GREEN
+         << atfw::util::cli::shell_font_style::SHELL_FONT_SPEC_BOLD << "[ On Start ] "
+         << atfw::util::cli::shell_font_style::SHELL_FONT_SPEC_NULL << "Running " << run_order[i]->name << std::endl;
+    reinterpret_cast<on_start_ptr_type>(run_order[i]->object)->run();
+  }
+
+  return 0;
+}
+
+int test_manager::run_event_on_exit() {
+  using index_by_name_t = std::unordered_map<std::string, detail::topological_sort_object_t>;
+  // generate topological_sort_object_t
+  index_by_name_t index_by_name;
+  for (size_t i = 0; i < evt_on_exits_.size(); ++i) {
+    detail::topological_sort_object_t &obj = index_by_name[evt_on_exits_[i].first];
+    obj.name = evt_on_exits_[i].first;
+    obj.object = reinterpret_cast<void *>(evt_on_exits_[i].second);
+    obj.dependency_count = 0;
+  }
+
+  for (size_t i = 0; i < evt_on_exits_.size(); ++i) {
+    detail::topological_sort_object_t &obj = index_by_name[evt_on_exits_[i].first];
+
+    for (test_on_exit_base::before_set_t::iterator iter = evt_on_exits_[i].second->before.begin();
+         iter != evt_on_exits_[i].second->before.end(); ++iter) {
+      index_by_name_t::iterator dep_iter = index_by_name.find(*iter);
+      if (dep_iter == index_by_name.end()) {
+        atfw::util::cli::shell_stream ss(std::cerr);
+        ss() << atfw::util::cli::shell_font_style::SHELL_FONT_COLOR_GREEN
+             << atfw::util::cli::shell_font_style::SHELL_FONT_SPEC_BOLD << "[ WARNING  ] "
+             << atfw::util::cli::shell_font_style::SHELL_FONT_SPEC_NULL << "On Exit Event " << evt_on_exits_[i].first
+             << " is configured run before " << (*iter) << ", but " << (*iter) << "not found." << std::endl;
+        continue;
+      }
+
+      ++obj.dependency_count;
+      dep_iter->second.depend_by.push_back(&obj);
+    }
+  }
+
+  std::vector<detail::topological_sort_object_t *> run_order;
+  topological_sort(index_by_name, run_order);
+
+  for (size_t i = 0; i < run_order.size(); ++i) {
+    size_t idx = run_order.size() - 1 - i;
+    atfw::util::cli::shell_stream ss(std::cout);
+    ss() << atfw::util::cli::shell_font_style::SHELL_FONT_COLOR_GREEN
+         << atfw::util::cli::shell_font_style::SHELL_FONT_SPEC_BOLD << "[ On Exit  ] "
+         << atfw::util::cli::shell_font_style::SHELL_FONT_SPEC_NULL << "Running " << run_order[idx]->name << std::endl;
+    reinterpret_cast<on_exit_ptr_type>(run_order[idx]->object)->run();
+  }
+
+  return 0;
+}
+
 void test_manager::set_cases(const std::vector<std::string> &case_names) {
   run_cases_.clear();
   run_groups_.clear();
@@ -532,7 +534,12 @@ void test_manager::inc_failed_counter() {
        << "Expect expression can not be used when not running test case." << std::endl;
 }
 
-int run_event_on_start() { return test_manager::me().run_event_on_start(); }
+int run_event_on_start() {
+  // Applies the configured resource limits and starts the watchdog. This entry is invoked by the framework
+  // main for the private runner as well as for the GoogleTest and Boost.Test integrations.
+  setup_test_resource_limit();
+  return test_manager::me().run_event_on_start();
+}
 
 int run_event_on_exit() { return test_manager::me().run_event_on_exit(); }
 

@@ -41,6 +41,8 @@
 #include "test_case_base.h"
 #include "test_event_listener.h"
 
+#include "test_framework_export.h"  // NOLINT(build/include_subdir)
+
 #if (defined(__cplusplus) && __cplusplus >= 201103L) || (defined(_MSC_VER) && _MSC_VER >= 1600)
 
 #  define UTILS_TEST_ENV_AUTO_MAP(...) std::unordered_map<__VA_ARGS__>
@@ -61,7 +63,7 @@
 ATFRAMEWORK_UTILS_NAMESPACE_BEGIN
 namespace testing {
 
-class test_manager {
+class ATFRAMEWORK_TEST_API test_manager {
  public:
   using case_ptr_type = test_case_base *;
   using on_start_ptr_type = test_on_start_base *;
@@ -536,9 +538,9 @@ class test_manager {
   std::unordered_set<std::string> run_groups_;
 };
 
-int run_event_on_start();
-int run_event_on_exit();
-int run_tests(int argc, char *argv[]);
+ATFRAMEWORK_TEST_API int run_event_on_start();
+ATFRAMEWORK_TEST_API int run_event_on_exit();
+ATFRAMEWORK_TEST_API int run_tests(int argc, char *argv[]);
 
 }  // namespace testing
 ATFRAMEWORK_UTILS_NAMESPACE_END

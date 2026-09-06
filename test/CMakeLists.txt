@@ -14,9 +14,12 @@ file(
   ${PROJECT_TEST_SRC_DIR}/*.cc
   ${PROJECT_TEST_SRC_DIR}/*.cxx)
 source_group_by_dir(PROJECT_TEST_SRC_LIST)
+# The framework (frame/) and the entry point (app/) come from atframework::test::main; only the actual
+# test cases are compiled into this executable.
+list(FILTER PROJECT_TEST_SRC_LIST EXCLUDE REGEX "/(frame|app)/")
 
 # ============ test - coroutine test frame ============
-atframe_add_test_executable(atframe_utils_unit_test ${PROJECT_TEST_SRC_LIST})
+atframe_add_test_executable(atframe_utils_unit_test ${PROJECT_TEST_SRC_LIST} LINK_TEST_MAIN)
 
 target_link_libraries(atframe_utils_unit_test ${PROJECT_NAME})
 target_compile_options(atframe_utils_unit_test PRIVATE ${COMPILER_STRICT_EXTRA_CFLAGS} ${COMPILER_STRICT_CFLAGS})

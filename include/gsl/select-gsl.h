@@ -80,8 +80,7 @@ namespace gsl = ::gsl_lite;
 #  include <type_traits>
 #  include <utility>
 
-#  if defined(ATFRAMEWORK_UTILS_ENABLE_GSL_WITH_FALLBACK_STL_SPAN) && \
-      ATFRAMEWORK_UTILS_ENABLE_GSL_WITH_FALLBACK_STL_SPAN
+#  if defined(ATFRAMEWORK_UTILS_GSL_TEST_FALLBACK_STL_SPAN) && ATFRAMEWORK_UTILS_GSL_TEST_FALLBACK_STL_SPAN
 #    include <span>
 #  endif
 
@@ -115,18 +114,10 @@ ATFW_EXPLICIT_NODISCARD_ATTR ATFRAMEWORK_UTILS_API_HEAD_ONLY constexpr inline ty
   return cont[pos];
 }
 
-#  if gsl_HAVE(INITIALIZER_LIST)
-
 template <class T>
-ATFW_EXPLICIT_NODISCARD_ATTR
-    ATFRAMEWORK_UTILS_API_HEAD_ONLY constexpr inline const T at(std::initializer_list<T> cont, size_t pos) {
+ATFW_EXPLICIT_NODISCARD_ATTR ATFRAMEWORK_UTILS_API_HEAD_ONLY constexpr inline const T at(std::initializer_list<T> cont,
+                                                                                         size_t pos) {
   return *(cont.begin() + pos);
-}
-#  endif
-
-template <class T>
-ATFW_EXPLICIT_NODISCARD_ATTR ATFRAMEWORK_UTILS_API_HEAD_ONLY constexpr inline T& at(span<T> s, size_t pos) {
-  return s[pos];
 }
 
 template <class TCONTAINER>
@@ -159,12 +150,16 @@ ATFRAMEWORK_UTILS_API_HEAD_ONLY constexpr inline const TELEMENT* data(std::initi
   return l.begin();
 }
 
-#  if defined(ATFRAMEWORK_UTILS_ENABLE_GSL_WITH_FALLBACK_STL_SPAN) && \
-      ATFRAMEWORK_UTILS_ENABLE_GSL_WITH_FALLBACK_STL_SPAN
+#  if defined(ATFRAMEWORK_UTILS_GSL_TEST_FALLBACK_STL_SPAN) && ATFRAMEWORK_UTILS_GSL_TEST_FALLBACK_STL_SPAN
 using std::span;
+
 template <class T>
-ATFW_EXPLICIT_NODISCARD_ATTR ATFRAMEWORK_UTILS_API_HEAD_ONLY inline constexpr span<T> make_span(
-    T* ptr, typename span<T>::index_type count) {
+ATFW_EXPLICIT_NODISCARD_ATTR ATFRAMEWORK_UTILS_API_HEAD_ONLY constexpr inline T& at(span<T> s, size_t pos) {
+  return s[pos];
+}
+
+template <class T>
+ATFW_EXPLICIT_NODISCARD_ATTR ATFRAMEWORK_UTILS_API_HEAD_ONLY inline constexpr span<T> make_span(T* ptr, size_t count) {
   return span<T>(ptr, count);
 }
 
@@ -188,28 +183,16 @@ ATFW_EXPLICIT_NODISCARD_ATTR inline constexpr span<const T> make_span(std::array
   return span<const T>(arr);
 }
 
-template <class Container, class EP = decltype(data(std::declval<Container&>()))>
+template <class Container, class EP = decltype(std::declval<Container&>().data())>
 ATFW_EXPLICIT_NODISCARD_ATTR inline constexpr auto make_span(Container& cont)
     -> span<typename std::remove_pointer<EP>::type> {
   return span<typename std::remove_pointer<EP>::type>(cont);
 }
 
-template <class Container, class EP = decltype(data(std::declval<Container&>()))>
+template <class Container, class EP = decltype(std::declval<const Container&>().data())>
 ATFW_EXPLICIT_NODISCARD_ATTR inline constexpr auto make_span(Container const& cont)
     -> span<const typename std::remove_pointer<EP>::type> {
   return span<const typename std::remove_pointer<EP>::type>(cont);
-}
-
-template <class Container>
-ATFW_EXPLICIT_NODISCARD_ATTR inline constexpr span<typename Container::value_type> make_span(with_container_t,
-                                                                                             Container& cont) noexcept {
-  return span<typename Container::value_type>(with_container, cont);
-}
-
-template <class Container>
-ATFW_EXPLICIT_NODISCARD_ATTR inline constexpr span<const typename Container::value_type> make_span(
-    with_container_t, Container const& cont) noexcept {
-  return span<const typename Container::value_type>(with_container, cont);
 }
 
 #  endif
@@ -228,8 +211,7 @@ using owner = T;
 
 #  if defined(ATFRAMEWORK_UTILS_GSL_TEST_FALLBACK_STL_BYTE) && ATFRAMEWORK_UTILS_GSL_TEST_FALLBACK_STL_BYTE
 using std::byte;
-#    if defined(ATFRAMEWORK_UTILS_ENABLE_GSL_WITH_FALLBACK_STL_SPAN) && \
-        ATFRAMEWORK_UTILS_ENABLE_GSL_WITH_FALLBACK_STL_SPAN
+#    if defined(ATFRAMEWORK_UTILS_GSL_TEST_FALLBACK_STL_SPAN) && ATFRAMEWORK_UTILS_GSL_TEST_FALLBACK_STL_SPAN
 template <class T>
 ATFW_EXPLICIT_NODISCARD_ATTR ATFRAMEWORK_UTILS_API_HEAD_ONLY inline span<const byte> as_bytes(span<T> spn) noexcept {
   return span<const byte>(reinterpret_cast<const byte*>(spn.data()), spn.size_bytes());  // NOLINT

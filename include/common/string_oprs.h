@@ -35,36 +35,65 @@
 #include <type_traits>
 
 #if defined(_MSC_VER) && _MSC_VER >= 1600
-#  define UTIL_STRFUNC_STRCASE_CMP(l, r) _stricmp(l, r)
-#  define UTIL_STRFUNC_STRNCASE_CMP(l, r, s) _strnicmp(l, r, s)
-#  define UTIL_STRFUNC_STRCMP(l, r) strcmp(l, r)
-#  define UTIL_STRFUNC_STRNCMP(l, r, s) strncmp(l, r, s)
+#  define ATFW_UTIL_STRFUNC_STRCASE_CMP(l, r) _stricmp(l, r)
+#  define ATFW_UTIL_STRFUNC_STRNCASE_CMP(l, r, s) _strnicmp(l, r, s)
+#  define ATFW_UTIL_STRFUNC_STRCMP(l, r) strcmp(l, r)
+#  define ATFW_UTIL_STRFUNC_STRNCMP(l, r, s) strncmp(l, r, s)
 #else
-#  define UTIL_STRFUNC_STRCASE_CMP(l, r) strcasecmp(l, r)
-#  define UTIL_STRFUNC_STRNCASE_CMP(l, r, s) strncasecmp(l, r, s)
-#  define UTIL_STRFUNC_STRCMP(l, r) strcmp(l, r)
-#  define UTIL_STRFUNC_STRNCMP(l, r, s) strncmp(l, r, s)
+#  define ATFW_UTIL_STRFUNC_STRCASE_CMP(l, r) strcasecmp(l, r)
+#  define ATFW_UTIL_STRFUNC_STRNCASE_CMP(l, r, s) strncasecmp(l, r, s)
+#  define ATFW_UTIL_STRFUNC_STRCMP(l, r) strcmp(l, r)
+#  define ATFW_UTIL_STRFUNC_STRNCMP(l, r, s) strncmp(l, r, s)
+#endif
+
+#ifndef UTIL_STRFUNC_STRCASE_CMP
+#  define UTIL_STRFUNC_STRCASE_CMP(l, r) ATFW_UTIL_STRFUNC_STRCASE_CMP(l, r)
+#endif
+#ifndef UTIL_STRFUNC_STRNCASE_CMP
+#  define UTIL_STRFUNC_STRNCASE_CMP(l, r, s) ATFW_UTIL_STRFUNC_STRNCASE_CMP(l, r, s)
+#endif
+#ifndef UTIL_STRFUNC_STRCMP
+#  define UTIL_STRFUNC_STRCMP(l, r) ATFW_UTIL_STRFUNC_STRCMP(l, r)
+#endif
+#ifndef UTIL_STRFUNC_STRNCMP
+#  define UTIL_STRFUNC_STRNCMP(l, r, s) ATFW_UTIL_STRFUNC_STRNCMP(l, r, s)
 #endif
 
 #if (defined(_MSC_VER) && _MSC_VER >= 1600) || (defined(__STDC_VERSION__) && __STDC_VERSION__ >= 201112L) || \
     defined(__STDC_LIB_EXT1__)
-#  define UTIL_STRFUNC_SSCANF(...) sscanf_s(__VA_ARGS__)
+#  define ATFW_UTIL_STRFUNC_SSCANF(...) sscanf_s(__VA_ARGS__)
 
 #  ifdef _MSC_VER
-#    define UTIL_STRFUNC_VSNPRINTF(buffer, bufsz, fmt, arg) \
+#    define ATFW_UTIL_STRFUNC_VSNPRINTF(buffer, bufsz, fmt, arg) \
       vsnprintf_s(buffer, static_cast<size_t>(bufsz), _TRUNCATE, fmt, arg)
-#    define UTIL_STRFUNC_SNPRINTF(buffer, bufsz, ...) sprintf_s(buffer, static_cast<size_t>(bufsz), __VA_ARGS__)
+#    define ATFW_UTIL_STRFUNC_SNPRINTF(buffer, bufsz, ...) sprintf_s(buffer, static_cast<size_t>(bufsz), __VA_ARGS__)
 #  else
-#    define UTIL_STRFUNC_VSNPRINTF(buffer, bufsz, fmt, arg) vsnprintf_s(buffer, static_cast<rsize_t>(bufsz), fmt, arg)
-#    define UTIL_STRFUNC_SNPRINTF(buffer, bufsz, fmt, args...) \
+#    define ATFW_UTIL_STRFUNC_VSNPRINTF(buffer, bufsz, fmt, arg) \
+      vsnprintf_s(buffer, static_cast<rsize_t>(bufsz), fmt, arg)
+#    define ATFW_UTIL_STRFUNC_SNPRINTF(buffer, bufsz, fmt, args...) \
       snprintf_s(buffer, static_cast<rsize_t>(bufsz), fmt, ##args)
 #  endif
 
-#  define UTIL_STRFUNC_C11_SUPPORT 1
+#  define ATFW_UTIL_STRFUNC_C11_SUPPORT 1
 #else
-#  define UTIL_STRFUNC_SSCANF(...) sscanf(__VA_ARGS__)
-#  define UTIL_STRFUNC_SNPRINTF(buffer, bufsz, fmt, args...) snprintf(buffer, static_cast<size_t>(bufsz), fmt, ##args)
-#  define UTIL_STRFUNC_VSNPRINTF(buffer, bufsz, fmt, arg) vsnprintf(buffer, static_cast<size_t>(bufsz), fmt, arg)
+#  define ATFW_UTIL_STRFUNC_SSCANF(...) sscanf(__VA_ARGS__)
+#  define ATFW_UTIL_STRFUNC_SNPRINTF(buffer, bufsz, fmt, args...) \
+    snprintf(buffer, static_cast<size_t>(bufsz), fmt, ##args)
+#  define ATFW_UTIL_STRFUNC_VSNPRINTF(buffer, bufsz, fmt, arg) vsnprintf(buffer, static_cast<size_t>(bufsz), fmt, arg)
+#endif
+
+#ifndef UTIL_STRFUNC_SSCANF
+#  define UTIL_STRFUNC_SSCANF(...) ATFW_UTIL_STRFUNC_SSCANF(__VA_ARGS__)
+#endif
+#ifndef UTIL_STRFUNC_SNPRINTF
+#  define UTIL_STRFUNC_SNPRINTF(buffer, bufsz, ...) ATFW_UTIL_STRFUNC_SNPRINTF(buffer, bufsz, __VA_ARGS__)
+#endif
+#ifndef UTIL_STRFUNC_VSNPRINTF
+#  define UTIL_STRFUNC_VSNPRINTF(buffer, bufsz, fmt, arg) ATFW_UTIL_STRFUNC_VSNPRINTF(buffer, bufsz, fmt, arg)
+#endif
+
+#if defined(ATFW_UTIL_STRFUNC_C11_SUPPORT) && !defined(UTIL_STRFUNC_C11_SUPPORT)
+#  define UTIL_STRFUNC_C11_SUPPORT ATFW_UTIL_STRFUNC_C11_SUPPORT
 #endif
 
 ATFRAMEWORK_UTILS_NAMESPACE_BEGIN
@@ -527,4 +556,3 @@ ATFRAMEWORK_UTILS_NAMESPACE_END
 ATFRAMEWORK_UTILS_API_C(const char *) util_string_version_tok(const char *v, int64_t &out);
 ATFRAMEWORK_UTILS_API_C(int) util_string_version_compare(const char *l, const char *r);
 ATFRAMEWORK_UTILS_API std::string util_string_version_normalize(const char *v);
-
