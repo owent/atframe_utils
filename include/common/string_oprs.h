@@ -24,10 +24,8 @@
 #include <stdint.h>
 
 #include <algorithm>
-#include <cctype>
 #include <cstdlib>
 #include <cstring>
-#include <memory>
 #include <ostream>
 #include <string>
 #include <utility>
@@ -236,6 +234,42 @@ template <class TCH>
 ATFRAMEWORK_UTILS_API_HEAD_ONLY inline void reverse(TCH *begin, std::nullptr_t) {
   reverse<TCH, TCH *>(begin, static_cast<TCH *>(nullptr));
 }
+
+ATFW_UTIL_FORCEINLINE bool string_equal(nostd::basic_string_view<char> lhs, nostd::basic_string_view<char> rhs,
+                                        bool ignore_case = false) {
+  if (!ignore_case) {
+    return lhs == rhs;
+  }
+
+  if (lhs.empty() && rhs.empty()) {
+    return true;
+  }
+
+  if (lhs.size() != rhs.size()) {
+    return false;
+  }
+
+  return 0 == ATFW_UTIL_STRFUNC_STRNCASE_CMP(lhs.data(), rhs.data(), lhs.size());
+}
+
+#if defined(ATFRAMEWORK_UTILS_GSL_TEST_STL_STRING_VIEW) && ATFRAMEWORK_UTILS_GSL_TEST_STL_STRING_VIEW
+ATFW_UTIL_FORCEINLINE bool string_equal(std::basic_string_view<char> lhs, std::basic_string_view<char> rhs,
+                                        bool ignore_case = false) {
+  if (!ignore_case) {
+    return lhs == rhs;
+  }
+
+  if (lhs.empty() && rhs.empty()) {
+    return true;
+  }
+
+  if (lhs.size() != rhs.size()) {
+    return false;
+  }
+
+  return 0 == ATFW_UTIL_STRFUNC_STRNCASE_CMP(lhs.data(), rhs.data(), lhs.size());
+}
+#endif
 
 template <class T>
 ATFRAMEWORK_UTILS_API_HEAD_ONLY size_t int2str_unsigned(char *str, size_t strsz, T in) {
