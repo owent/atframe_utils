@@ -40,7 +40,7 @@ class ATFRAMEWORK_TEST_API test_on_start_base {
   using on_start_func = void (*)();
 
   template <typename... T>
-  test_on_start_base(const std::string& n, on_start_func func, T&&... deps) : name(n), func_(func) {
+  test_on_start_base(const std::string& n, on_start_func func, T&&... deps) noexcept : name(n), func_(func) {
     after.reserve(sizeof...(T));
     expand(after.insert(after.end(), std::forward<T>(deps))...);
     register_self();
@@ -67,7 +67,7 @@ class ATFRAMEWORK_TEST_API test_on_exit_base {
 
  public:
   template <typename... T>
-  test_on_exit_base(const std::string& n, on_exit_func func, T&&... deps) : name(n), func_(func) {
+  test_on_exit_base(const std::string& n, on_exit_func func, T&&... deps) noexcept : name(n), func_(func) {
     before.reserve(sizeof...(T));
     expand(before.insert(before.end(), std::forward<T>(deps))...);
     register_self();

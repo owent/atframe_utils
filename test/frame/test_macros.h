@@ -5,6 +5,8 @@
 
 #pragma once
 
+#include <std/explicit_declare.h>
+
 #include <cstdio>    // IWYU pragma: keep
 #include <iostream>  // IWYU pragma: keep
 #include <sstream>   // IWYU pragma: keep
@@ -47,10 +49,10 @@
 #  define test_case_obj_name(test_name, case_name) atfw_test_obj_test_##test_name##_case_##case_name##_
 
 // NOLINTNEXTLINE(misc-use-anonymous-namespace)
-#  define CASE_TEST(test_name, case_name)                                                  \
-    static void test_case_func_name(test_name, case_name)();                               \
-    static ::atfw::util::testing::test_case_base test_case_obj_name(test_name, case_name)( \
-        #test_name, #case_name, test_case_func_name(test_name, case_name));                \
+#  define CASE_TEST(test_name, case_name)                                                            \
+    static void test_case_func_name(test_name, case_name)();                                         \
+    ATFW_EXPLICIT_UNUSED_ATTR static const ::atfw::util::testing::test_case_base test_case_obj_name( \
+        test_name, case_name)(#test_name, #case_name, test_case_func_name(test_name, case_name));    \
     void test_case_func_name(test_name, case_name)()
 
 #  define test_event_on_start_func_name(event_name) atfw_test_func_event_on_start_##event_name##_
@@ -59,32 +61,48 @@
 #  define test_event_on_exit_obj_name(event_name) atfw_test_obj_event_on_exit_##event_name##_
 
 #  ifdef _MSC_VER
+#    if defined(_MSVC_TRADITIONAL) && !_MSVC_TRADITIONAL
 // NOLINTNEXTLINE(misc-use-anonymous-namespace)
-#    define CASE_TEST_EVENT_ON_START(event_name, ...)                                            \
-      static void test_event_on_start_func_name(event_name)();                                   \
-      static ::atfw::util::testing::test_on_start_base test_event_on_start_obj_name(event_name)( \
-          #event_name, test_event_on_start_func_name(event_name), __VA_ARGS__);                  \
-      void test_event_on_start_func_name(event_name)()
+#      define CASE_TEST_EVENT_ON_START(event_name, ...)                                                                \
+        static void test_event_on_start_func_name(event_name)();                                                       \
+        ATFW_EXPLICIT_UNUSED_ATTR static const ::atfw::util::testing::test_on_start_base test_event_on_start_obj_name( \
+            event_name)(#event_name, test_event_on_start_func_name(event_name) __VA_OPT__(, ) __VA_ARGS__);            \
+        void test_event_on_start_func_name(event_name)()
 
 // NOLINTNEXTLINE(misc-use-anonymous-namespace)
-#    define CASE_TEST_EVENT_ON_EXIT(event_name, ...)                                           \
-      static void test_event_on_exit_func_name(event_name)();                                  \
-      static ::atfw::util::testing::test_on_exit_base test_event_on_exit_obj_name(event_name)( \
-          #event_name, test_event_on_exit_func_name(event_name), __VA_ARGS__);                 \
-      void test_event_on_exit_func_name(event_name)()
+#      define CASE_TEST_EVENT_ON_EXIT(event_name, ...)                                                               \
+        static void test_event_on_exit_func_name(event_name)();                                                      \
+        ATFW_EXPLICIT_UNUSED_ATTR static const ::atfw::util::testing::test_on_exit_base test_event_on_exit_obj_name( \
+            event_name)(#event_name, test_event_on_exit_func_name(event_name) __VA_OPT__(, ) __VA_ARGS__);           \
+        void test_event_on_exit_func_name(event_name)()
+#    else
+// NOLINTNEXTLINE(misc-use-anonymous-namespace)
+#      define CASE_TEST_EVENT_ON_START(event_name, ...)                                                                \
+        static void test_event_on_start_func_name(event_name)();                                                       \
+        ATFW_EXPLICIT_UNUSED_ATTR static const ::atfw::util::testing::test_on_start_base test_event_on_start_obj_name( \
+            event_name)(#event_name, test_event_on_start_func_name(event_name), __VA_ARGS__);                          \
+        void test_event_on_start_func_name(event_name)()
+
+// NOLINTNEXTLINE(misc-use-anonymous-namespace)
+#      define CASE_TEST_EVENT_ON_EXIT(event_name, ...)                                                               \
+        static void test_event_on_exit_func_name(event_name)();                                                      \
+        ATFW_EXPLICIT_UNUSED_ATTR static const ::atfw::util::testing::test_on_exit_base test_event_on_exit_obj_name( \
+            event_name)(#event_name, test_event_on_exit_func_name(event_name), __VA_ARGS__);                         \
+        void test_event_on_exit_func_name(event_name)()
+#    endif
 #  else
 // NOLINTNEXTLINE(misc-use-anonymous-namespace)
-#    define CASE_TEST_EVENT_ON_START(event_name, args...)                                        \
-      static void test_event_on_start_func_name(event_name)();                                   \
-      static ::atfw::util::testing::test_on_start_base test_event_on_start_obj_name(event_name)( \
-          #event_name, test_event_on_start_func_name(event_name), ##args);                       \
+#    define CASE_TEST_EVENT_ON_START(event_name, args...)                                                            \
+      static void test_event_on_start_func_name(event_name)();                                                       \
+      ATFW_EXPLICIT_UNUSED_ATTR static const ::atfw::util::testing::test_on_start_base test_event_on_start_obj_name( \
+          event_name)(#event_name, test_event_on_start_func_name(event_name), ##args);                               \
       void test_event_on_start_func_name(event_name)()
 
 // NOLINTNEXTLINE(misc-use-anonymous-namespace)
-#    define CASE_TEST_EVENT_ON_EXIT(event_name, args...)                                       \
-      static void test_event_on_exit_func_name(event_name)();                                  \
-      static ::atfw::util::testing::test_on_exit_base test_event_on_exit_obj_name(event_name)( \
-          #event_name, test_event_on_exit_func_name(event_name), ##args);                      \
+#    define CASE_TEST_EVENT_ON_EXIT(event_name, args...)                                                           \
+      static void test_event_on_exit_func_name(event_name)();                                                      \
+      ATFW_EXPLICIT_UNUSED_ATTR static const ::atfw::util::testing::test_on_exit_base test_event_on_exit_obj_name( \
+          event_name)(#event_name, test_event_on_exit_func_name(event_name), ##args);                              \
       void test_event_on_exit_func_name(event_name)()
 #  endif
 
