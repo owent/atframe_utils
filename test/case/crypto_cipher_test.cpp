@@ -1,10 +1,12 @@
 // Copyright 2026 atframework
 
 #include <chrono>
+#include <cstdint>
 #include <cstdlib>
 #include <cstring>
 #include <fstream>
 #include <memory>
+#include <vector>
 
 #include "algorithm/crypto_cipher.h"
 #include "common/file_system.h"
@@ -49,6 +51,70 @@ CASE_TEST(crypto_cipher, get_all_cipher_names) {
   CASE_MSG_INFO() << "All ciphers: " << ss.str() << std::endl;
   CASE_EXPECT_NE(0, all_ciphers.size());
 }
+
+#  if defined(ATFRAMEWORK_UTILS_CRYPTO_USE_LIBSODIUM) && ATFRAMEWORK_UTILS_CRYPTO_USE_LIBSODIUM
+CASE_TEST(crypto_cipher, chacha20_stream_continues_across_counter_wrap) {
+  constexpr size_t COUNTER_SIZE = sizeof(uint64_t);
+  constexpr size_t BLOCK_SIZE = 64;
+  constexpr size_t BLOCKS_PER_PACKET = 3;
+  constexpr size_t PACKET_COUNT = 3;
+  constexpr unsigned char LAST_COUNTER_BYTE = 0xff;
+  const unsigned char key[32] = {0x41, 0x29, 0x63};
+  unsigned char iv[16] = {0};
+  memset(iv, LAST_COUNTER_BYTE, COUNTER_SIZE);
+  iv[0] = LAST_COUNTER_BYTE - 1;
+  atfw::util::crypto::cipher sender;
+  atfw::util::crypto::cipher receiver;
+  for (auto *cipher : {&sender, &receiver}) {
+    int result = cipher->init("chacha20");
+    CASE_EXPECT_EQ(0, result);
+    if (result != 0) {
+      return;
+    }
+    result = cipher->set_key(gsl::span<const unsigned char>{key});
+    CASE_EXPECT_EQ(0, result);
+    if (result != 0) {
+      return;
+    }
+    result = cipher->set_iv(iv, sizeof(iv));
+    CASE_EXPECT_EQ(0, result);
+    if (result != 0) {
+      return;
+    }
+  }
+  for (size_t packet = 0; packet < PACKET_COUNT; ++packet) {
+    unsigned char input[BLOCK_SIZE * BLOCKS_PER_PACKET] = {0x71, 0x32};
+    input[0] += static_cast<unsigned char>(packet);
+    unsigned char encrypted[sizeof(input) + BLOCK_SIZE];
+    unsigned char decrypted[sizeof(input) + BLOCK_SIZE];
+    size_t encrypted_size = sizeof(encrypted);
+    int result = sender.encrypt(input, sizeof(input), encrypted, &encrypted_size);
+    CASE_EXPECT_EQ(0, result);
+    CASE_EXPECT_EQ(sizeof(input), encrypted_size);
+    if (result != 0 || encrypted_size != sizeof(input)) {
+      return;
+    }
+    size_t decrypted_size = sizeof(decrypted);
+    result = receiver.decrypt(encrypted, encrypted_size, decrypted, &decrypted_size);
+    CASE_EXPECT_EQ(0, result);
+    CASE_EXPECT_EQ(sizeof(input), decrypted_size);
+    if (result != 0 || decrypted_size != sizeof(input)) {
+      return;
+    }
+    CASE_EXPECT_EQ(0, memcmp(input, decrypted, decrypted_size));
+    CASE_EXPECT_TRUE(std::vector<unsigned char>(sender.get_iv().begin(), sender.get_iv().end()) ==
+                     std::vector<unsigned char>(receiver.get_iv().begin(), receiver.get_iv().end()));
+  }
+  // The first packet crosses UINT64_MAX within the cipher call; later packets continue from the wrapped IV.
+  constexpr size_t BLOCKS_BEFORE_WRAP = 2;
+  iv[0] = static_cast<unsigned char>(PACKET_COUNT * BLOCKS_PER_PACKET - BLOCKS_BEFORE_WRAP);
+  memset(iv + 1, 0, COUNTER_SIZE - 1);
+  CASE_EXPECT_EQ(sizeof(iv), sender.get_iv().size());
+  if (sender.get_iv().size() == sizeof(iv)) {
+    CASE_EXPECT_EQ(0, memcmp(iv, sender.get_iv().data(), sizeof(iv)));
+  }
+}
+#  endif
 
 CASE_TEST(crypto_cipher, split_ciphers) {
   std::vector<std::string> all_ciphers;
