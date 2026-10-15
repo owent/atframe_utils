@@ -116,6 +116,77 @@ CASE_TEST(crypto_cipher, chacha20_stream_continues_across_counter_wrap) {
 }
 #  endif
 
+CASE_TEST(crypto_cipher, aes_gcm_continuous_messages_match_cross_backend_vectors) {
+#  if defined(ATFRAMEWORK_UTILS_CRYPTO_USE_OPENSSL) || defined(ATFRAMEWORK_UTILS_CRYPTO_USE_LIBRESSL) || \
+      defined(ATFRAMEWORK_UTILS_CRYPTO_USE_BORINGSSL)
+  if (!openssl_test_inited) {
+    openssl_test_inited = std::make_shared<openssl_test_init_wrapper>();
+  }
+#  endif
+  // These vectors were checked against OpenSSL and Go crypto/cipher independently.
+  constexpr size_t KEY_SIZE = 32;
+  constexpr size_t PLAINTEXT_SIZES[] = {8, 15};
+  const char *expected_ciphertext[] = {"ec4a76d400c1ea69bf78885efe37faa8cca04a3a23fc0b62",
+                                       "8ec561fb0cee8e70e4da7dfc9e99088f1ad9ef1b3a301d85bb5b64a3fce215"};
+  const char *expected_iv[] = {"606162636465666768696aff", "606162636465666768696b00"};
+  unsigned char key[KEY_SIZE];
+  for (size_t index = 0; index < sizeof(key); ++index) {
+    key[index] = static_cast<unsigned char>(index + 1);
+  }
+  const unsigned char iv[] = {0x60, 0x61, 0x62, 0x63, 0x64, 0x65, 0x66, 0x67, 0x68, 0x69, 0x6a, 0xfe};
+  const unsigned char aad[] = "cross-backend";
+  atfw::util::crypto::cipher sender, receiver;
+  for (auto *cipher : {&sender, &receiver}) {
+    int result = cipher->init("aes-256-gcm");
+    CASE_EXPECT_EQ(0, result);
+    if (result != 0) {
+      return;
+    }
+    result = cipher->set_key(gsl::span<const unsigned char>{key});
+    CASE_EXPECT_EQ(0, result);
+    if (result != 0) {
+      return;
+    }
+    result = cipher->set_iv(iv, sizeof(iv));
+    CASE_EXPECT_EQ(0, result);
+    if (result != 0) {
+      return;
+    }
+  }
+  for (size_t packet = 0; packet < sizeof(PLAINTEXT_SIZES) / sizeof(PLAINTEXT_SIZES[0]); ++packet) {
+    std::vector<unsigned char> input(PLAINTEXT_SIZES[packet]);
+    for (size_t index = 0; index < input.size(); ++index) {
+      input[index] = static_cast<unsigned char>(index + packet * 7);
+    }
+    std::vector<unsigned char> encrypted(input.size() + sender.get_block_size() + sender.get_tag_size());
+    size_t encrypted_size = encrypted.size();
+    int result =
+        sender.encrypt_aead(input.data(), input.size(), encrypted.data(), &encrypted_size, aad, sizeof(aad) - 1);
+    CASE_EXPECT_EQ(0, result);
+    if (result != 0) {
+      return;
+    }
+    std::stringstream encoded;
+    atfw::util::string::dumphex(encrypted.data(), encrypted_size, encoded);
+    CASE_EXPECT_EQ(expected_ciphertext[packet], encoded.str());
+    std::vector<unsigned char> decrypted(input.size() + receiver.get_block_size());
+    size_t decrypted_size = decrypted.size();
+    result = receiver.decrypt_aead(encrypted.data(), encrypted_size, decrypted.data(), &decrypted_size, aad,
+                                   sizeof(aad) - 1);
+    CASE_EXPECT_EQ(0, result);
+    CASE_EXPECT_EQ(input.size(), decrypted_size);
+    if (result != 0 || decrypted_size != input.size()) {
+      return;
+    }
+    CASE_EXPECT_EQ(0, memcmp(input.data(), decrypted.data(), input.size()));
+    for (auto *cipher : {&sender, &receiver}) {
+      std::stringstream current_iv;
+      atfw::util::string::dumphex(cipher->get_iv().data(), cipher->get_iv().size(), current_iv);
+      CASE_EXPECT_EQ(expected_iv[packet], current_iv.str());
+    }
+  }
+}
+
 CASE_TEST(crypto_cipher, split_ciphers) {
   std::vector<std::string> all_ciphers;
   std::string in =

@@ -1672,7 +1672,7 @@ ATFRAMEWORK_UTILS_API int cipher::decrypt_aead(const unsigned char *input, size_
                                           ad_len, input, ilen, output, *olen, olen, tag_len)
 #    else
           mbedtls_cipher_auth_decrypt(cipher_context_.dec, iv_.empty() ? empty_iv : iv_.data(), iv_.size(), ad, ad_len,
-                                      input, ilen, output, olen, input + ilen - tag_len, tag_len)
+                                      input, ilen - tag_len, output, olen, input + ilen - tag_len, tag_len)
 #    endif
           ;
       if (last_errorno_ != 0) {
