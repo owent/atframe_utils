@@ -192,6 +192,13 @@ CASE_TEST(string_oprs, string_equal_sources) {
 
   CASE_EXPECT_TRUE(atfw::util::string::string_equal(nul_lhs, with_nul_same));
   CASE_EXPECT_FALSE(atfw::util::string::string_equal(nul_lhs, with_nul_diff));
+
+  // 忽略大小写路径同样按视图长度逐字节比较，内嵌的 '\0' 不会提前截断
+  std::string with_nul_folded("a\0B", 3);
+  CASE_EXPECT_TRUE(atfw::util::string::string_equal(nul_lhs, with_nul_same, true));
+  CASE_EXPECT_TRUE(atfw::util::string::string_equal(nul_lhs, with_nul_folded, true));
+  CASE_EXPECT_FALSE(atfw::util::string::string_equal(nul_lhs, with_nul_folded));
+  CASE_EXPECT_FALSE(atfw::util::string::string_equal(nul_lhs, with_nul_diff, true));
 }
 
 #if defined(ATFRAMEWORK_UTILS_GSL_TEST_STL_STRING_VIEW) && ATFRAMEWORK_UTILS_GSL_TEST_STL_STRING_VIEW
@@ -213,6 +220,10 @@ CASE_TEST(string_oprs, string_equal_stl_string_view) {
   std::string_view empty;  // data() 可能为空指针
   CASE_EXPECT_TRUE(atfw::util::string::string_equal(empty, std::string_view(), true));
   CASE_EXPECT_FALSE(atfw::util::string::string_equal(empty, same, true));
+
+  // std::basic_string_view 重载同样按视图长度比较内嵌的 '\0'
+  CASE_EXPECT_TRUE(atfw::util::string::string_equal(std::string_view("a\0b", 3), std::string_view("a\0B", 3), true));
+  CASE_EXPECT_FALSE(atfw::util::string::string_equal(std::string_view("a\0b", 3), std::string_view("a\0c", 3), true));
 }
 #endif
 

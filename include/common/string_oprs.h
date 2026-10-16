@@ -249,7 +249,13 @@ ATFW_UTIL_FORCEINLINE bool string_equal(nostd::basic_string_view<char> lhs, nost
     return false;
   }
 
-  return 0 == ATFW_UTIL_STRFUNC_STRNCASE_CMP(lhs.data(), rhs.data(), lhs.size());
+  for (size_t i = 0; i < lhs.size(); ++i) {
+    if (tolower(lhs[i]) != tolower(rhs[i])) {
+      return false;
+    }
+  }
+
+  return true;
 }
 
 #if defined(ATFRAMEWORK_UTILS_GSL_TEST_STL_STRING_VIEW) && ATFRAMEWORK_UTILS_GSL_TEST_STL_STRING_VIEW
@@ -267,7 +273,13 @@ ATFW_UTIL_FORCEINLINE bool string_equal(std::basic_string_view<char> lhs, std::b
     return false;
   }
 
-  return 0 == ATFW_UTIL_STRFUNC_STRNCASE_CMP(lhs.data(), rhs.data(), lhs.size());
+  for (size_t i = 0; i < lhs.size(); ++i) {
+    if (tolower(lhs[i]) != tolower(rhs[i])) {
+      return false;
+    }
+  }
+
+  return true;
 }
 #endif
 

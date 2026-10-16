@@ -123,6 +123,12 @@ CASE_TEST(crypto_cipher, aes_gcm_continuous_messages_match_cross_backend_vectors
     openssl_test_inited = std::make_shared<openssl_test_init_wrapper>();
   }
 #  endif
+
+  if (nullptr == atfw::util::crypto::cipher::get_cipher_by_name("aes-256-gcm")) {
+    CASE_MSG_INFO() << "Current crypto suite do not support aes-256-gcm, just skip the test." << std::endl;
+    return;
+  }
+
   // These vectors were checked against OpenSSL and Go crypto/cipher independently.
   constexpr size_t KEY_SIZE = 32;
   constexpr size_t PLAINTEXT_SIZES[] = {8, 15};
