@@ -18,6 +18,7 @@
 
 #include <config/atframe_utils_build_feature.h>
 #include <config/compile_optimize.h>
+#include <gsl/select-gsl.h>
 #include <std/explicit_declare.h>
 
 #include <climits>
@@ -55,16 +56,18 @@
 
 #if (defined(_MSC_VER) && _MSC_VER >= 1600)
 #  include <errno.h>
-#  define UTIL_FS_OPEN(e, f, path, mode) \
-    f = _fsopen(path, mode, _SH_DENYNO);  \
-    ATFW_EXPLICIT_UNUSED_ATTR errno_t e = errno;
+#  define UTIL_FS_OPEN(e, f, path, mode)         \
+    f = _fsopen(path, mode, _SH_DENYNO);         \
+    ATFW_EXPLICIT_UNUSED_ATTR errno_t e = errno; \
+    static_cast<void>(e);
 #  define UTIL_FS_CLOSE(f) fclose(f)
 #  define UTIL_FS_C11_API
 #else
 #  include <errno.h>
-#  define UTIL_FS_OPEN(e, f, path, mode) \
-    f = fopen(path, mode);               \
-    ATFW_EXPLICIT_UNUSED_ATTR int e = errno
+#  define UTIL_FS_OPEN(e, f, path, mode)     \
+    f = fopen(path, mode);                   \
+    ATFW_EXPLICIT_UNUSED_ATTR int e = errno; \
+    static_cast<void>(e)
 #  define UTIL_FS_CLOSE(f) fclose(f)
 #endif
 
@@ -201,6 +204,23 @@ class file_system {
   static ATFRAMEWORK_UTILS_API bool rename(const char *from, const char *to);
 
   /**
+   * @brief 独占创建二进制文件，已有路径不会被覆盖
+   * @param path 非空路径；拒绝内嵌 NUL，沿用平台现有的窄字符路径约定
+   * @return 成功返回文件句柄，由调用者负责 fclose()；创建或转换句柄失败返回 nullptr
+   */
+  static ATFRAMEWORK_UTILS_API FILE *open_exclusive(gsl::string_view path);
+
+  /**
+   * @brief 在同一文件系统中发布普通文件，禁止覆盖已有目标路径
+   * @param from 源文件路径；不接受目录或符号链接
+   * @param to 目标路径，必须不存在
+   * @return 目标成功发布返回 true；校验或发布失败返回 false
+   * @note 两个路径均拒绝内嵌 NUL，沿用平台现有的窄字符路径约定。
+   *       POSIX 先用 link() 发布，再移除源路径；后续清理失败可能保留源路径，但仍返回发布成功。
+   */
+  static ATFRAMEWORK_UTILS_API bool publish_noreplace(gsl::string_view from, gsl::string_view to);
+
+  /**
    * @brief 移除文件/目录
    * @param path 路径
    * @return 成功返回true
@@ -257,4 +277,3 @@ class file_system {
 ATFRAMEWORK_UTILS_NAMESPACE_END
 
 #endif  // UTIL_COMMON__FILESYSTEM_H
-

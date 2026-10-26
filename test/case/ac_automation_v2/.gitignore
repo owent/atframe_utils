@@ -1,0 +1,9 @@
+# Optional full stress corpora stay local; ordinary tests use four small samples.
+/unicode/
+/library-checker/*
+!/library-checker/in/
+/library-checker/in/*
+!/library-checker/in/example_00.in
+!/library-checker/in/example_01.in
+!/library-checker/in/example_02.in
+!/library-checker/in/example_03.in

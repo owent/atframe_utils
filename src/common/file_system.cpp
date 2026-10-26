@@ -6,6 +6,8 @@
 
 #include <std/explicit_declare.h>
 
+#include <fcntl.h>
+#include <sys/stat.h>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
@@ -23,6 +25,7 @@
 #  include <Windows.h>
 #  include <direct.h>
 #  include <io.h>
+#  include <share.h>
 
 #  ifdef UNICODE
 #    include <atlconv.h>
@@ -297,6 +300,74 @@ ATFRAMEWORK_UTILS_API std::string file_system::get_abs_path(const char *dir_path
 }
 
 ATFRAMEWORK_UTILS_API bool file_system::rename(const char *from, const char *to) { return 0 == ::rename(from, to); }
+
+namespace {
+static constexpr char kPathTerminator = '\0';
+static constexpr char kBinaryWriteMode[] = "wb";
+}  // namespace
+
+ATFRAMEWORK_UTILS_API FILE *file_system::open_exclusive(gsl::string_view path) {
+  if (path.empty() || path.find(kPathTerminator) != gsl::string_view::npos) {
+    return nullptr;
+  }
+  std::string name(path.data(), path.size());
+#ifdef UTIL_FS_WINDOWS_API
+  int descriptor = -1;
+#  if defined(_MSC_VER)
+  if (_sopen_s(&descriptor, name.c_str(), _O_CREAT | _O_EXCL | _O_WRONLY | _O_BINARY, _SH_DENYRW,
+               _S_IREAD | _S_IWRITE) != 0) {
+    return nullptr;
+  }
+#  else
+  descriptor = _sopen(name.c_str(), _O_CREAT | _O_EXCL | _O_WRONLY | _O_BINARY, _SH_DENYRW, _S_IREAD | _S_IWRITE);
+  if (descriptor < 0) {
+    return nullptr;
+  }
+#  endif
+  FILE *result = _fdopen(descriptor, kBinaryWriteMode);
+  if (result == nullptr) {
+    _close(descriptor);
+    ::remove(name.c_str());
+  }
+#else
+  int descriptor = ::open(name.c_str(), O_CREAT | O_EXCL | O_WRONLY, S_IRUSR | S_IWUSR);
+  if (descriptor < 0) {
+    return nullptr;
+  }
+  FILE *result = fdopen(descriptor, kBinaryWriteMode);
+  if (result == nullptr) {
+    ::close(descriptor);
+    ::remove(name.c_str());
+  }
+#endif
+  return result;
+}
+
+ATFRAMEWORK_UTILS_API bool file_system::publish_noreplace(gsl::string_view from, gsl::string_view to) {
+  if (from.empty() || to.empty() || from.find(kPathTerminator) != gsl::string_view::npos ||
+      to.find(kPathTerminator) != gsl::string_view::npos) {
+    return false;
+  }
+  std::string source(from.data(), from.size()), destination(to.data(), to.size());
+#ifdef UTIL_FS_WINDOWS_API
+  DWORD attributes = GetFileAttributesA(source.c_str());
+  if (attributes == INVALID_FILE_ATTRIBUTES ||
+      (attributes & (FILE_ATTRIBUTE_DIRECTORY | FILE_ATTRIBUTE_REPARSE_POINT)) != 0) {
+    return false;
+  }
+  return MoveFileExA(source.c_str(), destination.c_str(), 0) != 0;
+#else
+  struct stat info;
+  if (::lstat(source.c_str(), &info) != 0 || !S_ISREG(info.st_mode)) {
+    return false;
+  }
+  if (::link(source.c_str(), destination.c_str()) != 0) {
+    return false;
+  }
+  ::unlink(source.c_str());
+  return true;
+#endif
+}
 
 ATFRAMEWORK_UTILS_API bool file_system::remove(const char *path) { return 0 == ::remove(path); }
 
@@ -740,4 +811,3 @@ ATFRAMEWORK_UTILS_API int file_system::link(const char *oldpath, const char *new
 #endif
 
 ATFRAMEWORK_UTILS_NAMESPACE_END
-

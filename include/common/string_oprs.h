@@ -497,7 +497,8 @@ ATFRAMEWORK_UTILS_API_HEAD_ONLY void oct(TStr *out, TCh c) {
 template <class TCh>
 ATFRAMEWORK_UTILS_API_HEAD_ONLY void serialization(const void *src, size_t ss, TCh *out, size_t &os) {
   const TCh *cs = reinterpret_cast<const TCh *>(src);
-  size_t i, j;
+  size_t i;
+  size_t j;
   for (i = 0, j = 0; i < ss && j < os; ++i) {
     if (cs[i] >= 32 && cs[i] < 127) {
       out[j] = cs[i];

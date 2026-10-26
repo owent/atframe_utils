@@ -17,11 +17,13 @@ source_group_by_dir(PROJECT_TEST_SRC_LIST)
 # The framework (frame/) and the entry point (app/) come from atframework::test::main; only the actual
 # test cases are compiled into this executable.
 list(FILTER PROJECT_TEST_SRC_LIST EXCLUDE REGEX "/(frame|app)/")
+# Retained AC datasets include original upstream generators, not test translation units.
+list(FILTER PROJECT_TEST_SRC_LIST EXCLUDE REGEX "/case/ac_automation_v2/")
 
 # ============ test - coroutine test frame ============
 atframe_add_test_executable(atframe_utils_unit_test ${PROJECT_TEST_SRC_LIST} LINK_TEST_MAIN)
 
-target_link_libraries(atframe_utils_unit_test ${PROJECT_NAME})
+target_link_libraries(atframe_utils_unit_test ${PROJECT_NAME} ${ATFRAMEWORK_CMAKE_TOOLSET_THIRD_PARTY_XXHASH_LINK_NAME})
 target_compile_options(atframe_utils_unit_test PRIVATE ${COMPILER_STRICT_EXTRA_CFLAGS} ${COMPILER_STRICT_CFLAGS})
 
 add_test(NAME "atframe_utils.unit_test" COMMAND "$<TARGET_FILE:atframe_utils_unit_test>")

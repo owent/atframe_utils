@@ -153,6 +153,9 @@ endif()
 
 include("${PROJECT_ATFRAME_UTILS_SOURCE_DIR}/log/log_configure.cmake")
 
+project_third_party_include_port("algorithm/xxhash.cmake")
+list(APPEND PROJECT_ATFRAME_UTILS_PRIVATE_LINK_NAMES ${ATFRAMEWORK_CMAKE_TOOLSET_THIRD_PARTY_XXHASH_LINK_NAME})
+
 if(NOT ATFRAMEWORK_CMAKE_TOOLSET_THIRD_PARTY_CRYPTO_DISABLED)
   project_third_party_include_port("ssl/port.cmake")
 endif()

@@ -26,7 +26,8 @@ struct ci_char_traits : public std::char_traits<Tc> {
 
   static ATFRAMEWORK_UTILS_API_HEAD_ONLY int compare(const Tc *left, const Tc *right, size_t n) {
     while (n-- > 0) {
-      char cl = (Tc)toupper(*left), cr = (Tc)toupper(*right);
+      char cl = (Tc)toupper(*left);
+      char cr = (Tc)toupper(*right);
       if (cl < cr)
         return -1;
       else if (cl > cr)

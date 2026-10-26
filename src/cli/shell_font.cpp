@@ -45,7 +45,7 @@ static std::string getenv(const char *name) {
   }
 
   ret.resize(len, 0);
-  if (0 != getenv_s(&len, ret.data(), ret.size(), name)) {
+  if (0 != getenv_s(&len, &ret[0], ret.size(), name)) {
     ret.clear();
     return ret;
   }

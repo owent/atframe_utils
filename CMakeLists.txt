@@ -90,6 +90,7 @@ set(SRC_LIST
     "${CMAKE_CURRENT_LIST_DIR}/src/network/http_content_type.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/src/network/http_request.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/src/random/uuid_generator.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/src/string/ac_automation_v2.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/src/string/tquerystring.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/src/time/time_utility.cpp")
 set(HEADER_LIST
@@ -169,6 +170,7 @@ set(HEADER_LIST
     "${CMAKE_CURRENT_LIST_DIR}/include/std/intrusive_ptr.h"
     "${CMAKE_CURRENT_LIST_DIR}/include/std/thread.h"
     "${CMAKE_CURRENT_LIST_DIR}/include/string/ac_automation.h"
+    "${CMAKE_CURRENT_LIST_DIR}/include/string/ac_automation_v2.h"
     "${CMAKE_CURRENT_LIST_DIR}/include/string/tquerystring.h"
     "${CMAKE_CURRENT_LIST_DIR}/include/string/utf8_char_t.h"
     "${CMAKE_CURRENT_LIST_DIR}/include/time/jiffies_timer.h"

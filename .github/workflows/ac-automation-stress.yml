@@ -1,0 +1,80 @@
+# Copyright 2026 atframework
+name: AC automation stress
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "include/**"
+      - "src/**"
+      - "CMakeLists.txt"
+      - "project/cmake/**"
+      - "tools/ac_automation/**"
+      - "tools/CMakeLists.txt"
+      - "test/CMakeLists.txt"
+      - "test/case/ac_automation_v2*"
+      - "test/case/ac_automation_v2/**"
+      - "ci/ac_automation_v2_stress.py"
+      - ".github/workflows/ac-automation-stress.yml"
+  pull_request:
+    branches: [main]
+    paths:
+      - "include/**"
+      - "src/**"
+      - "CMakeLists.txt"
+      - "project/cmake/**"
+      - "tools/ac_automation/**"
+      - "tools/CMakeLists.txt"
+      - "test/CMakeLists.txt"
+      - "test/case/ac_automation_v2*"
+      - "test/case/ac_automation_v2/**"
+      - "ci/ac_automation_v2_stress.py"
+      - ".github/workflows/ac-automation-stress.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  stress:
+    name: C++14 Clang ASAN and UBSAN
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      CC: clang
+      CXX: clang++
+      ASAN_OPTIONS: detect_leaks=1:halt_on_error=1
+      UBSAN_OPTIONS: halt_on_error=1:print_stacktrace=1
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          submodules: recursive
+      - name: Configure instrumented library and existing benchmark
+        run: >-
+          cmake -S . -B build_ac_stress -G Ninja
+          -DCMAKE_BUILD_TYPE=RelWithDebInfo
+          -DCMAKE_CXX_STANDARD=14 -DCMAKE_CXX_STANDARD_REQUIRED=ON
+          -DBUILD_SHARED_LIBS=OFF
+          -DPROJECT_ENABLE_UNITTEST=ON -DPROJECT_ENABLE_TOOLS=ON -DPROJECT_ENABLE_SAMPLE=OFF
+          -DATFRAMEWORK_CMAKE_TOOLSET_THIRD_PARTY_CRYPTO_DISABLED=ON
+          -DATFRAMEWORK_UTILS_LIBUNWIND_ENABLED=OFF
+          -DCMAKE_C_FLAGS="-fsanitize=address,undefined -fno-omit-frame-pointer"
+          -DCMAKE_CXX_FLAGS="-fsanitize=address,undefined -fno-omit-frame-pointer"
+          -DCMAKE_EXE_LINKER_FLAGS="-fsanitize=address,undefined"
+      - name: Build
+        run: cmake --build build_ac_stress --parallel 2 --target ac_automation_benchmark atframe_utils_unit_test
+      - name: Unit tests
+        run: ctest --test-dir build_ac_stress -R '^atframe_utils\.unit_test$' --output-on-failure
+      - name: Generate and validate pressure data
+        run: >-
+          python3 ci/ac_automation_v2_stress.py
+          --benchmark build_ac_stress/bin/ac_automation_benchmark
+          --work-dir build_ac_stress/ac_automation_pressure
+          --upstream-cxx clang++ --profile full
+      - name: Show reproducible case summary
+        if: always()
+        run: |
+          if [ -f build_ac_stress/ac_automation_pressure/summary.json ]; then
+            cat build_ac_stress/ac_automation_pressure/summary.json
+          fi

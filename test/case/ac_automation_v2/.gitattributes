@@ -1,0 +1,4 @@
+# Preserve fixture bytes, malformed encodings and the recorded SHA-256 values.
+library-checker/** -text
+unicode/** -text
+LICENSE.library-checker -text
