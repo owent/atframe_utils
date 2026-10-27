@@ -138,6 +138,70 @@ with tempfile.TemporaryDirectory(prefix="ac-tool-", dir=scratch) as directory:
         result = subprocess.run([exe, *map(str, args)], capture_output=True, text=True, encoding="utf-8")
         assert (result.returncode == 0) == ok, (args, result.returncode, result.stdout, result.stderr)
         return result.stdout
+    replacement_file = root / "replacements.txt"
+    replacement_file.write_text("65 66\n67 68\nE5A3B9 E4B880\n78 65\n", encoding="ascii")
+    replacement_words = root / "replacement-words.txt"
+    replacement_words.write_text("abc\nac\naec\nafc\nahc\n壹\n-\n", encoding="utf-8")
+    replacement_skips = root / "replacement-skips.txt"
+    replacement_skips.write_text("b-", encoding="ascii")
+    replacement_image = root / "replacement.ac"
+    run("build", "--input", replacement_words, "--output", replacement_image,
+        "--replacement-file", replacement_file, "--skip-file", replacement_skips)
+    replacement_report = json.loads(run("print", "--input", replacement_image, "--format", "json"))
+    assert replacement_report["config"]["version"] == "2.1"
+    assert replacement_report["config"]["replacements"] is True
+    assert replacement_report["config"]["nocase"] is False
+    assert replacement_report["config"]["replacement_rules"] == 4
+    assert replacement_report["folds"] == []
+    assert [word["text"] for word in replacement_report["keywords"]] == ["abc", "aec", "ahc", "壹"]
+    assert {rule["source"]["text"]: rule["target"]["text"] for rule in replacement_report["replacements"]} == {
+        "e": "f", "g": "h", "壹": "一", "x": "f"}
+    assert "version=2.1" in run("info", "--input", replacement_image)
+    run("verify", "--input", replacement_image, "--semantic")
+    printed_replacements = json.loads(run("print", "--input", replacement_image, "--section", "replacements",
+                                         "--format", "json"))
+    assert printed_replacements == {"replacements": replacement_report["replacements"]}
+    replacement_symbols = {entry["id"]: entry for entry in replacement_report["symbols"]}
+    for symbol in replacement_symbols.values():
+        target = replacement_symbols[symbol["canonical_id"]]
+        assert target["canonical_id"] == target["id"]
+    replacement_dot = root / "replacement.dot"
+    run("visualize", "--input", replacement_image, "--output", replacement_dot, "--format", "dot")
+    graph_text = replacement_dot.read_text(encoding="utf-8")
+    assert 'label="f"' in graph_text and 'label="e"' not in graph_text
+    assert 'label="一"' in graph_text and 'label="壹"' not in graph_text
+    cycle_words = root / "cycle-words.txt"
+    cycle_words.write_text("agc\naec\nafc\nadc\n", encoding="ascii")
+    replacement_file.write_text("67 65\n64 67\n65 66\n66 67\n", encoding="ascii")
+    cycle_image = root / "cycle.ac"
+    run("build", "--input", cycle_words, "--output", cycle_image, "--replacement-file", replacement_file)
+    run("verify", "--input", cycle_image, "--semantic")
+    cycle_report = json.loads(run("print", "--input", cycle_image, "--format", "json"))
+    assert [word["text"] for word in cycle_report["keywords"]] == ["agc"]
+    assert {rule["source"]["text"]: rule["target"]["text"] for rule in cycle_report["replacements"]} == {
+        "d": "e", "f": "e", "g": "e"}
+    cycle_symbols = {entry["id"]: entry for entry in cycle_report["symbols"]}
+    for symbol in cycle_symbols.values():
+        if symbol["text"] in ("d", "e", "f", "g"):
+            assert cycle_symbols[symbol["canonical_id"]]["text"] == "e"
+        assert cycle_symbols[symbol["canonical_id"]]["canonical_id"] == symbol["canonical_id"]
+    for malformed in ("78 79\n78 7A\n", "78 ZZ\n", "78 7\n", "78\n", "78 79 7A\n"):
+        replacement_file.write_text(malformed, encoding="ascii")
+        rejected_image = root / "rejected-replacement.ac"
+        run("build", "--input", replacement_words, "--output", rejected_image,
+            "--replacement-file", replacement_file, ok=False)
+        assert not rejected_image.exists()
+    replacement_file.write_text("65 46\n66 67\n", encoding="ascii")
+    replacement_words.write_text("E\nf\ng\n", encoding="ascii")
+    composed_image = root / "composed.ac"
+    run("build", "--input", replacement_words, "--output", composed_image,
+        "--replacement-file", replacement_file, "--nocase")
+    composed = json.loads(run("print", "--input", composed_image, "--format", "json"))
+    assert len(composed["keywords"]) == 1 and composed["keywords"][0]["text"] == "E"
+    assert len(composed["folds"]) == 26
+    assert {rule["source"]["text"]: rule["target"]["text"] for rule in composed["replacements"]} == {
+        "e": "g", "f": "g"}
+    run("verify", "--input", composed_image, "--semantic")
     source, image = root / "words.txt", root / "words.ac"
     source.write_text("\ufeff  ab\r\n\n\u3000BC\u3000\n#tag\nx,y\nquote\"slash/\nAB\n", encoding="utf-8")
     run("build", "--input", source, "--output", image, "--nocase", "--skip-space", "--skip-punctuation")
@@ -146,7 +210,8 @@ with tempfile.TemporaryDirectory(prefix="ac-tool-", dir=scratch) as directory:
     run("verify", "--input", image, "--semantic")
     # Printed records describe the stored bytes, not the normalized trie spelling.
     report = json.loads(run("print", "--input", image, "--format", "json"))
-    assert set(report) == {"config", "keywords", "skips", "folds", "symbols"}
+    assert set(report) == {"config", "keywords", "skips", "folds", "replacements", "symbols"}
+    assert report["replacements"] == [] and report["config"]["replacements"] is False
     assert [entry["text"] for entry in report["keywords"]] == ["ab", "BC", "#tag", "x,y", 'quote"slash/']
     assert [bytes.fromhex(entry["hex"]) for entry in report["keywords"]] == [
         word.encode("utf-8") for word in ("ab", "BC", "#tag", "x,y", 'quote"slash/')]
@@ -202,7 +267,7 @@ with tempfile.TemporaryDirectory(prefix="ac-tool-", dir=scratch) as directory:
     plain = root / "empty.ac"
     run("build", "--input", empty_source, "--output", plain)
     empty = json.loads(run("print", "--input", plain, "--format", "json"))
-    assert all(empty[section] == [] for section in ("keywords", "skips", "folds", "symbols"))
+    assert all(empty[section] == [] for section in ("keywords", "skips", "folds", "replacements", "symbols"))
     assert empty["config"]["nocase"] is False and empty["config"]["symbols"] == 0
     # Built-in profiles preserve writing components even when Unicode calls them
     # symbols/default-ignorables. Explicit --skip-file remains an exact user override.

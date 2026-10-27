@@ -33,6 +33,7 @@ static constexpr size_t kDirectoryFlagsOffset = 4;
 static constexpr size_t kDirectoryCountOffset = 24;
 static constexpr size_t kHeaderMajorOffset = 12;
 static constexpr size_t kHeaderMinorOffset = 14;
+static constexpr size_t kHeaderFlagsOffset = 20;
 static constexpr size_t kHeaderSectionCountOffset = 28;
 static constexpr size_t kHeaderNodeCountOffset = 48;
 static constexpr size_t kHeaderKeywordCountOffset = 52;
@@ -54,6 +55,9 @@ static constexpr uint32_t kSectionSymbolOffsets = 3;
 static constexpr uint32_t kSectionSkipBits = 5;
 static constexpr uint32_t kSectionKeywords = 6;
 static constexpr uint32_t kSectionFolds = 8;
+static constexpr uint32_t kSectionCanonical = 9;
+static constexpr uint32_t kFeatureNoCase = 1;
+static constexpr uint32_t kFeatureReplacements = 2;
 static constexpr uint32_t kUnknownOptionalSectionType = 100;
 static constexpr uint32_t kSectionOptionalFlag = 1;
 static constexpr uint16_t kFutureMinorVersion = 1;
@@ -681,6 +685,726 @@ CASE_TEST(ac_automation_v2, binary_roundtrip_and_failed_load_keeps_snapshot) {
   for (size_t length : {size_t{0}, size_t{12}, size_t{127}, dump.size() - 1}) {
     CASE_EXPECT_TRUE(loaded.load(gsl::span<const unsigned char>(dump.data(), length)) != ac::status::kOk);
   }
+}
+
+CASE_TEST(ac_automation_v2, replacements_normalize_keywords_queries_and_duplicate_ids) {
+  ac value;
+  const ac::replacement_rule rules[] = {{"e", "f"}, {"g", "h"}};
+  CASE_EXPECT_TRUE(value.set_replacements(gsl::span<const ac::replacement_rule>(rules)) == ac::status::kOk);
+  CASE_EXPECT_TRUE(value.set_skip("b") == ac::status::kOk);
+  uint32_t id = UINT32_MAX;
+  CASE_EXPECT_TRUE(value.insert_keyword("abc", &id) == ac::status::kOk);
+  CASE_EXPECT_TRUE(value.set_replacements(gsl::span<const ac::replacement_rule>()) == ac::status::kInvalidState);
+  CASE_EXPECT_EQ(0, id);
+  CASE_EXPECT_TRUE(value.insert_keyword("ac", &id) == ac::status::kAlreadyExists);
+  CASE_EXPECT_EQ(0, id);
+  CASE_EXPECT_TRUE(value.insert_keyword("aec", &id) == ac::status::kOk);
+  CASE_EXPECT_EQ(1, id);
+  CASE_EXPECT_TRUE(value.insert_keyword("afc", &id) == ac::status::kAlreadyExists);
+  CASE_EXPECT_EQ(1, id);
+  if (!build(value, {"ahc"})) {
+    return;
+  }
+  CASE_EXPECT_EQ(3, value.get_statistics().keywords);
+  CASE_EXPECT_EQ(7, value.get_statistics().nodes);
+  CASE_EXPECT_TRUE(value.get_statistics().replacements);
+  CASE_EXPECT_FALSE(value.get_statistics().nocase);
+  const gsl::string_view input = "ac abc ab aec afc agc ahc";
+  const std::vector<ac::match_t> expected = {{0, 2, 0, "abc"},  {3, 3, 0, "abc"},  {10, 3, 1, "aec"},
+                                             {14, 3, 1, "aec"}, {18, 3, 2, "ahc"}, {22, 3, 2, "ahc"}};
+  std::vector<unsigned char> image;
+  if (!dump_image(value, image)) {
+    return;
+  }
+  ac restored;
+  ac::load_options load_options;
+  load_options.verify_semantics = true;
+  auto code = restored.load(bytes(image), load_options);
+  CASE_EXPECT_TRUE(code == ac::status::kOk);
+  if (code != ac::status::kOk) {
+    return;
+  }
+  for (const ac* model : {&value, &restored}) {
+    std::vector<ac::match_t> hits;
+    CASE_EXPECT_TRUE(model->match(input, hits).code == ac::status::kOk);
+    expect_hits(expected, hits, input.size());
+    hits.clear();
+    CASE_EXPECT_TRUE(model->match(input, collect_hit, &hits).code == ac::status::kOk);
+    expect_hits(expected, hits, input.size());
+    hits.resize(expected.size());
+    CASE_EXPECT_TRUE(model->match(input, gsl::span<ac::match_t>(hits)).stopped == ac::stop_reason::kOutputFull);
+    expect_hits(expected, hits, input.size());
+    bool found = true;
+    CASE_EXPECT_TRUE(model->contains("ab", found).code == ac::status::kOk);
+    CASE_EXPECT_FALSE(found);
+    CASE_EXPECT_TRUE(model->contains("agc", found).code == ac::status::kOk);
+    CASE_EXPECT_TRUE(found);
+    ac::match_options options;
+    options.max_matches = 2;
+    hits.clear();
+    CASE_EXPECT_TRUE(model->match(input, hits, options).stopped == ac::stop_reason::kMatchLimit);
+    expect_hits(std::vector<ac::match_t>(expected.begin(), expected.begin() + 2), hits, input.size());
+  }
+  std::vector<unsigned char> redump;
+  CASE_EXPECT_TRUE(restored.dump(redump) == ac::status::kOk);
+  CASE_EXPECT_TRUE(image == redump);
+}
+
+CASE_TEST(ac_automation_v2, replacement_chains_fold_then_skip_and_keep_original_spans) {
+  ac value;
+  const ac::replacement_rule rules[] = {{"壹", "一"}, {"x", "壹"}, {"e", "F"}, {"f", "g"}, {"g", "g"}};
+  CASE_EXPECT_TRUE(value.set_nocase(true) == ac::status::kOk);
+  CASE_EXPECT_TRUE(value.set_replacements(gsl::span<const ac::replacement_rule>(rules)) == ac::status::kOk);
+  // A skip on an alias must remove its entire normalized class from both trie and queries.
+  CASE_EXPECT_TRUE(value.set_skip("E") == ac::status::kOk);
+  CASE_EXPECT_TRUE(value.insert_keyword("eFg") == ac::status::kEmptyKeyword);
+  CASE_EXPECT_TRUE(value.insert_keyword("壹E二") == ac::status::kOk);
+  CASE_EXPECT_TRUE(value.insert_keyword("一二") == ac::status::kAlreadyExists);
+  CASE_EXPECT_TRUE(value.build() == ac::status::kOk);
+  const gsl::string_view input = "!Xg二/壹F二/一二";
+  const std::vector<ac::match_t> expected = {{1, 5, 0, "壹E二"}, {7, 7, 0, "壹E二"}, {15, 6, 0, "壹E二"}};
+  std::vector<ac::match_t> hits;
+  CASE_EXPECT_TRUE(value.match(input, hits).code == ac::status::kOk);
+  expect_hits(expected, hits, input.size());
+  std::vector<ac::symbol_view> symbols;
+  CASE_EXPECT_TRUE(value.visit_symbols(collect_symbol, &symbols));
+  for (const auto& symbol : symbols) {
+    if (symbol.token == "E") {
+      CASE_EXPECT_TRUE(symbol.folded_token == "e");
+      CASE_EXPECT_TRUE(symbol.canonical_token == "g");
+    }
+    if (symbol.token == "x" || symbol.token == "壹") {
+      CASE_EXPECT_TRUE(symbol.canonical_token == "一");
+    }
+  }
+  std::vector<unsigned char> image;
+  if (!dump_image(value, image)) {
+    return;
+  }
+  ac loaded;
+  ac::load_options options;
+  options.verify_semantics = true;
+  CASE_EXPECT_TRUE(loaded.load(bytes(image), options) == ac::status::kOk);
+  hits.clear();
+  CASE_EXPECT_TRUE(loaded.match(input, hits).code == ac::status::kOk);
+  expect_hits(expected, hits, input.size());
+}
+
+CASE_TEST(ac_automation_v2, replacement_chains_match_the_terminal_keyword) {
+  ac value;
+  const ac::replacement_rule rules[] = {{"e", "f"}, {"f", "g"}};
+  CASE_EXPECT_TRUE(value.set_replacements(gsl::span<const ac::replacement_rule>(rules)) == ac::status::kOk);
+  CASE_EXPECT_TRUE(value.insert_keyword("agc") == ac::status::kOk);
+  CASE_EXPECT_TRUE(value.insert_keyword("aec") == ac::status::kAlreadyExists);
+  if (!build(value, {})) {
+    return;
+  }
+  const gsl::string_view input = "aec afc agc";
+  std::vector<ac::match_t> hits;
+  CASE_EXPECT_TRUE(value.match(input, hits).code == ac::status::kOk);
+  expect_hits({{0, 3, 0, "agc"}, {4, 3, 0, "agc"}, {8, 3, 0, "agc"}}, hits, input.size());
+}
+
+CASE_TEST(ac_automation_v2, replacement_cycles_use_minimum_token_and_flatten_incoming_chains) {
+  ac value;
+  const ac::replacement_rule rules[] = {{"g", "e"}, {"d", "g"}, {"e", "f"}, {"f", "g"}};
+  auto code = value.set_replacements(gsl::span<const ac::replacement_rule>(rules));
+  CASE_EXPECT_TRUE(code == ac::status::kOk);
+  if (code != ac::status::kOk) {
+    return;
+  }
+  uint32_t keyword_id = UINT32_MAX;
+  CASE_EXPECT_TRUE(value.insert_keyword("agc", &keyword_id) == ac::status::kOk);
+  CASE_EXPECT_EQ(0, keyword_id);
+  for (const auto* keyword : {"aec", "afc", "adc"}) {
+    CASE_EXPECT_TRUE(value.insert_keyword(keyword, &keyword_id) == ac::status::kAlreadyExists);
+    CASE_EXPECT_EQ(0, keyword_id);
+  }
+  if (!build(value, {})) {
+    return;
+  }
+  CASE_EXPECT_EQ(1, value.get_statistics().keywords);
+  CASE_EXPECT_EQ(4, value.get_statistics().nodes);
+  std::vector<unsigned char> image;
+  if (!dump_image(value, image)) {
+    return;
+  }
+  ac loaded;
+  ac::load_options load_options;
+  load_options.verify_semantics = true;
+  code = loaded.load(bytes(image), load_options);
+  CASE_EXPECT_TRUE(code == ac::status::kOk);
+  if (code != ac::status::kOk) {
+    return;
+  }
+  for (const ac* model : {&value, &loaded}) {
+    std::vector<ac::symbol_view> symbols;
+    CASE_EXPECT_TRUE(model->visit_symbols(collect_symbol, &symbols));
+    for (const auto& symbol : symbols) {
+      if (symbol.token == "d" || symbol.token == "e" || symbol.token == "f" || symbol.token == "g") {
+        // d is smaller than every ring member, but belongs only to an incoming chain.
+        CASE_EXPECT_TRUE(symbol.canonical_token == "e");
+      }
+      CASE_EXPECT_TRUE(symbol.canonical_id > 0 && symbol.canonical_id <= symbols.size());
+      if (symbol.canonical_id > 0 && symbol.canonical_id <= symbols.size()) {
+        CASE_EXPECT_EQ(symbol.canonical_id, symbols[symbol.canonical_id - 1].canonical_id);
+      }
+    }
+    const gsl::string_view input = "aec afc agc adc";
+    std::vector<ac::match_t> hits;
+    CASE_EXPECT_TRUE(model->match(input, hits).code == ac::status::kOk);
+    expect_hits({{0, 3, 0, "agc"}, {4, 3, 0, "agc"}, {8, 3, 0, "agc"}, {12, 3, 0, "agc"}}, hits, input.size());
+  }
+  std::vector<unsigned char> redump;
+  CASE_EXPECT_TRUE(loaded.dump(redump) == ac::status::kOk);
+  CASE_EXPECT_TRUE(image == redump);
+  ac reordered;
+  const ac::replacement_rule reordered_rules[] = {{"f", "g"}, {"e", "f"}, {"d", "g"}, {"g", "e"}};
+  CASE_EXPECT_TRUE(reordered.set_replacements(gsl::span<const ac::replacement_rule>(reordered_rules)) ==
+                   ac::status::kOk);
+  if (!build(reordered, {"agc"})) {
+    return;
+  }
+  redump.clear();
+  CASE_EXPECT_TRUE(reordered.dump(redump) == ac::status::kOk);
+  CASE_EXPECT_TRUE(image == redump);
+}
+
+CASE_TEST(ac_automation_v2, replacement_incoming_chain_joins_existing_cycle_in_any_rule_order) {
+  const ac::replacement_rule cycle[] = {{"H", "I"}, {"I", "J"}, {"J", "H"}};
+  const ac::replacement_rule rules[] = {{"H", "I"}, {"I", "J"}, {"J", "H"}, {"A", "B"}, {"B", "H"}};
+  static constexpr size_t kRuleCount = sizeof(rules) / sizeof(rules[0]);
+  std::array<size_t, kRuleCount> order{{0, 1, 2, 3, 4}};
+  const gsl::string_view input = "pAz pBz pHz pIz pJz";
+  const std::vector<ac::match_t> expected = {
+      {0, 3, 0, "pHz"}, {4, 3, 0, "pHz"}, {8, 3, 0, "pHz"}, {12, 3, 0, "pHz"}, {16, 3, 0, "pHz"}};
+  std::vector<unsigned char> expected_image;
+  do {
+    ac value;
+    auto code = value.set_replacements(gsl::span<const ac::replacement_rule>(cycle));
+    CASE_EXPECT_TRUE(code == ac::status::kOk);
+    if (code != ac::status::kOk) {
+      return;
+    }
+    std::array<ac::replacement_rule, kRuleCount> reordered;
+    for (size_t i = 0; i < order.size(); ++i) {
+      reordered[i] = rules[order[i]];
+    }
+    // set_replacements replaces the complete table and must discard earlier resolution state.
+    code = value.set_replacements(gsl::span<const ac::replacement_rule>(reordered));
+    CASE_EXPECT_TRUE(code == ac::status::kOk);
+    if (code != ac::status::kOk) {
+      return;
+    }
+    uint32_t keyword_id = UINT32_MAX;
+    CASE_EXPECT_TRUE(value.insert_keyword("pHz", &keyword_id) == ac::status::kOk);
+    CASE_EXPECT_EQ(0, keyword_id);
+    for (const auto* keyword : {"pAz", "pBz", "pIz", "pJz"}) {
+      CASE_EXPECT_TRUE(value.insert_keyword(keyword, &keyword_id) == ac::status::kAlreadyExists);
+      CASE_EXPECT_EQ(0, keyword_id);
+    }
+    if (!build(value, {})) {
+      return;
+    }
+    std::vector<ac::match_t> hits;
+    CASE_EXPECT_TRUE(value.match(input, hits).code == ac::status::kOk);
+    if (!expect_hits(expected, hits, input.size())) {
+      return;
+    }
+    std::vector<unsigned char> image;
+    if (!dump_image(value, image)) {
+      return;
+    }
+    if (expected_image.empty()) {
+      expected_image = image;
+    } else {
+      CASE_EXPECT_TRUE(image == expected_image);
+    }
+    ac loaded;
+    ac::load_options options;
+    options.verify_semantics = true;
+    code = loaded.load(bytes(image), options);
+    CASE_EXPECT_TRUE(code == ac::status::kOk);
+    if (code != ac::status::kOk) {
+      return;
+    }
+    hits.clear();
+    CASE_EXPECT_TRUE(loaded.match(input, hits).code == ac::status::kOk);
+    if (!expect_hits(expected, hits, input.size())) {
+      return;
+    }
+  } while (std::next_permutation(order.begin(), order.end()));
+}
+
+CASE_TEST(ac_automation_v2, replacement_cycles_are_independent_and_allow_identity_rules) {
+  ac value;
+  const ac::replacement_rule rules[] = {{"e", "f"}, {"f", "e"}, {"m", "n"}, {"n", "m"}, {"x", "x"}};
+  auto code = value.set_replacements(gsl::span<const ac::replacement_rule>(rules));
+  CASE_EXPECT_TRUE(code == ac::status::kOk);
+  if (code != ac::status::kOk || !build(value, {"f", "n", "x"})) {
+    return;
+  }
+  const gsl::string_view input = "efmnx";
+  std::vector<ac::match_t> hits;
+  CASE_EXPECT_TRUE(value.match(input, hits).code == ac::status::kOk);
+  expect_hits({{0, 1, 0, "f"}, {1, 1, 0, "f"}, {2, 1, 1, "n"}, {3, 1, 1, "n"}, {4, 1, 2, "x"}}, hits, input.size());
+  std::vector<ac::symbol_view> symbols;
+  CASE_EXPECT_TRUE(value.visit_symbols(collect_symbol, &symbols));
+  for (const auto& symbol : symbols) {
+    if (symbol.token == "e" || symbol.token == "f") {
+      CASE_EXPECT_TRUE(symbol.canonical_token == "e");
+    } else if (symbol.token == "m" || symbol.token == "n") {
+      CASE_EXPECT_TRUE(symbol.canonical_token == "m");
+    } else {
+      CASE_EXPECT_TRUE(symbol.canonical_token == "x");
+    }
+  }
+}
+
+CASE_TEST(ac_automation_v2, replacement_cycles_fold_then_skip_the_entire_class) {
+  ac value;
+  CASE_EXPECT_TRUE(value.set_nocase(true) == ac::status::kOk);
+  const ac::replacement_rule rules[] = {{"E", "F"}, {"f", "g"}, {"G", "e"}};
+  auto code = value.set_replacements(gsl::span<const ac::replacement_rule>(rules));
+  CASE_EXPECT_TRUE(code == ac::status::kOk);
+  if (code != ac::status::kOk) {
+    return;
+  }
+  CASE_EXPECT_TRUE(value.set_skip("G") == ac::status::kOk);
+  CASE_EXPECT_TRUE(value.insert_keyword("eFg") == ac::status::kEmptyKeyword);
+  CASE_EXPECT_TRUE(value.insert_keyword("aeFgbc") == ac::status::kOk);
+  CASE_EXPECT_TRUE(value.insert_keyword("abc") == ac::status::kAlreadyExists);
+  if (!build(value, {})) {
+    return;
+  }
+  std::vector<ac::match_t> hits;
+  const gsl::string_view input = "aGFbc";
+  CASE_EXPECT_TRUE(value.match(input, hits).code == ac::status::kOk);
+  expect_hits({{0, 5, 0, "aeFgbc"}}, hits, input.size());
+  std::vector<ac::symbol_view> symbols;
+  CASE_EXPECT_TRUE(value.visit_symbols(collect_symbol, &symbols));
+  for (const auto& symbol : symbols) {
+    if (symbol.canonical_token == "e") {
+      CASE_EXPECT_TRUE(symbol.canonical_id > 0 && symbol.canonical_id <= symbols.size());
+      if (symbol.canonical_id > 0 && symbol.canonical_id <= symbols.size()) {
+        CASE_EXPECT_TRUE(symbols[symbol.canonical_id - 1].skipped);
+      }
+    }
+  }
+}
+
+CASE_TEST(ac_automation_v2, replacement_cycles_compare_opaque_unsigned_bytes_and_prefixes) {
+  const std::string high_byte(1, static_cast<char>(kNonAsciiFirstByte));
+  const std::string low_byte(1, '\x7f');
+  const std::string nul_prefix(1, '\0');
+  const std::string nul_word("\0x", 2);
+  const ac::replacement_rule rules[] = {
+      {high_byte, low_byte}, {low_byte, nul_word}, {nul_word, nul_prefix}, {nul_prefix, high_byte}};
+  ac value;
+  auto code = value.set_replacements(gsl::span<const ac::replacement_rule>(rules));
+  CASE_EXPECT_TRUE(code == ac::status::kOk);
+  if (code != ac::status::kOk) {
+    return;
+  }
+  CASE_EXPECT_TRUE(value.insert_keyword(high_byte, nullptr, ac::tokenizer(whole)) == ac::status::kOk);
+  CASE_EXPECT_TRUE(value.insert_keyword(nul_prefix, nullptr, ac::tokenizer(whole)) == ac::status::kAlreadyExists);
+  if (!build(value, {})) {
+    return;
+  }
+  CASE_EXPECT_EQ(2, value.get_statistics().nodes);
+  std::vector<ac::symbol_view> symbols;
+  CASE_EXPECT_TRUE(value.visit_symbols(collect_symbol, &symbols));
+  CASE_EXPECT_EQ(4, symbols.size());
+  for (const auto& symbol : symbols) {
+    CASE_EXPECT_TRUE(symbol.canonical_token == nul_prefix);
+  }
+  ac::match_options options;
+  options.tokens = ac::tokenizer(whole);
+  for (const auto& input : {high_byte, low_byte, nul_prefix, nul_word}) {
+    std::vector<ac::match_t> hits;
+    CASE_EXPECT_TRUE(value.match(input, hits, options).code == ac::status::kOk);
+    expect_hits({{0, input.size(), 0, high_byte}}, hits, input.size());
+  }
+}
+
+CASE_TEST(ac_automation_v2, replacement_cycles_preserve_utf8_match_spans) {
+  ac value;
+  const ac::replacement_rule rules[] = {{"壹", "伊"}, {"伊", "一"}, {"一", "壹"}};
+  auto code = value.set_replacements(gsl::span<const ac::replacement_rule>(rules));
+  CASE_EXPECT_TRUE(code == ac::status::kOk);
+  if (code != ac::status::kOk) {
+    return;
+  }
+  CASE_EXPECT_TRUE(value.insert_keyword("二伊三") == ac::status::kOk);
+  CASE_EXPECT_TRUE(value.insert_keyword("二一三") == ac::status::kAlreadyExists);
+  if (!build(value, {})) {
+    return;
+  }
+  const gsl::string_view input = "二壹三 二一三";
+  std::vector<ac::match_t> hits;
+  CASE_EXPECT_TRUE(value.match(input, hits).code == ac::status::kOk);
+  expect_hits({{0, 9, 0, "二伊三"}, {10, 9, 0, "二伊三"}}, hits, input.size());
+  std::vector<ac::symbol_view> symbols;
+  CASE_EXPECT_TRUE(value.visit_symbols(collect_symbol, &symbols));
+  for (const auto& symbol : symbols) {
+    if (symbol.token == "壹" || symbol.token == "伊" || symbol.token == "一") {
+      CASE_EXPECT_TRUE(symbol.canonical_token == "一");
+    }
+  }
+}
+
+CASE_TEST(ac_automation_v2, replacements_resolve_long_cycles_without_runtime_traversal) {
+  static constexpr size_t kCycleLength = 4096;
+  std::vector<std::string> tokens;
+  tokens.reserve(kCycleLength);
+  for (size_t i = 0; i < kCycleLength; ++i) {
+    tokens.push_back(std::to_string(i));
+  }
+  std::vector<ac::replacement_rule> rules;
+  rules.reserve(kCycleLength);
+  for (size_t i = 0; i < kCycleLength; ++i) {
+    rules.push_back({tokens[i], tokens[(i + 1) % kCycleLength]});
+  }
+  ac value;
+  auto code = value.set_replacements(gsl::span<const ac::replacement_rule>(rules));
+  CASE_EXPECT_TRUE(code == ac::status::kOk);
+  if (code != ac::status::kOk) {
+    return;
+  }
+  CASE_EXPECT_TRUE(value.insert_keyword(tokens.back(), nullptr, ac::tokenizer(whole)) == ac::status::kOk);
+  if (!build(value, {})) {
+    return;
+  }
+  CASE_EXPECT_EQ(2, value.get_statistics().nodes);
+  std::vector<ac::symbol_view> symbols;
+  CASE_EXPECT_TRUE(value.visit_symbols(collect_symbol, &symbols));
+  CASE_EXPECT_EQ(kCycleLength, symbols.size());
+  for (const auto& symbol : symbols) {
+    CASE_EXPECT_TRUE(symbol.canonical_token == "0");
+  }
+  ac::match_options options;
+  options.tokens = ac::tokenizer(whole);
+  bool found = false;
+  CASE_EXPECT_TRUE(value.contains(tokens.front(), found, options).code == ac::status::kOk);
+  CASE_EXPECT_TRUE(found);
+}
+
+CASE_TEST(ac_automation_v2, shuffled_configuration_preserves_canonical_matches_and_dump) {
+  std::vector<ac::case_fold_rule> folds = {{"Ａ", "a"}, {"壹", "一"}};
+  std::vector<ac::replacement_rule> rules = {{"e", "f"},  {"f", "g"}, {"g", "e"}, {"d", "g"}, {"一", "h"},
+                                             {"x", "壹"}, {"q", "r"}, {"r", "q"}, {"s", "q"}, {"!", "!"}};
+  std::vector<gsl::string_view> skips = {"G", " ", "一", "?"};
+  static constexpr uint32_t kShuffleSeed = 9527;
+  static constexpr size_t kConfigurationOrders = 8;
+  std::mt19937 random(kShuffleSeed);
+  std::vector<unsigned char> expected_image;
+  for (size_t order = 0; order < kConfigurationOrders; ++order) {
+    std::shuffle(folds.begin(), folds.end(), random);
+    std::shuffle(rules.begin(), rules.end(), random);
+    std::shuffle(skips.begin(), skips.end(), random);
+    ac value;
+    CASE_EXPECT_TRUE(value.set_nocase(true) == ac::status::kOk);
+    CASE_EXPECT_TRUE(value.set_case_folding(gsl::span<const ac::case_fold_rule>(folds)) == ac::status::kOk);
+    CASE_EXPECT_TRUE(value.set_replacements(gsl::span<const ac::replacement_rule>(rules)) == ac::status::kOk);
+    CASE_EXPECT_TRUE(value.set_skip(gsl::span<const gsl::string_view>(skips)) == ac::status::kOk);
+    if (!build(value, {"ＡE壹x!", "arc", "zz"})) {
+      return;
+    }
+    CASE_EXPECT_EQ(3, value.get_statistics().keywords);
+    const gsl::string_view input = "aFG! arc asc zz";
+    std::vector<ac::match_t> hits;
+    CASE_EXPECT_TRUE(value.match(input, hits).code == ac::status::kOk);
+    expect_hits({{0, 4, 0, "ＡE壹x!"}, {5, 3, 1, "arc"}, {9, 3, 1, "arc"}, {13, 2, 2, "zz"}}, hits, input.size());
+    std::vector<unsigned char> image;
+    if (!dump_image(value, image)) {
+      return;
+    }
+    if (order == 0) {
+      expected_image = image;
+    } else {
+      CASE_EXPECT_TRUE(image == expected_image);
+    }
+    ac loaded;
+    ac::load_options options;
+    options.verify_semantics = true;
+    auto code = loaded.load(bytes(image), options);
+    CASE_EXPECT_TRUE(code == ac::status::kOk);
+    if (code != ac::status::kOk) {
+      return;
+    }
+    hits.clear();
+    CASE_EXPECT_TRUE(loaded.match(input, hits).code == ac::status::kOk);
+    expect_hits({{0, 4, 0, "ＡE壹x!"}, {5, 3, 1, "arc"}, {9, 3, 1, "arc"}, {13, 2, 2, "zz"}}, hits, input.size());
+  }
+}
+
+CASE_TEST(ac_automation_v2, replacement_configuration_is_atomic_and_copy_on_write) {
+  ac value;
+  const ac::replacement_rule original[] = {{"x", "z"}};
+  CASE_EXPECT_TRUE(value.set_replacements(gsl::span<const ac::replacement_rule>(original)) == ac::status::kOk);
+  ac copy = value;
+  const ac::replacement_rule conflict[] = {{"x", "y"}, {"x", "z"}};
+  const ac::replacement_rule empty[] = {{"x", gsl::string_view()}};
+  for (auto rules : {gsl::span<const ac::replacement_rule>(conflict), gsl::span<const ac::replacement_rule>(empty)}) {
+    CASE_EXPECT_TRUE(value.set_replacements(rules) == ac::status::kInvalidArgument);
+  }
+  CASE_EXPECT_TRUE(copy.set_replacements(gsl::span<const ac::replacement_rule>()) == ac::status::kOk);
+  if (!build(value, {"z"}) || !build(copy, {"z"})) {
+    return;
+  }
+  bool found = false;
+  value.contains("x", found);
+  CASE_EXPECT_TRUE(found);
+  copy.contains("x", found);
+  CASE_EXPECT_FALSE(found);
+  CASE_EXPECT_FALSE(copy.get_statistics().replacements);
+  CASE_EXPECT_TRUE(value.set_replacements(gsl::span<const ac::replacement_rule>()) == ac::status::kInvalidState);
+  ac frozen_copy = value;
+  const auto borrowed = value.keyword(0);
+  value.reset();
+  CASE_EXPECT_TRUE(borrowed == frozen_copy.keyword(0));
+  const ac::replacement_rule folded_conflict[] = {{"A", "x"}, {"a", "y"}};
+  CASE_EXPECT_TRUE(value.set_replacements(gsl::span<const ac::replacement_rule>(folded_conflict)) == ac::status::kOk);
+  CASE_EXPECT_TRUE(value.set_nocase(true) == ac::status::kInvalidArgument);
+  if (!build(value, {"x", "y"})) {
+    return;
+  }
+  CASE_EXPECT_FALSE(value.get_statistics().nocase);
+  std::vector<ac::match_t> hits;
+  value.match("Aa", hits);
+  expect_hits({{0, 1, 0, "x"}, {1, 1, 1, "y"}}, hits, 2);
+  value.reset();
+  const ac::replacement_rule folded_cycle[] = {{"a", "B"}, {"b", "A"}};
+  CASE_EXPECT_TRUE(value.set_replacements(gsl::span<const ac::replacement_rule>(folded_cycle)) == ac::status::kOk);
+  CASE_EXPECT_TRUE(value.set_nocase(true) == ac::status::kOk);
+  if (!build(value, {"b"})) {
+    return;
+  }
+  hits.clear();
+  CASE_EXPECT_TRUE(value.match("AaBb", hits).code == ac::status::kOk);
+  expect_hits({{0, 1, 0, "b"}, {1, 1, 0, "b"}, {2, 1, 0, "b"}, {3, 1, 0, "b"}}, hits, 4);
+  value.reset();
+  // A new case rule can close a replacement cycle; both classes then normalize to '#'.
+  const ac::replacement_rule chain[] = {{"@", "#"}, {"#", "!"}};
+  CASE_EXPECT_TRUE(value.set_replacements(gsl::span<const ac::replacement_rule>(chain)) == ac::status::kOk);
+  CASE_EXPECT_TRUE(value.set_nocase(true) == ac::status::kOk);
+  const ac::case_fold_rule fold_cycle[] = {{"!", "@"}};
+  ac fold_only;
+  CASE_EXPECT_TRUE(fold_only.set_nocase(true) == ac::status::kOk);
+  CASE_EXPECT_TRUE(fold_only.set_case_folding(gsl::span<const ac::case_fold_rule>(fold_cycle)) == ac::status::kOk);
+  CASE_EXPECT_TRUE(value.set_case_folding(gsl::span<const ac::case_fold_rule>(fold_cycle)) == ac::status::kOk);
+  uint32_t id = UINT32_MAX;
+  CASE_EXPECT_TRUE(value.insert_keyword("!", &id) == ac::status::kOk);
+  CASE_EXPECT_TRUE(value.insert_keyword("#", &id) == ac::status::kAlreadyExists);
+  CASE_EXPECT_EQ(0, id);
+  ac unchanged = value;
+  if (!build(unchanged, {})) {
+    return;
+  }
+  unchanged.contains("@", found);
+  CASE_EXPECT_TRUE(found);
+  value.reset();
+  // An alias that becomes an identity after folding remains valid.
+  CASE_EXPECT_TRUE(value.set_nocase(true) == ac::status::kOk);
+  const ac::replacement_rule identity_alias[] = {{"@", "!"}};
+  CASE_EXPECT_TRUE(value.set_replacements(gsl::span<const ac::replacement_rule>(identity_alias)) == ac::status::kOk);
+  const ac::case_fold_rule fold_identity[] = {{"@", "!"}};
+  CASE_EXPECT_TRUE(value.set_case_folding(gsl::span<const ac::case_fold_rule>(fold_identity)) == ac::status::kOk);
+}
+
+CASE_TEST(ac_automation_v2, replacements_resolve_long_chains_without_runtime_traversal) {
+  static constexpr size_t kChainLength = 2048;
+  std::vector<std::string> tokens;
+  tokens.reserve(kChainLength + 1);
+  for (size_t i = 0; i <= kChainLength; ++i) {
+    tokens.push_back(std::to_string(i));
+  }
+  std::vector<ac::replacement_rule> rules;
+  for (size_t i = 0; i < kChainLength; ++i) {
+    rules.push_back({tokens[i], tokens[i + 1]});
+  }
+  ac value;
+  CASE_EXPECT_TRUE(value.set_replacements(gsl::span<const ac::replacement_rule>(rules)) == ac::status::kOk);
+  CASE_EXPECT_TRUE(value.insert_keyword(tokens.back(), nullptr, ac::tokenizer(whole)) == ac::status::kOk);
+  CASE_EXPECT_TRUE(value.build() == ac::status::kOk);
+  CASE_EXPECT_EQ(2, value.get_statistics().nodes);
+  std::vector<ac::symbol_view> symbols;
+  value.visit_symbols(collect_symbol, &symbols);
+  CASE_EXPECT_EQ(tokens.size(), symbols.size());
+  for (const auto& symbol : symbols) {
+    CASE_EXPECT_TRUE(symbol.canonical_token == tokens.back());
+  }
+  ac::match_options options;
+  options.tokens = ac::tokenizer(whole);
+  bool found = false;
+  CASE_EXPECT_TRUE(value.contains(tokens.front(), found, options).code == ac::status::kOk);
+  CASE_EXPECT_TRUE(found);
+}
+
+CASE_TEST(ac_automation_v2, replacement_matches_agree_with_independent_suffix_oracle) {
+  ac value;
+  const ac::replacement_rule rules[] = {{"a", "b"}, {"b", "c"}, {"x", "-"}};
+  CASE_EXPECT_TRUE(value.set_nocase(true) == ac::status::kOk);
+  CASE_EXPECT_TRUE(value.set_replacements(gsl::span<const ac::replacement_rule>(rules)) == ac::status::kOk);
+  CASE_EXPECT_TRUE(value.set_skip("-") == ac::status::kOk);
+  const std::vector<std::string> canonical = {"c", "dcd", "dc", "cc", "cd"};
+  const std::vector<std::string> original = {"A", "dBd", "dxA", "ab", "Cd"};
+  for (const auto& word : original) {
+    CASE_EXPECT_TRUE(value.insert_keyword(word) == ac::status::kOk);
+  }
+  CASE_EXPECT_TRUE(value.build() == ac::status::kOk);
+  static constexpr uint32_t kRandomSeed = 731;
+  std::mt19937 random(kRandomSeed);
+  static constexpr char kAlphabet[] = "aAbBcCdDxX-!";
+  static constexpr size_t kTrials = 64;
+  static constexpr size_t kInputBytes = 97;
+  ac::match_context context;
+  for (size_t trial = 0; trial < kTrials; ++trial) {
+    std::string input;
+    std::string normalized;
+    for (size_t i = 0; i < kInputBytes; ++i) {
+      char c = kAlphabet[random() % (sizeof(kAlphabet) - 1)];
+      input += c;
+      // Literal equivalence classes form an independent oracle, with unchanged byte offsets.
+      if (c == 'a' || c == 'A' || c == 'b' || c == 'B' || c == 'c' || c == 'C') {
+        c = 'c';
+      } else if (c == 'x' || c == 'X') {
+        c = '-';
+      } else if (c == 'D') {
+        c = 'd';
+      }
+      normalized += c;
+    }
+    for (bool overlap : {false, true}) {
+      auto expected = ascii_oracle(canonical, normalized, overlap, true);
+      for (auto& hit : expected) {
+        hit.keyword = original[hit.keyword_id];
+      }
+      ac::match_options options;
+      options.allow_overlap = overlap;
+      std::vector<ac::match_t> hits;
+      auto report = value.match(input, hits, options, &context);
+      CASE_EXPECT_TRUE(report.code == ac::status::kOk);
+      expect_hits(expected, hits, input.size());
+    }
+  }
+}
+
+CASE_TEST(ac_automation_v2, replacement_image_rejects_invalid_ids_cycles_and_flag_mismatches) {
+  ac value;
+  const ac::replacement_rule rules[] = {{"x", "y"}, {"z", "-"}};
+  CASE_EXPECT_TRUE(value.set_nocase(true) == ac::status::kOk);
+  CASE_EXPECT_TRUE(value.set_replacements(gsl::span<const ac::replacement_rule>(rules)) == ac::status::kOk);
+  CASE_EXPECT_TRUE(value.set_skip("-") == ac::status::kOk);
+  if (!build(value, {"ay"})) {
+    return;
+  }
+  std::vector<unsigned char> good;
+  if (!dump_image(value, good)) {
+    return;
+  }
+  const size_t mapping = section_start(good, kSectionCanonical);
+  std::vector<ac::symbol_view> symbols;
+  value.visit_symbols(collect_symbol, &symbols);
+  uint32_t x = 0;
+  uint32_t y = 0;
+  uint32_t upper_x = 0;
+  uint32_t skip = 0;
+  for (const auto& symbol : symbols) {
+    if (symbol.token == "x") {
+      x = symbol.id;
+    } else if (symbol.token == "y") {
+      y = symbol.id;
+    } else if (symbol.token == "X") {
+      upper_x = symbol.id;
+    } else if (symbol.token == "-") {
+      skip = symbol.id;
+    }
+  }
+  CASE_EXPECT_TRUE(x > 0 && y > 0 && upper_x > 0 && skip > 0);
+  if (x == 0 || y == 0 || upper_x == 0 || skip == 0) {
+    return;
+  }
+  ac loaded;
+  CASE_EXPECT_TRUE(loaded.load(bytes(good)) == ac::status::kOk);
+  const char* old_keyword = loaded.keyword(0).data();
+  const size_t canonical_directory = kImageHeaderBytes + (kSectionCanonical - 1) * kDirectoryEntryBytes;
+  const std::pair<size_t, uint32_t> corruptions[] = {
+      {mapping, 0},
+      {mapping, UINT32_MAX},
+      {mapping, value.get_statistics().symbols + 1},
+      {mapping + (y - 1) * kIndexBytes, x},
+      {mapping + (x - 1) * kIndexBytes, upper_x},
+      {mapping + (upper_x - 1) * kIndexBytes, skip},
+      {mapping + (skip - 1) * kIndexBytes, y},
+      {canonical_directory + kDirectoryCountOffset, UINT32_MAX},
+      {canonical_directory + kDirectorySizeOffset, UINT32_MAX},
+      {canonical_directory + kDirectoryFlagsOffset, kSectionOptionalFlag},
+      {canonical_directory, kUnknownOptionalSectionType},
+      {kHeaderFlagsOffset, kFeatureNoCase},
+      {kHeaderFlagsOffset, kFeatureReplacements}};
+  for (const auto& mutation : corruptions) {
+    auto image = good;
+    atfw::util::bit::write_le_uint32(image.data() + mutation.first, mutation.second);
+    resign(image);
+    CASE_EXPECT_TRUE(loaded.load(bytes(image)) != ac::status::kOk);
+    CASE_EXPECT_TRUE(loaded.keyword(0).data() == old_keyword);
+  }
+  auto image = good;
+  atfw::util::bit::write_le_uint16(image.data() + kHeaderMinorOffset, 0);
+  resign(image);
+  CASE_EXPECT_TRUE(loaded.load(bytes(image)) == ac::status::kInvalidFormat);
+  ac::load_options budget;
+  budget.max_memory_bytes = value.get_statistics().payload_bytes - 1;
+  CASE_EXPECT_TRUE(loaded.load(bytes(good), budget) == ac::status::kResourceLimit);
+  for (size_t length : {mapping, mapping + kIndexBytes - 1, good.size() - 1}) {
+    CASE_EXPECT_TRUE(loaded.load(gsl::span<const unsigned char>(good.data(), length)) != ac::status::kOk);
+  }
+  CASE_EXPECT_TRUE(loaded.keyword(0).data() == old_keyword);
+}
+
+CASE_TEST(ac_automation_v2, replacements_accept_opaque_tokens_and_recover_invalid_input) {
+  ac value;
+  const std::string utf16_one("\x00\x4e", 2);
+  const std::string utf16_alias("\xf9\x58", 2);
+  const std::string opaque("\xff\0", 2);
+  const ac::replacement_rule rules[] = {{"壹", "一"}, {utf16_alias, "一"}, {utf16_one, "一"}, {opaque, "一"}};
+  CASE_EXPECT_TRUE(value.set_replacements(gsl::span<const ac::replacement_rule>(rules)) == ac::status::kOk);
+  if (!build(value, {"一"})) {
+    return;
+  }
+  for (auto input : {gsl::string_view(utf16_alias), gsl::string_view(utf16_one), gsl::string_view(opaque)}) {
+    ac::match_options options;
+    options.tokens = ac::tokenizer(whole);
+    std::vector<ac::match_t> hits;
+    CASE_EXPECT_TRUE(value.match(input, hits, options).code == ac::status::kOk);
+    expect_hits({{0, input.size(), 0, "一"}}, hits, input.size());
+  }
+  ac::match_options utf16;
+  utf16.tokens = ac::tokenizer(ac::token_encoding::kUtf16Le);
+  std::vector<ac::match_t> hits;
+  CASE_EXPECT_TRUE(value.match(utf16_alias, hits, utf16).code == ac::status::kOk);
+  expect_hits({{0, 2, 0, "一"}}, hits, 2);
+  // Invalid UTF-8 never reaches replacement lookup even if its bytes are configured as an alias.
+  std::string input = opaque + "壹";
+  hits.clear();
+  auto report = value.match(input, hits);
+  CASE_EXPECT_EQ(1, report.invalid_units);
+  expect_hits({{2, 3, 0, "一"}}, hits, input.size());
+  ac::match_options reject;
+  reject.invalid_input = ac::invalid_input_policy::kReject;
+  hits.clear();
+  CASE_EXPECT_TRUE(value.match(input, hits, reject).code == ac::status::kInvalidEncoding);
+  CASE_EXPECT_TRUE(hits.empty());
+  std::vector<unsigned char> image;
+  if (!dump_image(value, image)) {
+    return;
+  }
+  ac loaded;
+  CASE_EXPECT_TRUE(loaded.load(bytes(image)) == ac::status::kOk);
+  hits.clear();
+  CASE_EXPECT_TRUE(loaded.match(utf16_alias, hits, utf16).code == ac::status::kOk);
+  expect_hits({{0, 2, 0, "一"}}, hits, 2);
 }
 
 CASE_TEST(ac_automation_v2, symbol_views_expose_frozen_configuration_and_shared_lifetime) {

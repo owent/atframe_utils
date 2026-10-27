@@ -117,6 +117,7 @@ static constexpr char kCommandPrint[] = "print";
 static constexpr char kCommandVerify[] = "verify";
 static constexpr char kCommandVisualize[] = "visualize";
 static constexpr char kOptionCaseFoldFile[] = "--case-fold-file";
+static constexpr char kOptionReplacementFile[] = "--replacement-file";
 static constexpr char kOptionFormat[] = "--format";
 static constexpr char kOptionHelp[] = "--help";
 static constexpr char kOptionIgnoreCase[] = "--ignore-case";
@@ -144,7 +145,8 @@ static constexpr char kParserErrorEvent[] = "@OnError";
 static constexpr char kDiagnosticPrefix[] = "ac_automation_tool: ";
 static constexpr char kDiagnosticSeparator[] = ": ";
 static constexpr char kErrorBuild[] = "build failed";
-static constexpr char kErrorConfiguration[] = "invalid skip/fold configuration or unreadable configuration file";
+static constexpr char kErrorConfiguration[] =
+    "invalid skip/fold/replacement configuration or unreadable configuration file";
 static constexpr char kErrorCreateOutput[] = "cannot create temporary output";
 static constexpr char kErrorFoldRequiresNoCase[] = "--case-fold-file requires --nocase";
 static constexpr char kErrorFormat[] = "invalid format";
@@ -169,6 +171,7 @@ static constexpr char kErrorTrailingData[] = "trailing data after image";
 static constexpr char kErrorUnknownCommand[] = "unknown command";
 static constexpr char kOperationDump[] = "dump";
 static constexpr char kOperationFold[] = "fold";
+static constexpr char kOperationReplacement[] = "replacement";
 static constexpr char kOperationInsert[] = "insert";
 static constexpr char kOperationLoad[] = "load";
 static constexpr char kOperationNoCase[] = "nocase";
@@ -177,7 +180,7 @@ static constexpr char kOperationSkip[] = "skip";
 // Report fields and verification messages.
 static constexpr char kDuplicatesField[] = " duplicates=";
 static constexpr char kIgnoredField[] = " ignored=";
-static constexpr char kImageInfoPrefix[] = "version=2.0 nodes=";
+static constexpr char kImageInfoPrefix[] = "version=";
 static constexpr char kInsertedField[] = "inserted=";
 static constexpr char kKeywordsField[] = " keywords=";
 static constexpr char kMaxKeywordTokensField[] = " max_keyword_tokens=";
@@ -197,11 +200,13 @@ static constexpr char kSectionConfig[] = "config";
 static constexpr char kSectionKeywords[] = "keywords";
 static constexpr char kSectionSkips[] = "skips";
 static constexpr char kSectionFolds[] = "folds";
+static constexpr char kSectionReplacements[] = "replacements";
 static constexpr char kSectionSymbols[] = "symbols";
-static constexpr const char* kPrintSections[] = {kSectionConfig, kSectionKeywords, kSectionSkips, kSectionFolds,
-                                                 kSectionSymbols};
+static constexpr const char* kPrintSections[] = {kSectionConfig, kSectionKeywords,     kSectionSkips,
+                                                 kSectionFolds,  kSectionReplacements, kSectionSymbols};
 static constexpr char kFieldVersion[] = "version";
 static constexpr char kImageVersion[] = "2.0";
+static constexpr char kReplacementImageVersion[] = "2.1";
 static constexpr char kFieldNodes[] = "nodes";
 static constexpr char kFieldMaxKeywordTokens[] = "max_keyword_tokens";
 static constexpr char kFieldPayloadBytes[] = "payload_bytes";
@@ -209,8 +214,10 @@ static constexpr char kFieldSymbolIndexBytes[] = "symbol_index_bytes";
 static constexpr char kFieldNoCase[] = "nocase";
 static constexpr char kFieldSkipSymbols[] = "skip_symbols";
 static constexpr char kFieldCaseFoldRules[] = "case_fold_rules";
+static constexpr char kFieldReplacementRules[] = "replacement_rules";
 static constexpr char kFieldId[] = "id";
 static constexpr char kFieldFoldedId[] = "folded_id";
+static constexpr char kFieldCanonicalId[] = "canonical_id";
 static constexpr char kFieldSkipped[] = "skipped";
 static constexpr char kFieldSourceId[] = "source_id";
 static constexpr char kFieldTargetId[] = "target_id";
@@ -322,8 +329,9 @@ static constexpr char kUsageText[] =
     "Usage: ac_automation_tool <build|info|print|verify|visualize> --input FILE [options]\n"
     "  build: --output FILE [--nocase|--ignore-case] [--skip-space] [--skip-punctuation]\n"
     "         [--skip-symbols] [--skip-invisible] [--skip-file FILE] [--case-fold-file FILE]\n"
+    "         [--replacement-file FILE]\n"
     "  verify: [--semantic]\n"
-    "  print: [--section all|config|keywords|skips|folds|symbols (all)]\n"
+    "  print: [--section all|config|keywords|skips|folds|replacements|symbols (all)]\n"
     "         [--format text|json (text)] [--output FILE (stdout)]\n"
     "  visualize: --output FILE --format dot|mermaid|plantuml|d2|nomnoml|graphml\n"
     "             [--max-nodes N (1000000000)] [--root-id N (0)] [--max-depth N (4294967295)]\n"
@@ -509,9 +517,15 @@ static bool configure(ac& value, const arguments& args) {
   if (!check(value.set_skip(gsl::span<const gsl::string_view>(skips.data(), skips.size())), kOperationSkip)) {
     return false;
   }
-  auto folds_file = args.values.find(kOptionCaseFoldFile);
-  if (folds_file != args.values.end()) {
-    std::ifstream file(folds_file->second, std::ios::binary);
+  if (!check(value.set_nocase(args.flags.count(kOptionNoCase) != 0), kOperationNoCase)) {
+    return false;
+  }
+  for (const char* option : {kOptionCaseFoldFile, kOptionReplacementFile}) {
+    auto rules_file = args.values.find(option);
+    if (rules_file == args.values.end()) {
+      continue;
+    }
+    std::ifstream file(rules_file->second, std::ios::binary);
     if (file.fail()) {
       return false;
     }
@@ -538,16 +552,27 @@ static bool configure(ac& value, const arguments& args) {
     if (file.bad()) {
       return false;
     }
-    std::vector<ac::case_fold_rule> rules;
-    for (const auto& rule : owned) {
-      rules.push_back({rule.first, rule.second});
-    }
-    if (!check(value.set_case_folding(gsl::span<const ac::case_fold_rule>(rules.data(), rules.size())),
-               kOperationFold)) {
-      return false;
+    if (gsl::string_view(option) == kOptionCaseFoldFile) {
+      std::vector<ac::case_fold_rule> rules;
+      for (const auto& rule : owned) {
+        rules.push_back({rule.first, rule.second});
+      }
+      if (!check(value.set_case_folding(gsl::span<const ac::case_fold_rule>(rules.data(), rules.size())),
+                 kOperationFold)) {
+        return false;
+      }
+    } else {
+      std::vector<ac::replacement_rule> rules;
+      for (const auto& rule : owned) {
+        rules.push_back({rule.first, rule.second});
+      }
+      if (!check(value.set_replacements(gsl::span<const ac::replacement_rule>(rules.data(), rules.size())),
+                 kOperationReplacement)) {
+        return false;
+      }
     }
   }
-  return check(value.set_nocase(args.flags.count(kOptionNoCase) != 0), kOperationNoCase);
+  return true;
 }
 
 class ATFW_UTIL_SYMBOL_LOCAL file_buffer : public std::streambuf {
@@ -1021,6 +1046,7 @@ struct ATFW_UTIL_SYMBOL_LOCAL print_record {
 struct ATFW_UTIL_SYMBOL_LOCAL configuration_counts {
   uint32_t skips = 0;
   uint32_t folds = 0;
+  uint32_t replacements = 0;
 };
 
 static bool count_configuration(const ac::symbol_view& symbol, void* data) {
@@ -1031,6 +1057,9 @@ static bool count_configuration(const ac::symbol_view& symbol, void* data) {
   if (symbol.id != symbol.folded_id) {
     ++counts.folds;
   }
+  if (symbol.id == symbol.folded_id && symbol.id != symbol.canonical_id) {
+    ++counts.replacements;
+  }
   return true;
 }
 
@@ -1039,7 +1068,7 @@ static void write_configuration(std::ostream& out, const ac& value, bool json) {
   value.visit_symbols(count_configuration, &counts);
   auto stats = value.get_statistics();
   print_record record(out, json);
-  record.text(kFieldVersion, kImageVersion);
+  record.text(kFieldVersion, stats.replacements ? kReplacementImageVersion : kImageVersion);
   record.number(kFieldNodes, stats.nodes);
   record.number(kSectionKeywords, stats.keywords);
   record.number(kSectionSymbols, stats.symbols);
@@ -1049,6 +1078,8 @@ static void write_configuration(std::ostream& out, const ac& value, bool json) {
   record.boolean(kFieldNoCase, stats.nocase);
   record.number(kFieldSkipSymbols, counts.skips);
   record.number(kFieldCaseFoldRules, counts.folds);
+  record.boolean(kSectionReplacements, stats.replacements);
+  record.number(kFieldReplacementRules, counts.replacements);
   record.finish();
 }
 
@@ -1072,26 +1103,30 @@ struct ATFW_UTIL_SYMBOL_LOCAL symbol_printer {
 static bool print_symbol(const ac::symbol_view& symbol, void* data) {
   auto& printer = *static_cast<symbol_printer*>(data);
   if ((printer.section == kSectionSkips && !symbol.skipped) ||
-      (printer.section == kSectionFolds && symbol.id == symbol.folded_id)) {
+      (printer.section == kSectionFolds && symbol.id == symbol.folded_id) ||
+      (printer.section == kSectionReplacements &&
+       (symbol.id != symbol.folded_id || symbol.id == symbol.canonical_id))) {
     return true;
   }
   printer.next();
   print_record record(printer.output, printer.json);
-  if (printer.section == kSectionFolds) {
+  if (printer.section == kSectionFolds || printer.section == kSectionReplacements) {
+    bool replacement = printer.section == kSectionReplacements;
     record.number(kFieldSourceId, symbol.id);
-    record.number(kFieldTargetId, symbol.folded_id);
+    record.number(kFieldTargetId, replacement ? symbol.canonical_id : symbol.folded_id);
     record.key(kFieldSource);
     print_record source(printer.output, printer.json);
     source.bytes(symbol.token);
     source.finish();
     record.key(kFieldTarget);
     print_record target(printer.output, printer.json);
-    target.bytes(symbol.folded_token);
+    target.bytes(replacement ? symbol.canonical_token : symbol.folded_token);
     target.finish();
   } else {
     record.number(kFieldId, symbol.id);
     if (printer.section == kSectionSymbols) {
       record.number(kFieldFoldedId, symbol.folded_id);
+      record.number(kFieldCanonicalId, symbol.canonical_id);
       record.boolean(kFieldSkipped, symbol.skipped);
     }
     record.bytes(symbol.token);
@@ -1406,7 +1441,7 @@ int main(int argc, char* argv[]) {
   std::vector<const char*> values{kOptionInput};
   std::vector<const char*> flags{kOptionHelp};
   if (command == kCommandBuild) {
-    values.insert(values.end(), {kOptionOutput, kOptionSkipFile, kOptionCaseFoldFile});
+    values.insert(values.end(), {kOptionOutput, kOptionSkipFile, kOptionCaseFoldFile, kOptionReplacementFile});
     flags.insert(flags.end(),
                  {kOptionNoCase, kOptionSkipSpace, kOptionSkipPunctuation, kOptionSkipSymbols, kOptionSkipInvisible});
   } else {
@@ -1547,7 +1582,8 @@ int main(int argc, char* argv[]) {
     return print_file(value, print_section, print_json, args);
   }
   if (command == kCommandInfo) {
-    std::cout << kImageInfoPrefix << stats.nodes << kKeywordsField << stats.keywords << kSymbolsField << stats.symbols
+    std::cout << kImageInfoPrefix << (stats.replacements ? kReplacementImageVersion : kImageVersion) << kNodesField
+              << stats.nodes << kKeywordsField << stats.keywords << kSymbolsField << stats.symbols
               << kMaxKeywordTokensField << stats.max_keyword_tokens << kPayloadBytesField << stats.payload_bytes
               << kNoCaseField << stats.nocase << kLineFeed;
     return kExitSuccess;

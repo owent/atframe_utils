@@ -52,10 +52,18 @@ struct ac_v2_storage;
  * SkipBits[ceil(S / 8)]    1 byte : symbol ID i uses bit (i - 1)
  * Keyword[K]              16 bytes: byte_offset, byte_length, token_count, suffix_output
  * KeywordBytes[W]          1 byte : concatenated original keyword bytes
- * FoldTo[nocase ? S : 0]   4 bytes: symbol ID -> final canonical symbol ID
+ * FoldTo[nocase ? S : 0]   4 bytes: symbol ID -> case-folded symbol ID
+ * CanonicalTo[R ? S : 0]   4 bytes: symbol ID -> final folded/replaced symbol ID
  * @endcode
  * Logical payload bytes are 20*N + 16*K + 4*(S+1) + A + W + ceil(S/8), plus
- * 4*S when nocase is enabled. Derived indices, allocator overhead and scratch are separate.
+ * 4*S when nocase is enabled and another 4*S when replacements are configured (R=true).
+ * Without replacements the query uses FoldTo directly. With replacements it uses CanonicalTo
+ * alone, retaining FoldTo for configuration inspection and validation. Chains are resolved
+ * during configuration; cycles use their unsigned-byte lexicographically smallest token,
+ * excluding incoming chain tokens from that minimum. Queries perform at most one ID-table
+ * lookup per token, with no replacement allocation, hash lookup or chain traversal.
+ * Derived indices, allocator overhead and scratch are separate. Rule tables remain
+ * encoding-independent, one token to one token.
  * Symbols have IDs 1..S in unsigned-byte lexicographic order; 0 means unknown.
  * Token i occupies [SymbolOffsets[i - 1], SymbolOffsets[i]); offsets are strictly
  * increasing, so long tokens need no packed length field. Each byte pool is limited
@@ -69,7 +77,10 @@ struct ac_v2_storage;
  * links target shallower nodes with smaller IDs. output_head/suffix_output use
  * UINT32_MAX for no keyword. A terminal's output head is its own keyword; other
  * nodes inherit the failure node's head. Suffix outputs strictly decrease in token
- * count. FoldTo is idempotent; trie labels and skip bits refer to canonical IDs.
+ * count. Both mapping tables are idempotent. CanonicalTo[FoldTo[i]] = CanonicalTo[i]
+ * when both exist. Canonical targets are also case-fold fixed points. Trie labels and
+ * skip bits refer to final canonical IDs. Keywords with equal canonical token sequences
+ * share the first-insertion ID and original spelling, without extra terminal outputs.
  *
  * Lookup uses binary search over contiguous labels, with direct 0/1-child cases.
  * Symbol lookup derives 257 uint32_t first-byte bucket boundaries and 256 uint32_t
@@ -79,18 +90,18 @@ struct ac_v2_storage;
  * The collecting builder may use standard map/hash containers and is released when
  * its last collecting owner releases it. XXH64 is used for interning/integrity only.
  *
- * @par Binary image layout, version 2.0
+ * @par Binary image layout, versions 2.0 and 2.1
  * Integers are little endian and are read/written through algorithm/bit.h. Opaque
  * byte pools are never transcoded or byte-swapped. The 128-byte header is:
  * @code{.text}
  * Offset  Width  Field
  *   0       12   ASCII "ACAUTOMATION", no NUL
  *  12        2   major = 2
- *  14        2   minor = 0
+ *  14        2   minor = 1 with replacements; otherwise 0 (unchanged version 2.0 image)
  *  16        4   header_bytes = 128
- *  20        4   feature_flags: bit 0 = nocase; other bits zero
+ *  20        4   feature_flags: bit 0 = nocase, bit 1 = replacements; other bits zero
  *  24        4   endian_tag = 0x01020304
- *  28        4   section_count = 8 when writing
+ *  28        4   section_count = 9 with replacements; otherwise 8
  *  32        8   file_bytes, including the footer
  *  40        8   directory_offset = 128
  *  48        4   N
@@ -108,7 +119,7 @@ struct ac_v2_storage;
  *  96       32   reserved, all zero
  * @endcode
  * Each 32-byte directory entry is {type:u32, flags:u32, offset:u64,
- * byte_size:u64, count:u64}. Writers emit these eight required sections in order:
+ * byte_size:u64, count:u64}. Writers emit the following required sections in order:
  * @code{.text}
  * Type  Section         Count                 Byte size
  *   1   Node            N                     16 * N
@@ -119,12 +130,17 @@ struct ac_v2_storage;
  *   6   Keyword         K                     16 * K
  *   7   KeywordBytes    W                      W
  *   8   FoldTo          nocase ? S : 0         nocase ? 4 * S : 0
+ *   9   CanonicalTo     S                     4 * S (only when feature bit 1 is set)
  * @endcode
  * Records have the field order shown in the memory-layout table and are explicitly
  * encoded rather than copied as C++ structs. Section offsets and the footer are
  * 8-byte aligned; all gaps/padding and unused skip bits are zero. Even S=0 retains
  * one zero SymbolOffsets entry. No pointers, tokenizer/encoding identifiers, Unicode
  * version, query options, derived indices or CPU settings enter the image.
+ * Section 9 and feature bit 1 must occur together and require minor >= 1. Version 2.0
+ * readers reject replacement images rather than silently changing their matching behavior.
+ * Images without replacements retain byte-for-byte version 2.0 serialization. The image
+ * stores compiled effective mappings, not original rule order, chains or disabled rules.
  *
  * header_hash64 is XXH64 over the 128-byte header with bytes 80..87 zeroed.
  * The footer is one little-endian uint64_t: XXH64 over [0, checksum_offset), including
@@ -270,6 +286,12 @@ class ATFW_UTIL_SYMBOL_VISIBLE ac_automation_v2 {
     gsl::string_view target_token;
   };
 
+  /** @brief One opaque token alias; views are copied by set_replacements(). */
+  struct ATFW_UTIL_SYMBOL_VISIBLE replacement_rule {
+    gsl::string_view source_token;  ///< Nonempty source token bytes, without encoding conversion.
+    gsl::string_view target_token;  ///< Nonempty destination token bytes; never tokenized or expanded.
+  };
+
   struct ATFW_UTIL_SYMBOL_VISIBLE load_options {
     uint64_t max_file_bytes;
     uint64_t max_memory_bytes;  // Candidate payload and validation scratch; excludes old snapshots/input.
@@ -291,6 +313,7 @@ class ATFW_UTIL_SYMBOL_VISIBLE ac_automation_v2 {
     uint64_t payload_bytes;
     uint32_t symbol_index_bytes;
     bool nocase;
+    bool replacements;  ///< Whether a compiled replacement table is present.
   };
 
   struct ATFW_UTIL_SYMBOL_VISIBLE node_view {
@@ -303,13 +326,15 @@ class ATFW_UTIL_SYMBOL_VISIBLE ac_automation_v2 {
     gsl::string_view token;
   };
 
-  /** @brief Borrowed row of the frozen symbol, folding and skip tables. */
+  /** @brief Borrowed row of the frozen symbol, folding, replacement and skip tables. */
   struct ATFW_UTIL_SYMBOL_VISIBLE symbol_view {
-    uint32_t id;                    ///< Symbol ID in [1, statistics::symbols]; zero is never visited.
-    uint32_t folded_id;             ///< Final canonical ID; equals id when case folding is disabled.
-    gsl::string_view token;         ///< Original opaque token bytes, without encoding conversion.
-    gsl::string_view folded_token;  ///< Bytes of folded_id; borrows the same snapshot as token.
-    bool skipped;                   ///< Stored skip bit for id; matching tests the bit for folded_id.
+    uint32_t id;                       ///< Symbol ID in [1, statistics::symbols]; zero is never visited.
+    uint32_t folded_id;                ///< Case-folded ID; equals id when case folding is disabled.
+    gsl::string_view token;            ///< Original opaque token bytes, without encoding conversion.
+    gsl::string_view folded_token;     ///< Bytes of folded_id; borrows the same snapshot as token.
+    bool skipped;                      ///< Stored skip bit for id; matching tests the bit for canonical_id.
+    uint32_t canonical_id;             ///< Final ID after folding and replacement; equals folded_id without aliases.
+    gsl::string_view canonical_token;  ///< Bytes of canonical_id, borrowed from this snapshot.
   };
 
   /** @brief Receive a synchronous hit; return false to request successful early termination. */
@@ -321,7 +346,7 @@ class ATFW_UTIL_SYMBOL_VISIBLE ac_automation_v2 {
   /** @brief Receive a synchronous symbol view; return false to stop visit_symbols(). */
   using symbol_callback = bool (*)(const symbol_view&, void*);
 
-  /** @brief Create an empty collecting automaton with case-sensitive matching and no skips/folds. */
+  /** @brief Create an empty collecting automaton with case-sensitive matching and no skips/folds/aliases. */
   ATFRAMEWORK_UTILS_API ac_automation_v2();
 
   /** @brief Release this handle; other owners keep the shared snapshot and its views alive. */
@@ -352,7 +377,8 @@ class ATFW_UTIL_SYMBOL_VISIBLE ac_automation_v2 {
   /**
    * @brief Enable or disable canonical token folding before the first successful insertion.
    * @param value Enable single-byte ASCII A-Z to a-z and explicit set_case_folding() rules.
-   * @return kOk on success; kInvalidState after insertion/build. Returned failures preserve settings.
+   * @return kOk, kInvalidState after insertion/build, or kInvalidArgument if active aliases become
+   *         conflicting after the change. Returned failures preserve settings.
    * @note Folding compares opaque tokens; UTF-16 and other multibyte case rules must
    *       be supplied explicitly. No Unicode conversion or full Unicode folding occurs.
    */
@@ -362,7 +388,7 @@ class ATFW_UTIL_SYMBOL_VISIBLE ac_automation_v2 {
    * @brief Add one opaque token to the skip set before the first successful insertion.
    * @param token Nonempty raw token bytes; copied without invoking a tokenizer.
    * @return kOk, kInvalidArgument for an empty/oversized token, or kInvalidState.
-   * @note Folding precedes skip lookup. Duplicate entries are harmless.
+   * @note Folding and replacement precede skip lookup. Duplicate entries are harmless.
    */
   ATFRAMEWORK_UTILS_API status set_skip(gsl::string_view token);
 
@@ -385,14 +411,32 @@ class ATFW_UTIL_SYMBOL_VISIBLE ac_automation_v2 {
    * @brief Atomically replace the explicit one-token-to-one-token case rules.
    * @param rules Nonempty source/target byte tokens; copied without tokenization. Empty clears custom rules.
    * @return kOk, kInvalidState after insertion/build, or kInvalidArgument for empty/oversized
-   *         tokens, conflicting sources, ASCII-rule conflicts or noncanonical targets.
+   *         tokens, conflicting sources, ASCII-rule conflicts, noncanonical targets or incompatible aliases.
    * @note Each target may map only to itself. Rules are validated even while nocase
    *       is disabled and applied only when set_nocase(true) is active.
    */
   ATFRAMEWORK_UTILS_API status set_case_folding(gsl::span<const case_fold_rule> rules);
 
   /**
-   * @brief Tokenize, fold and remove skips, then insert one keyword into the collecting trie.
+   * @brief Atomically replace the one-token-to-one-token alias table before insertion.
+   * @param rules Nonempty opaque source/target tokens, copied without tokenization. Empty clears aliases.
+   * @return kOk, kInvalidState after insertion/build, or kInvalidArgument for empty/oversized
+   *         tokens or conflicting sources (including after folding).
+   * @note Aliases apply independently of nocase. Sources and targets first undergo the active
+   *       case folding; chains resolve to a final token. A cycle and every chain entering it
+   *       resolve to the unsigned-byte lexicographically smallest token within that cycle,
+   *       after folding. Identity rules are allowed. Resolution is iterative and completes
+   *       before insertion/build, so the frozen table contains only final, idempotent mappings.
+   *       Both keywords and queries use fold -> replace -> skip. Skip entries undergo the
+   *       same normalization, so skipping an alias skips its whole equivalence class.
+   *       A target is exactly one token even if its bytes contain several encoded characters;
+   *       the query tokenizer must produce that same token to match its literal spelling.
+   *       Returned failures preserve all settings. Later case-setting changes revalidate aliases.
+   */
+  ATFRAMEWORK_UTILS_API status set_replacements(gsl::span<const replacement_rule> rules);
+
+  /**
+   * @brief Tokenize, fold, replace and remove skips, then insert one keyword into the collecting trie.
    * @param text Original bytes, including possible NULs; original spelling is copied for returned views.
    * @param keyword_id Optional output, written only on kOk/kAlreadyExists with the stable keyword ID.
    * @param tokens Input-boundary tokenizer; defaults to UTF-8 and is not retained by storage.
@@ -548,7 +592,7 @@ class ATFW_UTIL_SYMBOL_VISIBLE ac_automation_v2 {
    * @param user_data Opaque pointer passed unchanged to callback; may be null.
    * @return True if every symbol was visited (including an empty table); false for an
    *         unbuilt handle, null callback or early stop.
-   * @note Iteration allocates no storage. Only effective canonical skip/fold rules are
+   * @note Iteration allocates no storage. Only effective canonical skip/fold/replacement rules are
    *       available; original configuration options and disabled custom folds are not retained.
    *       The symbol_view reference is temporary; token views borrow the snapshot and
    *       remain valid while an automaton owns it. The visitor must not mutate/destroy

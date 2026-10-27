@@ -11,9 +11,9 @@
 #include <limits>
 #include <map>
 #include <ostream>
-#include <set>
 #include <string>
 #include <unordered_map>
+#include <unordered_set>
 #include <utility>
 
 ATFRAMEWORK_UTILS_NAMESPACE_BEGIN
@@ -61,13 +61,16 @@ static constexpr uint16_t kUtf16HighSurrogateLast = 0xdbff;
 static constexpr uint16_t kUtf16LowSurrogateFirst = 0xdc00;
 static constexpr uint16_t kUtf16LowSurrogateLast = 0xdfff;
 
-// Version 2.0 wire constants; keep the public layout tables in sync when changing the format.
+// Version 2.0/2.1 wire constants; keep the public layout tables in sync when changing the format.
 static constexpr char kImageMagic[] = "ACAUTOMATION";
 static constexpr size_t kImageMagicBytes = sizeof(kImageMagic) - 1;
 static constexpr uint16_t kImageMajorVersion = 2;
 static constexpr uint16_t kImageMinorVersion = 0;
+static constexpr uint16_t kReplacementMinorVersion = 1;
 static constexpr uint32_t kImageEndianTag = 0x01020304;
 static constexpr uint32_t kFeatureNoCase = 1;
+static constexpr uint32_t kFeatureReplacements = 2;
+static constexpr uint32_t kKnownFeatures = kFeatureNoCase | kFeatureReplacements;
 static constexpr uint32_t kSectionRequiredFlags = 0;
 static constexpr uint32_t kSectionOptionalFlag = 1;
 static constexpr uint32_t kChecksumAlgorithmXxh64 = 1;
@@ -78,6 +81,7 @@ static constexpr size_t kImageFooterBytes = sizeof(uint64_t);
 static constexpr size_t kImageHeaderBytes = 128;
 static constexpr size_t kDirectoryEntryBytes = 32;
 static constexpr size_t kRequiredSectionCount = 8;
+static constexpr size_t kKnownSectionCount = kRequiredSectionCount + 1;
 static constexpr size_t kMaxSectionCount = 64;
 static constexpr size_t kIoBufferBytes = 65536;
 static constexpr uint64_t kValidationFixedBytes = 2 * kIoBufferBytes;
@@ -127,10 +131,12 @@ static constexpr uint32_t kSectionSkipBits = 5;
 static constexpr uint32_t kSectionKeywords = 6;
 static constexpr uint32_t kSectionKeywordBytes = 7;
 static constexpr uint32_t kSectionFolds = 8;
+static constexpr uint32_t kSectionCanonical = 9;
 static constexpr size_t kSymbolBytesSectionIndex = kSectionSymbolBytes - 1;
 static constexpr size_t kSkipBitsSectionIndex = kSectionSkipBits - 1;
 static constexpr size_t kKeywordBytesSectionIndex = kSectionKeywordBytes - 1;
 static constexpr size_t kFoldsSectionIndex = kSectionFolds - 1;
+static constexpr size_t kCanonicalSectionIndex = kSectionCanonical - 1;
 
 static constexpr char kStatusOk[] = "ok";
 static constexpr char kStatusAlreadyExists[] = "already_exists";
@@ -195,19 +201,23 @@ struct ATFW_UTIL_SYMBOL_LOCAL build_word {
   uint32_t tokens;
 };
 
+enum class ATFW_UTIL_SYMBOL_LOCAL replacement_visit_state { kActive, kResolved };
+
 struct ATFW_UTIL_SYMBOL_LOCAL builder {
   bool nocase = false;
-  std::set<std::string, byte_less> skips;
-  std::set<std::string, byte_less> effective_skips;
-  std::map<std::string, std::string, byte_less> custom_folds;
-  std::map<std::string, std::string, byte_less> folds;
+  std::unordered_set<std::string, string_hash> skips;
+  std::unordered_set<std::string, string_hash> effective_skips;
+  std::unordered_map<std::string, std::string, string_hash> custom_folds;
+  std::unordered_map<std::string, std::string, string_hash> folds;
+  std::unordered_map<std::string, std::string, string_hash> replacements;
+  std::unordered_map<std::string, std::string, string_hash> effective_replacements;
   std::unordered_map<std::string, uint32_t, string_hash> intern;
   std::vector<std::string> symbols;
   std::vector<build_node> nodes{kRootNodeCount};
   std::vector<build_word> words;
   uint64_t word_bytes = 0;
 
-  status configure() {
+  status configure_folds() {
     folds.clear();
     if (nocase) {
       for (char c = kAsciiUpperFirst; c <= kAsciiUpperLast; ++c) {
@@ -226,16 +236,85 @@ struct ATFW_UTIL_SYMBOL_LOCAL builder {
         }
       }
     }
+    return status::kOk;
+  }
+
+  status configure() {
+    auto code = configure_folds();
+    if (code != status::kOk) {
+      return code;
+    }
+    effective_replacements.clear();
+    effective_replacements.reserve(replacements.size());
+    for (const auto& rule : replacements) {
+      auto inserted = effective_replacements.emplace(fold(rule.first), fold(rule.second));
+      if (!inserted.second && inserted.first->second != fold(rule.second)) {
+        return status::kInvalidArgument;
+      }
+    }
+    // Resolve the functional graph iteratively: no call-stack growth for long alias chains.
+    // Each source is visited once; terminal targets and cycle representatives are idempotent.
+    std::unordered_map<std::string, replacement_visit_state, string_hash> states;
+    states.reserve(effective_replacements.size());
+    using replacement_iterator = decltype(effective_replacements)::iterator;
+    std::vector<replacement_iterator> path;
+    // All insertions are complete; value-only resolution keeps recorded hash-table iterators valid.
+    for (auto current = effective_replacements.begin(); current != effective_replacements.end(); ++current) {
+      if (states.find(current->first) != states.end()) {
+        continue;
+      }
+      path.clear();
+      auto edge = current;
+      std::string target;
+      for (;;) {
+        auto state = states.emplace(edge->first, replacement_visit_state::kActive);
+        if (!state.second) {
+          if (state.first->second == replacement_visit_state::kActive) {
+            // Only the repeated suffix is a cycle: incoming aliases must not affect its minimum.
+            auto cycle_begin = std::find(path.begin(), path.end(), edge);
+            if (cycle_begin == path.end()) {
+              return status::kInvalidFormat;
+            }
+            auto representative = std::min_element(
+                cycle_begin, path.end(), [](const replacement_iterator& left, const replacement_iterator& right) {
+                  return byte_less{}(left->first, right->first);
+                });
+            target = (*representative)->first;
+          } else {
+            target = edge->second;
+          }
+          break;
+        }
+        path.push_back(edge);
+        auto next = effective_replacements.find(edge->second);
+        if (next == effective_replacements.end() || next == edge) {
+          target = edge->second;
+          break;
+        }
+        edge = next;
+      }
+      for (auto entry : path) {
+        entry->second = target;
+        states.find(entry->first)->second = replacement_visit_state::kResolved;
+      }
+    }
     effective_skips.clear();
+    effective_skips.reserve(skips.size());
     for (const auto& token : skips) {
       effective_skips.insert(canonical(token));
     }
     return status::kOk;
   }
 
-  const std::string& canonical(const std::string& token) const {
+  const std::string& fold(const std::string& token) const {
     auto it = folds.find(token);
     return it == folds.end() ? token : it->second;
+  }
+
+  const std::string& canonical(const std::string& token) const {
+    const auto& folded = fold(token);
+    auto it = effective_replacements.find(folded);
+    return it == effective_replacements.end() ? folded : it->second;
   }
 };
 
@@ -308,6 +387,7 @@ struct ac_v2_storage {
   // Frozen payload is a set of separately allocated contiguous arrays, not an object image.
   // nodes/words are 16-byte rows; labels/offsets/folds hold u32 values. Symbol offsets have
   // S+1 entries; skips have ceil(S/8) bytes; folds have S entries only when nocase is active.
+  // Version 2.1 adds S canonical IDs when aliases are configured, composing fold and replace.
   // pending belongs only to collecting snapshots and is released before built publication.
   // The complete native and versioned disk layouts are documented on ac_automation_v2.
   // Query indexing relies on build()/read_image() establishing these invariants once:
@@ -316,11 +396,13 @@ struct ac_v2_storage {
   // Public view/span arguments must themselves refer to live memory supplied by the caller.
   std::unique_ptr<builder> pending{new builder};
   bool nocase = false;
+  bool replacements = false;
   uint32_t max_tokens = 0;
   std::vector<node> nodes;
   std::vector<uint32_t> labels;
   std::vector<uint32_t> offsets;
   std::vector<uint32_t> folds;
+  std::vector<uint32_t> canonical;
   std::string symbol_bytes;
   std::string keyword_bytes;
   std::vector<unsigned char> skips;
@@ -336,8 +418,11 @@ struct ac_v2_storage {
       return false;
     }
     uint64_t symbols = offsets.size() - 1;
-    return skips.size() == (symbols + kBitsPerByte - 1) / kBitsPerByte && folds.size() == (nocase ? symbols : 0);
+    return skips.size() == (symbols + kBitsPerByte - 1) / kBitsPerByte && folds.size() == (nocase ? symbols : 0) &&
+           canonical.size() == (replacements ? symbols : 0);
   }
+
+  const std::vector<uint32_t>& normalization() const noexcept { return replacements ? canonical : folds; }
 
   bool initialize_symbol_index() noexcept {
     symbol_buckets.fill(kUnknownSymbolId);
@@ -464,7 +549,8 @@ struct ac_v2_storage {
   uint64_t payload() const noexcept {
     return nodes.size() * uint64_t{kNodeStrideBytes} + labels.size() * uint64_t{kSerializedIndexBytes} +
            offsets.size() * uint64_t{kSerializedIndexBytes} + folds.size() * uint64_t{kSerializedIndexBytes} +
-           words.size() * uint64_t{kKeywordStrideBytes} + symbol_bytes.size() + keyword_bytes.size() + skips.size();
+           canonical.size() * uint64_t{kSerializedIndexBytes} + words.size() * uint64_t{kKeywordStrideBytes} +
+           symbol_bytes.size() + keyword_bytes.size() + skips.size();
   }
 
   template <class Next>
@@ -499,6 +585,7 @@ struct ac_v2_storage {
     size_t valid = 0;
     size_t pos = 0;
     uint32_t state = kRootNodeId;
+    const auto& mapping = normalization();
     while (pos < input.size()) {
       auto r = next(input.substr(pos));
       if (!valid_result(r, input.size() - pos)) {
@@ -524,11 +611,11 @@ struct ac_v2_storage {
         continue;
       }
       uint32_t symbol_id = lookup(input.substr(pos, r.byte_count));
-      if (nocase && symbol_id != kUnknownSymbolId) {
-        if (symbol_id > folds.size()) {
+      if (!mapping.empty() && symbol_id != kUnknownSymbolId) {
+        if (symbol_id > mapping.size()) {
           return make_error(status::kInvalidFormat);
         }
-        symbol_id = folds[symbol_id - 1];
+        symbol_id = mapping[symbol_id - 1];
         if (symbol_id == kUnknownSymbolId || offsets.empty() || symbol_id >= offsets.size()) {
           return make_error(status::kInvalidFormat);
         }
@@ -794,14 +881,43 @@ status ac::set_case_folding(gsl::span<const case_fold_rule> rules) {
   // Validate even while disabled, including collisions with the built-in ASCII rules.
   bool enabled = next->pending->nocase;
   next->pending->nocase = true;
-  auto result = next->pending->configure();
+  auto result = next->pending->configure_folds();
   if (result != status::kOk) {
     return result;
   }
   next->pending->nocase = enabled;
-  next->pending->configure();
+  result = next->pending->configure();
+  if (result != status::kOk) {
+    return result;
+  }
   storage_.swap(next);
   return status::kOk;
+}
+
+status ac::set_replacements(gsl::span<const replacement_rule> rules) {
+  if (!configurable(storage_)) {
+    return status::kInvalidState;
+  }
+  auto next = copy_builder(storage_);
+  if (next == nullptr) {
+    return status::kInvalidState;
+  }
+  next->pending->replacements.clear();
+  for (const auto& rule : rules) {
+    if (rule.source_token.empty() || rule.target_token.empty() || rule.source_token.size() > UINT32_MAX ||
+        rule.target_token.size() > UINT32_MAX) {
+      return status::kInvalidArgument;
+    }
+    auto inserted = next->pending->replacements.emplace(own(rule.source_token), own(rule.target_token));
+    if (!inserted.second && view(inserted.first->second) != rule.target_token) {
+      return status::kInvalidArgument;
+    }
+  }
+  auto result = next->pending->configure();
+  if (result == status::kOk) {
+    storage_.swap(next);
+  }
+  return result;
 }
 
 status ac::insert_keyword(gsl::string_view text, uint32_t* keyword_id, const tokenizer& tokens) {
@@ -993,19 +1109,33 @@ status ac::build() {
   auto result = std::make_shared<detail::ac_v2_storage>();
   result->pending.reset();
   result->nocase = b.nocase;
-  // Sort opaque token bytes once and share one symbol table across all trie nodes.
-  std::set<std::string, byte_less> symbols(b.symbols.begin(), b.symbols.end());
-  symbols.insert(b.skips.begin(), b.skips.end());
-  symbols.insert(b.effective_skips.begin(), b.effective_skips.end());
+  result->replacements = !b.replacements.empty();
+  std::unordered_set<std::string, string_hash> unique_symbols(b.symbols.begin(), b.symbols.end());
+  unique_symbols.insert(b.skips.begin(), b.skips.end());
+  unique_symbols.insert(b.effective_skips.begin(), b.effective_skips.end());
   for (const auto& rule : b.folds) {
-    symbols.insert(rule.first);
-    symbols.insert(rule.second);
+    unique_symbols.insert(rule.first);
+    unique_symbols.insert(rule.second);
   }
-  if (symbols.size() >= kInvalidId) {
+  for (const auto& rule : b.replacements) {
+    unique_symbols.insert(rule.first);
+    unique_symbols.insert(rule.second);
+  }
+  if (unique_symbols.size() >= kInvalidId) {
     return status::kCapacityExceeded;
   }
+  // Finish hash-table insertions before sorting borrowed strings for stable frozen Symbol IDs.
+  // unique_symbols owns the bytes until build() returns; this vector does not copy them again.
+  std::vector<const std::string*> symbols;
+  symbols.reserve(unique_symbols.size());
+  for (const auto& token : unique_symbols) {
+    symbols.push_back(&token);
+  }
+  std::sort(symbols.begin(), symbols.end(),
+            [](const std::string* left, const std::string* right) { return byte_less{}(*left, *right); });
   uint64_t symbol_bytes = 0;
-  for (const auto& s : symbols) {
+  for (const auto* token : symbols) {
+    const auto& s = *token;
     symbol_bytes += s.size();
     if (symbol_bytes > UINT32_MAX) {
       return status::kCapacityExceeded;
@@ -1014,7 +1144,8 @@ status ac::build() {
   result->symbol_bytes.reserve(static_cast<size_t>(symbol_bytes));
   result->offsets.reserve(symbols.size() + 1);
   result->offsets.push_back(0);
-  for (const auto& s : symbols) {
+  for (const auto* token : symbols) {
+    const auto& s = *token;
     if (s.size() > UINT32_MAX - result->symbol_bytes.size()) {
       return status::kCapacityExceeded;
     }
@@ -1041,12 +1172,24 @@ status ac::build() {
   }
   if (b.nocase) {
     result->folds.reserve(symbols.size());
-    for (const auto& s : symbols) {
-      uint32_t target = result->lookup(view(b.canonical(s)));
+    for (const auto* token : symbols) {
+      const auto& s = *token;
+      uint32_t target = result->lookup(view(b.fold(s)));
       if (target == kUnknownSymbolId) {
         return status::kInvalidFormat;
       }
       result->folds.push_back(target);
+    }
+  }
+  if (result->replacements) {
+    result->canonical.reserve(symbols.size());
+    for (const auto* token : symbols) {
+      const auto& s = *token;
+      uint32_t target = result->lookup(view(b.canonical(s)));
+      if (target == kUnknownSymbolId) {
+        return status::kInvalidFormat;
+      }
+      result->canonical.push_back(target);
     }
   }
   // Translate collecting symbol IDs without changing stable keyword IDs or original bytes.
@@ -1262,7 +1405,8 @@ ac::statistics ac::get_statistics() const noexcept {
           storage_->max_tokens,
           storage_->payload(),
           static_cast<uint32_t>(kSymbolIndexBytes),
-          storage_->nocase};
+          storage_->nocase,
+          storage_->replacements};
 }
 
 gsl::string_view ac::keyword(uint32_t id) const noexcept {
@@ -1290,7 +1434,9 @@ bool ac::visit_symbols(symbol_callback callback, void* data) const {
   }
   for (uint32_t id = kFirstSymbolId; id < storage_->offsets.size(); ++id) {
     uint32_t folded_id = storage_->nocase ? storage_->folds[id - kFirstSymbolId] : id;
-    if (!callback(symbol_view{id, folded_id, storage_->symbol(id), storage_->symbol(folded_id), storage_->skipped(id)},
+    uint32_t canonical_id = storage_->replacements ? storage_->canonical[id - kFirstSymbolId] : folded_id;
+    if (!callback(symbol_view{id, folded_id, storage_->symbol(id), storage_->symbol(folded_id), storage_->skipped(id),
+                              canonical_id, storage_->symbol(canonical_id)},
                   data)) {
       return false;
     }
@@ -1487,18 +1633,22 @@ struct ATFW_UTIL_SYMBOL_LOCAL section {
 
 static uint64_t align_image(uint64_t n) { return (n + kImageAlignmentBytes - 1) & ~uint64_t{kImageAlignmentBytes - 1}; }
 
-static std::array<section, kRequiredSectionCount> sections_for(const detail::ac_v2_storage& s) {
-  std::array<section, kRequiredSectionCount> result{
-      {{kSectionNodes, kSectionRequiredFlags, 0, s.nodes.size() * uint64_t{kNodeStrideBytes}, s.nodes.size()},
-       {kSectionLabels, kSectionRequiredFlags, 0, s.labels.size() * uint64_t{kSerializedIndexBytes}, s.labels.size()},
-       {kSectionSymbolOffsets, kSectionRequiredFlags, 0, s.offsets.size() * uint64_t{kSerializedIndexBytes},
-        s.offsets.size()},
-       {kSectionSymbolBytes, kSectionRequiredFlags, 0, s.symbol_bytes.size(), s.symbol_bytes.size()},
-       {kSectionSkipBits, kSectionRequiredFlags, 0, s.skips.size(), s.skips.size()},
-       {kSectionKeywords, kSectionRequiredFlags, 0, s.words.size() * uint64_t{kKeywordStrideBytes}, s.words.size()},
-       {kSectionKeywordBytes, kSectionRequiredFlags, 0, s.keyword_bytes.size(), s.keyword_bytes.size()},
-       {kSectionFolds, kSectionRequiredFlags, 0, s.folds.size() * uint64_t{kSerializedIndexBytes}, s.folds.size()}}};
-  uint64_t offset = kImageHeaderBytes + kRequiredSectionCount * kDirectoryEntryBytes;
+static std::vector<section> sections_for(const detail::ac_v2_storage& s) {
+  std::vector<section> result{
+      {kSectionNodes, kSectionRequiredFlags, 0, s.nodes.size() * uint64_t{kNodeStrideBytes}, s.nodes.size()},
+      {kSectionLabels, kSectionRequiredFlags, 0, s.labels.size() * uint64_t{kSerializedIndexBytes}, s.labels.size()},
+      {kSectionSymbolOffsets, kSectionRequiredFlags, 0, s.offsets.size() * uint64_t{kSerializedIndexBytes},
+       s.offsets.size()},
+      {kSectionSymbolBytes, kSectionRequiredFlags, 0, s.symbol_bytes.size(), s.symbol_bytes.size()},
+      {kSectionSkipBits, kSectionRequiredFlags, 0, s.skips.size(), s.skips.size()},
+      {kSectionKeywords, kSectionRequiredFlags, 0, s.words.size() * uint64_t{kKeywordStrideBytes}, s.words.size()},
+      {kSectionKeywordBytes, kSectionRequiredFlags, 0, s.keyword_bytes.size(), s.keyword_bytes.size()},
+      {kSectionFolds, kSectionRequiredFlags, 0, s.folds.size() * uint64_t{kSerializedIndexBytes}, s.folds.size()}};
+  if (s.replacements) {
+    result.push_back({kSectionCanonical, kSectionRequiredFlags, 0, s.canonical.size() * uint64_t{kSerializedIndexBytes},
+                      s.canonical.size()});
+  }
+  uint64_t offset = kImageHeaderBytes + result.size() * kDirectoryEntryBytes;
   for (auto& part : result) {
     part.offset = align_image(offset);
     offset = part.offset + part.size;
@@ -1507,7 +1657,7 @@ static std::array<section, kRequiredSectionCount> sections_for(const detail::ac_
 }
 
 static status write_image(const detail::ac_v2_storage& s, image_writer& output) {
-  // Image: header[128], directory[8*32], eight aligned sections, aligned XXH64 footer[8].
+  // Image: header[128], directory[8*32 or 9*32], aligned sections, aligned XXH64 footer[8].
   // Header and section offsets/strides are specified in the public class documentation.
   // Hash the filled header and serialized payload while writing; the footer is excluded.
   if (s.pending != nullptr) {
@@ -1521,11 +1671,13 @@ static status write_image(const detail::ac_v2_storage& s, image_writer& output) 
   std::array<unsigned char, kImageHeaderBytes> header{};
   std::memcpy(header.data(), kImageMagic, kImageMagicBytes);
   bit::write_le_uint16(header.data() + kHeaderMajorOffset, kImageMajorVersion);
-  bit::write_le_uint16(header.data() + kHeaderMinorOffset, kImageMinorVersion);
+  bit::write_le_uint16(header.data() + kHeaderMinorOffset,
+                       s.replacements ? kReplacementMinorVersion : kImageMinorVersion);
   bit::write_le_uint32(header.data() + kHeaderSizeOffset, kImageHeaderBytes);
-  bit::write_le_uint32(header.data() + kHeaderFlagsOffset, s.nocase ? kFeatureNoCase : 0);
+  bit::write_le_uint32(header.data() + kHeaderFlagsOffset,
+                       (s.nocase ? kFeatureNoCase : 0) | (s.replacements ? kFeatureReplacements : 0));
   bit::write_le_uint32(header.data() + kHeaderEndianOffset, kImageEndianTag);
-  bit::write_le_uint32(header.data() + kHeaderSectionCountOffset, kRequiredSectionCount);
+  bit::write_le_uint32(header.data() + kHeaderSectionCountOffset, static_cast<uint32_t>(directory.size()));
   bit::write_le_uint64(header.data() + kHeaderFileSizeOffset, checksum_offset + kImageFooterBytes);
   bit::write_le_uint64(header.data() + kHeaderDirectoryOffset, kImageHeaderBytes);
   bit::write_le_uint32(header.data() + kHeaderNodeCountOffset, static_cast<uint32_t>(s.nodes.size()));
@@ -1609,15 +1761,18 @@ static status write_image(const detail::ac_v2_storage& s, image_writer& output) 
             bit::write_le_uint32(p + kKeywordTokensOffset, w.tokens);
             bit::write_le_uint32(p + kKeywordSuffixOffset, w.suffix);
           } else {
-            if ((part.type != kSectionLabels && part.type != kSectionSymbolOffsets && part.type != kSectionFolds) ||
+            if ((part.type != kSectionLabels && part.type != kSectionSymbolOffsets && part.type != kSectionFolds &&
+                 part.type != kSectionCanonical) ||
                 (part.type == kSectionLabels && i >= s.labels.size()) ||
                 (part.type == kSectionSymbolOffsets && i >= s.offsets.size()) ||
-                (part.type == kSectionFolds && i >= s.folds.size())) {
+                (part.type == kSectionFolds && i >= s.folds.size()) ||
+                (part.type == kSectionCanonical && i >= s.canonical.size())) {
               return status::kInvalidFormat;
             }
             bit::write_le_uint32(p, part.type == kSectionLabels          ? s.labels[i]
                                     : part.type == kSectionSymbolOffsets ? s.offsets[i]
-                                                                         : s.folds[i]);
+                                    : part.type == kSectionFolds         ? s.folds[i]
+                                                                         : s.canonical[i]);
           }
         }
         if (!output.write(buffer.data(), count * stride)) {
@@ -1670,6 +1825,16 @@ static status validate_storage(const detail::ac_v2_storage& s, bool semantic) {
       }
     }
   }
+  if (s.replacements) {
+    for (size_t i = 0; i < symbols; ++i) {
+      uint32_t target = s.canonical[i];
+      if (target == kUnknownSymbolId || target > symbols || s.canonical[target - 1] != target ||
+          (s.nocase && (s.folds[target - 1] != target || s.canonical[s.folds[i] - 1] != target)) ||
+          (s.skipped(static_cast<uint32_t>(i + 1)) && target != i + 1)) {
+        return status::kInvalidFormat;
+      }
+    }
+  }
   // Keyword ranges partition the original byte pool; suffix chains decrease in token length.
   uint64_t end = 0;
   uint32_t maximum = 0;
@@ -1715,7 +1880,7 @@ static status validate_storage(const detail::ac_v2_storage& s, bool semantic) {
     for (uint32_t j = p.begin; j < p.begin + p.count; ++j) {
       uint32_t label = s.labels[j];
       if (j <= i || label <= previous_label || label > symbols || s.skipped(label) ||
-          (s.nocase && s.folds[label - 1] != label)) {
+          (!s.normalization().empty() && s.normalization()[label - 1] != label)) {
         return status::kInvalidFormat;
       }
       previous_label = label;
@@ -1768,7 +1933,9 @@ static status read_image(image_reader& input, const ac::load_options& options,
   uint32_t n = bit::read_le_uint32(header.data() + kHeaderNodeCountOffset);
   uint32_t k = bit::read_le_uint32(header.data() + kHeaderKeywordCountOffset);
   uint32_t symbols = bit::read_le_uint32(header.data() + kHeaderSymbolCountOffset);
-  if (bit::read_le_uint32(header.data() + kHeaderSizeOffset) != kImageHeaderBytes || flags > kFeatureNoCase ||
+  if (bit::read_le_uint32(header.data() + kHeaderSizeOffset) != kImageHeaderBytes || (flags & ~kKnownFeatures) != 0 ||
+      ((flags & kFeatureReplacements) != 0 &&
+       bit::read_le_uint16(header.data() + kHeaderMinorOffset) < kReplacementMinorVersion) ||
       bit::read_le_uint32(header.data() + kHeaderEndianOffset) != kImageEndianTag || count < kRequiredSectionCount ||
       count > kMaxSectionCount || bit::read_le_uint64(header.data() + kHeaderDirectoryOffset) != kImageHeaderBytes ||
       file_size < kImageHeaderBytes + count * uint64_t{kDirectoryEntryBytes} + kImageFooterBytes ||
@@ -1794,8 +1961,8 @@ static status read_image(image_reader& input, const ac::load_options& options,
   // Validate the directory and total candidate/scratch budget before allocating payload tables.
   std::vector<section> directory;
   directory.reserve(count);
-  std::array<section, kRequiredSectionCount> known{};
-  std::array<bool, kRequiredSectionCount> seen{};
+  std::array<section, kKnownSectionCount> known{};
+  std::array<bool, kKnownSectionCount> seen{};
   uint64_t memory = n * uint64_t{sizeof(uint32_t)} + k +
                     kValidationFixedBytes;  // Validation arrays, I/O buffers and directory/objects.
   for (uint32_t i = 0; i < count; ++i) {
@@ -1811,7 +1978,7 @@ static status read_image(image_reader& input, const ac::load_options& options,
         p.size > checksum_offset - p.offset) {
       return status::kInvalidFormat;
     }
-    if (p.type >= kSectionNodes && p.type <= kSectionFolds) {
+    if (p.type >= kSectionNodes && p.type <= kSectionCanonical) {
       if (seen[p.type - kSectionNodes] || p.flags != 0) {
         return status::kInvalidFormat;
       }
@@ -1826,21 +1993,23 @@ static status read_image(image_reader& input, const ac::load_options& options,
     }
     directory.push_back(p);
   }
-  if (std::find(seen.begin(), seen.end(), false) != seen.end()) {
+  if (std::find(seen.begin(), seen.begin() + kRequiredSectionCount, false) != seen.begin() + kRequiredSectionCount ||
+      seen[kCanonicalSectionIndex] != ((flags & kFeatureReplacements) != 0)) {
     return status::kInvalidFormat;
   }
   // Each required section has one exact count/stride contract; optional sections stay opaque.
-  const uint64_t expected_counts[kRequiredSectionCount] = {n,
-                                                           n,
-                                                           uint64_t{symbols} + 1,
-                                                           known[kSymbolBytesSectionIndex].size,
-                                                           (uint64_t{symbols} + kBitsPerByte - 1) / kBitsPerByte,
-                                                           k,
-                                                           known[kKeywordBytesSectionIndex].size,
-                                                           flags != 0 ? symbols : 0};
-  static constexpr uint64_t kSectionStrides[kRequiredSectionCount] = {
-      kNodeStrideBytes, kSerializedIndexBytes, kSerializedIndexBytes, kByteStrideBytes,
-      kByteStrideBytes, kKeywordStrideBytes,   kByteStrideBytes,      kSerializedIndexBytes};
+  const uint64_t expected_counts[kKnownSectionCount] = {n,
+                                                        n,
+                                                        uint64_t{symbols} + 1,
+                                                        known[kSymbolBytesSectionIndex].size,
+                                                        (uint64_t{symbols} + kBitsPerByte - 1) / kBitsPerByte,
+                                                        k,
+                                                        known[kKeywordBytesSectionIndex].size,
+                                                        (flags & kFeatureNoCase) != 0 ? symbols : 0,
+                                                        (flags & kFeatureReplacements) != 0 ? symbols : 0};
+  static constexpr uint64_t kSectionStrides[kKnownSectionCount] = {
+      kNodeStrideBytes,    kSerializedIndexBytes, kSerializedIndexBytes, kByteStrideBytes,     kByteStrideBytes,
+      kKeywordStrideBytes, kByteStrideBytes,      kSerializedIndexBytes, kSerializedIndexBytes};
   for (size_t i = 0; i < known.size(); ++i) {
     if (known[i].count != expected_counts[i] || known[i].size != expected_counts[i] * kSectionStrides[i]) {
       return status::kInvalidFormat;
@@ -1864,7 +2033,8 @@ static status read_image(image_reader& input, const ac::load_options& options,
   // Decode into a detached candidate so I/O, checksum and structural failures are atomic.
   auto candidate = std::make_shared<detail::ac_v2_storage>();
   candidate->pending.reset();
-  candidate->nocase = flags != 0;
+  candidate->nocase = (flags & kFeatureNoCase) != 0;
+  candidate->replacements = (flags & kFeatureReplacements) != 0;
   candidate->max_tokens = bit::read_le_uint32(header.data() + kHeaderMaxTokensOffset);
   candidate->nodes.resize(n);
   candidate->labels.resize(n);
@@ -1874,12 +2044,13 @@ static status read_image(image_reader& input, const ac::load_options& options,
   candidate->words.resize(k);
   candidate->keyword_bytes.resize(static_cast<size_t>(known[kKeywordBytesSectionIndex].size));
   candidate->folds.resize(static_cast<size_t>(expected_counts[kFoldsSectionIndex]));
+  candidate->canonical.resize(static_cast<size_t>(expected_counts[kCanonicalSectionIndex]));
   std::array<unsigned char, kIoBufferBytes> buffer{};
   for (const auto& part : directory) {
     if (!input.gap(part.offset, true)) {
       return status::kInvalidFormat;
     }
-    if (part.type < kSectionNodes || part.type > kSectionFolds) {
+    if (part.type < kSectionNodes || part.type > kSectionCanonical) {
       if (!input.gap(part.offset + part.size, false)) {
         return status::kIoError;
       }
@@ -1942,11 +2113,16 @@ static status read_image(image_reader& input, const ac::load_options& options,
               return status::kInvalidFormat;
             }
             candidate->offsets[i] = bit::read_le_uint32(p);
-          } else {
-            if (part.type != kSectionFolds || i >= candidate->folds.size()) {
+          } else if (part.type == kSectionFolds) {
+            if (i >= candidate->folds.size()) {
               return status::kInvalidFormat;
             }
             candidate->folds[i] = bit::read_le_uint32(p);
+          } else {
+            if (part.type != kSectionCanonical || i >= candidate->canonical.size()) {
+              return status::kInvalidFormat;
+            }
+            candidate->canonical[i] = bit::read_le_uint32(p);
           }
         }
         first += amount;

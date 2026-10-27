@@ -10,6 +10,8 @@ ac_automation_tool print --input words.ac
 ac_automation_tool print --input words.ac --section keywords --format json --output keywords.json
 ac_automation_tool print --input words.ac --section skips
 ac_automation_tool print --input words.ac --section folds
+ac_automation_tool build --input words.txt --output aliases.ac --replacement-file replacements.txt
+ac_automation_tool print --input aliases.ac --section replacements
 ac_automation_tool verify --input words.ac --semantic
 ac_automation_tool visualize --input words.ac --output words.dot --format dot --max-depth 3
 ac_automation_tool visualize --input words.ac --output words.mmd --format mermaid --root-id 1 --max-nodes 500
@@ -25,7 +27,7 @@ ac_automation_tool visualize --input words.ac --output words.graphml --format gr
 
 输入词表为 UTF-8，每行一个词，忽略空行及两端 Unicode White_Space。只移除文件开头的 UTF-8 BOM；
 `#`、逗号等没有注释或字段分隔含义。非法 UTF-8 会报告行号并停止，不留下最终输出。
-词条经当前 skip/fold 处理后重复时保留第一条；去 skip 后为空的词条计入 ignored。
+词条按 fold → replacement → skip 处理后重复时保留第一条及其 keyword ID；处理后为空的词条计入 ignored。
 
 构建选项：
 
@@ -33,11 +35,50 @@ ac_automation_tool visualize --input words.ac --output words.graphml --format gr
 | --- | --- |
 | `--nocase` / `--ignore-case` | 内置单字节 ASCII A–Z 折叠；不是完整 Unicode case folding |
 | `--case-fold-file FILE` | 每行两个十六进制 token，例如 `4100 6100`；要求同时指定 `--nocase` |
+| `--replacement-file FILE` | 每行两个十六进制 token，源在前、目标在后；不要求 `--nocase`，允许空行 |
 | `--skip-space` | Unicode White_Space，25 个码位 |
 | `--skip-punctuation` | 保守白名单中的 P*，365 个码位 |
 | `--skip-symbols` | 保守白名单中的 S*，2382 个码位 |
 | `--skip-invisible` | Cc 及有限格式控制符，81 个码位；不展开整个 Default_Ignorable_Code_Point |
 | `--skip-file FILE` | 去开头 BOM 后按 UTF-8 拆成 skip token；包括空格和换行，不做 trim |
+
+## 字符替换
+
+替换表由业务显式提供，不内置跨语言的相似字符规则。例如文件内容：
+
+```text
+E5A3B9 E4B880
+65 66
+67 68
+```
+
+分别表示 UTF-8 的 `壹 → 一`、`e → f`、`g → h`。输入词表和匹配输入采用相同处理顺序：
+tokenizer 拆分原始字节 → 大小写折叠 → 替换为最终 token → 跳过 canonical skip → AC 转移。
+`aec`、`afc` 只建立一条 `afc` 路径；只插入 `ahc` 时也能查询 `agc`。skip 含 `b` 时，
+`abc`、`ac` 共享路径，`ab` 不命中该路径。返回的 keyword 保留首个词条原文，位置和长度对应原始查询字节，
+包含命中内部的 skip 字节；替换不会改变返回的字节坐标。
+
+库接口 `set_replacements(gsl::span<const replacement_rule>)` 原子替换整张表，空 span 清空。
+必须在首次成功插入前配置；之后改规则需要重新建库。规则两端是非空的不透明字节 token，配置接口不分词、
+不转码；UTF-8、UTF-16 和自定义 token 可以并存。一个目标始终是一个 token，不能用该接口把一个字符展开为多个字符。
+若目标包含多个 UTF-8 字符，只有调用方 tokenizer 将它们作为同一个 token 时，目标的字面输入才与之对应。
+非法输入仍由查询 tokenizer/invalid-input policy 处理，不能利用替换规则跨越非法编码单元。
+
+源和目标先经过当前 fold；替换链在配置阶段迭代展开，允许恒等规则。遇到回环时，以环内按无符号字节
+字典序最小的 token 为代表，环内节点及进入环的链条均直接映射到它；进入环的链条不参与环内最小值比较。
+例如 `e → f → g → e` 最终统一为 `e`，即使另有 `d → g`，最终也为 `d → e`。同源不同目标仍被拒绝，失败保留原设置。
+例如 `e → F`、`f → g` 在 nocase 下合成为 `e → g`、`f → g`。skip token 也经过同样的规范化：
+skip 含别名 `e` 时，其目标 `g` 及其他归一到 `g` 的别名全部跳过。修改 nocase/case-fold 时会重新验证替换表。
+
+冻结后保留原 FoldTo 以检查大小写规则，并为替换配置增加 `CanonicalTo[S]`（每字符 4 字节）。查询仅查一次
+最终映射表，不追踪链或操作 map/hash。没有替换时保持原有内存布局和 2.0 dump；有替换时写出 2.1，
+增加必需 feature bit 1 和第 9 节 CanonicalTo。新版本仍读取 2.0；旧版本拒绝 2.1 替换模型，不会悄悄漏掉替换。
+内存及磁盘精确布局保留在公共头文件注释中。
+
+幂等的最终映射避免二次处理结果变化；这一约束也用于 [UTS #39](https://www.unicode.org/reports/tr39/) 的混淆检测映射。
+这里采用业务提供的 token 别名，不实现其 Unicode skeleton 转换或自动导入全量 confusables。
+
+## 内置 skip 范围
 
 四类内置选项合计 2847 个码位（空白与控制字符存在交集），使用 `conservative-pattern-syntax-v1`：
 以 `Pattern_Syntax`、`White_Space`、Cc、`Bidi_Control` 和下划线、软连字符、零宽空格、Word Joiner、BOM 为基础，
@@ -71,12 +112,13 @@ clang-format --dry-run --Werror unicode_ranges.h
 
 | `--section` | 内容 |
 | --- | --- |
-| `all`（默认） | 以下全部五类内容 |
-| `config` | 当前 dump 格式版本、节点/词条/字符数量、最长词 token 数、payload/index 字节数、nocase、skip 和有效 fold 数量 |
+| `all`（默认） | 以下全部六类内容 |
+| `config` | 当前 dump 格式版本、节点/词条/字符数量、最长词 token 数、payload/index 字节数、nocase、替换开关及 skip/fold/replacement 数量 |
 | `keywords` | 按 keyword ID 输出完整原始词条，保留第一条插入时的大小写、标点及词中 skip 字节 |
 | `skips` | 实际保存 skip bit 的 canonical token；包含只用于配置、未出现在词条里的 token |
 | `folds` | 非恒等的有效折叠规则，包含 source/target ID 和两端原始字节；包括内置 ASCII 规则 |
-| `symbols` | 完整字符表，包含 symbol ID、folded ID、该 ID 的 skip bit 及原始 token |
+| `replacements` | fold 后源 token 到最终目标的非恒等替换；链已展开，源 ID 已去重 |
+| `symbols` | 完整字符表，包含 symbol ID、folded ID、canonical ID、该 ID 的 skip bit 及原始 token |
 
 每个字节串同时打印 `byte_length`、`text` 和 `hex`。`text` 使用 JSON 字符串转义规则，保留基本多文种平面的可见 UTF-8，
 转义引号、反斜杠、空白、控制字符、不可见字符、私用区和 Unicode 非字符；辅助平面字符使用 `\uXXXX\uXXXX`
@@ -90,10 +132,10 @@ Windows 的真实控制台使用 Unicode 输出接口，避免把 UTF-8 字节�
 不修改终端码页。文件和管道仍输出 UTF-8。字体不支持的私用区/辅助平面字符可通过转义和 `hex` 核对，
 不会因字符编码无法显示而终止；磁盘写满、管道关闭等实际 I/O 错误仍会返回失败。
 
-打印结果描述冻结后的实际配置。匹配先折叠再检查 skip，`symbols.skipped` 只表示该 ID 自身的存储位，
-来源 token 是否被跳过需查看其 `folded_id` 对应的 skip bit。dump 不保留 `--skip-space` 等选项来源、
-已禁用的自定义 fold、tokenizer/编码或查询时的重叠、非法输入处理及命中数量设置，因此不能恢复这些构建/调用参数。
-`config.version` 表示当前写出格式（2.0）；加载兼容的未来 minor 版本也按当前已知表展示。
+打印结果描述冻结后的实际配置。匹配先折叠和替换再检查 skip，`symbols.skipped` 只表示该 ID 自身的存储位，
+来源 token 是否被跳过需查看其 `canonical_id` 对应的 skip bit。dump 不保留 `--skip-space` 等选项来源、
+已禁用的自定义 fold、替换规则的原始顺序/链、tokenizer/编码或查询时的重叠、非法输入处理及命中数量设置。
+`config.version` 表示当前写出格式（无替换为 2.0，有替换为 2.1）；加载兼容的未来 minor 版本也按当前已知表展示。
 
 ## 可视化范围
 
@@ -139,7 +181,9 @@ ac_automation_benchmark /path/to/external/words.utf8.txt
 命令行集成测试生成小型临时词表，检查六种格式的完整拓扑与子树、默认 UTF-8、转义、
 Unicode trim、失败退出码、不覆盖既有输出和临时文件清理。打印检查覆盖完整/分区 JSON、文本与文件输出、
 原始词条、配置专用 token、fold、NUL/不可见字节及非法输入；分别检查四类内置 skip 选项、跨语言文字保留、
-组合后的规则一致性，以及未跳过的不可见文字仍被正确转义。Windows 还在隐藏的真实控制台验证 GBK/UTF-8
+组合后的规则一致性，以及未跳过的不可见文字仍被正确转义。替换检查覆盖 UTF-8 别名、链展开、fold/skip 组合、
+规范化词条去重、回环最小代表及最终映射、2.1 load/verify、替换表打印及图中的 canonical 标签；冲突和非法规则不生成结果文件。
+Windows 还在隐藏的真实控制台验证 GBK/UTF-8
 码页、中文、辅助平面转义和长词条跨缓冲区输出，检查打印完成且不改变码页。检测到 D2 时还会验证语法并生成 SVG；
 设置 `AC_AUTOMATION_NOMNOML_MODULE` 为已安装 nomnoml 模块的绝对目录后，会执行真实的 nomnoml SVG 渲染。
 基准显式要求外部词表，不会下载或把完整敏感词表写入仓库；缺少/非法输入返回失败。
@@ -181,6 +225,8 @@ using ac = atfw::util::string::ac_automation_v2;
 ac dictionary;
 dictionary.set_nocase(true);
 dictionary.set_skip(" ");
+const ac::replacement_rule aliases[] = {{"壹", "一"}};
+dictionary.set_replacements(gsl::span<const ac::replacement_rule>(aliases));
 dictionary.insert_keyword("ab");
 dictionary.build();
 ac shared_copy = dictionary;
