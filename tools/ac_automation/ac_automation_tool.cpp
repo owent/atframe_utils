@@ -4,12 +4,25 @@
 #include "string/ac_automation_v2.h"
 #include "unicode_ranges.h"
 
+#if defined(_WIN32)
+#  ifndef WIN32_LEAN_AND_MEAN
+#    define WIN32_LEAN_AND_MEAN
+#  endif
+#  ifndef NOMINMAX
+#    define NOMINMAX
+#  endif
+#  include <Windows.h>
+#endif
+
 #include <algorithm>
+#include <array>
 #include <cstdio>
+#include <cstring>
 #include <deque>
 #include <fstream>
 #include <functional>
 #include <iostream>
+#include <iterator>
 #include <map>
 #include <set>
 #include <sstream>
@@ -32,7 +45,7 @@ static constexpr int kFirstOptionArgumentIndex = 2;
 static constexpr size_t kValueOptionParameterCount = 1;
 static constexpr uint64_t kDefaultMaxGraphNodes = 1000000000;
 static constexpr uint32_t kDefaultMaxGraphDepth = UINT32_MAX;
-static constexpr uint64_t kDefaultVisualizationBudgetBytes = uint64_t{64} << 30;
+static constexpr uint64_t kDefaultLargeModelBudgetBytes = uint64_t{64} << 30;
 static constexpr size_t kTextWriteChunkBytes = 16384;
 static constexpr int kDecimalRadix = 10;
 static constexpr int kHexLetterValueBase = 10;
@@ -67,6 +80,15 @@ static constexpr uint32_t kNoncharacterFirst = 0xfdd0;
 static constexpr uint32_t kNoncharacterLast = 0xfdef;
 static constexpr uint32_t kNoncharacterPlaneMask = 0xffff;
 static constexpr uint32_t kNoncharacterPlaneFirst = 0xfffe;
+static constexpr uint32_t kPrivateUseFirst = 0xe000;
+static constexpr uint32_t kPrivateUseLast = 0xf8ff;
+static constexpr uint32_t kJsonControlLimit = 0x20;
+static constexpr uint32_t kAsciiDelete = 0x7f;
+static constexpr uint32_t kUtf16HighSurrogateBase = 0xd800;
+static constexpr uint32_t kUtf16LowSurrogateBase = 0xdc00;
+static constexpr uint32_t kUtf16SurrogateMask = 0x3ff;
+static constexpr size_t kUtf16SurrogateBits = 10;
+static constexpr int kUnicodeEscapeFirstShift = 12;
 
 // ASCII boundaries and byte markers.
 static constexpr char kAsciiDigitFirst = '0';
@@ -80,6 +102,10 @@ static constexpr char kAsciiUpperLast = 'Z';
 static constexpr char kHexPrefix[] = "0x";
 static constexpr char kLabelSeparator = ' ';
 static constexpr char kLineFeed = '\n';
+static constexpr char kBackspace = '\b';
+static constexpr char kFormFeed = '\f';
+static constexpr char kCarriageReturn = '\r';
+static constexpr char kTab = '\t';
 static constexpr char kTemporarySuffix[] = ".tmp.";
 static constexpr char kUtf8Bom[] = "\xef\xbb\xbf";
 static constexpr size_t kUtf8BomBytes = sizeof(kUtf8Bom) - 1;
@@ -87,6 +113,7 @@ static constexpr size_t kUtf8BomBytes = sizeof(kUtf8Bom) - 1;
 // Commands, option keys and parser events.
 static constexpr char kCommandBuild[] = "build";
 static constexpr char kCommandInfo[] = "info";
+static constexpr char kCommandPrint[] = "print";
 static constexpr char kCommandVerify[] = "verify";
 static constexpr char kCommandVisualize[] = "visualize";
 static constexpr char kOptionCaseFoldFile[] = "--case-fold-file";
@@ -103,6 +130,7 @@ static constexpr char kOptionNoCase[] = "--nocase";
 static constexpr char kOptionOutput[] = "--output";
 static constexpr char kOptionRootId[] = "--root-id";
 static constexpr char kOptionSemantic[] = "--semantic";
+static constexpr char kOptionSection[] = "--section";
 static constexpr char kOptionSkipFile[] = "--skip-file";
 static constexpr char kOptionSkipInvisible[] = "--skip-invisible";
 static constexpr char kOptionSkipPunctuation[] = "--skip-punctuation";
@@ -134,7 +162,9 @@ static constexpr char kErrorMissingOutput[] = "--output is required";
 static constexpr char kErrorMissingRoot[] = "root-id does not exist";
 static constexpr char kErrorOpenInput[] = "cannot open input";
 static constexpr char kErrorPublishOutput[] = "cannot publish output; destination must not already exist";
+static constexpr char kErrorPrintWrite[] = "print write failed";
 static constexpr char kErrorResourceLimit[] = "invalid resource limit";
+static constexpr char kErrorSection[] = "invalid print section";
 static constexpr char kErrorTrailingData[] = "trailing data after image";
 static constexpr char kErrorUnknownCommand[] = "unknown command";
 static constexpr char kOperationDump[] = "dump";
@@ -158,6 +188,61 @@ static constexpr char kSemanticVerificationSuffix[] = " (semantic)\n";
 static constexpr char kStructuralVerificationSuffix[] = " (structural)\n";
 static constexpr char kSymbolsField[] = " symbols=";
 static constexpr char kVerifiedMessage[] = "verified";
+
+// Inspection sections and lossless byte-display fields.
+static constexpr char kFormatText[] = "text";
+static constexpr char kFormatJson[] = "json";
+static constexpr char kSectionAll[] = "all";
+static constexpr char kSectionConfig[] = "config";
+static constexpr char kSectionKeywords[] = "keywords";
+static constexpr char kSectionSkips[] = "skips";
+static constexpr char kSectionFolds[] = "folds";
+static constexpr char kSectionSymbols[] = "symbols";
+static constexpr const char* kPrintSections[] = {kSectionConfig, kSectionKeywords, kSectionSkips, kSectionFolds,
+                                                 kSectionSymbols};
+static constexpr char kFieldVersion[] = "version";
+static constexpr char kImageVersion[] = "2.0";
+static constexpr char kFieldNodes[] = "nodes";
+static constexpr char kFieldMaxKeywordTokens[] = "max_keyword_tokens";
+static constexpr char kFieldPayloadBytes[] = "payload_bytes";
+static constexpr char kFieldSymbolIndexBytes[] = "symbol_index_bytes";
+static constexpr char kFieldNoCase[] = "nocase";
+static constexpr char kFieldSkipSymbols[] = "skip_symbols";
+static constexpr char kFieldCaseFoldRules[] = "case_fold_rules";
+static constexpr char kFieldId[] = "id";
+static constexpr char kFieldFoldedId[] = "folded_id";
+static constexpr char kFieldSkipped[] = "skipped";
+static constexpr char kFieldSourceId[] = "source_id";
+static constexpr char kFieldTargetId[] = "target_id";
+static constexpr char kFieldSource[] = "source";
+static constexpr char kFieldTarget[] = "target";
+static constexpr char kFieldByteLength[] = "byte_length";
+static constexpr char kFieldText[] = "text";
+static constexpr char kFieldHex[] = "hex";
+static constexpr char kBooleanTrue[] = "true";
+static constexpr char kBooleanFalse[] = "false";
+static constexpr char kRecordSeparator[] = ", ";
+static constexpr char kJsonFieldSeparator[] = ": ";
+static constexpr char kJsonArrayBegin[] = "[\n";
+static constexpr char kJsonItemSeparator[] = ",\n";
+static constexpr char kJsonDocumentBegin[] = "{\n";
+static constexpr char kJsonDocumentEnd[] = "\n}\n";
+static constexpr char kTextSectionEnd[] = "]\n";
+static constexpr char kQuote = '"';
+static constexpr char kBackslash = '\\';
+static constexpr char kRecordBegin = '{';
+static constexpr char kRecordEnd = '}';
+static constexpr char kArrayBegin = '[';
+static constexpr char kArrayEnd = ']';
+static constexpr char kTextFieldSeparator = '=';
+static constexpr char kEscapeQuote[] = "\\\"";
+static constexpr char kEscapeBackslash[] = "\\\\";
+static constexpr char kEscapeBackspace[] = "\\b";
+static constexpr char kEscapeFormFeed[] = "\\f";
+static constexpr char kEscapeLineFeed[] = "\\n";
+static constexpr char kEscapeCarriageReturn[] = "\\r";
+static constexpr char kEscapeTab[] = "\\t";
+static constexpr char kEscapeUnicode[] = "\\u";
 
 // Graph formats and output syntax.
 static constexpr char kDotEdge[] = " -> n";
@@ -234,15 +319,17 @@ static constexpr char kPlantUmlStateAlias[] = "\" as n";
 static constexpr char kPlantUmlStateBegin[] = "state \"";
 
 static constexpr char kUsageText[] =
-    "Usage: ac_automation_tool <build|info|verify|visualize> --input FILE [options]\n"
+    "Usage: ac_automation_tool <build|info|print|verify|visualize> --input FILE [options]\n"
     "  build: --output FILE [--nocase|--ignore-case] [--skip-space] [--skip-punctuation]\n"
     "         [--skip-symbols] [--skip-invisible] [--skip-file FILE] [--case-fold-file FILE]\n"
     "  verify: [--semantic]\n"
+    "  print: [--section all|config|keywords|skips|folds|symbols (all)]\n"
+    "         [--format text|json (text)] [--output FILE (stdout)]\n"
     "  visualize: --output FILE --format dot|mermaid|plantuml|d2|nomnoml|graphml\n"
     "             [--max-nodes N (1000000000)] [--root-id N (0)] [--max-depth N (4294967295)]\n"
     "             [--label-format utf8|hex (utf8)] [--utf8-labels]\n"
-    "  info/verify/visualize: [--max-file-bytes N] [--max-memory-bytes N]\n"
-    "                       (defaults: visualize 64 GiB each, info/verify 1 GiB each)\n"
+    "  info/print/verify/visualize: [--max-file-bytes N] [--max-memory-bytes N]\n"
+    "                       (defaults: print/visualize 64 GiB each, info/verify 1 GiB each)\n"
     "Output files must not exist. Options use separate values, not --name=value.\n";
 
 struct ATFW_UTIL_SYMBOL_LOCAL arguments {
@@ -333,9 +420,9 @@ static std::string encode(uint32_t cp) {
   return result;
 }
 
-static uint32_t properties(uint32_t cp) {
-  auto first = std::begin(kUnicodeSkipRanges);
-  auto last = std::end(kUnicodeSkipRanges);
+static uint32_t display_properties(uint32_t cp) {
+  auto first = std::begin(kUnicodeDisplayRanges);
+  auto last = std::end(kUnicodeDisplayRanges);
   auto it = std::lower_bound(first, last, cp, [](const unicode_range& range, uint32_t v) { return range.last < v; });
   return it != last && it->first <= cp ? it->mask : 0;
 }
@@ -348,7 +435,7 @@ static bool trim_line(const std::string& line, gsl::string_view& trimmed) {
     if (token.state != ac::token_status::kValid) {
       return false;
     }
-    if ((properties(decode(gsl::string_view(line).substr(pos, token.byte_count))) & kPropertyWhiteSpace) == 0) {
+    if ((display_properties(decode(gsl::string_view(line).substr(pos, token.byte_count))) & kPropertyWhiteSpace) == 0) {
       first = (std::min)(first, pos);
       end = pos + token.byte_count;
     }
@@ -484,6 +571,102 @@ class ATFW_UTIL_SYMBOL_LOCAL file_buffer : public std::streambuf {
  private:
   FILE* file_;
 };
+
+#if defined(_WIN32)
+static constexpr size_t kConsoleMaxUtf8TokenBytes = 4;
+static constexpr size_t kConsoleMaxUtf16TokenUnits = 2;
+static constexpr size_t kConsoleWideBufferUnits = kConsoleMaxUtf16TokenUnits * kTextWriteChunkBytes;
+
+// Narrow CRT console writes can reinterpret UTF-8 through the active locale/code page,
+// corrupting valid characters or reporting a short write. Use the Unicode console API
+// only for a real console; redirected stdout and explicit files retain UTF-8 bytes.
+class ATFW_UTIL_SYMBOL_LOCAL console_buffer : public std::streambuf {
+ public:
+  explicit console_buffer(HANDLE handle) : handle_(handle) {}
+
+ protected:
+  std::streamsize xsputn(const char* data, std::streamsize size) override {
+    if (size <= 0) {
+      return 0;
+    }
+    const size_t count = static_cast<size_t>(size);
+    size_t copied = 0;
+    while (copied < count) {
+      if (used_ == pending_.size() && !flush(false)) {
+        return 0;
+      }
+      size_t amount = (std::min)(count - copied, pending_.size() - used_);
+      std::memcpy(pending_.data() + used_, data + copied, amount);
+      used_ += amount;
+      copied += amount;
+    }
+    return size;
+  }
+
+  int_type overflow(int_type value) override {
+    if (traits_type::eq_int_type(value, traits_type::eof())) {
+      return sync() == kStreamSyncSuccess ? traits_type::not_eof(value) : traits_type::eof();
+    }
+    char byte = traits_type::to_char_type(value);
+    return xsputn(&byte, sizeof(byte)) == sizeof(byte) ? value : traits_type::eof();
+  }
+
+  int sync() override { return flush(true) ? kStreamSyncSuccess : kStreamSyncFailure; }
+
+ private:
+  bool flush(bool final) {
+    std::array<wchar_t, kConsoleWideBufferUnits> wide;
+    size_t consumed = 0;
+    size_t units = 0;
+    while (consumed < used_) {
+      gsl::string_view remaining(pending_.data() + consumed, used_ - consumed);
+      auto token = ac::next_utf8(remaining);
+      if (token.state != ac::token_status::kValid) {
+        // Quoted input bytes have already been escaped. Only a valid scalar split
+        // at the buffer boundary can remain; retain at most three bytes until refill.
+        if (!final && remaining.size() < kConsoleMaxUtf8TokenBytes) {
+          break;
+        }
+        return false;
+      }
+      if (units > wide.size() - kConsoleMaxUtf16TokenUnits) {
+        return false;
+      }
+      uint32_t cp = decode(remaining.substr(0, token.byte_count));
+      if (cp == kLineFeed) {
+        wide[units++] = kCarriageReturn;
+        wide[units++] = kLineFeed;
+      } else if (cp < kUtf8ThreeByteLimit) {
+        wide[units++] = static_cast<wchar_t>(cp);
+      } else {
+        cp -= kUtf8ThreeByteLimit;
+        wide[units++] = static_cast<wchar_t>(kUtf16HighSurrogateBase + (cp >> kUtf16SurrogateBits));
+        wide[units++] = static_cast<wchar_t>(kUtf16LowSurrogateBase + (cp & kUtf16SurrogateMask));
+      }
+      consumed += token.byte_count;
+    }
+    size_t written = 0;
+    while (written < units) {
+      DWORD amount = 0;
+      DWORD requested = static_cast<DWORD>(units - written);
+      if (WriteConsoleW(handle_, wide.data() + written, requested, &amount, nullptr) == 0 || amount == 0 ||
+          amount > requested) {
+        return false;
+      }
+      written += amount;
+    }
+    if (consumed > 0) {
+      used_ -= consumed;
+      std::memmove(pending_.data(), pending_.data() + consumed, used_);
+    }
+    return !final || used_ == 0;
+  }
+
+  HANDLE handle_;
+  std::array<char, kTextWriteChunkBytes> pending_;
+  size_t used_ = 0;
+};
+#endif
 
 class ATFW_UTIL_SYMBOL_LOCAL publication {
  public:
@@ -682,7 +865,7 @@ static std::string label(gsl::string_view bytes, bool utf8) {
     unsigned char c = static_cast<unsigned char>(bytes[pos]);
     uint32_t cp = token.state == ac::token_status::kValid ? decode(bytes.substr(pos, token.byte_count)) : 0;
     if (utf8 && token.state == ac::token_status::kValid &&
-        (properties(cp) & (kPropertyInvisible | kPropertyWhiteSpace)) == 0 &&
+        (display_properties(cp) & (kPropertyInvisible | kPropertyWhiteSpace)) == 0 &&
         (cp < kNoncharacterFirst || cp > kNoncharacterLast) &&
         (cp & kNoncharacterPlaneMask) < kNoncharacterPlaneFirst &&
         (token.byte_count > 1 || (c >= kAsciiLowerFirst && c <= kAsciiLowerLast) ||
@@ -708,6 +891,318 @@ static void write_text(std::ostream& out, gsl::string_view text) {
     out.write(text.data() + pos, static_cast<std::streamsize>(length));
     pos += length;
   }
+}
+
+static void write_unicode_escape(std::ostream& out, uint32_t unit) {
+  out << kEscapeUnicode;
+  for (int shift = kUnicodeEscapeFirstShift; shift >= 0; shift -= static_cast<int>(kHexBitsPerDigit)) {
+    out.put(kHexDigits[(unit >> shift) & kHexDigitMask]);
+  }
+}
+
+static void write_quoted(std::ostream& out, gsl::string_view bytes) {
+  out.put(kQuote);
+  for (size_t pos = 0; pos < bytes.size() && out.good();) {
+    auto remaining = bytes.substr(pos);
+    auto token = ac::next_utf8(remaining);
+    if (token.state != ac::token_status::kValid) {
+      // JSON cannot represent arbitrary byte strings. The accompanying hex field is
+      // authoritative; map a malformed display byte to its U+00xx escape without loss there.
+      write_unicode_escape(out, static_cast<unsigned char>(remaining[0]));
+      ++pos;
+      continue;
+    }
+    auto current = remaining.substr(0, token.byte_count);
+    uint32_t cp = decode(current);
+    const char* escape = nullptr;
+    switch (cp) {
+      case kQuote:
+        escape = kEscapeQuote;
+        break;
+      case kBackslash:
+        escape = kEscapeBackslash;
+        break;
+      case kBackspace:
+        escape = kEscapeBackspace;
+        break;
+      case kFormFeed:
+        escape = kEscapeFormFeed;
+        break;
+      case kLineFeed:
+        escape = kEscapeLineFeed;
+        break;
+      case kCarriageReturn:
+        escape = kEscapeCarriageReturn;
+        break;
+      case kTab:
+        escape = kEscapeTab;
+        break;
+      default:
+        break;
+    }
+    if (escape != nullptr) {
+      out << escape;
+    } else if (cp < kJsonControlLimit || cp == kAsciiDelete || cp >= kUtf8ThreeByteLimit ||
+               (cp >= kPrivateUseFirst && cp <= kPrivateUseLast) ||
+               (display_properties(cp) & (kPropertyWhiteSpace | kPropertyInvisible)) != 0 ||
+               (cp >= kNoncharacterFirst && cp <= kNoncharacterLast) ||
+               (cp & kNoncharacterPlaneMask) >= kNoncharacterPlaneFirst) {
+      if (cp < kUtf8ThreeByteLimit) {
+        write_unicode_escape(out, cp);
+      } else {
+        // Classic Windows consoles may replace supplementary-plane characters even
+        // through WriteConsoleW. ASCII surrogate escapes remain readable everywhere.
+        cp -= kUtf8ThreeByteLimit;
+        write_unicode_escape(out, kUtf16HighSurrogateBase + (cp >> kUtf16SurrogateBits));
+        write_unicode_escape(out, kUtf16LowSurrogateBase + (cp & kUtf16SurrogateMask));
+      }
+    } else {
+      write_text(out, current);
+    }
+    pos += token.byte_count;
+  }
+  out.put(kQuote);
+}
+
+struct ATFW_UTIL_SYMBOL_LOCAL print_record {
+  std::ostream& output;
+  bool json;
+  bool first = true;
+
+  print_record(std::ostream& out, bool as_json) : output(out), json(as_json) { output.put(kRecordBegin); }
+
+  void key(gsl::string_view name) {
+    if (!first) {
+      output << kRecordSeparator;
+    }
+    first = false;
+    if (json) {
+      write_quoted(output, name);
+      output << kJsonFieldSeparator;
+    } else {
+      write_text(output, name);
+      output.put(kTextFieldSeparator);
+    }
+  }
+
+  void number(gsl::string_view name, uint64_t value) {
+    key(name);
+    output << value;
+  }
+
+  void boolean(gsl::string_view name, bool value) {
+    key(name);
+    output << (value ? kBooleanTrue : kBooleanFalse);
+  }
+
+  void text(gsl::string_view name, gsl::string_view value) {
+    key(name);
+    write_quoted(output, value);
+  }
+
+  void bytes(gsl::string_view value) {
+    number(kFieldByteLength, value.size());
+    text(kFieldText, value);
+    key(kFieldHex);
+    output.put(kQuote);
+    for (unsigned char byte : value) {
+      if (!output.good()) {
+        break;
+      }
+      output.put(kHexDigits[byte >> kHexBitsPerDigit]);
+      output.put(kHexDigits[byte & kHexDigitMask]);
+    }
+    output.put(kQuote);
+  }
+
+  void finish() { output.put(kRecordEnd); }
+};
+
+struct ATFW_UTIL_SYMBOL_LOCAL configuration_counts {
+  uint32_t skips = 0;
+  uint32_t folds = 0;
+};
+
+static bool count_configuration(const ac::symbol_view& symbol, void* data) {
+  auto& counts = *static_cast<configuration_counts*>(data);
+  if (symbol.skipped) {
+    ++counts.skips;
+  }
+  if (symbol.id != symbol.folded_id) {
+    ++counts.folds;
+  }
+  return true;
+}
+
+static void write_configuration(std::ostream& out, const ac& value, bool json) {
+  configuration_counts counts;
+  value.visit_symbols(count_configuration, &counts);
+  auto stats = value.get_statistics();
+  print_record record(out, json);
+  record.text(kFieldVersion, kImageVersion);
+  record.number(kFieldNodes, stats.nodes);
+  record.number(kSectionKeywords, stats.keywords);
+  record.number(kSectionSymbols, stats.symbols);
+  record.number(kFieldMaxKeywordTokens, stats.max_keyword_tokens);
+  record.number(kFieldPayloadBytes, stats.payload_bytes);
+  record.number(kFieldSymbolIndexBytes, stats.symbol_index_bytes);
+  record.boolean(kFieldNoCase, stats.nocase);
+  record.number(kFieldSkipSymbols, counts.skips);
+  record.number(kFieldCaseFoldRules, counts.folds);
+  record.finish();
+}
+
+struct ATFW_UTIL_SYMBOL_LOCAL symbol_printer {
+  std::ostream& output;
+  gsl::string_view section;
+  bool json;
+  bool first = true;
+
+  symbol_printer(std::ostream& out, gsl::string_view selected, bool as_json)
+      : output(out), section(selected), json(as_json) {}
+
+  void next() {
+    if (json && !first) {
+      output << kJsonItemSeparator;
+    }
+    first = false;
+  }
+};
+
+static bool print_symbol(const ac::symbol_view& symbol, void* data) {
+  auto& printer = *static_cast<symbol_printer*>(data);
+  if ((printer.section == kSectionSkips && !symbol.skipped) ||
+      (printer.section == kSectionFolds && symbol.id == symbol.folded_id)) {
+    return true;
+  }
+  printer.next();
+  print_record record(printer.output, printer.json);
+  if (printer.section == kSectionFolds) {
+    record.number(kFieldSourceId, symbol.id);
+    record.number(kFieldTargetId, symbol.folded_id);
+    record.key(kFieldSource);
+    print_record source(printer.output, printer.json);
+    source.bytes(symbol.token);
+    source.finish();
+    record.key(kFieldTarget);
+    print_record target(printer.output, printer.json);
+    target.bytes(symbol.folded_token);
+    target.finish();
+  } else {
+    record.number(kFieldId, symbol.id);
+    if (printer.section == kSectionSymbols) {
+      record.number(kFieldFoldedId, symbol.folded_id);
+      record.boolean(kFieldSkipped, symbol.skipped);
+    }
+    record.bytes(symbol.token);
+  }
+  record.finish();
+  if (!printer.json) {
+    printer.output.put(kLineFeed);
+  }
+  return printer.output.good();
+}
+
+static bool print_model(std::ostream& out, const ac& value, gsl::string_view section, bool json) {
+  if (json) {
+    out << kJsonDocumentBegin;
+  }
+  bool first = true;
+  for (const char* name : kPrintSections) {
+    if (section != kSectionAll && section != name) {
+      continue;
+    }
+    if (json) {
+      if (!first) {
+        out << kJsonItemSeparator;
+      }
+      write_quoted(out, name);
+      out << kJsonFieldSeparator;
+    } else {
+      out.put(kArrayBegin);
+      out << name << kTextSectionEnd;
+    }
+    first = false;
+    if (gsl::string_view(name) == kSectionConfig) {
+      write_configuration(out, value, json);
+      if (!json) {
+        out.put(kLineFeed);
+      }
+      continue;
+    }
+    if (json) {
+      out << kJsonArrayBegin;
+    }
+    if (gsl::string_view(name) == kSectionKeywords) {
+      const uint32_t count = value.get_statistics().keywords;
+      for (uint32_t id = 0; id < count && out.good(); ++id) {
+        if (json && id > 0) {
+          out << kJsonItemSeparator;
+        }
+        print_record record(out, json);
+        record.number(kFieldId, id);
+        record.bytes(value.keyword(id));
+        record.finish();
+        if (!json) {
+          out.put(kLineFeed);
+        }
+      }
+    } else {
+      symbol_printer printer(out, name, json);
+      if (!value.visit_symbols(print_symbol, &printer)) {
+        return false;
+      }
+    }
+    if (json) {
+      out.put(kLineFeed);
+      out.put(kArrayEnd);
+    }
+    if (!out.good()) {
+      return false;
+    }
+  }
+  if (json) {
+    out << kJsonDocumentEnd;
+  }
+  return out.good();
+}
+
+static int print_file(const ac& value, gsl::string_view section, bool json, const arguments& args) {
+  auto destination = args.values.find(kOptionOutput);
+  if (destination == args.values.end()) {
+#if defined(_WIN32)
+    HANDLE handle = GetStdHandle(STD_OUTPUT_HANDLE);
+    DWORD mode = 0;
+    if (handle != nullptr && handle != INVALID_HANDLE_VALUE && GetConsoleMode(handle, &mode) != 0) {
+      console_buffer buffer(handle);
+      std::ostream output(&buffer);
+      if (!print_model(output, value, section, json)) {
+        return fail(kErrorPrintWrite);
+      }
+      output.flush();
+      return output.good() ? kExitSuccess : fail(kErrorPrintWrite);
+    }
+#endif
+    if (!print_model(std::cout, value, section, json)) {
+      return fail(kErrorPrintWrite);
+    }
+    std::cout.flush();
+    return std::cout.good() ? kExitSuccess : fail(kErrorPrintWrite);
+  }
+  publication file(destination->second);
+  if (file.file() == nullptr) {
+    return fail(kErrorCreateOutput);
+  }
+  file_buffer buffer(file.file());
+  std::ostream output(&buffer);
+  if (!print_model(output, value, section, json)) {
+    return fail(kErrorPrintWrite);
+  }
+  output.flush();
+  if (output.fail() || !file.commit()) {
+    return fail(kErrorPublishOutput);
+  }
+  return kExitSuccess;
 }
 
 static void write_node_caption(std::ostream& out, const ac::node_view& node) {
@@ -899,7 +1394,7 @@ int main(int argc, char* argv[]) {
     return kExitFailure;
   }
   std::string command = argv[kCommandArgumentIndex];
-  if (command != kCommandBuild && command != kCommandInfo && command != kCommandVerify &&
+  if (command != kCommandBuild && command != kCommandInfo && command != kCommandPrint && command != kCommandVerify &&
       command != kCommandVisualize) {
     return fail(kErrorUnknownCommand);
   }
@@ -918,6 +1413,9 @@ int main(int argc, char* argv[]) {
     values.insert(values.end(), {kOptionMaxFileBytes, kOptionMaxMemoryBytes});
     if (command == kCommandVerify) {
       flags.push_back(kOptionSemantic);
+    }
+    if (command == kCommandPrint) {
+      values.insert(values.end(), {kOptionOutput, kOptionFormat, kOptionSection});
     }
     if (command == kCommandVisualize) {
       values.insert(values.end(), {kOptionOutput, kOptionFormat, kOptionMaxNodes, kOptionRootId, kOptionMaxDepth,
@@ -949,6 +1447,9 @@ int main(int argc, char* argv[]) {
       ((args.values.count(kOptionOutput) == 0) || args.values.at(kOptionOutput).empty())) {
     return fail(kErrorMissingOutput);
   }
+  if (command == kCommandPrint && args.values.count(kOptionOutput) > 0 && args.values.at(kOptionOutput).empty()) {
+    return fail(kErrorMissingOutput);
+  }
   if (command == kCommandBuild) {
     if ((args.values.count(kOptionCaseFoldFile) > 0) && (args.flags.count(kOptionNoCase) == 0)) {
       return fail(kErrorFoldRequiresNoCase);
@@ -958,9 +1459,9 @@ int main(int argc, char* argv[]) {
   // Enforce resource limits before loading any image sections or selecting graph nodes.
   ac::load_options options;
   options.verify_semantics = args.flags.count(kOptionSemantic) != 0;
-  if (command == kCommandVisualize) {
-    options.max_file_bytes = kDefaultVisualizationBudgetBytes;
-    options.max_memory_bytes = kDefaultVisualizationBudgetBytes;
+  if (command == kCommandVisualize || command == kCommandPrint) {
+    options.max_file_bytes = kDefaultLargeModelBudgetBytes;
+    options.max_memory_bytes = kDefaultLargeModelBudgetBytes;
   }
   for (const char* name : {kOptionMaxFileBytes, kOptionMaxMemoryBytes}) {
     auto it = args.values.find(name);
@@ -982,6 +1483,26 @@ int main(int argc, char* argv[]) {
   uint64_t depth = kDefaultMaxGraphDepth;
   graph_format format = graph_format::kDot;
   bool utf8_labels = true;
+  gsl::string_view print_section = kSectionAll;
+  bool print_json = false;
+  if (command == kCommandPrint) {
+    auto section = args.values.find(kOptionSection);
+    if (section != args.values.end()) {
+      print_section = section->second;
+    }
+    if (print_section != kSectionAll &&
+        std::none_of(std::begin(kPrintSections), std::end(kPrintSections),
+                     [print_section](const char* name) { return print_section == name; })) {
+      return fail(kErrorSection);
+    }
+    auto selected_format = args.values.find(kOptionFormat);
+    if (selected_format != args.values.end()) {
+      if (selected_format->second != kFormatText && selected_format->second != kFormatJson) {
+        return fail(kErrorFormat);
+      }
+      print_json = selected_format->second == kFormatJson;
+    }
+  }
   if (command == kCommandVisualize) {
     auto label_format = args.values.find(kOptionLabelFormat);
     if (label_format != args.values.end()) {
@@ -1009,7 +1530,7 @@ int main(int argc, char* argv[]) {
       return fail(kErrorGraphRange);
     }
   }
-  // A loaded snapshot is validated before it becomes available to info/verify/visualize.
+  // A loaded snapshot is validated before it becomes available to inspection or visualization.
   std::ifstream input(args.values.at(kOptionInput), std::ios::binary);
   if (input.fail()) {
     return fail(kErrorOpenInput);
@@ -1022,6 +1543,9 @@ int main(int argc, char* argv[]) {
     return fail(kErrorTrailingData);
   }
   auto stats = value.get_statistics();
+  if (command == kCommandPrint) {
+    return print_file(value, print_section, print_json, args);
+  }
   if (command == kCommandInfo) {
     std::cout << kImageInfoPrefix << stats.nodes << kKeywordsField << stats.keywords << kSymbolsField << stats.symbols
               << kMaxKeywordTokensField << stats.max_keyword_tokens << kPayloadBytesField << stats.payload_bytes

@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Run deterministic CLI integration checks: test_tool.py EXE SCRATCH_DIRECTORY."""
 import pathlib
+import json
 import os
 import re
 import subprocess
@@ -13,6 +14,61 @@ import xml.etree.ElementTree as ET
 FORMATS = ("dot", "mermaid", "plantuml", "d2", "nomnoml", "graphml")
 GRAPHML = "{http://graphml.graphdrawing.org/xmlns}"
 YWORKS = "{http://www.yworks.com/xml/graphml}"
+
+
+def windows_console_worker(executable, image, section, code_page, result_path):
+    """Read actual console cells; a stdout pipe does not exercise CRT console conversion."""
+    import ctypes
+    from ctypes import wintypes
+
+    class Coord(ctypes.Structure):
+        _fields_ = [("X", ctypes.c_short), ("Y", ctypes.c_short)]
+
+    kernel = ctypes.WinDLL("kernel32", use_last_error=True)
+    kernel.GetStdHandle.argtypes = [wintypes.DWORD]
+    kernel.GetStdHandle.restype = wintypes.HANDLE
+    kernel.SetConsoleOutputCP.argtypes = [wintypes.UINT]
+    kernel.SetConsoleOutputCP.restype = wintypes.BOOL
+    kernel.GetConsoleOutputCP.restype = wintypes.UINT
+    kernel.SetConsoleScreenBufferSize.argtypes = [wintypes.HANDLE, Coord]
+    kernel.SetConsoleScreenBufferSize.restype = wintypes.BOOL
+    kernel.ReadConsoleOutputCharacterW.argtypes = [wintypes.HANDLE, wintypes.LPWSTR, wintypes.DWORD,
+                                                  Coord, ctypes.POINTER(wintypes.DWORD)]
+    kernel.ReadConsoleOutputCharacterW.restype = wintypes.BOOL
+    handle = kernel.GetStdHandle(-11 & 0xffffffff)  # STD_OUTPUT_HANDLE
+    width, height = 512, 256
+    assert kernel.SetConsoleOutputCP(int(code_page)), ctypes.get_last_error()
+    assert kernel.SetConsoleScreenBufferSize(handle, Coord(width, height)), ctypes.get_last_error()
+    with open("CONOUT$", "wb", buffering=0) as console:
+        completed = subprocess.run([executable, "print", "--input", image, "--section", section],
+                                   stdout=console, stderr=subprocess.PIPE)
+    screen = ctypes.create_unicode_buffer(width * height)
+    count = wintypes.DWORD()
+    assert kernel.ReadConsoleOutputCharacterW(handle, screen, len(screen) - 1, Coord(0, 0),
+                                              ctypes.byref(count)), ctypes.get_last_error()
+    result = {"returncode": completed.returncode, "stderr": completed.stderr.decode("utf-8", "backslashreplace"),
+              "code_page": kernel.GetConsoleOutputCP(), "screen": screen[:count.value].rstrip()}
+    pathlib.Path(result_path).write_text(json.dumps(result, ensure_ascii=True), encoding="utf-8")
+
+
+def check_windows_console(executable, image, section, code_page, root):
+    result_path = root / "console-{}-{}.json".format(section, code_page)
+    startup = subprocess.STARTUPINFO()
+    startup.dwFlags = subprocess.STARTF_USESHOWWINDOW
+    startup.wShowWindow = 0  # SW_HIDE: never open a visible helper window.
+    subprocess.run([sys.executable, str(pathlib.Path(__file__).resolve()), "--console-worker",
+                    executable, str(image), section, str(code_page), str(result_path)],
+                   startupinfo=startup, creationflags=subprocess.CREATE_NEW_CONSOLE, check=True, timeout=30)
+    result = json.loads(result_path.read_text(encoding="utf-8"))
+    assert result["returncode"] == 0, result
+    assert result["stderr"] == "", result["stderr"]
+    assert result["code_page"] == code_page, result["code_page"]
+    return result["screen"]
+
+
+if os.name == "nt" and sys.argv[1:2] == ["--console-worker"]:
+    windows_console_worker(*sys.argv[2:])
+    sys.exit(0)
 
 
 def topology(path, fmt):
@@ -79,7 +135,7 @@ scratch.mkdir(parents=True, exist_ok=True)
 with tempfile.TemporaryDirectory(prefix="ac-tool-", dir=scratch) as directory:
     root = pathlib.Path(directory)
     def run(*args, ok=True):
-        result = subprocess.run([exe, *map(str, args)], capture_output=True, text=True)
+        result = subprocess.run([exe, *map(str, args)], capture_output=True, text=True, encoding="utf-8")
         assert (result.returncode == 0) == ok, (args, result.returncode, result.stdout, result.stderr)
         return result.stdout
     source, image = root / "words.txt", root / "words.ac"
@@ -88,6 +144,134 @@ with tempfile.TemporaryDirectory(prefix="ac-tool-", dir=scratch) as directory:
     original = image.read_bytes()
     assert "keywords=5" in run("info", "--input", image)
     run("verify", "--input", image, "--semantic")
+    # Printed records describe the stored bytes, not the normalized trie spelling.
+    report = json.loads(run("print", "--input", image, "--format", "json"))
+    assert set(report) == {"config", "keywords", "skips", "folds", "symbols"}
+    assert [entry["text"] for entry in report["keywords"]] == ["ab", "BC", "#tag", "x,y", 'quote"slash/']
+    assert [bytes.fromhex(entry["hex"]) for entry in report["keywords"]] == [
+        word.encode("utf-8") for word in ("ab", "BC", "#tag", "x,y", 'quote"slash/')]
+    assert [entry["id"] for entry in report["keywords"]] == list(range(5))
+    config = report["config"]
+    assert config["nocase"] is True and config["version"] == "2.0"
+    assert config["keywords"] == 5 and config["symbol_index_bytes"] == 2052
+    assert config["skip_symbols"] == len(report["skips"]) > 0
+    assert config["case_fold_rules"] == len(report["folds"]) == 26
+    assert config["symbols"] == len(report["symbols"])
+    symbols = {entry["id"]: entry for entry in report["symbols"]}
+    assert [entry["id"] for entry in report["symbols"]] == list(range(1, config["symbols"] + 1))
+    assert {entry["hex"] for entry in report["skips"]} >= {"20", "0A", "E38080", "2D"}
+    assert {entry["hex"] for entry in report["skips"]} == {
+        entry["hex"] for entry in report["symbols"] if entry["skipped"]}
+    for entry in report["folds"]:
+        assert entry["source"]["hex"] == symbols[entry["source_id"]]["hex"]
+        assert entry["target"]["hex"] == symbols[entry["target_id"]]["hex"]
+        assert symbols[entry["source_id"]]["folded_id"] == entry["target_id"]
+    for section in report:
+        selected = json.loads(run("print", "--input", image, "--section", section, "--format", "json"))
+        assert selected == {section: report[section]}
+    printed = root / "printed.txt"
+    text = run("print", "--input", image)
+    assert all("[{}]".format(section) in text for section in report)
+    assert 'text="\\n"' in text and 'text="quote\\"slash/"' in text
+    run("print", "--input", image, "--output", printed)
+    assert printed.read_text(encoding="utf-8") == text
+    run("print", "--input", image, "--output", printed, ok=False)
+    assert printed.read_text(encoding="utf-8") == text
+    for extra in (("--section", "bad"), ("--format", "dot"), ("--max-file-bytes", "1"),
+                  ("--max-memory-bytes", "1"), ("--section", "keywords", "--section", "skips")):
+        rejected = root / "rejected-print.json"
+        run("print", "--input", image, "--output", rejected, *extra, ok=False)
+        assert not rejected.exists()
+    # Configuration-only models include symbols absent from every trie edge.
+    empty_source = root / "empty.txt"
+    empty_source.write_bytes(b"")
+    skip_file = root / "skips.txt"
+    skip_file.write_bytes(b"\x00\t\n \x1b" + "\u200b\U000e0001".encode("utf-8"))
+    fold_file = root / "folds.txt"
+    fold_file.write_text("FF 6100\n", encoding="ascii")
+    configured = root / "configured.ac"
+    run("build", "--input", empty_source, "--output", configured, "--nocase",
+        "--skip-file", skip_file, "--case-fold-file", fold_file)
+    opaque = json.loads(run("print", "--input", configured, "--format", "json"))
+    assert opaque["keywords"] == [] and len(opaque["folds"]) == 27
+    assert {entry["hex"] for entry in opaque["skips"]} == {"00", "09", "0A", "20", "1B", "E2808B", "F3A08081"}
+    rule = next(entry for entry in opaque["folds"] if entry["source"]["hex"] == "FF")
+    assert rule["target"]["hex"] == "6100" and rule["target"]["text"] == "a\x00"
+    opaque_text = run("print", "--input", configured)
+    assert "\x1b" not in opaque_text and "\U000e0001" not in opaque_text and "\\uDB40\\uDC01" in opaque_text
+    plain = root / "empty.ac"
+    run("build", "--input", empty_source, "--output", plain)
+    empty = json.loads(run("print", "--input", plain, "--format", "json"))
+    assert all(empty[section] == [] for section in ("keywords", "skips", "folds", "symbols"))
+    assert empty["config"]["nocase"] is False and empty["config"]["symbols"] == 0
+    # Built-in profiles preserve writing components even when Unicode calls them
+    # symbols/default-ignorables. Explicit --skip-file remains an exact user override.
+    protected = set("Aa09αЖאاकア가一⼀⺀〆々㍿①é^`ᅟᅠㅤﾠ∂" + "\u0301\u034f\u200c\u200d\ufe0f\U000e0001")
+    profiles = {
+        "--skip-space": set(" \t\r\n\u3000"),
+        "--skip-punctuation": set("*-/_,。？—"),
+        "--skip-symbols": set("+$☀"),
+        "--skip-invisible": set("\x00\t\n\u00ad\u200b\u2060\ufeff"),
+    }
+    profile_sets = []
+    for option, required in profiles.items():
+        profile_image = root / (option[2:] + ".ac")
+        run("build", "--input", empty_source, "--output", profile_image, option)
+        entries = json.loads(run("print", "--input", profile_image, "--section", "skips", "--format", "json"))["skips"]
+        tokens = {bytes.fromhex(entry["hex"]).decode("utf-8") for entry in entries}
+        assert required <= tokens, (option, required - tokens)
+        assert not (tokens & protected), (option, tokens & protected)
+        profile_sets.append(tokens)
+    builtin = root / "builtin-safe.ac"
+    run("build", "--input", empty_source, "--output", builtin, *profiles)
+    entries = json.loads(run("print", "--input", builtin, "--section", "skips", "--format", "json"))["skips"]
+    combined = {bytes.fromhex(entry["hex"]).decode("utf-8") for entry in entries}
+    assert combined == set.union(*profile_sets)
+    exact_file = root / "builtin-exact.txt"
+    exact_file.write_bytes("".join(sorted(combined)).encode("utf-8"))
+    explicit = root / "builtin-explicit.ac"
+    run("build", "--input", empty_source, "--output", explicit, "--skip-file", exact_file)
+    assert builtin.read_bytes() == explicit.read_bytes()
+    visible_source = root / "writing-components.txt"
+    visible_word = "\u115fa\u034f\u200c\ufe0fb\u115f"
+    visible_source.write_text(visible_word + "\n", encoding="utf-8")
+    visible_image = root / "writing-components.ac"
+    run("build", "--input", visible_source, "--output", visible_image, *profiles)
+    visible_report = run("print", "--input", visible_image, "--format", "json")
+    assert all("\\u{:04X}".format(ord(char)) in visible_report for char in "\u115f\u034f\u200c\ufe0f")
+    parsed_visible = json.loads(visible_report)
+    assert parsed_visible["keywords"][0]["text"] == visible_word
+    assert all(not entry["skipped"] for entry in parsed_visible["symbols"] if entry["text"] in protected)
+    visible_graph = root / "writing-components.dot"
+    run("visualize", "--input", visible_image, "--output", visible_graph, "--format", "dot")
+    assert "0xE1 0x85 0x9F" in visible_graph.read_text(encoding="utf-8")
+    fallback_source = root / "fallback.txt"
+    fallback_word = "汉字😀𠀀\ue219"
+    fallback_source.write_text(fallback_word + "\n", encoding="utf-8")
+    fallback_image = root / "fallback.ac"
+    run("build", "--input", fallback_source, "--output", fallback_image)
+    fallback = run("print", "--input", fallback_image, "--section", "keywords", "--format", "json")
+    assert "\\uD83D\\uDE00\\uD840\\uDC00\\uE219" in fallback
+    fallback_record = json.loads(fallback)["keywords"][0]
+    assert fallback_record["text"] == fallback_word
+    assert bytes.fromhex(fallback_record["hex"]) == fallback_word.encode("utf-8")
+    if os.name == "nt":
+        # These are valid UTF-8; GBK console output previously garbled them and stopped mid-record.
+        console_source = root / "console.txt"
+        console_source.write_text("001工程\n007手机防盗软件任意显软件\n汉字😀𠀀\ue219\n" + "中" * 6000 + "\nlast\n",
+                                  encoding="utf-8")
+        console_skips = root / "console-skips.txt"
+        console_skips.write_text("-*/⼀", encoding="utf-8")
+        console_image = root / "console.ac"
+        run("build", "--input", console_source, "--output", console_image, "--skip-file", console_skips)
+        for code_page in (936, 65001):
+            text = check_windows_console(exe, console_image, "keywords", code_page, root)
+            assert 'text="001工程"' in text and 'text="007手机防盗软件任意显软件"' in text
+            assert 'text="汉字\\uD83D\\uDE00\\uD840\\uDC00\\uE219"' in text and 'text="last"' in text
+            assert text.count("{id=") == 5 and "中" * 6000 in text
+            skips = check_windows_console(exe, console_image, "skips", code_page, root)
+            assert skips.count("{id=") == 4 and 'text="⼀"' in skips
+            assert all('text="{}"'.format(char) not in skips for char in "一中文工程")
     for fmt in FORMATS:
         output = root / ("graph." + fmt)
         run("visualize", "--input", image, "--output", output, "--format", fmt, "--utf8-labels")
@@ -153,6 +337,10 @@ with tempfile.TemporaryDirectory(prefix="ac-tool-", dir=scratch) as directory:
     source.write_text('x"[]<>;&:#\\\n\u3000x\ufffey\uffffz\ufdd0\n', encoding="utf-8")
     special = root / "special.ac"
     run("build", "--input", source, "--output", special)
+    special_print = json.loads(run("print", "--input", special, "--section", "keywords", "--format", "json"))
+    assert [entry["text"] for entry in special_print["keywords"]] == ['x"[]<>;&:#\\', 'x\ufffey\uffffz\ufdd0']
+    unicode_print = json.loads(run("print", "--input", branches, "--section", "keywords", "--format", "json"))
+    assert [entry["text"] for entry in unicode_print["keywords"]] == words
     for fmt in FORMATS:
         output = root / ("special." + fmt)
         run("visualize", "--input", special, "--output", output, "--format", fmt)
@@ -166,7 +354,9 @@ with tempfile.TemporaryDirectory(prefix="ac-tool-", dir=scratch) as directory:
     assert not output.exists()
     image.write_bytes(original[:-1])
     run("verify", "--input", image, ok=False)
+    run("print", "--input", image, "--format", "json", ok=False)
     image.write_bytes(original + b"trailing")
     run("verify", "--input", image, ok=False)
+    run("print", "--input", image, "--format", "json", ok=False)
     assert not list(root.glob("*.tmp.*"))
 print("CLI integration checks passed")

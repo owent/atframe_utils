@@ -303,11 +303,23 @@ class ATFW_UTIL_SYMBOL_VISIBLE ac_automation_v2 {
     gsl::string_view token;
   };
 
+  /** @brief Borrowed row of the frozen symbol, folding and skip tables. */
+  struct ATFW_UTIL_SYMBOL_VISIBLE symbol_view {
+    uint32_t id;                    ///< Symbol ID in [1, statistics::symbols]; zero is never visited.
+    uint32_t folded_id;             ///< Final canonical ID; equals id when case folding is disabled.
+    gsl::string_view token;         ///< Original opaque token bytes, without encoding conversion.
+    gsl::string_view folded_token;  ///< Bytes of folded_id; borrows the same snapshot as token.
+    bool skipped;                   ///< Stored skip bit for id; matching tests the bit for folded_id.
+  };
+
   /** @brief Receive a synchronous hit; return false to request successful early termination. */
   using match_callback = bool (*)(const match_t&, void*);
 
   /** @brief Receive a synchronous node view; return false to stop visit_nodes(). */
   using node_callback = bool (*)(const node_view&, void*);
+
+  /** @brief Receive a synchronous symbol view; return false to stop visit_symbols(). */
+  using symbol_callback = bool (*)(const symbol_view&, void*);
 
   /** @brief Create an empty collecting automaton with case-sensitive matching and no skips/folds. */
   ATFRAMEWORK_UTILS_API ac_automation_v2();
@@ -529,6 +541,20 @@ class ATFW_UTIL_SYMBOL_VISIBLE ac_automation_v2 {
    *       visitor must not mutate/destroy this handle. Callback exceptions propagate.
    */
   ATFRAMEWORK_UTILS_API bool visit_nodes(node_callback callback, void* user_data) const;
+
+  /**
+   * @brief Visit every frozen symbol in ID order, including configuration-only symbols.
+   * @param callback Non-null synchronous visitor; false stops iteration.
+   * @param user_data Opaque pointer passed unchanged to callback; may be null.
+   * @return True if every symbol was visited (including an empty table); false for an
+   *         unbuilt handle, null callback or early stop.
+   * @note Iteration allocates no storage. Only effective canonical skip/fold rules are
+   *       available; original configuration options and disabled custom folds are not retained.
+   *       The symbol_view reference is temporary; token views borrow the snapshot and
+   *       remain valid while an automaton owns it. The visitor must not mutate/destroy
+   *       this handle. Callback exceptions propagate.
+   */
+  ATFRAMEWORK_UTILS_API bool visit_symbols(symbol_callback callback, void* user_data) const;
 
   /**
    * @brief Split one strictly valid UTF-8 scalar from a bounded byte view.

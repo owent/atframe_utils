@@ -1284,6 +1284,20 @@ bool ac::visit_nodes(node_callback callback, void* data) const {
   return true;
 }
 
+bool ac::visit_symbols(symbol_callback callback, void* data) const {
+  if (!is_built() || !storage_->has_basic_layout() || callback == nullptr) {
+    return false;
+  }
+  for (uint32_t id = kFirstSymbolId; id < storage_->offsets.size(); ++id) {
+    uint32_t folded_id = storage_->nocase ? storage_->folds[id - kFirstSymbolId] : id;
+    if (!callback(symbol_view{id, folded_id, storage_->symbol(id), storage_->symbol(folded_id), storage_->skipped(id)},
+                  data)) {
+      return false;
+    }
+  }
+  return true;
+}
+
 ac::token_result ac::next_utf8(gsl::string_view input, void*) noexcept {
   if (input.empty()) {
     return {token_status::kInvalid, 0};

@@ -127,6 +127,17 @@ static bool collect_node(const ac::node_view& node, void* data) {
   return true;
 }
 
+static bool collect_symbol(const ac::symbol_view& symbol, void* data) {
+  static_cast<std::vector<ac::symbol_view>*>(data)->push_back(symbol);
+  return true;
+}
+
+static bool stop_symbol(const ac::symbol_view&, void* data) {
+  auto& count = *static_cast<size_t*>(data);
+  ++count;
+  return false;
+}
+
 static bool collect_hit(const ac::match_t& hit, void* data) {
   static_cast<std::vector<ac::match_t>*>(data)->push_back(hit);
   return true;
@@ -669,6 +680,105 @@ CASE_TEST(ac_automation_v2, binary_roundtrip_and_failed_load_keeps_snapshot) {
   CASE_EXPECT_TRUE(loaded.load(bytes(dump), options) == ac::status::kResourceLimit);
   for (size_t length : {size_t{0}, size_t{12}, size_t{127}, dump.size() - 1}) {
     CASE_EXPECT_TRUE(loaded.load(gsl::span<const unsigned char>(dump.data(), length)) != ac::status::kOk);
+  }
+}
+
+CASE_TEST(ac_automation_v2, symbol_views_expose_frozen_configuration_and_shared_lifetime) {
+  ac value;
+  std::vector<ac::symbol_view> symbols;
+  CASE_EXPECT_FALSE(value.visit_symbols(collect_symbol, &symbols));
+  CASE_EXPECT_TRUE(value.build() == ac::status::kOk);
+  CASE_EXPECT_TRUE(value.visit_symbols(collect_symbol, &symbols));
+  CASE_EXPECT_TRUE(symbols.empty());
+  CASE_EXPECT_FALSE(value.visit_symbols(nullptr, nullptr));
+  value.reset();
+  // An opaque UTF-16LE token and a malformed UTF-8 token never pass through a tokenizer here.
+  static constexpr char kOpaqueUpper[] = {'A', '\0'};
+  static constexpr char kOpaqueLower[] = {'a', '\0'};
+  static constexpr char kInvalidUtf8[] = {'\xff'};
+  const gsl::string_view upper(kOpaqueUpper, sizeof(kOpaqueUpper));
+  const gsl::string_view lower(kOpaqueLower, sizeof(kOpaqueLower));
+  const gsl::string_view invalid(kInvalidUtf8, sizeof(kInvalidUtf8));
+  const ac::case_fold_rule rules[] = {{upper, lower}, {invalid, lower}};
+  CASE_EXPECT_TRUE(value.set_case_folding(gsl::span<const ac::case_fold_rule>(rules)) == ac::status::kOk);
+  CASE_EXPECT_TRUE(value.set_nocase(true) == ac::status::kOk);
+  CASE_EXPECT_TRUE(value.set_skip(upper) == ac::status::kOk);
+  if (!build(value, {"word"})) {
+    return;
+  }
+  CASE_EXPECT_TRUE(value.visit_symbols(collect_symbol, &symbols));
+  CASE_EXPECT_EQ(value.get_statistics().symbols, symbols.size());
+  if (symbols.empty()) {
+    return;
+  }
+  size_t seen = 0;
+  size_t skip_count = 0;
+  for (size_t i = 0; i < symbols.size(); ++i) {
+    const auto& symbol = symbols[i];
+    CASE_EXPECT_EQ(i + 1, symbol.id);
+    CASE_EXPECT_TRUE(symbol.folded_id > 0 && symbol.folded_id <= symbols.size());
+    if (symbol.folded_id == 0 || symbol.folded_id > symbols.size()) {
+      return;
+    }
+    CASE_EXPECT_TRUE(symbol.folded_token == symbols[symbol.folded_id - 1].token);
+    CASE_EXPECT_TRUE(symbols[symbol.folded_id - 1].folded_id == symbol.folded_id);
+    if (symbol.token == upper || symbol.token == invalid) {
+      ++seen;
+      CASE_EXPECT_TRUE(symbol.folded_token == lower);
+      CASE_EXPECT_FALSE(symbol.skipped);
+      CASE_EXPECT_TRUE(symbols[symbol.folded_id - 1].skipped);
+    }
+    if (symbol.skipped) {
+      ++skip_count;
+      CASE_EXPECT_TRUE(symbol.token == lower);
+    }
+  }
+  CASE_EXPECT_EQ(2, seen);
+  CASE_EXPECT_EQ(1, skip_count);
+  size_t callbacks = 0;
+  CASE_EXPECT_FALSE(value.visit_symbols(stop_symbol, &callbacks));
+  CASE_EXPECT_EQ(1, callbacks);
+  std::vector<unsigned char> image;
+  if (!dump_image(value, image)) {
+    return;
+  }
+  ac loaded;
+  CASE_EXPECT_TRUE(loaded.load(bytes(image)) == ac::status::kOk);
+  std::vector<ac::symbol_view> restored;
+  CASE_EXPECT_TRUE(loaded.visit_symbols(collect_symbol, &restored));
+  CASE_EXPECT_EQ(symbols.size(), restored.size());
+  if (symbols.size() != restored.size()) {
+    return;
+  }
+  for (size_t i = 0; i < symbols.size(); ++i) {
+    CASE_EXPECT_EQ(symbols[i].id, restored[i].id);
+    CASE_EXPECT_EQ(symbols[i].folded_id, restored[i].folded_id);
+    CASE_EXPECT_TRUE(symbols[i].token == restored[i].token);
+    CASE_EXPECT_TRUE(symbols[i].folded_token == restored[i].folded_token);
+    CASE_EXPECT_TRUE(symbols[i].skipped == restored[i].skipped);
+  }
+  ac owner = value;
+  const char* first_address = symbols.front().token.data();
+  value.reset();
+  std::vector<ac::symbol_view> shared;
+  CASE_EXPECT_TRUE(owner.visit_symbols(collect_symbol, &shared));
+  CASE_EXPECT_FALSE(shared.empty());
+  if (!shared.empty()) {
+    CASE_EXPECT_TRUE(shared.front().token.data() == first_address);
+    CASE_EXPECT_TRUE(shared.front().token == symbols.front().token);
+  }
+
+  ac case_sensitive;
+  CASE_EXPECT_TRUE(case_sensitive.set_case_folding(gsl::span<const ac::case_fold_rule>(rules)) == ac::status::kOk);
+  CASE_EXPECT_TRUE(case_sensitive.set_skip(upper) == ac::status::kOk);
+  CASE_EXPECT_TRUE(case_sensitive.build() == ac::status::kOk);
+  std::vector<ac::symbol_view> disabled;
+  CASE_EXPECT_TRUE(case_sensitive.visit_symbols(collect_symbol, &disabled));
+  CASE_EXPECT_EQ(1, disabled.size());
+  if (disabled.size() == 1) {
+    CASE_EXPECT_TRUE(disabled[0].id == disabled[0].folded_id);
+    CASE_EXPECT_TRUE(disabled[0].token == upper && disabled[0].folded_token == upper);
+    CASE_EXPECT_TRUE(disabled[0].skipped);
   }
 }
 
