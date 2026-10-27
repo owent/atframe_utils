@@ -48,6 +48,7 @@ template <typename TSINT>
 class ATFRAMEWORK_UTILS_API_HEAD_ONLY mixed_signed_int {
  public:
   using value_type = TSINT;
+  using unsigned_type = typename std::make_unsigned<value_type>::type;
 
   static constexpr const size_t TYPE_BIT = 8 * sizeof(value_type);
   static constexpr const size_t TYPE_LEFT_BIT = ATFRAMEWORK_UTILS_ENABLE_MIXEDINT_MAGIC_MASK % TYPE_BIT;
@@ -56,10 +57,20 @@ class ATFRAMEWORK_UTILS_API_HEAD_ONLY mixed_signed_int {
   static constexpr const value_type SYMBOL_MASK = ((value_type)1) << (TYPE_LEFT_BIT - 1);
 
  public:
-  static value_type encode(value_type d) { return (d << TYPE_LEFT_BIT) ^ (d >> TYPE_RIGHT_BIT); }
+  static value_type encode(value_type d) {
+    // Preserve the encoded bit pattern without left-shifting a negative signed value.
+    return static_cast<value_type>((static_cast<unsigned_type>(d) << TYPE_LEFT_BIT) ^
+                                   static_cast<unsigned_type>(d >> TYPE_RIGHT_BIT));
+  }
 
   static value_type decode(value_type d) {
-    return (d << TYPE_RIGHT_BIT) | (RIGHT_MASK & (d & SYMBOL_MASK) ? ~(d >> TYPE_LEFT_BIT) : (d >> TYPE_LEFT_BIT));
+    const unsigned_type bits = static_cast<unsigned_type>(d);
+    unsigned_type low = bits >> TYPE_LEFT_BIT;
+    if ((bits & static_cast<unsigned_type>(SYMBOL_MASK)) != 0) {
+      low = static_cast<unsigned_type>(~low);
+    }
+    // Recover the lower field without sign extension overwriting the original upper bits.
+    return static_cast<value_type>((bits << TYPE_RIGHT_BIT) | (low & static_cast<unsigned_type>(RIGHT_MASK)));
   }
 };
 
@@ -395,4 +406,3 @@ using mixed_uint32_t = ATFRAMEWORK_UTILS_NAMESPACE_ID::mixed_int::mixed_uint32_t
 using mixed_uint64_t = ATFRAMEWORK_UTILS_NAMESPACE_ID::mixed_int::mixed_uint64_t;
 
 #endif /* _UTIL_ALGORITHM_MIXEDINT_H_ */
-

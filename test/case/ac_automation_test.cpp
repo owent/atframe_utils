@@ -32,6 +32,23 @@
 #  define U8_LITERALS(x) x
 #endif
 
+CASE_TEST(ac_automation, skip_all_byte_values) {
+  atfw::util::string::detail::actrie_skip_charset<char, sizeof(char)> skips;
+  static constexpr size_t kByteValues = 256;
+  for (size_t code = 0; code < kByteValues; ++code) {
+    char byte = static_cast<char>(static_cast<unsigned char>(code));
+    CASE_EXPECT_FALSE(skips.test(byte));
+    skips.set(byte);
+    CASE_EXPECT_TRUE(skips.test(byte));
+  }
+  for (size_t code = 0; code < kByteValues; ++code) {
+    char byte = static_cast<char>(static_cast<unsigned char>(code));
+    CASE_EXPECT_TRUE(skips.test(byte));
+    skips.unset(byte);
+    CASE_EXPECT_FALSE(skips.test(byte));
+  }
+}
+
 CASE_TEST(ac_automation, basic) {
   atfw::util::string::ac_automation<> actree;
 
@@ -217,4 +234,3 @@ CASE_TEST(ac_automation, load_and_dump) {
   actree.dump(fos);
   actree.dump_dot(fdot, nullptr, node_options, edge_options);
 }
-

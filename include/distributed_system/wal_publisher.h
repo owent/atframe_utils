@@ -590,7 +590,8 @@ class ATFRAMEWORK_UTILS_API_HEAD_ONLY wal_publisher {
     }
 
     if (configure_ && configure_->enable_last_broadcast_for_removed_subscriber) {
-      gc_subscribers_[key] = subscriber;
+      // key may refer to the map entry erased by unsubscribe(); the returned subscriber owns a stable key.
+      gc_subscribers_[subscriber->get_key()] = subscriber;
     }
 
     if (vtable_ && vtable_->on_subscriber_removed) {

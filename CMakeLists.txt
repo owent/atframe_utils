@@ -341,6 +341,15 @@ include(CMakePackageConfigHelpers)
 get_filename_component(INCLUDE_INSTALL_DIR "${ATFRAMEWORK_INSTALL_INCLUDEDIR}" NAME)
 get_filename_component(CMAKE_INSTALL_LIBDIR "${ATFRAMEWORK_INSTALL_LIBDIR}" NAME)
 
+# Static consumers need the private xxHash target as a link-only dependency. Keep a relative hint so moving the
+# installation together with its dependency prefix preserves package discovery.
+set(ATFRAMEWORK_UTILS_PACKAGE_XXHASH_HINT "")
+if(xxHash_DIR AND IS_DIRECTORY "${xxHash_DIR}")
+  get_filename_component(ATFRAMEWORK_UTILS_PACKAGE_CONFIG_DIR "${ATFRAMEWORK_INSTALL_CMAKEDIR}" ABSOLUTE BASE_DIR
+                         "${CMAKE_INSTALL_PREFIX}")
+  file(RELATIVE_PATH ATFRAMEWORK_UTILS_PACKAGE_XXHASH_HINT "${ATFRAMEWORK_UTILS_PACKAGE_CONFIG_DIR}" "${xxHash_DIR}")
+endif()
+
 file(MAKE_DIRECTORY "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/cmake/${PROJECT_NAME}")
 
 configure_package_config_file(

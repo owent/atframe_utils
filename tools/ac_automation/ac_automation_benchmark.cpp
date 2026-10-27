@@ -175,6 +175,7 @@ static bool collect_node(const ac::node_view& node, void* output) {
 }
 
 static bool graph(const char* filename) {
+  // Library Checker inputs contain one lowercase-ASCII pattern per line with a bounded total size.
   std::ifstream input(filename, std::ios::binary);
   size_t count = 0;
   input >> count;
@@ -200,6 +201,7 @@ static bool graph(const char* filename) {
   if (value.build() != ac::status::kOk) {
     return false;
   }
+  // Every generated trie also exercises serialization and semantic failure-link validation.
   std::vector<unsigned char> image;
   if (value.dump(image) != ac::status::kOk) {
     return false;
@@ -216,6 +218,7 @@ static bool graph(const char* filename) {
       nodes.size() != again.size()) {
     return false;
   }
+  // Compare complete public node views before translating IDs to the judge's insertion order.
   std::vector<uint32_t> parents(nodes.size(), 0);
   for (size_t i = 0; i < nodes.size(); ++i) {
     const auto& node = nodes[i];
@@ -260,6 +263,7 @@ static bool graph(const char* filename) {
   if (by_judge_id.size() != nodes.size()) {
     return false;
   }
+  // Probe exact keyword IDs/ranges so a shorter prefix cannot hide a missing terminal.
   const size_t probes[] = {0, count / 2, count - 1};
   ac::match_options match_options;
   match_options.allow_overlap = true;
@@ -419,6 +423,7 @@ static bool fuzz() {
 }  // namespace
 
 int main(int argc, char* argv[]) {
+  // Validation modes share this executable with the original external-word-list benchmark.
   if (argc >= kModeOnlyArguments) {
     gsl::string_view mode(argv[kModeArgument]);
     if (mode == kGraphMode || mode == kUnicodeMode || mode == kFuzzMode) {
@@ -443,6 +448,8 @@ int main(int argc, char* argv[]) {
     std::cerr << kUsageText;
     return kExitInputFailure;
   }
+  // This local CLI intentionally reads the operator-selected file with the operator's privileges.
+  // Absolute paths and parent components are supported; no path is derived from file contents.
   std::ifstream source(argv[kInputArgumentIndex], std::ios::binary);
   if (source.fail()) {
     return kExitInputFailure;
@@ -460,6 +467,7 @@ int main(int argc, char* argv[]) {
   if (source.bad() || words.empty()) {
     return kExitInputFailure;
   }
+  // Keep construction outside scan timings and verify every original keyword after build/load.
   std::cout << std::fixed << std::setprecision(kOutputDecimalPlaces) << kCsvHeader;
   ac value;
   std::vector<uint32_t> ids;
@@ -482,6 +490,7 @@ int main(int argc, char* argv[]) {
   auto stats = value.get_statistics();
   std::cout << kNodesField << stats.nodes << kKeywordsField << stats.keywords << kSymbolsField << stats.symbols
             << kPayloadBytesField << stats.payload_bytes << kLineFeed;
+  // The two probes separate keyword-heavy input from unknown-symbol lookup; neither models traffic.
   std::string hits;
   for (const auto& word : words) {
     hits += word;
@@ -544,6 +553,7 @@ int main(int argc, char* argv[]) {
   if (!verify_words(loaded, words, ids)) {
     return kExitValidationFailure;
   }
+  // v1 initializes failure links lazily; trigger initialization before timing its scans.
   atfw::util::string::ac_automation<atfw::util::string::utf8_char_t> legacy;
   begin = clock_type::now();
   for (const auto& word : words) {

@@ -57,15 +57,23 @@ jobs:
           -DCMAKE_CXX_STANDARD=14 -DCMAKE_CXX_STANDARD_REQUIRED=ON
           -DBUILD_SHARED_LIBS=OFF
           -DPROJECT_ENABLE_UNITTEST=ON -DPROJECT_ENABLE_TOOLS=ON -DPROJECT_ENABLE_SAMPLE=OFF
+          -DATFRAMEWORK_UTILS_ENABLE_NETWORK=OFF
           -DATFRAMEWORK_CMAKE_TOOLSET_THIRD_PARTY_CRYPTO_DISABLED=ON
           -DATFRAMEWORK_UTILS_LIBUNWIND_ENABLED=OFF
           -DCMAKE_C_FLAGS="-fsanitize=address,undefined -fno-omit-frame-pointer"
           -DCMAKE_CXX_FLAGS="-fsanitize=address,undefined -fno-omit-frame-pointer"
           -DCMAKE_EXE_LINKER_FLAGS="-fsanitize=address,undefined"
       - name: Build
-        run: cmake --build build_ac_stress --parallel 2 --target ac_automation_benchmark atframe_utils_unit_test
+        run: cmake --build build_ac_stress --parallel 2 --target ac_automation_tool ac_automation_benchmark atframe_utils_unit_test
+      - name: Locate Clang sanitizer runtime
+        run: |
+          runtime_dir="$(clang++ -print-runtime-dir)"
+          test -d "$runtime_dir"
+          printf 'LD_LIBRARY_PATH=%s%s\n' "$runtime_dir" "${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}" >> "$GITHUB_ENV"
       - name: Unit tests
         run: ctest --test-dir build_ac_stress -R '^atframe_utils\.unit_test$' --output-on-failure
+      - name: CLI integration checks
+        run: python3 tools/ac_automation/test_tool.py build_ac_stress/bin/ac_automation_tool build_ac_stress/_agent_tmp
       - name: Generate and validate pressure data
         run: >-
           python3 ci/ac_automation_v2_stress.py

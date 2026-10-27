@@ -470,6 +470,7 @@ struct ac_v2_storage {
   template <class Next>
   ac::match_report scan(gsl::string_view input, ac::match_callback emit, void* data, const ac::match_options& options,
                         ac::match_context* context, bool only_contains, size_t output_capacity, Next next) const {
+    // Every emitted position refers to the original input, including skipped bytes within a hit.
     ac::match_report report;
     auto make_error = [&report](status code) {
       report.code = code;
@@ -483,6 +484,7 @@ struct ac_v2_storage {
     if (!has_basic_layout()) {
       return make_error(status::kInvalidFormat);
     }
+    // One ring entry per retained token is sufficient; contains() needs no position ring.
     size_t cap = only_contains ? 0 : (std::min)(static_cast<size_t>(max_tokens), input.size());
     if (cap > 0 && context == nullptr) {
       return make_error(status::kInvalidArgument);
@@ -504,6 +506,7 @@ struct ac_v2_storage {
         report.stopped = ac::stop_reason::kError;
         break;
       }
+      // Recovery breaks the current candidate, so matches cannot bridge invalid encoding units.
       if (r.state == ac::token_status::kInvalid) {
         if (report.invalid_units == 0) {
           report.first_invalid_offset = pos;
@@ -541,6 +544,7 @@ struct ac_v2_storage {
         valid = cursor = 0;
         continue;
       }
+      // Record only non-skipped tokens, while retaining their original byte offsets.
       if (cap > 0) {
         if (context == nullptr || context->origins_.size() < cap || cursor >= cap) {
           return make_error(status::kInvalidFormat);
@@ -556,6 +560,7 @@ struct ac_v2_storage {
       if (state >= nodes.size()) {
         return make_error(status::kInvalidFormat);
       }
+      // BFS failure IDs decrease strictly, bounding every fallback traversal.
       uint32_t target = child(state, symbol_id);
       while (target == kRootNodeId && state != kRootNodeId) {
         uint32_t failure = nodes[state].fail;
@@ -569,6 +574,7 @@ struct ac_v2_storage {
       if (state >= nodes.size()) {
         return make_error(status::kInvalidFormat);
       }
+      // The output head is the longest terminal suffix; overlap mode follows shorter suffixes.
       uint32_t output = nodes[state].output;
       while (output != kInvalidId) {
         if (output >= words.size()) {
@@ -799,6 +805,7 @@ status ac::set_case_folding(gsl::span<const case_fold_rule> rules) {
 }
 
 status ac::insert_keyword(gsl::string_view text, uint32_t* keyword_id, const tokenizer& tokens) {
+  // Tokenize and normalize completely before changing the shared builder.
   if (storage_ != nullptr && storage_->pending == nullptr) {
     return status::kInvalidState;
   }
@@ -837,6 +844,7 @@ status ac::insert_keyword(gsl::string_view text, uint32_t* keyword_id, const tok
       static_cast<uint64_t>(original.symbols.size()) + sequence.size() >= kInvalidId) {
     return status::kCapacityExceeded;
   }
+  // A duplicate keeps its first-insertion ID and does not detach shared builder storage.
   uint32_t current = kRootNodeId;
   bool existing = true;
   for (const auto& token : sequence) {
@@ -870,6 +878,7 @@ status ac::insert_keyword(gsl::string_view text, uint32_t* keyword_id, const tok
     }
     return status::kAlreadyExists;
   }
+  // Detach only after validation and duplicate detection have succeeded.
   if (storage_.use_count() != 1) {
     auto copied = copy_builder(storage_);
     if (copied == nullptr) {
@@ -911,6 +920,7 @@ status ac::insert_keyword(gsl::string_view text, uint32_t* keyword_id, const tok
     }
   } guard(b);
 
+  // Reserve the rollback journal before any trie edge can be published.
   guard.edges.reserve(sequence.size());
   current = kRootNodeId;
   for (const auto& token : sequence) {
@@ -955,6 +965,7 @@ status ac::insert_keyword(gsl::string_view text, uint32_t* keyword_id, const tok
   if (b.words.size() >= kInvalidId) {
     return status::kCapacityExceeded;
   }
+  // Publish the terminal and byte count only after all throwing allocations have succeeded.
   uint32_t id = static_cast<uint32_t>(b.words.size());
   b.words.push_back(build_word{own(text), static_cast<uint32_t>(sequence.size())});
   b.nodes[current].terminal = id;
@@ -967,6 +978,7 @@ status ac::insert_keyword(gsl::string_view text, uint32_t* keyword_id, const tok
 }
 
 status ac::build() {
+  // Freeze into a separate candidate; errors leave the collecting snapshot unchanged.
   if (is_built()) {
     return status::kOk;
   }
@@ -981,6 +993,7 @@ status ac::build() {
   auto result = std::make_shared<detail::ac_v2_storage>();
   result->pending.reset();
   result->nocase = b.nocase;
+  // Sort opaque token bytes once and share one symbol table across all trie nodes.
   std::set<std::string, byte_less> symbols(b.symbols.begin(), b.symbols.end());
   symbols.insert(b.skips.begin(), b.skips.end());
   symbols.insert(b.effective_skips.begin(), b.effective_skips.end());
@@ -1011,6 +1024,7 @@ status ac::build() {
   if (!result->initialize_symbol_index()) {
     return status::kInvalidFormat;
   }
+  // Materialize normalized skip/fold configuration as dense ID-indexed tables.
   result->skips.resize(static_cast<size_t>((static_cast<uint64_t>(symbols.size()) + kBitsPerByte - 1) / kBitsPerByte),
                        0);
   for (const auto& s : b.effective_skips) {
@@ -1035,6 +1049,7 @@ status ac::build() {
       result->folds.push_back(target);
     }
   }
+  // Translate collecting symbol IDs without changing stable keyword IDs or original bytes.
   std::vector<uint32_t> translated;
   translated.reserve(b.symbols.size());
   for (const auto& s : b.symbols) {
@@ -1062,6 +1077,7 @@ status ac::build() {
   if (result->keyword_bytes.size() != b.word_bytes) {
     return status::kInvalidFormat;
   }
+  // BFS allocation makes every parent's sorted children one contiguous array interval.
   result->nodes.reserve(b.nodes.size());
   result->labels.reserve(b.nodes.size());
   std::vector<uint32_t> queue;
@@ -1104,6 +1120,7 @@ status ac::build() {
   if (result->labels.size() != result->nodes.size()) {
     return status::kInvalidFormat;
   }
+  // Parents and failure ancestors are already initialized when each child is visited.
   for (uint32_t i = 0; i < result->nodes.size(); ++i) {
     const auto p = result->nodes[i];
     if (p.begin > result->nodes.size() || p.count > result->nodes.size() - p.begin || p.begin > result->labels.size() ||
@@ -1543,11 +1560,14 @@ static status write_image(const detail::ac_v2_storage& s, image_writer& output) 
         pos += n;
       }
     } else {
-      size_t stride =
-          part.type == kSectionNodes || part.type == kSectionKeywords ? kNodeStrideBytes : kSerializedIndexBytes;
-      if (stride == 0 || stride > buffer.size()) {
-        return status::kInvalidFormat;
-      }
+      static_assert(kNodeStrideBytes > 0 && kNodeStrideBytes <= kIoBufferBytes, "Node fits serialization buffer");
+      static_assert(kKeywordStrideBytes > 0 && kKeywordStrideBytes <= kIoBufferBytes,
+                    "Keyword fits serialization buffer");
+      static_assert(kSerializedIndexBytes > 0 && kSerializedIndexBytes <= kIoBufferBytes,
+                    "Index fits serialization buffer");
+      const size_t stride = part.type == kSectionNodes      ? kNodeStrideBytes
+                            : part.type == kSectionKeywords ? kKeywordStrideBytes
+                                                            : kSerializedIndexBytes;
       for (size_t first = 0; first < part.count;) {
         size_t count = (std::min)(static_cast<size_t>(part.count) - first, buffer.size() / stride);
         if (count == 0) {
@@ -1602,6 +1622,7 @@ static status write_image(const detail::ac_v2_storage& s, image_writer& output) 
 }
 
 static status validate_storage(const detail::ac_v2_storage& s, bool semantic) {
+  // Structural checks precede any traversal that dereferences failure or output IDs.
   if (!s.has_basic_layout()) {
     return status::kInvalidFormat;
   }
@@ -1612,6 +1633,7 @@ static status validate_storage(const detail::ac_v2_storage& s, bool semantic) {
       s.nodes[0].output != kInvalidId) {
     return status::kInvalidFormat;
   }
+  // Nonempty, strictly sorted byte slices make binary symbol lookup well-defined.
   for (size_t i = 1; i <= symbols; ++i) {
     if (s.offsets[i] <= s.offsets[i - 1] || s.offsets[i] > s.symbol_bytes.size()) {
       return status::kInvalidFormat;
@@ -1634,6 +1656,7 @@ static status validate_storage(const detail::ac_v2_storage& s, bool semantic) {
       }
     }
   }
+  // Keyword ranges partition the original byte pool; suffix chains decrease in token length.
   uint64_t end = 0;
   uint32_t maximum = 0;
   for (const auto& word : s.words) {
@@ -1650,6 +1673,7 @@ static status validate_storage(const detail::ac_v2_storage& s, bool semantic) {
   if (end != s.keyword_bytes.size() || maximum != s.max_tokens) {
     return status::kInvalidFormat;
   }
+  // BFS child intervals partition all nonroot nodes and determine each terminal's depth.
   std::vector<uint32_t> depth(n, 0);
   std::vector<unsigned char> terminal_seen(k, 0);
   uint32_t next_child = 1;
@@ -1682,6 +1706,7 @@ static status validate_storage(const detail::ac_v2_storage& s, bool semantic) {
       }
       previous_label = label;
       depth[j] = depth[i] + 1;
+      // Optional semantic validation recomputes the longest suffix, beyond safe indexing alone.
       if (semantic) {
         uint32_t fail = kRootNodeId;
         uint32_t ancestor = p.fail;
@@ -1706,6 +1731,7 @@ static status validate_storage(const detail::ac_v2_storage& s, bool semantic) {
 
 static status read_image(image_reader& input, const ac::load_options& options,
                          std::shared_ptr<detail::ac_v2_storage>& result) {
+  // Verify the header checksum before trusting its counts, offsets or resource claims.
   std::array<unsigned char, kImageHeaderBytes> header{};
   if (!input.read(header.data(), header.size())) {
     return status::kIoError;
@@ -1751,6 +1777,7 @@ static status read_image(image_reader& input, const ac::load_options& options,
   if (input.bytes != nullptr && file_size != input.length) {
     return status::kInvalidFormat;
   }
+  // Validate the directory and total candidate/scratch budget before allocating payload tables.
   std::vector<section> directory;
   directory.reserve(count);
   std::array<section, kRequiredSectionCount> known{};
@@ -1788,6 +1815,7 @@ static status read_image(image_reader& input, const ac::load_options& options,
   if (std::find(seen.begin(), seen.end(), false) != seen.end()) {
     return status::kInvalidFormat;
   }
+  // Each required section has one exact count/stride contract; optional sections stay opaque.
   const uint64_t expected_counts[kRequiredSectionCount] = {n,
                                                            n,
                                                            uint64_t{symbols} + 1,
@@ -1808,6 +1836,7 @@ static status read_image(image_reader& input, const ac::load_options& options,
       memory > options.max_memory_bytes || memory > SIZE_MAX) {
     return status::kResourceLimit;
   }
+  // Sort by physical position to reject overlapping sections and check gaps while streaming.
   std::sort(directory.begin(), directory.end(), [](const section& a, const section& b) {
     return a.offset < b.offset || (a.offset == b.offset && a.size < b.size);
   });
@@ -1818,6 +1847,7 @@ static status read_image(image_reader& input, const ac::load_options& options,
     }
     previous = p.offset + p.size;
   }
+  // Decode into a detached candidate so I/O, checksum and structural failures are atomic.
   auto candidate = std::make_shared<detail::ac_v2_storage>();
   candidate->pending.reset();
   candidate->nocase = flags != 0;
@@ -1909,6 +1939,7 @@ static status read_image(image_reader& input, const ac::load_options& options,
       }
     }
   }
+  // Verify the complete image before interpreting its graph or publishing borrowed views.
   if (!input.gap(checksum_offset, true)) {
     return status::kInvalidFormat;
   }

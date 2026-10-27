@@ -29,7 +29,7 @@ UPSTREAM = {
     "gen/almost_single.cpp": ("string/aho_corasick/gen/almost_single.cpp", "f00376bbe41fde1dddafce24582c3b8938028e65e92c0dfd6fa19d20a962c071"),
 }
 FAMILIES = (("bfs", 4), ("random", 24), ("short_period", 16), ("fibonacci", 16), ("almost_single", 8))
-KUHN_URL = "https://www.cl.cam.ac.uk/~mgk25/ucs/examples/UTF-8-test.txt"
+KUHN_FIXTURE = Path("test/case/ac_automation_v2/UTF-8-test.txt")
 KUHN_SHA256 = "b51cfe9a8d2689c90b10a13a3624092d546e0837c6ff835b6e5d713c5749c8c6"
 ORACLE_SHA256 = "c5c506ba099c526b5c981322748adb17abde7d7274998551d3e3fdbfba4a3274"
 ORACLE_RECORDS = 3363077
@@ -176,7 +176,9 @@ def run(arguments, summary):
     summary["benchmark_report"] = str(performance.relative_to(work))
     print(performance.read_text(encoding="utf-8").strip(), flush=True)
     summary["current_case"] = "unicode"
-    kuhn = fetch(work / "UTF-8-test.txt", KUHN_URL, KUHN_SHA256)
+    kuhn = (root / KUHN_FIXTURE).read_bytes()
+    if digest(kuhn) != KUHN_SHA256:
+        raise ValueError("SHA-256 mismatch: " + str(KUHN_FIXTURE))
     oracle = work / "tokenizers.bin"
     write_changed(oracle, generate_unicode(kuhn))
     result = execute([str(benchmark), "--unicode", str(oracle)], work, "unicode")

@@ -527,15 +527,16 @@ CASE_TEST(nostd_string_view, set) {
 CASE_TEST(nostd_string_view, front_back) {
   static const char arr[] = "abcd";
   const atfw::util::nostd::string_view csp(arr, 4);
-  CASE_EXPECT_EQ(&arr[0], &csp.front());
-  CASE_EXPECT_EQ(&arr[3], &csp.back());
+  CASE_EXPECT_TRUE(&arr[0] == &csp.front());
+  CASE_EXPECT_TRUE(&arr[3] == &csp.back());
 }
 
 CASE_TEST(nostd_string_view, front_back_single_char) {
   static const char c = 'a';
   const atfw::util::nostd::string_view csp(&c, 1);
-  CASE_EXPECT_EQ(&c, &csp.front());
-  CASE_EXPECT_EQ(&c, &csp.back());
+  // Character-pointer equality in CASE_EXPECT_EQ compares C strings, but c is not NUL-terminated.
+  CASE_EXPECT_TRUE(&c == &csp.front());
+  CASE_EXPECT_TRUE(&c == &csp.back());
 }
 
 CASE_TEST(nostd_string_view, null_input) {
@@ -788,4 +789,3 @@ struct test_nostd_type_traits_b {
 }  // namespace test
 
 CASE_TEST(nostd_type_traits, detected_or) {}
-

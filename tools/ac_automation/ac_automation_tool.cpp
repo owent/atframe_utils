@@ -661,6 +661,7 @@ static void usage() { std::cout << kUsageText; }
 }  // namespace
 
 int main(int argc, char* argv[]) {
+  // Validate the subcommand before registering its command-specific options.
   if (argc == kCommandArgumentCount && std::string(argv[kCommandArgumentIndex]) == kOptionHelp) {
     usage();
     return kExitSuccess;
@@ -678,6 +679,7 @@ int main(int argc, char* argv[]) {
   auto parser = cli::create();
   parser->bind_cmd(kParserDefaultEvent, parse_error, &args);
   parser->bind_cmd(kParserErrorEvent, parse_error, &args);
+  // The parser borrows these option names; all names have static storage duration.
   std::vector<const char*> values{kOptionInput};
   std::vector<const char*> flags{kOptionHelp};
   if (command == kCommandBuild) {
@@ -725,6 +727,7 @@ int main(int argc, char* argv[]) {
     }
     return build_file(args);
   }
+  // Enforce resource limits before loading any image sections or selecting graph nodes.
   ac::load_options options;
   options.verify_semantics = args.flags.count(kOptionSemantic) != 0;
   for (const char* name : {kOptionMaxFileBytes, kOptionMaxMemoryBytes}) {
@@ -762,8 +765,9 @@ int main(int argc, char* argv[]) {
     if (format != kFormatDot && format != kFormatMermaid && format != kFormatPlantUml) {
       return fail(kErrorFormat);
     }
-    for (auto item : {std::make_pair(kOptionMaxNodes, &max_nodes), std::make_pair(kOptionRootId, &root),
-                      std::make_pair(kOptionMaxDepth, &depth)}) {
+    const std::pair<const char*, uint64_t*> graph_bounds[] = {
+        {kOptionMaxNodes, &max_nodes}, {kOptionRootId, &root}, {kOptionMaxDepth, &depth}};
+    for (const auto& item : graph_bounds) {
       auto it = args.values.find(item.first);
       if (it != args.values.end() && !number(it->second, *item.second)) {
         return fail(kErrorGraphBound);
@@ -773,6 +777,7 @@ int main(int argc, char* argv[]) {
       return fail(kErrorGraphRange);
     }
   }
+  // A loaded snapshot is validated before it becomes available to info/verify/visualize.
   std::ifstream input(args.values.at(kOptionInput), std::ios::binary);
   if (input.fail()) {
     return fail(kErrorOpenInput);

@@ -1,11 +1,34 @@
 // Copyright 2026 atframework
 
+#include <limits>
 #include <typeinfo>
+#include <utility>
 #include "frame/test_macros.h"
 
 #define ATFRAMEWORK_UTILS_ENABLE_MIXEDINT_MAGIC_MASK 3
 
 #include "algorithm/mixed_int.h"
+
+namespace {
+template <typename Signed>
+static void check_signed_encoding_boundaries() {
+  using encoding = atfw::util::mixed_int::detail::mixed_signed_int<Signed>;
+  // Golden encoded values for the existing three-bit mask, independent of the implementation.
+  const std::pair<Signed, Signed> cases[] = {
+      {(std::numeric_limits<Signed>::min)(), -4}, {-1, 7}, {0, 0}, {1, 8}, {(std::numeric_limits<Signed>::max)(), -5}};
+  for (const auto& item : cases) {
+    CASE_EXPECT_EQ(item.second, encoding::encode(item.first));
+    CASE_EXPECT_EQ(item.first, encoding::decode(item.second));
+  }
+}
+}  // namespace
+
+CASE_TEST(mixed_int_test, signed_encoding_boundaries) {
+  check_signed_encoding_boundaries<int8_t>();
+  check_signed_encoding_boundaries<int16_t>();
+  check_signed_encoding_boundaries<int32_t>();
+  check_signed_encoding_boundaries<int64_t>();
+}
 
 CASE_TEST(mixed_int_test, basic) {
 #if defined(ATFRAMEWORK_UTILS_ENABLE_RTTI) && ATFRAMEWORK_UTILS_ENABLE_RTTI
@@ -105,4 +128,3 @@ CASE_TEST(mixed_int_test, bit_operator) {
   CASE_EXPECT_EQ((uint64_t)65535, 0xFF00 | a2);
   CASE_EXPECT_EQ((uint64_t)15, 0xF0 ^ a2);
 }
-

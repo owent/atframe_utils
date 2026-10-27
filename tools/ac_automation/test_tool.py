@@ -44,6 +44,16 @@ with tempfile.TemporaryDirectory(prefix="ac-tool-", dir=scratch) as directory:
     assert not output.exists()
     run("visualize", "--input", image, "--output", output, "--format", "dot", "--max-depth", "0")
     assert "node 0" in output.read_text()
+    subtree = root / "subtree.dot"
+    run("visualize", "--input", image, "--output", subtree, "--format", "dot",
+        "--root-id", "1", "--max-depth", "0", "--max-nodes", "1")
+    assert "node 1" in subtree.read_text() and "node 0" not in subtree.read_text()
+    for option, number in (("--max-nodes", "0"), ("--max-nodes", "18446744073709551616"),
+                           ("--root-id", "4294967295"), ("--max-depth", "4294967296"),
+                           ("--max-depth", "invalid")):
+        rejected = root / "invalid-bound.dot"
+        run("visualize", "--input", image, "--output", rejected, "--format", "dot", option, number, ok=False)
+        assert not rejected.exists()
     source.write_bytes(b"good\ninvalid\xff\n")
     output = root / "invalid.ac"
     run("build", "--input", source, "--output", output, ok=False)

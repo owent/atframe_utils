@@ -23,6 +23,13 @@ The `AC automation stress` CI workflow runs `ci/ac_automation_v2_stress.py` with
 directory and compares the graph output hashes with the upstream manifest. It also generates an independent
 Unicode tokenizer oracle and runs fixed-seed malformed-dump validation. No generated pressure corpus is versioned.
 
+`UTF-8-test.txt` is Markus Kuhn's unmodified UTF-8 decoder capability and stress test (2015-08-28),
+from <https://www.cl.cam.ac.uk/~mgk25/ucs/examples/UTF-8-test.txt>, under
+[CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). Its malformed bytes are intentional; Git must preserve
+the file byte for byte. SHA-256: `b51cfe9a8d2689c90b10a13a3624092d546e0837c6ff835b6e5d713c5749c8c6`.
+The CI script checks this local fixture's hash before constructing the oracle, so Unicode validation does not need
+the original site's availability.
+
 [UVa 1449: Dominating Patterns](https://onlinejudge.org/external/14/1449.pdf) is also useful for occurrence-count
 checks. Its counting contract includes overlaps, so AC v2 must use `allow_overlap = true`. UVa 10679 tests substring
 existence. Public problem samples do not establish access to the judges' hidden tests; those hidden tests are not

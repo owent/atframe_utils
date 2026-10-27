@@ -43,9 +43,13 @@ set(${CMAKE_FIND_PACKAGE_NAME}_SOURCE_DIR "@PROJECT_SOURCE_DIR@")
 set_and_check(${CMAKE_FIND_PACKAGE_NAME}_INCLUDE_DIRS "@PACKAGE_INCLUDE_INSTALL_DIR@")
 set_and_check(${CMAKE_FIND_PACKAGE_NAME}_LIBRARY_DIRS "@PACKAGE_CMAKE_INSTALL_LIBDIR@")
 
-if(NOT "@BUILD_SHARED_LIBS@" AND NOT "@ATFRAMEWORK_USE_DYNAMIC_LIBRARY@")
+if(NOT "@BUILD_SHARED_LIBS@"
+   AND NOT "@ATFRAMEWORK_USE_DYNAMIC_LIBRARY@"
+   AND NOT TARGET xxHash::xxhash)
   include(CMakeFindDependencyMacro)
-  find_dependency(xxHash CONFIG)
+  # Prefer the relocated dependency prefix; the original location also supports build-tree exports.
+  find_dependency(xxHash CONFIG HINTS "${CMAKE_CURRENT_LIST_DIR}/@ATFRAMEWORK_UTILS_PACKAGE_XXHASH_HINT@"
+                  "@xxHash_DIR@")
 endif()
 include("${CMAKE_CURRENT_LIST_DIR}/@PROJECT_LIB_EXPORT_NAME@.cmake")
 
@@ -65,4 +69,3 @@ if(${CMAKE_FIND_PACKAGE_NAME}_FOUND)
 endif()
 
 # check_required_components(${CMAKE_FIND_PACKAGE_NAME})
-

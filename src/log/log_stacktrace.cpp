@@ -5,6 +5,8 @@
 
 #include "log/log_stacktrace.h"
 
+#include <cstdlib>
+#include <memory>
 #include <mutex>
 #include <string>
 #include <vector>
@@ -611,11 +613,13 @@ static void stacktrace_fill_symbol_info(gsl::span<stacktrace_handle> stack_handl
 
   // Second step: load from symbol
   if (!parse_symbols_ptr.empty()) {
-    char **func_name_cache = backtrace_symbols(parse_symbols_ptr.data(), static_cast<int>(parse_symbols_ptr.size()));
-    for (size_t i = 0; nullptr != func_name_cache && i < parse_symbols_ptr.size() && i < parse_symbols_idx.size() &&
-                       i < new_handle_pairs.size();
+    // backtrace_symbols() allocates one block; release it even if symbol construction throws.
+    std::unique_ptr<char *, decltype(&std::free)> func_name_cache(
+        backtrace_symbols(parse_symbols_ptr.data(), static_cast<int>(parse_symbols_ptr.size())), &std::free);
+    for (size_t i = 0; func_name_cache.get() != nullptr && i < parse_symbols_ptr.size() &&
+                       i < parse_symbols_idx.size() && i < new_handle_pairs.size();
          ++i) {
-      symbols[parse_symbols_idx[i]] = stacktrace_create_symbol(new_handle_pairs[i].first, func_name_cache[i]);
+      symbols[parse_symbols_idx[i]] = stacktrace_create_symbol(new_handle_pairs[i].first, func_name_cache.get()[i]);
       new_handle_pairs[i].second = symbols[parse_symbols_idx[i]];
     }
   }
@@ -1262,4 +1266,3 @@ ATFRAMEWORK_UTILS_API size_t stacktrace_write(char *buf, size_t bufsz, const sta
 
 }  // namespace log
 ATFRAMEWORK_UTILS_NAMESPACE_END
-

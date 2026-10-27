@@ -2,3 +2,4 @@
 library-checker/** -text
 unicode/** -text
 LICENSE.library-checker -text
+UTF-8-test.txt -text -diff

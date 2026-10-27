@@ -78,6 +78,13 @@ python ci/ac_automation_v2_stress.py --benchmark /path/to/build/bin/ac_automatio
 上游生成器使用 C++17；库和 benchmark 保持 C++14。`--profile quick` 将图用例减为 9 个。
 生成器、数据和 `summary.json` 均保留在 `--work-dir`，不加入仓库。
 独立的 `AC automation stress` 工作流使用 Clang ASAN/UBSAN 执行上述验证；耗时只作记录，不设置性能阈值。
+其中 22 KB 的 Kuhn 原始样本固定在 `test/case/ac_automation_v2/UTF-8-test.txt` 并校验 SHA-256，
+Unicode 验证无需访问原始个人站点。工作流从当前 Clang 查询 sanitizer 运行库目录，供测试与工具加载。
+专用压测构建关闭网络组件，减少与 AC 无关的依赖；常规构建矩阵继续覆盖网络功能。
+
+静态安装的 CMake 配置保留 xxHash 配置目录的相对提示，以及构建树的原始位置作为后备。
+部署时仍须提供 xxHash 库及其 CMake 配置；安装目录与私有依赖前缀一同移动时保持两者的相对位置，
+或通过 `xxHash_DIR` / `CMAKE_PREFIX_PATH` 显式选择依赖。
 
 ## 库调用
 

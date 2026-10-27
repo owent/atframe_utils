@@ -91,20 +91,24 @@ class ATFRAMEWORK_UTILS_API_HEAD_ONLY actrie_skip_charset<CH, 1> {
   actrie_skip_charset() { memset(skip_code_, 0, sizeof(skip_code_)); }
 
   void set(CH c) {
-    size_t index = c / 8;
-    size_t offset = c % 8;
+    size_t code = static_cast<unsigned char>(c);
+    size_t index = code / kBitsPerByte;
+    size_t offset = code % kBitsPerByte;
     skip_code_[index] |= 1 << offset;
   }
 
   void unset(CH c) {
-    size_t index = c / 8;
-    size_t offset = c % 8;
+    size_t code = static_cast<unsigned char>(c);
+    size_t index = code / kBitsPerByte;
+    size_t offset = code % kBitsPerByte;
     skip_code_[index] &= ~(1 << offset);
   }
 
   bool test(CH c) const {
-    size_t index = c / 8;
-    size_t offset = c % 8;
+    // Signed char values must be normalized before indexing the byte bitset.
+    size_t code = static_cast<unsigned char>(c);
+    size_t index = code / kBitsPerByte;
+    size_t offset = code % kBitsPerByte;
     return 0 != (skip_code_[index] & (1 << offset));
   }
 
@@ -126,7 +130,8 @@ class ATFRAMEWORK_UTILS_API_HEAD_ONLY actrie_skip_charset<CH, 1> {
 
  private:
   enum {
-    kSkipCodeSize = (static_cast<size_t>(1) << (sizeof(CH) * 8)) / 8,
+    kBitsPerByte = 8,
+    kSkipCodeSize = (static_cast<size_t>(1) << (sizeof(CH) * kBitsPerByte)) / kBitsPerByte,
   };
   uint8_t skip_code_[kSkipCodeSize];
 };
@@ -842,4 +847,3 @@ class ATFRAMEWORK_UTILS_API_HEAD_ONLY ac_automation {
 };
 }  // namespace string
 ATFRAMEWORK_UTILS_NAMESPACE_END
-
