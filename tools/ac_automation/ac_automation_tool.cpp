@@ -6,6 +6,7 @@
 
 #include <algorithm>
 #include <cstdio>
+#include <deque>
 #include <fstream>
 #include <functional>
 #include <iostream>
@@ -29,7 +30,10 @@ static constexpr int kCommandArgumentCount = 2;
 static constexpr int kCommandArgumentIndex = 1;
 static constexpr int kFirstOptionArgumentIndex = 2;
 static constexpr size_t kValueOptionParameterCount = 1;
-static constexpr uint64_t kDefaultMaxGraphNodes = 1000;
+static constexpr uint64_t kDefaultMaxGraphNodes = 1000000000;
+static constexpr uint32_t kDefaultMaxGraphDepth = UINT32_MAX;
+static constexpr uint64_t kDefaultVisualizationBudgetBytes = uint64_t{64} << 30;
+static constexpr size_t kTextWriteChunkBytes = 16384;
 static constexpr int kDecimalRadix = 10;
 static constexpr int kHexLetterValueBase = 10;
 static constexpr int kInvalidHexDigit = -1;
@@ -59,6 +63,10 @@ static constexpr uint32_t kPropertyWhiteSpace = 1;
 static constexpr uint32_t kPropertyPunctuation = 2;
 static constexpr uint32_t kPropertySymbols = 4;
 static constexpr uint32_t kPropertyInvisible = 8;
+static constexpr uint32_t kNoncharacterFirst = 0xfdd0;
+static constexpr uint32_t kNoncharacterLast = 0xfdef;
+static constexpr uint32_t kNoncharacterPlaneMask = 0xffff;
+static constexpr uint32_t kNoncharacterPlaneFirst = 0xfffe;
 
 // ASCII boundaries and byte markers.
 static constexpr char kAsciiDigitFirst = '0';
@@ -161,6 +169,49 @@ static constexpr char kDotStatementEnd[] = "\"];\n";
 static constexpr char kFormatDot[] = "dot";
 static constexpr char kFormatMermaid[] = "mermaid";
 static constexpr char kFormatPlantUml[] = "plantuml";
+static constexpr char kFormatD2[] = "d2";
+static constexpr char kFormatNomnoml[] = "nomnoml";
+static constexpr char kFormatGraphMl[] = "graphml";
+static constexpr char kD2Preamble[] = "direction: right\n";
+static constexpr char kD2LabelBegin[] = ": \"";
+static constexpr char kD2LabelEnd[] = "\"\n";
+static constexpr char kD2FailureEnd[] = "\" {style.stroke-dash: 5}\n";
+static constexpr char kNomnomlPreamble[] = "#direction: right\n";
+static constexpr char kNomnomlNodeBegin[] = "[<state id=n";
+static constexpr char kNomnomlNodeCaption[] = ">";
+static constexpr char kNomnomlNodeEnd[] = "]\n";
+static constexpr char kNomnomlReferenceBegin[] = "[n";
+static constexpr char kNomnomlReferenceEnd[] = "] ";
+static constexpr char kNomnomlEdge[] = " -> [n";
+static constexpr char kNomnomlFailureEdge[] = " --> [n";
+static constexpr char kGraphMlPreamble[] =
+    "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+    "<graphml xmlns=\"http://graphml.graphdrawing.org/xmlns\" xmlns:y=\"http://www.yworks.com/xml/graphml\">\n"
+    "  <key id=\"label\" for=\"all\" attr.name=\"label\" attr.type=\"string\"/>\n"
+    "  <key id=\"kind\" for=\"edge\" attr.name=\"kind\" attr.type=\"string\"/>\n"
+    "  <key id=\"ng\" for=\"node\" yfiles.type=\"nodegraphics\"/>\n"
+    "  <key id=\"eg\" for=\"edge\" yfiles.type=\"edgegraphics\"/>\n"
+    "  <graph id=\"AC\" edgedefault=\"directed\">\n";
+static constexpr char kGraphMlEpilogue[] = "  </graph>\n</graphml>\n";
+static constexpr char kGraphMlNodeBegin[] = "    <node id=\"n";
+static constexpr char kGraphMlLabelBegin[] = "\"><data key=\"label\">";
+static constexpr char kGraphMlNodeGraphics[] = "</data><data key=\"ng\"><y:ShapeNode><y:NodeLabel>";
+static constexpr char kGraphMlNodeEnd[] = "</y:NodeLabel><y:Shape type=\"rectangle\"/></y:ShapeNode></data></node>\n";
+static constexpr char kGraphMlEdgeBegin[] = "    <edge id=\"";
+static constexpr char kGraphMlTrieId[] = "t";
+static constexpr char kGraphMlFailureId[] = "f";
+static constexpr char kGraphMlSource[] = "\" source=\"n";
+static constexpr char kGraphMlTarget[] = "\" target=\"n";
+static constexpr char kGraphMlKindBegin[] = "</data><data key=\"kind\">";
+static constexpr char kGraphMlEdgeGraphics[] =
+    "</data><data key=\"eg\"><y:PolyLineEdge><y:LineStyle color=\"#000000\" width=\"1.0\" type=\"";
+static constexpr char kGraphMlSolid[] = "line";
+static constexpr char kGraphMlDashed[] = "dashed";
+static constexpr char kGraphMlArrow[] = "\"/><y:Arrows source=\"none\" target=\"standard\"/><y:EdgeLabel>";
+static constexpr char kGraphMlEdgeEnd[] =
+    "</y:EdgeLabel><y:BendStyle smoothed=\"false\"/></y:PolyLineEdge></data></edge>\n";
+static constexpr char kTrieEdgeKind[] = "trie";
+static constexpr char kFailureEdgeText[] = "fail";
 static constexpr char kIndentedNodePrefix[] = "  n";
 static constexpr char kLabelFormatHex[] = "hex";
 static constexpr char kLabelFormatUtf8[] = "utf8";
@@ -187,9 +238,11 @@ static constexpr char kUsageText[] =
     "  build: --output FILE [--nocase|--ignore-case] [--skip-space] [--skip-punctuation]\n"
     "         [--skip-symbols] [--skip-invisible] [--skip-file FILE] [--case-fold-file FILE]\n"
     "  verify: [--semantic]\n"
-    "  visualize: --output FILE --format dot|mermaid|plantuml\n"
-    "             [--max-nodes N (1000)] [--root-id N (0)] [--max-depth N] [--label-format hex|utf8]\n"
-    "  info/verify/visualize: [--max-file-bytes N] [--max-memory-bytes N] (default 1 GiB)\n"
+    "  visualize: --output FILE --format dot|mermaid|plantuml|d2|nomnoml|graphml\n"
+    "             [--max-nodes N (1000000000)] [--root-id N (0)] [--max-depth N (4294967295)]\n"
+    "             [--label-format utf8|hex (utf8)] [--utf8-labels]\n"
+    "  info/verify/visualize: [--max-file-bytes N] [--max-memory-bytes N]\n"
+    "                       (defaults: visualize 64 GiB each, info/verify 1 GiB each)\n"
     "Output files must not exist. Options use separate values, not --name=value.\n";
 
 struct ATFW_UTIL_SYMBOL_LOCAL arguments {
@@ -533,38 +586,91 @@ static int build_file(const arguments& args) {
   return kExitSuccess;
 }
 
+enum class ATFW_UTIL_SYMBOL_LOCAL graph_format { kDot, kMermaid, kPlantUml, kD2, kNomnoml, kGraphMl };
+
+static bool parse_graph_format(gsl::string_view name, graph_format& output) {
+  const std::pair<const char*, graph_format> formats[] = {
+      {kFormatDot, graph_format::kDot},           {kFormatMermaid, graph_format::kMermaid},
+      {kFormatPlantUml, graph_format::kPlantUml}, {kFormatD2, graph_format::kD2},
+      {kFormatNomnoml, graph_format::kNomnoml},   {kFormatGraphMl, graph_format::kGraphMl}};
+  for (const auto& item : formats) {
+    if (name == item.first) {
+      output = item.second;
+      return true;
+    }
+  }
+  return false;
+}
+
+struct ATFW_UTIL_SYMBOL_LOCAL graph_range {
+  uint32_t begin;
+  uint32_t end;
+};
+
 struct ATFW_UTIL_SYMBOL_LOCAL graph_selection {
   uint32_t root;
   uint32_t max_depth;
   size_t limit;
+  size_t count = 0;
   bool overflow = false;
-  std::map<uint32_t, uint32_t> pending;
-  std::vector<ac::node_view> nodes;
+  bool complete = false;
+  uint32_t level_begin;
+  uint32_t level_end;
+  uint32_t next_begin = 0;
+  uint32_t next_end = 0;
+  uint32_t depth = 0;
+  std::vector<graph_range> ranges;
 
-  graph_selection(uint32_t start, uint32_t depth, size_t maximum) : root(start), max_depth(depth), limit(maximum) {}
+  graph_selection(uint32_t start, uint32_t depth_limit, size_t maximum)
+      : root(start), max_depth(depth_limit), limit(maximum), level_begin(start), level_end(start + 1) {}
+
+  bool contains(uint32_t id) const {
+    auto next = std::upper_bound(ranges.begin(), ranges.end(), id,
+                                 [](uint32_t value, const graph_range& range) { return value < range.begin; });
+    return next != ranges.begin() && id < (--next)->end;
+  }
 };
 
 static bool select_node(const ac::node_view& node, void* data) {
   auto& graph = *static_cast<graph_selection*>(data);
-  auto it = graph.pending.find(node.id);
-  if (it == graph.pending.end()) {
+  if (node.id < graph.level_begin) {
     return true;
   }
-  uint32_t depth = it->second;
-  graph.pending.erase(it);
-  if (graph.nodes.size() == graph.limit) {
+  if (node.id >= graph.level_end) {
+    return false;
+  }
+  if (graph.count == graph.limit) {
     graph.overflow = true;
     return false;
   }
-  graph.nodes.push_back(node);
-  if (depth < graph.max_depth) {
-    if (node.child_count > graph.limit - graph.nodes.size() - graph.pending.size()) {
+  ++graph.count;
+  // A subtree occupies one contiguous BFS interval at each depth. Adjacent levels can merge,
+  // so complete graphs and single chains need only one range, without copies of their nodes.
+  if (!graph.ranges.empty() && graph.ranges.back().end == node.id) {
+    graph.ranges.back().end = node.id + 1;
+  } else {
+    graph.ranges.push_back({node.id, node.id + 1});
+  }
+  if (graph.depth < graph.max_depth && node.child_count > 0) {
+    if (graph.next_begin == graph.next_end) {
+      graph.next_begin = node.child_begin;
+    }
+    graph.next_end = node.child_begin + node.child_count;
+  }
+  if (node.id + 1 == graph.level_end) {
+    if (graph.depth == graph.max_depth || graph.next_begin == graph.next_end) {
+      graph.complete = true;
+      return false;
+    }
+    if (graph.next_end - graph.next_begin > graph.limit - graph.count) {
       graph.overflow = true;
       return false;
     }
-    for (uint32_t i = node.child_begin; i < node.child_begin + node.child_count; ++i) {
-      graph.pending.emplace(i, depth + 1);
-    }
+    graph.level_begin = graph.next_begin;
+    graph.level_end = graph.next_end;
+    graph.next_begin = 0;
+    graph.next_end = 0;
+    ++graph.depth;
   }
   return true;
 }
@@ -574,8 +680,11 @@ static std::string label(gsl::string_view bytes, bool utf8) {
   for (size_t pos = 0; pos < bytes.size();) {
     auto token = ac::next_utf8(bytes.substr(pos));
     unsigned char c = static_cast<unsigned char>(bytes[pos]);
+    uint32_t cp = token.state == ac::token_status::kValid ? decode(bytes.substr(pos, token.byte_count)) : 0;
     if (utf8 && token.state == ac::token_status::kValid &&
-        (properties(decode(bytes.substr(pos, token.byte_count))) & kPropertyInvisible) == 0 &&
+        (properties(cp) & (kPropertyInvisible | kPropertyWhiteSpace)) == 0 &&
+        (cp < kNoncharacterFirst || cp > kNoncharacterLast) &&
+        (cp & kNoncharacterPlaneMask) < kNoncharacterPlaneFirst &&
         (token.byte_count > 1 || (c >= kAsciiLowerFirst && c <= kAsciiLowerLast) ||
          (c >= kAsciiUpperFirst && c <= kAsciiUpperLast) || (c >= kAsciiDigitFirst && c <= kAsciiDigitLast))) {
       result.append(bytes.data() + pos, token.byte_count);
@@ -593,66 +702,185 @@ static std::string label(gsl::string_view bytes, bool utf8) {
   return result;
 }
 
-static bool write_graph(std::ostream& out, const graph_selection& graph, const std::string& format, bool utf8) {
-  std::set<uint32_t> ids;
-  std::vector<const ac::node_view*> parents;
-  for (const auto& n : graph.nodes) {
-    ids.insert(n.id);
-    if (n.child_count > 0) {
-      parents.push_back(&n);
-    }
+static void write_text(std::ostream& out, gsl::string_view text) {
+  for (size_t pos = 0; pos < text.size() && out.good();) {
+    size_t length = (std::min)(text.size() - pos, kTextWriteChunkBytes);
+    out.write(text.data() + pos, static_cast<std::streamsize>(length));
+    pos += length;
   }
-  if (format == kFormatDot) {
-    out << kDotPreamble;
-  } else if (format == kFormatMermaid) {
-    out << kMermaidPreamble;
+}
+
+static void write_node_caption(std::ostream& out, const ac::node_view& node) {
+  out << kNodeCaptionPrefix << node.id;
+  if (node.output_head != UINT32_MAX) {
+    out << kOutputCaptionPrefix << node.output_head;
+  }
+}
+
+static void write_graph_node(std::ostream& out, const ac::node_view& node, graph_format format) {
+  if (format == graph_format::kDot) {
+    out << kIndentedNodePrefix << node.id << kDotLabelBegin;
+    write_node_caption(out, node);
+    out << kDotStatementEnd;
+  } else if (format == graph_format::kMermaid) {
+    out << kIndentedNodePrefix << node.id << kMermaidLabelBegin;
+    write_node_caption(out, node);
+    out << kMermaidLabelEnd;
+  } else if (format == graph_format::kPlantUml) {
+    out << kPlantUmlStateBegin;
+    write_node_caption(out, node);
+    out << kPlantUmlStateAlias << node.id << kLineFeed;
+  } else if (format == graph_format::kD2) {
+    out << kNodeIdPrefix << node.id << kD2LabelBegin;
+    write_node_caption(out, node);
+    out << kD2LabelEnd;
+  } else if (format == graph_format::kNomnoml) {
+    out << kNomnomlNodeBegin << node.id << kNomnomlNodeCaption;
+    write_node_caption(out, node);
+    out << kNomnomlNodeEnd;
   } else {
-    out << kPlantUmlPreamble;
+    out << kGraphMlNodeBegin << node.id << kGraphMlLabelBegin;
+    write_node_caption(out, node);
+    out << kGraphMlNodeGraphics;
+    write_node_caption(out, node);
+    out << kGraphMlNodeEnd;
   }
-  for (const auto& n : graph.nodes) {
-    std::string text = kNodeCaptionPrefix + std::to_string(n.id);
-    if (n.output_head != UINT32_MAX) {
-      text += kOutputCaptionPrefix + std::to_string(n.output_head);
-    }
-    if (format == kFormatDot) {
-      out << kIndentedNodePrefix << n.id << kDotLabelBegin << text << kDotStatementEnd;
-    } else if (format == kFormatMermaid) {
-      out << kIndentedNodePrefix << n.id << kMermaidLabelBegin << text << kMermaidLabelEnd;
+}
+
+static void write_graph_edge(std::ostream& out, graph_format format, uint32_t source, uint32_t target,
+                             gsl::string_view text, bool failure) {
+  if (format == graph_format::kDot) {
+    out << kIndentedNodePrefix << source << kDotEdge << target;
+    if (failure) {
+      out << kDotFailureEdgeEnd;
     } else {
-      out << kPlantUmlStateBegin << text << kPlantUmlStateAlias << n.id << kLineFeed;
+      out << kDotLabelBegin;
+      write_text(out, text);
+      out << kDotStatementEnd;
+    }
+  } else if (format == graph_format::kMermaid) {
+    out << kIndentedNodePrefix << source;
+    if (failure) {
+      out << kMermaidFailureEdge << target << kLineFeed;
+    } else {
+      out << kMermaidEdgeLabelBegin;
+      write_text(out, text);
+      out << kMermaidEdgeLabelEnd << target << kLineFeed;
+    }
+  } else if (format == graph_format::kPlantUml) {
+    out << kNodeIdPrefix << source << (failure ? kPlantUmlFailureEdge : kPlantUmlEdge) << target;
+    if (failure) {
+      out << kPlantUmlFailureLabel;
+    } else {
+      out << kPlantUmlLabelSeparator;
+      write_text(out, text);
+      out << kLineFeed;
+    }
+  } else if (format == graph_format::kD2) {
+    out << kNodeIdPrefix << source << kDotEdge << target << kD2LabelBegin;
+    write_text(out, text);
+    out << (failure ? kD2FailureEnd : kD2LabelEnd);
+  } else if (format == graph_format::kNomnoml) {
+    out << kNomnomlReferenceBegin << source << kNomnomlReferenceEnd;
+    write_text(out, text);
+    out << (failure ? kNomnomlFailureEdge : kNomnomlEdge) << target << kNomnomlNodeEnd;
+  } else {
+    out << kGraphMlEdgeBegin << (failure ? kGraphMlFailureId : kGraphMlTrieId) << (failure ? source : target)
+        << kGraphMlSource << source << kGraphMlTarget << target << kGraphMlLabelBegin;
+    write_text(out, text);
+    out << kGraphMlKindBegin << (failure ? kFailureEdgeText : kTrieEdgeKind) << kGraphMlEdgeGraphics
+        << (failure ? kGraphMlDashed : kGraphMlSolid) << kGraphMlArrow;
+    write_text(out, text);
+    out << kGraphMlEdgeEnd;
+  }
+}
+
+struct ATFW_UTIL_SYMBOL_LOCAL graph_parent {
+  uint32_t begin;
+  uint32_t end;
+  uint32_t id;
+};
+
+struct ATFW_UTIL_SYMBOL_LOCAL graph_writer {
+  std::ostream& output;
+  const graph_selection& selection;
+  graph_format format;
+  bool utf8;
+  size_t written = 0;
+  size_t range = 0;
+  // Only parents whose children have not been visited remain in the BFS frontier.
+  // A long chain uses one entry; selected node views and per-node lookup trees are never retained.
+  std::deque<graph_parent> parents;
+
+  graph_writer(std::ostream& stream, const graph_selection& graph, graph_format syntax, bool utf8_labels)
+      : output(stream), selection(graph), format(syntax), utf8(utf8_labels) {}
+};
+
+static bool write_selected_node(const ac::node_view& node, void* data) {
+  auto& writer = *static_cast<graph_writer*>(data);
+  const auto& ranges = writer.selection.ranges;
+  while (writer.range < ranges.size() && node.id >= ranges[writer.range].end) {
+    ++writer.range;
+  }
+  if (writer.range >= ranges.size()) {
+    return false;
+  }
+  if (node.id < ranges[writer.range].begin) {
+    return true;
+  }
+  while (!writer.parents.empty() && node.id >= writer.parents.front().end) {
+    writer.parents.pop_front();
+  }
+  write_graph_node(writer.output, node, writer.format);
+  if (node.id != writer.selection.root) {
+    if (writer.parents.empty() || node.id < writer.parents.front().begin) {
+      return false;
+    }
+    auto token = label(node.token, writer.utf8);
+    write_graph_edge(writer.output, writer.format, writer.parents.front().id, node.id, token, false);
+    if (node.id + 1 == writer.parents.front().end) {
+      writer.parents.pop_front();
     }
   }
-  for (const auto& child : graph.nodes) {
-    // BFS children are contiguous; only selected parents/targets are rendered.
-    auto found = std::upper_bound(parents.begin(), parents.end(), child.id,
-                                  [](uint32_t id, const ac::node_view* n) { return id < n->child_begin; });
-    const ac::node_view* parent = found == parents.begin() ? nullptr : *--found;
-    if (parent != nullptr && child.id - parent->child_begin < parent->child_count) {
-      std::string token = label(child.token, utf8);
-      if (format == kFormatDot) {
-        out << kIndentedNodePrefix << parent->id << kDotEdge << child.id << kDotLabelBegin << token << kDotStatementEnd;
-      } else if (format == kFormatMermaid) {
-        out << kIndentedNodePrefix << parent->id << kMermaidEdgeLabelBegin << token << kMermaidEdgeLabelEnd << child.id
-            << kLineFeed;
-      } else {
-        out << kNodeIdPrefix << parent->id << kPlantUmlEdge << child.id << kPlantUmlLabelSeparator << token
-            << kLineFeed;
-      }
-    }
-    if (child.id > 0 && ids.count(child.failure) > 0) {
-      if (format == kFormatDot) {
-        out << kIndentedNodePrefix << child.id << kDotEdge << child.failure << kDotFailureEdgeEnd;
-      } else if (format == kFormatMermaid) {
-        out << kIndentedNodePrefix << child.id << kMermaidFailureEdge << child.failure << kLineFeed;
-      } else {
-        out << kNodeIdPrefix << child.id << kPlantUmlFailureEdge << child.failure << kPlantUmlFailureLabel;
-      }
-    }
+  if (node.id > 0 && writer.selection.contains(node.failure)) {
+    write_graph_edge(writer.output, writer.format, node.id, node.failure, kFailureEdgeText, true);
   }
-  if (format == kFormatDot) {
+  if (!writer.output.good()) {
+    return false;
+  }
+  if (node.child_count > 0 && writer.selection.contains(node.child_begin)) {
+    writer.parents.push_back({node.child_begin, node.child_begin + node.child_count, node.id});
+  }
+  ++writer.written;
+  return writer.written < writer.selection.count;
+}
+
+static bool write_graph(std::ostream& out, const ac& value, const graph_selection& graph, graph_format format,
+                        bool utf8) {
+  if (format == graph_format::kDot) {
+    out << kDotPreamble;
+  } else if (format == graph_format::kMermaid) {
+    out << kMermaidPreamble;
+  } else if (format == graph_format::kPlantUml) {
+    out << kPlantUmlPreamble;
+  } else if (format == graph_format::kD2) {
+    out << kD2Preamble;
+  } else if (format == graph_format::kNomnoml) {
+    out << kNomnomlPreamble;
+  } else {
+    out << kGraphMlPreamble;
+  }
+  graph_writer writer(out, graph, format, utf8);
+  value.visit_nodes(write_selected_node, &writer);
+  if (writer.written != graph.count || !out.good()) {
+    return false;
+  }
+  if (format == graph_format::kDot) {
     out << kDotEpilogue;
-  } else if (format == kFormatPlantUml) {
+  } else if (format == graph_format::kPlantUml) {
     out << kPlantUmlEpilogue;
+  } else if (format == graph_format::kGraphMl) {
+    out << kGraphMlEpilogue;
   }
   return out.good();
 }
@@ -730,6 +958,10 @@ int main(int argc, char* argv[]) {
   // Enforce resource limits before loading any image sections or selecting graph nodes.
   ac::load_options options;
   options.verify_semantics = args.flags.count(kOptionSemantic) != 0;
+  if (command == kCommandVisualize) {
+    options.max_file_bytes = kDefaultVisualizationBudgetBytes;
+    options.max_memory_bytes = kDefaultVisualizationBudgetBytes;
+  }
   for (const char* name : {kOptionMaxFileBytes, kOptionMaxMemoryBytes}) {
     auto it = args.values.find(name);
     if (it == args.values.end()) {
@@ -747,13 +979,14 @@ int main(int argc, char* argv[]) {
   }
   uint64_t max_nodes = kDefaultMaxGraphNodes;
   uint64_t root = 0;
-  uint64_t depth = UINT32_MAX;
-  std::string format;
-  bool utf8_labels = args.flags.count(kOptionUtf8Labels) != 0;
+  uint64_t depth = kDefaultMaxGraphDepth;
+  graph_format format = graph_format::kDot;
+  bool utf8_labels = true;
   if (command == kCommandVisualize) {
     auto label_format = args.values.find(kOptionLabelFormat);
     if (label_format != args.values.end()) {
-      if (utf8_labels || (label_format->second != kLabelFormatHex && label_format->second != kLabelFormatUtf8)) {
+      if (args.flags.count(kOptionUtf8Labels) > 0 ||
+          (label_format->second != kLabelFormatHex && label_format->second != kLabelFormatUtf8)) {
         return fail(kErrorLabelFormat);
       }
       utf8_labels = label_format->second == kLabelFormatUtf8;
@@ -761,8 +994,7 @@ int main(int argc, char* argv[]) {
     if ((args.values.count(kOptionFormat) == 0)) {
       return fail(kErrorMissingFormat);
     }
-    format = args.values.at(kOptionFormat);
-    if (format != kFormatDot && format != kFormatMermaid && format != kFormatPlantUml) {
+    if (!parse_graph_format(args.values.at(kOptionFormat), format)) {
       return fail(kErrorFormat);
     }
     const std::pair<const char*, uint64_t*> graph_bounds[] = {
@@ -805,10 +1037,12 @@ int main(int argc, char* argv[]) {
     return fail(kErrorMissingRoot);
   }
   graph_selection graph{static_cast<uint32_t>(root), static_cast<uint32_t>(depth), static_cast<size_t>(max_nodes)};
-  graph.pending.emplace(graph.root, 0);
   value.visit_nodes(select_node, &graph);
   if (graph.overflow) {
     return fail(kErrorGraphLimit);
+  }
+  if (!graph.complete) {
+    return fail(kErrorGraphWrite);
   }
   publication file(args.values.at(kOptionOutput));
   if (file.file() == nullptr) {
@@ -816,7 +1050,7 @@ int main(int argc, char* argv[]) {
   }
   file_buffer buffer(file.file());
   std::ostream output(&buffer);
-  if (!write_graph(output, graph, format, utf8_labels)) {
+  if (!write_graph(output, value, graph, format, utf8_labels)) {
     return fail(kErrorGraphWrite);
   }
   output.flush();

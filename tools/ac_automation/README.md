@@ -10,6 +10,9 @@ ac_automation_tool verify --input words.ac --semantic
 ac_automation_tool visualize --input words.ac --output words.dot --format dot --max-depth 3
 ac_automation_tool visualize --input words.ac --output words.mmd --format mermaid --root-id 1 --max-nodes 500
 ac_automation_tool visualize --input words.ac --output words.puml --format plantuml --utf8-labels
+ac_automation_tool visualize --input words.ac --output words.d2 --format d2 --max-depth 4
+ac_automation_tool visualize --input words.ac --output words.noml --format nomnoml --root-id 1
+ac_automation_tool visualize --input words.ac --output words.graphml --format graphml
 ```
 
 参数使用 `--name value`，不支持 `--name=value`。重复参数、未知参数、缺失值、非法数字都会返回非零退出码。
@@ -36,15 +39,41 @@ ac_automation_tool visualize --input words.ac --output words.puml --format plant
 表来自 Unicode 18.0.0，许可证见 [UNICODE-LICENSE.txt](UNICODE-LICENSE.txt)。
 可用 `generate_unicode_ranges.py UnicodeData.txt DerivedCoreProperties.txt unicode_ranges.h` 重建表，再运行 clang-format。
 
-`info`、`verify`、`visualize` 默认各有 1 GiB 文件和候选内存上限，可用 `--max-file-bytes`、
+`info`、`verify` 默认各有 1 GiB 文件和候选内存上限，`visualize` 默认各为 64 GiB，可用 `--max-file-bytes`、
 `--max-memory-bytes` 调整。内存预算覆盖新模型 payload 和结构验证 scratch，不包括调用者已有模型、输入缓冲、
 分配器开销或整个进程 RSS。`verify --semantic` 还重算最长 failure suffix。
 
-可视化默认最多 1000 个节点，超过上限报错；`--root-id`、`--max-depth` 可明确选择子图。
-默认以十六进制显示不透明 token；`--label-format utf8`（别名 `--utf8-labels`）保留合法 UTF-8 可见文字，
-语法敏感 ASCII 和控制字符仍显示十六进制。
+可视化默认最多 1000000000（10 亿）个节点，超过上限报错；`--root-id`、`--max-depth` 可明确选择子图。
+`--max-depth` 默认已经是 `UINT32_MAX`（4294967295），深度按相对所选根节点的 token 数计算，
+设为 0 只导出根节点。核心节点 ID 和最长词的限制仍遵循库接口，见头文件注释。
+默认 `--label-format utf8` 保留合法 UTF-8 可见文字；`--utf8-labels` 是兼容别名，`--label-format hex`
+可显式切换十六进制。语法敏感 ASCII、空白、控制字符、Unicode 非字符和非法 UTF-8 字节显示为十六进制。
 图中仅绘制选中节点之间的 trie/failure 边；节点的 output 值是输出链头的 keyword ID。
 输出函数位于工具，核心库只提供只读节点访问。
+
+子图选择将每层连续的 BFS ID 合并为区间，写出时仅保留尚未遍历子节点的父节点队列，
+不为全部节点建立 map/set 或保留节点副本。完整图与单条长链只需一个选取区间。
+按布局估算，1 亿节点的 Node（16 bytes）和 Label（4 bytes）表约占 1.86 GiB，
+结构验证的深度数组另需约 0.37 GiB，还需加上关键词、字符表和字节池等空间；默认预算据此留出余量。
+完整图文本可能达数十 GiB；上述上限不保证外部绘图器能对整图排版。
+大词表通常先用 `--root-id` / `--max-depth` 选取要检查的部分。
+
+## 文本绘图格式
+
+| 格式 | 文件扩展名 | 自动布局组件与用法 |
+| --- | --- | --- |
+| `dot` | `.dot` | [Graphviz](https://graphviz.org/)：`dot -Tsvg words.dot -o words.svg` |
+| `mermaid` | `.mmd` | [Mermaid](https://mermaid.js.org/) 流程图，适合 Markdown/网页集成 |
+| `plantuml` | `.puml` | [PlantUML](https://plantuml.com/state-diagram) 状态图，保留实线 trie 与虚线 failure 边 |
+| `d2` | `.d2` | [D2](https://d2lang.com/)：`d2 --layout dagre words.d2 words.svg`，支持更换布局引擎 |
+| `nomnoml` | `.noml` | [nomnoml](https://github.com/skanaar/nomnoml)：`npx nomnoml words.noml > words.svg`，使用 graphre 自动布局 |
+| `graphml` | `.graphml` | [yEd](https://yed.yworks.com/support/manual/fileformat.html) / [Gephi](https://docs.gephi.org/desktop/User_Manual/Import/GraphML_Format/) 导入后应用层次或力导向布局 |
+
+导出这些格式无需安装绘图器。D2、nomnoml 可以直接从文本生成 SVG；GraphML 使用标准 `label`、`kind`
+属性，并包含 yWorks 节点标签、箭头和虚线样式扩展，便于在图编辑器中继续操作。
+新增组件选择以通用有向图、自动布局和实际维护情况为依据；还调研了
+[Diagrams](https://diagrams.mingrammer.com/)（面向 Python 云架构图，使用 Graphviz）和 Blockdiag，
+前者的定位与 AC 状态图差别较大，后者近年维护较少，未增加专用导出。
 
 ## 验证与性能
 
@@ -53,7 +82,9 @@ python tools/ac_automation/test_tool.py /path/to/ac_automation_tool /path/to/bui
 ac_automation_benchmark /path/to/external/words.utf8.txt
 ```
 
-命令行集成测试生成小型临时词表，检查三个图格式、Unicode trim、失败退出码、不覆盖既有输出和临时文件清理。
+命令行集成测试生成小型临时词表，检查六种格式的完整拓扑与子树、默认 UTF-8、转义、
+Unicode trim、失败退出码、不覆盖既有输出和临时文件清理。检测到 D2 时还会验证语法并生成 SVG；
+设置 `AC_AUTOMATION_NOMNOML_MODULE` 为已安装 nomnoml 模块的绝对目录后，会执行真实的 nomnoml SVG 渲染。
 基准显式要求外部词表，不会下载或把完整敏感词表写入仓库；缺少/非法输入返回失败。
 它在 build/load 后逐词检查原 keyword ID 与完整 byte 范围，防止短词命中掩盖长词丢失；
 报告插入、冻结、7 次测量中位数的匹配和内存 dump/load。
