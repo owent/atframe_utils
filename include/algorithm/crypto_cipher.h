@@ -175,6 +175,8 @@ class cipher {
   /**
    * @brief               get block size in crypt library
    * @return              block length in bytes
+   * @note XXTEA uses 8-byte padding blocks (two 32-bit words). Its encrypt/decrypt input must be a nonempty
+   *       multiple of this size; callers add padding before encryption and retain the original plaintext length.
    */
   ATFRAMEWORK_UTILS_API uint32_t get_block_size() const;
 

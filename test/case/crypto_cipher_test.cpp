@@ -421,6 +421,74 @@ CASE_TEST(crypto_cipher, xxtea) {
   }
 }
 
+CASE_TEST(crypto_cipher, xxtea_block_alignment_roundtrip) {
+  atfw::util::crypto::cipher cipher;
+  int result = cipher.init("xxtea");
+  CASE_EXPECT_EQ(0, result);
+  if (result != 0) {
+    return;
+  }
+  result = cipher.set_key(xtea_test_key[0], cipher.get_key_bits());
+  CASE_EXPECT_EQ(0, result);
+  if (result != 0) {
+    return;
+  }
+  for (size_t input_size : {size_t{1}, size_t{4}, size_t{5}, size_t{8}, size_t{9}, size_t{16}, size_t{17}}) {
+    const size_t expected_size = ((input_size + 7) / 8) * 8;
+    const size_t block_size = cipher.get_block_size();
+    const size_t padded_size = ((input_size + block_size - 1) / block_size) * block_size;
+    std::vector<unsigned char> padded(padded_size, static_cast<unsigned char>(padded_size - input_size));
+    for (size_t index = 0; index < input_size; ++index) {
+      padded.at(index) = static_cast<unsigned char>(index + 0x31);
+    }
+    std::vector<unsigned char> ciphertext(padded.size() + block_size);
+    size_t ciphertext_size = ciphertext.size();
+    result = cipher.encrypt(padded.data(), padded.size(), ciphertext.data(), &ciphertext_size);
+    CASE_EXPECT_EQ(0, result);
+    CASE_EXPECT_EQ(expected_size, ciphertext_size);
+    if (result != 0) {
+      continue;
+    }
+    std::vector<unsigned char> plaintext(ciphertext_size + block_size);
+    size_t plaintext_size = plaintext.size();
+    result = cipher.decrypt(ciphertext.data(), ciphertext_size, plaintext.data(), &plaintext_size);
+    CASE_EXPECT_EQ(0, result);
+    CASE_EXPECT_EQ(padded.size(), plaintext_size);
+    if (result == 0 && plaintext_size == padded.size()) {
+      CASE_EXPECT_EQ(0, memcmp(padded.data(), plaintext.data(), plaintext_size));
+    }
+  }
+}
+
+CASE_TEST(crypto_cipher, xxtea_rejects_invalid_block_lengths) {
+  atfw::util::crypto::cipher cipher;
+  int result = cipher.init("xxtea");
+  CASE_EXPECT_EQ(0, result);
+  if (result != 0) {
+    return;
+  }
+  result = cipher.set_key(xtea_test_key[0], cipher.get_key_bits());
+  CASE_EXPECT_EQ(0, result);
+  if (result != 0) {
+    return;
+  }
+  const unsigned char input[16] = {0x23, 0x41, 0x57};
+  for (size_t input_size : {size_t{0}, size_t{1}, size_t{4}, size_t{7}, size_t{9}, size_t{12}, size_t{15}}) {
+    for (bool encrypt : {true, false}) {
+      unsigned char output[32];
+      memset(output, 0xa5, sizeof(output));
+      size_t output_size = sizeof(output);
+      result = encrypt ? cipher.encrypt(input, input_size, output, &output_size)
+                       : cipher.decrypt(input, input_size, output, &output_size);
+      CASE_EXPECT_EQ(static_cast<int>(atfw::util::crypto::cipher::error_code_t::kInvalidParam), result);
+      CASE_EXPECT_EQ(sizeof(output), output_size);
+      for (unsigned char value : output) {
+        CASE_EXPECT_EQ(static_cast<unsigned char>(0xa5), value);
+      }
+    }
+  }
+}
+
 enum evp_test_operation_type {
   EN_ETOT_BOTH = 0,
   EN_ETOT_ENCRYPT = 1,

@@ -54,6 +54,14 @@ cmake --build . --target INSTALL # using clang or gcc
 # cmake --build . --config RelWithDebInfo --target INSTALL # using MSVC
 ~~~~~~~~~~
 
+## XXTEA padding
+
+`crypto::cipher::get_block_size()` returns 8 for XXTEA. Both `encrypt` and `decrypt`
+require a nonempty input whose length is a multiple of 8 bytes; invalid lengths
+return `error_code_t::kInvalidParam` before writing output. Callers pad plaintext
+before encryption and retain its original length for trimming after decryption.
+An 8-byte block contains two 32-bit XXTEA words, avoiding the invalid single-word path.
+
 ## Incremental build hygiene
 
 Code and resources consumed by CMake targets must not be touched or overwritten when content is unchanged, including

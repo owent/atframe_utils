@@ -857,7 +857,8 @@ ATFRAMEWORK_UTILS_API uint32_t cipher::get_block_size() const {
     case EN_CIMT_INVALID:
       return 0;
     case EN_CIMT_XXTEA:
-      return 0x04;
+      // A valid XXTEA block needs at least two 32-bit words.
+      return 0x08;
     case EN_CIMT_CIPHER:
       if (nullptr != cipher_context_.enc) {
 #  if defined(ATFRAMEWORK_UTILS_CRYPTO_USE_OPENSSL) || defined(ATFRAMEWORK_UTILS_CRYPTO_USE_LIBRESSL) || \
@@ -1060,6 +1061,9 @@ ATFRAMEWORK_UTILS_API int cipher::encrypt(const unsigned char *input, size_t ile
     case EN_CIMT_INVALID:
       return setup_errorno(*this, -1, error_code_t::kNotInited);
     case EN_CIMT_XXTEA: {
+      if (ilen % get_block_size() != 0) {
+        return setup_errorno(*this, -1, error_code_t::kInvalidParam);
+      }
       ATFRAMEWORK_UTILS_NAMESPACE_ID::xxtea_encrypt(&xxtea_context_.key, reinterpret_cast<const void *>(input), ilen,
                                                     reinterpret_cast<void *>(output), olen);
       return setup_errorno(*this, 0, error_code_t::kOk);
@@ -1228,6 +1232,9 @@ ATFRAMEWORK_UTILS_API int cipher::decrypt(const unsigned char *input, size_t ile
     case EN_CIMT_INVALID:
       return setup_errorno(*this, -1, error_code_t::kNotInited);
     case EN_CIMT_XXTEA: {
+      if (ilen % get_block_size() != 0) {
+        return setup_errorno(*this, -1, error_code_t::kInvalidParam);
+      }
       ATFRAMEWORK_UTILS_NAMESPACE_ID::xxtea_decrypt(&xxtea_context_.key, reinterpret_cast<const void *>(input), ilen,
                                                     reinterpret_cast<void *>(output), olen);
       return setup_errorno(*this, 0, error_code_t::kOk);
