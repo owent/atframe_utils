@@ -1731,6 +1731,24 @@ static status write_image(const detail::ac_v2_storage& s, image_writer& output) 
                     "Keyword fits serialization buffer");
       static_assert(kSerializedIndexBytes > 0 && kSerializedIndexBytes <= kIoBufferBytes,
                     "Index fits serialization buffer");
+      // Select an index table once per section; each row still checks its own bounds.
+      const std::vector<uint32_t>* indices = nullptr;
+      switch (part.type) {
+        case kSectionLabels:
+          indices = &s.labels;
+          break;
+        case kSectionSymbolOffsets:
+          indices = &s.offsets;
+          break;
+        case kSectionFolds:
+          indices = &s.folds;
+          break;
+        case kSectionCanonical:
+          indices = &s.canonical;
+          break;
+        default:
+          break;
+      }
       const size_t stride = part.type == kSectionNodes      ? kNodeStrideBytes
                             : part.type == kSectionKeywords ? kKeywordStrideBytes
                                                             : kSerializedIndexBytes;
@@ -1761,18 +1779,10 @@ static status write_image(const detail::ac_v2_storage& s, image_writer& output) 
             bit::write_le_uint32(p + kKeywordTokensOffset, w.tokens);
             bit::write_le_uint32(p + kKeywordSuffixOffset, w.suffix);
           } else {
-            if ((part.type != kSectionLabels && part.type != kSectionSymbolOffsets && part.type != kSectionFolds &&
-                 part.type != kSectionCanonical) ||
-                (part.type == kSectionLabels && i >= s.labels.size()) ||
-                (part.type == kSectionSymbolOffsets && i >= s.offsets.size()) ||
-                (part.type == kSectionFolds && i >= s.folds.size()) ||
-                (part.type == kSectionCanonical && i >= s.canonical.size())) {
+            if (indices == nullptr || i >= indices->size()) {
               return status::kInvalidFormat;
             }
-            bit::write_le_uint32(p, part.type == kSectionLabels          ? s.labels[i]
-                                    : part.type == kSectionSymbolOffsets ? s.offsets[i]
-                                    : part.type == kSectionFolds         ? s.folds[i]
-                                                                         : s.canonical[i]);
+            bit::write_le_uint32(p, (*indices)[i]);
           }
         }
         if (!output.write(buffer.data(), count * stride)) {

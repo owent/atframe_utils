@@ -19,7 +19,7 @@ YWORKS = "{http://www.yworks.com/xml/graphml}"
 def windows_console_worker(executable, image, section, code_page, result_path):
     """Read actual console cells; a stdout pipe does not exercise CRT console conversion."""
     import ctypes
-    from ctypes import wintypes
+    import ctypes.wintypes as wintypes
 
     class Coord(ctypes.Structure):
         _fields_ = [("X", ctypes.c_short), ("Y", ctypes.c_short)]
