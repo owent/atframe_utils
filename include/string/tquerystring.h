@@ -20,6 +20,7 @@
 #include <config/atframe_utils_build_feature.h>
 
 #include <cstddef>
+#include <locale>
 #include <memory>
 #include <sstream>
 #include <string>
@@ -104,6 +105,7 @@ ATFRAMEWORK_UTILS_API_HEAD_ONLY T query_string_to_any(const char *str) {
   T ret;
   std::stringstream ss;
   ss << str;
+  ss.imbue(std::locale::classic());
   ss >> ret;
   return ret;
 }
@@ -116,6 +118,7 @@ ATFRAMEWORK_UTILS_API_HEAD_ONLY T query_string_to_any(const char *str) {
 template <typename T>
 ATFRAMEWORK_UTILS_API_HEAD_ONLY std::string any_to_query_string(const T &val) {
   std::stringstream ss;
+  ss.imbue(std::locale::classic());
   ss << val;
   return ss.str();
 }
@@ -528,4 +531,3 @@ class tquerystring : public types::item_object {
   ATFRAMEWORK_UTILS_API types::item_object::ptr_type create_object();
 };
 ATFRAMEWORK_UTILS_NAMESPACE_END
-
