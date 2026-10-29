@@ -37,7 +37,8 @@ static constexpr char kCsvDelimiter[] = ",";
 static constexpr char kLineFeed = '\n';
 static constexpr char kUsageText[] =
     "Usage: ac_automation_benchmark UTF8_WORD_LIST\n"
-    "       ac_automation_benchmark --graph INPUT | --unicode ORACLE | --fuzz\n";
+    "       ac_automation_benchmark --graph INPUT | --unicode ORACLE | --fuzz\n"
+    "       ac_automation_benchmark --scan IMAGE INPUT\n";
 static constexpr char kCarriageReturn = '\r';
 static constexpr char kCsvHeader[] = "operation,median_ms,MiB_per_second\n";
 static constexpr char kMetricInsert[] = "v2_insert";
@@ -123,6 +124,20 @@ static constexpr int kFileArguments = 3;
 static constexpr char kGraphMode[] = "--graph";
 static constexpr char kUnicodeMode[] = "--unicode";
 static constexpr char kFuzzMode[] = "--fuzz";
+static constexpr char kScanMode[] = "--scan";
+static constexpr int kScanArguments = 4;
+static constexpr int kScanInputArgument = 3;
+static constexpr uint64_t kMaximumScanBytes = uint64_t{1} << 30;
+static constexpr uint64_t kScanSampleBytes = uint64_t{32} << 20;
+static constexpr size_t kMaximumScanRepeats = 256;
+static constexpr char kMetricMatchFile[] = "v2_match_file";
+static constexpr char kMetricContainsFile[] = "v2_contains_file";
+static constexpr char kMatchesField[] = " matches=";
+static constexpr char kInputBytesField[] = " input_bytes=";
+static constexpr char kRepeatsField[] = " repeats=";
+static constexpr char kContainsBytesField[] = " contains_bytes=";
+static constexpr char kContainsFoundField[] = " contains_found=";
+static constexpr char kContainsRepeatsField[] = " contains_repeats=";
 static constexpr char kFailed[] = "AC v2 stress validation failed\n";
 static constexpr char kSpace = ' ';
 static constexpr uint32_t kInvalidId = UINT32_MAX;
@@ -420,12 +435,97 @@ static bool fuzz() {
             << kLineFeed;
   return accepted > 0 && rejected > 0;
 }
+// Measure already-built images with identical input and match options. File I/O and the
+// first scratch allocation stay outside timing. Repetition targets 32 MiB per sample,
+// capped at 256 scans; an input larger than the target is scanned once per sample.
+static bool scan_file(const char* image_path, const char* input_path) {
+  ac value;
+  std::ifstream image(image_path, std::ios::binary);
+  if (image.fail() || value.load(image) != ac::status::kOk || image.peek() != std::char_traits<char>::eof()) {
+    return false;
+  }
+  std::ifstream input(input_path, std::ios::binary | std::ios::ate);
+  auto length = input.tellg();
+  if (length <= 0 || static_cast<uint64_t>(length) > kMaximumScanBytes) {
+    return false;
+  }
+  std::string text(static_cast<size_t>(length), '\0');
+  input.seekg(0);
+  if (input.read(&text[0], static_cast<std::streamsize>(text.size())).fail()) {
+    return false;
+  }
+  uint64_t checksum = 0;
+  ac::match_context context;
+  auto expected = value.match(text, count_hit, &checksum, ac::match_options{}, &context);
+  if (expected.code != ac::status::kOk || expected.bytes_consumed != text.size()) {
+    return false;
+  }
+  size_t repeats = static_cast<size_t>(
+      (std::min)(static_cast<uint64_t>(kMaximumScanRepeats), (kScanSampleBytes + text.size() - 1) / text.size()));
+  bool valid = true;
+  double duration = median([&] {
+    for (size_t i = 0; i < repeats; ++i) {
+      auto report = value.match(text, count_hit, &checksum, ac::match_options{}, &context);
+      if (report.code != ac::status::kOk || report.bytes_consumed != text.size() ||
+          report.matches != expected.matches) {
+        valid = false;
+      }
+    }
+  });
+  if (!valid) {
+    return false;
+  }
+  bool expected_found = false;
+  auto expected_contains = value.contains(text, expected_found);
+  if (expected_contains.code != ac::status::kOk || expected_contains.bytes_consumed == 0) {
+    return false;
+  }
+  size_t contains_repeats = static_cast<size_t>(
+      (std::min)(static_cast<uint64_t>(kMaximumScanRepeats),
+                 (kScanSampleBytes + expected_contains.bytes_consumed - 1) / expected_contains.bytes_consumed));
+  double contains_duration = median([&] {
+    for (size_t i = 0; i < contains_repeats; ++i) {
+      bool found = false;
+      auto report = value.contains(text, found);
+      if (report.code != ac::status::kOk || report.bytes_consumed != expected_contains.bytes_consumed ||
+          found != expected_found) {
+        valid = false;
+      }
+      checksum += report.bytes_consumed;
+    }
+  });
+  if (!valid) {
+    return false;
+  }
+  auto stats = value.get_statistics();
+  std::cout << std::fixed << std::setprecision(kOutputDecimalPlaces) << kCsvHeader;
+  print(kMetricMatchFile, duration, text.size() * repeats);
+  // contains() can stop before the end; report throughput only for bytes actually consumed.
+  print(kMetricContainsFile, contains_duration, expected_contains.bytes_consumed * contains_repeats);
+  std::cout << kNodesField << stats.nodes << kKeywordsField << stats.keywords << kSymbolsField << stats.symbols
+            << kPayloadBytesField << stats.payload_bytes << kInputBytesField << text.size() << kRepeatsField << repeats
+            << kMatchesField << expected.matches << kContainsBytesField << expected_contains.bytes_consumed
+            << kContainsFoundField << expected_found << kContainsRepeatsField << contains_repeats
+            << kScratchCapacityField << context.capacity() << kChecksumField << checksum << kLineFeed;
+  return true;
+}
 }  // namespace
 
 int main(int argc, char* argv[]) {
   // Validation modes share this executable with the original external-word-list benchmark.
   if (argc >= kModeOnlyArguments) {
     gsl::string_view mode(argv[kModeArgument]);
+    if (mode == kScanMode) {
+      if (argc != kScanArguments) {
+        std::cerr << kUsageText;
+        return kExitInputFailure;
+      }
+      bool valid = scan_file(argv[kFileArgument], argv[kScanInputArgument]);
+      if (!valid) {
+        std::cerr << kFailed;
+      }
+      return valid ? kExitSuccess : kExitValidationFailure;
+    }
     if (mode == kGraphMode || mode == kUnicodeMode || mode == kFuzzMode) {
       bool valid = false;
       if (mode == kFuzzMode && argc == kModeOnlyArguments) {

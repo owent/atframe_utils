@@ -2629,3 +2629,535 @@ CASE_TEST(ac_automation_v2, late_tokenizer_failures_rollback_insertions_and_vect
     expect_hits(next, hits, 2);
   }
 }
+
+namespace {
+static uint32_t add_boundary(ac& value, const char* members, ac::boundary_mode mode = ac::boundary_mode::kExcludeSet,
+                             bool edge = true) {
+  std::vector<gsl::string_view> tokens;
+  for (const char* p = members; *p != '\0'; ++p) {
+    tokens.emplace_back(p, 1);
+  }
+  ac::boundary_rule rule;
+  rule.mode = mode;
+  rule.tokens = gsl::span<const gsl::string_view>(tokens.data(), tokens.size());
+  rule.match_input_edge = edge;
+  uint32_t id = 0;
+  CASE_EXPECT_TRUE(value.add_boundary_rule(rule, &id) == ac::status::kOk);
+  return id;
+}
+
+static bool boundary_found(const ac& value, gsl::string_view text, bool expected,
+                           const ac::match_options& options = ac::match_options()) {
+  bool found = false;
+  auto report = value.contains(text, found, options);
+  CASE_EXPECT_TRUE(report.code == ac::status::kOk);
+  CASE_EXPECT_EQ(expected, found);
+  std::vector<ac::match_t> hits;
+  report = value.match(text, hits, options);
+  CASE_EXPECT_TRUE(report.code == ac::status::kOk);
+  CASE_EXPECT_EQ(expected, !hits.empty());
+  return report.code == ac::status::kOk && expected == !hits.empty();
+}
+
+struct ATFW_UTIL_SYMBOL_LOCAL boundary_tokenizer_state {
+  const char* base;
+  std::vector<size_t> calls;
+};
+
+static ac::token_result boundary_counted_token(gsl::string_view text, void* data) {
+  auto& state = *static_cast<boundary_tokenizer_state*>(data);
+  size_t index = static_cast<size_t>(text.data() - state.base);
+  if (index >= state.calls.size() || ++state.calls[index] != 1) {
+    return {ac::token_status::kValid, 0};
+  }
+  return ac::next_utf8(text);
+}
+}  // namespace
+
+CASE_TEST(ac_automation_v2, boundary_membership_and_sides) {
+  static constexpr char kLetters[] = "abcdefghijklmnopqrstuvwxyz";
+  static constexpr char kAlphaNumeric[] = "abcdefghijklmnopqrstuvwxyz0123456789";
+  const char* inputs[] = {"smile", "sm9", "sm_", "sm中", "smé", "sm ile", "sm", "wesm9"};
+  const bool expected[][8] = {{false, true, true, true, true, true, true, true},
+                              {true, true, false, false, false, false, true, true},
+                              {false, false, true, true, true, true, true, false}};
+  for (size_t mode = 0; mode < 3; ++mode) {
+    ac value;
+    uint32_t id = add_boundary(value, mode == 0 ? kLetters : kAlphaNumeric,
+                               mode == 1 ? ac::boundary_mode::kIncludeSet : ac::boundary_mode::kExcludeSet);
+    if (id == 0) {
+      return;
+    }
+    ac::keyword_options word;
+    word.right_boundary = id;
+    CASE_EXPECT_TRUE(value.insert_keyword("sm", word) == ac::status::kOk);
+    CASE_EXPECT_TRUE(value.build() == ac::status::kOk);
+    for (size_t i = 0; i < 8; ++i) {
+      boundary_found(value, inputs[i], expected[mode][i]);
+    }
+    CASE_EXPECT_EQ(id, value.get_keyword_options(0).right_boundary);
+  }
+  for (bool both : {false, true}) {
+    ac value;
+    uint32_t id = add_boundary(value, kLetters);
+    ac::keyword_options word;
+    word.left_boundary = id;
+    word.right_boundary = both ? id : 0;
+    CASE_EXPECT_TRUE(value.insert_keyword("sm", word) == ac::status::kOk);
+    CASE_EXPECT_TRUE(value.build() == ac::status::kOk);
+    boundary_found(value, "wesm9", false);
+    boundary_found(value, "smile", !both);
+    boundary_found(value, "9sm9", true);
+    boundary_found(value, "中sm_", true);
+    boundary_found(value, "sm", true);
+  }
+}
+
+CASE_TEST(ac_automation_v2, boundary_normalization_skip_and_original_ranges) {
+  ac value;
+  uint32_t id = add_boundary(value, "abcdefghijklmnopqrstuvwxyz");
+  CASE_EXPECT_TRUE(value.set_nocase(true) == ac::status::kOk);
+  const ac::replacement_rule aliases[] = {{"é", "j"}, {"j", "i"}, {"壹", "一"}, {"e", "9"}, {"q", "_"}, {"_", "q"}};
+  CASE_EXPECT_TRUE(value.set_replacements(aliases) == ac::status::kOk);
+  CASE_EXPECT_TRUE(value.set_skip("-") == ac::status::kOk);
+  ac::keyword_options word;
+  word.left_boundary = id;
+  word.right_boundary = id;
+  CASE_EXPECT_TRUE(value.insert_keyword("sm", word) == ac::status::kOk);
+  CASE_EXPECT_TRUE(value.build() == ac::status::kOk);
+  boundary_found(value, "sméle", false);
+  boundary_found(value, "SMILE", false);
+  boundary_found(value, "smqle", true);  // Cycle q -> _ -> q resolves to _, outside a-z.
+  boundary_found(value, "sme", true);    // Class e stays e: its replacement 9 is outside a-z.
+  boundary_found(value, "x-sm-ile", true);
+  boundary_found(value, "-sm-", true);
+  std::vector<ac::match_t> hits;
+  auto report = value.match("x-s-m-ile", hits);
+  CASE_EXPECT_TRUE(report.code == ac::status::kOk);
+  CASE_EXPECT_EQ(static_cast<size_t>(1), hits.size());
+  if (hits.size() == 1) {
+    CASE_EXPECT_EQ(static_cast<size_t>(2), hits[0].start);
+    CASE_EXPECT_EQ(static_cast<size_t>(3), hits[0].length);
+  }
+}
+
+CASE_TEST(ac_automation_v2, boundary_rejection_preserves_suffix_and_nonoverlap_state) {
+  ac value;
+  uint32_t id = add_boundary(value, "abcdefghijklmnopqrstuvwxyz");
+  ac::keyword_options right;
+  right.right_boundary = id;
+  CASE_EXPECT_TRUE(value.insert_keyword("sm", right) == ac::status::kOk);
+  CASE_EXPECT_TRUE(value.insert_keyword("mile") == ac::status::kOk);
+  CASE_EXPECT_TRUE(value.build() == ac::status::kOk);
+  ac::match_options options;
+  options.max_matches = 1;
+  ac::match_t slot;
+  auto report = value.match("smile", gsl::span<ac::match_t>(&slot, 1), options);
+  CASE_EXPECT_TRUE(report.code == ac::status::kOk);
+  CASE_EXPECT_EQ(static_cast<size_t>(1), report.matches);
+  CASE_EXPECT_EQ(static_cast<size_t>(1), slot.start);
+  CASE_EXPECT_TRUE(slot.keyword == "mile");
+  bool found = false;
+  report = value.contains("smile", found);
+  CASE_EXPECT_TRUE(found);
+  CASE_EXPECT_EQ(static_cast<size_t>(5), report.bytes_consumed);
+  ac suffix;
+  uint32_t left_id = add_boundary(suffix, "abcdefghijklmnopqrstuvwxyz");
+  ac::keyword_options left;
+  left.left_boundary = left_id;
+  CASE_EXPECT_TRUE(suffix.insert_keyword("asm", left) == ac::status::kOk);
+  CASE_EXPECT_TRUE(suffix.insert_keyword("sm") == ac::status::kOk);
+  CASE_EXPECT_TRUE(suffix.build() == ac::status::kOk);
+  std::vector<ac::match_t> hits;
+  report = suffix.match("xasm", collect_hit, &hits);
+  CASE_EXPECT_TRUE(report.code == ac::status::kOk);
+  CASE_EXPECT_EQ(static_cast<size_t>(1), hits.size());
+  if (hits.size() == 1) {
+    CASE_EXPECT_EQ(static_cast<size_t>(2), hits[0].start);
+    CASE_EXPECT_TRUE(hits[0].keyword == "sm");
+  }
+}
+
+CASE_TEST(ac_automation_v2, boundary_lookahead_is_cached_and_not_consumed) {
+  ac value;
+  uint32_t id = add_boundary(value, "abcdefghijklmnopqrstuvwxyz");
+  ac::keyword_options word;
+  word.right_boundary = id;
+  CASE_EXPECT_TRUE(value.insert_keyword("sm", word) == ac::status::kOk);
+  CASE_EXPECT_TRUE(value.insert_keyword("ile") == ac::status::kOk);
+  CASE_EXPECT_TRUE(value.build() == ac::status::kOk);
+  std::string input = "sm-ile";
+  for (bool limit : {true, false}) {
+    boundary_tokenizer_state state{input.data(), std::vector<size_t>(input.size(), 0)};
+    ac::match_options options;
+    options.tokens = ac::tokenizer(boundary_counted_token, &state);
+    options.max_matches = limit ? 1 : 0;
+    std::vector<ac::match_t> hits;
+    auto report = value.match(input, hits, options);
+    CASE_EXPECT_TRUE(report.code == ac::status::kOk);
+    CASE_EXPECT_EQ(static_cast<size_t>(limit ? 1 : 2), hits.size());
+    CASE_EXPECT_EQ(static_cast<size_t>(limit ? 2 : 6), report.bytes_consumed);
+    CASE_EXPECT_EQ(static_cast<size_t>(1), state.calls[2]);
+    CASE_EXPECT_EQ(static_cast<size_t>(limit ? 0 : 1), state.calls[3]);
+  }
+  ac::match_options options;
+  options.allow_overlap = true;
+  std::vector<ac::match_t> hits;
+  auto report = value.match("sm9sm_", hits, options);
+  CASE_EXPECT_TRUE(report.code == ac::status::kOk);
+  CASE_EXPECT_EQ(static_cast<size_t>(2), hits.size());
+}
+
+CASE_TEST(ac_automation_v2, boundary_edges_invalid_encoding_and_bad_tokenizers) {
+  ac value;
+  uint32_t id = add_boundary(value, "", ac::boundary_mode::kExcludeSet, false);
+  ac::keyword_options word;
+  word.left_boundary = id;
+  word.right_boundary = id;
+  CASE_EXPECT_TRUE(value.insert_keyword("sm", word) == ac::status::kOk);
+  CASE_EXPECT_TRUE(value.build() == ac::status::kOk);
+  boundary_found(value, "sm", false);
+  boundary_found(value, " sm ", true);
+  std::string invalid_left("\xffsm ");
+  std::string invalid_right(" sm\xff", 4);
+  boundary_found(value, invalid_left, false);
+  boundary_found(value, invalid_right, false);
+  boundary_found(value, std::string("\xff sm "), true);
+  ac::match_options options;
+  options.invalid_input = ac::invalid_input_policy::kReject;
+  bool found = true;
+  auto report = value.contains(invalid_right, found, options);
+  CASE_EXPECT_TRUE(report.code == ac::status::kInvalidEncoding);
+  CASE_EXPECT_FALSE(found);
+  CASE_EXPECT_EQ(static_cast<size_t>(3), report.bytes_consumed);
+  for (auto next : {bad_zero, bad_range, bad_max_count, bad_state}) {
+    options.tokens = ac::tokenizer(next);
+    report = value.contains("sm_", found, options);
+    CASE_EXPECT_TRUE(report.code == ac::status::kInvalidTokenizerResult);
+    CASE_EXPECT_FALSE(found);
+  }
+}
+
+CASE_TEST(ac_automation_v2, boundary_opaque_utf16_tokens_and_copy_on_write) {
+  ac value;
+  const char raw_letter[] = {'i', '\0'};
+  gsl::string_view member(raw_letter, sizeof(raw_letter));
+  ac::boundary_rule rule;
+  rule.tokens = gsl::span<const gsl::string_view>(&member, 1);
+  uint32_t id = 0;
+  CASE_EXPECT_TRUE(value.add_boundary_rule(rule, &id) == ac::status::kOk);
+  ac original = value;
+  ac::keyword_options word;
+  word.right_boundary = id;
+  const char raw_word[] = {'s', '\0', 'm', '\0'};
+  gsl::string_view keyword(raw_word, sizeof(raw_word));
+  ac::tokenizer utf16(ac::token_encoding::kUtf16Le);
+  CASE_EXPECT_TRUE(value.insert_keyword(keyword, word, nullptr, utf16) == ac::status::kOk);
+  CASE_EXPECT_TRUE(value.insert_keyword(keyword, nullptr, utf16) == ac::status::kInvalidArgument);
+  uint32_t duplicate = UINT32_MAX;
+  CASE_EXPECT_TRUE(value.insert_keyword(keyword, word, &duplicate, utf16) == ac::status::kAlreadyExists);
+  CASE_EXPECT_EQ(static_cast<uint32_t>(0), duplicate);
+  CASE_EXPECT_TRUE(value.add_boundary_rule(rule) == ac::status::kInvalidState);
+  CASE_EXPECT_TRUE(original.insert_keyword("plain") == ac::status::kOk);
+  CASE_EXPECT_TRUE(original.build() == ac::status::kOk);
+  CASE_EXPECT_TRUE(value.build() == ac::status::kOk);
+  const char raw_input[] = {'s', '\0', 'm', '\0', 'i', '\0'};
+  ac::match_options options;
+  options.tokens = utf16;
+  boundary_found(value, gsl::string_view(raw_input, sizeof(raw_input)), false, options);
+  boundary_found(value, keyword, true, options);
+  std::vector<unsigned char> image;
+  if (!dump_image(value, image)) {
+    return;
+  }
+  ac loaded;
+  CASE_EXPECT_TRUE(loaded.load(bytes(image)) == ac::status::kOk);
+  boundary_found(loaded, gsl::string_view(raw_input, sizeof(raw_input)), false, options);
+  CASE_EXPECT_TRUE(loaded.symbol(UINT32_MAX).empty());
+  CASE_EXPECT_EQ(id, loaded.get_keyword_options(0).right_boundary);
+  CASE_EXPECT_EQ(static_cast<uint32_t>(0), loaded.get_keyword_options(UINT32_MAX).right_boundary);
+}
+
+CASE_TEST(ac_automation_v2, boundary_image_corruption_and_atomic_load) {
+  ac value;
+  uint32_t id = add_boundary(value, "abc");
+  const ac::replacement_rule aliases[] = {{"A", "a"}};
+  CASE_EXPECT_TRUE(value.set_replacements(aliases) == ac::status::kOk);
+  ac::keyword_options word;
+  word.left_boundary = id;
+  word.right_boundary = id;
+  CASE_EXPECT_TRUE(value.insert_keyword("sm", word) == ac::status::kOk);
+  CASE_EXPECT_TRUE(value.build() == ac::status::kOk);
+  std::vector<unsigned char> image;
+  if (!dump_image(value, image)) {
+    return;
+  }
+  CASE_EXPECT_EQ(static_cast<uint16_t>(2), atfw::util::bit::read_le_uint16(image.data() + kHeaderMinorOffset));
+  ac loaded;
+  ac::load_options options;
+  options.verify_semantics = true;
+  CASE_EXPECT_TRUE(loaded.load(bytes(image), options) == ac::status::kOk);
+  boundary_found(loaded, "sm_", true);
+  boundary_found(loaded, "asm_", false);
+  std::vector<unsigned char> redump;
+  CASE_EXPECT_TRUE(loaded.dump(redump) == ac::status::kOk);
+  CASE_EXPECT_TRUE(image == redump);
+  static constexpr uint32_t kRules = 10;
+  static constexpr uint32_t kMembers = 11;
+  static constexpr uint32_t kAssignments = 12;
+  const std::pair<size_t, uint32_t> corruptions[] = {
+      {section_start(image, kRules), UINT32_MAX},
+      {section_start(image, kRules) + 4, UINT32_MAX},
+      {section_start(image, kRules) + 8, UINT32_MAX},
+      {section_start(image, kMembers), 0},
+      {section_start(image, kMembers) + 4, 0},
+      {section_start(image, kAssignments), UINT32_MAX},
+      {section_start(image, kAssignments) + 4, UINT32_MAX},
+      {kHeaderFlagsOffset, kFeatureReplacements},
+  };
+  for (const auto& corrupt : corruptions) {
+    auto broken = image;
+    atfw::util::bit::write_le_uint32(broken.data() + corrupt.first, corrupt.second);
+    resign(broken);
+    CASE_EXPECT_TRUE(loaded.load(bytes(broken), options) == ac::status::kInvalidFormat);
+    boundary_found(loaded, "sm_", true);
+  }
+  auto broken = image;
+  atfw::util::bit::write_le_uint16(broken.data() + kHeaderMinorOffset, 1);
+  resign(broken);
+  CASE_EXPECT_TRUE(loaded.load(bytes(broken)) == ac::status::kInvalidFormat);
+  options.max_memory_bytes = value.get_statistics().payload_bytes;
+  CASE_EXPECT_TRUE(loaded.load(bytes(image), options) == ac::status::kResourceLimit);
+}
+
+CASE_TEST(ac_automation_v2, boundary_randomized_scan_matches_independent_oracle) {
+  ac value;
+  const char* sets[] = {"", "simle", "simle", "09", "simle09"};
+  const bool include[] = {false, false, true, true, false};
+  for (size_t rule = 1; rule < 5; ++rule) {
+    CASE_EXPECT_EQ(static_cast<uint32_t>(rule),
+                   add_boundary(value, sets[rule],
+                                include[rule] ? ac::boundary_mode::kIncludeSet : ac::boundary_mode::kExcludeSet));
+  }
+  CASE_EXPECT_TRUE(value.set_nocase(true) == ac::status::kOk);
+  const ac::replacement_rule aliases[] = {{"j", "i"}};
+  CASE_EXPECT_TRUE(value.set_replacements(aliases) == ac::status::kOk);
+  CASE_EXPECT_TRUE(value.set_skip("-") == ac::status::kOk);
+  const char* words[] = {"sm", "m", "mile", "ism", "ile", "ss", "mi", "im", "s"};
+  std::vector<ac::keyword_options> assignments;
+  for (size_t i = 0; i < 9; ++i) {
+    ac::keyword_options word;
+    word.left_boundary = static_cast<uint32_t>(i % 5);
+    word.right_boundary = static_cast<uint32_t>((i * 3 + 1) % 5);
+    assignments.push_back(word);
+    CASE_EXPECT_TRUE(value.insert_keyword(words[i], word) == ac::status::kOk);
+  }
+  CASE_EXPECT_TRUE(value.build() == ac::status::kOk);
+  std::vector<unsigned char> image;
+  if (!dump_image(value, image)) {
+    return;
+  }
+  ac loaded;
+  CASE_EXPECT_TRUE(loaded.load(bytes(image)) == ac::status::kOk);
+  std::mt19937 random(71029);
+  static constexpr char kAlphabet[] = "sSmMiIlLeE09-_j";
+  ac::match_context context;
+  for (size_t trial = 0; trial < 500; ++trial) {
+    std::string input;
+    for (size_t i = 0, count = random() % 80; i < count; ++i) {
+      input.push_back(kAlphabet[random() % (sizeof(kAlphabet) - 1)]);
+    }
+    std::string canonical = input;
+    for (auto& token : canonical) {
+      if (token >= 'A' && token <= 'Z') {
+        token = static_cast<char>(token + ('a' - 'A'));
+      }
+      if (token == 'j') {
+        token = 'i';
+      }
+    }
+    auto accepts = [&](uint32_t rule, size_t adjacent) {
+      if (rule == 0 || adjacent == SIZE_MAX || adjacent == canonical.size()) {
+        return true;
+      }
+      bool member = std::strchr(sets[rule], canonical[adjacent]) != nullptr;
+      return include[rule] ? member : !member;
+    };
+    std::vector<ac::match_t> candidates;
+    for (size_t start = 0; start < canonical.size(); ++start) {
+      if (canonical[start] == '-') {
+        continue;
+      }
+      for (size_t id = 0; id < 9; ++id) {
+        if (!accepts(assignments[id].left_boundary, start == 0 ? SIZE_MAX : start - 1)) {
+          continue;
+        }
+        std::string word(words[id]);
+        size_t matched = 0;
+        for (size_t end = start; end < canonical.size(); ++end) {
+          if (canonical[end] == '-') {
+            continue;
+          }
+          if (canonical[end] != word[matched++]) {
+            break;
+          }
+          if (matched == word.size()) {
+            if (accepts(assignments[id].right_boundary, end + 1)) {
+              candidates.push_back(ac::match_t{start, end - start + 1, static_cast<uint32_t>(id), words[id]});
+            }
+            break;
+          }
+        }
+      }
+    }
+    std::sort(candidates.begin(), candidates.end(), [](const ac::match_t& a, const ac::match_t& b) {
+      size_t a_end = a.start + a.length;
+      size_t b_end = b.start + b.length;
+      return a_end < b_end || (a_end == b_end && a.keyword.size() > b.keyword.size());
+    });
+    for (bool overlap : {false, true}) {
+      ac::match_options options;
+      options.allow_overlap = overlap;
+      options.max_matches = trial % 2 == 0 ? 3 : 0;
+      std::vector<ac::match_t> expected;
+      size_t occupied = 0;
+      for (const auto& candidate : candidates) {
+        if (!overlap && candidate.start < occupied) {
+          continue;
+        }
+        expected.push_back(candidate);
+        occupied = candidate.start + candidate.length;
+        if (options.max_matches > 0 && expected.size() == options.max_matches) {
+          break;
+        }
+      }
+      std::vector<ac::match_t> hits;
+      auto report = (trial % 2 == 0 ? value : loaded).match(input, hits, options, &context);
+      CASE_EXPECT_TRUE(report.code == ac::status::kOk);
+      if (!expect_hits(expected, hits, input.size())) {
+        return;
+      }
+      bool found = false;
+      report = loaded.contains(input, found, options);
+      CASE_EXPECT_TRUE(report.code == ac::status::kOk);
+      CASE_EXPECT_EQ(!expected.empty(), found);
+    }
+  }
+}
+
+CASE_TEST(ac_automation_v2, boundary_bad_lookahead_rolls_back_vector_and_validates_configuration) {
+  ac value;
+  ac::boundary_rule invalid;
+  invalid.mode = static_cast<ac::boundary_mode>(-1);
+  uint32_t unchanged = UINT32_MAX;
+  CASE_EXPECT_TRUE(value.add_boundary_rule(invalid, &unchanged) == ac::status::kInvalidArgument);
+  CASE_EXPECT_EQ(UINT32_MAX, unchanged);
+  gsl::string_view empty;
+  invalid.mode = ac::boundary_mode::kIncludeSet;
+  invalid.tokens = gsl::span<const gsl::string_view>(&empty, 1);
+  CASE_EXPECT_TRUE(value.add_boundary_rule(invalid) == ac::status::kInvalidArgument);
+  uint32_t id = add_boundary(value, "abcdefghijklmnopqrstuvwxyz");
+  ac::keyword_options word;
+  word.right_boundary = UINT32_MAX;
+  CASE_EXPECT_TRUE(value.insert_keyword("sm", word) == ac::status::kInvalidArgument);
+  word.right_boundary = id;
+  CASE_EXPECT_TRUE(value.insert_keyword("sm", word) == ac::status::kOk);
+  CASE_EXPECT_TRUE(value.build() == ac::status::kOk);
+  std::string input = "sm_";
+  boundary_tokenizer_state state{input.data(), {0, 0, 1}};
+  ac::match_options options;
+  options.tokens = ac::tokenizer(boundary_counted_token, &state);
+  std::vector<ac::match_t> hits(1, ac::match_t{0, 1, 0, "sentinel"});
+  auto report = value.match(input, hits, options);
+  CASE_EXPECT_TRUE(report.code == ac::status::kInvalidTokenizerResult);
+  CASE_EXPECT_EQ(static_cast<size_t>(0), report.matches);
+  CASE_EXPECT_EQ(static_cast<size_t>(2), report.bytes_consumed);
+  CASE_EXPECT_EQ(static_cast<size_t>(1), hits.size());
+  CASE_EXPECT_TRUE(hits[0].keyword == "sentinel");
+}
+
+namespace {
+static ac::token_result boundary_framed_token(gsl::string_view input, void*) {
+  // This custom format is one byte X followed by one opaque four-byte token.
+  static constexpr size_t kFrameBytes = 5;
+  return {ac::token_status::kValid, input.size() == kFrameBytes ? 1 : input.size()};
+}
+}  // namespace
+
+CASE_TEST(ac_automation_v2, boundary_rule_and_symbol_ids_exceed_sixteen_bits) {
+  static constexpr uint32_t kCount = 70000;
+  ac value;
+  ac::boundary_rule rule;
+  uint32_t id = 0;
+  for (uint32_t i = 0; i < kCount; ++i) {
+    auto code = value.add_boundary_rule(rule, &id);
+    CASE_EXPECT_TRUE(code == ac::status::kOk);
+    if (code != ac::status::kOk) {
+      return;
+    }
+  }
+  CASE_EXPECT_EQ(kCount, id);
+  std::vector<std::string> owned;
+  owned.reserve(kCount);
+  for (uint32_t i = 0; i < kCount; ++i) {
+    std::string token(sizeof(uint32_t), '\0');
+    atfw::util::bit::write_le_uint32(reinterpret_cast<unsigned char*>(&token[0]), i);
+    owned.push_back(std::move(token));
+  }
+  std::vector<gsl::string_view> tokens;
+  for (const auto& token : owned) {
+    tokens.emplace_back(token);
+  }
+  rule.mode = ac::boundary_mode::kIncludeSet;
+  rule.tokens = gsl::span<const gsl::string_view>(tokens.data(), tokens.size());
+  CASE_EXPECT_TRUE(value.add_boundary_rule(rule, &id) == ac::status::kOk);
+  CASE_EXPECT_EQ(kCount + 1, id);
+  ac::keyword_options word;
+  word.left_boundary = kCount;
+  word.right_boundary = id;
+  CASE_EXPECT_TRUE(value.insert_keyword("X", word) == ac::status::kOk);
+  CASE_EXPECT_TRUE(value.build() == ac::status::kOk);
+  CASE_EXPECT_EQ(kCount + 1, value.get_statistics().boundary_rules);
+  CASE_EXPECT_EQ(kCount, value.get_statistics().boundary_tokens);
+  CASE_EXPECT_TRUE(value.get_statistics().symbols > UINT16_MAX);
+  std::vector<unsigned char> image;
+  if (!dump_image(value, image)) {
+    return;
+  }
+  ac loaded;
+  CASE_EXPECT_TRUE(loaded.load(bytes(image)) == ac::status::kOk);
+  CASE_EXPECT_EQ(id, loaded.get_keyword_options(0).right_boundary);
+  ac::match_options options;
+  options.tokens = ac::tokenizer(boundary_framed_token);
+  boundary_found(loaded, "X" + owned.back(), true, options);
+  std::string unknown(sizeof(uint32_t), '\0');
+  atfw::util::bit::write_le_uint32(reinterpret_cast<unsigned char*>(&unknown[0]), kCount);
+  boundary_found(loaded, "X" + unknown, false, options);
+}
+
+CASE_TEST(ac_automation_v2, boundary_every_truncated_image_fails_without_publishing) {
+  ac value;
+  uint32_t id = add_boundary(value, "abc");
+  ac::keyword_options word;
+  word.right_boundary = id;
+  CASE_EXPECT_TRUE(value.insert_keyword("sm", word) == ac::status::kOk);
+  CASE_EXPECT_TRUE(value.build() == ac::status::kOk);
+  std::vector<unsigned char> image;
+  if (!dump_image(value, image)) {
+    return;
+  }
+  ac loaded = value;
+  for (size_t length = 0; length < image.size(); ++length) {
+    std::unique_ptr<unsigned char[]> exact(length > 0 ? new unsigned char[length] : nullptr);
+    if (length > 0) {
+      std::memcpy(exact.get(), image.data(), length);
+    }
+    auto code = loaded.load(gsl::span<const unsigned char>(exact.get(), length));
+    CASE_EXPECT_TRUE(code != ac::status::kOk);
+    if (code == ac::status::kOk) {
+      return;
+    }
+  }
+  boundary_found(loaded, "sm_", true);
+  boundary_found(loaded, "sma", false);
+}

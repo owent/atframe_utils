@@ -36,11 +36,66 @@ ac_automation_tool visualize --input words.ac --output words.graphml --format gr
 | `--nocase` / `--ignore-case` | 内置单字节 ASCII A–Z 折叠；不是完整 Unicode case folding |
 | `--case-fold-file FILE` | 每行两个十六进制 token，例如 `4100 6100`；要求同时指定 `--nocase` |
 | `--replacement-file FILE` | 每行两个十六进制 token，源在前、目标在后；不要求 `--nocase`，允许空行 |
+| `--boundary-file FILE` | 共享边界规则，每行显式指定 ID；词表左右字段引用该 ID |
+| `--keyword-boundaries` | 词表使用 `左规则ID<TAB>右规则ID<TAB>词条`；0 表示该侧不限制 |
 | `--skip-space` | Unicode White_Space，25 个码位 |
 | `--skip-punctuation` | 保守白名单中的 P*，365 个码位 |
 | `--skip-symbols` | 保守白名单中的 S*，2382 个码位 |
 | `--skip-invisible` | Cc 及有限格式控制符，81 个码位；不展开整个 Default_Ignorable_Code_Point |
 | `--skip-file FILE` | 去开头 BOM 后按 UTF-8 拆成 skip token；包括空格和换行，不做 trim |
+
+## 左右边界
+
+边界是零宽断言，检查关键词旁边的一个原始 token，先 fold/replacement，再判断集合，最后处理 skip。
+左右规则独立；断言不消耗相邻字符，也不扩大命中字节范围。规则可以包含或排除任意不透明 token 集合，
+不采用 Unicode 单词边界或正则 `\b` 的定义。集合成员表示最终 token 的字节值，自身不做 fold/replacement。
+
+例如 `boundaries.txt`：
+
+```text
+10 exclude edge a-z A-Z
+20 include no-edge a-z 0-9 text:中 hex:5F
+30 exclude edge a-z 0-9
+```
+
+每行依次为十进制 ID、`include`/`exclude`、`edge`/`no-edge` 和零个或多个成员说明。
+ID 范围为 1..4294967294，允许乱序和稀疏编号；0 保留给“不限制”。重复、越界 ID 及不存在的引用会报错。
+`edge` 允许输入开头或结尾，`no-edge` 拒绝输入边缘，与成员集合独立。空 include 集只允许已启用的输入边缘；
+空 exclude 集允许任意合法相邻 token。非法编码不能满足任何边界规则。
+成员说明支持升序 ASCII 范围 `a-z`、`A-Z`、`0-9`，`text:中_` 按 UTF-8 拆成多个 token，
+`hex:5F` 将十六进制字节整体作为一个 token；空白 token 使用 `hex:20` 等形式。规则文件忽略空行，
+没有行尾注释。`a-z` 只包含小写，可显式加入 `A-Z` 或启用 `--nocase`。
+
+工具按输入 ID 递增排序并映射到连续内部 ID，避免稀疏编号产生空洞。原始 ID 是构建输入的引用标签，
+不写入存储；dump/print 使用内部 ID。例如上述 10、20、30 编译为 1、2、3。规则行重排不改变编译结果。
+连续输入 ID 1..N 与内部 ID 一致。旧的不带 ID 文件仍按非空行从 1 编号，但两种格式不能在同一文件中混用。
+
+带规则的词表中，每行三个字段用实际 Tab 分隔，例如 `0<TAB>10<TAB>sm`，然后构建：
+
+```text
+ac_automation_tool build --input words.tsv --output words.ac --boundary-file boundaries.txt --keyword-boundaries --skip-punctuation
+ac_automation_tool print --input words.ac --section boundaries --format json
+ac_automation_tool print --input words.ac --section keywords
+```
+
+右边界排除字母时，`smile` 不命中，`sm ile`、`wesm9`、`smé`、`sm中`、`sm_` 命中；即使 `-` 在 skip 中，
+`sm-ile` 也命中。配置 `é → i` 后，`sméle` 的相邻 token 是 `i`，不命中。
+设置左边界后，`wesm9` 不命中；左右都设置时要求两侧同时成立。若只允许数字作为相邻边界，使用 `include … 0-9`；
+若排除字母数字，使用 `exclude … a-z A-Z 0-9`。
+
+普通词表保持每行一词，不解释 `<boundary>` 等标记；只有显式启用 `--keyword-boundaries` 才解析字段。
+相同规范化词条的左右规则 ID 必须一致，冲突会拒绝构建，避免导入顺序意外取消限制。
+`print` 的关键词记录输出 `left_boundary`/`right_boundary`；`boundaries` 输出模式、输入边缘策略和完整成员。
+所有可视化格式在命中节点标签中显示 `left=ID`/`right=ID`，规则详情由 `print` 查询。
+
+库调用先 `add_boundary_rule()` 获取 ID，再将其写入 `keyword_options`，传给 `insert_keyword()` 重载。
+规则必须在首次成功插入前配置；UTF-16 和自定义 tokenizer 可直接配置对应的不透明字节 token，不做转码。
+查询在命中提交前验证断言，失败后继续后缀输出和后续文本；不会消耗命中限额或触发不重叠状态重置。
+右侧前瞻最多缓存一个 token，同一 token 不会重复调用自定义 tokenizer；提前返回的 `bytes_consumed` 不包含前瞻字节。
+
+边界配置写入 2.2 镜像的必需特性位和第 10–12 节；旧读取器会拒绝该镜像。
+没有边界配置时继续输出原有 2.0/2.1 格式。Node/Keyword 仍为 16 字节；共享规则和成员单独保存，
+每个关键词的左右规则共 8 字节，仅有边界配置时存在。精确布局及校验约束见公共头文件。
 
 ## 字符替换
 
@@ -112,13 +167,14 @@ clang-format --dry-run --Werror unicode_ranges.h
 
 | `--section` | 内容 |
 | --- | --- |
-| `all`（默认） | 以下全部六类内容 |
-| `config` | 当前 dump 格式版本、节点/词条/字符数量、最长词 token 数、payload/index 字节数、nocase、替换开关及 skip/fold/replacement 数量 |
+| `all`（默认） | 以下全部七类内容 |
+| `config` | 当前 dump 格式版本、节点/词条/字符数量、最长词 token 数、payload/index 字节数、nocase、替换开关及 skip/fold/replacement/boundary 数量 |
 | `keywords` | 按 keyword ID 输出完整原始词条，保留第一条插入时的大小写、标点及词中 skip 字节 |
 | `skips` | 实际保存 skip bit 的 canonical token；包含只用于配置、未出现在词条里的 token |
 | `folds` | 非恒等的有效折叠规则，包含 source/target ID 和两端原始字节；包括内置 ASCII 规则 |
 | `replacements` | fold 后源 token 到最终目标的非恒等替换；链已展开，源 ID 已去重 |
 | `symbols` | 完整字符表，包含 symbol ID、folded ID、canonical ID、该 ID 的 skip bit 及原始 token |
+| `boundaries` | 按规则 ID 输出 include/exclude 模式、输入边缘匹配策略及成员 token 列表 |
 
 每个字节串同时打印 `byte_length`、`text` 和 `hex`。`text` 使用 JSON 字符串转义规则，保留基本多文种平面的可见 UTF-8，
 转义引号、反斜杠、空白、控制字符、不可见字符、私用区和 Unicode 非字符；辅助平面字符使用 `\uXXXX\uXXXX`
@@ -135,7 +191,7 @@ Windows 的真实控制台使用 Unicode 输出接口，避免把 UTF-8 字节�
 打印结果描述冻结后的实际配置。匹配先折叠和替换再检查 skip，`symbols.skipped` 只表示该 ID 自身的存储位，
 来源 token 是否被跳过需查看其 `canonical_id` 对应的 skip bit。dump 不保留 `--skip-space` 等选项来源、
 已禁用的自定义 fold、替换规则的原始顺序/链、tokenizer/编码或查询时的重叠、非法输入处理及命中数量设置。
-`config.version` 表示当前写出格式（无替换为 2.0，有替换为 2.1）；加载兼容的未来 minor 版本也按当前已知表展示。
+`config.version` 表示当前写出格式（有边界规则为 2.2；否则有替换为 2.1；否则为 2.0）；加载兼容的未来 minor 版本也按当前已知表展示。
 
 ## 可视化范围
 
@@ -176,6 +232,7 @@ Windows 的真实控制台使用 Unicode 输出接口，避免把 UTF-8 字节�
 ```text
 python tools/ac_automation/test_tool.py /path/to/ac_automation_tool /path/to/build/_agent_tmp
 ac_automation_benchmark /path/to/external/words.utf8.txt
+ac_automation_benchmark --scan /path/to/words.ac /path/to/query.utf8.txt
 ```
 
 命令行集成测试生成小型临时词表，检查六种格式的完整拓扑与子树、默认 UTF-8、转义、
@@ -191,6 +248,14 @@ Windows 还在隐藏的真实控制台验证 GBK/UTF-8
 报告插入、冻结、7 次测量中位数的匹配和内存 dump/load。
 扫描文本是词表拼接以及 U+10FFFF 未知字符序列，不代表生产文本分布。v1 的选择/输出接口不同，比较数值须结合语义解读。
 磁盘 I/O、峰值 RSS、真实业务流量和不同 CPU 的结果需单独测量。
+
+`--scan IMAGE INPUT` 复用同一个基准程序，加载已构建的普通或带边界模型，对同一份查询文本测量
+callback 匹配和 `contains()`。文件读取、load 和首次 match scratch 分配不计入扫描耗时；每次测量重复扫描，目标为 32 MiB，
+最多重复 256 次，输出 7 次测量的中位数以及单遍命中数、输入大小、重复次数、payload 和校验和。
+match 每遍检查状态、完整消费和稳定的命中计数。contains 使用独立重复次数，检查状态、消费位置及命中状态；
+其吞吐量只使用实际消费字节，不用完整文件长度夸大提前返回的性能。输入必须非空且不超过 1 GiB；镜像使用库默认 load 预算。
+比较时使用相同编译选项和 CPU，交替运行多个批次；规则变化可能改变命中数，因此配置间的耗时差
+同时包含边界判断和不同命中分布的影响。该模式不下载、修改或自动生成词表。
 
 CI 复用同一个 `ac_automation_benchmark`，增加以下验证模式：
 

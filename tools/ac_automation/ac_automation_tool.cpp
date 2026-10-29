@@ -118,6 +118,27 @@ static constexpr char kCommandVerify[] = "verify";
 static constexpr char kCommandVisualize[] = "visualize";
 static constexpr char kOptionCaseFoldFile[] = "--case-fold-file";
 static constexpr char kOptionReplacementFile[] = "--replacement-file";
+static constexpr char kOptionBoundaryFile[] = "--boundary-file";
+static constexpr char kOptionKeywordBoundaries[] = "--keyword-boundaries";
+static constexpr char kBoundaryInclude[] = "include";
+static constexpr char kBoundaryExclude[] = "exclude";
+static constexpr char kBoundaryEdge[] = "edge";
+static constexpr char kBoundaryNoEdge[] = "no-edge";
+static constexpr char kBoundaryHexPrefix[] = "hex:";
+static constexpr char kBoundaryTextPrefix[] = "text:";
+static constexpr uint64_t kInvalidBoundaryRuleId = UINT32_MAX;
+static constexpr uint32_t kNoBoundaryRuleId = 0;
+static constexpr uint32_t kFirstBoundaryRuleId = 1;
+static constexpr char kErrorBoundaryId[] = "invalid boundary rule ID on line ";
+static constexpr char kErrorBoundaryDuplicate[] = "duplicate boundary rule ID: ";
+static constexpr char kErrorBoundaryMixed[] = "cannot mix numbered and unnumbered boundary rules";
+static constexpr char kErrorBoundaryReference[] = "invalid or unknown boundary reference on keyword line ";
+static constexpr char kBoundaryTab = '\t';
+static constexpr char kBoundaryRangeSeparator = '-';
+static constexpr size_t kBoundaryRangeBytes = 3;
+static constexpr size_t kBoundaryRangeLastIndex = 2;
+static constexpr char kBoundaryLeftCaption[] = " left=";
+static constexpr char kBoundaryRightCaption[] = " right=";
 static constexpr char kOptionFormat[] = "--format";
 static constexpr char kOptionHelp[] = "--help";
 static constexpr char kOptionIgnoreCase[] = "--ignore-case";
@@ -146,7 +167,7 @@ static constexpr char kDiagnosticPrefix[] = "ac_automation_tool: ";
 static constexpr char kDiagnosticSeparator[] = ": ";
 static constexpr char kErrorBuild[] = "build failed";
 static constexpr char kErrorConfiguration[] =
-    "invalid skip/fold/replacement configuration or unreadable configuration file";
+    "invalid skip/fold/replacement/boundary configuration or unreadable configuration file";
 static constexpr char kErrorCreateOutput[] = "cannot create temporary output";
 static constexpr char kErrorFoldRequiresNoCase[] = "--case-fold-file requires --nocase";
 static constexpr char kErrorFormat[] = "invalid format";
@@ -202,8 +223,18 @@ static constexpr char kSectionSkips[] = "skips";
 static constexpr char kSectionFolds[] = "folds";
 static constexpr char kSectionReplacements[] = "replacements";
 static constexpr char kSectionSymbols[] = "symbols";
-static constexpr const char* kPrintSections[] = {kSectionConfig, kSectionKeywords,     kSectionSkips,
-                                                 kSectionFolds,  kSectionReplacements, kSectionSymbols};
+static constexpr char kSectionBoundaries[] = "boundaries";
+static constexpr char kFieldBoundaryRules[] = "boundary_rules";
+static constexpr char kFieldBoundaryTokens[] = "boundary_tokens";
+static constexpr char kFieldLeftBoundary[] = "left_boundary";
+static constexpr char kFieldRightBoundary[] = "right_boundary";
+static constexpr char kFieldMode[] = "mode";
+static constexpr char kFieldInputEdge[] = "match_input_edge";
+static constexpr char kFieldMembers[] = "members";
+static constexpr char kBoundaryImageVersion[] = "2.2";
+static constexpr const char* kPrintSections[] = {kSectionConfig,    kSectionKeywords,     kSectionSkips,
+                                                 kSectionFolds,     kSectionReplacements, kSectionSymbols,
+                                                 kSectionBoundaries};
 static constexpr char kFieldVersion[] = "version";
 static constexpr char kImageVersion[] = "2.0";
 static constexpr char kReplacementImageVersion[] = "2.1";
@@ -329,9 +360,11 @@ static constexpr char kUsageText[] =
     "Usage: ac_automation_tool <build|info|print|verify|visualize> --input FILE [options]\n"
     "  build: --output FILE [--nocase|--ignore-case] [--skip-space] [--skip-punctuation]\n"
     "         [--skip-symbols] [--skip-invisible] [--skip-file FILE] [--case-fold-file FILE]\n"
-    "         [--replacement-file FILE]\n"
+    "         [--replacement-file FILE] [--boundary-file FILE] [--keyword-boundaries]\n"
+    "  boundary rows: ID include|exclude edge|no-edge [a-z|text:TOKENS|hex:BYTES ...]\n"
+    "                 IDs may be sparse/out of order; compiled IDs are dense in source-ID order.\n"
     "  verify: [--semantic]\n"
-    "  print: [--section all|config|keywords|skips|folds|replacements|symbols (all)]\n"
+    "  print: [--section all|config|keywords|skips|folds|replacements|symbols|boundaries (all)]\n"
     "         [--format text|json (text)] [--output FILE (stdout)]\n"
     "  visualize: --output FILE --format dot|mermaid|plantuml|d2|nomnoml|graphml\n"
     "             [--max-nodes N (1000000000)] [--root-id N (0)] [--max-depth N (4294967295)]\n"
@@ -435,7 +468,7 @@ static uint32_t display_properties(uint32_t cp) {
   return it != last && it->first <= cp ? it->mask : 0;
 }
 
-static bool trim_line(const std::string& line, gsl::string_view& trimmed) {
+static bool trim_line(gsl::string_view line, gsl::string_view& trimmed) {
   size_t first = line.size();
   size_t end = 0;
   for (size_t pos = 0; pos < line.size();) {
@@ -735,9 +768,167 @@ class ATFW_UTIL_SYMBOL_LOCAL publication {
   bool created_ = false;
 };
 
+struct ATFW_UTIL_SYMBOL_LOCAL boundary_definition {
+  ac::boundary_mode mode = ac::boundary_mode::kExcludeSet;
+  bool match_input_edge = true;
+  std::vector<std::string> tokens;
+};
+
+static bool configure_boundaries(ac& value, const arguments& args, std::map<uint32_t, uint32_t>& boundary_ids) {
+  auto configured = args.values.find(kOptionBoundaryFile);
+  if (configured == args.values.end()) {
+    return true;
+  }
+  std::ifstream input(configured->second, std::ios::binary);
+  if (input.fail()) {
+    return false;
+  }
+  // Source IDs are labels, not vector offsets. Sorting makes explicit files independent
+  // of line order; dense IDs keep frozen storage compact even for UINT32_MAX-1 labels.
+  std::map<uint32_t, boundary_definition> definitions;
+  bool explicit_ids = false;
+  std::string line;
+  size_t lines = 0;
+  while (!std::getline(input, line).fail()) {
+    ++lines;
+    if (lines == 1 && line.compare(0, kUtf8BomBytes, kUtf8Bom) == 0) {
+      line.erase(0, kUtf8BomBytes);
+    }
+    std::istringstream fields(line);
+    std::string first;
+    if ((fields >> first).fail()) {
+      continue;
+    }
+    if (definitions.size() >= kInvalidBoundaryRuleId - kFirstBoundaryRuleId) {
+      return false;
+    }
+    bool numbered = first != kBoundaryInclude && first != kBoundaryExclude;
+    if (!definitions.empty() && numbered != explicit_ids) {
+      fail(kErrorBoundaryMixed);
+      return false;
+    }
+    explicit_ids = numbered;
+    uint64_t source_id = static_cast<uint64_t>(definitions.size()) + kFirstBoundaryRuleId;
+    std::string mode = first;
+    if (numbered) {
+      if (!number(first, source_id) || source_id == kNoBoundaryRuleId || source_id >= kInvalidBoundaryRuleId) {
+        fail(kErrorBoundaryId + std::to_string(lines));
+        return false;
+      }
+      if ((fields >> mode).fail()) {
+        return false;
+      }
+    }
+    std::string edge;
+    if ((fields >> edge).fail() || (mode != kBoundaryInclude && mode != kBoundaryExclude) ||
+        (edge != kBoundaryEdge && edge != kBoundaryNoEdge)) {
+      return false;
+    }
+    boundary_definition definition;
+    definition.mode = mode == kBoundaryInclude ? ac::boundary_mode::kIncludeSet : ac::boundary_mode::kExcludeSet;
+    definition.match_input_edge = edge == kBoundaryEdge;
+
+    std::string specification;
+    while (!(fields >> specification).fail()) {
+      if (specification.compare(0, sizeof(kBoundaryHexPrefix) - 1, kBoundaryHexPrefix) == 0) {
+        std::string decoded;
+        if (!hex_decode(specification.substr(sizeof(kBoundaryHexPrefix) - 1), decoded) || decoded.empty()) {
+          return false;
+        }
+        definition.tokens.push_back(std::move(decoded));
+      } else if (specification.compare(0, sizeof(kBoundaryTextPrefix) - 1, kBoundaryTextPrefix) == 0) {
+        gsl::string_view text(specification);
+        text.remove_prefix(sizeof(kBoundaryTextPrefix) - 1);
+        if (text.empty()) {
+          return false;
+        }
+        for (size_t pos = 0; pos < text.size();) {
+          auto token = ac::next_utf8(text.substr(pos));
+          if (token.state != ac::token_status::kValid) {
+            return false;
+          }
+          definition.tokens.emplace_back(text.data() + pos, token.byte_count);
+          pos += token.byte_count;
+        }
+      } else if (specification.size() == kBoundaryRangeBytes && specification[1] == kBoundaryRangeSeparator &&
+                 static_cast<unsigned char>(specification.front()) <=
+                     static_cast<unsigned char>(specification.back()) &&
+                 static_cast<unsigned char>(specification.back()) < kUtf8SingleByteLimit) {
+        for (unsigned int c = static_cast<unsigned char>(specification.front());
+             c <= static_cast<unsigned char>(specification[kBoundaryRangeLastIndex]); ++c) {
+          definition.tokens.emplace_back(1, static_cast<char>(c));
+        }
+      } else {
+        return false;
+      }
+    }
+
+    if (!definitions.emplace(static_cast<uint32_t>(source_id), std::move(definition)).second) {
+      fail(kErrorBoundaryDuplicate + std::to_string(source_id));
+      return false;
+    }
+  }
+  if (input.bad()) {
+    return false;
+  }
+  for (const auto& entry : definitions) {
+    const auto& definition = entry.second;
+    std::vector<gsl::string_view> tokens;
+    for (const auto& token : definition.tokens) {
+      tokens.emplace_back(token);
+    }
+    ac::boundary_rule rule;
+    rule.mode = definition.mode;
+    rule.match_input_edge = definition.match_input_edge;
+    rule.tokens = gsl::span<const gsl::string_view>(tokens.data(), tokens.size());
+    uint32_t internal_id = kNoBoundaryRuleId;
+    if (!check(value.add_boundary_rule(rule, &internal_id), kSectionBoundaries)) {
+      return false;
+    }
+    boundary_ids.emplace(entry.first, internal_id);
+  }
+  return true;
+}
+
+static bool keyword_boundaries(gsl::string_view& text, ac::keyword_options& options,
+                               const std::map<uint32_t, uint32_t>& boundary_ids) {
+  size_t first = text.find(kBoundaryTab);
+  if (first == gsl::string_view::npos) {
+    return false;
+  }
+  size_t second = text.find(kBoundaryTab, first + 1);
+  if (second == gsl::string_view::npos) {
+    return false;
+  }
+  uint64_t left = 0;
+  uint64_t right = 0;
+  if (!number(std::string(text.data(), first), left) || left >= UINT32_MAX ||
+      !number(std::string(text.data() + first + 1, second - first - 1), right) || right >= UINT32_MAX) {
+    return false;
+  }
+  auto resolve = [&boundary_ids](uint64_t source_id, uint32_t& result) {
+    if (source_id == kNoBoundaryRuleId) {
+      result = kNoBoundaryRuleId;
+      return true;
+    }
+    auto found = boundary_ids.find(static_cast<uint32_t>(source_id));
+    if (found == boundary_ids.end()) {
+      return false;
+    }
+    result = found->second;
+    return true;
+  };
+  if (!resolve(left, options.left_boundary) || !resolve(right, options.right_boundary)) {
+    return false;
+  }
+  auto body = text.substr(second + 1);
+  return trim_line(body, text);
+}
+
 static int build_file(const arguments& args) {
   ac value;
-  if (!configure(value, args)) {
+  std::map<uint32_t, uint32_t> boundary_ids;
+  if (!configure(value, args) || !configure_boundaries(value, args, boundary_ids)) {
     return fail(kErrorConfiguration);
   }
   std::ifstream input(args.values.at(kOptionInput), std::ios::binary);
@@ -762,7 +953,19 @@ static int build_file(const arguments& args) {
       ++ignored;
       continue;
     }
-    auto result = value.insert_keyword(trimmed);
+    ac::keyword_options boundaries;
+    if (args.flags.count(kOptionKeywordBoundaries) > 0) {
+      gsl::string_view annotated = gsl::string_view(line).substr(static_cast<size_t>(trimmed.data() - line.data()));
+      if (!keyword_boundaries(annotated, boundaries, boundary_ids)) {
+        return fail(kErrorBoundaryReference + std::to_string(lines));
+      }
+      trimmed = annotated;
+      if (trimmed.empty()) {
+        ++ignored;
+        continue;
+      }
+    }
+    auto result = value.insert_keyword(trimmed, boundaries);
     if (result == ac::status::kAlreadyExists) {
       ++duplicates;
     } else if (result == ac::status::kEmptyKeyword) {
@@ -1068,7 +1271,9 @@ static void write_configuration(std::ostream& out, const ac& value, bool json) {
   value.visit_symbols(count_configuration, &counts);
   auto stats = value.get_statistics();
   print_record record(out, json);
-  record.text(kFieldVersion, stats.replacements ? kReplacementImageVersion : kImageVersion);
+  record.text(kFieldVersion, stats.boundary_rules > 0
+                                 ? kBoundaryImageVersion
+                                 : (stats.replacements ? kReplacementImageVersion : kImageVersion));
   record.number(kFieldNodes, stats.nodes);
   record.number(kSectionKeywords, stats.keywords);
   record.number(kSectionSymbols, stats.symbols);
@@ -1080,6 +1285,8 @@ static void write_configuration(std::ostream& out, const ac& value, bool json) {
   record.number(kFieldCaseFoldRules, counts.folds);
   record.boolean(kSectionReplacements, stats.replacements);
   record.number(kFieldReplacementRules, counts.replacements);
+  record.number(kFieldBoundaryRules, stats.boundary_rules);
+  record.number(kFieldBoundaryTokens, stats.boundary_tokens);
   record.finish();
 }
 
@@ -1138,6 +1345,46 @@ static bool print_symbol(const ac::symbol_view& symbol, void* data) {
   return printer.output.good();
 }
 
+struct ATFW_UTIL_SYMBOL_LOCAL boundary_printer {
+  std::ostream& output;
+  const ac& value;
+  bool json;
+  bool first = true;
+
+  boundary_printer(std::ostream& out, const ac& model, bool as_json) : output(out), value(model), json(as_json) {}
+};
+
+static bool print_boundary(const ac::boundary_rule_view& rule, void* data) {
+  auto& printer = *static_cast<boundary_printer*>(data);
+  if (printer.json && !printer.first) {
+    printer.output << kJsonItemSeparator;
+  }
+  printer.first = false;
+  print_record record(printer.output, printer.json);
+  record.number(kFieldId, rule.id);
+  record.text(kFieldMode, rule.mode == ac::boundary_mode::kIncludeSet ? kBoundaryInclude : kBoundaryExclude);
+  record.boolean(kFieldInputEdge, rule.match_input_edge);
+  record.key(kFieldMembers);
+  printer.output << kJsonArrayBegin;
+  bool first = true;
+  for (auto id : rule.symbols) {
+    if (!first) {
+      printer.output << kRecordSeparator;
+    }
+    first = false;
+    print_record member(printer.output, printer.json);
+    member.number(kFieldId, id);
+    member.bytes(printer.value.symbol(id));
+    member.finish();
+  }
+  printer.output.put(kArrayEnd);
+  record.finish();
+  if (!printer.json) {
+    printer.output.put(kLineFeed);
+  }
+  return printer.output.good();
+}
+
 static bool print_model(std::ostream& out, const ac& value, gsl::string_view section, bool json) {
   if (json) {
     out << kJsonDocumentBegin;
@@ -1177,10 +1424,18 @@ static bool print_model(std::ostream& out, const ac& value, gsl::string_view sec
         print_record record(out, json);
         record.number(kFieldId, id);
         record.bytes(value.keyword(id));
+        auto boundaries = value.get_keyword_options(id);
+        record.number(kFieldLeftBoundary, boundaries.left_boundary);
+        record.number(kFieldRightBoundary, boundaries.right_boundary);
         record.finish();
         if (!json) {
           out.put(kLineFeed);
         }
+      }
+    } else if (gsl::string_view(name) == kSectionBoundaries) {
+      boundary_printer printer(out, value, json);
+      if (!value.visit_boundary_rules(print_boundary, &printer)) {
+        return false;
       }
     } else {
       symbol_printer printer(out, name, json);
@@ -1240,39 +1495,46 @@ static int print_file(const ac& value, gsl::string_view section, bool json, cons
   return kExitSuccess;
 }
 
-static void write_node_caption(std::ostream& out, const ac::node_view& node) {
+static void write_node_caption(std::ostream& out, const ac::node_view& node, const ac& value) {
   out << kNodeCaptionPrefix << node.id;
   if (node.output_head != UINT32_MAX) {
     out << kOutputCaptionPrefix << node.output_head;
+    auto options = value.get_keyword_options(node.output_head);
+    if (options.left_boundary > 0) {
+      out << kBoundaryLeftCaption << options.left_boundary;
+    }
+    if (options.right_boundary > 0) {
+      out << kBoundaryRightCaption << options.right_boundary;
+    }
   }
 }
 
-static void write_graph_node(std::ostream& out, const ac::node_view& node, graph_format format) {
+static void write_graph_node(std::ostream& out, const ac::node_view& node, graph_format format, const ac& value) {
   if (format == graph_format::kDot) {
     out << kIndentedNodePrefix << node.id << kDotLabelBegin;
-    write_node_caption(out, node);
+    write_node_caption(out, node, value);
     out << kDotStatementEnd;
   } else if (format == graph_format::kMermaid) {
     out << kIndentedNodePrefix << node.id << kMermaidLabelBegin;
-    write_node_caption(out, node);
+    write_node_caption(out, node, value);
     out << kMermaidLabelEnd;
   } else if (format == graph_format::kPlantUml) {
     out << kPlantUmlStateBegin;
-    write_node_caption(out, node);
+    write_node_caption(out, node, value);
     out << kPlantUmlStateAlias << node.id << kLineFeed;
   } else if (format == graph_format::kD2) {
     out << kNodeIdPrefix << node.id << kD2LabelBegin;
-    write_node_caption(out, node);
+    write_node_caption(out, node, value);
     out << kD2LabelEnd;
   } else if (format == graph_format::kNomnoml) {
     out << kNomnomlNodeBegin << node.id << kNomnomlNodeCaption;
-    write_node_caption(out, node);
+    write_node_caption(out, node, value);
     out << kNomnomlNodeEnd;
   } else {
     out << kGraphMlNodeBegin << node.id << kGraphMlLabelBegin;
-    write_node_caption(out, node);
+    write_node_caption(out, node, value);
     out << kGraphMlNodeGraphics;
-    write_node_caption(out, node);
+    write_node_caption(out, node, value);
     out << kGraphMlNodeEnd;
   }
 }
@@ -1334,6 +1596,7 @@ struct ATFW_UTIL_SYMBOL_LOCAL graph_parent {
 struct ATFW_UTIL_SYMBOL_LOCAL graph_writer {
   std::ostream& output;
   const graph_selection& selection;
+  const ac& value;
   graph_format format;
   bool utf8;
   size_t written = 0;
@@ -1342,8 +1605,9 @@ struct ATFW_UTIL_SYMBOL_LOCAL graph_writer {
   // A long chain uses one entry; selected node views and per-node lookup trees are never retained.
   std::deque<graph_parent> parents;
 
-  graph_writer(std::ostream& stream, const graph_selection& graph, graph_format syntax, bool utf8_labels)
-      : output(stream), selection(graph), format(syntax), utf8(utf8_labels) {}
+  graph_writer(std::ostream& stream, const graph_selection& graph, const ac& model, graph_format syntax,
+               bool utf8_labels)
+      : output(stream), selection(graph), value(model), format(syntax), utf8(utf8_labels) {}
 };
 
 static bool write_selected_node(const ac::node_view& node, void* data) {
@@ -1361,7 +1625,7 @@ static bool write_selected_node(const ac::node_view& node, void* data) {
   while (!writer.parents.empty() && node.id >= writer.parents.front().end) {
     writer.parents.pop_front();
   }
-  write_graph_node(writer.output, node, writer.format);
+  write_graph_node(writer.output, node, writer.format, writer.value);
   if (node.id != writer.selection.root) {
     if (writer.parents.empty() || node.id < writer.parents.front().begin) {
       return false;
@@ -1400,7 +1664,7 @@ static bool write_graph(std::ostream& out, const ac& value, const graph_selectio
   } else {
     out << kGraphMlPreamble;
   }
-  graph_writer writer(out, graph, format, utf8);
+  graph_writer writer(out, graph, value, format, utf8);
   value.visit_nodes(write_selected_node, &writer);
   if (writer.written != graph.count || !out.good()) {
     return false;
@@ -1441,9 +1705,10 @@ int main(int argc, char* argv[]) {
   std::vector<const char*> values{kOptionInput};
   std::vector<const char*> flags{kOptionHelp};
   if (command == kCommandBuild) {
-    values.insert(values.end(), {kOptionOutput, kOptionSkipFile, kOptionCaseFoldFile, kOptionReplacementFile});
-    flags.insert(flags.end(),
-                 {kOptionNoCase, kOptionSkipSpace, kOptionSkipPunctuation, kOptionSkipSymbols, kOptionSkipInvisible});
+    values.insert(values.end(),
+                  {kOptionOutput, kOptionSkipFile, kOptionCaseFoldFile, kOptionReplacementFile, kOptionBoundaryFile});
+    flags.insert(flags.end(), {kOptionNoCase, kOptionSkipSpace, kOptionSkipPunctuation, kOptionSkipSymbols,
+                               kOptionSkipInvisible, kOptionKeywordBoundaries});
   } else {
     values.insert(values.end(), {kOptionMaxFileBytes, kOptionMaxMemoryBytes});
     if (command == kCommandVerify) {
@@ -1582,8 +1847,10 @@ int main(int argc, char* argv[]) {
     return print_file(value, print_section, print_json, args);
   }
   if (command == kCommandInfo) {
-    std::cout << kImageInfoPrefix << (stats.replacements ? kReplacementImageVersion : kImageVersion) << kNodesField
-              << stats.nodes << kKeywordsField << stats.keywords << kSymbolsField << stats.symbols
+    std::cout << kImageInfoPrefix
+              << (stats.boundary_rules > 0 ? kBoundaryImageVersion
+                                           : (stats.replacements ? kReplacementImageVersion : kImageVersion))
+              << kNodesField << stats.nodes << kKeywordsField << stats.keywords << kSymbolsField << stats.symbols
               << kMaxKeywordTokensField << stats.max_keyword_tokens << kPayloadBytesField << stats.payload_bytes
               << kNoCaseField << stats.nocase << kLineFeed;
     return kExitSuccess;

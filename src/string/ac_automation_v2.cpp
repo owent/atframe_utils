@@ -61,7 +61,7 @@ static constexpr uint16_t kUtf16HighSurrogateLast = 0xdbff;
 static constexpr uint16_t kUtf16LowSurrogateFirst = 0xdc00;
 static constexpr uint16_t kUtf16LowSurrogateLast = 0xdfff;
 
-// Version 2.0/2.1 wire constants; keep the public layout tables in sync when changing the format.
+// Version 2.0/2.1/2.2 wire constants; keep the public layout tables in sync when changing the format.
 static constexpr char kImageMagic[] = "ACAUTOMATION";
 static constexpr size_t kImageMagicBytes = sizeof(kImageMagic) - 1;
 static constexpr uint16_t kImageMajorVersion = 2;
@@ -70,7 +70,14 @@ static constexpr uint16_t kReplacementMinorVersion = 1;
 static constexpr uint32_t kImageEndianTag = 0x01020304;
 static constexpr uint32_t kFeatureNoCase = 1;
 static constexpr uint32_t kFeatureReplacements = 2;
-static constexpr uint32_t kKnownFeatures = kFeatureNoCase | kFeatureReplacements;
+static constexpr uint16_t kBoundaryMinorVersion = 2;
+static constexpr uint32_t kFeatureBoundaries = 4;
+static constexpr uint32_t kKnownFeatures = kFeatureNoCase | kFeatureReplacements | kFeatureBoundaries;
+static constexpr uint32_t kBoundaryIncludeFlag = 1;
+static constexpr uint32_t kBoundaryEdgeFlag = 2;
+static constexpr uint32_t kBoundaryKnownFlags = kBoundaryIncludeFlag | kBoundaryEdgeFlag;
+static constexpr uint64_t kBoundaryInputEdge = UINT64_MAX;
+static constexpr uint64_t kBoundaryInvalidToken = UINT64_MAX - 1;
 static constexpr uint32_t kSectionRequiredFlags = 0;
 static constexpr uint32_t kSectionOptionalFlag = 1;
 static constexpr uint32_t kChecksumAlgorithmXxh64 = 1;
@@ -81,7 +88,7 @@ static constexpr size_t kImageFooterBytes = sizeof(uint64_t);
 static constexpr size_t kImageHeaderBytes = 128;
 static constexpr size_t kDirectoryEntryBytes = 32;
 static constexpr size_t kRequiredSectionCount = 8;
-static constexpr size_t kKnownSectionCount = kRequiredSectionCount + 1;
+static constexpr size_t kKnownSectionCount = kRequiredSectionCount + 4;
 static constexpr size_t kMaxSectionCount = 64;
 static constexpr size_t kIoBufferBytes = 65536;
 static constexpr uint64_t kValidationFixedBytes = 2 * kIoBufferBytes;
@@ -89,6 +96,8 @@ static constexpr size_t kSerializedIndexBytes = sizeof(uint32_t);
 static constexpr size_t kByteStrideBytes = sizeof(unsigned char);
 static constexpr size_t kNodeStrideBytes = 16;
 static constexpr size_t kKeywordStrideBytes = 16;
+static constexpr size_t kBoundaryRuleStrideBytes = 12;
+static constexpr size_t kKeywordBoundaryStrideBytes = 8;
 
 static constexpr size_t kHeaderMajorOffset = 12;
 static constexpr size_t kHeaderMinorOffset = 14;
@@ -122,6 +131,9 @@ static constexpr size_t kNodeOutputOffset = 12;
 static constexpr size_t kKeywordLengthOffset = 4;
 static constexpr size_t kKeywordTokensOffset = 8;
 static constexpr size_t kKeywordSuffixOffset = 12;
+static constexpr size_t kBoundaryRuleCountOffset = 4;
+static constexpr size_t kBoundaryRuleFlagsOffset = 8;
+static constexpr size_t kKeywordBoundaryRightOffset = 4;
 
 static constexpr uint32_t kSectionNodes = 1;
 static constexpr uint32_t kSectionLabels = 2;
@@ -132,6 +144,12 @@ static constexpr uint32_t kSectionKeywords = 6;
 static constexpr uint32_t kSectionKeywordBytes = 7;
 static constexpr uint32_t kSectionFolds = 8;
 static constexpr uint32_t kSectionCanonical = 9;
+static constexpr uint32_t kSectionBoundaryRules = 10;
+static constexpr uint32_t kSectionBoundaryTokens = 11;
+static constexpr uint32_t kSectionKeywordBoundaries = 12;
+static constexpr size_t kBoundaryRulesSectionIndex = kSectionBoundaryRules - 1;
+static constexpr size_t kBoundaryTokensSectionIndex = kSectionBoundaryTokens - 1;
+static constexpr size_t kKeywordBoundariesSectionIndex = kSectionKeywordBoundaries - 1;
 static constexpr size_t kSymbolBytesSectionIndex = kSectionSymbolBytes - 1;
 static constexpr size_t kSkipBitsSectionIndex = kSectionSkipBits - 1;
 static constexpr size_t kKeywordBytesSectionIndex = kSectionKeywordBytes - 1;
@@ -191,6 +209,23 @@ struct ATFW_UTIL_SYMBOL_LOCAL keyword_record {
 
 static_assert(sizeof(node) == kNodeStrideBytes && sizeof(keyword_record) == kKeywordStrideBytes, "AC table layout");
 
+// Native 12-byte row; wire fields: member_begin@0, member_count@4, flags@8.
+// Directory counts retain the version 2.2 convention of counting serialized u32 fields.
+struct ATFW_UTIL_SYMBOL_LOCAL boundary_rule_record {
+  uint32_t member_begin = 0;
+  uint32_t member_count = 0;
+  uint32_t flags = 0;
+};
+
+// Native 8-byte row and wire fields: left_rule@0, right_rule@4; zero disables a side.
+struct ATFW_UTIL_SYMBOL_LOCAL keyword_boundary_record {
+  uint32_t left_rule = 0;
+  uint32_t right_rule = 0;
+};
+
+static_assert(sizeof(boundary_rule_record) == kBoundaryRuleStrideBytes, "Boundary rule table layout");
+static_assert(sizeof(keyword_boundary_record) == kKeywordBoundaryStrideBytes, "Keyword boundary table layout");
+
 struct ATFW_UTIL_SYMBOL_LOCAL build_node {
   std::map<uint32_t, uint32_t> children;
   uint32_t terminal = kInvalidId;
@@ -199,6 +234,12 @@ struct ATFW_UTIL_SYMBOL_LOCAL build_node {
 struct ATFW_UTIL_SYMBOL_LOCAL build_word {
   std::string bytes;
   uint32_t tokens;
+  ac::keyword_options boundaries;
+};
+
+struct ATFW_UTIL_SYMBOL_LOCAL build_boundary {
+  uint32_t flags;
+  std::vector<std::string> tokens;
 };
 
 enum class ATFW_UTIL_SYMBOL_LOCAL replacement_visit_state { kActive, kResolved };
@@ -216,6 +257,7 @@ struct ATFW_UTIL_SYMBOL_LOCAL builder {
   std::vector<build_node> nodes{kRootNodeCount};
   std::vector<build_word> words;
   uint64_t word_bytes = 0;
+  std::vector<build_boundary> boundaries;
 
   status configure_folds() {
     folds.clear();
@@ -407,6 +449,13 @@ struct ac_v2_storage {
   std::string keyword_bytes;
   std::vector<unsigned char> skips;
   std::vector<keyword_record> words;
+  // Version 2.2 optional tables: Rule[R]={member_begin,member_count,flags} (12 bytes),
+  // Members[M]=sorted Symbol IDs per rule, KeywordBoundary[K]={left_rule,right_rule} (8 bytes).
+  // Rule IDs start at one; zero disables an assertion. Node/Keyword rows stay 16 bytes.
+  std::vector<boundary_rule_record> boundary_rules;
+  std::vector<uint32_t> boundary_tokens;
+  std::vector<keyword_boundary_record> keyword_boundaries;
+  bool has_left_boundary = false;  // Derived, never serialized.
   // Derived from the opaque byte alphabet, independent of the input tokenizer.
   std::array<uint32_t, kSymbolBucketCount> symbol_buckets{};
   std::array<uint32_t, kByteValueCount> single_byte_symbols{};
@@ -419,7 +468,10 @@ struct ac_v2_storage {
     }
     uint64_t symbols = offsets.size() - 1;
     return skips.size() == (symbols + kBitsPerByte - 1) / kBitsPerByte && folds.size() == (nocase ? symbols : 0) &&
-           canonical.size() == (replacements ? symbols : 0);
+           canonical.size() == (replacements ? symbols : 0) && boundary_rules.size() < kInvalidId &&
+           boundary_tokens.size() < kInvalidId &&
+           keyword_boundaries.size() == (boundary_rules.empty() ? 0 : words.size()) &&
+           (!boundary_rules.empty() || boundary_tokens.empty());
   }
 
   const std::vector<uint32_t>& normalization() const noexcept { return replacements ? canonical : folds; }
@@ -550,13 +602,36 @@ struct ac_v2_storage {
     return nodes.size() * uint64_t{kNodeStrideBytes} + labels.size() * uint64_t{kSerializedIndexBytes} +
            offsets.size() * uint64_t{kSerializedIndexBytes} + folds.size() * uint64_t{kSerializedIndexBytes} +
            canonical.size() * uint64_t{kSerializedIndexBytes} + words.size() * uint64_t{kKeywordStrideBytes} +
-           symbol_bytes.size() + keyword_bytes.size() + skips.size();
+           symbol_bytes.size() + keyword_bytes.size() + skips.size() +
+           boundary_rules.size() * uint64_t{kBoundaryRuleStrideBytes} +
+           boundary_tokens.size() * uint64_t{kSerializedIndexBytes} +
+           keyword_boundaries.size() * uint64_t{kKeywordBoundaryStrideBytes};
   }
 
-  template <class Next>
+  bool boundary_accepts(uint32_t rule_id, uint64_t adjacent) const noexcept {
+    if (rule_id == 0) {
+      return true;
+    }
+    if (rule_id > boundary_rules.size() || adjacent == kBoundaryInvalidToken) {
+      return false;
+    }
+    const auto& rule = boundary_rules[rule_id - 1];
+    if (adjacent == kBoundaryInputEdge) {
+      return (rule.flags & kBoundaryEdgeFlag) != 0;
+    }
+    if (rule.member_begin > boundary_tokens.size() || rule.member_count > boundary_tokens.size() - rule.member_begin) {
+      return false;
+    }
+    auto first = boundary_tokens.begin() + rule.member_begin;
+    bool member = std::binary_search(first, first + rule.member_count, static_cast<uint32_t>(adjacent));
+    return (rule.flags & kBoundaryIncludeFlag) != 0 ? member : !member;
+  }
+
+  template <bool HasBoundaries, class Next>
   ac::match_report scan(gsl::string_view input, ac::match_callback emit, void* data, const ac::match_options& options,
                         ac::match_context* context, bool only_contains, size_t output_capacity, Next next) const {
-    // Every emitted position refers to the original input, including skipped bytes within a hit.
+    // Origin and predecessor rings are bounded by the longest retained keyword. Predecessors
+    // describe raw-token adjacency after normalization, before skip; assertions consume no bytes.
     ac::match_report report;
     auto make_error = [&report](status code) {
       report.code = code;
@@ -570,57 +645,86 @@ struct ac_v2_storage {
     if (!has_basic_layout()) {
       return make_error(status::kInvalidFormat);
     }
-    // One ring entry per retained token is sufficient; contains() needs no position ring.
-    size_t cap = only_contains ? 0 : (std::min)(static_cast<size_t>(max_tokens), input.size());
-    if (cap > 0 && context == nullptr) {
-      return make_error(status::kInvalidArgument);
-    }
+    size_t cap = only_contains && !(HasBoundaries && has_left_boundary)
+                     ? 0
+                     : (std::min)(static_cast<size_t>(max_tokens), input.size());
     if (cap > 0) {
-      context->origins_.resize(cap);
-      if (context->origins_.size() < cap) {
-        return make_error(status::kInvalidFormat);
+      if (context == nullptr) {
+        return make_error(status::kInvalidArgument);
+      }
+      if (!only_contains) {
+        context->origins_.resize(cap);
+      }
+      if (HasBoundaries && has_left_boundary) {
+        context->predecessors_.resize(cap);
       }
     }
+    const auto& mapping = normalization();
+    auto decode = [&](size_t offset, ac::token_result& result, uint32_t& id) {
+      if (offset >= input.size()) {
+        return false;
+      }
+      result = next(input.substr(offset));
+      if (!valid_result(result, input.size() - offset)) {
+        report.code = status::kInvalidTokenizerResult;
+        return false;
+      }
+      id = kUnknownSymbolId;
+      if (result.state == ac::token_status::kValid) {
+        id = lookup(input.substr(offset, result.byte_count));
+        if (!mapping.empty() && id != kUnknownSymbolId) {
+          if (id > mapping.size()) {
+            report.code = status::kInvalidFormat;
+            return false;
+          }
+          id = mapping[id - kFirstSymbolId];
+          if (id == kUnknownSymbolId || id >= offsets.size()) {
+            report.code = status::kInvalidFormat;
+            return false;
+          }
+        }
+      }
+      return true;
+    };
     size_t cursor = 0;
     size_t valid = 0;
     size_t pos = 0;
     uint32_t state = kRootNodeId;
-    const auto& mapping = normalization();
+    uint64_t previous = kBoundaryInputEdge;
+    bool cached = false;
+    ac::token_result cached_result{ac::token_status::kInvalid, 0};
+    uint32_t cached_symbol = kUnknownSymbolId;
     while (pos < input.size()) {
-      auto r = next(input.substr(pos));
-      if (!valid_result(r, input.size() - pos)) {
-        report.code = status::kInvalidTokenizerResult;
-        report.stopped = ac::stop_reason::kError;
-        break;
+      ac::token_result r{ac::token_status::kInvalid, 0};
+      uint32_t symbol_id = kUnknownSymbolId;
+      if (HasBoundaries && cached) {
+        r = cached_result;
+        symbol_id = cached_symbol;
+        cached = false;
+      } else if (!decode(pos, r, symbol_id)) {
+        return make_error(report.code);
       }
-      // Recovery breaks the current candidate, so matches cannot bridge invalid encoding units.
       if (r.state == ac::token_status::kInvalid) {
         if (report.invalid_units == 0) {
           report.first_invalid_offset = pos;
         }
         ++report.invalid_units;
         if (options.invalid_input == ac::invalid_input_policy::kReject) {
-          report.code = status::kInvalidEncoding;
-          report.stopped = ac::stop_reason::kError;
-          break;
+          return make_error(status::kInvalidEncoding);
         }
         state = kRootNodeId;
-        valid = cursor = 0;
+        valid = 0;
+        cursor = 0;
+        previous = kBoundaryInvalidToken;
         pos += r.byte_count;
         report.bytes_consumed = pos;
         continue;
       }
-      uint32_t symbol_id = lookup(input.substr(pos, r.byte_count));
-      if (!mapping.empty() && symbol_id != kUnknownSymbolId) {
-        if (symbol_id > mapping.size()) {
-          return make_error(status::kInvalidFormat);
-        }
-        symbol_id = mapping[symbol_id - 1];
-        if (symbol_id == kUnknownSymbolId || offsets.empty() || symbol_id >= offsets.size()) {
-          return make_error(status::kInvalidFormat);
-        }
-      }
       size_t start = pos;
+      uint64_t predecessor = previous;
+      if (HasBoundaries && has_left_boundary) {
+        previous = symbol_id;
+      }
       pos += r.byte_count;
       report.bytes_consumed = pos;
       if (skipped(symbol_id)) {
@@ -628,15 +732,26 @@ struct ac_v2_storage {
       }
       if (symbol_id == kUnknownSymbolId) {
         state = kRootNodeId;
-        valid = cursor = 0;
+        valid = 0;
+        cursor = 0;
         continue;
       }
-      // Record only non-skipped tokens, while retaining their original byte offsets.
       if (cap > 0) {
-        if (context == nullptr || context->origins_.size() < cap || cursor >= cap) {
+        if (context == nullptr || cursor >= cap) {
           return make_error(status::kInvalidFormat);
         }
-        context->origins_[cursor] = start;
+        if (!only_contains) {
+          if (context->origins_.size() < cap) {
+            return make_error(status::kInvalidFormat);
+          }
+          context->origins_[cursor] = start;
+        }
+        if (HasBoundaries && has_left_boundary) {
+          if (context->predecessors_.size() < cap) {
+            return make_error(status::kInvalidFormat);
+          }
+          context->predecessors_[cursor] = predecessor;
+        }
         if (++cursor == cap) {
           cursor = 0;
         }
@@ -647,7 +762,6 @@ struct ac_v2_storage {
       if (state >= nodes.size()) {
         return make_error(status::kInvalidFormat);
       }
-      // BFS failure IDs decrease strictly, bounding every fallback traversal.
       uint32_t target = child(state, symbol_id);
       while (target == kRootNodeId && state != kRootNodeId) {
         uint32_t failure = nodes[state].fail;
@@ -661,24 +775,60 @@ struct ac_v2_storage {
       if (state >= nodes.size()) {
         return make_error(status::kInvalidFormat);
       }
-      // The output head is the longest terminal suffix; overlap mode follows shorter suffixes.
       uint32_t output = nodes[state].output;
       while (output != kInvalidId) {
         if (output >= words.size()) {
           return make_error(status::kInvalidFormat);
         }
+        const auto& word = words[output];
+        size_t index = 0;
+        if (cap > 0) {
+          if (word.tokens == 0 || word.tokens > valid || word.tokens > cap || cursor >= cap) {
+            return make_error(status::kInvalidFormat);
+          }
+          index = cursor >= word.tokens ? cursor - word.tokens : cap - (word.tokens - cursor);
+          if (index >= cap) {
+            return make_error(status::kInvalidFormat);
+          }
+        }
+        if (HasBoundaries && !keyword_boundaries.empty()) {
+          if (output >= keyword_boundaries.size()) {
+            return make_error(status::kInvalidFormat);
+          }
+          const auto& boundaries = keyword_boundaries[output];
+          if (boundaries.left_rule > 0) {
+            if (cap == 0 || context == nullptr || index >= context->predecessors_.size()) {
+              return make_error(status::kInvalidFormat);
+            }
+            if (!boundary_accepts(boundaries.left_rule, context->predecessors_[index])) {
+              output = word.suffix;
+              continue;
+            }
+          }
+          if (boundaries.right_rule > 0) {
+            uint64_t adjacent = kBoundaryInputEdge;
+            if (pos < input.size()) {
+              if (!cached) {
+                if (!decode(pos, cached_result, cached_symbol)) {
+                  return make_error(report.code);
+                }
+                cached = true;
+              }
+              adjacent = cached_result.state == ac::token_status::kValid ? cached_symbol : kBoundaryInvalidToken;
+            }
+            if (!boundary_accepts(boundaries.right_rule, adjacent)) {
+              output = word.suffix;
+              continue;
+            }
+          }
+        }
+        // Rejecting an assertion never consumes output capacity or resets failure/suffix traversal.
         if (only_contains) {
           report.matches = 1;
           report.stopped = ac::stop_reason::kMatchLimit;
           return report;
         }
-        const auto& word = words[output];
-        if (word.tokens == 0 || cap == 0 || context == nullptr || cursor >= cap || word.tokens > valid ||
-            word.tokens > cap || context->origins_.size() < cap) {
-          return make_error(status::kInvalidFormat);
-        }
-        size_t index = cursor >= word.tokens ? cursor - word.tokens : cap - (word.tokens - cursor);
-        if (index >= cap) {
+        if (cap == 0 || context == nullptr || index >= context->origins_.size()) {
           return make_error(status::kInvalidFormat);
         }
         size_t begin = context->origins_[index];
@@ -702,13 +852,23 @@ struct ac_v2_storage {
         }
         if (!options.allow_overlap) {
           state = kRootNodeId;
-          cursor = valid = 0;
+          cursor = 0;
+          valid = 0;
           break;
         }
         output = word.suffix;
       }
     }
     return report;
+  }
+
+  template <class Next>
+  ac::match_report select_scan(gsl::string_view input, ac::match_callback emit, void* data,
+                               const ac::match_options& options, ac::match_context* context, bool only_contains,
+                               size_t capacity, Next next) const {
+    // Compile assertions and lookahead out of the ordinary-dictionary path.
+    return boundary_rules.empty() ? scan<false>(input, emit, data, options, context, only_contains, capacity, next)
+                                  : scan<true>(input, emit, data, options, context, only_contains, capacity, next);
   }
 
   ac::match_report dispatch(gsl::string_view input, ac::match_callback emit, void* data,
@@ -728,13 +888,13 @@ struct ac_v2_storage {
     }
     switch (options.tokens.encoding) {
       case ac::token_encoding::kUtf8:
-        return scan(input, emit, data, options, context, only_contains, capacity, utf8_next{});
+        return select_scan(input, emit, data, options, context, only_contains, capacity, utf8_next{});
       case ac::token_encoding::kUtf16Le:
-        return scan(input, emit, data, options, context, only_contains, capacity, utf16le_next{});
+        return select_scan(input, emit, data, options, context, only_contains, capacity, utf16le_next{});
       case ac::token_encoding::kUtf16Be:
-        return scan(input, emit, data, options, context, only_contains, capacity, utf16be_next{});
+        return select_scan(input, emit, data, options, context, only_contains, capacity, utf16be_next{});
       default:
-        return scan(input, emit, data, options, context, only_contains, capacity, custom_next{options.tokens});
+        return select_scan(input, emit, data, options, context, only_contains, capacity, custom_next{options.tokens});
     }
   }
 };
@@ -746,6 +906,10 @@ ac::tokenizer::tokenizer(token_encoding e) noexcept : encoding(e), next(nullptr)
 
 ac::tokenizer::tokenizer(tokenize_fn cb, void* data) noexcept
     : encoding(token_encoding::kCustom), next(cb), user_data(data) {}
+
+ac::boundary_rule::boundary_rule() noexcept : mode(boundary_mode::kExcludeSet), match_input_edge(true) {}
+
+ac::keyword_options::keyword_options() noexcept : left_boundary(0), right_boundary(0) {}
 
 ac::match_options::match_options() noexcept
     : allow_overlap(false), max_matches(0), invalid_input(invalid_input_policy::kSkipCurrent) {}
@@ -920,7 +1084,54 @@ status ac::set_replacements(gsl::span<const replacement_rule> rules) {
   return result;
 }
 
+status ac::add_boundary_rule(const boundary_rule& rule, uint32_t* rule_id) {
+  if (!configurable(storage_)) {
+    return status::kInvalidState;
+  }
+  if ((rule.mode != boundary_mode::kIncludeSet && rule.mode != boundary_mode::kExcludeSet) ||
+      rule.tokens.size() >= kInvalidId) {
+    return status::kInvalidArgument;
+  }
+  build_boundary added;
+  added.flags = (rule.mode == boundary_mode::kIncludeSet ? kBoundaryIncludeFlag : 0) |
+                (rule.match_input_edge ? kBoundaryEdgeFlag : 0);
+  std::unordered_set<std::string, string_hash> members;
+  for (auto token : rule.tokens) {
+    if (token.empty() || token.size() > UINT32_MAX) {
+      return status::kInvalidArgument;
+    }
+    members.insert(own(token));
+  }
+  added.tokens.assign(members.begin(), members.end());
+  std::sort(added.tokens.begin(), added.tokens.end(), byte_less{});
+  if (storage_ != nullptr && storage_->pending->boundaries.size() >= kInvalidId - 1) {
+    return status::kCapacityExceeded;
+  }
+  // All validation is complete. Appending a fully owned rule has the vector's strong
+  // exception guarantee; detach only when another collecting handle shares the builder.
+  if (storage_ == nullptr || storage_.use_count() != 1) {
+    auto next = copy_builder(storage_);
+    if (next == nullptr) {
+      return status::kInvalidState;
+    }
+    next->pending->boundaries.push_back(std::move(added));
+    storage_.swap(next);
+  } else {
+    storage_->pending->boundaries.push_back(std::move(added));
+  }
+  uint32_t id = static_cast<uint32_t>(storage_->pending->boundaries.size());
+  if (rule_id != nullptr) {
+    *rule_id = id;
+  }
+  return status::kOk;
+}
+
 status ac::insert_keyword(gsl::string_view text, uint32_t* keyword_id, const tokenizer& tokens) {
+  return insert_keyword(text, keyword_options{}, keyword_id, tokens);
+}
+
+status ac::insert_keyword(gsl::string_view text, const keyword_options& options, uint32_t* keyword_id,
+                          const tokenizer& tokens) {
   // Tokenize and normalize completely before changing the shared builder.
   if (storage_ != nullptr && storage_->pending == nullptr) {
     return status::kInvalidState;
@@ -935,6 +1146,9 @@ status ac::insert_keyword(gsl::string_view text, uint32_t* keyword_id, const tok
     reset();
   }
   const auto& original = *storage_->pending;
+  if (options.left_boundary > original.boundaries.size() || options.right_boundary > original.boundaries.size()) {
+    return status::kInvalidArgument;
+  }
   std::vector<std::string> sequence;
   for (size_t pos = 0; pos < text.size();) {
     auto r = next_token(text.substr(pos), tokens);
@@ -989,6 +1203,14 @@ status ac::insert_keyword(gsl::string_view text, uint32_t* keyword_id, const tok
     return status::kInvalidFormat;
   }
   if (existing && original.nodes[current].terminal != kInvalidId) {
+    uint32_t id = original.nodes[current].terminal;
+    if (id >= original.words.size()) {
+      return status::kInvalidFormat;
+    }
+    const auto& previous = original.words[id].boundaries;
+    if (previous.left_boundary != options.left_boundary || previous.right_boundary != options.right_boundary) {
+      return status::kInvalidArgument;
+    }
     if (keyword_id != nullptr) {
       *keyword_id = original.nodes[current].terminal;
     }
@@ -1083,7 +1305,7 @@ status ac::insert_keyword(gsl::string_view text, uint32_t* keyword_id, const tok
   }
   // Publish the terminal and byte count only after all throwing allocations have succeeded.
   uint32_t id = static_cast<uint32_t>(b.words.size());
-  b.words.push_back(build_word{own(text), static_cast<uint32_t>(sequence.size())});
+  b.words.push_back(build_word{own(text), static_cast<uint32_t>(sequence.size()), options});
   b.nodes[current].terminal = id;
   b.word_bytes += text.size();
   guard.committed = true;
@@ -1120,6 +1342,9 @@ status ac::build() {
   for (const auto& rule : b.replacements) {
     unique_symbols.insert(rule.first);
     unique_symbols.insert(rule.second);
+  }
+  for (const auto& rule : b.boundaries) {
+    unique_symbols.insert(rule.tokens.begin(), rule.tokens.end());
   }
   if (unique_symbols.size() >= kInvalidId) {
     return status::kCapacityExceeded;
@@ -1192,6 +1417,20 @@ status ac::build() {
       result->canonical.push_back(target);
     }
   }
+  for (const auto& rule : b.boundaries) {
+    if (rule.tokens.size() >= kInvalidId || result->boundary_tokens.size() >= kInvalidId - rule.tokens.size()) {
+      return status::kCapacityExceeded;
+    }
+    result->boundary_rules.push_back(
+        {static_cast<uint32_t>(result->boundary_tokens.size()), static_cast<uint32_t>(rule.tokens.size()), rule.flags});
+    for (const auto& token : rule.tokens) {
+      uint32_t id = result->lookup(view(token));
+      if (id == kUnknownSymbolId) {
+        return status::kInvalidFormat;
+      }
+      result->boundary_tokens.push_back(id);
+    }
+  }
   // Translate collecting symbol IDs without changing stable keyword IDs or original bytes.
   std::vector<uint32_t> translated;
   translated.reserve(b.symbols.size());
@@ -1214,6 +1453,10 @@ status ac::build() {
     r.length = static_cast<uint32_t>(word.bytes.size());
     r.tokens = word.tokens;
     result->words.push_back(r);
+    if (!b.boundaries.empty()) {
+      result->keyword_boundaries.push_back({word.boundaries.left_boundary, word.boundaries.right_boundary});
+      result->has_left_boundary = result->has_left_boundary || word.boundaries.left_boundary > 0;
+    }
     result->keyword_bytes += word.bytes;
     result->max_tokens = (std::max)(result->max_tokens, word.tokens);
   }
@@ -1390,7 +1633,8 @@ ac::match_report ac::contains(gsl::string_view input, bool& found, const match_o
   if (storage_ == nullptr) {
     return invalid_state_report();
   }
-  auto r = storage_->dispatch(input, nullptr, nullptr, options, nullptr, true);
+  match_context local;
+  auto r = storage_->dispatch(input, nullptr, nullptr, options, &local, true);
   found = r.matches != 0;
   return r;
 }
@@ -1406,11 +1650,49 @@ ac::statistics ac::get_statistics() const noexcept {
           storage_->payload(),
           static_cast<uint32_t>(kSymbolIndexBytes),
           storage_->nocase,
-          storage_->replacements};
+          storage_->replacements,
+          static_cast<uint32_t>(storage_->boundary_rules.size()),
+          static_cast<uint32_t>(storage_->boundary_tokens.size())};
 }
 
 gsl::string_view ac::keyword(uint32_t id) const noexcept {
   return is_built() ? storage_->keyword(id) : gsl::string_view{};
+}
+
+ac::keyword_options ac::get_keyword_options(uint32_t id) const noexcept {
+  keyword_options result;
+  if (is_built() && id < storage_->words.size() && id < storage_->keyword_boundaries.size()) {
+    const auto& boundaries = storage_->keyword_boundaries[id];
+    result.left_boundary = boundaries.left_rule;
+    result.right_boundary = boundaries.right_rule;
+  }
+  return result;
+}
+
+gsl::string_view ac::symbol(uint32_t id) const noexcept {
+  return is_built() ? storage_->symbol(id) : gsl::string_view{};
+}
+
+bool ac::visit_boundary_rules(boundary_callback callback, void* data) const {
+  if (!is_built() || !storage_->has_basic_layout() || callback == nullptr) {
+    return false;
+  }
+  for (size_t index = 0; index < storage_->boundary_rules.size(); ++index) {
+    const auto& rule = storage_->boundary_rules[index];
+    if (rule.member_begin > storage_->boundary_tokens.size() ||
+        rule.member_count > storage_->boundary_tokens.size() - rule.member_begin) {
+      return false;
+    }
+    auto members = gsl::span<const uint32_t>(storage_->boundary_tokens).subspan(rule.member_begin, rule.member_count);
+    if (!callback(boundary_rule_view{static_cast<uint32_t>(index + 1),
+                                     (rule.flags & kBoundaryIncludeFlag) != 0 ? boundary_mode::kIncludeSet
+                                                                              : boundary_mode::kExcludeSet,
+                                     (rule.flags & kBoundaryEdgeFlag) != 0, members},
+                  data)) {
+      return false;
+    }
+  }
+  return true;
 }
 
 bool ac::visit_nodes(node_callback callback, void* data) const {
@@ -1648,6 +1930,15 @@ static std::vector<section> sections_for(const detail::ac_v2_storage& s) {
     result.push_back({kSectionCanonical, kSectionRequiredFlags, 0, s.canonical.size() * uint64_t{kSerializedIndexBytes},
                       s.canonical.size()});
   }
+  if (!s.boundary_rules.empty()) {
+    uint64_t rule_bytes = s.boundary_rules.size() * uint64_t{kBoundaryRuleStrideBytes};
+    result.push_back({kSectionBoundaryRules, kSectionRequiredFlags, 0, rule_bytes, rule_bytes / kSerializedIndexBytes});
+    result.push_back({kSectionBoundaryTokens, kSectionRequiredFlags, 0,
+                      s.boundary_tokens.size() * uint64_t{kSerializedIndexBytes}, s.boundary_tokens.size()});
+    uint64_t assignment_bytes = s.keyword_boundaries.size() * uint64_t{kKeywordBoundaryStrideBytes};
+    result.push_back({kSectionKeywordBoundaries, kSectionRequiredFlags, 0, assignment_bytes,
+                      assignment_bytes / kSerializedIndexBytes});
+  }
   uint64_t offset = kImageHeaderBytes + result.size() * kDirectoryEntryBytes;
   for (auto& part : result) {
     part.offset = align_image(offset);
@@ -1657,7 +1948,7 @@ static std::vector<section> sections_for(const detail::ac_v2_storage& s) {
 }
 
 static status write_image(const detail::ac_v2_storage& s, image_writer& output) {
-  // Image: header[128], directory[8*32 or 9*32], aligned sections, aligned XXH64 footer[8].
+  // Image: header[128], directory[section_count*32], aligned sections, aligned XXH64 footer[8].
   // Header and section offsets/strides are specified in the public class documentation.
   // Hash the filled header and serialized payload while writing; the footer is excluded.
   if (s.pending != nullptr) {
@@ -1672,10 +1963,12 @@ static status write_image(const detail::ac_v2_storage& s, image_writer& output) 
   std::memcpy(header.data(), kImageMagic, kImageMagicBytes);
   bit::write_le_uint16(header.data() + kHeaderMajorOffset, kImageMajorVersion);
   bit::write_le_uint16(header.data() + kHeaderMinorOffset,
-                       s.replacements ? kReplacementMinorVersion : kImageMinorVersion);
+                       !s.boundary_rules.empty() ? kBoundaryMinorVersion
+                                                 : (s.replacements ? kReplacementMinorVersion : kImageMinorVersion));
   bit::write_le_uint32(header.data() + kHeaderSizeOffset, kImageHeaderBytes);
-  bit::write_le_uint32(header.data() + kHeaderFlagsOffset,
-                       (s.nocase ? kFeatureNoCase : 0) | (s.replacements ? kFeatureReplacements : 0));
+  bit::write_le_uint32(header.data() + kHeaderFlagsOffset, (s.nocase ? kFeatureNoCase : 0) |
+                                                               (s.replacements ? kFeatureReplacements : 0) |
+                                                               (!s.boundary_rules.empty() ? kFeatureBoundaries : 0));
   bit::write_le_uint32(header.data() + kHeaderEndianOffset, kImageEndianTag);
   bit::write_le_uint32(header.data() + kHeaderSectionCountOffset, static_cast<uint32_t>(directory.size()));
   bit::write_le_uint64(header.data() + kHeaderFileSizeOffset, checksum_offset + kImageFooterBytes);
@@ -1731,6 +2024,10 @@ static status write_image(const detail::ac_v2_storage& s, image_writer& output) 
                     "Keyword fits serialization buffer");
       static_assert(kSerializedIndexBytes > 0 && kSerializedIndexBytes <= kIoBufferBytes,
                     "Index fits serialization buffer");
+      static_assert(kBoundaryRuleStrideBytes > 0 && kBoundaryRuleStrideBytes <= kIoBufferBytes,
+                    "Boundary rule fits serialization buffer");
+      static_assert(kKeywordBoundaryStrideBytes > 0 && kKeywordBoundaryStrideBytes <= kIoBufferBytes,
+                    "Keyword boundary fits serialization buffer");
       // Select an index table once per section; each row still checks its own bounds.
       const std::vector<uint32_t>* indices = nullptr;
       switch (part.type) {
@@ -1746,14 +2043,21 @@ static status write_image(const detail::ac_v2_storage& s, image_writer& output) 
         case kSectionCanonical:
           indices = &s.canonical;
           break;
+        case kSectionBoundaryTokens:
+          indices = &s.boundary_tokens;
+          break;
         default:
           break;
       }
-      const size_t stride = part.type == kSectionNodes      ? kNodeStrideBytes
-                            : part.type == kSectionKeywords ? kKeywordStrideBytes
-                                                            : kSerializedIndexBytes;
-      for (size_t first = 0; first < part.count;) {
-        size_t count = (std::min)(static_cast<size_t>(part.count) - first, buffer.size() / stride);
+      const size_t stride = part.type == kSectionNodes               ? kNodeStrideBytes
+                            : part.type == kSectionKeywords          ? kKeywordStrideBytes
+                            : part.type == kSectionBoundaryRules     ? kBoundaryRuleStrideBytes
+                            : part.type == kSectionKeywordBoundaries ? kKeywordBoundaryStrideBytes
+                                                                     : kSerializedIndexBytes;
+      // Boundary directory counts describe u32 fields; process complete named records.
+      const size_t rows = static_cast<size_t>(part.size / stride);
+      for (size_t first = 0; first < rows;) {
+        size_t count = (std::min)(rows - first, buffer.size() / stride);
         if (count == 0) {
           return status::kInvalidFormat;
         }
@@ -1778,6 +2082,21 @@ static status write_image(const detail::ac_v2_storage& s, image_writer& output) 
             bit::write_le_uint32(p + kKeywordLengthOffset, w.length);
             bit::write_le_uint32(p + kKeywordTokensOffset, w.tokens);
             bit::write_le_uint32(p + kKeywordSuffixOffset, w.suffix);
+          } else if (part.type == kSectionBoundaryRules) {
+            if (i >= s.boundary_rules.size()) {
+              return status::kInvalidFormat;
+            }
+            const auto& rule = s.boundary_rules[i];
+            bit::write_le_uint32(p, rule.member_begin);
+            bit::write_le_uint32(p + kBoundaryRuleCountOffset, rule.member_count);
+            bit::write_le_uint32(p + kBoundaryRuleFlagsOffset, rule.flags);
+          } else if (part.type == kSectionKeywordBoundaries) {
+            if (i >= s.keyword_boundaries.size()) {
+              return status::kInvalidFormat;
+            }
+            const auto& boundaries = s.keyword_boundaries[i];
+            bit::write_le_uint32(p, boundaries.left_rule);
+            bit::write_le_uint32(p + kKeywordBoundaryRightOffset, boundaries.right_rule);
           } else {
             if (indices == nullptr || i >= indices->size()) {
               return status::kInvalidFormat;
@@ -1804,6 +2123,32 @@ static status validate_storage(const detail::ac_v2_storage& s, bool semantic) {
   // Structural checks precede any traversal that dereferences failure or output IDs.
   if (!s.has_basic_layout()) {
     return status::kInvalidFormat;
+  }
+  // Rule members describe exact final-token bytes: noncanonical members are legal but
+  // unreachable after normalization. Invalid input is never represented by a Symbol ID.
+  uint64_t member_end = 0;
+  for (const auto& rule : s.boundary_rules) {
+    if (rule.member_begin != member_end || rule.member_begin > s.boundary_tokens.size() ||
+        rule.member_count > s.boundary_tokens.size() - rule.member_begin || (rule.flags & ~kBoundaryKnownFlags) != 0) {
+      return status::kInvalidFormat;
+    }
+    uint32_t previous = kUnknownSymbolId;
+    for (size_t i = rule.member_begin; i < static_cast<uint64_t>(rule.member_begin) + rule.member_count; ++i) {
+      uint32_t id = s.boundary_tokens[i];
+      if (id <= previous || id >= s.offsets.size()) {
+        return status::kInvalidFormat;
+      }
+      previous = id;
+    }
+    member_end += rule.member_count;
+  }
+  if (member_end != s.boundary_tokens.size()) {
+    return status::kInvalidFormat;
+  }
+  for (const auto& boundaries : s.keyword_boundaries) {
+    if (boundaries.left_rule > s.boundary_rules.size() || boundaries.right_rule > s.boundary_rules.size()) {
+      return status::kInvalidFormat;
+    }
   }
   const size_t n = s.nodes.size();
   const size_t k = s.words.size();
@@ -1944,6 +2289,8 @@ static status read_image(image_reader& input, const ac::load_options& options,
   uint32_t k = bit::read_le_uint32(header.data() + kHeaderKeywordCountOffset);
   uint32_t symbols = bit::read_le_uint32(header.data() + kHeaderSymbolCountOffset);
   if (bit::read_le_uint32(header.data() + kHeaderSizeOffset) != kImageHeaderBytes || (flags & ~kKnownFeatures) != 0 ||
+      ((flags & kFeatureBoundaries) != 0 &&
+       bit::read_le_uint16(header.data() + kHeaderMinorOffset) < kBoundaryMinorVersion) ||
       ((flags & kFeatureReplacements) != 0 &&
        bit::read_le_uint16(header.data() + kHeaderMinorOffset) < kReplacementMinorVersion) ||
       bit::read_le_uint32(header.data() + kHeaderEndianOffset) != kImageEndianTag || count < kRequiredSectionCount ||
@@ -1988,7 +2335,7 @@ static status read_image(image_reader& input, const ac::load_options& options,
         p.size > checksum_offset - p.offset) {
       return status::kInvalidFormat;
     }
-    if (p.type >= kSectionNodes && p.type <= kSectionCanonical) {
+    if (p.type >= kSectionNodes && p.type <= kSectionKeywordBoundaries) {
       if (seen[p.type - kSectionNodes] || p.flags != 0) {
         return status::kInvalidFormat;
       }
@@ -2004,24 +2351,40 @@ static status read_image(image_reader& input, const ac::load_options& options,
     directory.push_back(p);
   }
   if (std::find(seen.begin(), seen.begin() + kRequiredSectionCount, false) != seen.begin() + kRequiredSectionCount ||
-      seen[kCanonicalSectionIndex] != ((flags & kFeatureReplacements) != 0)) {
+      seen[kCanonicalSectionIndex] != ((flags & kFeatureReplacements) != 0) ||
+      seen[kBoundaryRulesSectionIndex] != ((flags & kFeatureBoundaries) != 0) ||
+      seen[kBoundaryTokensSectionIndex] != ((flags & kFeatureBoundaries) != 0) ||
+      seen[kKeywordBoundariesSectionIndex] != ((flags & kFeatureBoundaries) != 0)) {
+    return status::kInvalidFormat;
+  }
+  if ((flags & kFeatureBoundaries) != 0 &&
+      (known[kBoundaryRulesSectionIndex].count == 0 ||
+       known[kBoundaryRulesSectionIndex].size % kBoundaryRuleStrideBytes != 0 ||
+       known[kBoundaryRulesSectionIndex].size / kBoundaryRuleStrideBytes >= kInvalidId ||
+       known[kBoundaryTokensSectionIndex].count >= kInvalidId)) {
     return status::kInvalidFormat;
   }
   // Each required section has one exact count/stride contract; optional sections stay opaque.
-  const uint64_t expected_counts[kKnownSectionCount] = {n,
-                                                        n,
-                                                        uint64_t{symbols} + 1,
-                                                        known[kSymbolBytesSectionIndex].size,
-                                                        (uint64_t{symbols} + kBitsPerByte - 1) / kBitsPerByte,
-                                                        k,
-                                                        known[kKeywordBytesSectionIndex].size,
-                                                        (flags & kFeatureNoCase) != 0 ? symbols : 0,
-                                                        (flags & kFeatureReplacements) != 0 ? symbols : 0};
+  const uint64_t expected_counts[kKnownSectionCount] = {
+      n,
+      n,
+      uint64_t{symbols} + 1,
+      known[kSymbolBytesSectionIndex].size,
+      (uint64_t{symbols} + kBitsPerByte - 1) / kBitsPerByte,
+      k,
+      known[kKeywordBytesSectionIndex].size,
+      (flags & kFeatureNoCase) != 0 ? symbols : 0,
+      (flags & kFeatureReplacements) != 0 ? symbols : 0,
+      known[kBoundaryRulesSectionIndex].count,
+      known[kBoundaryTokensSectionIndex].count,
+      (flags & kFeatureBoundaries) != 0 ? uint64_t{k} * kKeywordBoundaryStrideBytes / kSerializedIndexBytes : 0};
   static constexpr uint64_t kSectionStrides[kKnownSectionCount] = {
-      kNodeStrideBytes,    kSerializedIndexBytes, kSerializedIndexBytes, kByteStrideBytes,     kByteStrideBytes,
-      kKeywordStrideBytes, kByteStrideBytes,      kSerializedIndexBytes, kSerializedIndexBytes};
+      kNodeStrideBytes,      kSerializedIndexBytes, kSerializedIndexBytes, kByteStrideBytes,
+      kByteStrideBytes,      kKeywordStrideBytes,   kByteStrideBytes,      kSerializedIndexBytes,
+      kSerializedIndexBytes, kSerializedIndexBytes, kSerializedIndexBytes, kSerializedIndexBytes};
   for (size_t i = 0; i < known.size(); ++i) {
-    if (known[i].count != expected_counts[i] || known[i].size != expected_counts[i] * kSectionStrides[i]) {
+    if (expected_counts[i] > UINT64_MAX / kSectionStrides[i] || known[i].count != expected_counts[i] ||
+        known[i].size != expected_counts[i] * kSectionStrides[i]) {
       return status::kInvalidFormat;
     }
   }
@@ -2055,12 +2418,17 @@ static status read_image(image_reader& input, const ac::load_options& options,
   candidate->keyword_bytes.resize(static_cast<size_t>(known[kKeywordBytesSectionIndex].size));
   candidate->folds.resize(static_cast<size_t>(expected_counts[kFoldsSectionIndex]));
   candidate->canonical.resize(static_cast<size_t>(expected_counts[kCanonicalSectionIndex]));
+  candidate->boundary_rules.resize(
+      static_cast<size_t>(known[kBoundaryRulesSectionIndex].size / kBoundaryRuleStrideBytes));
+  candidate->boundary_tokens.resize(static_cast<size_t>(expected_counts[kBoundaryTokensSectionIndex]));
+  candidate->keyword_boundaries.resize(
+      static_cast<size_t>(known[kKeywordBoundariesSectionIndex].size / kKeywordBoundaryStrideBytes));
   std::array<unsigned char, kIoBufferBytes> buffer{};
   for (const auto& part : directory) {
     if (!input.gap(part.offset, true)) {
       return status::kInvalidFormat;
     }
-    if (part.type < kSectionNodes || part.type > kSectionCanonical) {
+    if (part.type < kSectionNodes || part.type > kSectionKeywordBoundaries) {
       if (!input.gap(part.offset + part.size, false)) {
         return status::kIoError;
       }
@@ -2083,12 +2451,36 @@ static status read_image(image_reader& input, const ac::load_options& options,
         pos += amount;
       }
     } else {
-      size_t stride = static_cast<size_t>(kSectionStrides[part.type - kSectionNodes]);
+      std::vector<uint32_t>* indices = nullptr;
+      switch (part.type) {
+        case kSectionLabels:
+          indices = &candidate->labels;
+          break;
+        case kSectionSymbolOffsets:
+          indices = &candidate->offsets;
+          break;
+        case kSectionFolds:
+          indices = &candidate->folds;
+          break;
+        case kSectionCanonical:
+          indices = &candidate->canonical;
+          break;
+        case kSectionBoundaryTokens:
+          indices = &candidate->boundary_tokens;
+          break;
+        default:
+          break;
+      }
+      size_t stride = part.type == kSectionBoundaryRules ? kBoundaryRuleStrideBytes
+                      : part.type == kSectionKeywordBoundaries
+                          ? kKeywordBoundaryStrideBytes
+                          : static_cast<size_t>(kSectionStrides[part.type - kSectionNodes]);
       if (stride == 0 || stride > buffer.size()) {
         return status::kInvalidFormat;
       }
-      for (size_t first = 0; first < part.count;) {
-        size_t amount = (std::min)(static_cast<size_t>(part.count) - first, buffer.size() / stride);
+      const size_t rows = static_cast<size_t>(part.size / stride);
+      for (size_t first = 0; first < rows;) {
+        size_t amount = (std::min)(rows - first, buffer.size() / stride);
         if (amount == 0 || !input.read(buffer.data(), amount * stride)) {
           return status::kIoError;
         }
@@ -2113,26 +2505,26 @@ static status read_image(image_reader& input, const ac::load_options& options,
             v.length = bit::read_le_uint32(p + kKeywordLengthOffset);
             v.tokens = bit::read_le_uint32(p + kKeywordTokensOffset);
             v.suffix = bit::read_le_uint32(p + kKeywordSuffixOffset);
-          } else if (part.type == kSectionLabels) {
-            if (i >= candidate->labels.size()) {
+          } else if (part.type == kSectionBoundaryRules) {
+            if (i >= candidate->boundary_rules.size()) {
               return status::kInvalidFormat;
             }
-            candidate->labels[i] = bit::read_le_uint32(p);
-          } else if (part.type == kSectionSymbolOffsets) {
-            if (i >= candidate->offsets.size()) {
+            auto& rule = candidate->boundary_rules[i];
+            rule.member_begin = bit::read_le_uint32(p);
+            rule.member_count = bit::read_le_uint32(p + kBoundaryRuleCountOffset);
+            rule.flags = bit::read_le_uint32(p + kBoundaryRuleFlagsOffset);
+          } else if (part.type == kSectionKeywordBoundaries) {
+            if (i >= candidate->keyword_boundaries.size()) {
               return status::kInvalidFormat;
             }
-            candidate->offsets[i] = bit::read_le_uint32(p);
-          } else if (part.type == kSectionFolds) {
-            if (i >= candidate->folds.size()) {
-              return status::kInvalidFormat;
-            }
-            candidate->folds[i] = bit::read_le_uint32(p);
+            auto& boundaries = candidate->keyword_boundaries[i];
+            boundaries.left_rule = bit::read_le_uint32(p);
+            boundaries.right_rule = bit::read_le_uint32(p + kKeywordBoundaryRightOffset);
           } else {
-            if (part.type != kSectionCanonical || i >= candidate->canonical.size()) {
+            if (indices == nullptr || i >= indices->size()) {
               return status::kInvalidFormat;
             }
-            candidate->canonical[i] = bit::read_le_uint32(p);
+            (*indices)[i] = bit::read_le_uint32(p);
           }
         }
         first += amount;
@@ -2159,6 +2551,9 @@ static status read_image(image_reader& input, const ac::load_options& options,
     valid = status::kInvalidFormat;
   }
   if (valid == status::kOk) {
+    for (const auto& boundaries : candidate->keyword_boundaries) {
+      candidate->has_left_boundary = candidate->has_left_boundary || boundaries.left_rule > 0;
+    }
     result.swap(candidate);
   }
   return valid;

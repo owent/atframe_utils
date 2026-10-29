@@ -54,6 +54,9 @@ struct ac_v2_storage;
  * KeywordBytes[W]          1 byte : concatenated original keyword bytes
  * FoldTo[nocase ? S : 0]   4 bytes: symbol ID -> case-folded symbol ID
  * CanonicalTo[R ? S : 0]   4 bytes: symbol ID -> final folded/replaced symbol ID
+ * BoundaryRule[B]         12 bytes: member_begin, member_count, flags
+ * BoundaryTokens[M]       4 bytes: sorted Symbol IDs within each rule's contiguous interval
+ * KeywordBoundary[K]       8 bytes: left_rule_id, right_rule_id (only when B > 0)
  * @endcode
  * Logical payload bytes are 20*N + 16*K + 4*(S+1) + A + W + ceil(S/8), plus
  * 4*S when nocase is enabled and another 4*S when replacements are configured (R=true).
@@ -62,6 +65,13 @@ struct ac_v2_storage;
  * during configuration; cycles use their unsigned-byte lexicographically smallest token,
  * excluding incoming chain tokens from that minimum. Queries perform at most one ID-table
  * lookup per token, with no replacement allocation, hash lookup or chain traversal.
+ * B is the configured boundary-rule count and M the total membership count. Boundary
+ * arrays add 12*B + 4*M + 8*K bytes only when B > 0; Node and Keyword strides stay 16.
+ * Rule IDs start at one; zero disables an assertion. Flags bit 0 selects include (otherwise
+ * exclude), bit 1 permits the input edge; other bits are zero. Rule member intervals partition
+ * BoundaryTokens with strictly increasing nonzero IDs in each interval. Membership describes
+ * exact final-token bytes and is never itself folded/replaced. Symbols also intern members
+ * absent from keywords, so a letter absent from the trie still fails an exclude-letter assertion.
  * Derived indices, allocator overhead and scratch are separate. Rule tables remain
  * encoding-independent, one token to one token.
  * Symbols have IDs 1..S in unsigned-byte lexicographic order; 0 means unknown.
@@ -80,28 +90,40 @@ struct ac_v2_storage;
  * count. Both mapping tables are idempotent. CanonicalTo[FoldTo[i]] = CanonicalTo[i]
  * when both exist. Canonical targets are also case-fold fixed points. Trie labels and
  * skip bits refer to final canonical IDs. Keywords with equal canonical token sequences
- * share the first-insertion ID and original spelling, without extra terminal outputs.
+ * share the first-insertion ID and original spelling, without extra terminal outputs, provided
+ * their left/right rule IDs agree. Conflicting boundary options return kInvalidArgument.
  *
  * Lookup uses binary search over contiguous labels, with direct 0/1-child cases.
  * Symbol lookup derives 257 uint32_t first-byte bucket boundaries and 256 uint32_t
  * single-byte IDs (2052 bytes) per snapshot. These indices are not serialized.
  * Frozen lookup retains no map/hash builder. Match positions use a per-query ring
- * of at most min(Lmax, input byte size) size_t entries; contains() needs no ring.
+ * of at most min(Lmax, input byte size) size_t entries. Left assertions add one uint64_t
+ * predecessor per entry, containing a canonical Symbol ID (0 for unknown), UINT64_MAX for
+ * input start, or UINT64_MAX-1 for invalid encoding. contains() only needs this predecessor
+ * ring when left assertions are used; otherwise it allocates no ring. A derived boolean records
+ * whether any keyword has a left assertion. Right assertions cache at most one decoded raw
+ * token and its canonical ID on the stack and reuse it at the next traversal step.
+ * Assertions run after fold/replacement and before skip, including skipped adjacent tokens.
+ * Invalid tokens satisfy neither include nor exclude; input edges follow their explicit flag.
+ * Assertions consume no input bytes and precede callback/count/limit/nonoverlap decisions.
+ * A failed assertion continues suffix outputs and scanning without resetting the automaton.
+ * Read-ahead calls a custom tokenizer at most once per raw token; bytes_consumed excludes
+ * that lookahead token when a match stops the scan.
  * The collecting builder may use standard map/hash containers and is released when
  * its last collecting owner releases it. XXH64 is used for interning/integrity only.
  *
- * @par Binary image layout, versions 2.0 and 2.1
+ * @par Binary image layout, versions 2.0, 2.1 and 2.2
  * Integers are little endian and are read/written through algorithm/bit.h. Opaque
  * byte pools are never transcoded or byte-swapped. The 128-byte header is:
  * @code{.text}
  * Offset  Width  Field
  *   0       12   ASCII "ACAUTOMATION", no NUL
  *  12        2   major = 2
- *  14        2   minor = 1 with replacements; otherwise 0 (unchanged version 2.0 image)
+ *  14        2   minor = 2 with boundary rules; else 1 with replacements; otherwise 0
  *  16        4   header_bytes = 128
- *  20        4   feature_flags: bit 0 = nocase, bit 1 = replacements; other bits zero
+ *  20        4   feature_flags: bit 0 = nocase, bit 1 = replacements, bit 2 = boundaries
  *  24        4   endian_tag = 0x01020304
- *  28        4   section_count = 9 with replacements; otherwise 8
+ *  28        4   section_count = 8 + (replacements ? 1 : 0) + (B > 0 ? 3 : 0)
  *  32        8   file_bytes, including the footer
  *  40        8   directory_offset = 128
  *  48        4   N
@@ -131,6 +153,9 @@ struct ac_v2_storage;
  *   7   KeywordBytes    W                      W
  *   8   FoldTo          nocase ? S : 0         nocase ? 4 * S : 0
  *   9   CanonicalTo     S                     4 * S (only when feature bit 1 is set)
+ *  10   BoundaryRule    3 * B                 12 * B (only when feature bit 2 is set)
+ *  11   BoundaryTokens  M                      4 * M (only when feature bit 2 is set)
+ *  12   KeywordBoundary 2 * K                  8 * K (only when feature bit 2 is set)
  * @endcode
  * Records have the field order shown in the memory-layout table and are explicitly
  * encoded rather than copied as C++ structs. Section offsets and the footer are
@@ -139,7 +164,9 @@ struct ac_v2_storage;
  * version, query options, derived indices or CPU settings enter the image.
  * Section 9 and feature bit 1 must occur together and require minor >= 1. Version 2.0
  * readers reject replacement images rather than silently changing their matching behavior.
- * Images without replacements retain byte-for-byte version 2.0 serialization. The image
+ * Sections 10..12 and feature bit 2 must occur together, with B > 0 and minor >= 2.
+ * Old readers reject boundary images. With no boundary rules the existing 2.0/2.1 serialization
+ * is unchanged, including byte-for-byte version 2.0 images without replacements. The image
  * stores compiled effective mappings, not original rule order, chains or disabled rules.
  *
  * header_hash64 is XXH64 over the 128-byte header with bytes 80..87 zeroed.
@@ -279,6 +306,7 @@ class ATFW_UTIL_SYMBOL_VISIBLE ac_automation_v2 {
    private:
     friend struct detail::ac_v2_storage;
     std::vector<size_t> origins_;
+    std::vector<uint64_t> predecessors_;  // Allocated only by scans needing left assertions.
   };
 
   struct ATFW_UTIL_SYMBOL_VISIBLE case_fold_rule {
@@ -291,6 +319,39 @@ class ATFW_UTIL_SYMBOL_VISIBLE ac_automation_v2 {
     gsl::string_view source_token;  ///< Nonempty source token bytes, without encoding conversion.
     gsl::string_view target_token;  ///< Nonempty destination token bytes; never tokenized or expanded.
   };
+
+  /** @brief Test membership of the adjacent canonical token, before removing skip tokens. */
+  enum class boundary_mode { kIncludeSet, kExcludeSet };
+
+  /** @brief Shared zero-width assertion; members are opaque final token bytes, never normalized. */
+  struct ATFW_UTIL_SYMBOL_VISIBLE boundary_rule {
+    boundary_mode mode;
+    gsl::span<const gsl::string_view> tokens;
+    bool match_input_edge;
+
+    /** @brief Default to an empty exclusion set accepting either input edge. */
+    ATFRAMEWORK_UTILS_API boundary_rule() noexcept;
+  };
+
+  /** @brief Independent left/right boundary rule IDs; zero disables that assertion. */
+  struct ATFW_UTIL_SYMBOL_VISIBLE keyword_options {
+    uint32_t left_boundary;
+    uint32_t right_boundary;
+
+    /** @brief Create an unrestricted keyword. */
+    ATFRAMEWORK_UTILS_API keyword_options() noexcept;
+  };
+
+  /** @brief Borrowed compiled rule; symbol IDs name the exact configured final token bytes. */
+  struct ATFW_UTIL_SYMBOL_VISIBLE boundary_rule_view {
+    uint32_t id;
+    boundary_mode mode;
+    bool match_input_edge;
+    gsl::span<const uint32_t> symbols;
+  };
+
+  /** @brief Receive one compiled rule; return false to stop iteration. */
+  using boundary_callback = bool (*)(const boundary_rule_view&, void*);
 
   struct ATFW_UTIL_SYMBOL_VISIBLE load_options {
     uint64_t max_file_bytes;
@@ -313,7 +374,9 @@ class ATFW_UTIL_SYMBOL_VISIBLE ac_automation_v2 {
     uint64_t payload_bytes;
     uint32_t symbol_index_bytes;
     bool nocase;
-    bool replacements;  ///< Whether a compiled replacement table is present.
+    bool replacements;         ///< Whether a compiled replacement table is present.
+    uint32_t boundary_rules;   ///< Number of shared boundary rules; zero means version 2.0/2.1 storage.
+    uint32_t boundary_tokens;  ///< Number of rule membership entries, including shared symbols.
   };
 
   struct ATFW_UTIL_SYMBOL_VISIBLE node_view {
@@ -436,6 +499,18 @@ class ATFW_UTIL_SYMBOL_VISIBLE ac_automation_v2 {
   ATFRAMEWORK_UTILS_API status set_replacements(gsl::span<const replacement_rule> rules);
 
   /**
+   * @brief Append a shared boundary rule before the first successful insertion.
+   * @param rule Include/exclude set of nonempty opaque final tokens, copied and deduplicated.
+   * @param rule_id Optional output, written only on success with a stable ID starting at one.
+   * @return kOk, kInvalidState after insertion/build, kInvalidArgument or kCapacityExceeded.
+   * @note Empty sets are valid. Input edges follow match_input_edge independently of membership;
+   *       invalid encoding never satisfies a boundary. Sets are not folded/replaced: querying
+   *       first normalizes the adjacent token, then tests these exact member bytes, before skip.
+   *       Duplicate rules may have distinct IDs. Returned failures preserve configuration.
+   */
+  ATFRAMEWORK_UTILS_API status add_boundary_rule(const boundary_rule& rule, uint32_t* rule_id = nullptr);
+
+  /**
    * @brief Tokenize, fold, replace and remove skips, then insert one keyword into the collecting trie.
    * @param text Original bytes, including possible NULs; original spelling is copied for returned views.
    * @param keyword_id Optional output, written only on kOk/kAlreadyExists with the stable keyword ID.
@@ -448,6 +523,26 @@ class ATFW_UTIL_SYMBOL_VISIBLE ac_automation_v2 {
    */
   ATFRAMEWORK_UTILS_API status insert_keyword(gsl::string_view text, uint32_t* keyword_id = nullptr,
                                               const tokenizer& tokens = tokenizer());
+
+  /**
+   * @brief Insert a keyword with independent zero-width assertions on either side.
+   * @param options Rule IDs returned by add_boundary_rule(); zero means unrestricted.
+   * @note Assertions inspect the immediately adjacent raw token after fold/replacement, even
+   *       when skipped. They do not consume that token or extend the returned byte range.
+   *       A duplicate canonical body with different rule IDs returns kInvalidArgument;
+   *       identical options return kAlreadyExists. Other insertion contracts are unchanged.
+   */
+  ATFRAMEWORK_UTILS_API status insert_keyword(gsl::string_view text, const keyword_options& options,
+                                              uint32_t* keyword_id = nullptr, const tokenizer& tokens = tokenizer());
+
+  /** @brief Return a keyword's rule IDs, or unrestricted options for an absent/unbuilt keyword. */
+  ATFRAMEWORK_UTILS_API keyword_options get_keyword_options(uint32_t keyword_id) const noexcept;
+
+  /** @brief Borrow opaque bytes for a frozen symbol ID; return empty for invalid/unbuilt IDs. */
+  ATFRAMEWORK_UTILS_API gsl::string_view symbol(uint32_t symbol_id) const noexcept;
+
+  /** @brief Visit compiled rules in ID order; false means invalid state/callback or early stop. */
+  ATFRAMEWORK_UTILS_API bool visit_boundary_rules(boundary_callback callback, void* data) const;
 
   /**
    * @brief Freeze the collecting trie into compact lookup tables for this handle.
@@ -513,7 +608,9 @@ class ATFW_UTIL_SYMBOL_VISIBLE ac_automation_v2 {
    * @param found Set false initially, then true only when a hit is found.
    * @param options Tokenizer and invalid-input policy; overlap/count settings do not change this query.
    * @return Scan report with matches=1 on a hit; ordinary scan errors are reported as in match().
-   * @note Bytes after the first hit are not inspected, including with kReject policy.
+   * @note A right assertion may inspect one raw token after a candidate, without consuming it.
+   *       After an accepted hit no further tokens are inspected, including with kReject policy.
+   *       Left assertions allocate a bounded predecessor ring; otherwise no query ring is needed.
    */
   ATFRAMEWORK_UTILS_API match_report contains(gsl::string_view input, bool& found,
                                               const match_options& options = match_options()) const;

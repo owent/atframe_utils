@@ -210,7 +210,7 @@ with tempfile.TemporaryDirectory(prefix="ac-tool-", dir=scratch) as directory:
     run("verify", "--input", image, "--semantic")
     # Printed records describe the stored bytes, not the normalized trie spelling.
     report = json.loads(run("print", "--input", image, "--format", "json"))
-    assert set(report) == {"config", "keywords", "skips", "folds", "replacements", "symbols"}
+    assert set(report) == {"config", "keywords", "skips", "folds", "replacements", "symbols", "boundaries"}
     assert report["replacements"] == [] and report["config"]["replacements"] is False
     assert [entry["text"] for entry in report["keywords"]] == ["ab", "BC", "#tag", "x,y", 'quote"slash/']
     assert [bytes.fromhex(entry["hex"]) for entry in report["keywords"]] == [
@@ -417,6 +417,82 @@ with tempfile.TemporaryDirectory(prefix="ac-tool-", dir=scratch) as directory:
     output = root / "invalid.ac"
     run("build", "--input", source, "--output", output, ok=False)
     assert not output.exists()
+    # Explicit annotated mode preserves literal plain-word imports and shared rule IDs.
+    boundary_rules = root / "boundaries.txt"
+    boundary_rules.write_text("90000 include no-edge 0-9 text:中 hex:5F\n42 exclude edge a-z A-Z\n", encoding="utf-8")
+    source.write_text("0\t42\tsm\n90000\t0\tkey\n0\t0\tplain<boundary>\n", encoding="utf-8")
+    bounded = root / "bounded.ac"
+    run("build", "--input", source, "--output", bounded, "--boundary-file", boundary_rules,
+        "--keyword-boundaries")
+    run("verify", "--input", bounded, "--semantic")
+    printed = json.loads(run("print", "--input", bounded, "--format", "json"))
+    assert printed["config"]["version"] == "2.2" and printed["config"]["boundary_rules"] == 2
+    assert printed["keywords"][0]["right_boundary"] == 1
+    assert printed["keywords"][1]["left_boundary"] == 2
+    assert printed["keywords"][2]["text"] == "plain<boundary>"
+    assert printed["boundaries"][0]["mode"] == "exclude"
+    assert printed["boundaries"][0]["match_input_edge"] is True
+    assert {r["text"] for r in printed["boundaries"][0]["members"]} == set("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
+    assert printed["boundaries"][1]["mode"] == "include"
+    assert printed["boundaries"][1]["match_input_edge"] is False
+    assert {r["text"] for r in printed["boundaries"][1]["members"]} == set("0123456789中_")
+    assert "[boundaries]" in run("print", "--input", bounded, "--section", "boundaries")
+    assert "version=2.2" in run("info", "--input", bounded)
+    for fmt in FORMATS:
+        graph = root / ("bounded." + fmt)
+        run("visualize", "--input", bounded, "--output", graph, "--format", fmt)
+        assert "right=1" in graph.read_text(encoding="utf-8")
+        assert "left=2" in graph.read_text(encoding="utf-8")
+        render_small_graph(graph, fmt)
+    empty_boundary_source = root / "empty-boundary-keywords.txt"
+    empty_boundary_source.write_bytes(b"0\t0\t\r\n0\t0\t \r\n0\t42\tvalid\r\n")
+    empty_boundary_image = root / "empty-boundary-keywords.ac"
+    empty_boundary_report = run("build", "--input", empty_boundary_source, "--output", empty_boundary_image,
+                                "--boundary-file", boundary_rules, "--keyword-boundaries")
+    assert "inserted=1" in empty_boundary_report and "ignored=2" in empty_boundary_report
+    empty_boundary_print = json.loads(run("print", "--input", empty_boundary_image, "--format", "json"))
+    assert [entry["text"] for entry in empty_boundary_print["keywords"]] == ["valid"]
+    # Explicit IDs are source labels; sorting makes line order irrelevant without sparse storage.
+    boundary_rules.write_text("42 exclude edge a-z A-Z\n90000 include no-edge 0-9 text:中 hex:5F\n", encoding="utf-8")
+    reordered = root / "bounded-reordered.ac"
+    run("build", "--input", source, "--output", reordered, "--boundary-file", boundary_rules,
+        "--keyword-boundaries")
+    assert reordered.read_bytes() == bounded.read_bytes()
+    # Old unnumbered files remain readable, but numbered and unnumbered rows cannot mix.
+    boundary_rules.write_text("exclude edge a-z A-Z\ninclude no-edge 0-9 text:中 hex:5F\n", encoding="utf-8")
+    source.write_text("0\t1\tsm\n2\t0\tkey\n0\t0\tplain<boundary>\n", encoding="utf-8")
+    legacy = root / "bounded-legacy.ac"
+    run("build", "--input", source, "--output", legacy, "--boundary-file", boundary_rules,
+        "--keyword-boundaries")
+    assert legacy.read_bytes() == bounded.read_bytes()
+    boundary_rules.write_text("4294967294 exclude edge a-z\n", encoding="utf-8")
+    source.write_text("0\t4294967294\tsm\n", encoding="utf-8")
+    sparse_max = root / "bounded-max-id.ac"
+    run("build", "--input", source, "--output", sparse_max, "--boundary-file", boundary_rules,
+        "--keyword-boundaries")
+    sparse_print = json.loads(run("print", "--input", sparse_max, "--format", "json"))
+    assert sparse_print["config"]["boundary_rules"] == 1
+    assert sparse_print["keywords"][0]["right_boundary"] == 1
+    for index, malformed in enumerate(("exclude edge z-a", "include bad a-z", "exclude edge hex:GG",
+                                       "exclude edge text:", "unknown edge a-z",
+                                       "0 exclude edge a-z", "4294967295 exclude edge a-z",
+                                       "4294967296 exclude edge a-z", "18446744073709551616 exclude edge a-z",
+                                       "-1 exclude edge a-z", "42 exclude edge a-z\n42 include edge 0-9",
+                                       "42 exclude edge a-z\n0042 exclude edge a-z",
+                                       "42 exclude edge a-z\ninclude edge 0-9",
+                                       "exclude edge a-z\n42 include edge 0-9", "42 unknown edge a-z")):
+        boundary_rules.write_text(malformed, encoding="utf-8")
+        output = root / ("bad-boundary-%d.ac" % index)
+        run("build", "--input", source, "--output", output, "--boundary-file", boundary_rules, ok=False)
+        assert not output.exists()
+    boundary_rules.write_text("42 exclude edge a-z", encoding="utf-8")
+    for index, malformed in enumerate(("sm", "0\t2\tsm", "0\t1\tsm", "-1\t0\tsm", "0\t4294967295\tsm",
+                                       "0\t42\tsm\n0\t0\tsm")):
+        source.write_text(malformed, encoding="utf-8")
+        output = root / ("bad-assignment-%d.ac" % index)
+        run("build", "--input", source, "--output", output, "--boundary-file", boundary_rules,
+            "--keyword-boundaries", ok=False)
+        assert not output.exists()
     image.write_bytes(original[:-1])
     run("verify", "--input", image, ok=False)
     run("print", "--input", image, "--format", "json", ok=False)
