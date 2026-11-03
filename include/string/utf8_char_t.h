@@ -23,6 +23,30 @@
 
 #include "config/atframe_utils_build_feature.h"
 
+#if defined(__cpp_char8_t)
+#  define ATFW_UTIL_MACRO_UTF8_LITERAL(__STRING_LITERAL_VALUE) ((const char *)u8##__STRING_LITERAL_VALUE)
+#elif defined(_MSC_VER) && _MSC_VER >= 1900
+#  define ATFW_UTIL_MACRO_UTF8_LITERAL(__STRING_LITERAL_VALUE) ((const char *)u8##__STRING_LITERAL_VALUE)
+#elif defined(__clang__)
+// apple clang
+#  if defined(__apple_build_version__)
+#    if ((__clang_major__ * 100) + __clang_minor__) >= 600
+#      define ATFW_UTIL_MACRO_UTF8_LITERAL(__STRING_LITERAL_VALUE) ((const char *)u8##__STRING_LITERAL_VALUE)
+#    endif
+#  else
+// clang
+#    if ((__clang_major__ * 100) + __clang_minor__) >= 306
+#      define ATFW_UTIL_MACRO_UTF8_LITERAL(__STRING_LITERAL_VALUE) ((const char *)u8##__STRING_LITERAL_VALUE)
+#    endif
+#  endif
+#elif defined(__GNUC__) && (__GNUC__ * 100 + __GNUC_MINOR__) >= 600
+#  define ATFW_UTIL_MACRO_UTF8_LITERAL(__STRING_LITERAL_VALUE) ((const char *)u8##__STRING_LITERAL_VALUE)
+#endif
+
+#ifndef ATFW_UTIL_MACRO_UTF8_LITERAL
+#  define ATFW_UTIL_MACRO_UTF8_LITERAL(__STRING_LITERAL_VALUE) __STRING_LITERAL_VALUE
+#endif
+
 ATFRAMEWORK_UTILS_NAMESPACE_BEGIN
 namespace string {
 struct ATFRAMEWORK_UTILS_API_HEAD_ONLY utf8_char_t {
@@ -220,4 +244,3 @@ struct hash<ATFRAMEWORK_UTILS_NAMESPACE_ID::string::utf8_char_t> {
   }
 };
 }  // namespace std
-
