@@ -11,7 +11,7 @@ enable_testing()
 
 project(
   atframe_utils
-  VERSION "2.8.1"
+  VERSION "2.8.2"
   HOMEPAGE_URL "https://github.com/atframework/atframe_utils"
   LANGUAGES C CXX)
 
@@ -156,6 +156,7 @@ set(HEADER_LIST
     "${CMAKE_CURRENT_LIST_DIR}/include/network/http_content_type.h"
     "${CMAKE_CURRENT_LIST_DIR}/include/network/http_request.h"
     "${CMAKE_CURRENT_LIST_DIR}/include/nostd/function_ref.h"
+    "${CMAKE_CURRENT_LIST_DIR}/include/nostd/mutex.h"
     "${CMAKE_CURRENT_LIST_DIR}/include/nostd/nullability.h"
     "${CMAKE_CURRENT_LIST_DIR}/include/nostd/string_view.h"
     "${CMAKE_CURRENT_LIST_DIR}/include/nostd/type_traits.h"
