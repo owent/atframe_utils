@@ -4,9 +4,12 @@
 
 #include "config/compiler_features.h"
 
+#include <mutex>
+
 #include "lock/lock_holder.h"
 #include "lock/spin_lock.h"
 #include "lock/spin_rw_lock.h"
+#include "nostd/mutex.h"
 
 CASE_TEST(lock_test, spin_lock) {
   atfw::util::lock::spin_lock lock;
@@ -51,6 +54,32 @@ CASE_TEST(lock_test, lock_holder) {
   }
 
   CASE_EXPECT_FALSE(lock.is_locked());
+}
+
+CASE_TEST(lock_test, nostd_scoped_lock) {
+  atfw::util::lock::spin_lock first;
+  atfw::util::lock::spin_lock second;
+
+  {
+    atfw::util::nostd::scoped_lock<atfw::util::lock::spin_lock, atfw::util::lock::spin_lock> lock(first, second);
+    CASE_EXPECT_TRUE(first.is_locked());
+    CASE_EXPECT_TRUE(second.is_locked());
+  }
+  CASE_EXPECT_FALSE(first.is_locked());
+  CASE_EXPECT_FALSE(second.is_locked());
+
+  {
+    atfw::util::nostd::scoped_lock<atfw::util::lock::spin_lock> lock(first);
+    CASE_EXPECT_TRUE(first.is_locked());
+  }
+  CASE_EXPECT_FALSE(first.is_locked());
+
+  first.lock();
+  {
+    atfw::util::nostd::scoped_lock<atfw::util::lock::spin_lock> lock(std::adopt_lock, first);
+    CASE_EXPECT_TRUE(first.is_locked());
+  }
+  CASE_EXPECT_FALSE(first.is_locked());
 }
 
 CASE_TEST(lock_test, spin_rw_lock) {

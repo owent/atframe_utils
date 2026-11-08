@@ -11,6 +11,8 @@
 #include <mutex>
 
 #if !(defined(__cpp_lib_scoped_lock) && __cpp_lib_scoped_lock >= 201703L)
+#  include <nostd/utility_sequence.h>
+
 #  include <tuple>
 #endif
 
@@ -20,7 +22,7 @@ namespace nostd {
 using ::std::scoped_lock;
 #else
 template <class... MutexType>
-class ATFW_UTIL_SYMBOL_VISIBLE EXPLICIT_NODISCARD_ATTR scoped_lock {
+class ATFW_UTIL_SYMBOL_VISIBLE ATFW_EXPLICIT_NODISCARD_TYPE_ATTR scoped_lock {
   // class with destructor that unlocks mutexes
  public:
   explicit scoped_lock(MutexType&... _Mtxes) : mutex_refs_(_Mtxes...) {
@@ -32,14 +34,14 @@ class ATFW_UTIL_SYMBOL_VISIBLE EXPLICIT_NODISCARD_ATTR scoped_lock {
     // construct but don't lock
   }
 
-  ~scoped_lock() noexcept { __unlock_all(std::index_sequence_for<MutexType...>{}); }
+  ~scoped_lock() noexcept { __unlock_all(index_sequence_for<MutexType...>{}); }
 
   scoped_lock(const scoped_lock&) = delete;
   scoped_lock& operator=(const scoped_lock&) = delete;
 
  private:
   template <std::size_t... _Indices>
-  void __unlock_all(std::index_sequence<_Indices...>) noexcept {
+  void __unlock_all(index_sequence<_Indices...>) noexcept {
     using expand = int[];
 
     (void)expand{0, ((void)std::get<_Indices>(mutex_refs_).unlock(), 0)...};
@@ -50,7 +52,7 @@ class ATFW_UTIL_SYMBOL_VISIBLE EXPLICIT_NODISCARD_ATTR scoped_lock {
 };
 
 template <class MutexType>
-class ATFW_UTIL_SYMBOL_VISIBLE EXPLICIT_NODISCARD_ATTR scoped_lock<MutexType> {
+class ATFW_UTIL_SYMBOL_VISIBLE ATFW_EXPLICIT_NODISCARD_TYPE_ATTR scoped_lock<MutexType> {
  public:
   using mutex_type = MutexType;
 
