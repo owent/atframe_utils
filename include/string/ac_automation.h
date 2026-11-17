@@ -64,17 +64,19 @@ ATFRAMEWORK_UTILS_API_HEAD_ONLY void write_varint(std::basic_ostream<TC, TCTT> &
 
 template <typename TC, typename TCTT>
 ATFRAMEWORK_UTILS_API_HEAD_ONLY uint32_t read_varint(std::basic_istream<TC, TCTT> &is) {
-  unsigned char c;
-  if (!is >> c) {
+  // varint 是原始字节流，不能用格式化抽取（operator>> 会跳过空白字符，破坏 0x20/0x09/0x0A/0x0D 等值）
+  typename std::basic_istream<TC, TCTT>::int_type ic = is.get();
+  if (std::char_traits<TC>::eq_int_type(ic, std::char_traits<TC>::eof())) {
     return 0;
   }
 
-  uint32_t ret = 0;
-  ret = c & 0x3F;
+  unsigned char c = static_cast<unsigned char>(std::char_traits<TC>::to_char_type(ic));
+  uint32_t ret = c & 0x3F;
   for (unsigned char n = (c >> 6) & 0x03; n > 0; --n) {
     ret <<= 8;
-    if (is >> c) {
-      ret |= c;
+    ic = is.get();
+    if (!std::char_traits<TC>::eq_int_type(ic, std::char_traits<TC>::eof())) {
+      ret |= static_cast<unsigned char>(std::char_traits<TC>::to_char_type(ic));
     }
   }
 
@@ -361,15 +363,23 @@ class ATFRAMEWORK_UTILS_API_HEAD_ONLY actrie {
     uint32_t mstr_sz = read_varint(is);
     if (mstr_sz > 0) {
       matched_string_.resize(mstr_sz);
-      is.readsome(&matched_string_[0], mstr_sz);
+      // readsome 只读取 get area，对文件流可能少读；用 read 语义才是完整的反序列化
+      is.read(&matched_string_[0], static_cast<std::streamsize>(mstr_sz));
     }
 
     next_.clear();
     uint32_t next_sz = read_varint(is);
     for (uint32_t i = 0; i < next_sz; ++i) {
       std::pair<char_t, uint32_t> p;
-      is >> p.first;
-      p.second = (is);
+      // 边的 key 也是原始字节，1 字节类型必须原样读取，避免空白字符被跳过
+      if (1 == sizeof(char_t)) {
+        typename std::basic_istream<TC, TCTT>::int_type ic = is.get();
+        p.first = static_cast<char_t>(std::char_traits<TC>::to_char_type(ic));
+      } else {
+        is >> p.first;
+      }
+      p.second = read_varint(is);
+      next_.insert(std::make_pair(p.first, p.second));
     }
 
     return true;
@@ -843,6 +853,126 @@ class ATFRAMEWORK_UTILS_API_HEAD_ONLY ac_automation {
     for (size_t i = 0; i < storage_.size(); ++i) {
       storage_[i]->dump(os);
     }
+  }
+
+  /**
+   * 读取 ac_automation::dump() 导出的数据并重建自动机
+   * @param is 输入流
+   * @return 成功返回true，流或数据格式非法时返回false
+   * @note dump() 导出的失败指针随数据一同存储，load 后自动机处于已初始化状态，
+   *       无需再触发 init()
+   */
+  template <typename TC, typename TCTT>
+  ATFRAMEWORK_UTILS_API_HEAD_ONLY bool load(std::basic_istream<TC, TCTT> &is) {
+    string_t line;
+    // magic: "ACAUTOMATION <sizeof(char_t)>"，行尾可能是 "\r\n"
+    if (!std::getline(is, line)) {
+      return false;
+    }
+    {
+      size_t line_size = line.size();
+      while (line_size > 0 && ('\r' == line[line_size - 1] || '\n' == line[line_size - 1])) {
+        --line_size;
+      }
+      line.erase(line_size);
+    }
+
+    const char kMagic[] = "ACAUTOMATION ";
+    const size_t kMagicSize = sizeof(kMagic) - 1;
+    if (0 != line.compare(0, kMagicSize, kMagic) || line.size() <= kMagicSize) {
+      return false;
+    }
+    uint32_t char_size = 0;
+    {
+      uint32_t parsed = 0;
+      for (size_t i = kMagicSize; i < line.size(); ++i) {
+        if (line[i] < '0' || line[i] > '9') {
+          return false;
+        }
+        parsed = parsed * 10 + static_cast<uint32_t>(line[i] - '0');
+      }
+      char_size = parsed;
+    }
+    if (static_cast<size_t>(char_size) != sizeof(char_t)) {
+      return false;
+    }
+
+    // 可选行 "nocase 1"，随后必为 "node <N>"
+    uint32_t node_count = 0;
+    bool got_node_count = false;
+    while (!got_node_count && std::getline(is, line)) {
+      size_t line_size = line.size();
+      while (line_size > 0 && ('\r' == line[line_size - 1] || '\n' == line[line_size - 1])) {
+        --line_size;
+      }
+      line.erase(line_size);
+
+      if (line.size() > 7 && 0 == line.compare(0, 7, "nocase ")) {
+        is_no_case_ = ('0' != line[7]);
+        continue;
+      }
+
+      const char kNodePrefix[] = "node ";
+      const size_t kNodePrefixSize = sizeof(kNodePrefix) - 1;
+      if (0 != line.compare(0, kNodePrefixSize, kNodePrefix) || line.size() <= kNodePrefixSize) {
+        return false;
+      }
+      node_count = 0;
+      for (size_t i = kNodePrefixSize; i < line.size(); ++i) {
+        if (line[i] < '0' || line[i] > '9') {
+          return false;
+        }
+        node_count = node_count * 10 + static_cast<uint32_t>(line[i] - '0');
+      }
+      got_node_count = true;
+    }
+    if (!got_node_count) {
+      return false;
+    }
+
+    // dump() 在 "node <N>" 后写了一个空行（"\r\n"）再输出二进制数据
+    if (!std::getline(is, line) || !line.empty()) {
+      if (!line.empty()) {
+        // 宽字符流下空行内容可能是 "\r"，仍然视为空行
+        bool blank = true;
+        for (size_t i = 0; i < line.size(); ++i) {
+          if ('\r' != line[i] && '\n' != line[i]) {
+            blank = false;
+            break;
+          }
+        }
+        if (!blank) {
+          return false;
+        }
+      } else if (!is) {
+        return false;
+      }
+    }
+
+    // skip 字符集位图（1 字节类型为 32 字节原始数据）
+    if (!(is >> skip_charset_)) {
+      return false;
+    }
+
+    // 节点 0 已在构造时创建，其余节点按序重建；idx_ 由数据本身恢复
+    for (uint32_t i = 0; i < node_count; ++i) {
+      typename trie_type::ptr_type node;
+      if (0 == i) {
+        if (storage_.empty()) {
+          trie_type::create(storage_);
+        }
+        node = storage_[0];
+      } else {
+        node = trie_type::create(storage_);
+      }
+
+      if (!node || !node->load(is)) {
+        return false;
+      }
+    }
+
+    is_inited_ = true;
+    return true;
   }
 };
 }  // namespace string
